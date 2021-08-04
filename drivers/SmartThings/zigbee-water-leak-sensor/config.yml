@@ -1,0 +1,4 @@
+name: 'Zigbee Water Leak Sensor'
+packageKey: 'zigbee-water-leak-sensor'
+permissions:
+  zigbee: {}

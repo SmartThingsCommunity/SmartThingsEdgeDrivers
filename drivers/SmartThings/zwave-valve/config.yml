@@ -1,0 +1,4 @@
+name: 'Z-Wave Valve'
+packageKey: 'zwave-valve'
+permissions:
+  zwave: {}
