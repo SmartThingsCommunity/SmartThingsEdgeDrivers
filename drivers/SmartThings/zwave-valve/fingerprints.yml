@@ -1,0 +1,7 @@
+zwaveManufacturer:
+  - id: "1"
+    deviceLabel: EcoNet Valve
+    manufacturerId: 0x0157
+    productType: 0x0003
+    productId: 0x0002
+    deviceProfileName: valve-generic

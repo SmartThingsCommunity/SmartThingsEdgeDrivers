@@ -1,0 +1,10 @@
+name: valve-generic
+components:
+- id: main
+  capabilities:
+  - id: valve
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: WaterValve
