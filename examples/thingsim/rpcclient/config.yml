@@ -1,0 +1,5 @@
+name: 'ThingSim RPC Client'
+packageKey: 'com.smartthings.thingsim.rpcclient'
+permissions:
+  lan: {}
+  discovery: {}
