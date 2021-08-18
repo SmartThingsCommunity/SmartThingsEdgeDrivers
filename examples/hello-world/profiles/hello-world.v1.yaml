@@ -1,0 +1,9 @@
+# hello-world-profile
+name: hello-world.v1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Light
