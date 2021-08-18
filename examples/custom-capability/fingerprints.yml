@@ -1,0 +1,7 @@
+zigbeeGeneric:
+- id: "dimmer-generic"
+  deviceLabel: "Zigbee Fancy Swtich"
+  clusters:
+    server:
+      - 0x0006
+  deviceProfileName: fancy-switch

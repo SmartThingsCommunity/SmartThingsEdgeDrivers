@@ -1,0 +1,13 @@
+name: fancy-switch
+components:
+  - id: main
+    capabilities:
+      - id: "your_namespace.fancySwitch"
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

@@ -1,0 +1,52 @@
+mnmn: SmartThingsCommunity
+vid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+version: 0.0.1
+type: profile
+dashboard:
+  states:
+    - component: main
+      capability: your_namespace.fancySwitch
+      version: 1
+      idx: 0
+      group: main
+      values: []
+  actions:
+    - component: main
+      capability: your_namespace.fancySwitch
+      version: 1
+      idx: 0
+      group: main
+detailView:
+  - component: main
+    capability: your_namespace.fancySwitch
+    version: 1
+    values: []
+    patch: []
+  - component: main
+    capability: refresh
+    version: 1
+    values: []
+    patch: []
+automation:
+  conditions:
+    - component: main
+      capability: your_namespace.fancySwitch
+      version: 1
+      values: []
+      patch: []
+      exclusion: []
+  actions:
+    - component: main
+      capability: your_namespace.fancySwitch
+      version: 1
+      values: []
+      patch: []
+      exclusion: []
+    - component: main
+      capability: refresh
+      version: 1
+      values: []
+      patch: []
+      exclusion: []
+presentationId: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+manufacturerName: SmartThingsCommunity

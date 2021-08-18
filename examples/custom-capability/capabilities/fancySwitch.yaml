@@ -1,0 +1,34 @@
+name: Fancy Switch
+attributes:
+  fancySwitch:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - 'On'
+            - 'Off'
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands:
+  fancyOff:
+    name: fancyOff
+    arguments: []
+  fancyOn:
+    name: fancyOn
+    arguments: []
+  fancySet:
+    name: fancySet
+    arguments:
+      - name: state
+        optional: false
+        schema:
+          type: string
+          enum:
+            - 'On'
+            - 'Off'
+id: your_namespace.fancySwitch
+version: 1

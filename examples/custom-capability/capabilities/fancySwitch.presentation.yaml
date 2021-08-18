@@ -1,0 +1,40 @@
+dashboard:
+  states:
+    - label: '{{fancySwitch.value}}'
+      alternatives:
+        - key: 'On'
+          value: Fancy on
+        - key: 'Off'
+          type: inactive
+          value: Fancy off
+  actions:
+    - displayType: toggleSwitch
+      toggleSwitch:
+        command:
+          'on': fancyOn
+          'off': fancyOff
+        state:
+          value: fancySwitch.value
+          'on': 'On'
+          'off': 'Off'
+  basicPlus: []
+detailView:
+  - label: Fancy Switch
+    displayType: toggleSwitch
+    toggleSwitch:
+      command:
+        'on': fancyOn
+        'off': fancyOff
+      state:
+        value: fancySwitch.value
+        'on': 'On'
+        'off': 'Off'
+        label: '{{fancySwitch.value}}'
+        alternatives:
+          - key: 'On'
+            value: Fancy on
+          - key: 'Off'
+            type: inactive
+            value: Fancy off
+id: your_namespace.fancySwitch
+version: 1
