@@ -68,3 +68,17 @@ Alternatively, you can extract the API release to a location of your choice and 
 Library source in the Lua Language Server [settings](https://github.com/sumneko/lua-language-server#setting). **NOTE**:
 this is the internal folder, not a top level folder you potentially created when unzipping (i.e. it should not include 
 the docs folder).
+
+## Code of Conduct
+
+The code of conduct for SmartThingsEdgeDrivers can be found in
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## How to Contribute
+
+We welcome contributions to SmartThingsEdgeDrivers. Read our contribution
+guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+SmartThingsEdgeDrivers is released under the [Apache 2.0 License](LICENSE).
