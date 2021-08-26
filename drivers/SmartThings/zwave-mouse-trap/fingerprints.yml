@@ -1,0 +1,7 @@
+zwaveManufacturer:
+  - id: "Dome Pest Control"
+    deviceLabel: Dome Pest Control
+    manufacturerId: 0x021F
+    productType: 0x0003
+    productId: 0x0104
+    deviceProfileName: pest-control-battery
