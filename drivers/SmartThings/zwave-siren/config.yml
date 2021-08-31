@@ -1,0 +1,4 @@
+name: 'Z-Wave Siren'
+packageKey: 'zwave-siren'
+permissions:
+  zwave: {}
