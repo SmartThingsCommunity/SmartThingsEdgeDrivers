@@ -1,0 +1,4 @@
+name: 'Zigbee Range Extender'
+packageKey: 'zigbee-range-extender'
+permissions:
+  zigbee: {}
