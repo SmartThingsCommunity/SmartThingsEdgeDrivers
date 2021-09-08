@@ -1,0 +1,8 @@
+name: contact-general
+components:
+- id: main
+  capabilities:
+  - id: contactSensor
+    version: 1
+  categories:
+  - name: ContactSensor
