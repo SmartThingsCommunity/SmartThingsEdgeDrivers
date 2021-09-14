@@ -4,27 +4,27 @@ zigbeeManufacturer:
     deviceLabel: Orvibo Open/Closed Sensor
     manufacturer: ORVIBO
     model: e70f96b3773a4c9283c6862dbafb6a99
-    deviceProfileName: contact-profile
+    deviceProfileName: contact-general
   - id: "eWeLink/DS01"
     deviceLabel: eWeLink Open/Closed Sensor
     manufacturer: eWeLink
     model: DS01
-    deviceProfileName: contact-profile
+    deviceProfileName: contact-general
   - id: "Aurora/WindowSensor51AU"
     deviceLabel: Aurora Open/Closed Sensor
     manufacturer: Aurora
     model: WindowSensor51AU
-    deviceProfileName: contact-profile
+    deviceProfileName: contact-general
   - id: "Aurora/DoorSensor50AU"
     deviceLabel: Aurora Open/Closed Sensor
     manufacturer: Aurora
     model: DoorSensor50AU
-    deviceProfileName: contact-profile
+    deviceProfileName: contact-general
   - id: "HEIMAN/DoorSensor-N"
     deviceLabel: HEIMAN Open/Closed Sensor
     manufacturer: HEIMAN
     model: DoorSensor-N
-    deviceProfileName: contact-profile
+    deviceProfileName: contact-general
   - id: "NYCE/3010"
     deviceLabel: NYCE Open/Closed Sensor
     manufacturer: NYCE
