@@ -1,0 +1,17 @@
+name: humidity-temp-battery
+components:
+- id: main
+  capabilities:
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MultiFunctionalSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
