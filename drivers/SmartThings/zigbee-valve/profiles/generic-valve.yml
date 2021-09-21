@@ -1,0 +1,14 @@
+name: valve-battery-powerSource
+components:
+- id: main
+  capabilities:
+  - id: valve
+    version: 1
+  - id: battery
+    version: 1
+  - id: powerSource
+    version: 1
+  - id: refresh
+    version: 1
+  categories :
+  - name: WaterValve

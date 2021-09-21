@@ -1,0 +1,56 @@
+zigbeeManufacturer:
+  - id: "eZEX/E282-KR0B0Z1-HA"
+    deviceLabel: eZEX Multipurpose Sensor
+    model: E282-KR0B0Z1-HA
+    deviceProfileName: humidity-temperature
+  - id: "PLAID SYSTEMS/PS-SPRZMS-01"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-01
+    deviceProfileName: humidity-temp-battery
+  - id: "PLAID SYSTEMS/PS-SPRZMS-SLP1"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-SLP1
+    deviceProfileName: humidity-temp-battery
+  - id: "PLAID SYSTEMS/PS-SPRZMS-SLP3"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-SLP3
+    deviceProfileName: humidity-temp-battery
+zigbeeGeneric:
+  - id: "HumidityTempGeneric"
+    deviceLabel: Multipurpose Sensor
+    deviceIdentifiers:
+      - 0x0302
+    clusters: 
+      server: 
+        - 0x0402 # Temperature Measurement Cluster
+        - 0x0405 # Relative Humidity Measurement Cluster
+    deviceProfileName: humidity-temperature
+  - id: "PlantLinkClusterSpecific"
+    deviceLabel: Plant Link Humidity Sensor
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000
+        - 0x0003
+        - 0x0405
+        - 0xFC08 # Plant Link Manufacturer specific cluster
+      client:
+        - 0x0003
+    deviceProfileName: humidity-battery
+  - id: "PlantLinkHumiditySensor"
+    deviceLabel: Plant Link Humidity Sensor
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000
+        - 0x0001
+        - 0x0003
+        - 0x0B04
+      client:
+        - 0x0003
+    deviceProfileName: humidity-battery
