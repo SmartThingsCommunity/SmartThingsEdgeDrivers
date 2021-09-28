@@ -59,7 +59,8 @@ for driver in drivers:
           headers={
             "Content-Type": "application/zip", 
             "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN},
+            "Authorization": "Bearer "+TOKEN,
+            "X-ST-LOG-LEVEL": "TRACE"},
           data=data)
         if response.status_code != 200:
           print("Failed to upload driver "+driver)
@@ -86,7 +87,8 @@ response = requests.put(
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "X-ST-LOG-LEVEL": "TRACE"
   },
   data=json.dumps(driver_updates)
 )
