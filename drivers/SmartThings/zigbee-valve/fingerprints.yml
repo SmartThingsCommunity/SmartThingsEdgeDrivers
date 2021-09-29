@@ -14,5 +14,9 @@ zigbeeManufacturer :
     manufacturer: Sinope Technologies
     model: VA4220ZB
     deviceProfileName: valve-battery-powerSource
-
+  - id : Tuya/TS0011
+    deviceLabel : Tuya Zigbee Valve
+    manufacturer: Tuya
+    model: TS0011
+    deviceProfileName: valve-battery-powerSource
 
