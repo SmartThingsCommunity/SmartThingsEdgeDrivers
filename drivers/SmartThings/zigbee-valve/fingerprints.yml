@@ -16,7 +16,7 @@ zigbeeManufacturer :
     deviceProfileName: valve-battery-powerSource
   - id : Tuya/TS0011
     deviceLabel : Tuya Zigbee Valve
-    manufacturer: Tuya
+    manufacturer: _TYZB01_rifa0wlb
     model: TS0011
     deviceProfileName: valve-battery-powerSource
 
