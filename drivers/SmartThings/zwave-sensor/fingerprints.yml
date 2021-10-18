@@ -1,0 +1,179 @@
+zwaveManufacturer:
+  - id: "aeotec/contact/5"
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0086
+    productId: 0x001D
+    deviceProfileName: base-contact
+  - id: "aeotec/contact/6"
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0086
+    productId: 0x0070
+    deviceProfileName: base-contact
+  - id: "aeotec/contact/7"
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0371
+    productId: 0x00BB
+    deviceProfileName: base-contact
+  - id: "aeotec/water/6"
+    deviceLabel: Aeotec Water Leak Sensor
+    manufacturerId: 0x0086
+    productId: 0x007A
+    deviceProfileName: base-water
+  # - id: "Everspring/0001"
+  #   deviceLabel: Everspring Light
+  #   manufacturerId: 0x0060
+  #   productType: 0x0012
+  #   productId: 0x0001
+  #   deviceProfileName: motion-switch
+  - id: "Dome/DMMS1"
+    deviceLabel: Dome Motion/Light Sensor
+    manufacturerId: 0x021F
+    productType: 0x0003
+    productId: 0x0083
+    deviceProfileName: motion-battery-illuminance
+  - id: "NEOCoolcam/008D"
+    deviceLabel: NEO Coolcam Motion/Light Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x008D
+    deviceProfileName: motion-battery-illuminance
+  - id: "NEOCoolcam/108D"
+    deviceLabel: NEO Coolcam Motion/Light Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x108D
+    deviceProfileName: motion-battery-illuminance
+  - id: "Wink/0001"
+    deviceLabel: Wink Motion Sensor
+    manufacturerId: 0x017F
+    productType: 0x0101
+    productId: 0x0001
+    deviceProfileName: motion-battery-illuminance
+  # - id: "Ecolink/0x0010"
+  #   deviceLabel: Ecolink Water Leak Sensor
+  #   manufacturerId: 0x014A
+  #   productType: 0x0005
+  #   productId: 0x0010
+  #   deviceProfileName: water-battery-tempalarm
+  - id: "zooz/4in1"
+    deviceLabel: Zooz 4-in-1 sensor
+    manufacturerId: 0x027A
+    productType: 0x2021
+    productId: 0x2101
+    deviceProfileName: multi-functional-motion
+  - id: "zp3111us/4in1"
+    deviceLabel: ZP3111US 4-in-1 Motion
+    manufacturerId: 0x0109
+    productType: 0x2021
+    productId: 0x2101
+    deviceProfileName: multi-functional-motion
+  - id: "everspring/multi/sp815"
+    deviceLabel: Everspring Immune Pet PIR Sensor SP815
+    manufacturerId: 0x0060
+    productType: 0x0001
+    productId: 0x0004
+    deviceProfileName: motion-battery-temperature-humidity-tamperalert
+  # - id: "Aeotec/ZW005-C"
+  #   deviceLabel: Aeotec Multipurpose Sensor
+  #   manufacturerId: 0x0371
+  #   productType: 0x0002
+  #   productId: 0x0005
+  #   deviceProfileName: motion-battery-illuminance-temperature
+  # - id: "Aeotec/ZW005-A"
+  #   deviceLabel: Aeotec Multipurpose Sensor
+  #   manufacturerId: 0x0371
+  #   productType: 0x0102
+  #   productId: 0x0005
+  #   deviceProfileName: motion-battery-illuminance-temperature
+  # - id: "Aeotec/ZW005-B"
+  #   deviceLabel: Aeotec Multipurpose Sensor
+  #   manufacturerId: 0x0371
+  #   productType: 0x0202
+  #   productId: 0x0005
+  #   deviceProfileName: motion-battery-illuminance-temperature
+  - id: "0x001E/0x0004/0x0001"
+    deviceLabel: EZmultiPli multipurpose sensor
+    manufacturerId: 0x001E
+    productType: 0x0004
+    productId: 0x0001
+    deviceProfileName: motion-switch-color-illuminance-temperature
+  # - id: "vision/motion"
+  #   deviceLabel: Vision Motion Detector ZP3102
+  #   manufacturerId: 0x0109
+  #   productType: 0x2002
+  #   productId: 0x0205
+  #   deviceProfileName: motion-temp-sensor
+  # - id: "fibaro/flood/zw5"
+  #   deviceLabel: Fibaro Flood Sensor ZW5
+  #   manufacturerId: 0x010F
+  #   productType: 0x0B01
+  #   deviceProfileName: water-battery-tamper-temperature
+  # - id: "010F/0000/2002"
+  #   deviceLabel: Fibaro Water Leak Sensor
+  #   manufacturerId: 0x010F
+  #   productType: 0x0000
+  #   productId: 0x2002
+  #   deviceProfileName: water-acceleration-battery-temperature-tamperalert
+  # - id: "010F/0000/1002"
+  #   deviceLabel: Fibaro Water Leak Sensor
+  #   manufacturerId: 0x010F
+  #   productType: 0x0000
+  #   productId: 0x1002
+  #   deviceProfileName: water-acceleration-battery-temperature-tamperalert
+  # - id: "010F/0B00/1001"
+  #   deviceLabel: Fibaro Water Leak Sensor
+  #   manufacturerId: 0x010F
+  #   productType: 0x0B00
+  #   productId: 0x1001
+  #   deviceProfileName: water-acceleration-battery-temperature-tamperalert
+  - id: "aeotec/water/7"
+    deviceLabel: Aeotec Water Sensor 7 Pro
+    manufacturerId: 0x0371
+    productId: 0x0013
+    deviceProfileName: water-temperature-humidity-tamper-battery
+  - id: "everspring/multi/ST814"
+    deviceLabel: Everspring ST814
+    manufacturerId: 0x0060
+    productType: 0x0006
+    productId: 0x0001
+    deviceProfileName: humidity-temperature-battery
+  - id: "0060/0007/0001"
+    deviceLabel: Everspring Illuminance Sensor
+    manufacturerId: 0x0060
+    productType: 0x0007
+    productId: 0x0001
+    deviceProfileName: illuminance-battery
+  - id: "0084/0093/0114"
+    deviceLabel: Glentronics Water Leak Sensor
+    manufacturerId: 0x0084
+    productType: 0x0093
+    productId: 0x0114
+    deviceProfileName: water-battery-powersource
+  - id: "homeseer/multi/hsm100"
+    deviceLabel: Homeseer Multi Sensor HSM100
+    manufacturerId: 0x001E
+    productType: 0x0002
+    productId: 0x0001
+    deviceProfileName: motion-battery-illuminance-temperature
+  - id: "homeseer/multi/hsm200"
+    deviceLabel: Homeseer Multi Sensor HSM200
+    manufacturerId: 0x000C
+    productType: 0x0004
+    productId: 0x0001
+    deviceProfileName: motion-battery-illuminance-temperature
+  - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
+    deviceLabel: Fibaro Open/Closed Sensor
+    manufacturerId: 0x010F
+    productType: 0x0700
+    deviceProfileName: contact-battery-tamperalert
+  # - id: 010F/0701/2001 # Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
+  #   deviceLabel: Fibaro Open/Closed Sensor with temperature
+  #   manufacturerId: 0x010F
+  #   productType: 0x0701
+  #   productId: 0x2001
+  #   deviceProfileName: fibaro-door-window-sensor-temperature
+  - id: 010F/0702
+    deviceLabel: Fibaro Open/Closed Sensor 2
+    manufacturerId: 0x010F
+    productType: 0x0702
+    deviceProfileName: fibaro-door-window-sensor-2

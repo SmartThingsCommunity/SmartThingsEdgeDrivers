@@ -1,0 +1,14 @@
+name: water-battery-powersource
+components:
+- id: main
+  capabilities:
+  - id: waterSensor
+    version: 1
+  - id: battery
+    version: 1
+  - id: powerSource
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: LeakSensor

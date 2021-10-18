@@ -1,0 +1,12 @@
+name: motion-switch
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MotionSensor

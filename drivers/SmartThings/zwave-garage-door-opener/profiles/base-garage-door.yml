@@ -1,0 +1,12 @@
+name: base-garage-door
+components:
+- id: main
+  capabilities:
+  - id: doorControl
+    version: 1
+  - id: contactSensor
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GarageDoor
