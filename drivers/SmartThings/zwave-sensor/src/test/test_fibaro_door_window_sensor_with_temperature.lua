@@ -361,7 +361,7 @@ test.register_coroutine_test(
 
     test.mock_time.advance_time(1)
     _preferences = {}
-    _preferences.delayOfTamperAlarmCancellation = 5
+    _preferences.delayOfTamperAlarmCancel = 5
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
     test.wait_for_events()
         test.socket.zwave:__queue_receive(
@@ -410,7 +410,7 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
 
     _preferences = {}
-    _preferences.reportingTamperAlarmCancellation = 1
+    _preferences.reportTamperAlarmCancel = 1
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
     test.wait_for_events()
     test.socket.zwave:__queue_receive(
@@ -557,7 +557,7 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
 
     _preferences = {}
-    _preferences.intervalOfTemperatureReports = 0
+    _preferences.intervalOfTempReports = 0
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_door_window_sensor:generate_info_changed({ preferences = _preferences }))
     test.wait_for_events()
     test.socket.zwave:__queue_receive(

@@ -77,6 +77,7 @@ for driver in drivers:
           drivers_updated.append(driver)
           response_json = json.loads(response.text)
           driver_updates.append({DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]})
+          time.sleep(5)
     else:
       print("Hash matched existing driver for "+package_key)
       # hash matched, use the currently uploaded version of the driver to "update" the channel
