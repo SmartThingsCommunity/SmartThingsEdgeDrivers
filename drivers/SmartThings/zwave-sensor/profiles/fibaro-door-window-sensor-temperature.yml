@@ -40,7 +40,7 @@ preferences:
         5 : "Opening/closing and tampering"
         6 : "Wake up and tampering"
       default: 6
-  - name: "delayOfTamperAlarmCancellation"
+  - name: "delayOfTamperAlarmCancel"
     title: "Delay of tamper alarm cancellation"
     description: "Time period after which a tamper alarm will be cancelled"
     required: false
@@ -49,14 +49,14 @@ preferences:
       minimum: 0
       maximum: 32400
       default: 5
-  - name: "reportingTamperAlarmCancellation"
+  - name: "reportTamperAlarmCancel"
     title: "Reporting tamper alarm cancellation"
     description: "Reporting cancellation of tamper alarm to the controller"
     required: false
     preferenceType: boolean
     definition:
       default: true
-  - name: "intervalOfTempMeasurements"
+  - name: "tempMeasurementInterval"
     title: "Interval of temp measurements"
     description: "The shorter the time, the more frequently the temperature will be measured (0 - temperature measurements disabled)."
     required: false
@@ -74,7 +74,7 @@ preferences:
       minimum: 0
       maximum: 300
       default: 10
-  - name: "intervalOfTemperatureReports"
+  - name: "intervalOfTempReports"
     title: "Interval of temperature reports"
     description: "Temperature measurement is performed before sending any report (0 - periodic temperature reports disabled)."
     required: false
