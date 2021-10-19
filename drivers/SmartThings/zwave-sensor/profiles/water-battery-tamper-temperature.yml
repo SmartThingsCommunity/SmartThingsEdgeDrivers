@@ -1,0 +1,57 @@
+name: water-battery-tamper-temperature
+components:
+- id: main
+  capabilities:
+  - id: waterSensor
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: LeakSensor
+preferences:
+  - name: "alarmCancellationDelay"
+    title: "Alarm Cancellation Delay"
+    description: "Time period by which a Flood Sensor will retain the flood state after the flooding itself has ceased. 0-3600 in seconds"
+    required: false
+    preferenceType: number
+    definition: 
+      minimum: 0
+      maximum: 3600
+      default: 0
+  - name: "acousticVisualSignals"
+    title: "Acoustic Visual Signals"
+    description: "Acoustic and visual signals on / off in case of flooding."
+    required: false
+    preferenceType: enumeration
+    definition: 
+      options:
+        0: "acoustic and visual alarms inactive"
+        1: "acoustic inactive, visual active"
+        2: "acoustic active, visual inactive"
+        3: "acoustic and visual alarms active"
+      default: 3
+  - name: "tempMeasurementInterval"
+    title: "Interval Of Temperature Measurements"
+    description: "How often the temperature will be measured (1-65535 in seconds)"
+    required: false
+    preferenceType: number
+    definition: 
+      minimum: 1
+      maximum: 65535
+      default: 300
+  - name: "floodSensorTurnedOnOff"
+    title: "Flood Sensor Turned On Off"
+    description: "Allows to turn off the internal flood sensor. Tamper and built in temperature sensor will remain active."
+    required: false
+    preferenceType: enumeration
+    definition: 
+      options:
+        0: "on"
+        1: "off"
+      default: 0

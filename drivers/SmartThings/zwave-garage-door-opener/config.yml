@@ -1,0 +1,4 @@
+name: 'Z-Wave Garage Door Opener'
+packageKey: 'zwave-garage-door-opener'
+permissions:
+  zwave: {}

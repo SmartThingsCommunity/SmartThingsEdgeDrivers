@@ -1,0 +1,44 @@
+name: fibaro-co-sensor-zw5
+components:
+- id: main
+  capabilities:
+  - id: battery
+    version: 1
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: temperatureAlarm
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  categories:
+  - name: SmokeDetector
+preferences:
+- name: "zwaveNotifications"
+  title: "Zwave notifications"
+  description: "This parameter allows to set actions which result in sending notifications to the HUB"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0 : "Both actions disabled"
+      1 : "Tampering (opened casing)"
+      2 : "Exceeding the temperature"
+      3 : "Both actions enabled"
+    default: "0"
+- name: "overheatThreshold"
+  title: "Overheat threshold"
+  description: "This parameter defines the temperature level, which exceeding will result in sending actions set in paramater 2."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      50 : "120 °F / 50°C"
+      55 : "130 °F / 55°C"
+      60 : "140 °F / 60 °C"
+      65 : "150 °F / 65 °C"
+      71 : "160 °F / 71 °C"
+      77 : "170 °F / 77 °C"
+      80 : "176 °F / 80 °C"
+    default: "55"
