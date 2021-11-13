@@ -88,6 +88,22 @@ local devices = {
       highTempThreshold = {parameter_number = 55, size = 2},
       lowTempThreshold = {parameter_number = 56, size = 2}
     }
+  },
+  ZOOZ_4_IN_1_SENSOR = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x2021,
+      product_ids = 0x2101
+    },
+    PARAMETERS = {
+      temperatureScale = {parameter_number = 1, size = 1},
+      temperatureChange = {parameter_number = 2, size = 1},
+      humidityChange = {parameter_number = 3, size = 1},
+      illuminanceChange = {parameter_number = 4, size = 1},
+      motionInterval = {parameter_number = 5, size = 1},
+      motionSensitivity = {parameter_number = 6, size = 1},
+      ledMode = {parameter_number = 7, size = 1}
+    }
   }
 }
 local preferences = {}

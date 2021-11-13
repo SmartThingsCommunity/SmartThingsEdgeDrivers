@@ -60,7 +60,7 @@ zwaveManufacturer:
     manufacturerId: 0x027A
     productType: 0x2021
     productId: 0x2101
-    deviceProfileName: multi-functional-motion
+    deviceProfileName: zooz-4-in-1-sensor
   - id: "zp3111us/4in1"
     deviceLabel: ZP3111US 4-in-1 Motion
     manufacturerId: 0x0109
