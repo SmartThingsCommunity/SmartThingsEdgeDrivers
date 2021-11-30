@@ -1,0 +1,4 @@
+name: 'Z-Wave Window Treatment'
+packageKey: 'zwave-window-treatment'
+permissions:
+  zwave: {}
