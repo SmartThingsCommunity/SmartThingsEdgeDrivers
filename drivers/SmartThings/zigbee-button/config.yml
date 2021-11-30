@@ -1,0 +1,4 @@
+name: 'Zigbee Button'
+packageKey: 'zigbee-button'
+permissions:
+  zigbee: {}

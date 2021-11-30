@@ -1,0 +1,106 @@
+name: fibaro-metering-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+  - name: "alwaysActive"
+    title: "Always active"
+    description: "Turns the Wall Plug into a power and energy meter. Wall Plug will turn on connected device permanently and will stop reacting to attempts of turning it off."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "function inactive"
+        1: "function activated"
+      default: 0
+  - name: "restoreState"
+    title: "Restore state"
+    description: "After the power supply is back on, the Wall Plug can be restored to previous state or remain switched off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "device remains switched off"
+        1: "device restores the state"
+      default: 1
+  - name: "overloadSafety"
+    title: "Overload safety"
+    description: "Allows to turn off the controlled device in case of exceeding the defined power; 1-3000 W.\n0 - function inactive\n10-30000 (1.0-3000.0W, step 0.1W)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 30000
+      default: 0
+  - name: "standardPowerReports"
+    title: "Standard power reports"
+    description: "This parameter determines the minimum percentage change in active power that will result in sending a power report.\n1-99 - power change in percent\n100 - reports are disabled"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 15
+  - name: "powerReportFrequency"
+    title: "Power report frequency"
+    description: "Time interval of sending at most 5 standard power reports.\n5-600 (in seconds)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 5
+      maximum: 600
+      default: 30
+  - name: "periodicReports"
+    title: "Periodic reports"
+    description: "Time period between independent reports.\n0 - periodic reports inactive\n5-32400 (in seconds)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 3600
+  - name: "ringColorOn"
+    title: "Ring color on"
+    description: "Ring LED colour when the device is ON"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "Load based - continuous"
+        2: "Load based - steps"
+        3: "White"
+        4: "Red"
+        5: "Green"
+        6: "Blue"
+        7: "Yellow"
+        8: "Cyan"
+        9: "Magenta"
+      default: 1
+  - name: "ringColorOff"
+    title: "Ring color off"
+    description: "Ring LED colour when the device is OFF"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "Last measured power"
+        3: "White"
+        4: "Red"
+        5: "Green"
+        6: "Blue"
+        7: "Yellow"
+        8: "Cyan"
+        9: "Magenta"
+      default: 0
