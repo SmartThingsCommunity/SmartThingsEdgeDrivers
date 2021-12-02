@@ -1,0 +1,182 @@
+name: Create Driver Channel
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**'
+jobs:
+  find-changed-drivers:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-drivers: ${{ steps.set-outputs.outputs.changed-drivers }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: shallow fetch base revision
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+      - name: get changed drivers
+        id: set-outputs
+        run: |
+          echo "::set-output name=changed-drivers::$(git diff --dirstat=files,0 --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oE 'drivers/[^/]+/[^/]+/' | jq -Rrsc 'split("\n")[:-1]')"
+      - run: echo ${{ steps.set-outputs.outputs.changed-drivers }}
+
+  get-channel:
+    runs-on: ubuntu-latest
+    outputs:
+      channel-json: ${{ steps.set-outputs.outputs.channel-json }}
+    steps:
+      - name: List channels
+        id: channels
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/'
+          method: GET
+          bearerToken: ${{ secrets.TOKEN }}
+      - name: Create the channel
+        if: ${{ !contains(steps.channels.outputs.response, github.head_ref) }}
+        id: channel
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/'
+          bearerToken: ${{ secrets.TOKEN }}
+          data: '{
+              "name": "${{ github.head_ref }}",
+              "description": "Automatically generated from PR #${{ github.event.number }}",
+              "type": "DRIVER",
+              "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.number }}"
+            }'
+      - name: Set the channel environment variable
+        if: ${{ !contains(steps.channels.outputs.response, github.head_ref) }}
+        run: echo 'CHANNEL_JSON=${{ steps.channel.outputs.response }}' >> $GITHUB_ENV
+      - name: Get existing channel JSON
+        if: ${{ contains(steps.channels.outputs.response, github.head_ref) }}
+        run: |
+          jq -r ' .items[] | select(.name=="${{ github.head_ref }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
+          echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
+      - name: set outputs
+        id: set-outputs
+        uses: actions/github-script@v5
+        with:
+          script: core.setOutput('channel-json', ${{ env.CHANNEL_JSON }})
+
+  upload-driver:
+    runs-on: ubuntu-latest
+    needs:
+      - find-changed-drivers
+      - get-channel
+    strategy:
+      matrix:
+        driver: ${{ fromJSON(needs.find-changed-drivers.outputs.changed-drivers) }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Package the driver
+        working-directory: ${{ matrix.driver }}
+        run: |
+          zip ../../../edge.zip $(find . -name "*.yml" -o -name "*.lua" -o -name "*.yaml") -X -x "*test*"
+      - name: Upload the driver
+        id: driver
+        run: |
+          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @edge.zip)"
+      - name: Driver upload failed
+        if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('The driver failed to upload: ${{ steps.driver.outputs.response }}')
+      - name: Assign the driver
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}/drivers/'
+          bearerToken: ${{ secrets.TOKEN }}
+          data: '{
+              "driverId": "${{ fromJSON(steps.driver.outputs.response).driverId }}",
+              "version": "${{ fromJSON(steps.driver.outputs.response).version }}"
+            }'
+
+  get-invite:
+    runs-on: ubuntu-latest
+    needs: get-channel
+    outputs:
+      invite-url: ${{ steps.set-output.outputs.invite-url }}
+    steps:
+      - name: Get current channel invites
+        id: current
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/invites?resource=st1:developer:${{secrets.UUID}}:channel/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}'
+          bearerToken: ${{ secrets.TOKEN }}
+          method: GET
+      - name: Count current channel invites
+        id: count
+        run: echo "::set-output name=count::$(echo '${{ steps.current.outputs.response }}' | jq '.items | length')"
+      - name: Create invite
+        if: ${{ steps.count.outputs.count == 0 }}
+        id: invite
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/invites'
+          bearerToken: ${{ secrets.TOKEN }}
+          data: '{
+              "resource": {
+                "root": {
+                  "service": "developer",
+                  "id": "${{ secrets.UUID }}"
+                },
+                "components" : [
+                  {
+                    "kind": "channel",
+                    "id": "${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}"
+                  }
+                ]
+              },
+              "profileId": "${{ secrets.PROFILE_ID }}",
+              "metadata": {
+                "name": "${{ fromJSON(needs.get-channel.outputs.channel-json).name }}",
+                "description": "${{ fromJSON(needs.get-channel.outputs.channel-json).description }}",
+                "owner": "https://github.com/${{ github.actor }}",
+                "termsUrl": "${{ fromJSON(needs.get-channel.outputs.channel-json).termsOfServiceUrl }}"
+              }
+            }'
+      - run: echo "INVITE_URL=${{ fromJSON(steps.invite.outputs.response).acceptURL }}" >> $GITHUB_ENV
+        if: ${{ steps.count.outputs.count == 0 }}
+      - name: Get existing invite
+        if: ${{ steps.count.outputs.count > 0 }}
+        run: |
+          echo '${{ steps.current.outputs.response }}' | jq -r ' .items[0].acceptUrl ' | xargs -I % echo 'INVITE_URL=%' >> $GITHUB_ENV
+      - name: Set ouput
+        id: set-output
+        uses: actions/github-script@v5
+        with:
+          script: core.setOutput('invite-url', "${{ env.INVITE_URL }}" )
+
+  comment-on-pr:
+    runs-on: ubuntu-latest
+    needs: get-invite
+    steps:
+      - name: Get the comments (action)
+        id: comments-action
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments'
+          bearerToken: ${{ github.token }}
+          method: GET
+      - run: echo '${{ steps.comments-action.outputs.response }}' | jq -r ' .[] | select(.body | startswith("Invitation URL")).url' | xargs -I % echo 'COMMENT_URL=%' >> $GITHUB_ENV
+      - name: Update the comment
+        if: ${{ env.COMMENT_URL != '' }}
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: ${{ env.COMMENT_URL }}
+          bearerToken: ${{ github.token }}
+          method: PATCH
+          data: '{
+              "body": "Invitation URL: ${{ needs.get-invite.outputs.invite-url }}"
+            }'
+      - name: Post new comment
+        if: ${{ env.COMMENT_URL == '' }}
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments'
+          bearerToken: ${{ github.token }}
+          method: POST
+          data: '{
+              "body": "Invitation URL: ${{ needs.get-invite.outputs.invite-url }}"
+            }'
