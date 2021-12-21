@@ -1,0 +1,116 @@
+name: smartplug-1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+- id: smartplug1
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  categories:
+  - name: SmartPlug
+preferences:
+  - name: "restoreState"
+    title: "Restore state"
+    description: "After the power supply is back on, the Wall Plug can be restored to previous state or remain switched off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "device remains switched off"
+        1: "device restores the state"
+      default: 0
+  - name: "overloadSafety"
+    title: "Overload safety"
+    description: "Allows turning off the controlled device in case of exceeding the defined power;\n
+                  0 - function inactive\n
+                  10-18000 (1.0-1800.0W, step 0.1W)\n
+                  To calculate the effective threshold, multiply the parameter by ten. i.e. setting to 5"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 18000
+      default: 0
+  - name: "standardPowerReports"
+    title: "Standard power reports"
+    description: "This parameter determines the minimum percentage change in active power that will result in sending a power report.\n1-99 - power change in percent\n100 - reports are disabled"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 15
+  - name: "energyReportingThreshold"
+    title: "Energy reporting threshold"
+    description: "This parameter determines the minimum change in energy consumption (in relation to the previously reported) that will result in sending a new report.\n1-500 (0.01-5kWh) - threshold\n0 - reports are disabled"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 500
+      default: 10
+  - name: "periodicPowerReporting"
+    title: "Periodic power reporting"
+    description: "This parameter defines time period between independent reports sent when changes in power load have not been recorded or if changes are insignificant. By default reports are sent every hour.\n30-32400 - interval in seconds\n0 - periodic reports are disabled"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 3600
+  - name: "periodicReports"
+    title: "Periodic reports"
+    description: "Time period between independent reports.\n0 - periodic reports inactive\n30-32400 (in seconds)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 3600
+  - name: "ringColorOn"
+    title: "Ring color on"
+    description: "Ring LED colour when the device is ON"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "Load based - continuous"
+        2: "Load based - steps"
+        3: "White"
+        4: "Red"
+        5: "Green"
+        6: "Blue"
+        7: "Yellow"
+        8: "Cyan"
+        9: "Magenta"
+      default: 1
+  - name: "ringColorOff"
+    title: "Ring color off"
+    description: "Ring LED colour when the device is OFF"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "Last measured power"
+        3: "White"
+        4: "Red"
+        5: "Green"
+        6: "Blue"
+        7: "Yellow"
+        8: "Cyan"
+        9: "Magenta"
+      default: 0

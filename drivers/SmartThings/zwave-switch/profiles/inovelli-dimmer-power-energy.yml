@@ -1,0 +1,173 @@
+name: inovelli-dimmer-power-energy
+
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: colorControl
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+- id: button1
+  capabilities:
+  - id: button
+    version: 1
+  categories:
+  - name: RemoteController
+- id: button2
+  capabilities:
+    - id: button
+      version: 1
+  categories:
+    - name: RemoteController
+- id: button3
+  capabilities:
+    - id: button
+      version: 1
+  categories:
+    - name: RemoteController
+
+preferences:
+  - name: "dimmingSpeed"
+    title: "Dimming Speed"
+    description: "How fast or slow the light changes state when you hold the switch.
+      0 = Instant On, 1 = 1 second, 100 = 100 seconds."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 3
+  - name: "powerOnState"
+    title: "Power On State"
+    description: "When power is restored, the switch reverts to either On, Off or Last Level.
+      0 = Off, 1-99 = Specific % on, 101 = Returns to level before power outage."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 0
+  - name: "ledIndicatorIntensity"
+    title: "LED Indicator Intensity"
+    description: "Intensity of the LED bar.
+      0 = Off, 1 = Low, 5 = Medium, 10 = High."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 5
+  - name: "ledIntensityWhenOff"
+    title: "LED Indicator Intensity When Off"
+    description: "Intensity of the LED bar when the switch is off.
+      0 = Off, 1 = Low, 5 = Medium, 10 = High."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 1
+  - name: "ledIndicatorTimeout"
+    title: "LED Indicator Timeout"
+    description: "The amount of time the RGB Bar shows the Dim level if the LED Bar has been disabled.
+      0 = Always off, 1 = 1 second after level is adjusted, 10 = 10 seconds after level is adjusted."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 3
+  - name: "dimmingSpeedZWave"
+    title: "Dimming Speed (Z-Wave)"
+    description: "How fast or slow the light changes state when you adjust the level remotely.
+      0 = Instant On, 1 = 1 second, 100 = 100 seconds, 101 = synced with Dimming Speed."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 101
+  - name: "rampRate"
+    title: "Ramp Rate"
+    description: "How fast or slow the light changes state when you turn it on or off at the switch.
+      0 = Instant On, 1 = 1 second, 100 = 100 seconds, 101 = synced with Dimming Speed."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 101
+  - name: "rampRateZWave"
+    title: "Ramp Rate (Z-Wave)"
+    description: "How fast or slow the light changes state when you turn it on or off remotely.
+      0 = Instant On, 1 = 1 second, 100 = 100 seconds, 101 = synced with Dimming Speed."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 101
+  - name: "minimumDimLevel"
+    title: "Minimum Dim Level"
+    description: "Minimum level the light switch will dim to.
+      1 = 1%, 2 = 2%, 45 = 45%."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 45
+      default: 1
+  - name: "maximumDimLevel"
+    title: "Maximum Dim Level"
+    description: "Maximum level the light switch will dim to.
+      55 = 55%, 56 = 56%, 99 = 99% (Note: Z-Wave only goes up to 99%, not 100%)."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 55
+      maximum: 99
+      default: 99
+  - name: "invertSwitch"
+    title: "Invert Switch"
+    description: "Inverts the switch (Tap Down = On, Tap Up = Off)."
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: "autoOffTimer"
+    title: "Auto Off Timer"
+    description: "Automatically turns the switch off after x amount of seconds.
+      0 = Disabled, 1 = 1 second, 32767 = 32767 seconds."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 32767
+      default: 0
+  - name: "acPowerType"
+    title: "AC Power Type"
+    description: "Wiring the switch with or without neutral wire."
+    required: true
+    preferenceType: boolean
+    definition:
+      default: true
+  - name: "switchType"
+    title: "Switch Type"
+    description: "Select the type of installation.
+      0 = Single-pole (one switch), 1 = Multi-switch (dumb switch), 2 = Multi-switch (auxiliary switch)."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 2
+      default: 0

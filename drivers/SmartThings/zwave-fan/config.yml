@@ -1,0 +1,4 @@
+name: 'Z-Wave Fan'
+packageKey: 'zwave-fan'
+permissions:
+  zwave: {}

@@ -1,0 +1,106 @@
+zigbeeManufacturer:
+  - id: "HEIMAN/SOS-EM"
+    deviceLabel: HEIMAN Button
+    manufacturer: HEIMAN
+    model: SOS-EM
+    deviceProfileName: button-profile
+  - id: "frient A/S/MBTZB-110"
+    deviceLabel: frient Button
+    manufacturer: frient A/S
+    model: MBTZB-110
+    deviceProfileName: button-profile
+  - id: "LDS/ZBT-CCTSwitch-D0001"
+    deviceLabel: EcoSmart Remote Control
+    manufacturer: LDS
+    model: ZBT-CCTSwitch-D0001
+    deviceProfileName: four-buttons-battery
+  - id: "SOMFY/Situo 1 Zigbee"
+    deviceLabel: SOMFY Remote Control
+    manufacturer: SOMFY
+    model: Situo 1 Zigbee
+    deviceProfileName: three-buttons-battery
+  # - id: "SOMFY/Situo 4 Zigbee"
+  #   deviceLabel: SOMFY Remote Control
+  #   manufacturer: SOMFY
+  #   model: Situo 4 Zigbee
+  #   deviceProfileName: twelve-buttons
+  - id: "IKEA of Sweden/TRADFRI on"
+    deviceLabel: IKEA Remote Control
+    manufacturer: IKEA of Sweden
+    model: TRADFRI on/off switch
+    deviceProfileName: two-buttons-battery
+  - id: "IKEA of Sweden/TRADFRI op"
+    deviceLabel: IKEA Remote Control
+    manufacturer: IKEA of Sweden
+    model: TRADFRI open/close remote
+    deviceProfileName: two-buttons-battery
+  - id: "IKEA of Sweden/TRADFRI rem"
+    deviceLabel: IKEA Remote Control
+    manufacturer: IKEA of Sweden
+    model: TRADFRI remote control
+    deviceProfileName: five-buttons-battery
+  - id: "KE/TRADFRIopenclose"
+    deviceLabel: IKEA Remote Control
+    manufacturer: KE
+    model: TRADFRI open/close remote
+    deviceProfileName: two-buttons-battery
+  - id: "CentraLite/3450-L"
+    deviceLabel: Iris Remote Control
+    manufacturer: CentraLite
+    model: 3450-L
+    deviceProfileName: four-buttons-battery
+  - id: "CentraLite/3450-L2"
+    deviceLabel: Iris Remote Control
+    manufacturer: CentraLite
+    model: 3450-L2
+    deviceProfileName: four-buttons-battery
+  - id: "HEIMAN/SceneSwitch-EM-3.0"
+    deviceLabel: HEIMAN Remote Control
+    manufacturer: HEIMAN
+    model: SceneSwitch-EM-3.0
+    deviceProfileName: four-buttons-battery
+  - id: "AduroSmart Eria/Adurolight_NCC"
+    deviceLabel: Eria Remote Control
+    manufacturer: AduroSmart Eria
+    model: Adurolight_NCC
+    deviceProfileName: four-buttons
+  - id: "AduroSmart Eria/ADUROLIGHT_CSC"
+    deviceLabel: Eria Remote Control
+    manufacturer: AduroSmart Eria
+    model: ADUROLIGHT_CSC
+    deviceProfileName: four-buttons
+  - id: "ADUROLIGHT/Adurolight_NCC"
+    deviceLabel: Eria Remote Control
+    manufacturer: ADUROLIGHT
+    model: Adurolight_NCC
+    deviceProfileName: four-buttons
+  - id: "ADUROLIGHT/ADUROLIGHT_CSC"
+    deviceLabel: Eria Remote Control
+    manufacturer: ADUROLIGHT
+    model: ADUROLIGHT_CSC
+    deviceProfileName: four-buttons
+  - id: "ShinaSystem/MSM-300Z"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: MSM-300Z
+    deviceProfileName: four-buttons-battery
+  - id: "ShinaSystem/BSM-300Z"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: BSM-300Z
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZB1"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB1
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZB2"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB2
+    deviceProfileName: two-buttons-battery
+  - id: "ShinaSystem/SBM300ZB3"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB3
+    deviceProfileName: three-buttons-battery

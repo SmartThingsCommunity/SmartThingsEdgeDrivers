@@ -1,4 +1,4 @@
-name: rgbw-bulb
+name: rgbw-bulb-2580K-7050K
 components:
 - id: main
   capabilities:
@@ -16,4 +16,4 @@ components:
   - name: Light
 metadata:
   mnmn: SmartThingsEdge
-  vid: generic-rgbw-color-bulb
+  vid: generic-rgbw-color-bulb-2580K-7050K

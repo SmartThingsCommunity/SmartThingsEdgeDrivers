@@ -1,4 +1,4 @@
-name: rgbw-bulb
+name: metering-dimmer-temperature
 components:
 - id: main
   capabilities:
@@ -6,14 +6,13 @@ components:
     version: 1
   - id: switchLevel
     version: 1
-  - id: colorTemperature
+  - id: powerMeter
     version: 1
-  - id: colorControl
+  - id: energyMeter
+    version: 1
+  - id: temperatureMeasurement
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: Light
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-rgbw-color-bulb
+  - name: Switch
