@@ -15,13 +15,13 @@ zwaveManufacturer:
     deviceLabel: Aeotec LED Bulb 6
     manufacturerId: 0x0371
     productType: 0x0103
-    productId: 0x0002
+    productId: 0x0001
     deviceProfileName: rgbw-bulb
   - id: "AEOTEC_LED_BULB6_EU"
     deviceLabel: Aeotec LED Bulb 6
     manufacturerId: 0x0371
     productType: 0x0003
-    productId: 0x0002
+    productId: 0x0001
     deviceProfileName: rgbw-bulb
   - id: "AEOTEC_LED_STRIP_US"
     deviceLabel: Aeotec LED Strip
