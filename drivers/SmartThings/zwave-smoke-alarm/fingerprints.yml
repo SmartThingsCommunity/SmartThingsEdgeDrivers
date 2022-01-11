@@ -7,7 +7,7 @@ zwaveManufacturer:
     deviceProfileName: smoke-co-battery
   - id: 026F/0001/0002
     deviceLabel: FireAngel Smoke Detector
-    manufacturerId: 0x026F 
+    manufacturerId: 0x026F
     productType: 0x0001
     productId: 0x0002
     deviceProfileName: temperaturealarm-battery
@@ -16,11 +16,11 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x1201
     deviceProfileName: fibaro-co-sensor-zw5
-  # - id: 010F/0C02
-  #   deviceLabel: Fibaro Smoke Detector
-  #   manufacturerId: 0x010F
-  #   productType: 0x0C02
-  #   deviceProfileName: smoke-battery-temperature-tamperalert-temperaturealarm
+  - id: 010F/0C02
+    deviceLabel: Fibaro Smoke Detector
+    manufacturerId: 0x010F
+    productType: 0x0C02
+    deviceProfileName: smoke-battery-temperature-tamperalert-temperaturealarm
   # - id: 0138/0001/0001
   #   deviceLabel: First Alert Smoke Detector
   #   manufacturerId: 0x0138
