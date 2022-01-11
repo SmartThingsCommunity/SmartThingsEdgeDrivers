@@ -61,12 +61,37 @@ local function central_scene_notification_handler(self, device, cmd)
   end
 end
 
+local function component_to_endpoint(device, component_id)
+  if component_id == "main" then
+    return {1}
+  else
+    return {2}
+  end
+end
+
+local function endpoint_to_component(device, ep)
+  local switch_comp = string.format("switch%d", ep - 1)
+  if device.profile.components[switch_comp] ~= nil then
+    return switch_comp
+  else
+    return "main"
+  end
+end
+
+local device_init = function(self, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+end
+
 local fibaro_double_switch = {
   NAME = "fibaro double switch",
   zwave_handlers = {
     [cc.CENTRAL_SCENE] = {
       [CentralScene.NOTIFICATION] = central_scene_notification_handler
     }
+  },
+  lifecycle_handlers = {
+    init = device_init
   },
   can_handle = can_handle_fibaro_double_switch,
 }

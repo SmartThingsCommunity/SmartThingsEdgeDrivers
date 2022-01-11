@@ -827,8 +827,8 @@ zwaveManufacturer:
     productType: 0x8000
     productId: 0x0002
     deviceProfileName: switch-binary
-  - id: 0086/004B # Aeotec/Aeon Smart Switch Gen5 
-    deviceLabel: Aeotec Outlet 
+  - id: 0086/004B # Aeotec/Aeon Smart Switch Gen5
+    deviceLabel: Aeotec Outlet
     manufacturerId: 0x0086
     productId: 0x004B
     deviceProfileName: metering-switch

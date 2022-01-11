@@ -30,7 +30,7 @@ local sensor_endpoints = {
       {value = zw.SWITCH_BINARY},
       {value = zw.SWITCH_MULTILEVEL},
       {value = zw.METER},
-      {value = zw.CENTRAL_SCENE}      
+      {value = zw.CENTRAL_SCENE}
     }
   },
   {
@@ -38,7 +38,7 @@ local sensor_endpoints = {
       {value = zw.BASIC},
       {value = zw.SWITCH_BINARY},
       {value = zw.SWITCH_MULTILEVEL},
-      {value = zw.METER}  
+      {value = zw.METER}
     }
   },
   {
@@ -131,10 +131,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 0,
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
               dst_channels={0}
             }
           )
@@ -151,9 +151,14 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        Meter:Get({scale = Meter.scale.electric_meter.WATTS})
+        Meter:Get({scale = Meter.scale.electric_meter.WATTS},
+        {
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
+        })
       )
-    }  
+    }
   }
 )
 
@@ -174,11 +179,11 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 1,
-              dst_channels={0}
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={2}
             }
           )
         )
@@ -196,12 +201,12 @@ test.register_message_test(
         mock_device,
         Meter:Get({scale = Meter.scale.electric_meter.WATTS},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
-    }  
+    }
   }
 )
 
@@ -222,10 +227,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 0, 
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
               dst_channels={0}
             }
           )
@@ -242,9 +247,14 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        Meter:Get({scale = Meter.scale.electric_meter.WATTS})
+        Meter:Get({scale = Meter.scale.electric_meter.WATTS},
+        {
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
+        })
       )
-    }    
+    }
   }
 )
 
@@ -265,11 +275,11 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 1, 
-              dst_channels={0}
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={2}
             }
           )
         )
@@ -287,12 +297,12 @@ test.register_message_test(
         mock_device,
         Meter:Get({scale = Meter.scale.electric_meter.WATTS},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
-    }    
+    }
   }
 )
 
@@ -312,9 +322,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -325,9 +335,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -351,9 +361,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -364,9 +374,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -389,9 +399,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -402,9 +412,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -428,9 +438,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -441,9 +451,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -747,7 +757,7 @@ test.register_coroutine_test(
               Configuration:Set({parameter_number=20, size=1, configuration_value=0})
           )
       )
-      
+
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_device,
