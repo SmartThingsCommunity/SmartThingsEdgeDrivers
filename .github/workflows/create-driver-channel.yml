@@ -16,7 +16,7 @@ jobs:
       - name: get changed drivers
         id: set-outputs
         run: |
-          echo "::set-output name=changed-drivers::$(git diff --dirstat=files,0 --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oE 'drivers/[^/]+/[^/]+/' | jq -Rrsc 'split("\n")[:-1]')"
+          echo "::set-output name=changed-drivers::$(git diff --dirstat=files,0 --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oE 'drivers/[^/]+/[^/]+/' | sort -u | jq -Rrsc 'split("\n")[:-1]')"
       - run: echo ${{ steps.set-outputs.outputs.changed-drivers }}
 
   get-channel:
