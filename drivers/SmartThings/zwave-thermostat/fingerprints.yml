@@ -81,6 +81,18 @@ zwaveManufacturer:
     manufacturerId: 0x0002
     productType: 0x0005
     deviceProfileName: thermostat-heating-battery
+    - id: "Heatit/ztrm2"
+    deviceLabel: Heatit Z-TRM2 Thermostat
+    manufacturerId: 0x019B
+    productType: 0x0003
+    productId: 0x0202
+    deviceProfileName: thermostat-no-humidity
+    - id: "Heatit/ztrm3"
+    deviceLabel: Heatit Z-TRM3 Thermostat
+    manufacturerId: 0x019B
+    productType: 0x0003
+    productId: 0x0203
+    deviceProfileName: thermostat-no-humidity
 zwaveGeneric:
   - id: "GenericBatteryThermostat"
     deviceLabel: Z-Wave Battery Thermostat
