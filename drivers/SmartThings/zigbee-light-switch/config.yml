@@ -1,4 +1,0 @@
-name: 'Zigbee Light/Switch'
-packageKey: 'zigbee-light-switch'
-permissions:
-  zigbee: {}
