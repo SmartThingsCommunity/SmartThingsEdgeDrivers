@@ -30,7 +30,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "IKEA of Sweden",
         model = "TRADFRI bulb E26 WS clear 950lm",
-        server_clusters = { 0x0006, 0x0008 }
+        server_clusters = { 0x0006, 0x0008, 0x0300 }
       }
     }
   }
@@ -63,8 +63,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device)})
     test.wait_for_events()
-    test.mock_time.advance_time(1)
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
   end
 )
 
@@ -72,12 +74,14 @@ test.register_coroutine_test(
   "Switch command off should be handled",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.Off(mock_device)})
     test.wait_for_events()
-    test.mock_time.advance_time(1)
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
   end
 )
 
@@ -89,9 +93,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = {50} } })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.commands.MoveToLevelWithOnOff(mock_device, math.floor(50 / 100.0 * 254), 0xFFFF)})
     test.wait_for_events()
-    test.mock_time.advance_time(1)
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
   end
 )
 
@@ -104,8 +109,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device)})
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.commands.MoveToColorTemperature(mock_device, 5000, 0x0000)})
     test.wait_for_events()
-    test.mock_time.advance_time(1)
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
   end
 )

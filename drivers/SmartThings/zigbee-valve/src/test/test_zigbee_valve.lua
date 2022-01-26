@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,11 +20,19 @@ local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { profile = t_utils.get_profile_definition("generic-valve.yml") }
+  { profile = t_utils.get_profile_definition("generic-valve.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "Sinope Technologies",
+        model = "VA4200WZ",
+        server_clusters = {0x0000, 0x0001, 0x0006}
+      }
+    }
+  }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -192,29 +200,42 @@ test.register_coroutine_test(
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
-                                       })
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+      })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         OnOff.attributes.OnOff:read(mock_device)
-                                       })
+        mock_device.id,
+        OnOff.attributes.OnOff:read(mock_device)
+      })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
-                                       })
+        mock_device.id,
+        Basic.attributes.PowerSource:read(mock_device)
+      })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
-                                       })
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+      })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID)
-                                       })
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
+      })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0)
-                                       })
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 0)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Basic.ID)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Basic.attributes.PowerSource:configure_reporting(mock_device, 5, 600)
+      })
+
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
@@ -223,16 +244,19 @@ test.register_message_test(
     "Refresh should read all necessary attributes",
     {
       {
-        channel = "device_lifecycle",
-        direction = "receive",
-        message = {mock_device.id, "added"}
-      },
-      {
         channel = "capability",
         direction = "receive",
         message = {
           mock_device.id,
           { capability = "refresh", component = "main", command = "refresh", args = {} }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Basic.attributes.PowerSource:read(mock_device)
         }
       },
       {
@@ -250,7 +274,45 @@ test.register_message_test(
           mock_device.id,
           PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
         }
+      }
+    },
+    {
+      inner_block_ordering = "relaxed"
+    }
+)
+
+test.register_message_test(
+    "Device added event should refresh device states",
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_device.id, "added" },
       },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Basic.attributes.PowerSource:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          OnOff.attributes.OnOff:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+        }
+      }
     },
     {
       inner_block_ordering = "relaxed"

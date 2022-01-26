@@ -1,0 +1,70 @@
+name: aeotec-multisensor-6
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: ultravioletIndex
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  - id: powerSource
+    version: 1
+  categories:
+  - name: MultiFunctionalSensor
+preferences:
+  - name: "motionDelayTime"
+    title: "Motion Sensor Delay Time"
+    required: false
+    preferenceType: enumeration
+    definition: 
+      options:
+        20: "20 seconds"
+        30: "30 seconds"
+        40: "40 seconds"
+        60: "1 minute"
+        120: "2 minutes"
+        180: "3 minutes"
+        240: "4 minutes"
+      default: 20
+  - name: "motionSensitivity"
+    title: "Motion Sensor Sensitivity"
+    required: false
+    preferenceType: enumeration
+    definition: 
+      options:
+        5: "maximum"
+        3: "normal"
+        1: "minimum"
+        0: "disabled"
+      default: 5
+  - name: "reportInterval"
+    title: "Report Interval"
+    description: "How often the device should report"
+    required: false
+    preferenceType: enumeration
+    definition: 
+      options:
+        60: "1 minute"
+        120: "2 minutes"
+        180: "3 minutes"
+        240: "4 minutes"
+        480: "8 minutes"
+        900: "15 minutes"
+        1800: "30 minutes"
+        3600: "1 hour"
+        21600: "6 hours"
+        43200: "12 hours"
+        64800: "18 hours"
+        86400: "24 hours"
+      default: 480

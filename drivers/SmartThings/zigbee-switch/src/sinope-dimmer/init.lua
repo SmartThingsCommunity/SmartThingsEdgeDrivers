@@ -51,18 +51,25 @@ local function info_changed(driver, device, event, args)
       timeValue = timingTable[device.preferences.minimalIntensity] and timingTable[device.preferences.minimalIntensity] or 600
     end
 
-    local sinope_cluster_min_light_intensity_cmd = cluster_base.write_manufacturer_specific_attribute(device, SINOPE_DIMMER_CLUSTER, SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE, MFG_CODE, data_types.Uint16, timeValue)
-    device:send(sinope_cluster_min_light_intensity_cmd)
+    device:send(cluster_base.write_attribute(device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE),
+                data_types.validate_or_build_type(timeValue, data_types.Uint16, "payload")))
+
   end
 
   -- handle ledIntensity preference setting
   if (args.old_st_store.preferences.ledIntensity ~= device.preferences.ledIntensity) then
     local ledIntensity = device.preferences.ledIntensity
-    local sinope_cluster_max_intensity_on_cmd = cluster_base.write_manufacturer_specific_attribute(device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, ledIntensity)
-    device:send(sinope_cluster_max_intensity_on_cmd)
 
-    local sinope_cluster_max_intensity_off_cmd = cluster_base.write_manufacturer_specific_attribute(device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, ledIntensity)
-    device:send(sinope_cluster_max_intensity_off_cmd)
+    device:send(cluster_base.write_attribute(device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(ledIntensity, data_types.Uint8, "payload")))
+    device:send(cluster_base.write_attribute(device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(ledIntensity, data_types.Uint8, "payload")))
   end
 end
 

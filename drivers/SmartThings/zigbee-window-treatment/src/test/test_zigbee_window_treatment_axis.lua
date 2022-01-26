@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ local Basic = clusters.Basic
 local Level = clusters.Level
 local PowerConfiguration = clusters.PowerConfiguration
 local WindowCovering = clusters.WindowCovering
+
+local swbuild_payload_newer = "102-5.3.5.1125"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("window-treatment-battery.yml"),
@@ -65,7 +67,7 @@ test.register_coroutine_test(
       )
       test.socket.zigbee:__queue_receive({
           mock_device.id,
-          Level.attributes.CurrentLevel:build_test_attr_report(mock_device, math.floor(100 / 100 * 254))
+          Level.attributes.CurrentLevel:build_test_attr_report(mock_device, 254)
       })
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
@@ -92,7 +94,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -130,7 +132,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -205,7 +207,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -216,9 +218,6 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
-      )
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
       )
@@ -262,7 +261,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -273,9 +272,6 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
-      )
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
       )
@@ -331,7 +327,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -342,9 +338,6 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
-      )
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
       )
@@ -386,7 +379,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send(
         {
           mock_device.id,
-          Level.server.commands.MoveToLevelWithOnOff(mock_device, 83)
+          Level.server.commands.MoveToLevelWithOnOff(mock_device, 84)
         }
       )
     end
@@ -398,7 +391,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -456,7 +449,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -488,7 +481,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()
@@ -534,7 +527,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__queue_receive(
         {
           mock_device.id,
-          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, "01030405")
+          Basic.attributes.SWBuildID:build_test_attr_report(mock_device, swbuild_payload_newer)
         }
       )
       test.wait_for_events()

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Same level event should be emitted",
+    "Same level event should not be emitted",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__queue_receive(
@@ -236,10 +236,6 @@ test.register_coroutine_test(
               attribute_id = "shadeLevel", state = { value = 33 }
             }
           }
-      )
-      test.mock_time.advance_time(2)
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
     end
@@ -373,7 +369,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 99)
     })
   end
 )
@@ -391,7 +387,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
   end
 )
@@ -427,7 +423,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 101)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
   end
 )
@@ -445,7 +441,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
   end
 )

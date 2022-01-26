@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
@@ -21,7 +23,43 @@ local ZwaveDriver = require "st.zwave.driver"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+--- @type st.zwave.CommandClass.Association
+local Association = (require "st.zwave.CommandClass.Association")({ version=2 })
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 })
+--- @type st.zwave.CommandClass.WakeUp
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local preferencesMap = require "preferences"
+local configurationsMap = require "configurations"
+
+local function initial_configuration(driver, device)
+  local configuration = configurationsMap.get_device_configuration(device)
+  if configuration ~= nil then
+    for _, value in ipairs(configuration) do
+      device:send(Configuration:Set(value))
+    end
+  end
+  local association = configurationsMap.get_device_association(device)
+  if association ~= nil then
+    for _, value in ipairs(association) do
+      local _node_ids = value.node_ids or {driver.environment_info.hub_zwave_id}
+      device:send(Association:Set({grouping_identifier = value.grouping_identifier, node_ids = _node_ids}))
+    end
+  end
+  local notification = configurationsMap.get_device_notification(device)
+  if notification ~= nil then
+    for _, value in ipairs(notification) do
+      device:send(Notification:Set(value))
+    end
+  end
+  local wake_up = configurationsMap.get_device_wake_up(device)
+  if wake_up ~= nil then
+    for _, value in ipairs(wake_up) do
+      local _node_id = value.node_id or driver.environment_info.hub_zwave_id
+      device:send(WakeUp:IntervalSet({seconds = value.seconds, node_id = _node_id}))
+    end
+  end
+end
 
 local function update_preferences(driver, device, args)
   local preferences = preferencesMap.get_device_parameters(device)
@@ -50,6 +88,7 @@ local function device_init(self, device)
 end
 
 local function do_configure(driver, device)
+  initial_configuration(driver, device)
   device:refresh()
   if not device:is_cc_supported(cc.WAKE_UP) then
     update_preferences(driver, device)
@@ -62,6 +101,9 @@ local function added_handler(self, device)
   end
   if device:supports_capability_by_id(capabilities.waterSensor.ID) then
     device:emit_event(capabilities.waterSensor.water.dry())
+  end
+  if device:supports_capability_by_id(capabilities.moldHealthConcern.ID) then
+    device:emit_event(capabilities.moldHealthConcern.moldHealthConcern.good())
   end
 end
 
@@ -77,19 +119,25 @@ local driver_template = {
     capabilities.tamperAlert,
     capabilities.temperatureAlarm,
     capabilities.temperatureMeasurement,
-    capabilities.switch
+    capabilities.switch,
+    capabilities.moldHealthConcern,
+    capabilities.dewPoint,
+    capabilities.ultravioletIndex,
+    capabilities.accelerationSensor,
+    capabilities.threeAxis
   },
   sub_drivers = {
     require("zooz-4-in-1-sensor"),
-    require("zwave-motion-temp-light-sensor"),
     require("vision-motion-detector"),
     require("fibaro-flood-sensor"),
     require("zwave-water-temp-humidity-sensor"),
-    require("everspring-ST814"),
-    require("everspring-illuminance-sensor"),
     require("glentronics-water-leak-sensor"),
     require("homeseer-multi-sensor"),
-    require("fibaro-door-window-sensor")
+    require("fibaro-door-window-sensor"),
+    require("sensative-strip"),
+    require("enerwave-motion-sensor"),
+    require("aeotec-multisensor"),
+    require("zwave-water-leak-sensor")
   },
   lifecycle_handlers = {
     added = added_handler,

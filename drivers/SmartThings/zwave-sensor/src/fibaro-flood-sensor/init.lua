@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -26,19 +28,11 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 
-local FIBARO_FLOOD_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x010F, productType = 0x0000, productId = 0x2002 }, -- Fibaro Water Leak Sensor
-  { manufacturerId = 0x010F, productType = 0x0000, productId = 0x1002 }, -- Fibaro Water Leak Sensor
-  { manufacturerId = 0x010F, productType = 0x0B00, productId = 0x1001 }  -- Fibaro Water Leak Sensor
-}
+local FIBARO_MFR_ID = 0x010F
+local FIBARO_FLOOD_PROD_TYPES = { 0x0000, 0x0B00 }
 
 local function can_handle_fibaro_flood_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_FLOOD_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
+  return device:id_match(FIBARO_MFR_ID, FIBARO_FLOOD_PROD_TYPES, nil)
 end
 
 local function basic_set_handler(self, device, cmd)

@@ -8,6 +8,8 @@ components:
     version: 1
   - id: temperatureAlarm
     version: 1
+  - id: tamperAlert
+    version: 1
   - id: refresh
     version: 1
   categories:
