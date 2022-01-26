@@ -50,7 +50,6 @@ zwaveManufacturer:
   - id: "fibaro/thermostat/1"
     deviceLabel: Fibaro Thermostat
     manufacturerId: 0x010F
-    productId: 0x1000
     productType: 0x1301
     deviceProfileName: base-radiator-thermostat
   - id: "0239/0001/0001"

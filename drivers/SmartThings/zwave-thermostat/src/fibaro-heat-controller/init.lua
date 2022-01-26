@@ -30,12 +30,21 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({v
 
 local utils = require "st.utils"
 
-local FIBARO_HEAT_FINGERPRINT = {mfr = 0x010F, prod = 0x1301, model = 0x1000}
+local FIBARO_HEAT_FINGERPRINTS = {
+    {mfr = 0x010F, prod = 0x1301, model = 0x1000}, -- Fibaro Heat Controller
+    {mfr = 0x010F, prod = 0x1301, model = 0x1001} -- Fibaro Heat Controller
+}
 
 local FORCED_REFRESH_THREAD = "forcedRefreshThread"
 
 local function can_handle_fibaro_heat_controller(opts, driver, device, ...)
-  return device:id_match(FIBARO_HEAT_FINGERPRINT.mfr, FIBARO_HEAT_FINGERPRINT.prod, FIBARO_HEAT_FINGERPRINT.model)
+  for _, fingerprint in ipairs(FIBARO_HEAT_FINGERPRINTS) do
+      if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+          return true
+      end
+  end
+
+  return false
 end
 
 local function thermostat_mode_report_handler(self, device, cmd)
