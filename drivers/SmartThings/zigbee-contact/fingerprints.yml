@@ -1,30 +1,4 @@
 zigbeeManufacturer:
-  - id: "ORVIBO/e70f96b3773a4c9283c6862dbafb"
-    # Shorten because of 36 ch limit. Need to use complete model name
-    deviceLabel: Orvibo Open/Closed Sensor
-    manufacturer: ORVIBO
-    model: e70f96b3773a4c9283c6862dbafb6a99
-    deviceProfileName: contact-battery-profile
-  - id: "eWeLink/DS01"
-    deviceLabel: eWeLink Open/Closed Sensor
-    manufacturer: eWeLink
-    model: DS01
-    deviceProfileName: contact-battery-profile
-  - id: "Aurora/WindowSensor51AU"
-    deviceLabel: Aurora Open/Closed Sensor
-    manufacturer: Aurora
-    model: WindowSensor51AU
-    deviceProfileName: contact-battery-profile
-  - id: "Aurora/DoorSensor50AU"
-    deviceLabel: Aurora Open/Closed Sensor
-    manufacturer: Aurora
-    model: DoorSensor50AU
-    deviceProfileName: contact-battery-profile
-  - id: "HEIMAN/DoorSensor-N"
-    deviceLabel: HEIMAN Open/Closed Sensor
-    manufacturer: HEIMAN
-    model: DoorSensor-N
-    deviceProfileName: contact-battery-profile
   - id: "NYCE/3010"
     deviceLabel: NYCE Open/Closed Sensor
     manufacturer: NYCE
@@ -50,6 +24,126 @@ zigbeeManufacturer:
     manufacturer: Visonic
     model: MCT-340 SMA
     deviceProfileName: contact-profile
+  - id: "eWeLink/DS01"
+    deviceLabel: eWeLink Open/Closed Sensor
+    manufacturer: eWeLink
+    model: DS01
+    deviceProfileName: contact-battery-profile
+  - id: "ORVIBO/e70f..."
+    deviceLabel: Orvibo Open/Closed Sensor
+    manufacturer: ORVIBO
+    model: e70f96b3773a4c9283c6862dbafb6a99
+    deviceProfileName: contact-battery-profile
+  - id: "Aurora/WindowSensor51AU"
+    deviceLabel: Aurora Open/Closed Sensor
+    manufacturer: Aurora
+    model: WindowSensor51AU
+    deviceProfileName: contact-battery-profile
+  - id: "Aurora/DoorSensor50AU"
+    deviceLabel: Aurora Open/Closed Sensor
+    manufacturer: Aurora
+    model: DoorSensor50AU
+    deviceProfileName: contact-battery-profile
+  - id: "HEIMAN/DoorSensor-N"
+    deviceLabel: HEIMAN Open/Closed Sensor
+    manufacturer: HEIMAN
+    model: DoorSensor-N
+    deviceProfileName: contact-battery-profile
+  - id: "Third Reality/3RDS17BZ"
+    deviceLabel: ThirdReality Door Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RDS17BZ
+    deviceProfileName: contact-battery-profile
+  - id: "CentraLite/3300-S"
+    deviceLabel: Open/Closed Sensor
+    manufacturer: CentraLite
+    model: 3300-S
+    deviceProfileName: contact-battery-temperature
+  - id: "CentraLite/3300"
+    deviceLabel: Open/Closed Sensor
+    manufacturer: CentraLite
+    model: 3300
+    deviceProfileName: contact-battery-temperature
+  - id: "CentraLite/3320-L"
+    deviceLabel: Iris Open/Closed Sensor
+    manufacturer: CentraLite
+    model: 3320-L
+    deviceProfileName: contact-battery-temperature
+  - id: "CentraLite/3323-G"
+    deviceLabel: Centralite Open/Closed Sensor
+    manufacturer: CentraLite
+    model: 3323-G
+    deviceProfileName: contact-battery-temperature
+  - id: "CentraLite/Contact Sensor-A"
+    deviceLabel: SYLVANIA Open/Closed Sensor
+    manufacturer: CentraLite
+    model: Contact Sensor-A
+    deviceProfileName: contact-battery-temperature
+  - id: "Visonic/MCT-340 E"
+    deviceLabel: Visonic Open/Closed Sensor
+    manufacturer: Visonic
+    model: MCT-340 E
+    deviceProfileName: contact-battery-temperature
+  - id: "Ecolink/4655BC0-R"
+    deviceLabel: Ecolink Open/Closed Sensor
+    manufacturer: Ecolink
+    model: 4655BC0-R
+    deviceProfileName: contact-battery-temperature
+  - id: "Ecolink/DWZB1-ECO"
+    deviceLabel: Ecolink Open/Closed Sensor
+    manufacturer: Ecolink
+    model: DWZB1-ECO
+    deviceProfileName: contact-battery-temperature
+  - id: "iMagic by GreatStar/1116-S"
+    deviceLabel: Iris Open/Closed Sensor
+    manufacturer: iMagic by GreatStar
+    model: 1116-S
+    deviceProfileName: contact-battery-temperature
+  - id: "Bosch/RFMS-ZBMS"
+    deviceLabel: Bosch Open/Closed Sensor
+    manufacturer: Bosch
+    model: RFMS-ZBMS
+    deviceProfileName: contact-battery-temperature
+  - id: "Megaman/MS601/z1"
+    deviceLabel: INGENIUM Open/Closed Sensor
+    manufacturer: Megaman
+    model: MS601/z1
+    deviceProfileName: contact-battery-temperature
+  - id: "AduroSmart Eria/CSW_ADUROLIGHT"
+    deviceLabel: ERIA Open/Closed Sensor
+    manufacturer: AduroSmart Eria
+    model: CSW_ADUROLIGHT
+    deviceProfileName: contact-battery-temperature
+  - id: "ADUROLIGHT/CSW_ADUROLIGHT"
+    deviceLabel: ERIA Open/Closed Sensor
+    manufacturer: ADUROLIGHT
+    model: CSW_ADUROLIGHT
+    deviceProfileName: contact-battery-temperature
+  - id: "Sercomm Corp./SZ-DWS04"
+    deviceLabel: Sercomm Open/Closed Sensor
+    manufacturer: Sercomm Corp.
+    model: SZ-DWS04
+    deviceProfileName: contact-battery-temperature
+  - id: "DAWON_DNS/SS-B100-ZB"
+    deviceLabel: Dawon Signal Interlock
+    manufacturer: DAWON_DNS
+    model: SS-B100-ZB
+    deviceProfileName: contact-battery-temperature
+  - id: "frient A/S/WISZB-120"
+    deviceLabel: frient Open/Closed Sensor
+    manufacturer: frient A/S
+    model: WISZB-120
+    deviceProfileName: contact-battery-temperature
+  - id: "frient A/S/WISZB-121"
+    deviceLabel: frient Open/Closed Sensor
+    manufacturer: frient A/S
+    model: WISZB-121
+    deviceProfileName: contact-battery-temperature
+  - id: "Compacta/ZBWDS"
+    deviceLabel: Smartenit Open/Closed Sensor
+    manufacturer: Compacta
+    model: ZBWDS
+    deviceProfileName: contact-battery-temperature
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"

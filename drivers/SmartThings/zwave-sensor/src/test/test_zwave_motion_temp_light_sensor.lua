@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
@@ -23,6 +25,7 @@ local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
 
@@ -202,6 +205,18 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_device,
           Configuration:Set({parameter_number=2, size=2, configuration_value=30})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_device,
+          Battery:Get({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_device,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_device,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE, scale = SensorMultilevel.scale.luminance.LUX})
       ))
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,19 +17,24 @@ local defaults = require "st.zigbee.defaults"
 
 --ZCL
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local Basic = zcl_clusters.Basic
-
+local Basic               = zcl_clusters.Basic
 --Capability
 local capabilities = require "st.capabilities"
 local battery = capabilities.battery
 local valve = capabilities.valve
 local powerSource = capabilities.powerSource
+local refresh = capabilities.refresh
+
+local function device_added(self, device)
+  device:refresh()
+end
 
 local zigbee_valve_driver_template = {
   supported_capabilities = {
     valve,
     battery,
-    powerSource
+    powerSource,
+    refresh
   },
   cluster_configurations = {
     [powerSource.ID] = {
@@ -39,9 +44,12 @@ local zigbee_valve_driver_template = {
         minimum_interval = 5,
         maximum_interval = 600,
         data_type = Basic.attributes.PowerSource.base_type,
-        configurable = false
+        configurable = true
       }
     }
+  },
+  lifecycle_handlers = {
+    added = device_added
   }
 }
 

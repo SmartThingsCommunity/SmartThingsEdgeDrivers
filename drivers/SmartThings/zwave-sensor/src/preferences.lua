@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local devices = {
   EVERSPRING_PIR = {
     MATCHING_MATRIX = {
@@ -22,6 +24,16 @@ local devices = {
     PARAMETERS = {
       temperatureAndHumidityReport = {parameter_number = 1, size = 2},
       retriggerIntervalSetting = {parameter_number = 2, size = 2}
+    }
+  },
+  EVERSPRING_SP817 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0060,
+      product_types = 0x0001,
+      product_ids = 0x0006
+    },
+    PARAMETERS = {
+      retriggerIntervalSetting = {parameter_number = 4, size = 2}
     }
   },
   FIBARO_FLOOD_SENSOR_ZW5 = {
@@ -87,6 +99,53 @@ local devices = {
       temperatureAlarmReports = {parameter_number = 54, size = 1},
       highTempThreshold = {parameter_number = 55, size = 2},
       lowTempThreshold = {parameter_number = 56, size = 2}
+    }
+  },
+  AEOTEC_MULTISENSOR_6 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0086,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = 0x0064
+    },
+    PARAMETERS = {
+      motionDelayTime = {parameter_number = 3, size = 2},
+      motionSensitivity = {parameter_number = 4, size = 1},
+      reportInterval = {parameter_number = 111, size = 4}
+    }
+  },
+  AEOTEC_MULTISENSOR_7 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = 0x0018
+    },
+    PARAMETERS = {
+      motionDelayTime = {parameter_number = 3, size = 2},
+      motionSensitivity = {parameter_number = 4, size = 1},
+      reportInterval = {parameter_number = 111, size = 2}
+    }
+  },
+  FIBARO_MOTION_SENSOR = {
+    MATCHING_MATRIX = {
+      mfrs = 0x010F,
+      product_types = 0x0801,
+      product_ids = {0x1001, 0x1002, 0x2001, 0x2002}
+    },
+    PARAMETERS = {
+      motionSensitivity = {parameter_number = 1, size = 2},
+      motionBlindTime = {parameter_number = 2, size = 1},
+      motionCancelationDelay = {parameter_number = 6, size = 2},
+      motionOperatingMode = {parameter_number = 8, size = 1},
+      motionNightDay = {parameter_number = 9, size = 2},
+      tamperCancelationDelay = {parameter_number = 22, size = 2},
+      tamperOperatingMode = {parameter_number = 24, size = 1},
+      illuminanceThreshold = {parameter_number = 40, size = 2},
+      illuminanceInterval = {parameter_number = 42, size = 2},
+      temperatureThreshold = {parameter_number = 60, size = 2},
+      ledMode = {parameter_number = 80, size = 1},
+      ledBrightness = {parameter_number = 81, size = 1},
+      ledLowBrightness = {parameter_number = 82, size = 2},
+      ledHighBrightness = {parameter_number = 83, size = 2}
     }
   }
 }

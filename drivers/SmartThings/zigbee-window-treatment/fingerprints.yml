@@ -58,8 +58,8 @@ zigbeeManufacturer:
     manufacturer: Rooms Beautiful
     model: C001
     deviceProfileName: window-treatment-no-preset
-  # - id: "AXIS/Gear"
-  #   deviceLabel: AXIS Window Treatment
-  #   manufacturer: AXIS
-  #   model: Gear
-  #   deviceProfileName: window-treatment-battery
+  - id: "AXIS/Gear"
+    deviceLabel: AXIS Window Treatment
+    manufacturer: AXIS
+    model: Gear
+    deviceProfileName: window-treatment-battery

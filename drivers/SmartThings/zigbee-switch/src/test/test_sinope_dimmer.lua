@@ -28,7 +28,6 @@ local SINOPE_DIMMER_CLUSTER = 0xFF01
 local SINOPE_MAX_INTENSITY_ON_ATTRIBUTE = 0x0052
 local SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE = 0x0053
 local SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE = 0x0055
-local MFG_CODE = 0x0000
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
@@ -71,9 +70,18 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE, MFG_CODE, data_types.Uint16, 2250)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE),
+                data_types.validate_or_build_type(2250, data_types.Uint16, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -98,8 +106,14 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -123,9 +137,18 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE, MFG_CODE, data_types.Uint16, 600)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE),
+                data_types.validate_or_build_type(600, data_types.Uint16, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -150,8 +173,14 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -174,7 +203,10 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE, MFG_CODE, data_types.Uint16, 600)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE),
+                data_types.validate_or_build_type(600, data_types.Uint16, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -221,9 +253,18 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE, MFG_CODE, data_types.Uint16, 100)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MIN_LIGHT_INTENSITY_ATTRIBUTE),
+                data_types.validate_or_build_type(100, data_types.Uint16, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end
@@ -248,8 +289,14 @@ test.register_coroutine_test(
 
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_ON_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
-      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_DIMMER_CLUSTER, SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE, MFG_CODE, data_types.Uint8, updates.preferences.ledIntensity)})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_ON_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
+      test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
+                data_types.ClusterId(SINOPE_DIMMER_CLUSTER),
+                data_types.AttributeId(SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE),
+                data_types.validate_or_build_type(updates.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
    end

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,6 +16,17 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local constants = require "st.zigbee.constants"
 local defaults = require "st.zigbee.defaults"
+local configurationMap = require "configurations"
+
+local function device_init(driver, device)
+  local configuration = configurationMap.get_device_configuration(device)
+  if configuration ~= nil then
+    for _, attribute in ipairs(configuration) do
+      device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
+    end
+  end
+end
 
 local zigbee_contact_driver_template = {
   supported_capabilities = {
@@ -23,7 +34,14 @@ local zigbee_contact_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.battery,
   },
-  sub_drivers = { require("battery-overrides") },
+  lifecycle_handlers = {
+    init = device_init
+  },
+  sub_drivers = {
+    require("battery-overrides"),
+    require("aurora-contact-sensor"),
+    require("contact-temperature-sensor")
+  },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }
 

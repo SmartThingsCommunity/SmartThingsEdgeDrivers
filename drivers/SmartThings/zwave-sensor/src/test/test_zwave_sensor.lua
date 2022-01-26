@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -35,6 +37,8 @@ local zwave_sensor_profile = {
         [capabilities.battery.ID] = { id = capabilities.battery.ID },
         [capabilities.tamperAlert.ID] = { id = capabilities.tamperAlert.ID },
         [capabilities.illuminanceMeasurement.ID] = { id = capabilities.illuminanceMeasurement.ID },
+        [capabilities.moldHealthConcern.ID] = { id = capabilities.moldHealthConcern.ID },
+        [capabilities.dewPoint.ID] = { id = capabilities.dewPoint.ID },
         [capabilities.refresh.ID] = { id = capabilities.refresh.ID },
       },
       id = "main"
@@ -160,6 +164,11 @@ test.register_message_test(
     },
     {
       channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
+    },
+    {
+      channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,
@@ -213,7 +222,15 @@ test.register_message_test(
         mock_device,
         SensorBinary:Get({sensor_type = SensorBinary.sensor_type.WATER})
       )
-    }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.DEW_POINT})
+      )
+    },
   },
   {
     inner_block_ordering = "relaxed"
@@ -582,6 +599,64 @@ test.register_message_test(
         message = mock_contact_device:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
     }
+)
+
+test.register_message_test(
+    "Notification report (mold detection) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.WEATHER_ALARM,
+          event = Notification.event.weather_alarm.MOISTURE_ALARM
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.unhealthy())
+      }
+    }
+)
+
+test.register_message_test(
+    "Notification report (no mold detection) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.WEATHER_ALARM,
+          event = Notification.event.weather_alarm.STATE_IDLE
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
+      }
+    }
+)
+
+test.register_message_test(
+  "Sensor multilevel reports dew_point type command should be handled as dew point measurement",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+        sensor_type = SensorMultilevel.sensor_type.DEW_POINT,
+        sensor_value = 8,
+        scale = 0
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.dewPoint.dewpoint({value = 8, unit = "C"}))
+    }
+  }
 )
 
 test.run_registered_tests()

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
 local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local utils = require "st.utils"
 
 local Basic = zcl_clusters.Basic
 local Level = zcl_clusters.Level
@@ -33,25 +34,24 @@ local is_zigbee_window_shade = function(opts, driver, device)
 end
 
 -- Commands
-local function window_shade_set_level(driver, device, command, level)
+local function window_shade_set_level(device, command, level)
   local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or DEFAULT_LEVEL
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
   -- Opening or Closing
   local windowShade = capabilities.windowShade.windowShade
   device:emit_event(level > current_level and windowShade.opening() or windowShade.closing())
   -- Send Zigbee command
-  local shade_level = math.floor(level/100.0 * 254)
-  device:send_to_component(command.component, Level.server.commands.MoveToLevelWithOnOff(device, shade_level))
+  device:send_to_component(command.component, Level.server.commands.MoveToLevelWithOnOff(device, utils.round(level/100.0 * 254)))
 end
 
 local function window_shade_level_cmd_handler(driver, device, command)
   local level = command.args.shadeLevel
-  window_shade_set_level(driver, device, command, level)
+  window_shade_set_level(device, command, level)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
   local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
-  window_shade_set_level(driver, device, command, level)
+  window_shade_set_level(device, command, level)
 end
 
 local function window_shade_pause_cmd(driver, device, command)
@@ -62,15 +62,15 @@ local function window_shade_pause_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
-  window_shade_set_level(driver, device, command, 100)
+  window_shade_set_level(device, command, 100)
 end
 
 local function window_shade_close_cmd(driver, device, command)
-  window_shade_set_level(driver, device, command, 0)
+  window_shade_set_level(device, command, 0)
 end
 
 -- Common
-local function handle_window_shade(driver, device, zb_rx, current_level)
+local function handle_window_shade(device, current_level)
   local windowShade = capabilities.windowShade.windowShade
   if current_level > 0 and current_level < 99 then
     device:emit_event(windowShade.partially_open())
@@ -81,16 +81,10 @@ local function handle_window_shade(driver, device, zb_rx, current_level)
   end
 end
 
-local function current_position_attr_handler(driver, device, value, zb_rx)
-  local level = 100 - value.value
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
-  handle_window_shade(driver, device, zb_rx, level)
-end
-
 local function level_attr_handler(driver, device, value, zb_rx)
-  local level = math.floor((value.value / 254.0 * 100) + 0.5)
+  local level = utils.round((value.value/254.0) * 100)
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
-  handle_window_shade(driver, device, zb_rx, level)
+  handle_window_shade(device, level)
 end
 
 local do_refresh = function(self, device)
@@ -101,8 +95,11 @@ end
 
 -- Attr Handlers
 local function basic_software_version_attr_handler(driver, device, value, zb_rx)
-  local version = tonumber(value.value, 16)
-  -- Spec limits bytes upto 16 bytes
+  -- The version string is usually in the format of A.B.C.DDDD
+  -- Such as: 102-5.3.5.1125
+  -- We want the last 4
+  local version = tonumber(string.sub(value.value, -4))
+
   device:set_field(SOFTWARE_VERSION, version, {persist = true})
 end
 
@@ -146,9 +143,6 @@ local axis_handler = {
       },
       [Level.ID] = {
         [Level.attributes.CurrentLevel.ID] = level_attr_handler
-      },
-      [WindowCovering.ID] = {
-        [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = current_position_attr_handler
       }
     }
   },

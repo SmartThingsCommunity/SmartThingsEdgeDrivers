@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,10 +12,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 local t_utils = require "integration_test.utils"
 
@@ -56,6 +59,10 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Configuration:Set({parameter_number = 6, size = 2, configuration_value = 30})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Battery:Get({})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
