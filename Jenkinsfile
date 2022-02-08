@@ -1,11 +1,11 @@
 def getEnvName(branch) {
   print(branch)
-  if (branch == "origin/main") {return "BETA"}
+  if (branch == "origin/beta") {return "BETA"}
 }
 
 pipeline {
   agent {
-    docker { 
+    docker {
       image 'smartthings-registry.jfrog.io/iot/edge/edblua-formatter:latest'
       label 'production'
       args '--entrypoint='
