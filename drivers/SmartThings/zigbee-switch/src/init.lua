@@ -95,6 +95,7 @@ local zigbee_switch_driver_template = {
   }
 }
 
+
 defaults.register_for_default_handlers(zigbee_switch_driver_template, zigbee_switch_driver_template.supported_capabilities)
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
 zigbee_switch:run()

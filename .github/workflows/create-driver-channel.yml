@@ -1,4 +1,8 @@
 name: Create Driver Channel
+
+env:
+  API_URL: 'https://api.stacceptance.com'
+
 on:
   pull_request:
     types: [opened, synchronize]
@@ -28,16 +32,16 @@ jobs:
         id: channels
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://api.smartthings.com/distchannels/'
+          url: '${{ env.api_url }}/distchannels/'
           method: GET
-          bearerToken: ${{ secrets.TOKEN }}
+          bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
       - name: Create the channel
         if: ${{ !contains(steps.channels.outputs.response, github.head_ref) }}
         id: channel
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://api.smartthings.com/distchannels/'
-          bearerToken: ${{ secrets.TOKEN }}
+          url: '${{ env.api_url }}/distchannels/'
+          bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
           data: '{
               "name": "${{ github.head_ref }}",
               "description": "Automatically generated from PR #${{ github.event.number }}",
@@ -75,7 +79,7 @@ jobs:
       - name: Upload the driver
         id: driver
         run: |
-          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @edge.zip)"
+          echo "::set-output name=response::$(curl --location --request POST '${{ env.api_url }}/drivers/package/' --header 'Authorization: Bearer ${{ secrets.ACCEPTANCE_TOKEN }}' --header 'Content-Type: application/zip' --data-binary @edge.zip)"
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
         uses: actions/github-script@v3
@@ -85,8 +89,8 @@ jobs:
       - name: Assign the driver
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://api.smartthings.com/distchannels/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}/drivers/'
-          bearerToken: ${{ secrets.TOKEN }}
+          url: '${{ env.api_url }}/distchannels/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}/drivers/'
+          bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
           data: '{
               "driverId": "${{ fromJSON(steps.driver.outputs.response).driverId }}",
               "version": "${{ fromJSON(steps.driver.outputs.response).version }}"
@@ -102,8 +106,8 @@ jobs:
         id: current
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://api.smartthings.com/invites?resource=st1:developer:${{secrets.UUID}}:channel/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}'
-          bearerToken: ${{ secrets.TOKEN }}
+          url: '${{ env.api_url }}/invites?resource=st1:developer:${{secrets.ACCEPTANCE_UUID}}:channel/${{ fromJSON(needs.get-channel.outputs.channel-json).channelId }}'
+          bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
           method: GET
       - name: Count current channel invites
         id: count
@@ -113,13 +117,13 @@ jobs:
         id: invite
         uses: fjogeleit/http-request-action@master
         with:
-          url: 'https://api.smartthings.com/invites'
-          bearerToken: ${{ secrets.TOKEN }}
+          url: '${{ env.api_url }}/invites'
+          bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
           data: '{
               "resource": {
                 "root": {
                   "service": "developer",
-                  "id": "${{ secrets.UUID }}"
+                  "id": "${{ secrets.ACCEPTANCE_UUID }}"
                 },
                 "components" : [
                   {
@@ -128,7 +132,7 @@ jobs:
                   }
                 ]
               },
-              "profileId": "${{ secrets.PROFILE_ID }}",
+              "profileId": "${{ secrets.ACCEPTANCE_PROFILE_ID }}",
               "metadata": {
                 "name": "${{ fromJSON(needs.get-channel.outputs.channel-json).name }}",
                 "description": "${{ fromJSON(needs.get-channel.outputs.channel-json).description }}",
