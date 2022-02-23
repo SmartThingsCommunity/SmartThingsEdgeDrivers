@@ -32,7 +32,7 @@ jobs:
         id: channels
         uses: fjogeleit/http-request-action@master
         with:
-          url: '${{ format("{0}/{1}/", env.api_url, "distchannels") }}'
+          url: ${{ format("{0}/{1}/", env.api_url, "distchannels") }}
           method: GET
           bearerToken: ${{ secrets.ACCEPTANCE_TOKEN }}
       - name: Create the channel
