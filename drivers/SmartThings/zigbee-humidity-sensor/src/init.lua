@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,12 +14,18 @@
 
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
-local device_management = require "st.zigbee.device_management"
 local defaults = require "st.zigbee.defaults"
-local clusters = require "st.zigbee.zcl.clusters"
-local constants = require "st.zigbee.constants"
-local RelativeHumidity = clusters.RelativeHumidity
+local configurationMap = require "configurations"
 
+local function device_init(driver, device)
+  local configuration = configurationMap.get_device_configuration(device)
+  if configuration ~= nil then
+    for _, attribute in ipairs(configuration) do
+      device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
+    end
+  end
+end
 
 local zigbee_humidity_driver = {
   supported_capabilities = {
@@ -27,7 +33,16 @@ local zigbee_humidity_driver = {
     capabilities.relativeHumidityMeasurement,
     capabilities.temperatureMeasurement,
   },
-  sub_drivers = { require("plant-link"), require("plaid-systems") },
+  lifecycle_handlers = {
+    init = device_init
+  },
+  sub_drivers = {
+    require("plant-link"),
+    require("plaid-systems"),
+    require("centralite-sensor"),
+    require("heiman-sensor"),
+    require("frient-sensor")
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_humidity_driver, zigbee_humidity_driver.supported_capabilities)

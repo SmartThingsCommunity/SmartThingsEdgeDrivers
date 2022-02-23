@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,6 +34,12 @@ local zigbee_motion_driver = {
                   require("motion_timeout"),
                   require("nyce"),
                   require("zigbee-plugin-motion-sensor"),
+                  require("compacta"),
+                  require("frient"),
+                  require("samjin"),
+                  require("battery-voltage"),
+                  require("centralite"),
+                  require("smartthings")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

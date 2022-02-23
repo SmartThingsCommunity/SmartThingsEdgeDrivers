@@ -22,6 +22,7 @@ local ColorControl = clusters.ColorControl
 local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["AduroSmart Eria"] = {
     ["ZLL-DimmableLight"] = true,
+    ["ZLL-ExtendedColor"] = true,
     ["ZLL-ColorTemperature"] = true
   },
   ["IKEA of Sweden"] = {
@@ -47,13 +48,16 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["FLOALT panel WS 30x90"] = true,
     ["FLOALT panel WS 60x60"] = true,
     ["SURTE door WS 38x64"] = true,
-    ["JORMLIEN door WS 40x80"] = true
+    ["JORMLIEN door WS 40x80"] = true,
+    ["TRADFRI bulb E27 CWS opal 600lm"] = true,
+    ["TRADFRI bulb E26 CWS opal 600lm"] = true
   },
   ["Eaton"] = {
     ["Halo_RL5601"] = true
   },
   ["Megaman"] = {
     ["ZLL-DimmableLight"] = true,
+    ["ZLL-ExtendedColor"] = true,
     ["BSZTM002"] = true,
     ["BSZTM003"] = true
   },
@@ -64,7 +68,12 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["RB 145"] = true,
     ["RS 128 T"] = true,
     ["RB 178 T"] = true,
-    ["RB 148 T"] = true
+    ["RB 148 T"] = true,
+    ["RB 185 C"] = true,
+    ["FL 130 C"] = true,
+    ["OFL 120 C"] = true,
+    ["OFL 140 C"] = true,
+    ["OSL 130 C"] = true
   },
   ["Leviton"] = {
     ["DG3HL"] = true,
@@ -74,6 +83,13 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["Classic A60 W clear"] = true,
     ["Classic A60 W clear - LIGHTIFY"] = true,
     ["CLA60 OFD OSRAM"] = true,
+    ["PAR 16 50 RGBW - LIGHTIFY"] = true,
+    ["CLA60 RGBW OSRAM"] = true,
+    ["Flex RGBW"] = true,
+    ["Gardenpole RGBW-Lightify"] = true,
+    ["LIGHTIFY Outdoor Flex RGBW"] = true,
+    ["LIGHTIFY Indoor Flex RGBW"] = true,
+    ["CLA60 OFD OSRAM"] = true,
     ["Classic B40 TW - LIGHTIFY"] = true,
     ["CLA60 TW OSRAM"] = true
   },
@@ -81,6 +97,19 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["LWB006"] = true,
     ["LWB007"] = true,
     ["LWB010"] = true,
+    ["LWB014"] = true,
+    ["LCT001"] = true,
+    ["LCT002"] = true,
+    ["LCT003"] = true,
+    ["LCT007"] = true,
+    ["LCT010"] = true,
+    ["LCT011"] = true,
+    ["LCT012"] = true,
+    ["LCT014"] = true,
+    ["LCT015"] = true,
+    ["LCT016"] = true,
+    ["LST001"] = true,
+    ["LST002"] = true,
     ["LWB014"] = true,
     ["LTW001"] = true,
     ["LTW004"] = true,
@@ -94,15 +123,12 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["sengled"] = {
     ["E14-U43"] = true
   },
+  ["GLEDOPTO"] = {
+    ["GL-C-008"] = true,
+    ["GL-B-001Z"] = true
+  },
   ["Ubec"] = {
     ["BBB65L-HY"] = true
-  }
-}
-
-local REFRESH_ATTRIBUTES = {
-  [capabilities.colorControl] = {
-    ColorControl.attributes.CurrentHue,
-    ColorControl.attributes.CurrentSaturation
   }
 }
 
@@ -110,23 +136,19 @@ local function can_handle_zll_dimmer_bulb(opts, driver, device)
   return (ZLL_DIMMER_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
 end
 
-local function do_refresh(driver, device)
-  device:refresh()
+local function do_configure(driver, device)
+  device:configure()
+end
 
-  for capability, attributes in pairs(REFRESH_ATTRIBUTES) do
-    if device:supports_capability(capability) then
-      for _,attr in ipairs(attributes) do
-        device:send(attr:read(device))
-      end
-    end
-  end
+local function device_added(driver, device)
+  device:refresh()
 end
 
 local function handle_switch_on(driver, device, cmd)
   device:send(OnOff.commands.On(device))
 
   device.thread:call_with_delay(2, function(d)
-    do_refresh(driver, device)
+    device:refresh()
   end)
 end
 
@@ -134,7 +156,7 @@ local function handle_switch_off(driver, device, cmd)
   device:send(OnOff.commands.Off(device))
 
   device.thread:call_with_delay(2, function(d)
-    do_refresh(driver, device)
+    device:refresh()
   end)
 end
 
@@ -143,7 +165,7 @@ local function handle_set_level(driver, device, cmd)
   device:send(Level.commands.MoveToLevelWithOnOff(device, level, cmd.args.rate or 0xFFFF))
 
   device.thread:call_with_delay(2, function(d)
-    do_refresh(driver, device)
+    device:refresh()
   end)
 end
 
@@ -153,14 +175,17 @@ local function handle_set_color_temperature(driver, device, cmd)
   device:send(ColorControl.commands.MoveToColorTemperature(device, temp_in_mired, 0x0000))
 
   local function query_device()
-    do_refresh(driver, device)
+    device:refresh()
   end
   device.thread:call_with_delay(2, query_device)
 end
 
-
 local zll_dimmer_bulb = {
   NAME = "ZLL Dimmer Bulb",
+  lifecycle_handlers = {
+    doConfigure = do_configure,
+    added = device_added
+  },
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
@@ -171,10 +196,10 @@ local zll_dimmer_bulb = {
     },
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
+  },
+  sub_drivers = {
+    require("zll-dimmer-bulb/ikea-xy-color-bulb")
   },
   can_handle = can_handle_zll_dimmer_bulb
 }

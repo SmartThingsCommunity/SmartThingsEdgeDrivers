@@ -29,47 +29,8 @@ local Association = (require "st.zwave.CommandClass.Association")({ version=2 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 })
 --- @type st.zwave.CommandClass.WakeUp
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
-local preferencesMap = require "preferences"
-local configurationsMap = require "configurations"
-
-local function initial_configuration(driver, device)
-  local configuration = configurationsMap.get_device_configuration(device)
-  if configuration ~= nil then
-    for _, value in ipairs(configuration) do
-      device:send(Configuration:Set(value))
-    end
-  end
-  local association = configurationsMap.get_device_association(device)
-  if association ~= nil then
-    for _, value in ipairs(association) do
-      local _node_ids = value.node_ids or {driver.environment_info.hub_zwave_id}
-      device:send(Association:Set({grouping_identifier = value.grouping_identifier, node_ids = _node_ids}))
-    end
-  end
-  local notification = configurationsMap.get_device_notification(device)
-  if notification ~= nil then
-    for _, value in ipairs(notification) do
-      device:send(Notification:Set(value))
-    end
-  end
-  local wake_up = configurationsMap.get_device_wake_up(device)
-  if wake_up ~= nil then
-    for _, value in ipairs(wake_up) do
-      local _node_id = value.node_id or driver.environment_info.hub_zwave_id
-      device:send(WakeUp:IntervalSet({seconds = value.seconds, node_id = _node_id}))
-    end
-  end
-end
-
-local function update_preferences(driver, device, args)
-  local preferences = preferencesMap.get_device_parameters(device)
-  for id, value in pairs(device.preferences) do
-    if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
-      local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
-    end
-  end
-end
+local preferences = require "preferences"
+local configurations = require "configurations"
 
 --- Handle preference changes
 ---
@@ -79,19 +40,19 @@ end
 --- @param args
 local function info_changed(self, device, event, args)
   if not device:is_cc_supported(cc.WAKE_UP) then
-    update_preferences(self, device, args)
+    preferences.update_preferences(self, device, args)
   end
 end
 
 local function device_init(self, device)
-  device:set_update_preferences_fn(update_preferences)
+  device:set_update_preferences_fn(preferences.update_preferences)
 end
 
 local function do_configure(driver, device)
-  initial_configuration(driver, device)
+  configurations.initial_configuration(driver, device)
   device:refresh()
   if not device:is_cc_supported(cc.WAKE_UP) then
-    update_preferences(driver, device)
+    preferences.update_preferences(driver, device)
   end
 end
 

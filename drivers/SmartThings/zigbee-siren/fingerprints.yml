@@ -14,3 +14,8 @@ zigbeeManufacturer :
     manufacturer : frient A/S
     model : SIRZB-110
     deviceProfileName : switch-alarm
+  - id: "Sercomm Corp./SZ-SRN12N"
+    deviceLabel: SmartThings Siren
+    manufacturer: Sercomm Corp.
+    model: SZ-SRN12N
+    deviceProfileName: basic-alarm

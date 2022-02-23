@@ -733,12 +733,6 @@ zwaveManufacturer:
     productType: 0x4F44
     productId: 0x3031
     deviceProfileName: metering-switch
-  - id: 010F/0602/1001
-    deviceLabel: Fibaro Outlet
-    manufacturerId: 0x010F
-    productType: 0x0602
-    productId: 0x1001
-    deviceProfileName: metering-switch
   - id: 010F/1801/1000
     deviceLabel: Fibaro Outlet
     manufacturerId: 0x010F
@@ -750,10 +744,17 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x004E
     deviceProfileName: metering-switch
-  - id: 0258/0003
+  - id: 0258/0003/0087
     deviceLabel: NEO Coolcam Outlet
     manufacturerId: 0x0258
     productType: 0x0003
+    productId: 0x0087
+    deviceProfileName: metering-switch
+  - id: 0258/0003/1087
+    deviceLabel: NEO Coolcam Outlet
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x1087
     deviceProfileName: metering-switch
   - id: 027A/0101/000D
     deviceLabel: Zooz Switch
@@ -847,6 +848,11 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x0008
     deviceProfileName: metering-switch
+  - id: 010F/0102
+    deviceLabel: Fibaro Dimmer Switch
+    manufacturerId: 0x010F
+    productType: 0x0102
+    deviceProfileName: fibaro-dimmer-2
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

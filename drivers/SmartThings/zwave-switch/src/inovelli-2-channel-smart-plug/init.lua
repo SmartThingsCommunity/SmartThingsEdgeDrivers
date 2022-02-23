@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchAll = (require "st.zwave.CommandClass.SwitchAll")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+--- @type st.zwave.CommandClass.Association
+local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 
 local log = require "log"
 
@@ -100,6 +102,10 @@ local function switch_set_helper(value)
   return function(driver, device, command) return set_switch_value(driver, device, value, command) end
 end
 
+local function do_configure(driver, device)
+  device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
+end
+
 local inovelli_2_channel_smart_plug = {
   NAME = "Inovelli 2 channel smart plug",
   zwave_handlers = {
@@ -116,6 +122,9 @@ local inovelli_2_channel_smart_plug = {
       [capabilities.switch.commands.on.NAME] = switch_set_helper(SwitchBinary.value.ON_ENABLE),
       [capabilities.switch.commands.off.NAME] = switch_set_helper(SwitchBinary.value.OFF_DISABLE)
     }
+  },
+  lifecycle_handlers = {
+    doConfigure = do_configure
   },
   can_handle = can_handle_inovelli_2_channel_smart_plug,
 }

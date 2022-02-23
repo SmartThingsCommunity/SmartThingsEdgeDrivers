@@ -1,3 +1,17 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 -- Mock out globals
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -90,7 +104,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -116,7 +130,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -142,7 +156,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -168,7 +182,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -194,7 +208,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -220,7 +234,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -246,7 +260,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.locked({data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -272,7 +286,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad", usedCode = 0} })
+          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
         )
       }
     }
@@ -1259,14 +1273,14 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "manufacture specific command on DoorLock cluster (\\x00\\x00) should be handled",
+  "manufacture specific command on DoorLock cluster (\x00\x00) should be handled",
   {
     {
       channel = "zigbee",
       direction = "receive",
       message = {
         mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "\x00\x00")
+        zigbee_test_utils.build_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "  ")
       }
     },
     {
@@ -1278,14 +1292,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "manufacture specific command on DoorLock cluster (\\x01\\x00) should be handled",
+  "manufacture specific command on DoorLock cluster (\x01\x00) should be handled",
   {
     {
       channel = "zigbee",
       direction = "receive",
       message = {
         mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "\x01\x00")
+        zigbee_test_utils.build_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, " ")
       }
     }
   }
@@ -1302,7 +1316,7 @@ test.register_coroutine_test(
       )
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        zigbee_test_utils.build_tx_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "\x10\x04\x31\x32\x33\x35")
+        zigbee_test_utils.build_tx_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "1235")
       })
       test.wait_for_events()
     end

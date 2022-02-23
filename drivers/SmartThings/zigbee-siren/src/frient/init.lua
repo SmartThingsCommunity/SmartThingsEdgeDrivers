@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ local data_types = require "st.zigbee.data_types"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local IASWD = zcl_clusters.IASWD
 local SirenConfiguration = IASWD.types.SirenConfiguration
-local WarningMode = IASWD.types.WarningMode
-local Strobe = IASWD.types.Strobe
 local IaswdLevel = IASWD.types.IaswdLevel
 
 --capability
@@ -47,7 +45,7 @@ local send_siren_command = function(device)
 
     device:set_field(ALARM_LAST_DURATION, warning_duration, {persist = true})
 
-    siren_configuration = SirenConfiguration(0xC1)
+    local siren_configuration = SirenConfiguration(0xC1)
 
     device:send(
         IASWD.server.commands.StartWarning(

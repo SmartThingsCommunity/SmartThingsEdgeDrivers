@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           id = 1,
           manufacturer = "IKEA of Sweden",
           model = "TRADFRI on/off switch",
-          server_clusters = {0x0019}
+          server_clusters = {0x0019,0x0001}
         }
       }
     }
@@ -158,6 +158,10 @@ test.register_coroutine_test(
     end
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
     test.wait_for_events()
     end
 )

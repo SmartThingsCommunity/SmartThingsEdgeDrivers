@@ -33,6 +33,8 @@ local zigbee_contact_driver_template = {
     capabilities.contactSensor,
     capabilities.temperatureMeasurement,
     capabilities.battery,
+    capabilities.threeAxis,
+    capabilities.accelerationSensor
   },
   lifecycle_handlers = {
     init = device_init
@@ -40,7 +42,8 @@ local zigbee_contact_driver_template = {
   sub_drivers = {
     require("battery-overrides"),
     require("aurora-contact-sensor"),
-    require("contact-temperature-sensor")
+    require("contact-temperature-sensor"),
+    require("multi-sensor")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

@@ -1,0 +1,81 @@
+zigbeeManufacturer:
+  - id: "LUX/KONOZ"
+    deviceLabel: LUX Thermostat
+    manufacturer: LUX
+    model: KONOZ
+    deviceProfileName: thermostat-battery-powerSource
+  - id: "Umbrela/Thermostat"
+    deviceLabel: Umbrela Thermostat
+    manufacturer: Umbrela
+    model: Thermostat
+    deviceProfileName: thermostat-battery-powerSource
+  - id: "Danfoss/eTRV0100"
+    deviceLabel: Danfoss Thermostat
+    manufacturer: Danfoss
+    model: eTRV0100
+    deviceProfileName: thermostat-battery-powerSource
+  - id: "Zen Within/Zen-01"
+    deviceLabel: Zen Thermostat
+    manufacturer: Zen Within
+    model: Zen-01
+    deviceProfileName: thermostat-battery
+  - id: "Fidure/A1732R3"
+    deviceLabel: Fidure Thermostat
+    manufacturer: Fidure
+    model: A1732R3
+    deviceProfileName: base-thermostat
+  - id: "Sinope Technologies/TH1123ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1123ZB
+    deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1124ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1124ZB
+    deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1300ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1300ZB
+    deviceProfileName: thermostat-sinope-th1300
+  - id: "Sinope Technologies/TH1400ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1400ZB
+    deviceProfileName: thermostat-sinope-th1400
+  - id: "Sinope Technologies/TH1500ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1500ZB
+    deviceProfileName: thermostat-sinope
+  - id: "Stelpro/STZB402plus"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: STZB402+
+    deviceProfileName: thermostat-temperature-temperaturealarm
+  - id: "Stelpro/ST218"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: ST218
+    deviceProfileName: thermostat-temperature-temperaturealarm
+  - id: "Stelpro/MaestroStat"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: MaestroStat
+    deviceProfileName: thermostat-stelpro-profile
+  - id: "Stelpro/SORB"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: SORB
+    deviceProfileName: thermostat-stelpro-profile
+  - id: "Stelpro/SonomaStyle"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: SonomaStyle
+    deviceProfileName: thermostat-stelpro-profile
+  - id: "Leviton RC"
+    deviceLabel: Leviton RC Series Thermostat
+    manufacturer: HAI
+    model: 65A01-1
+    deviceProfileName: base-thermostat-no-operating-state

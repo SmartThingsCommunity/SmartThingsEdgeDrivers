@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
+--- @type st.zwave.CommandClass.Battery
+local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
+--- @type st.zwave.CommandClass.SensorMultilevel
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version=5 })
 --- @type st.zwave.CommandClass.WakeUp
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version=1})
 
@@ -43,10 +47,16 @@ end
 
 local function device_added(self, device)
   device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = FIBARO_SMOKE_SENSOR_WAKEUP_INTERVAL}))
+  device:emit_event(capabilities.smokeDetector.smoke.clear())
+  device:emit_event(capabilities.tamperAlert.tamper.clear())
+  device:send(Battery:Get({}))
+  device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
 end
 
 local function wakeup_notification_handler(self, device, cmd)
   device:emit_event(capabilities.smokeDetector.smoke.clear())
+  device:send(Battery:Get({}))
+  device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
 end
 
 local fibaro_smoke_sensor = {

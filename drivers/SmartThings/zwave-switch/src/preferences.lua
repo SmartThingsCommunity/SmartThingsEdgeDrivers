@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -207,7 +207,6 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x010F,
       product_types = 0x0602,
-      product_ids = 0x1001
     },
     PARAMETERS = {
       alwaysActive = {parameter_number = 1, size = 1},
@@ -249,6 +248,23 @@ local devices = {
     },
     PARAMETERS = {
       minimumDimmingValue = {parameter_number = 131, size = 1}
+    }
+  },
+  FIBARO_DIMMER_2 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x010F,
+      product_types = 0x0102,
+      product_ids = {0x1000, 0x2000, 0x3000}
+    },
+    PARAMETERS = {
+      autoStepTime = {parameter_number = 6, size = 2},
+      manualStepTime = {parameter_number = 8, size = 2},
+      autoOff = {parameter_number = 10, size = 2},
+      autoCalibration = {parameter_number = 13, size = 1},
+      switchType = {parameter_number = 20, size = 1},
+      threeWaySwitch = {parameter_number = 26, size = 1},
+      loadControllMode = {parameter_number = 30, size = 1},
+      levelCorrection = {parameter_number = 38, size = 2}
     }
   }
 }

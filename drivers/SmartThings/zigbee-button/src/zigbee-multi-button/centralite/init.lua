@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local log = require "log"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+
+local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -57,28 +59,11 @@ local do_configuration = function(self, device)
 end
 
 local function attr_on_handler(driver, device, zb_rx)
-  device:set_field(PRESS_TIME_EVENT, os.time())
+  button_utils.init_button_press(device)
 end
 
 local function attr_off_handler(driver, device, zb_rx)
-  local additional_fields = {
-    state_change = true
-  }
-  local button_num = EP_BUTTON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value]
-  local press_time = device:get_field(PRESS_TIME_EVENT) or 0
-  local time_diff = (os.time() - press_time) * 1000
-  local button_name = "button" .. button_num
-  if time_diff < HELD_THRESHOLD_TIMEOUT then
-    local event = time_diff < HOLD_TIME and
-      capabilities.button.button.pushed(additional_fields) or
-      capabilities.button.button.held(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
+  button_utils.send_pushed_or_held_button_event_if_applicable(device, EP_BUTTON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value])
 end
 
 local centralite_device_handler = {
