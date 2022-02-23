@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@ local function can_handle_v2_alarm(opts, driver, device, cmd, ...)
 end
 
 local device_added = function(self, device)
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.CO}))
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT}))
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR}))
+  device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  device:emit_event(capabilities.tamperAlert.tamper.clear())
 end
 
 --- Default handler for alarm command class reports
@@ -54,6 +54,7 @@ end
 --- @param cmd st.zwave.CommandClass.Alarm.Report
 local function alarm_report_handler(self, device, cmd)
   local CARBON_MONOXIDE_TEST = 0x03
+  local CARBON_MONOXIDE_TEST_CLEAR = ""
   local zwaveAlarmType = cmd.args.z_wave_alarm_type
   local zwaveAlarmEvent = cmd.args.z_wave_alarm_event
 
@@ -63,7 +64,13 @@ local function alarm_report_handler(self, device, cmd)
     elseif zwaveAlarmEvent == Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED then
       device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     elseif zwaveAlarmEvent == CARBON_MONOXIDE_TEST then
-      device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+      local event_parameter = cmd.args.event_parameter
+
+      if event_parameter == CARBON_MONOXIDE_TEST_CLEAR then
+        device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+      else
+        device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+      end
     end
   elseif zwaveAlarmType == Alarm.z_wave_alarm_type.HEAT then
     if zwaveAlarmEvent == Notification.event.heat.STATE_IDLE then

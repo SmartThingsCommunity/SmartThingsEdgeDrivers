@@ -1,0 +1,4 @@
+name: 'Zigbee Presence Sensor'
+packageKey: 'zigbee-presence-sensor'
+permissions:
+  zigbee: {}

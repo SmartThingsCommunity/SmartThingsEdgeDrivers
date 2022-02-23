@@ -36,7 +36,7 @@ local sensor_endpoints = {
 }
 
 local mock_sensor = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("water-acceleration-battery-temperature-tamperalert.yml"),
+  profile = t_utils.get_profile_definition("water-temperature-battery-tamper.yml"),
   zwave_endpoints = sensor_endpoints,
   zwave_manufacturer_id = 0x010F,
   zwave_product_type = 0x0B00,
@@ -82,39 +82,37 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "SensorBinary Report 0xFF should be handled as acceleration active",
+  "SensorBinary Report 0xFF should be handled as water wet",
   {
     {
       channel = "zwave",
       direction = "receive",
       message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorBinary:Report({
-        sensor_type = 0x00,
         sensor_value = 0xFF
       })) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.accelerationSensor.acceleration.active())
+      message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
   }
 )
 
 test.register_message_test(
-  "SensorBinary Report 0x00 should be handled as acceleration inactive",
+  "SensorBinary Report 0x00 should be handled as water dry",
   {
     {
       channel = "zwave",
       direction = "receive",
       message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorBinary:Report({
-        sensor_type = 0x00,
         sensor_value = 0x00
       })) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive())
+      message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
   }
 )
@@ -134,43 +132,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 25, unit = 'C'}))
-    }
-  }
-)
-
-test.register_message_test(
-  "SensorMultilevel Report 0x00 should be handled as acceleration inactive",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-        sensor_type = 0x00,
-        sensor_value = 0x00
-      })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive())
-    }
-  }
-)
-test.register_message_test(
-  "SensorMultilevel Report 0xFF should be handled as acceleration active",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-        sensor_type = 0x00,
-        sensor_value = 0xFF
-      })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.accelerationSensor.acceleration.active())
     }
   }
 )

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ local log = require "log"
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 local Scenes = clusters.Scenes
+local PowerConfiguration = clusters.PowerConfiguration
 
 function build_button_handler(button_name, pressed_type)
   return function(driver, device, zb_rx)
@@ -65,6 +66,7 @@ local function added_handler(self, device)
       device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}))
     end
   end
+  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 
 local remote_control = {

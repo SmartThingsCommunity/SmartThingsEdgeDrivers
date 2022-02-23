@@ -1,3 +1,17 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local capabilities = require "st.capabilities"
@@ -31,7 +45,7 @@ function unlock_cmd_handler(driver, device, command)
           DoorLock.ID,
           SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND,
           SAMSUNG_SDS_MFR_CODE,
-          "\x10\x04\x31\x32\x33\x35"))
+          "1235"))
 end
 
 local device_added = function(self, device)

@@ -33,7 +33,9 @@ local FIBARO_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x010F, prod = 0x0702, productId = 0x1000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / Europe
   { manufacturerId = 0x010F, prod = 0x0702, productId = 0x2000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / NA
   { manufacturerId = 0x010F, prod = 0x0702, productId = 0x3000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / ANZ
-  { manufacturerId = 0x010F, prod = 0x0701, productId = 0x2001 } -- Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
+  { manufacturerId = 0x010F, prod = 0x0701, productId = 0x2001 }, -- Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
+  { manufacturerId = 0x010F, prod = 0x0701, productId = 0x1001 }, -- Fibaro Open/Closed Sensor
+  { manufacturerId = 0x010F, prod = 0x0501, productId = 0x1002 }  -- Fibaro Open/Closed Sensor
 }
 
 local function can_handle_fibaro_door_window_sensor(opts, driver, device, ...)
@@ -154,7 +156,8 @@ local fibaro_door_window_sensor = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
-  sub_drivers = { 
+  sub_drivers = {
+    require("fibaro-door-window-sensor/fibaro-door-window-sensor-1"),
     require("fibaro-door-window-sensor/fibaro-door-window-sensor-2")
   },
   can_handle = can_handle_fibaro_door_window_sensor

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ local messages = require "st.zigbee.messages"
 local mgmt_bind_resp = require "st.zigbee.zdo.mgmt_bind_response"
 local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
 local zdo_messages = require "st.zigbee.zdo"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -30,7 +31,7 @@ local IKEA_MOTION_SENSOR_FINGERPRINTS = {
 
 local MOTION_RESET_TIMER = "motionResetTimer"
 
-function on_with_timed_off_command_handler(driver, device, zb_rx)
+local function on_with_timed_off_command_handler(driver, device, zb_rx)
   local motion_reset_timer = device:get_field(MOTION_RESET_TIMER)
   local on_time_secs = zb_rx.body.zcl_body.on_time.value and zb_rx.body.zcl_body.on_time.value / 10 or 180
   device:emit_event(capabilities.motionSensor.motion.active())
@@ -65,12 +66,15 @@ end
 
 local function device_added(self, device)
   device:refresh()
+  -- Ikea Motion Sensor doesn't report current status during pairing process
+  -- so fake event is needed for default status
+  device:emit_event(capabilities.motionSensor.motion.inactive())
 end
 
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   -- Read binding table
   local addr_header = messages.AddressHeader(
     constants.HUB.ADDR,
@@ -104,6 +108,7 @@ local ikea_motion_sensor = {
     }
   },
   lifecycle_handlers = {
+    init = battery_defaults.build_linear_voltage_init(2.1, 3.0),
     added = device_added,
     doConfigure = do_configure
   },

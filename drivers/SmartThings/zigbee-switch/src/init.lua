@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
+local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 
@@ -51,9 +52,17 @@ end
 local device_init = function(self, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
+
+  local configuration = configurationMap.get_device_configuration(device)
+  if configuration ~= nil then
+    for _, attribute in ipairs(configuration) do
+      device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
+    end
+  end
 end
 
-local zigbee_light_switch_driver_template = {
+local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
@@ -76,7 +85,9 @@ local zigbee_light_switch_driver_template = {
     require("zigbee-dimming-light"),
     require("white-color-temp-bulb"),
     require("rgbw-bulb"),
-    require("zll-dimmer-bulb")
+    require("zll-dimmer-bulb"),
+    require("zigbee-switch-power"),
+    require("ge-link-bulb")
   },
   lifecycle_handlers = {
     init = device_init,
@@ -84,6 +95,6 @@ local zigbee_light_switch_driver_template = {
   }
 }
 
-defaults.register_for_default_handlers(zigbee_light_switch_driver_template, zigbee_light_switch_driver_template.supported_capabilities)
-local zigbee_light_switch = ZigbeeDriver("zigbee_light_switch", zigbee_light_switch_driver_template)
-zigbee_light_switch:run()
+defaults.register_for_default_handlers(zigbee_switch_driver_template, zigbee_switch_driver_template.supported_capabilities)
+local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
+zigbee_switch:run()

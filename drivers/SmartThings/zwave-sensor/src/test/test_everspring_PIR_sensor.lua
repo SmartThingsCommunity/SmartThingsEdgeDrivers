@@ -162,7 +162,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_sensor:generate_info_changed(
           {
               preferences = {
-                temperatureAndHumidityReport = 1000,
+                tempAndHumidityReport = 1000,
                 retriggerIntervalSetting = 200
               }
           }

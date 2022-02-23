@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -56,8 +56,13 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
   }
 )
@@ -68,15 +73,6 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
       test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send(
-          {
-            mock_device.id,
-            PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device,
-                                                                                         30,
-                                                                                         21600,
-                                                                                         1)
-          }
-      )
       test.socket.zigbee:__expect_send(
           {
             mock_device.id,
@@ -93,6 +89,13 @@ test.register_coroutine_test(
                                                OnOff.ID)
         }
       )
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device,
+                                                                                     30,
+                                                                                     21600,
+                                                                                     1)
+      })
       test.socket.zigbee:__expect_send(
         {
           mock_device.id,

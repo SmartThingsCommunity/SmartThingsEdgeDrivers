@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,24 +18,27 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
+local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version=5 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version=1 })
 
--- supported comand classes
+--- supported comand classes
 local sensor_endpoints = {
   {
     command_classes = {
       {value = zw.SENSOR_BINARY},
       {value = zw.SENSOR_ALARM},
       {value = zw.NOTIFICATION},
-      {value = zw.ALARM}
+      {value = zw.ALARM},
+      {value = zw.WAKE_UP}
     }
   }
 }
 
 local mock_device = test.mock_device.build_test_zwave_device(
   {
-    profile = t_utils.get_profile_definition("smoke-battery-temperature-tamperalert-temperaturealarm.yml"),
+    profile = t_utils.get_profile_definition("smoke-battery-temperature-tamperalert.yml"),
     zwave_endpoints = sensor_endpoints,
     zwave_manufacturer_id = 0x010F,
     zwave_product_type = 0x0C02,
@@ -68,6 +71,22 @@ test.register_coroutine_test(
               }
           }
       ))
+      test.wait_for_events()
+      test.socket.zwave:__queue_receive({mock_device.id, WakeUp:Notification({}) })
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear()))
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              Battery:Get({})
+          )
+      )
+
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+            mock_device,
+            SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
+        )
+      )
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -144,20 +163,25 @@ test.register_coroutine_test(
             mock_device,
             WakeUp:IntervalSet({node_id = 0x00, seconds = 21600})
         ))
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+        )
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+        )
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              SensorMultilevel:Get({ sensor_type=SensorMultilevel.sensor_type.TEMPERATURE })
+            )
+        )
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              Battery:Get({})
+            )
+        )
     end
 )
-
-test.register_coroutine_test(
-    "WakeUp notificaiton command should be handled",
-    function()
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.zwave:__queue_receive({mock_device.id, WakeUp:Notification({}) })
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-    )
-    end
-)
-
-
 
 test.run_registered_tests()

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ end
 local zigbee_button_driver_template = {
   supported_capabilities = {
     capabilities.button,
-    capabilities.battery
+    capabilities.battery,
+    capabilities.temperatureMeasurement
   },
   zigbee_handlers = {
     attr = {
@@ -87,7 +88,10 @@ local zigbee_button_driver_template = {
   sub_drivers = {
     require("pushButton"),
     require("frient"),
-    require("zigbee-multi-button")
+    require("zigbee-multi-button"),
+    require("dimming-remote"),
+    require("iris"),
+    require("samjin")
   },
   lifecycle_handlers = {
     added = added_handler,

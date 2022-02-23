@@ -354,3 +354,14 @@ zwaveManufacturer:
     productType: 0x7000
     productId: 0xE001
     deviceProfileName: contact-battery-tamperalert
+  - id: Aotec/aerQ # all regions
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productId: 0x0009
+    deviceProfileName: temp-humidity-dew-mold
+  - id: POPP/moldDetector # all regions
+    deviceLabel: POPP Multipurpose Sensor
+    manufacturerId: 0x0154
+    productType: 0x0004
+    productId: 0x0014
+    deviceProfileName: temp-humidity-dew-mold
