@@ -803,11 +803,17 @@ zwaveManufacturer:
     productType: 0x1F01
     productId: 0x1000
     deviceProfileName: metering-switch
-  - id: 0312/FF00/FF0E
+  - id: 0312/FF00/FF0E # Minoston Model MP21ZP
     deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF0E
+    deviceProfileName: metering-switch
+  - id: 0312/FF00/FF0F # Minoston Model MP22ZP
+    deviceLabel: Minoston Outlet
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF0F
     deviceProfileName: metering-switch
   - id: Evolve/RelaySwitch
     deviceLabel: Evolve Switch
