@@ -1,6 +1,7 @@
 def getEnvName(branch) {
   print(branch)
   if (branch == "origin/beta") {return "BETA"}
+	if (branch == "origin/production") {return "PRODUCTION"}
 }
 
 pipeline {
