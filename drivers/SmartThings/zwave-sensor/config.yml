@@ -1,4 +1,0 @@
-name: 'Z-Wave Sensor'
-packageKey: 'zwave-sensor'
-permissions:
-  zwave: {}

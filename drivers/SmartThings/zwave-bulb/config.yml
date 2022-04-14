@@ -1,4 +1,0 @@
-name: 'Z-Wave Bulb'
-packageKey: 'zwave-bulb'
-permissions:
-  zwave: {}

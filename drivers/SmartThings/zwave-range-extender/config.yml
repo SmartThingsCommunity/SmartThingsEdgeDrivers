@@ -1,4 +1,0 @@
-name: 'Z-Wave Range Extender'
-packageKey: 'zwave-range-extender'
-permissions:
-  zwave: {}

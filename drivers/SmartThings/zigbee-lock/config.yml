@@ -1,4 +1,0 @@
-name: 'Zigbee Lock'
-packageKey: 'zigbee-lock'
-permissions:
-  zigbee: {}

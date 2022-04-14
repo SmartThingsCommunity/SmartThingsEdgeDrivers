@@ -1,4 +1,0 @@
-name: 'Z-Wave Button'
-packageKey: 'zwave-button'
-permissions:
-  zwave: {}

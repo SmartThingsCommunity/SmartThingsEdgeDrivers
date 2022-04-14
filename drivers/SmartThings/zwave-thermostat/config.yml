@@ -1,4 +1,0 @@
-name: 'Z-Wave Thermostat'
-packageKey: 'zwave-thermostat'
-permissions:
-  zwave: {}

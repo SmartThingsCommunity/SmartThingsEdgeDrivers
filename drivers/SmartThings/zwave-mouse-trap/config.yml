@@ -1,4 +1,0 @@
-name: 'Z-Wave Mouse Trap'
-packageKey: 'zwave-mouse-trap'
-permissions:
-  zwave: {}

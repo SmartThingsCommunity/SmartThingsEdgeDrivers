@@ -1,4 +1,0 @@
-name: 'Zigbee Illuminance Sensor'
-packageKey: 'zigbee-illuminance-sensor'
-permissions:
-  zigbee: {}

@@ -1,4 +1,0 @@
-name: 'Zigbee Window Treatment'
-packageKey: 'zigbee-window-treatment'
-permissions:
-  zigbee: {}

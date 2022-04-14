@@ -1,4 +1,0 @@
-name: 'Z-Wave Electric Meter'
-packageKey: 'zwave-electric-meter'
-permissions:
-  zwave: {}

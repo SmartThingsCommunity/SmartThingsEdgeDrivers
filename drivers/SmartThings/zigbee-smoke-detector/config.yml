@@ -1,4 +1,0 @@
-name: 'Zigbee Smoke Detector'
-packageKey: 'zigbee-smoke-detector'
-permissions:
-  zigbee: {}

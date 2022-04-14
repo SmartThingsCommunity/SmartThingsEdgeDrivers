@@ -1,4 +1,0 @@
-name: 'Zigbee Sound Sensor'
-packageKey: 'zigbee-sound-sensor'
-permissions:
-  zigbee: {}

@@ -1,4 +1,0 @@
-name: 'Zigbee Valve'
-packageKey: 'zigbee-valve'
-permissions:
-  zigbee: {}

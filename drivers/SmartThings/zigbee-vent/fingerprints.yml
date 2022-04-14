@@ -1,7 +1,0 @@
-zigbeeManufacturer:
-  - id: "keen/sv01-610-mp-1.1"
-    deviceLabel: Keen Home Vent
-    manufacturer: Keen Home Inc
-    model: SV01-610-MP-1.1
-    deviceProfileName: vent-profile-1
-

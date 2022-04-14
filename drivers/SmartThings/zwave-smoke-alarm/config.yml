@@ -1,4 +1,0 @@
-name: 'Z-Wave Smoke Alarm'
-packageKey: 'zwave-smoke-alarm'
-permissions:
-  zwave: {}

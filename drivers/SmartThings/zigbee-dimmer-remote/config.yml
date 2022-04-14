@@ -1,4 +1,0 @@
-name: 'Zigbee Dimmer Remote'
-packageKey: 'zigbee-dimmer-remote'
-permissions:
-  zigbee: {}

@@ -1,6 +1,0 @@
-zigbeeManufacturer:
-  - id: "E240-KR080Z0-HA"
-    deviceLabel: Energy Monitor
-    manufacturer: ""
-    model: "E240-KR080Z0-HA"
-    deviceProfileName: power-meter

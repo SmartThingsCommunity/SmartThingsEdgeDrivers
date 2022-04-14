@@ -1,4 +1,0 @@
-name: 'Zigbee Carbon Monoxide Detector'
-packageKey: 'zigbee-carborn-monoxide-detector'
-permissions:
-  zigbee: {}

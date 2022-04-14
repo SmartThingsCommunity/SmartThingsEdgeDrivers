@@ -1,4 +1,0 @@
-name: 'Zigbee Siren'
-packageKey: 'zigbee-siren'
-permissions:
-  zigbee: {}
