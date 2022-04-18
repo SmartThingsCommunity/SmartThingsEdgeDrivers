@@ -8,6 +8,7 @@ TOKEN = os.environ.get('TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
 ARCHIVEHASH = "archiveHash"
+PACKAGEKEY = "packageKey"
 
 # Make sure we're running in the root of the git directory
 a = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True)
@@ -21,7 +22,7 @@ uploaded_drivers = {}
 
 # Get drivers currently on the channel
 response = requests.get(
-  ENVIRONMENT_URL+"/drivers",
+  ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers",
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN
@@ -34,8 +35,24 @@ if response.status_code != 200:
 else:
   response_json = json.loads(response.text)["items"]
   for driver in response_json:
-    if ARCHIVEHASH in driver.keys() and VERSION in driver.keys() and DRIVERID in driver.keys():
-      uploaded_drivers[driver["packageKey"]] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: driver[ARCHIVEHASH]}
+    # get detailed driver info for currently-uploaded drivers
+    driver_info_response = requests.post(
+      ENVIRONMENT_URL+"/drivers/search",
+      headers = {
+        "Accept": "application/vnd.smartthings+json;v=20200810",
+        "Authorization": "Bearer "+TOKEN
+      },
+      json = {
+        DRIVERID: driver[DRIVERID],
+        "driverVersion": driver[VERSION]
+      }
+    )
+    driver_info_response_json = json.loads(driver_info_response.text)["items"][0]
+    if PACKAGEKEY in driver_info_response_json:
+      archiveHash = driver_info_response_json[ARCHIVEHASH]
+      packageKey = driver_info_response_json[PACKAGEKEY]
+      if VERSION in driver.keys() and DRIVERID in driver.keys():
+        uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: archiveHash}
 
 # For each driver, first package the driver locally, then upload it
 # after it's been uploaded, hold on to the driver id and version
@@ -52,15 +69,14 @@ for driver in drivers:
     hash = hashlib.sha256(data).hexdigest()
     response = None
     retries = 0
-    if package_key not in uploaded_drivers.keys() or hash != uploaded_drivers[package_key]["archiveHash"]:      
+    if package_key not in uploaded_drivers or hash != uploaded_drivers[package_key][ARCHIVEHASH]:
       while response == None or (response.status_code == 500 or response.status_code == 429):
         response = requests.post(
-          UPLOAD_URL, 
+          UPLOAD_URL,
           headers={
-            "Content-Type": "application/zip", 
+            "Content-Type": "application/zip",
             "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN,
-            "X-ST-LOG-LEVEL": "TRACE"},
+            "Authorization": "Bearer "+TOKEN},
           data=data)
         if response.status_code != 200:
           print("Failed to upload driver "+driver)
@@ -76,20 +92,22 @@ for driver in drivers:
           print("Uploaded package successfully: "+driver)
           drivers_updated.append(driver)
           response_json = json.loads(response.text)
-          driver_updates.append({DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]})
-          time.sleep(5)
-    else:
+          uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION], ARCHIVEHASH: hash}
+    elif hash == uploaded_drivers[package_key][ARCHIVEHASH]:
       print("Hash matched existing driver for "+package_key)
+      print(hash)
+      print(uploaded_drivers[package_key][ARCHIVEHASH])
       # hash matched, use the currently uploaded version of the driver to "update" the channel
-      driver_updates.append({DRIVERID: uploaded_drivers[package_key][DRIVERID], VERSION: uploaded_drivers[package_key][VERSION]})      
+
+for package_key, driver_info in uploaded_drivers.items():
+  driver_updates.append(driver_info)
 
 response = requests.put(
   UPDATE_URL,
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "Content-Type": "application/json",
-    "X-ST-LOG-LEVEL": "TRACE"
+    "Content-Type": "application/json"
   },
   data=json.dumps(driver_updates)
 )
@@ -101,3 +119,5 @@ if response.status_code != 204:
 
 print("Successfully bulk-updated channel: ")
 print(drivers_updated)
+print("\nDrivers currently deplpyed: ")
+print(uploaded_drivers.keys())
