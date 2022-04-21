@@ -26,6 +26,10 @@ local driver_template = {
   supported_capabilities = {
     capabilities.valve,
   },
+  sub_drivers = {
+    -- Fortrezz and Zooz valves treat open as "off" and close as "on"
+    require("inverse_valve")
+  }
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
