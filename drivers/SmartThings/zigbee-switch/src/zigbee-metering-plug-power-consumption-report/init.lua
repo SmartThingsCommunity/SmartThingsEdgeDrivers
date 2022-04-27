@@ -39,7 +39,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.energyMeter.energy({value = converted_value, unit = "kWh"}))
 end
 
-local function build_bind_request(device, cluster, hub_zigbee_eui, src_endpoint)
+function build_bind_request(device, cluster, hub_zigbee_eui, src_endpoint)
   local addr_header = messages.AddressHeader(constants.HUB.ADDR, constants.HUB.ENDPOINT, device:get_short_address(), device.fingerprinted_endpoint_id, constants.ZDO_PROFILE_ID, bind_request.BindRequest.ID)
   local bind_req = bind_request.BindRequest(device.zigbee_eui, src_endpoint, cluster, bind_request.ADDRESS_MODE_64_BIT, hub_zigbee_eui, constants.HUB.ENDPOINT)
   local message_body = zdo_messages.ZdoMessageBody({

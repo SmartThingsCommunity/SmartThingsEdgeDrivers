@@ -1,5 +1,0 @@
-zigbeeThing :
-  - id: SmartThings/ZigbeeThing
-    deviceLabel: Zigbee Thing
-    deviceProfileName: zigbee-thing
-    isJoinable: true

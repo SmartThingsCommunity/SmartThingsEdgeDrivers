@@ -14,9 +14,6 @@ components:
     version: 1
   categories:
   - name: SmokeDetector
-metadata:
-  mnmn: SmartThingsEdge
-  vid: fibaro-co-sensor-zw5
 preferences:
 - name: "zwaveNotifications"
   title: "Zwave notifications"

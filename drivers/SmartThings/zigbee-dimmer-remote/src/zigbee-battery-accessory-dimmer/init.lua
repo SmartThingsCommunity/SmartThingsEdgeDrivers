@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ local switch_level_set_level_command_handler = function(driver, device, command)
   local level = command.args.level
 
   if level == 0 then
-    generate_switch_onoff_event(device, "off", true)
+    generate_switch_onoff_event(device, "off", true);    
     level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) or 0
   else
     generate_switch_onoff_event(device, "on", true)

@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
@@ -217,15 +219,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
-  },
-  {
-    inner_block_ordering = "relaxed"
   }
 )
 

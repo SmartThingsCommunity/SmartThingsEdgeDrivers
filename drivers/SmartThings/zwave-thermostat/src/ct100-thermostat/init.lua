@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -85,11 +85,11 @@ local function send_setpoint_to_device(device, data)
 
   device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
   device:send(ThermostatOperatingState:Get({}))
-
+  
   if data.target_heating_setpoint ~= nil then
     device:send(ThermostatSetpoint:Get({
       setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-    }))
+    }))    
   end
 
   if data.target_cooling_setpoint ~= nil then
@@ -248,7 +248,7 @@ local function thermostat_mode_report_handler(self, device, cmd)
   local current_temperature = device:get_field(TEMPERATURE)
 
   device:send(ThermostatOperatingState:Get({}))
-  if mode == ThermostatMode.mode.COOL or
+  if mode == ThermostatMode.mode.COOL or 
     ((mode == ThermostatMode.mode.COOL or mode == ThermostatMode.mode.OFF) and (current_temperature > (heating_setpoint + cooling_setpoint) / 2)) then
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))

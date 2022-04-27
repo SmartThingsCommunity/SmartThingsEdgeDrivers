@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local device_management = require "st.zigbee.device_management"
+local utils = require "st.utils"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -70,14 +71,6 @@ local level_move_with_onoff_command_handler = function(driver, device, zb_rx)
   handleStepEvent(device, zcl_clusters.Level.types.MoveStepMode.UP)
 end
 
-local do_configure = function(self, device)
-  device:refresh()
-  device:configure()
-
-  device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
-end
-
 local is_centralite_systems = function(opts, driver, device)
   for _, fingerprint in ipairs(CENTRALITE_SYSTEMS_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -99,8 +92,7 @@ local centralite_systems = {
     }
   },
   lifecycle_handlers = {
-    init = battery_defaults.build_linear_voltage_init(2.3, 3.0),
-    doConfigure = do_configure
+    init = battery_defaults.build_linear_voltage_init(2.3, 3.0)
   },
   can_handle = is_centralite_systems
 }

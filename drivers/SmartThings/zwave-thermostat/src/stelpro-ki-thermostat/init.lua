@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ local function set_heating_setpoint(driver, device, command)
     local scale = device:get_field(constants.TEMPERATURE_SCALE)
     if (scale == ThermostatSetpoint.scale.FAHRENHEIT) then
       value = utils.c_to_f(value) -- the device has reported using F, so set using F
-    end
+    end  
 
     local set = ThermostatSetpoint:Set({
       setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,

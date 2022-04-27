@@ -8,14 +8,13 @@ components:
     version: 1
   categories:
   - name: Blind
-preferences:
+preference:
   - preferenceId: reverse
     explicit: true
-  - name: "openCloseTiming"
-    title: "Open close timing"
+  - title: "Open close timing"
     description: "Set the motor's open/close time"
     required: false
-    preferenceType: integer
+    preferenceType: interger
     definition:
       minimum: 5
       maximum: 255

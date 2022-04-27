@@ -86,7 +86,7 @@ local function component_to_endpoint(device, component_id)
     return { 1, 2, 3, 4, 5 }
   else
     local ep_num = component_id:match("switch(%d)")
-    return { ep_num and tonumber(ep_num) }
+    return { ep_num and tonumber(ep_num) } 
   end
 end
 

@@ -70,10 +70,10 @@ local do_configure = function(self, device)
   device:send(Alarm.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
 
   device.thread:call_with_delay(2, function(d)
-    self:inject_capability_command(device, {
+    self:inject_capability_command(device, { 
       capability = capabilities.lockCodes.ID,
       command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-      args = {}
+      args = {} 
     })
   end)
 end

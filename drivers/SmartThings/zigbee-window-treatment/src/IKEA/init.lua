@@ -22,7 +22,7 @@ local SHADE_SET_STATUS = "shade_set_status"
 
 local function current_position_attr_handler(driver, device, value, zb_rx)
   local level = 100 - value.value
-  local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
+  local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)  
   local windowShade = capabilities.windowShade.windowShade
   if level == 0 then
     device:emit_event(windowShade.closed())

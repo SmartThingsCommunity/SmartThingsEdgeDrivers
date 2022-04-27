@@ -22,8 +22,7 @@ local YALE_FINGERPRINT_MAX_CODES = 0x1E
 local YALE_FINGERPRINT_LOCK = {
   { mfr = "ASSA ABLOY iRevo", model = "iZBModule01" },
   { mfr = "ASSA ABLOY iRevo", model = "c700000202" },
-  { mfr = "ASSA ABLOY iRevo", model = "0700000001" },
-  { mfr = "ASSA ABLOY iRevo", model = "06ffff2027" }
+  { mfr = "ASSA ABLOY iRevo", model = "0700000001" }
 }
 
 local yale_fingerprint_lock_models = function(opts, driver, device)

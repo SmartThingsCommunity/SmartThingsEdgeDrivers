@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Configuration
@@ -20,14 +22,13 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local SENSATIVE_MFR = 0x019A
-local SENSATIVE_MODEL = 0x000A
 local LEAKAGE_ALARM_PARAM = 12
 local LEAKAGE_ALARM_OFF = 0
 local SENSATIVE_COMFORT_PROFILE = "illuminance-temperature"
 local CONFIG_REPORT_RECEIVED = "configReportReceived"
 
 local function can_handle_sensative_strip(opts, driver, device, cmd, ...)
-  return device:id_match(SENSATIVE_MFR, nil, SENSATIVE_MODEL)
+  return device.zwave_manufacturer_id == SENSATIVE_MFR
 end
 
 local function configuration_report(driver, device, cmd)

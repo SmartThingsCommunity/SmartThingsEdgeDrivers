@@ -16,9 +16,8 @@ components:
     version: 1
   categories:
   - name: MultiFunctionalSensor
-preferences:
-  - name: "tempAndHumidityReport"
-    title: "Temperature And Humidity Report"
+preference:
+  - title: "Temperature And Humidity Report"
     description: "This setting allows to adjusts report time (in seconds) of temperature and humidity report."
     required: false
     preferenceType: number
@@ -26,8 +25,7 @@ preferences:
       minimum: 600
       maximum: 1440
       default: 600
-  - name: "retriggerIntervalSetting"
-    title: "Retrigger Interval Setting"
+  - title: "Retrigger Interval Setting"
     description: "The setting adjusts the sleep period (in seconds) after the detector has been triggered. No response will be made during this interval if a movement is presented. Longer re-trigger interval will result in longer battery life."
     required: false
     preferenceType: number

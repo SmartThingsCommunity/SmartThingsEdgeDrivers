@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -67,11 +67,11 @@ end
 
 local function window_shade_level_change(self, device, level, cmd)
   device:send_to_component(SwitchMultilevel:Set({value = level}), cmd.component)
-
+  
   if cmd.component ~= "main" then
     local slatsMoveTime = preferencesMap.to_numeric_value(device.preferences[SLATS_TURN_TIME])
     local delay = utils.round(slatsMoveTime / 100 * 1.1)
-    device.thread:call_with_delay(delay,
+    device.thread:call_with_delay(delay, 
       function()
         device:send_to_component(SwitchMultilevel:Get({}), cmd.component)
       end
@@ -84,11 +84,11 @@ local function set_shade_level(self, device, cmd)
   window_shade_level_change(self, device, level, cmd)
 end
 
-local function open(driver, device, cmd)
+function open(driver, device, cmd)
   window_shade_level_change(driver, device, 99, cmd)
 end
 
-local function close(driver, device, cmd)
+function close(driver, device, cmd)
   window_shade_level_change(driver, device, 0, cmd)
 end
 
@@ -96,21 +96,21 @@ local function multilevel_set_handler(self, device, cmd)
   local targetLevel = cmd.args.value
   local currentLevel = device:get_latest_state("main",  capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
   local blindsCommand = nil
-  if currentLevel > targetLevel then
+  if currentLevel > targetLevel then 
     blindsCommand = capabilities.windowShade.windowShade.closing()
-  else
+  else 
     blindsCommand = capabilities.windowShade.windowShade.opening()
   end
   device:set_field(BLINDS_LAST_COMMAND, blindsCommand)
   device:set_field(SHADE_TARGET, targetLevel)
-  device.thread:call_with_delay(4,
+  device.thread:call_with_delay(4, 
     function()
       device:send(Meter:Get({scale = Meter.scale.electric_meter.WATTS}))
     end
   )
 end
 
-local function meter_report_handler(self, device, cmd)
+function meter_report_handler(self, device, cmd)
   local event = nil
   local event_arguments = nil
   if cmd.args.scale == Meter.scale.electric_meter.WATTS then
@@ -122,11 +122,11 @@ local function meter_report_handler(self, device, cmd)
     if event_arguments.value > 1 and device:get_field(BLINDS_LAST_COMMAND) ~= nil then
       device:emit_event(device:get_field(BLINDS_LAST_COMMAND))
       device:emit_event(capabilities.windowShadeLevel.shadeLevel(device:get_field(SHADE_TARGET)))
-    else
+    else 
       device:send(SwitchMultilevel:Get({}))
       device:send(Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}))
     end
-
+    
   elseif cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
     event_arguments = {
       value = cmd.args.meter_value,
@@ -147,7 +147,7 @@ local function info_changed(driver, device, event, args)
       if preferences[id] and args.old_st_store.preferences[id] ~= value then
         local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
         device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
-        device.thread:call_with_delay(1,
+        device.thread:call_with_delay(1, 
           function()
             device:send(Configuration:Get({parameter_number = preferences[id].parameter_number}))
           end

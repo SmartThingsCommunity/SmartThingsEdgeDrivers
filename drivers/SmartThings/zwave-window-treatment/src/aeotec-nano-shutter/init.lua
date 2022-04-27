@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ local zwave_handlers = {}
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.Basic.Report
-local function basic_report_handler(driver, device, cmd)
+function basic_report_handler(driver, device, cmd)
   local state
   if device.preferences.reverse then
     state = cmd.args.value == 0x00 and SHADE_STATE_CLOSING or SHADE_STATE_OPENING
@@ -116,8 +116,8 @@ local aeotec_nano_shutter = {
     [capabilities.statelessCurtainPowerButton.ID] = {
       [capabilities.statelessCurtainPowerButton.commands.setButton.NAME] = capability_handlers.set_button
     },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = refresh
+    [capabilities.refresh.ID] = { 
+      [capabilities.refresh.commands.refresh.NAME] = refresh 
     }
   },
   lifecycle_handlers = {

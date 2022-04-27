@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
+    "ActivePower Report should be handled",
     {
       {
         channel = "zigbee",

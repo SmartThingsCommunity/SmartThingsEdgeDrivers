@@ -95,7 +95,7 @@ local dawon_wall_smart_switch = {
     added = added_handler,
     doConfigure = do_configure,
     infoChanged = info_changed
-  },
+  },  
   can_handle = can_handle_dawon_wall_smart_switch,
 }
 

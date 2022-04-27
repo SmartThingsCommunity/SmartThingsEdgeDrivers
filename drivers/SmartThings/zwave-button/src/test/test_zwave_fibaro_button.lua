@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
 local t_utils = require "integration_test.utils"
 
 local button_endpoints = {
@@ -61,14 +60,6 @@ test.register_message_test(
                 message = mock_fibaro_button:generate_test_message("main", capabilities.button.numberOfButtons(
                   { value = 1 }
                 ))
-            },
-            {
-                channel = "zwave",
-                direction = "send",
-                message = zw_test_utils.zwave_test_build_send_command(
-                  mock_fibaro_button,
-                  Battery:Get({})
-                )
             }
         },
         {

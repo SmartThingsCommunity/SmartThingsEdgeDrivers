@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ local function onoff_level_report_handler(self, device, cmd)
   end
 end
 
-local function switch_color_report(driver, device, cmd)
+function switch_color_report(driver, device, cmd)
   local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
 
   if value == 0xFF then
@@ -81,7 +81,7 @@ local function set_color_temperature(driver, device, cmd)
   local cold_value = temp >= 5000 and 255 or 0
   local parameter_number = temp < 5000 and WARM_WHITE_CONFIG or COLD_WHITE_CONFIG
   local duration = constants.DEFAULT_DIMMING_DURATION
-
+  
   device:send(Configuration:Set({parameter_number = parameter_number, size = 2, configuration_value = cmd.args.temperature}))
   device:send(SwitchColor:Set({
     color_components = {

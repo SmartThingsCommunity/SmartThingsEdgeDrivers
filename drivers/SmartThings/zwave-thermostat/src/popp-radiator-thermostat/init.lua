@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
@@ -79,7 +78,7 @@ end
 local function set_heating_setpoint(driver, device, command)
   local scale = ThermostatSetpoint.scale.CELSIUS
   local value = command.args.setpoint
-
+  
   if (value >= 40) then -- assume this is a fahrenheit value
     value = utils.f_to_c(value)
   end

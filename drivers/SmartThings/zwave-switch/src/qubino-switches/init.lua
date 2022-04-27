@@ -84,7 +84,7 @@ local do_refresh = function(self, device)
   if device:supports_capability_by_id(capabilities.switchLevel.ID) then
     device:send(SwitchMultilevel:Get({}))
   end
-  for component, _ in pairs(device.profile.components) do
+  for component, _ in pairs(device.profile.components) do 
     if device:supports_capability_by_id(capabilities.powerMeter.ID, component) then
       device:send_to_component(Meter:Get({scale = Meter.scale.electric_meter.WATTS}), component)
     end

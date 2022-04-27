@@ -113,7 +113,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "ActivePower Report should be handled: Sensor value is in W, capability attribute value is in W, ep 1",
+    "ActivePower Report should be handled: Sensor value is in kW, capability attribute value is in W, ep 1",
     {
       {
         channel = "zigbee",
@@ -126,13 +126,13 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_simple_device:generate_test_message("main",  capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+        message = mock_simple_device:generate_test_message("main",  capabilities.powerMeter.power({ value = 27000.0, unit = "W" }))
       }
     }
 )
 
 test.register_message_test(
-    "ActivePower Report should be handled: Sensor value is in W, capability attribute value is in W, ep 2",
+    "ActivePower Report should be handled: Sensor value is in kW, capability attribute value is in W, ep 2",
     {
       {
         channel = "zigbee",
@@ -145,7 +145,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_simple_device:generate_test_message("switch1",  capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+        message = mock_simple_device:generate_test_message("switch1",  capabilities.powerMeter.power({ value = 27000.0, unit = "W" }))
       }
     }
 )
