@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -135,8 +135,8 @@ test.register_message_test(
           meter_value = 55
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 1, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 1,
           dst_channels={}
         })
       )}
@@ -166,8 +166,8 @@ test.register_message_test(
           meter_value = 89
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 2, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 2,
           dst_channels={}
         })
       )}
@@ -197,8 +197,8 @@ test.register_message_test(
           meter_value = 5
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 1, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 1,
           dst_channels={}
         })
       )}
@@ -228,8 +228,8 @@ test.register_message_test(
           meter_value = 5
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 2, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 2,
           dst_channels={}
         })
       )}

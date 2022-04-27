@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ local ZwaveDriver = require "st.zwave.driver"
 local driver_template = {
   supported_capabilities = {
     capabilities.switch,
-    capabilities.switchLevel,
     capabilities.fanSpeed,
   },
   sub_drivers = {

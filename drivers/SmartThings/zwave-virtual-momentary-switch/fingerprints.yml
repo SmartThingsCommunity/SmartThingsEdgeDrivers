@@ -1,0 +1,26 @@
+zwaveManufacturer:
+zwaveGeneric:
+- id: "GenericSwitch/1"
+  deviceLabel: Switch
+  commandClasses:
+    supported:
+    - 0x25 # binary switch
+  deviceProfileName: switch-momentary
+  isJoinable: false
+- id: "GenericSwitch/2"
+  deviceLabel: Virtual Momentary Switch
+  genericType: 0x10 # GENERIC_TYPE_SWITCH_BINARY
+  deviceProfileName: switch-momentary
+  isJoinable: false
+- id: "GenericDimmerSwitch/1"
+  deviceLabel: Virtual Momentary Switch
+  commandClasses:
+    supported:
+    - 0x26 # switch multilevel
+  deviceProfileName: switch-momentary
+  isJoinable: false
+- id: "GenericDimmerSwitch/2"
+  deviceLabel: Virtual Momentary Switch
+  genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
+  deviceProfileName: switch-momentary
+  isJoinable: false

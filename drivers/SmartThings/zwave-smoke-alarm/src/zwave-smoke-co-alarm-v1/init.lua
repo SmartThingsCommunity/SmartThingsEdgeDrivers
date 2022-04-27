@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,25 +18,20 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Alarm
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 
-local SMOKE_CO_ALARM_FINGERPRINTS = {
-  { manufacturerId = 0x0138, productType = 0x0001, productId = 0x0002 }, -- First Alert Smoke Detector
-}
+-- Devices that use this DTH:
+--   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0001 -- First Alert Smoke Detector
+--   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0002 -- First Alert Smoke & CO Detector
+--   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0003 -- First Alert Smoke & CO Detector
 
---- Determine whether the passed device is Smoke Alarm
+--- Determine whether the passed device only supports V1 or V2 of the Alarm command class
 ---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @return boolean true if the device is smoke co alarm
 local function can_handle_v1_alarm(opts, driver, device, cmd, ...)
-  if cmd.version == 1 then
-  -- we only handle v1 reports; this is Notification V3 ( or higher) command
-    for _, fingerprint in ipairs(SMOKE_CO_ALARM_FINGERPRINTS) do
-      if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-        return true
-      end
-    end
-  end
-  return false
+  -- The default handlers for the Alarm/Notification command class(es) for the
+  -- Smoke Detector and Carbon Monoxide Detector only handles V3 and up.
+  return opts.dispatcher_class == "ZwaveDispatcher" and cmd ~= nil and cmd.version ~= nil and cmd.version < 3
 end
 
 --- Default handler for alarm command class reports
@@ -60,7 +55,13 @@ local function alarm_report_handler(self, device, cmd)
       device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     end
   elseif cmd.args.alarm_type == 12 then -- undocumented value
-    device:emit_event(capabilities.smokeDetector.smoke.tested())
+    if cmd.args.alarm_level == 0 then
+      device:emit_event(capabilities.smokeDetector.smoke.clear())
+      device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    else
+      device:emit_event(capabilities.smokeDetector.smoke.tested())
+      device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+    end
   elseif cmd.args.alarm_type == 13 then -- undocumented value
     device:emit_event(capabilities.smokeDetector.smoke.clear())
   end

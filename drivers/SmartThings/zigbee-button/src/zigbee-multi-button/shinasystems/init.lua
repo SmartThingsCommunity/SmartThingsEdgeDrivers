@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ local is_shinasystem_button = function(opts, driver, device)
   return false
 end
 
-function build_button_handler(pressed_type)
+local function build_button_handler(pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true

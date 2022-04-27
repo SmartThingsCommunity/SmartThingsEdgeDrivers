@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -147,6 +147,15 @@ test.register_message_test(
   {
     inner_block_ordering = "relaxed"
   }
+)
+
+test.register_coroutine_test(
+  "Energy meter reset should send a reset command",
+  function()
+    test.socket.capability:__queue_receive({mock_switch.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {}}})
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command( mock_switch, Meter:Reset({})))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command( mock_switch, Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})))
+  end
 )
 
 test.run_registered_tests()

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
-local ZWAVE_AEOTEC_KEYFOB_FINGERPRINTS = {
+local ZWAVE_FIBARO_KEYFOB_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x1001, model = 0x1000}, -- Fibaro KeyFob EU
   {mfr = 0x010F, prod = 0x1001, model = 0x2000}, -- Fibaro KeyFob US
   {mfr = 0x010F, prod = 0x1001, model = 0x3000} -- Fibaro KeyFob AU
 }
 
 local function can_handle_fibaro_keyfob(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_AEOTEC_KEYFOB_FINGERPRINTS) do
+  for _, fingerprint in ipairs(ZWAVE_FIBARO_KEYFOB_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
       return true
     end

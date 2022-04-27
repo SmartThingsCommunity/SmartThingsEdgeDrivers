@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ local driver_template = {
   supported_capabilities = {
     capabilities.valve,
   },
+  sub_drivers = {
+    -- Fortrezz and Zooz valves treat open as "off" and close as "on"
+    require("inverse_valve")
+  }
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)

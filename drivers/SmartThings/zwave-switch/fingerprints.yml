@@ -346,7 +346,7 @@ zwaveManufacturer:
     deviceLabel: Aeotec Dimmer Switch
     manufacturerId: 0x0086
     productId: 0x001B
-    deviceProfileName: metering-dimmer
+    deviceProfileName: switch-level
   - id: 0086/0063
     deviceLabel: Aeotec Dimmer Switch
     manufacturerId: 0x0086
@@ -405,7 +405,7 @@ zwaveManufacturer:
     manufacturerId: 0x001D
     productType: 0x1A02
     productId: 0x0334
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 001D/3401/0001
     deviceLabel: Leviton Switch
     manufacturerId: 0x001D
@@ -417,7 +417,7 @@ zwaveManufacturer:
     manufacturerId: 0x001D
     productType: 0x1D04
     productId: 0x0334
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 001D/1C02/0334
     deviceLabel: Leviton Switch
     manufacturerId: 0x001D
@@ -441,7 +441,7 @@ zwaveManufacturer:
     manufacturerId: 0x001D
     productType: 0x1603
     productId: 0x0334
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 011A/0101/0102
     deviceLabel: Enerwave Switch
     manufacturerId: 0x011A
@@ -453,18 +453,18 @@ zwaveManufacturer:
     manufacturerId: 0x011A
     productType: 0x0101
     productId: 0x0603
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0039/5052/3038
     deviceLabel: Honeywell Outlet
     manufacturerId: 0x0039
     productType: 0x5052
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0039/4F50/3032
     deviceLabel: Honeywell Outlet
     manufacturerId: 0x0039
     productType: 0x4F50
     productId: 0x3032
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0039/4952/3036
     deviceLabel: Honeywell Switch
     manufacturerId: 0x0039
@@ -474,19 +474,19 @@ zwaveManufacturer:
     deviceLabel: Eaton Outlet
     manufacturerId: 0x001A
     productType: 0x5244
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 001A/534C/0000
     deviceLabel: Eaton Outlet
     manufacturerId: 0x001A
     productType: 0x534C
     productId: 0x0000
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 001A/5354/0003
     deviceLabel: Eaton Outlet
     manufacturerId: 0x001A
     productType: 0x5354
     productId: 0x0003
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 001A/5352/0000
     deviceLabel: Eaton Switch
     manufacturerId: 0x001A
@@ -516,7 +516,7 @@ zwaveManufacturer:
     manufacturerId: 0x0307
     productType: 0x4447
     productId: 0x3031
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 027A/B111/1E1C
     deviceLabel: Zooz Switch
     manufacturerId: 0x027A
@@ -527,24 +527,37 @@ zwaveManufacturer:
     manufacturerId: 0x0060
     productType: 0x0004
     productId: 0x000C
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0312/C000/C001
     deviceLabel: EVA Outlet
     manufacturerId: 0x0312
     productType: 0xC000
     productId: 0xC001
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF07
     deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productType: 0xFF00
-    deviceProfileName: switch-binary
+    productId: 0xFF07
+    deviceProfileName: smartplug-binary
+  - id: 0312/FF00/FF06
+    deviceLabel: Minoston Outlet
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF07
+    deviceProfileName: smartplug-binary
+  - id: 0312/FF00/FF01
+    deviceLabel: Minoston Outlet
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF01
+    deviceProfileName: smartplug-binary
   - id: 0312/C000/C003
     deviceLabel: Evalogik Outlet
     manufacturerId: 0x0312
     productType: 0xC000
     productId: 0xC003
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF03
     deviceLabel: Minoston Switch
     manufacturerId: 0x0312
@@ -556,7 +569,7 @@ zwaveManufacturer:
     manufacturerId: 0x0312
     productType: 0xC000
     productId: 0xC005
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 031E/0004/0001
     deviceLabel: Inovelli Switch
     manufacturerId: 0x031E
@@ -568,7 +581,7 @@ zwaveManufacturer:
     manufacturerId: 0x001D
     productType: 0x0037
     productId: 0x0002
-    deviceProfileName: switch-binary
+    deviceProfileName: smartplug-binary
   - id: 0371/0103/0026
     deviceLabel: Aeotec Switch
     manufacturerId: 0x0371
@@ -674,6 +687,13 @@ zwaveManufacturer:
     deviceLabel: Minoston Dimmer Switch
     manufacturerId: 0x0312
     productType: 0xFF00
+    productId: 0xFF04
+    deviceProfileName: switch-level
+  - id: 0312/FF00/FF02
+    deviceLabel: Minoston Dimmer Switch
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF02
     deviceProfileName: switch-level
   - id: 0312/AA00/AA02
     deviceLabel: Evalogik Dimmer Switch
@@ -733,12 +753,6 @@ zwaveManufacturer:
     productType: 0x4F44
     productId: 0x3031
     deviceProfileName: metering-switch
-  - id: 010F/0602/1001
-    deviceLabel: Fibaro Outlet
-    manufacturerId: 0x010F
-    productType: 0x0602
-    productId: 0x1001
-    deviceProfileName: metering-switch
   - id: 010F/1801/1000
     deviceLabel: Fibaro Outlet
     manufacturerId: 0x010F
@@ -750,10 +764,17 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x004E
     deviceProfileName: metering-switch
-  - id: 0258/0003
+  - id: 0258/0003/0087
     deviceLabel: NEO Coolcam Outlet
     manufacturerId: 0x0258
     productType: 0x0003
+    productId: 0x0087
+    deviceProfileName: metering-switch
+  - id: 0258/0003/1087
+    deviceLabel: NEO Coolcam Outlet
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x1087
     deviceProfileName: metering-switch
   - id: 027A/0101/000D
     deviceLabel: Zooz Switch
@@ -836,17 +857,22 @@ zwaveManufacturer:
     deviceLabel: Aeotec Dimmer Switch
     manufacturerId: 0x0086
     productId: 0x0019
-    deviceProfileName: metering-switch
+    deviceProfileName: metering-dimmer
   - id: 0086/0013
     deviceLabel: Aeotec Dimmer Switch
     manufacturerId: 0x0086
     productId: 0x0013
-    deviceProfileName: metering-switch
+    deviceProfileName: metering-dimmer
   - id: 0086/0008
     deviceLabel: Aeotec Dimmer Switch
     manufacturerId: 0x0086
     productId: 0x0008
-    deviceProfileName: metering-switch
+    deviceProfileName: metering-dimmer
+  - id: 010F/0102
+    deviceLabel: Fibaro Dimmer Switch
+    manufacturerId: 0x010F
+    productType: 0x0102
+    deviceProfileName: fibaro-dimmer-2
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
@@ -858,6 +884,10 @@ zwaveGeneric:
     deviceLabel: Switch
     genericType: 0x10 # GENERIC_TYPE_SWITCH_BINARY
     deviceProfileName: switch-binary
+  - id: "GenericSwitch/3"
+    deviceLabel: Dimmer Switch
+    genericType: 0x02 # GENERIC_TYPE_SWITCH_BINARY
+    deviceProfileName: switch-binary
   - id: "GenericDimmerSwitch/1"
     deviceLabel: Dimmer Switch
     commandClasses:
@@ -868,3 +898,8 @@ zwaveGeneric:
     deviceLabel: Dimmer Switch
     genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
     deviceProfileName: switch-level
+zwaveThing :
+  - id: SmartThings/Z-WaveThing
+    deviceLabel: Z-Wave Device
+    deviceProfileName: switch-level
+    isJoinable: true

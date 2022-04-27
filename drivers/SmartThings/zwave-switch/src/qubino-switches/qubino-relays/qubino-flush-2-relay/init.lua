@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 local QUBINO_FLUSH_2_RELAY_FINGERPRINT = {mfr = 0x0159, prod = 0x0002, model = 0x0051}
 
-local function can_handle_qubino_flush_2_relay(opts, driver, device, ...) 
+local function can_handle_qubino_flush_2_relay(opts, driver, device, ...)
   return device:id_match(QUBINO_FLUSH_2_RELAY_FINGERPRINT.mfr, QUBINO_FLUSH_2_RELAY_FINGERPRINT.prod, QUBINO_FLUSH_2_RELAY_FINGERPRINT.model)
 end
 
@@ -28,7 +28,7 @@ local function component_to_endpoint(device, component_id)
       return { ep_num and tonumber(ep_num)}
     end
 end
-  
+
 local function endpoint_to_component(device, ep)
     if ep == 2 then
       return string.format("switch%d", ep)

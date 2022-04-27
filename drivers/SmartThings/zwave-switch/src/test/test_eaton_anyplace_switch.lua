@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ local t_utils = require "integration_test.utils"
 
 local sensor_endpoints = {
   {
-    command_classes = 
+    command_classes =
     {
       {value = zw.BASIC}
     }

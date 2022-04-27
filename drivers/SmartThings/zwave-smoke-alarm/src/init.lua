@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ local preferencesMap = require "preferences"
 ---
 --- @param device st.zwave.Device
 --- @param args
-local function update_preference(self, device, args)
+local function update_preferences(self, device, args)
   local preferences = preferencesMap.get_device_parameters(device)
   for id, value in pairs(device.preferences) do
-    if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
+    if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
       device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
     end
@@ -42,7 +42,20 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
-  device:set_update_preferences_fn(update_preference)
+  device:set_update_preferences_fn(update_preferences)
+end
+
+--- Add device
+---
+--- @param self st.zwave.Driver
+--- @param device st.zwave.Device
+local device_added = function(self, device)
+  if device:supports_capability_by_id("smokeDetector") then
+    device:emit_event(capabilities.smokeDetector.smoke.clear())
+  end
+  if device:supports_capability_by_id("carbonMonoxideDetector") then
+    device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  end
 end
 
 --- Handle preference changes
@@ -53,8 +66,12 @@ end
 --- @param args
 local function info_changed(driver, device, event, args)
   if not device:is_cc_supported(cc.WAKE_UP) then
-    update_preference(self, device, args)
+    update_preferences(self, device, args)
   end
+end
+
+local function do_configure(driver, device)
+  update_preferences(driver, device)
 end
 
 local driver_template = {
@@ -73,7 +90,9 @@ local driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure,
+    added = device_added
   }
 }
 

@@ -33,4 +33,54 @@ zigbeeManufacturer:
     deviceLabel: leakSMART Water Leak Sensor
     manufacturer: WAXMAN
     model: leakSMART Water Sensor V2
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "CentraLite/Water Leak/3315-S"
+    deviceLabel: Water Leak Sensor
+    manufacturer: CentraLite
+    model: 3315-S
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "CentraLite/Water Leak/3315"
+    deviceLabel: Water Leak Sensor
+    manufacturer: CentraLite
+    model: 3315
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "CentraLite/Water Leak/3315-Seu"
+    deviceLabel: Water Leak Sensor
+    manufacturer: CentraLite
+    model: 3315-Seu
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "CentraLite/Water Leak/3315-L"
+    deviceLabel: Iris Water Leak Sensor
+    manufacturer: CentraLite
+    model: 3315-L
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "CentraLite/Water Leak/3315-G"
+    deviceLabel: Centralite Water Leak Sensor
+    manufacturer: CentraLite
+    model: 3315-G
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "SmartThings/Water Leak/moisturev4"
+    deviceLabel: Water Leak Sensor
+    manufacturer: SmartThings
+    model: moisturev4
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "Samjin/Water Leak/water"
+    deviceLabel: Water Leak Sensor
+    manufacturer: Samjin
+    model: water
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "Sercomm/Water Leak/SZ-WTD03"
+    deviceLabel: Sercomm Water Leak Sensor
+    manufacturer: Sercomm Corp.
+    model: SZ-WTD03
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "frient/Water Leak/FLSZB-110"
+    deviceLabel: frient Water Leak Sensor
+    manufacturer: frient A/S
+    model: FLSZB-110
+    deviceProfileName: water-temp-battery-tempOffset
+  - id: "Nortek/F-ADT-WTR-1"
+    deviceLabel: ADT Water Leak Detector
+    manufacturer: Nortek Security and Control
+    model: F-ADT-WTR-1
     deviceProfileName: water-temp-battery

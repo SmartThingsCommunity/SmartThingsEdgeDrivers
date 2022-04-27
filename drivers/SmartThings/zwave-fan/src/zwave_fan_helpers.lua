@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -54,23 +54,14 @@ local zwave_handlers = {}
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.SwitchMultilevel
 function zwave_handlers.fan_multilevel_report(driver, device, cmd, map_switch_level_to_fan_speed)
-  local event
-  if cmd.args.target_value ~= nil and cmd.args.target_value >= 0 then
-    -- Target value is our best inidicator of eventual state.
-    -- If we see this, it should be considered authoritative.
-    event = capabilities.fanSpeed.fanSpeed(map_switch_level_to_fan_speed(cmd.args.target_value))
-  elseif cmd.args.value ~= nil and cmd.args.value >= 0 then
-    event = capabilities.fanSpeed.fanSpeed(map_switch_level_to_fan_speed(cmd.args.value))
-  end
+  -- Target value is our best inidicator of eventual state.
+  -- If we see this, it should be considered authoritative.
+  local level = cmd.args.target_value ~= nil and cmd.args.target_value or cmd.args.value
 
-  if event ~= nil then
-    device:emit_event(event)
-  end
+  if level ~= nil and level >= 0 then
+    device:emit_event(capabilities.fanSpeed.fanSpeed(map_switch_level_to_fan_speed(level)))
 
-  -- emit events SwitchLevel capabilities
-  local switch_report_handlers = driver.zwave_handlers[cc.SWITCH_MULTILEVEL][SwitchMultilevel.REPORT]
-  for _, handler in ipairs(switch_report_handlers) do
-    handler(driver, device, cmd)
+    device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
   end
 end
 

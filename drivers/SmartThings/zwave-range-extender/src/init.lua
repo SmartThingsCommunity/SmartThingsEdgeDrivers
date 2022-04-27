@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
 
-local driver_template = {}
+local driver_template = {
+  zwave_handlers = {}
+}
 local zwave_range_extender_driver = ZwaveDriver("zwave-range-extender", driver_template)
 
 zwave_range_extender_driver:run()

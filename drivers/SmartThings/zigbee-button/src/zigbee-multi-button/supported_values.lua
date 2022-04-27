@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,22 +13,38 @@
 -- limitations under the License.
 
 local devices = {
-  BUTTON_PUSH_HELD = {
+  BUTTON_PUSH_HELD_2 = {
     MATCHING_MATRIX = {
-      { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" },
-      { mfr = "CentraLite", model = "3450-L" },
-      { mfr = "CentraLite", model = "3450-L2" },
+      { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" }
     },
-    VALUES = {
-      supported_button_values = {"pushed", "held"}
-    }
+    SUPPORTED_BUTTON_VALUES = {"pushed", "held"},
+    NUMBER_OF_BUTTONS = 2
   },
-  BUTTON_PUSH = {
+  BUTTON_PUSH_HELD_4 = {
+    MATCHING_MATRIX = {
+      { mfr = "CentraLite", model = "3450-L" },
+      { mfr = "CentraLite", model = "3450-L2" }
+    },
+    SUPPORTED_BUTTON_VALUES = {"pushed", "held"},
+    NUMBER_OF_BUTTONS = 4
+  },
+  BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {
       { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
-      { mfr = "KE", model = "TRADFRI open/close remote" },
-      { mfr = "SOMFY", model = "Situo 1 Zigbee" },
-      { mfr = "SOMFY", model = "Situo 4 Zigbee" },
+      { mfr = "KE", model = "TRADFRI open/close remote" }
+    },
+    SUPPORTED_BUTTON_VALUES = {"pushed"},
+    NUMBER_OF_BUTTONS = 2
+  },
+  BUTTON_PUSH_3 = {
+    MATCHING_MATRIX = {
+      { mfr = "SOMFY", model = "Situo 1 Zigbee" }
+    },
+    SUPPORTED_BUTTON_VALUES = {"pushed"},
+    NUMBER_OF_BUTTONS = 3
+  },
+  BUTTON_PUSH_4 = {
+    MATCHING_MATRIX = {
       { mfr = "LDS", model = "ZBT-CCTSwitch-D0001" },
       { mfr = "AduroSmart Eria", model = "ADUROLIGHT_CSC" },
       { mfr = "ADUROLIGHT", model = "ADUROLIGHT_CSC" },
@@ -36,22 +52,45 @@ local devices = {
       { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
       { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" }
     },
-    VALUES = {
-      supported_button_values = {"pushed"}
-    }
+    SUPPORTED_BUTTON_VALUES = {"pushed"},
+    NUMBER_OF_BUTTONS = 4
   },
-  BUTTON_PUSH_HELD_DOUBLE = {
+  BUTTON_PUSH_12 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "MSM-300Z" },
-      { mfr = "ShinaSystem", model = "BSM-300Z" },
-      { mfr = "ShinaSystem", model = "SBM300ZB1" },
-      { mfr = "ShinaSystem", model = "SBM300ZB2" },
-      { mfr = "ShinaSystem", model = "SBM300ZB3" },
+      { mfr = "SOMFY", model = "Situo 4 Zigbee" }
     },
-    VALUES = {
-      supported_button_values = { "pushed", "held", "double" }
-    }
+    SUPPORTED_BUTTON_VALUES = {"pushed"},
+    NUMBER_OF_BUTTONS = 12
   },
+  BUTTON_PUSH_HELD_DOUBLE_1 = {
+    MATCHING_MATRIX = {
+      { mfr = "ShinaSystem", model = "BSM-300Z" },
+      { mfr = "ShinaSystem", model = "SBM300ZB1" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
+    NUMBER_OF_BUTTONS = 1
+  },
+  BUTTON_PUSH_HELD_DOUBLE_2 = {
+    MATCHING_MATRIX = {
+      { mfr = "ShinaSystem", model = "SBM300ZB2" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
+    NUMBER_OF_BUTTONS = 2
+  },
+  BUTTON_PUSH_HELD_DOUBLE_3 = {
+    MATCHING_MATRIX = {
+      { mfr = "ShinaSystem", model = "SBM300ZB3" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
+    NUMBER_OF_BUTTONS = 3
+  },
+  BUTTON_PUSH_HELD_DOUBLE_4 = {
+    MATCHING_MATRIX = {
+      { mfr = "ShinaSystem", model = "MSM-300Z" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
+    NUMBER_OF_BUTTONS = 4
+  }
 }
 
 local configs = {}
@@ -60,7 +99,7 @@ configs.get_device_parameters = function(zb_device)
   for _, device in pairs(devices) do
     for _, fingerprint in pairs(device.MATCHING_MATRIX) do
       if zb_device:get_manufacturer() == fingerprint.mfr and zb_device:get_model() == fingerprint.model then
-        return device.VALUES
+        return device
       end
     end
   end

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -245,8 +245,8 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
-                                                            capabilities.thermostatMode.thermostatMode.off.NAME, 
-                                                            capabilities.thermostatMode.thermostatMode.heat.NAME 
+                                                            capabilities.thermostatMode.thermostatMode.off.NAME,
+                                                            capabilities.thermostatMode.thermostatMode.heat.NAME
                                                           }))
       }
     }
@@ -265,8 +265,8 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
-                                                            capabilities.thermostatMode.thermostatMode.off.NAME, 
-                                                            capabilities.thermostatMode.thermostatMode.cool.NAME 
+                                                            capabilities.thermostatMode.thermostatMode.off.NAME,
+                                                            capabilities.thermostatMode.thermostatMode.cool.NAME
                                                           }))
       }
     }

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local cc = require "st.zwave.CommandClass"
-local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local preferencesMap = require "preferences"
 
@@ -76,14 +75,7 @@ local function configuration_report(driver, device, cmd)
   end
 end
 
-local device_added = function(self, device)
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.CO}))
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT}))
-  device:send(Alarm:Get({z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR}))
-end
-
 local do_configure = function(self, device)
-  device:refresh()
   device:send(Configuration:Set({parameter_number = NOTIFICATIONS, configuration_value = TAMPERING_AND_EXCEEDING_THE_TEMPERATURE}))
   device:send(Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE}))
 end
@@ -112,7 +104,6 @@ local fibaro_co_sensor = {
     }
   },
   lifecycle_handlers = {
-    added = device_added,
     doConfigure = do_configure,
     init = device_init,
     infoChanged = info_changed

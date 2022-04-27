@@ -12,13 +12,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+local capabilities = require "st.capabilities"
+local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({version=2})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version=1})
 local t_utils = require "integration_test.utils"
 
 local sensor_endpoints = {
@@ -62,5 +62,33 @@ test.register_coroutine_test(
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
+
+test.register_coroutine_test(
+    "At a WakeUp, Assocation:Set should be sent when there wasn't a motion status event",
+    function()
+      test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({}) })
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Association:Set({grouping_identifier = 1, node_ids = {}})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Battery:Get({})
+      ))
+    end
+)
+
+test.register_coroutine_test(
+    "At a WakeUp, Assocation:Set shouldn't be sent when there was a motion status event",
+    function()
+      mock_sensor.wrapped_device.state_cache = {["main"] = {["motionSensor"] = {["motion"] = {["value"] = "inactive"}}}}
+      test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({}) })
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Battery:Get({})
+      ))
+    end
+)
+
 
 test.run_registered_tests()

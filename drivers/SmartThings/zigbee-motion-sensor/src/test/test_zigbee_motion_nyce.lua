@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Reported motion should be handled: active",
+    "Reported motion should be handled: inactive",
     {
       {
         channel = "zigbee",

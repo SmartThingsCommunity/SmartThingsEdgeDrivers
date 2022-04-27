@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -203,6 +203,11 @@ test.register_message_test(
       channel = "device_lifecycle",
       direction = "receive",
       message = { mock_device.id, "added" },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     },
     {
       channel = "capability",

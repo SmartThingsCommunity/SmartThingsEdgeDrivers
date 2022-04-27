@@ -12,7 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 
 local devices = {
   EVERSPRING_PIR = {
@@ -22,7 +23,7 @@ local devices = {
       product_ids = 0x0004
     },
     PARAMETERS = {
-      temperatureAndHumidityReport = {parameter_number = 1, size = 2},
+      tempAndHumidityReport = {parameter_number = 1, size = 2},
       retriggerIntervalSetting = {parameter_number = 2, size = 2}
     }
   },
@@ -132,7 +133,7 @@ local devices = {
       product_ids = {0x1001, 0x1002, 0x2001, 0x2002}
     },
     PARAMETERS = {
-      motionSensitivity = {parameter_number = 1, size = 2},
+      motionSensitivityLevel = {parameter_number = 1, size = 2},
       motionBlindTime = {parameter_number = 2, size = 1},
       motionCancelationDelay = {parameter_number = 6, size = 2},
       motionOperatingMode = {parameter_number = 8, size = 1},
@@ -150,6 +151,18 @@ local devices = {
   }
 }
 local preferences = {}
+
+preferences.update_preferences = function(driver, device, args)
+  local prefs = preferences.get_device_parameters(device)
+  if prefs ~= nil then
+    for id, value in pairs(device.preferences) do
+      if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
+        local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
+        device:send(Configuration:Set({parameter_number = prefs[id].parameter_number, size = prefs[id].size, configuration_value = new_parameter_value}))
+      end
+    end
+  end
+end
 
 preferences.get_device_parameters = function(zw_device)
   for _, device in pairs(devices) do

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           id = 1,
           manufacturer = "IKEA of Sweden",
           model = "TRADFRI on/off switch",
-          server_clusters = {0x0019}
+          server_clusters = {0x0019,0x0001}
         }
       }
     }
@@ -138,6 +138,20 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "numberOfButtons", state = { value = 2 }
+      }
+    })
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
         test.socket.capability:__expect_send({
@@ -158,6 +172,10 @@ test.register_coroutine_test(
     end
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
     test.wait_for_events()
     end
 )

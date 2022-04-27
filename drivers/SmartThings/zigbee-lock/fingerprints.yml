@@ -109,3 +109,21 @@ zigbeeManufacturer:
     manufacturer: SAMSUNG SDS
     model: ""
     deviceProfileName: lock-battery
+  - id: Danalock/V3-BTZB
+    deviceLabel: Danalock Door Lock
+    manufacturer: Danalock
+    model: V3-BTZB
+    deviceProfileName: lock-battery
+  - id: C2O/E261-KR0B0Z0-HA
+    deviceLabel: C2O Door Lock
+    manufacturer:
+    model: E261-KR0B0Z0-HA
+    deviceProfileName: lock-battery
+zigbeeGeneric:
+  - id: "genericLock"
+    deviceLabel: Zigbee Lock
+    clusters:
+      server:
+        - 0x0101 #Door Lock
+        - 0x0001 #Power Configuration
+    deviceProfileName: lock-battery

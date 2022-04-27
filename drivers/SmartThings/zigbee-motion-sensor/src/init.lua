@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 
-
 local zigbee_motion_driver = {
   supported_capabilities = {
     capabilities.motionSensor,
@@ -34,6 +33,16 @@ local zigbee_motion_driver = {
                   require("motion_timeout"),
                   require("nyce"),
                   require("zigbee-plugin-motion-sensor"),
+                  require("compacta"),
+                  require("frient"),
+                  require("samjin"),
+                  require("battery-voltage"),
+                  require("centralite"),
+                  require("smartthings"),
+                  require("smartsense")
+  },
+  additional_zcl_profiles = {
+    [0xFC01] = true
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -36,22 +36,22 @@ local CARBON_MONOXIDE_TEST = 0x03
 
 -- supported comand classes
 local fibaro_CO_sensor_endpoints = {
-    {
-        command_classes = {
-            { value = zw.ALARM },
-            { value = zw.BATTERY },
-            { value = zw.SENSOR_MULTILEVEL },
-            { value = zw.WAKE_UP }
-        }
+  {
+    command_classes = {
+      { value = zw.ALARM },
+      { value = zw.BATTERY },
+      { value = zw.SENSOR_MULTILEVEL },
+      { value = zw.WAKE_UP }
     }
+  }
 }
 
 local mock_fibaro_CO_sensor = test.mock_device.build_test_zwave_device({
-    profile = t_utils.get_profile_definition("fibaro-co-sensor-zw5.yml"),
-    zwave_endpoints = fibaro_CO_sensor_endpoints,
-    zwave_manufacturer_id = FIBARO_MANUFACTURER_ID,
-    zwave_product_type = FIBARO_CO_SENSOR_PRODUCT_TYPE,
-    zwave_product_id = FIBARO_CO_SENSOR_PRODUCT_ID
+  profile = t_utils.get_profile_definition("fibaro-co-sensor-zw5.yml"),
+  zwave_endpoints = fibaro_CO_sensor_endpoints,
+  zwave_manufacturer_id = FIBARO_MANUFACTURER_ID,
+  zwave_product_type = FIBARO_CO_SENSOR_PRODUCT_TYPE,
+  zwave_product_id = FIBARO_CO_SENSOR_PRODUCT_ID
 })
 
 test.mock_device.add_test_device(mock_fibaro_CO_sensor)
@@ -63,208 +63,312 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-    "Device should be configured",
-    function ()
-      test.socket.zwave:__set_channel_ordering("relaxed")
-      test.socket.device_lifecycle:__queue_receive({ mock_fibaro_CO_sensor.id, "doConfigure" })
-      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-          mock_fibaro_CO_sensor,
-          Configuration:Set({parameter_number = NOTIFICATIONS, configuration_value = TAMPERING_AND_EXCEEDING_THE_TEMPERATURE})
-      ))
-      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-          mock_fibaro_CO_sensor,
-          Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE})
-      ))
-      mock_fibaro_CO_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+  "Device should be configured",
+  function ()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_fibaro_CO_sensor.id, "doConfigure" })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({parameter_number = NOTIFICATIONS, configuration_value = TAMPERING_AND_EXCEEDING_THE_TEMPERATURE})
+    ))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE})
+    ))
+    mock_fibaro_CO_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.register_message_test(
-        "Battery report should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.battery.battery(99))
-            }
-        }
+  "Battery report should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.battery.battery(99))
+    }
+  }
 )
 
 test.register_message_test(
-        "Temperature reports should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-                    sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-                    scale = SensorMultilevel.scale.temperature.CELSIUS,
-                    sensor_value = 21.5 })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
-            }
-        }
+  "Temperature reports should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SensorMultilevel:Report({
+            sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+            scale = SensorMultilevel.scale.temperature.CELSIUS,
+            sensor_value = 21.5
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    }
+  }
 )
 
 test.register_message_test(
-        "Temperature reports should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-                    sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-                    scale = SensorMultilevel.scale.temperature.FAHRENHEIT,
-                    sensor_value = 70.7 })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
-            }
-        }
+  "Temperature reports should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SensorMultilevel:Report({
+            sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+            scale = SensorMultilevel.scale.temperature.FAHRENHEIT,
+            sensor_value = 70.7
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
+    }
+  }
 )
 
 test.register_message_test(
-        "Alarm report (tamper detected) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR,
-                    z_wave_alarm_event = Alarm.z_wave_alarm_event.burglar.TAMPERING_PRODUCT_COVER_REMOVED
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
-            }
-        }
+  "Alarm report (tamper detected) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR,
+            z_wave_alarm_event = Alarm.z_wave_alarm_event.burglar.TAMPERING_PRODUCT_COVER_REMOVED
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    }
+  }
 )
 
 test.register_message_test(
-        "Alarm report (tamper clear) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR,
-                    z_wave_alarm_event = Notification.event.co.STATE_IDLE
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-            }
-        }
+  "Alarm report (tamper clear) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.BURGLAR,
+            z_wave_alarm_event = Notification.event.co.STATE_IDLE
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    }
+  }
 )
 
 test.register_message_test(
-        "Alarm report (CO detected) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
-                    z_wave_alarm_event =  Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
-            }
-        }
+  "Alarm report (CO detected) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
+            z_wave_alarm_event = Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
+    }
+  }
 )
 
 test.register_message_test(
-        "Alarm report (CO clear) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
-                    z_wave_alarm_event = Notification.event.co.STATE_IDLE
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-            }
-        }
+  "Alarm report (CO clear) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
+            z_wave_alarm_event = Notification.event.co.STATE_IDLE
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    }
+  }
 )
 
 test.register_message_test(
-        "Alarm report (CO test) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
-                    z_wave_alarm_event = CARBON_MONOXIDE_TEST
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
-            }
-        }
+  "Alarm report (CO test) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
+        z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
+        z_wave_alarm_event = CARBON_MONOXIDE_TEST,
+        event_parameter = ""
+
+      }))}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+    }
+  }
 )
 
 test.register_message_test(
-        "Temperature alarm report (heat) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT,
-                    z_wave_alarm_event = Alarm.z_wave_alarm_event.heat.OVERDETECTED
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
-            }
-        }
+  "Alarm report (CO test clear) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.CO,
+            z_wave_alarm_event = CARBON_MONOXIDE_TEST,
+            event_parameter = ""
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    }
+  }
 )
 
 test.register_message_test(
-        "Temperature alarm report (heat clear) should be handled",
-        {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_fibaro_CO_sensor.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
-                    z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT,
-                    z_wave_alarm_event = Notification.event.heat.STATE_IDLE
-                })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-            }
-        }
+  "Temperature alarm report (heat) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT,
+            z_wave_alarm_event = Alarm.z_wave_alarm_event.heat.OVERDETECTED
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+    }
+  }
 )
+
+test.register_message_test(
+  "Temperature alarm report (heat clear) should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_fibaro_CO_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Alarm:Report({
+            z_wave_alarm_type = Alarm.z_wave_alarm_type.HEAT,
+            z_wave_alarm_event = Notification.event.heat.STATE_IDLE
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    }
+  }
+)
+
+
+test.register_message_test(
+  "Sending initial states when device is added",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_fibaro_CO_sensor.id, "added"}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
 
 test.register_coroutine_test(
   "Device should be configured after changing device settings",
@@ -306,14 +410,14 @@ test.register_coroutine_test(
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
-        zw_test_utils.zwave_test_build_send_command(
-          mock_fibaro_CO_sensor,
-          Configuration:Set({
-            parameter_number = 22,
-            configuration_value = 50,
-            size = 1
-          })
-        )
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({
+          parameter_number = 22,
+          configuration_value = 50,
+          size = 1
+        })
+      )
     )
 
     test.socket.zwave:__expect_send(

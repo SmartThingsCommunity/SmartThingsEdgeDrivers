@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
   {mfr = 0x0312, prod = 0xC000, model = 0xC004}, -- EVA Switch 1
   {mfr = 0x0312, prod = 0xFF00, model = 0xFF05}, -- Minoston Switch 1
   {mfr = 0x0312, prod = 0xC000, model = 0xC007}, -- Evalogik Switch 1
-  {mfr = 0x010F, prod = 0x1B01, model = 0x1000}  -- Fibaro Walli Double Switch
+  {mfr = 0x010F, prod = 0x1B01, model = 0x1000}, -- Fibaro Walli Double Switch
+  {mfr = 0x027A, prod = 0xA000, model = 0xA003} -- Zooz Double Plug
 }
 
 local function can_handle_zwave_dual_switch(opts, driver, device, ...)
@@ -46,6 +47,27 @@ end
 
 local function device_added(self, device)
   device:refresh()
+end
+
+local function endpoint_to_component(device, endpoint)
+  if endpoint == 2 then
+    return "switch1"
+  else
+    return "main"
+  end
+end
+
+local function component_to_endpoint(device, component)
+  if component == "switch1" then
+    return {2}
+  else
+    return {1}
+  end
+end
+
+local function map_components(self, device)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
 local function basic_set_handler(driver, device, cmd)
@@ -63,12 +85,10 @@ local zwave_dual_switch = {
     }
   },
   lifecycle_handlers = {
-    added = device_added
+    added = device_added,
+    init = map_components
   },
-  can_handle = can_handle_zwave_dual_switch,
-  sub_drivers = {
-    require("zwave-dual-switch/fibaro-walli-double-switch")
-  }
+  can_handle = can_handle_zwave_dual_switch
 }
 
 return zwave_dual_switch
