@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ local function sensor_binary_report_handler(self, device, cmd)
 end
 
 local function switch_binary_report_handler(self, device, cmd)
+  local event = nil
   if device:get_latest_state("main", capabilities.contactSensor.ID, capabilities.contactSensor.contact.NAME) == "closed" then
     event = capabilities.doorControl.door.opening()
   else
@@ -88,7 +89,7 @@ end
 
 local function do_configure(self, device)
   device:send(Configuration:Set({ configuration_value = 25, parameter_number = 11, size = 1 }))
-  device:send(Association:Set({grouping_identifier = 3, node_ids = self.environment_info.hub_zwave_id}))
+  device:send(Association:Set({grouping_identifier = 3, node_ids = {self.environment_info.hub_zwave_id}}))
 end
 
 local mimolite_garage_door = {

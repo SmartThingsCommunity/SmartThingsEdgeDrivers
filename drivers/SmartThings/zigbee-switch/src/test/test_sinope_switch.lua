@@ -95,21 +95,6 @@ test.register_coroutine_test(
   )
 
 test.register_coroutine_test(
-    "infochanged to check for necessary preferences settings or updated when ledIntensity preference setting is not present",
-    function()
-      test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
-
-      local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-      device_info_copy.preferences = {}
-      local device_info_json = dkjson.encode(device_info_copy)
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-
-   end
-  )
-
-test.register_coroutine_test(
     "infochanged to check for necessary preferences settings or updated when ledIntensity preference setting is > 50",
     function()
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })

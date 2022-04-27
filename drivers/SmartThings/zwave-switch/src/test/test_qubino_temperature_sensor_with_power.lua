@@ -186,8 +186,8 @@ test.register_message_test(
                   zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
                     sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
                     scale = 0,
-                    sensor_value = 21.5 
-                  },{encap = zw.ENCAP.AUTO, src_channel = 4, dst_channels = {0}})) 
+                    sensor_value = 21.5
+                  },{encap = zw.ENCAP.AUTO, src_channel = 4, dst_channels = {0}}))
                 }
     },
     {
@@ -340,7 +340,7 @@ test.register_coroutine_test(
       SensorMultilevel:Report({
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = 0,
-        sensor_value = -999 
+        sensor_value = -999
       },{encap = zw.ENCAP.AUTO, src_channel = 4, dst_channels = {0}}
       )
     })
@@ -354,7 +354,7 @@ test.register_coroutine_test(
       SensorMultilevel:Report({
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = 0,
-        sensor_value = 21.5 
+        sensor_value = 21.5
       },{encap = zw.ENCAP.AUTO, src_channel = 4, dst_channels = {0}}
       )
     })

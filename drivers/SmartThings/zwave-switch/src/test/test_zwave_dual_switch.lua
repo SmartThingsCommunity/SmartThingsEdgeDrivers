@@ -48,7 +48,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Basic set (0xFF) should be handled by main componet",
+  "Basic Set (0xFF) should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -63,8 +63,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 0,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 1,
             dst_channels = { 0 }
           })
         )
@@ -79,7 +79,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0xFF) should be handled by switch componet",
+  "Basic Set (0xFF) should be handled by switch1 component",
   {
     {
       channel = "device_lifecycle",
@@ -94,8 +94,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 1,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 2,
             dst_channels = { 0 }
           })
         )
@@ -110,7 +110,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0x00) should be handled by main componet",
+  "Basic Set (0x00) should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -125,8 +125,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0x00},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 0,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 1,
             dst_channels = { 0 }
           })
         )
@@ -141,7 +141,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0x00) should be handled by switch componet",
+  "Basic Set (0x00) should be handled by switch1 component",
   {
     {
       channel = "device_lifecycle",
@@ -156,8 +156,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0x00},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 1,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 2,
             dst_channels = { 0 }
           })
         )
@@ -172,7 +172,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0xFF) should be handled by main componet",
+  "Basic Report (0xFF) should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -187,8 +187,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 0,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 1,
             dst_channels = { 0 }
           })
         )
@@ -203,7 +203,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0xFF) should be handled by switch componet",
+  "Basic Report (0xFF) should be handled by switch1 component",
   {
     {
       channel = "device_lifecycle",
@@ -218,8 +218,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 1,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 2,
             dst_channels = { 0 }
           })
         )
@@ -234,7 +234,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0x00) should be handled by main componet",
+  "Basic Report (0x00) should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -249,8 +249,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 0,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 1,
             dst_channels = { 0 }
           })
         )
@@ -265,7 +265,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Basic set (0x00) should be handled by switch componet",
+  "Basic Report (0x00) should be handled by switch1 component",
   {
     {
       channel = "device_lifecycle",
@@ -280,8 +280,8 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO, 
-            src_channel = 1,
+            encap = zw.ENCAP.AUTO,
+            src_channel = 2,
             dst_channels = { 0 }
           })
         )
@@ -297,7 +297,7 @@ test.register_message_test(
 
 
 test.register_message_test(
-  "Switch Binary report ON_ENABLE should be handled by main componet",
+  "Switch Binary Report ON_ENABLE should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -313,44 +313,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 0,
-              dst_channels={0}
-            }
-          )
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
-)
-
-test.register_message_test(
-  "Switch Binary report ON_ENABLE should be handled by switch1 component",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_device.id, "init" }
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report(
-            {
-              target_value=SwitchBinary.value.ON_ENABLE
-            }, 
-            {
-              encap = zw.ENCAP.AUTO, 
+              encap = zw.ENCAP.AUTO,
               src_channel = 1,
               dst_channels={0}
             }
@@ -361,13 +326,48 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary Report ON_ENABLE should be handled by switch1 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_device.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.ON_ENABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("switch1",  capabilities.switch.switch.on())
     }
   }
 )
 
 test.register_message_test(
-  "Switch Binary report OFF_DISABLE should be handled by main componet",
+  "Switch Binary Report OFF_DISABLE should be handled by main component",
   {
     {
       channel = "device_lifecycle",
@@ -383,10 +383,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 0, 
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
               dst_channels={0}
             }
           )
@@ -397,12 +397,12 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
-    }   
+    }
   }
 )
 
 test.register_message_test(
-  "Switch Binary report OFF_DISABLE should be handled by main switch1 component",
+  "Switch Binary Report OFF_DISABLE should be handled by switch1 component",
   {
     {
       channel = "device_lifecycle",
@@ -418,10 +418,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            }, 
+            },
             {
-              encap = zw.ENCAP.AUTO, 
-              src_channel = 1, 
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
               dst_channels={0}
             }
           )
@@ -452,9 +452,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -465,9 +465,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -491,9 +491,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -504,9 +504,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -529,9 +529,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -542,9 +542,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={1}
         })
       )
     )
@@ -568,9 +568,9 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -581,9 +581,9 @@ test.register_coroutine_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 0, 
-          dst_channels={1}
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels={2}
         })
       )
     )
@@ -601,7 +601,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels={}
+          dst_channels={1}
         })
       )
     )
@@ -612,7 +612,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels={1}
+            dst_channels={2}
           })
       )
     )

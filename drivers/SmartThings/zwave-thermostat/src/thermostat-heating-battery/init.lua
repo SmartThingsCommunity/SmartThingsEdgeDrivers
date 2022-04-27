@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Clock = (require "st.zwave.CommandClass.Clock")({version=1})
 --- @type st.zwave.CommandClass.Protection
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local log = require "log"
 
 local constants = (require "st.zwave.constants")
-local DEVICE_WAKEUP_INTERVAL = 1 * 60
+local DEVICE_WAKEUP_INTERVAL = 5 * 60
 local LATEST_BATTERY_REPORT_TIMESTAMP = "latest_battery_report_timestamp"
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 local CACHED_SETPOINT = "cached_setpoint"
@@ -179,7 +181,6 @@ local function battery_report_handler(self, device, cmd)
     device:set_field(LATEST_BATTERY_REPORT_TIMESTAMP, os.time())
 end
 
-
 --TODO: Update this once we've decided how to handle setpoint commands
 local function convert_to_device_temp(command_temp, device_scale)
     -- capability comes with CELSIUS scale by default, but not sure all the time
@@ -207,6 +208,7 @@ local function set_heating_setpoint(driver, device, command)
 
     local value_celsius = device_scale == ThermostatSetpoint.scale.CELSIUS and value or utils.f_to_c(value)
     device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = value_celsius, unit = 'C' }))
+    device:send(setCommand)
     device:set_field(CACHED_SETPOINT, setCommand)
 end
 
@@ -228,22 +230,29 @@ local function update_preference(self, device, args)
     end
 end
 
-local device_init = function(self, device)
+local function device_init(self, device)
     device:set_update_preferences_fn(update_preference)
 end
 
-local do_configure = function(self, device)
-    -- set fast (60sec) wakeup at initial time.
-    device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = 60 }))
+local function added_handler(self, device)
+    -- initial capability value
+    device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
+    device:emit_event(capabilities.battery.battery(100))
 
-    local set_normal_wakeup_interval = function()
-        device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = DEVICE_WAKEUP_INTERVAL }))
+    local interval_min = 5
+    if device.preferences.reportingInterval ~= nil then
+        interval_min = device.preferences.reportingInterval
     end
-
-    -- Set the wakeup interval after 2 minutes later.
-    device.thread:call_with_delay(2*60, set_normal_wakeup_interval)
+    device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = interval_min*60}))
 
     check_and_send_clock_set(device)
+
+    device:refresh()
+end
+
+local function do_refresh(self, device)
+    device:send(Battery:Get({}))
+    device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
 end
 
 local thermostat_heating_battery = {
@@ -260,13 +269,16 @@ local thermostat_heating_battery = {
         }
     },
     capability_handlers = {
+        [capabilities.refresh.ID] = {
+            [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+        },
         [capabilities.thermostatHeatingSetpoint.ID] = {
             [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_heating_setpoint
         }
     },
     lifecycle_handlers = {
-        doConfigure = do_configure,
-        init = device_init
+        init = device_init,
+        added = added_handler,
     },
     can_handle = can_handle_thermostat_heating_battery
 }

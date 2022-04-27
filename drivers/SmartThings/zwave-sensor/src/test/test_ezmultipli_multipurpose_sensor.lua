@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
@@ -216,7 +214,7 @@ test.register_coroutine_test(
                 Configuration:Set({parameter_number=3, size=1, configuration_value=liteMin})
             )
         )
-        
+
         test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
                 mock_device,
@@ -246,14 +244,14 @@ test.register_coroutine_test(
                 Configuration:Set({parameter_number=2, size=1, configuration_value=onLevel})
             )
         )
-        
+
         test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
                 mock_device,
                 Configuration:Set({parameter_number=3, size=1, configuration_value=liteMin})
             )
         )
-        
+
         test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
                 mock_device,

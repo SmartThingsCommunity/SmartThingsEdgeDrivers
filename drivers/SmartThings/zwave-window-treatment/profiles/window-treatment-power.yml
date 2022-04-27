@@ -12,5 +12,7 @@ components:
     version: 1
   - id: energyMeter
     version: 1
+  - id: refresh
+    version: 1
   categories:
   - name: Blind

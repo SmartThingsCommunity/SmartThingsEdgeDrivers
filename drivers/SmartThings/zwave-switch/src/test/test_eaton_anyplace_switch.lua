@@ -21,7 +21,7 @@ local t_utils = require "integration_test.utils"
 
 local sensor_endpoints = {
   {
-    command_classes = 
+    command_classes =
     {
       {value = zw.BASIC}
     }

@@ -1,7 +1,6 @@
 zigbeeManufacturer:
   - id: "E240-KR080Z0-HA"
     deviceLabel: Energy Monitor
-    manufacturer: ""
     model: "E240-KR080Z0-HA"
     deviceProfileName: power-meter-consumption-report
   - id: "Develco/ZHEMI101"
@@ -18,4 +17,11 @@ zigbeeManufacturer:
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
     model: "PMM-300Z1"
+    deviceProfileName: power-meter
+zigbeeGeneric:
+  - id: "genericMeter"
+    deviceLabel: Zigbee Meter
+    clusters:
+      server:
+        - 0x0702 #Simple Metering
     deviceProfileName: power-meter

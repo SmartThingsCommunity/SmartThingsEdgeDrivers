@@ -263,14 +263,17 @@ test.register_coroutine_test(
           invert = true
         }
       }
+      test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, INVERT_CLUSTER, INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.invert)})
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
       -- Emit same InfoChanged event again
+      test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       -- No events should be emitted
       updates.preferences.invert = false
+      test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, INVERT_CLUSTER, INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.invert)})
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))

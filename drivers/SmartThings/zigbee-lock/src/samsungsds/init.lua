@@ -40,7 +40,7 @@ local function mfg_lock_door_handler(driver, device, zb_rx)
   end
 end
 
-function unlock_cmd_handler(driver, device, command)
+local function unlock_cmd_handler(driver, device, command)
   device:send(cluster_base.build_manufacturer_specific_command(
           device,
           DoorLock.ID,

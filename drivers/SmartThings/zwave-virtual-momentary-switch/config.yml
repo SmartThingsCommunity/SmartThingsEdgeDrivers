@@ -1,0 +1,4 @@
+name: 'Z-Wave Virtual Momentary Switch'
+packageKey: 'zwave-virtual-momentary-switch'
+permissions:
+  zwave: {}

@@ -31,7 +31,7 @@ local INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS = {
   {mfr = 0x0312, prod = 0x0221, model = 0x251C}, -- Inovelli Outlet
   {mfr = 0x0312, prod = 0xB221, model = 0x251C}, -- Inovelli Outlet
   {mfr = 0x0312, prod = 0x0221, model = 0x611C}, -- Inovelli Outlet
-  {mfr = 0x015D, prod = 0x0221, model = 0x611C}, -- Inovelli Outlet  
+  {mfr = 0x015D, prod = 0x0221, model = 0x611C}, -- Inovelli Outlet
   {mfr = 0x015D, prod = 0x6100, model = 0x6100}, -- Inovelli Outlet
   {mfr = 0x0312, prod = 0x6100, model = 0x6100}, -- Inovelli Outlet
   {mfr = 0x015D, prod = 0x2500, model = 0x2500}, -- Inovelli Outlet
@@ -90,7 +90,7 @@ end
 local function set_switch_value(driver, device, value, command)
   if command.component == "main" then
     local event = value == SwitchBinary.value.ON_ENABLE and SwitchAll:On({}) or SwitchAll:Off({})
-    device:send(event)    
+    device:send(event)
     query_switch_status(device)
   else
     device:send_to_component(Basic:Set({value = value}), command.component)

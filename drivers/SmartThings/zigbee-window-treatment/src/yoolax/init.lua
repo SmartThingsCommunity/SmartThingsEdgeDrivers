@@ -32,7 +32,7 @@ local is_yoolax_window_shade = function(opts, driver, device)
 end
 
 local set_window_shade_level = function(level)
-  return function(driver, device, cmd) 
+  return function(driver, device, cmd)
     device:send_to_component(cmd.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
   end
 end

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -43,9 +43,9 @@ end
 local do_configure = function(self, device)
   device:refresh()
   for buttons = 1,4 do
-    device:send(Configuration:Set({ configuration_value = 1, parameter_number = 240 + buttons, size = 1 }))
-    device:send(Configuration:Set({ configuration_value = 1, parameter_number = ( buttons - 1 ) * 40, size = 1 }))
-    device:send(Configuration:Set({ configuration_value = 1, parameter_number = ( buttons - 1 ) * 40 + 20, size = 1 }))
+    device:send(Configuration:Set({parameter_number = 240 + buttons , size = 1, configuration_value = 1}))
+    device:send(Configuration:Set({parameter_number = (buttons - 1) * 40, size = 4, configuration_value = 1 << 24 | ((buttons - 1) * 40 + 1) << 16}))
+    device:send(Configuration:Set({parameter_number = (buttons - 1) * 40 + 20, size = 4, configuration_value = 1 << 24 | ((buttons - 1) * 40 + 21) << 16}))
   end
 end
 

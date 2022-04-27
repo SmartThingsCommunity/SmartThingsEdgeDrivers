@@ -12,7 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -135,7 +136,7 @@ local devices = {
       product_ids = {0x1001, 0x1002, 0x2001, 0x2002}
     },
     PARAMETERS = {
-      motionSensitivity = {parameter_number = 1, size = 2},
+      motionSensitivityLevel = {parameter_number = 1, size = 2},
       motionBlindTime = {parameter_number = 2, size = 1},
       motionCancelationDelay = {parameter_number = 6, size = 2},
       motionOperatingMode = {parameter_number = 8, size = 1},
