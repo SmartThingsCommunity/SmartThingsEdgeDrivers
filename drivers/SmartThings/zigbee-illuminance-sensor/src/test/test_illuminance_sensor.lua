@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -57,6 +57,27 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
      }
   }
+)
+
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send(
+        {
+          mock_device.id,
+          IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 1, 3600, 1)
+        }
+    )
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.zigbee:__expect_send(
+        {
+          mock_device.id,
+          zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IlluminanceMeasurement.ID)
+        }
+    )
+  end
 )
 
 test.run_registered_tests()

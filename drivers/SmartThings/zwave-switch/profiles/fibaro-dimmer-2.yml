@@ -61,6 +61,17 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
+        0: "Readout"
+        1: "Auto-calibrate the load w/o Bypass"
+        2: "Auto-calibrate the load with Bypass"
+      default: 0
+  - name: "switchType"
+    title: "Switch type"
+    description: "Choose between momentary, toggle and roller blind switch."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
         0: "Momentary switch"
         1: "Toggle switch"
         2: "Roller blind switch"

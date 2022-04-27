@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ local function application_busy_handler(self, device, cmd)
   if forced_refresh_thread then
     device.thread:cancel_timer(forced_refresh_thread)
   end
-  forced_refresh_thread = device.thread:call_with_delay(cmd.args.wait_time + 5, 
+  forced_refresh_thread = device.thread:call_with_delay(cmd.args.wait_time + 5,
     function()
       device:refresh()
     end

@@ -13,8 +13,10 @@
 -- limitations under the License.
 
 local clusters = require "st.zigbee.zcl.clusters"
+local constants = require "st.zigbee.constants"
 
 local ColorControl = clusters.ColorControl
+local IASZone = clusters.IASZone
 
 local devices = {
   IKEA_RGB_BULB = {
@@ -40,6 +42,21 @@ local devices = {
         reportable_change = 16
       }
     }
+  },
+  SENGLED_BULB_WITH_MOTION_SENSOR = {
+    FINGERPRINTS = {
+      { mfr = "sengled", model = "E13-N11" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = IASZone.ID,
+        attribute = IASZone.attributes.ZoneStatus.ID,
+        minimum_interval = 30,
+        maximum_interval = 300,
+        data_type = IASZone.attributes.ZoneStatus.base_type
+      }
+    },
+    IAS_ZONE_CONFIG_METHOD = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
   }
 }
 
@@ -50,6 +67,17 @@ configurations.get_device_configuration = function(zigbee_device)
     for _, fingerprint in pairs(device.FINGERPRINTS) do
       if zigbee_device:get_manufacturer() == fingerprint.mfr and zigbee_device:get_model() == fingerprint.model then
         return device.CONFIGURATION
+      end
+    end
+  end
+  return nil
+end
+
+configurations.get_ias_zone_config_method = function(zigbee_device)
+  for _, device in pairs(devices) do
+    for _, fingerprint in pairs(device.FINGERPRINTS) do
+      if zigbee_device:get_manufacturer() == fingerprint.mfr and zigbee_device:get_model() == fingerprint.model then
+        return device.IAS_ZONE_CONFIG_METHOD
       end
     end
   end

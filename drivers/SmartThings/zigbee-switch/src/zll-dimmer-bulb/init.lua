@@ -57,7 +57,9 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
   },
   ["Megaman"] = {
     ["ZLL-DimmableLight"] = true,
-    ["ZLL-ExtendedColor"] = true,
+    ["ZLL-ExtendedColor"] = true
+  },
+  ["MEGAMAN"] = {
     ["BSZTM002"] = true,
     ["BSZTM003"] = true
   },
@@ -121,7 +123,12 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["LTW015"] = true
   },
   ["sengled"] = {
-    ["E14-U43"] = true
+    ["E14-U43"] = true,
+    ["E13-N11"] = true
+  },
+  ["GLEDOPTO"] = {
+    ["GL-C-008"] = true,
+    ["GL-B-001Z"] = true
   },
   ["GLEDOPTO"] = {
     ["GL-C-008"] = true,

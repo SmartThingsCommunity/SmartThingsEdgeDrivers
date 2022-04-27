@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ local AEOTEC_DOORBELL_SIREN_FINGERPRINTS = {
 local COMPONENT_NAME = "componentName"
 local TONE = "tone"
 local VOLUME = "volume"
+local STOP_SIREN = "stopSiren"
 local CONFIGURE_SOUND_AND_VOLUME = "configureSoundAndVolume"
 local TRIGGER_BUTTON_PAIRING = "triggerButtonPairing"
 local TRIGGER_BUTTON_UNPAIRING = "triggerButtonUnpairing"
@@ -72,7 +73,7 @@ end
 
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("sound(%d)")
-  return {ep_num and tonumber(ep_num)} or {}
+  return {ep_num and tonumber(ep_num)}
 end
 
 local function endpoint_to_component(device, ep)
@@ -99,11 +100,16 @@ end
 local function handleButtonBatteryEvent(device, endpoint, statusValue)
   local deviceProfileChangeInProgress = device:get_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS)
 
-  if(deviceProfileChangeInProgress and deviceProfileChangeInProgress == true) then
+  if (deviceProfileChangeInProgress and deviceProfileChangeInProgress == true) then
     device:set_field(NEXT_BUTTON_BATTERY_EVENT_DETAILS, {endpoint = endpoint, batteryStatus = statusValue}, {persist = true})
   else
     updateButtonBatteryStatus(device, endpoint, statusValue)
   end
+end
+
+local function stop_siren(device, command, args)
+  device:send_to_component(Basic:Set({value = OFF}), "main")
+  device:send_to_component(Basic:Get({}), "main")
 end
 
 --- Handle preference changes
@@ -114,6 +120,12 @@ end
 --- @param args
 local function info_changed(driver, device, event, args)
   local preferences = preferencesMap.get_device_parameters(device)
+
+  -- check if user stops the siren
+  local stopSiren = device.preferences[STOP_SIREN]
+  if (args.old_st_store.preferences[STOP_SIREN] ~= stopSiren and stopSiren) then
+    stop_siren(device)
+  end
 
   -- check if user triggered sound and volume configuration
   local configureSoundAndVolume = device.preferences[CONFIGURE_SOUND_AND_VOLUME]
@@ -129,7 +141,7 @@ local function info_changed(driver, device, event, args)
   if (args.old_st_store.preferences[TRIGGER_BUTTON_UNPAIRING] ~= triggerButtonUnpairing and triggerButtonUnpairing) then
     local buttonUnpairingMode = device.preferences[BUTTON_UNPAIRING_MODE]
     device:send(Configuration:Set(
-      { 
+      {
         parameter_number = preferences[BUTTON_UNPAIRING_MODE].parameter_number,
         size = preferences[BUTTON_UNPAIRING_MODE].size,
         configuration_value = buttonUnpairingMode
@@ -167,13 +179,11 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-local function device_added(self, device)
-  do_refresh(self, device)
-end
-
-local function device_init(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+local function clearAlarmAndChime(device, endpoint)
+  if (endpoint) then
+    device:emit_event_for_endpoint(endpoint, capabilities.alarm.alarm.off())
+    device:emit_event_for_endpoint(endpoint, capabilities.chime.chime.off())
+  end
 end
 
 local function deactivateTamper(device)
@@ -184,29 +194,32 @@ local function activateTamper(device)
   device:emit_event(capabilities.tamperAlert.tamper.detected())
   device.thread:call_with_delay(
     TAMPER_CLEAR_DELAY,
-    function(d)
-      deactivateTamper(device)
-    end
+      function(d)
+        deactivateTamper(device)
+      end
   )
 end
 
-local function clearAlarmAndChime(device, endpoint)
-  if(endpoint) then
-    device:emit_event_for_endpoint(endpoint, capabilities.alarm.alarm.off())
-    device:emit_event_for_endpoint(endpoint, capabilities.chime.chime.off())
+local function clearAlarmAndChimeStateOfSoundComponents(device)
+  for endpoint = 1, NUMBER_OF_SOUND_COMPONENTS do
+    clearAlarmAndChime(device, endpoint)
   end
+end
+
+local function device_added(self, device)
+  deactivateTamper(device)
+  clearAlarmAndChimeStateOfSoundComponents(device)
+end
+
+local function device_init(self, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
 end
 
 local function activateSoundComponent(device, endpoint)
-  if(endpoint) then
+  if (endpoint) then
     device:emit_event_for_endpoint(endpoint, capabilities.alarm.alarm.both())
     device:emit_event_for_endpoint(endpoint, capabilities.chime.chime.chime())
-  end
-end
-
-local function clearAlarmAndChimeStateOfSoundComponents(device)
-  for endpoint = 2, NUMBER_OF_SOUND_COMPONENTS do
-    clearAlarmAndChime(device, endpoint)
   end
 end
 
@@ -225,9 +238,14 @@ local function setActiveEndpoint(device, endpoint)
   if (endpoint) then
     device:set_field(LAST_TRIGGERED_ENDPOINT, endpoint, {persist = true})
     activateSoundComponent(device, endpoint)
-    if(endpoint ~= 0) then
-      activateSoundComponent(device, 0)
-    end
+  end
+end
+
+local function setInactiveEndpoint(device)
+  local lastTriggeredEndpoint = device:get_field(LAST_TRIGGERED_ENDPOINT)
+  if (lastTriggeredEndpoint) then
+    clearAlarmAndChime(device, lastTriggeredEndpoint)
+    device:set_field(LAST_TRIGGERED_ENDPOINT, nil, {persist = true})
   end
 end
 
@@ -235,13 +253,7 @@ local function resetActiveEndpoint(device)
   local lastTriggeredEndpoint = device:get_field(LAST_TRIGGERED_ENDPOINT)
   if (lastTriggeredEndpoint) then
     clearAlarmAndChime(device, lastTriggeredEndpoint)
-    --device:send_to_component(Basic:Get({}), endpoint_to_component(device,lastTriggeredEndpoint))
     device:send_to_component(Basic:Set({value = OFF}), endpoint_to_component(device,lastTriggeredEndpoint))
-    if (lastTriggeredEndpoint ~= 0) then
-      clearAlarmAndChime(device, 0)
-    end
-  else
-    clearAlarmAndChime(device, 0)
   end
 end
 
@@ -250,14 +262,10 @@ local function do_configure (self, device)
 end
 
 local function basic_report_handler(self, device, cmd)
-  if cmd.args.value == ON then
-    device:emit_event_for_endpoint(cmd.src_channel, capabilities.alarm.alarm.both())
-  else
-    clearAlarmAndChime(device, cmd.src_channel)
-    if (cmd.src_channel == 0) then
-      clearAlarmAndChimeStateOfSoundComponents(device)
-    end
-  end
+  -- device sends basic report (OFF) right after sound (endpoint) is switched ON and handling such events make impossible to stop the endpoint
+  -- additionally device sends NotificationReports (SIREN: ACTIVE/STATE_IDLE is sent) and that's main indicator for alarm/chime events
+  -- because NotificationReports SIREN/STATE_IDLE is sent when endpoint stops playing
+  -- we need to handle this here and do nothing, because z-wave defaults base on BasicReport too and produce alarm and chime events
 end
 
 local function notification_report_handler(self, device, cmd)
@@ -265,21 +273,19 @@ local function notification_report_handler(self, device, cmd)
   local notification_event = cmd.args.event
 
   if (notification_type == Notification.notification_type.HOME_SECURITY) then
-    if(notification_event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED) then
+    if (notification_event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED) then
       activateTamper(device)
-      setActiveEndpoint(device, cmd.src_channel)
     elseif (notification_event ==  Notification.event.home_security.STATE_IDLE) then
       deactivateTamper(device)
-      resetActiveEndpoint(device)
     end
   elseif (notification_type == Notification.notification_type.SIREN) then
-    if(notification_event ==  Notification.event.siren.ACTIVE) then
+    if (notification_event ==  Notification.event.siren.ACTIVE) then
       setActiveEndpoint(device, cmd.src_channel)
     elseif (notification_event ==  Notification.event.siren.STATE_IDLE) then
-      resetActiveEndpoint(device)
+      setInactiveEndpoint(device)
     end
   elseif (notification_type == Notification.notification_type.POWER_MANAGEMENT) then
-    if(notification_event ==  Notification.event.power_management.REPLACE_BATTERY_SOON) then
+    if (notification_event ==  Notification.event.power_management.REPLACE_BATTERY_SOON) then
       changeDeviceProfileIfNeeded(device, cmd.src_channel)
       handleButtonBatteryEvent(device, cmd.src_channel, BUTTON_BATTERY_LOW)
     elseif (notification_event ==  Notification.event.power_management.STATE_IDLE) then
@@ -293,8 +299,7 @@ local function alarmChimeOnOff(device, command, newValue)
   if (device and command and newValue) then
     local endpoint = component_to_endpoint(device, command.component)
     device:send(Basic:Set({value = newValue})):to_endpoint(endpoint)
-    -- device:send(Basic:Get({})):to_endpoint(endpoint)
-    if (endpoint == 1 or (endpoint > 1 and newValue == ON)) then
+    if (newValue == ON) then
       setActiveEndpoint(endpoint)
     end
   end

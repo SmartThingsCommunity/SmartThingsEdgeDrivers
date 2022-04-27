@@ -1,63 +1,58 @@
 zwaveManufacturer:
   - id: "AEOTEC_LED_BULB_US"
-    deviceLabel: Aeotec LED Bulb
+    deviceLabel: Aeotec Light
     manufacturerId: 0x086
     productType: 0x0103
     productId: 0x0062
     deviceProfileName: rgbw-bulb-2580K-7050K
   - id: "AEOTEC_LED_BULB_EU"
-    deviceLabel: Aeotec LED Bulb
+    deviceLabel: Aeotec Light
     manufacturerId: 0x086
     productType: 0x0003
     productId: 0x0062
     deviceProfileName: rgbw-bulb-2580K-7050K
   - id: "AEOTEC_LED_BULB6_US"
-    deviceLabel: Aeotec LED Bulb 6
+    deviceLabel: Aeotec Light
     manufacturerId: 0x0371
     productType: 0x0103
     productId: 0x0002
     deviceProfileName: rgbw-bulb
   - id: "AEOTEC_LED_BULB6_EU"
-    deviceLabel: Aeotec LED Bulb 6
+    deviceLabel: Aeotec Light
     manufacturerId: 0x0371
     productType: 0x0003
     productId: 0x0002
     deviceProfileName: rgbw-bulb
   - id: "AEOTEC_LED_STRIP_US"
-    deviceLabel: Aeotec LED Strip
+    deviceLabel: Aeotec Light
     manufacturerId: 0x0086
     productType: 0x0103
     productId: 0x0079
     deviceProfileName: rgbw-bulb-3000K-8000K
   - id: "AEOTEC_LED_STRIP_EU"
-    deviceLabel: Aeotec LED Strip
+    deviceLabel: Aeotec Light
     manufacturerId: 0x0086
     productType: 0x0003
     productId: 0x0079
     deviceProfileName: rgbw-bulb-3000K-8000K
-  - id: "ILLUMIN_RGBW_BULB"
-    deviceLabel: Illumin RGBW Bulb
+  - id: "ILUMIN_RGBW_BULB"
+    deviceLabel: ilumin Light
     manufacturerId: 0x0300
     productType: 0x0003
     productId: 0x0003
     deviceProfileName: rgbw-bulb
-  - id: "ILLUMIN_RGBW_BULB2"
-    deviceLabel: Illumin RGBW Bulb
+  - id: "ILUMIN_RGBW_BULB2"
+    deviceLabel: ilumin Light
     manufacturerId: 0x031E
     productType: 0x0005
     productId: 0x0001
     deviceProfileName: rgbw-bulb
-  - id: 0371/0103
+  - id: Aeon LED Bulb 6 Multi-White
     deviceLabel: Aeon Light
     manufacturerId: 0x0371
-    productType: 0x0103
+    productId: 0x0001
     deviceProfileName: switch-level-colortemp
-  - id: 0371/0003
-    deviceLabel: Aeon Light
-    manufacturerId: 0x0371
-    productType: 0x0003
-    deviceProfileName: switch-level-colortemp
-  - id: 0300/0003/0004
+  - id: ilumin Tunable White
     deviceLabel: ilumin Light
     manufacturerId: 0x0300
     productType: 0x0003

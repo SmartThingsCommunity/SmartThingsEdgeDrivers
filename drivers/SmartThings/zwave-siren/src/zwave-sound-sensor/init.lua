@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ local function alarm_report_handler(driver, device, cmd)
   local alarm_type = cmd.args.z_wave_alarm_type
   local alarm_event = cmd.args.z_wave_alarm_event
 
-  if alarm_type == Alarm.z_wave_alarm_type.SMOKE or cmd.alarm_type == Alarm.z_wave_alarm_type.CO then
-    if alarm_event == Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED_LOCATION_PROVIDED or 
+  if alarm_type == Alarm.z_wave_alarm_type.SMOKE or alarm_type == Alarm.z_wave_alarm_type.CO then
+    if alarm_event == Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED_LOCATION_PROVIDED or
        alarm_event == Alarm.z_wave_alarm_event.co.CARBON_MONOXIDE_DETECTED or
        alarm_event == Alarm.z_wave_alarm_event.smoke.DETECTED_LOCATION_PROVIDED or
        alarm_event == Alarm.z_wave_alarm_event.smoke.DETECTED then

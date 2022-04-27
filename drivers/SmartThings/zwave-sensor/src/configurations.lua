@@ -12,7 +12,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+--- @type st.zwave.CommandClass.Association
+local Association = (require "st.zwave.CommandClass.Association")({ version=2 })
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 })
+--- @type st.zwave.CommandClass.WakeUp
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -263,6 +270,21 @@ local devices = {
     CONFIGURATION = {
       {parameter_number = 24, configuration_value = 4, size = 1},
       {parameter_number = 60, configuration_value = 5, size = 1},
+    },
+    WAKE_UP = {
+      {seconds = 7200}
+    }
+  },
+  FIBARO_MOTION_SENSOR_ZW5 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x010F,
+      product_types = 0x0801
+    },
+    ASSOCIATION = {
+      {grouping_identifier = 1}
+    },
+    CONFIGURATION = {
+      {parameter_number = 24, configuration_value = 2, size = 1}
     },
     WAKE_UP = {
       {seconds = 7200}

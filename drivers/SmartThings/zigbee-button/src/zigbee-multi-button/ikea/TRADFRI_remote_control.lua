@@ -21,7 +21,7 @@ local OnOff = clusters.OnOff
 local Scenes = clusters.Scenes
 local PowerConfiguration = clusters.PowerConfiguration
 
-function build_button_handler(button_name, pressed_type)
+local function build_button_handler(button_name, pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true
@@ -36,7 +36,7 @@ function build_button_handler(button_name, pressed_type)
   end
 end
 
-function build_button_payload_handler(pressed_type)
+local function build_button_payload_handler(pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true
@@ -57,12 +57,14 @@ end
 
 local function added_handler(self, device)
   for comp_name, comp in pairs(device.profile.components) do
-    if comp_name ~= "main" then
-      if comp_name == "button5" then
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}))
-      else
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
-      end
+    if comp_name == "button5" then
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}))
+    else
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
+    end
+    if comp_name == "main" then
+      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 5}))
+    else
       device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}))
     end
   end

@@ -13,19 +13,22 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
+local log = require "log"
+local lua_socket = require "socket"
 
 local button_utils = {}
 
 local BUTTON_X_PRESS_TIME = "button_%d_pressed_time"
-local HOLD_TIME_THRESHOLD = 1
 local TIMEOUT_THRESHOLD = 10
 
 button_utils.init_button_press = function(device, button_number)
-  device:set_field(string.format(BUTTON_X_PRESS_TIME, button_number or 0), os.time())
+  device:set_field(string.format(BUTTON_X_PRESS_TIME, button_number or 0), lua_socket.gettime())
 end
 
 button_utils.send_pushed_or_held_button_event_if_applicable = function(device, button_number)
   local press_time = device:get_field(string.format(BUTTON_X_PRESS_TIME, button_number or 0))
+  local hold_time_threshold = tonumber(device.preferences.holdTime or 1)
+
   if press_time == nil then
     press_time = device:get_field(string.format(BUTTON_X_PRESS_TIME, 0))
     if press_time == nil then
@@ -35,7 +38,7 @@ button_utils.send_pushed_or_held_button_event_if_applicable = function(device, b
   end
   device:set_field(string.format(BUTTON_X_PRESS_TIME, button_number or 0), nil)
   local additional_fields = {state_change = true}
-  local time_diff = os.time() - press_time
+  local time_diff = lua_socket.gettime() - press_time
   local button_name
   if button_number ~= nil then
     button_name = "button" .. button_number
@@ -43,7 +46,7 @@ button_utils.send_pushed_or_held_button_event_if_applicable = function(device, b
     button_name = "main"
   end
   if time_diff < TIMEOUT_THRESHOLD  then
-    local event = time_diff < HOLD_TIME_THRESHOLD and
+    local event = time_diff < hold_time_threshold and
       capabilities.button.button.pushed(additional_fields) or
       capabilities.button.button.held(additional_fields)
     local component = device.profile.components[button_name]

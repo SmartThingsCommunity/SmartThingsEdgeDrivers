@@ -24,10 +24,15 @@ zigbeeManufacturer:
     manufacturer: SOMFY
     model: Glydea Ultra Curtain
     deviceProfileName: window-treatment-profile
-  - id: "SOMFY/Roller"
+  - id: "SOMFY/Sonesse 30 WF Roller"
     deviceLabel: SOMFY Window Treatment
     manufacturer: SOMFY
-    model: Roller
+    model: Sonesse 30 WF Roller
+    deviceProfileName: window-treatment-profile
+  - id: "SOMFY/Sonesse 40 Roller"
+    deviceLabel: SOMFY Window Treatment
+    manufacturer: SOMFY
+    model: Sonesse 40 Roller
     deviceProfileName: window-treatment-profile
   - id: "/E2B0-KR000Z0-HA"
     deviceLabel: eZEX Window Treatment
@@ -62,4 +67,18 @@ zigbeeManufacturer:
     deviceLabel: AXIS Window Treatment
     manufacturer: AXIS
     model: Gear
+    deviceProfileName: window-treatment-battery
+zigbeeGeneric:
+  - id: "genericShade"
+    deviceLabel: Zigbee Window Treatment
+    clusters:
+      server:
+        - 0x0102 #Window Covering
+    deviceProfileName: window-treatment-profile
+  - id: "genericShade-battery"
+    deviceLabel: Zigbee Window Treatment
+    clusters:
+      server:
+        - 0x0102 #Window Covering
+        - 0x0001 #Power Configuration
     deviceProfileName: window-treatment-battery

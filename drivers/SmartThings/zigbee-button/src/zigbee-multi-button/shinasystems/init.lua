@@ -45,7 +45,7 @@ local is_shinasystem_button = function(opts, driver, device)
   return false
 end
 
-function build_button_handler(pressed_type)
+local function build_button_handler(pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true

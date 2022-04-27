@@ -45,6 +45,19 @@ local device_init = function(self, device)
   device:set_update_preferences_fn(update_preferences)
 end
 
+--- Add device
+---
+--- @param self st.zwave.Driver
+--- @param device st.zwave.Device
+local device_added = function(self, device)
+  if device:supports_capability_by_id("smokeDetector") then
+    device:emit_event(capabilities.smokeDetector.smoke.clear())
+  end
+  if device:supports_capability_by_id("carbonMonoxideDetector") then
+    device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  end
+end
+
 --- Handle preference changes
 ---
 --- @param driver st.zwave.Driver
@@ -78,7 +91,8 @@ local driver_template = {
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    added = device_added
   }
 }
 

@@ -221,13 +221,29 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "Refresh should read all necessary attributes",
+  "added lifecycle event",
   {
     {
       channel = "device_lifecycle",
       direction = "receive",
       message = {mock_device.id, "added"}
     },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    }
+  }
+)
+
+test.register_message_test(
+  "Refresh should read all necessary attributes",
+  {
     {
       channel = "capability",
       direction = "receive",
@@ -259,7 +275,7 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "Setting a alarm command should be handled",
+  "Setting an alarm command should be handled",
   function()
     local zcl_messages = require "st.zigbee.zcl"
     local messages = require "st.zigbee.messages"
@@ -278,8 +294,6 @@ test.register_coroutine_test(
     local zclh = zcl_messages.ZclHeader({
       cmd = data_types.ZCLCommandId(zcl_cmds.DefaultResponse.ID)
     })
-
-    local clust_id = data_types.ClusterId(IASWD.ID)
 
     local addrh = messages.AddressHeader(
         mock_device:get_short_address(),

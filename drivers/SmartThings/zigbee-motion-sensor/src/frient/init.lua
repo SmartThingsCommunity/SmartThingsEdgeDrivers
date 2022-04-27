@@ -44,7 +44,7 @@ end
 local function do_configure(driver, device)
   device:configure()
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(
-    device, 
+    device,
     FRIENT_BATTERY_CONFIG.minimum_interval,
     FRIENT_BATTERY_CONFIG.maximum_interval,
     FRIENT_BATTERY_CONFIG.reportable_change

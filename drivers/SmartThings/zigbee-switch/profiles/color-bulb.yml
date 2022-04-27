@@ -4,9 +4,9 @@ components:
   capabilities:
   - id: switch
     version: 1
-  - id: switchLevel
-    version: 1
   - id: colorControl
+    version: 1
+  - id: switchLevel
     version: 1
   - id: firmwareUpdate
     version: 1

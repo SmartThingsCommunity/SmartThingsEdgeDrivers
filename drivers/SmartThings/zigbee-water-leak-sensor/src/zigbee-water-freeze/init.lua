@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ local device_management = require "st.zigbee.device_management"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 local PollControl = zcl_clusters.PollControl
@@ -64,6 +65,7 @@ local zigbee_water_freeze = {
     }
   },
   lifecycle_handlers = {
+    init = battery_defaults.build_linear_voltage_init(2.2, 3.0),
     doConfigure = do_configure
   },
   can_handle = function(opts, driver, device, ...)

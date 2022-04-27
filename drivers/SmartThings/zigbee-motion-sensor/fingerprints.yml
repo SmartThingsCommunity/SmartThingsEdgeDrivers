@@ -98,58 +98,69 @@ zigbeeManufacturer:
     manufacturer: CentraLite
     model: Motion Sensor-A
     deviceProfileName: motion-temp-battery
-  # - id: SmartThings/motionv4
-  #   deviceLabel: Motion Sensor
-  #   manufacturer: SmartThings
-  #   model: motionv4
-  #   deviceProfileName: motion-temp-battery
-  # - id: SmartThings/motionv5
-  #   deviceLabel: Motion Sensor
-  #   manufacturer: SmartThings
-  #   model: motionv5
-  #   deviceProfileName: motion-temp-battery
-  # - id: Bosch/RFPR-ZB
-  #   deviceLabel: Bosch Motion Sensor
-  #   manufacturer: Bosch
-  #   model: RFPR-ZB
-  #   deviceProfileName: motion-temp-battery
-  # - id: Bosch/RFDL-ZB-MS
-  #   deviceLabel: Bosch Motion Sensor
-  #   manufacturer: Bosch
-  #   model: RFDL-ZB-MS
-  #   deviceProfileName: motion-temp-battery
-  # - id: Samjin/motion
-  #   deviceLabel: Motion Sensor
-  #   manufacturer: Samjin
-  #   model: motion
-  #   deviceProfileName: motion-temp-battery
-  # - id: Ecolink/PIRZB1-ECO
-  #   deviceLabel: Ecolink Motion Sensor
-  #   manufacturer: Ecolink
-  #   model: PIRZB1-ECO
-  #   deviceProfileName: motion-temp-battery
-  # - id: ADUROLIGHT/VMS_ADUROLIGHT
-  #   deviceLabel: ERIA Motion Sensor
-  #   manufacturer: ADUROLIGHT
-  #   model: VMS_ADUROLIGHT
-  #   deviceProfileName: motion-battery
-  # - id: AduroSmart/Eria/VMS_ADUROLIGHT
-  #   deviceLabel: ERIA Motion Sensor
-  #   manufacturer: AduroSmart Eria
-  #   model: VMS_ADUROLIGHT
-  #   deviceProfileName: motion-battery
-  # - id: frientA/S/140
-  #   deviceLabel: frient Motion Sensor
-  #   manufacturer: frient A/S
-  #   model: MOSZB-140
-  #   deviceProfileName: motion-temp-battery
-  # - id: frientA/S/141
-  #   deviceLabel: frient Motion Sensor
-  #   manufacturer: frient A/S
-  #   model: MOSZB-141
-  #   deviceProfileName: motion-battery
-  # - id: Compacta/ZBMS3-1
-  #   deviceLabel: Smartenit Motion Sensor
-  #   manufacturer: Compacta
-  #   model: ZBMS3-1
-  #   deviceProfileName: motion-temp-battery
+  - id: SmartThings/motionv4
+    deviceLabel: Motion Sensor
+    manufacturer: SmartThings
+    model: motionv4
+    deviceProfileName: motion-temp-battery
+  - id: SmartThings/motionv5
+    deviceLabel: Motion Sensor
+    manufacturer: SmartThings
+    model: motionv5
+    deviceProfileName: motion-temp-battery
+  - id: Bosch/RFPR-ZB
+    deviceLabel: Bosch Motion Sensor
+    manufacturer: Bosch
+    model: RFPR-ZB
+    deviceProfileName: motion-temp-battery
+  - id: Bosch/RFDL-ZB-MS
+    deviceLabel: Bosch Motion Sensor
+    manufacturer: Bosch
+    model: RFDL-ZB-MS
+    deviceProfileName: motion-temp-battery
+  - id: Samjin/motion
+    deviceLabel: Motion Sensor
+    manufacturer: Samjin
+    model: motion
+    deviceProfileName: motion-temp-battery
+  - id: Ecolink/PIRZB1-ECO
+    deviceLabel: Ecolink Motion Sensor
+    manufacturer: Ecolink
+    model: PIRZB1-ECO
+    deviceProfileName: motion-temp-battery
+  - id: ADUROLIGHT/VMS_ADUROLIGHT
+    deviceLabel: ERIA Motion Sensor
+    manufacturer: ADUROLIGHT
+    model: VMS_ADUROLIGHT
+    deviceProfileName: motion-battery
+  - id: AduroSmart/Eria/VMS_ADUROLIGHT
+    deviceLabel: ERIA Motion Sensor
+    manufacturer: AduroSmart Eria
+    model: VMS_ADUROLIGHT
+    deviceProfileName: motion-battery
+  - id: frientA/S/140
+    deviceLabel: frient Motion Sensor
+    manufacturer: frient A/S
+    model: MOSZB-140
+    deviceProfileName: motion-temp-battery
+  - id: frientA/S/141
+    deviceLabel: frient Motion Sensor
+    manufacturer: frient A/S
+    model: MOSZB-141
+    deviceProfileName: motion-battery
+  - id: Compacta/ZBMS3-1
+    deviceLabel: Smartenit Motion Sensor
+    manufacturer: Compacta
+    model: ZBMS3-1
+    deviceProfileName: motion-temp-battery
+# This model has been seen to have an invisible character in the model string
+  - id: Compacta/ZBMS3-1/0x1F
+    deviceLabel: Smartenit Motion Sensor
+    manufacturer: Compacta
+    model: ZBMS3-1
+    deviceProfileName: motion-temp-battery
+  - id: SmartThings/PGC314
+    deviceLabel: SmartThings Motion Sensor
+    manufacturer: SmartThings
+    model: PGC314
+    deviceProfileName: smartsense-motion

@@ -1,10 +1,4 @@
 zwaveManufacturer:
-  - id: "1"
-    deviceLabel: Aeotec Panic Button
-    manufacturerId: 0x0086
-    productType: 0x0001
-    productId: 0x0026
-    deviceProfileName: button-generic
   - id: "026E/5643/5A31"
     deviceLabel: 2 Button Window Remote
     manufacturerId: 0x026E
@@ -62,9 +56,14 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productType: 0x0001
     productId: 0x0003
-    deviceProfileName: multi-button-4
+    deviceProfileName: multi-button-4-no-battery
   - id: Aeotec/wallmote7/illumino
     deviceLabel: Aeotec Remote Control
     manufacturerId: 0x0371
     productId: 0x0016
     deviceProfileName: multi-button-2
+  - id: Aeon/PanicButton
+    deviceLabel: Aeotec Button
+    manufacturerId: 0x0086
+    productId: 0x0026
+    deviceProfileName: button-generic

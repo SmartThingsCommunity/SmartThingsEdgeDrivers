@@ -51,16 +51,15 @@ local do_configure = function(self, device)
 end
 
 local function added_handler(self, device)
-  local sv = supported_values.get_device_parameters(device)
-  for comp_name, comp in pairs(device.profile.components) do
-    if comp_name ~= "main" then
-      if sv ~= nil then
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues(sv.supported_button_values))
-      else
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
-      end
-      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}))
+  local config = supported_values.get_device_parameters(device)
+  for _, component in pairs(device.profile.components) do
+    local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
+    if config ~= nil then
+      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES))
+    else
+      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
     end
+    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end

@@ -60,6 +60,11 @@ local device_init = function(self, device)
       device:add_monitored_attribute(attribute)
     end
   end
+
+  local ias_zone_config_method = configurationMap.get_ias_zone_config_method(device)
+  if ias_zone_config_method ~= nil then
+    device:set_ias_zone_config_method(ias_zone_config_method)
+  end
 end
 
 local zigbee_switch_driver_template = {
@@ -69,7 +74,8 @@ local zigbee_switch_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
     capabilities.powerMeter,
-    capabilities.energyMeter
+    capabilities.energyMeter,
+    capabilities.motionSensor
   },
   sub_drivers = {
     require("ezex"),
@@ -91,7 +97,7 @@ local zigbee_switch_driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = do_configure,
+    doConfigure = do_configure
   }
 }
 

@@ -214,7 +214,7 @@ local yale_door_lock_driver = {
 
   sub_drivers = { require("yale.yale-bad-battery-reporter") },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "Yale"
+    return device:get_manufacturer() == "ASSA ABLOY iRevo" or device:get_manufacturer() == "Yale"
   end
 }
 

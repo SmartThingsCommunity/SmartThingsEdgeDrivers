@@ -73,10 +73,10 @@ test.register_message_test(
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
           sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
-          sensor_value = 22 })) 
+          sensor_value = 22 }))
         },
         {
-          encap = zw.ENCAP.AUTO, 
+          encap = zw.ENCAP.AUTO,
           src_channel = 0,
           dst_channels = { 0 }
         }
@@ -99,10 +99,10 @@ test.register_message_test(
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
           sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-          sensor_value = 25 })) 
+          sensor_value = 25 }))
         },
         {
-          encap = zw.ENCAP.AUTO, 
+          encap = zw.ENCAP.AUTO,
           src_channel = 0,
           dst_channels = { 0 }
         }
@@ -124,12 +124,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_RE_CONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -153,12 +153,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_DISCONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -182,12 +182,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_RE_CONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -211,12 +211,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_DISCONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -240,12 +240,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_RE_CONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 3,
             dst_channels = { 0 }
           })
@@ -269,12 +269,12 @@ test.register_message_test(
       message = {
         mock_multi_switch.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({ 
+          Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
             event = Notification.event.power_management.AC_MAINS_DISCONNECTED
           },
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 3,
             dst_channels = { 0 }
           })
@@ -323,7 +323,7 @@ test.register_message_test(
       message = zw_test_utils.zwave_test_build_send_command(
         mock_multi_switch,
         Basic:Set(
-          { value=0x00 }, 
+          { value=0x00 },
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {1}}
         )
       )

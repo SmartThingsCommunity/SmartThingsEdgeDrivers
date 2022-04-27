@@ -2,13 +2,11 @@ name: thermostat-stelpro-profile
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
-    version: 1
-  - id: thermostatHeatingSetpoint
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatOperatingState
     version: 1
-  - id: temperatureMeasurement
+  - id: thermostatHeatingSetpoint
     version: 1
   - id: temperatureAlarm
     version: 1

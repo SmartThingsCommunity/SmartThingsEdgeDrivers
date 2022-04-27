@@ -25,7 +25,6 @@ local zigbee_thermostat_profile = {
   components = {
     main = {
       capabilities = {
-        [capabilities.thermostatMode.ID] = { id = capabilities.thermostatMode.ID },
         [capabilities.thermostatHeatingSetpoint.ID] = { id = capabilities.thermostatHeatingSetpoint.ID },
         [capabilities.thermostatOperatingState.ID] = { id = capabilities.thermostatOperatingState.ID },
         [capabilities.temperatureMeasurement.ID] = { id = capabilities.temperatureMeasurement.ID },
@@ -299,13 +298,6 @@ test.register_coroutine_test(
     "Refresh necessary attributes - SORB",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "thermostatMode", component_id = "main",
-          attribute_id = "supportedThermostatModes", state = { value= { "heat" } }
-        }
-      })
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       )
@@ -387,13 +379,6 @@ test.register_coroutine_test(
     "Refresh necessary attributes - MaestroStat",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device_maestro.id, "added" })
-      test.socket.capability:__expect_send({
-        mock_device_maestro.id,
-        {
-          capability_id = "thermostatMode", component_id = "main",
-          attribute_id = "supportedThermostatModes", state = { value= { "heat" } }
-        }
-      })
       test.socket.capability:__expect_send(
         mock_device_maestro:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       )

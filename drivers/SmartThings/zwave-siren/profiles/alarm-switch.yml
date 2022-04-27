@@ -1,0 +1,10 @@
+name: alarm-switch
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: switch
+    version: 1
+  categories:
+  - name: Siren

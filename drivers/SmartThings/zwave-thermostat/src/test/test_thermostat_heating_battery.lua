@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local Clock = (require "st.zwave.CommandClass.Clock")({ version = 1 })
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
+local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local zw = require "st.zwave"
 local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"
+local log = require "log"
 
 -- supported comand classes
 local thermostat_endpoints = {
@@ -36,13 +38,13 @@ local thermostat_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device(
-        {
-            profile = t_utils.get_profile_definition("thermostat-heating-battery.yml"),
-            zwave_endpoints = thermostat_endpoints,
-            zwave_manufacturer_id = 0x0002,
-            zwave_product_type = 0x0005,
-            zwave_product_id = 0x0003
-        }
+    {
+        profile = t_utils.get_profile_definition("thermostat-heating-battery.yml"),
+        zwave_endpoints = thermostat_endpoints,
+        zwave_manufacturer_id = 0x0002,
+        zwave_product_type = 0x0005,
+        zwave_product_id = 0x0003
+    }
 )
 
 local function test_init()
@@ -53,20 +55,46 @@ test.set_test_init_function(test_init)
 
 local WEEK = {6, 0, 1, 2, 3, 4, 5}
 
-local function do_configure()
+local function do_initial_setup()
     test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle():__queue_receive({mock_device.id, "init"})
-    test.socket.device_lifecycle():__queue_receive({mock_device.id, "doConfigure"})
+
+    test.socket.device_lifecycle():__queue_receive({mock_device.id, "added"})
+
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+                "main",
+                capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})
+        ))
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+                "main",
+                capabilities.battery.battery(100)
+        ))
+
     test.socket.zwave:__expect_send(
-            zw_test_utilities.zwave_test_build_send_command(mock_device, WakeUp:IntervalSet({node_id = 0x00, seconds = 60}))
+        zw_test_utilities.zwave_test_build_send_command(
+                mock_device,
+                ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
+        ))
+
+    test.socket.zwave:__expect_send(
+            zw_test_utilities.zwave_test_build_send_command(mock_device, Battery:Get({}))
     )
 
+    test.socket.zwave:__expect_send(
+        zw_test_utilities.zwave_test_build_send_command(
+            mock_device,
+            WakeUp:IntervalSet({
+                node_id = 0x00,
+                seconds = 300
+            })
+        ))
+
     local now = os.date("*t")
-    print("ClockSet: ".. now.hour ..":" .. now.min ..":" .. WEEK[now.wday])
+    log.trace("ClockSet: ".. now.hour ..":" .. now.min ..":" .. WEEK[now.wday])
     test.socket.zwave:__expect_send(
             zw_test_utilities.zwave_test_build_send_command(mock_device, Clock:Set({hour=now.hour, minute=now.min, weekday=WEEK[now.wday]}))
     )
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
     test.wait_for_events()
 end
@@ -74,7 +102,7 @@ end
 test.register_coroutine_test(
         "doConfigure() should generate WakeUp:IntervalSet",
         function()
-            do_configure()
+            do_initial_setup()
         end
 )
 
@@ -94,11 +122,10 @@ test.register_message_test(
         }
 )
 
-
 test.register_coroutine_test(
         "WakeUp.Notification after Battery report should not invoke Battery Get command",
         function()
-            do_configure()
+            do_initial_setup()
 
             test.socket.zwave:__queue_receive({
                 mock_device.id,
@@ -118,10 +145,11 @@ test.register_coroutine_test(
             })
         end
 )
+
 test.register_coroutine_test(
         "WakeUp.Notification should invoke Battery Get command, if the last Battery report was at 24 hours ago.",
         function()
-            do_configure()
+            do_initial_setup()
 
             mock_device:set_field(constants.TEMPERATURE_SCALE, ThermostatSetpoint.scale.FAHRENHEIT, {persist = true})
             mock_device:set_field("precision", 0, {persist = true})
@@ -164,7 +192,7 @@ test.register_coroutine_test(
 
             -- expected Clock Set
             local now = os.date("*t")
-            print("Date: ", now.hour, now.min, now.wday)
+            log.trace("Date: ", now.hour, now.min, now.wday)
             test.socket.zwave:__expect_send(
                     zw_test_utilities.zwave_test_build_send_command(mock_device, Clock:Set({hour=now.hour, minute=now.min, weekday=WEEK[now.wday]}))
             )
@@ -278,7 +306,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Wakeup.Notification should invoke cached set command",
         function()
-            do_configure()
+            do_initial_setup()
 
             -- Precondition1: Battery report was received
             test.socket.zwave:__queue_receive({
@@ -317,7 +345,18 @@ test.register_coroutine_test(
                 mock_device.id,
                 { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 25 } }
             })
-
+            -- Celsius 25 should be converted to Fahrenheit 77, since devices use Fahrenheit scale.
+            test.socket.zwave:__expect_send(
+                    zw_test_utilities.zwave_test_build_send_command(
+                            mock_device,
+                            ThermostatSetpoint:Set({
+                                setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                                scale = ThermostatSetpoint.scale.FAHRENHEIT,
+                                precision = 0,
+                                value = 77
+                            })
+                    )
+            )
             -- Main test case: automatic synthetic event for resync
             test.socket.capability:__expect_send(
                 mock_device:generate_test_message(
@@ -350,7 +389,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Driver should resent cached setpoint Set command for Wakeup.Notification",
         function()
-            do_configure()
+            do_initial_setup()
 
             -- Precondition1: Battery report was received
             test.socket.zwave:__queue_receive({
@@ -399,6 +438,19 @@ test.register_coroutine_test(
                     )
             )
 
+            -- Celsius 25
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                        mock_device,
+                        ThermostatSetpoint:Set({
+                            setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                            scale = ThermostatSetpoint.scale.CELSIUS,
+                            precision = 0,
+                            value = 25
+                        })
+                )
+            )
+
             test.wait_for_events()
 
             -- Main test case: Wakeup.Notification from device will trigger the driver to send cached 'thermostatHeatingSetpoint' to device
@@ -418,8 +470,6 @@ test.register_coroutine_test(
                             })
                     )
             )
-            print('test mock: compare ok!')
-
 
             -- wakeup.notification should re-invoke the cached set command again, until report comes
             test.socket.zwave:__queue_receive({
@@ -444,7 +494,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Driver received setpoint Report with what was sent, driver should remove cached set command. After that, Wakeup.Notification should not invoke no more set command",
         function()
-            do_configure()
+            do_initial_setup()
 
             mock_device:set_field(constants.TEMPERATURE_SCALE, ThermostatSetpoint.scale.FAHRENHEIT, {persist = true})
             mock_device:set_field("precision", 0, {persist = true})
@@ -461,6 +511,18 @@ test.register_coroutine_test(
                             "main",
                             capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15, unit = "C"})
                     ))
+
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                        mock_device,
+                        ThermostatSetpoint:Set({
+                            setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                            precision = 0,
+                            scale = ThermostatSetpoint.scale.FAHRENHEIT,
+                            value = 59
+                        })
+                )
+            )
 
             test.wait_for_events()
 
@@ -526,7 +588,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "cached Set command should be resent, if setpoint report is different with cached set command",
         function()
-            do_configure()
+            do_initial_setup()
 
             mock_device:set_field(constants.TEMPERATURE_SCALE, ThermostatSetpoint.scale.FAHRENHEIT, {persist = true})
             mock_device:set_field("precision", 0, {persist = true})
@@ -540,6 +602,18 @@ test.register_coroutine_test(
                             "main",
                             capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15, unit = "C"})
                     ))
+
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                        mock_device,
+                        ThermostatSetpoint:Set({
+                            setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                            precision = 0,
+                            scale = ThermostatSetpoint.scale.FAHRENHEIT,
+                            value = 59
+                        })
+                )
+            )
 
             test.wait_for_events()
 
@@ -591,7 +665,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Preference(reportingInterval) change should be handled",
     function()
-        do_configure()
+        do_initial_setup()
         local new_reportingInterval = 10  -- minutes
         local updates = {
             preferences = {
@@ -625,7 +699,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Preference(isLocked) change should be handled",
         function()
-            do_configure()
+            do_initial_setup()
             local new_protection = true
             local updates = {
                 preferences = {

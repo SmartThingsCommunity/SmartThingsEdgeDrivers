@@ -1,0 +1,40 @@
+name: generic-sensor
+components:
+- id: main
+  capabilities:
+  # Notification CC based capabilities
+  - id: contactSensor
+    version: 1
+  - id: motionSensor
+    version: 1
+  - id: smokeDetector
+    version: 1
+  - id: waterSensor
+    version: 1
+  - id: tamperAlert
+    version: 1
+  # Sensor Multilevel CC based capabilities
+  - id: atmosphericPressureMeasurement
+    version: 1
+  - id: bodyWeightMeasurement
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: voltageMeasurement
+    version: 1
+  # Meter CC based capabilities
+  - id: energyMeter
+    version: 1
+  - id: powerMeter
+    version: 1
+  # Other
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor

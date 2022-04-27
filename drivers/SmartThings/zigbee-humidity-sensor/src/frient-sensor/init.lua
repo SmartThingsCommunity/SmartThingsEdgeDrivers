@@ -15,12 +15,12 @@
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local configurationMap = require "configurations"
 
-local HEIMAN_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
+local FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
   { mfr = "frient A/S", model = "HMSZB-110" },
 }
 
-local function can_handle_heiman_sensor(opts, driver, device)
-  for _, fingerprint in ipairs(HEIMAN_TEMP_HUMUDITY_SENSOR_FINGERPRINTS) do
+local function can_handle_frient_sensor(opts, driver, device)
+  for _, fingerprint in ipairs(FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       return true
     end
@@ -39,12 +39,12 @@ local function device_init(driver, device)
   end
 end
 
-local heiman_sensor = {
-  NAME = "Heiman Humidity Sensor",
+local frient_sensor = {
+  NAME = "Frient Humidity Sensor",
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = can_handle_heiman_sensor
+  can_handle = can_handle_frient_sensor
 }
 
-return heiman_sensor
+return frient_sensor

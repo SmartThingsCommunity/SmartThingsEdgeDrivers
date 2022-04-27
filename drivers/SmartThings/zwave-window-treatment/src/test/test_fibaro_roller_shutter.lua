@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ local mock_fibaro_roller_shutter_venetian = test.mock_device.build_test_zwave_de
   zwave_product_type = 0x1D01,
   zwave_product_id = 0x1000,
 })
-  
 
 local function test_init()
   test.mock_device.add_test_device(mock_fibaro_roller_shutter)
@@ -401,13 +400,13 @@ test.register_coroutine_test(
       test.socket.zwave:__queue_receive({mock_fibaro_roller_shutter.id, Configuration:Report({ parameter_number = 150, configuration_value = 0 }) })
       test.wait_for_events()
       assert(mock_fibaro_roller_shutter:get_field("calibration") == "not_started", "Calibration should be not started")
-      
+
       test.mock_time.advance_time(2)
 
       test.socket.zwave:__queue_receive({mock_fibaro_roller_shutter.id, Configuration:Report({ parameter_number = 150, configuration_value = 2 }) })
       test.wait_for_events()
       assert(mock_fibaro_roller_shutter:get_field("calibration") == "pending", "Calibration should be in progress")
-      
+
       test.mock_time.advance_time(2)
 
       test.socket.zwave:__queue_receive({mock_fibaro_roller_shutter.id, Configuration:Report({ parameter_number = 150, configuration_value = 1 }) })
