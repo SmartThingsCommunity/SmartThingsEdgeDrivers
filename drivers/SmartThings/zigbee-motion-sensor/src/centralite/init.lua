@@ -23,12 +23,20 @@ local init_handler = function(self, device)
   local dev_major = tonumber(firmware_full_version:sub(1,1), 16)
   local dev_minor = tonumber(firmware_full_version:sub(2,2), 16)
   local dev_build = tonumber(firmware_full_version:sub(3,4), 16)
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> main
   local battery_init_function
   -- Centralite Firmware 1.15.7 contains battery smoothing fixes, so versions before that should NOT be smoothed
   if (dev_major < TARGET_DEV_MAJOR) or
      (dev_major == TARGET_DEV_MAJOR and dev_minor < TARGET_DEV_MINOR) or
+<<<<<<< HEAD
      (dev_major == TARGET_DEV_MAJOR and dev_minor == TARGET_DEV_MINOR and dev_build < TARGET_DEV_BUILD) 
+=======
+     (dev_major == TARGET_DEV_MAJOR and dev_minor == TARGET_DEV_MINOR and dev_build < TARGET_DEV_BUILD)
+>>>>>>> main
   then
     battery_init_function = battery_defaults.build_linear_voltage_init(2.1, 3.0)
   else

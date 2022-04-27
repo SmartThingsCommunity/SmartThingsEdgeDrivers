@@ -25,7 +25,7 @@ local devices = {
             indicatorNotification = {parameter_number = 3},
             soundNotificationStatus = {parameter_number = 4, size = 1},
             tempReportInterval = {parameter_number = 20, size = 2},
-            tempReportHysteresis = {parameter_number = 21, size = 2},  
+            tempReportHysteresis = {parameter_number = 21, size = 2},
             temperatureThreshold = {parameter_number = 30, size = 2},
             overheatInterval = {parameter_number = 31, size = 2},
             outOfRange = {parameter_number = 32, size = 2}

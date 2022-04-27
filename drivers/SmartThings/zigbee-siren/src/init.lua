@@ -102,7 +102,7 @@ local default_response_handler = function(driver, device, zigbee_message)
   if command == IASWD.server.commands.StartWarning.ID and is_success == Status.SUCCESS then
     if alarm_ev ~= alarm_command.OFF then
       emit_alarm_event(device, alarm_ev)
-      local lastDuration = device:get_field(ALARM_LAST_DURATION)
+      local lastDuration = device:get_field(ALARM_LAST_DURATION) or ALARM_DEFAULT_MAX_DURATION
       device.thread:call_with_delay(lastDuration, function(d)
         device:emit_event(capabilities.alarm.alarm.off())
         device:emit_event(capabilities.switch.switch.off())
@@ -152,6 +152,11 @@ local device_init = function(self, device)
   device:set_field(ALARM_MAX_DURATION, ALARM_DEFAULT_MAX_DURATION, {persist = true})
 end
 
+local function device_added(driver, device)
+  device:emit_event(capabilities.alarm.alarm.off())
+  device:emit_event(capabilities.switch.switch.off())
+end
+
 local zigbee_siren_driver_template = {
   supported_capabilities = {
     alarm,
@@ -184,6 +189,7 @@ local zigbee_siren_driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,    
     doConfigure = do_configure
   },
   sub_drivers = { require("ozom"), require("frient") },

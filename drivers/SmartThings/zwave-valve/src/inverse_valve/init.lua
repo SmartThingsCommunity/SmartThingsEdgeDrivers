@@ -67,4 +67,8 @@ local inverse_valve = {
   end
 }
 
+<<<<<<< HEAD
 return inverse_valve
+=======
+return inverse_valve
+>>>>>>> main

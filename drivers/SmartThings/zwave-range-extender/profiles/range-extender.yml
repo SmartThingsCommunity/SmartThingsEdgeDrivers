@@ -5,4 +5,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: Bridges
+  - name: Networking

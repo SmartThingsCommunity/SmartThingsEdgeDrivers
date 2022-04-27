@@ -12,8 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> main
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local Association = (require "st.zwave.CommandClass.Association")({ version=2 })

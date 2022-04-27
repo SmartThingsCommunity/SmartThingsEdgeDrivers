@@ -219,8 +219,13 @@ local update_device_setpoint = function(device)
   device:set_field(HEATING_SETPOINT, nil)
   device:set_field(COOLING_SETPOINT, nil)
 
+<<<<<<< HEAD
   min_setpoint = DEFAULT_MIN_SETPOINT
   max_setpoint = DEFAULT_MAX_SETPOINT
+=======
+  local min_setpoint = DEFAULT_MIN_SETPOINT
+  local max_setpoint = DEFAULT_MAX_SETPOINT
+>>>>>>> main
   local current_mode = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.NAME)
   if (current_mode == "auto") then
     if (device:get_field(MIN_HEAT_LIMIT) ~= nil) then

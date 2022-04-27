@@ -19,11 +19,11 @@ zigbeeManufacturer:
     manufacturer: SOMFY
     model: Situo 1 Zigbee
     deviceProfileName: three-buttons-battery
-  # - id: "SOMFY/Situo 4 Zigbee"
-  #   deviceLabel: SOMFY Remote Control
-  #   manufacturer: SOMFY
-  #   model: Situo 4 Zigbee
-  #   deviceProfileName: twelve-buttons
+  - id: "SOMFY/Situo 4 Zigbee"
+    deviceLabel: SOMFY Remote Control
+    manufacturer: SOMFY
+    model: Situo 4 Zigbee
+    deviceProfileName: twelve-buttons
   - id: "IKEA of Sweden/TRADFRI on"
     deviceLabel: IKEA Remote Control
     manufacturer: IKEA of Sweden
@@ -118,14 +118,27 @@ zigbeeManufacturer:
     deviceLabel: Iris Button
     manufacturer: CentraLite
     model: 3455-L
+<<<<<<< HEAD
     deviceProfileName: one-button-battery
+=======
+    deviceProfileName: iris-one-button-battery
+>>>>>>> main
   - id: CentraLite/3460-L
     deviceLabel: Iris Button
     manufacturer: CentraLite
     model: 3460-L
+<<<<<<< HEAD
     deviceProfileName: one-button-battery
   # - id: SmartSense/button
   #   deviceLabel: Button
   #   manufacturer: Samjin
   #   model: button
   #   deviceProfileName: one-button-temp-battery
+=======
+    deviceProfileName: iris-one-button-battery
+  - id: SmartSense/button
+    deviceLabel: Button
+    manufacturer: Samjin
+    model: button
+    deviceProfileName: one-button-temp-battery
+>>>>>>> main

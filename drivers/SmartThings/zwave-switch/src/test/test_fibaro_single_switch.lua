@@ -13,10 +13,14 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
+local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
+local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 
 -- supported comand classes
 local sensor_endpoints = {
@@ -44,8 +48,455 @@ local function  test_init()
 end
 test.set_test_init_function(test_init)
 
+test.register_message_test(
+  "Switch Binary report ON_ENABLE should be handled",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_device.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.ON_ENABLE
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report ON_ENABLE from source channel 2 should be discarded",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_device.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.ON_ENABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report OFF_DISABLE should be handled",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_device.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.OFF_DISABLE
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report OFF_DISABLE from source channel 2 should be discarded",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_device.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.OFF_DISABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_1_TIME attribute should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.pushed({
+        state_change = true }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_1_TIME attribute from source channel 2 should be discared",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_RELEASED attribute should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
+        scene_number = 1,
+        key_attributes=CentralScene.key_attributes.KEY_RELEASED}))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.held({
+        state_change = true }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_RELEASED attribute from source channel 2 should be discared",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_RELEASED
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_HELD_DOWN attribute should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
+        scene_number = 2,
+        key_attributes=CentralScene.key_attributes.KEY_HELD_DOWN}))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({
+        state_change = true }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_HELD_DOWN attribute from source channel 2 should be discared",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_HELD_DOWN
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_2_TIMES attribute should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
+        scene_number = 1,
+        key_attributes=CentralScene.key_attributes.KEY_PRESSED_2_TIMES}))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.double({
+        state_change = true }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_2_TIMES attribute from source channel 2 should be discared",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_PRESSED_2_TIMES
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_3_TIMES attribute should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
+        scene_number = 2,
+        key_attributes=CentralScene.key_attributes.KEY_PRESSED_3_TIMES}))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.pushed_3x({
+        state_change = true }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification KEY_PRESSED_3_TIMES attribute from source channel 2 should be discared",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 2,
+              key_attributes=CentralScene.key_attributes.KEY_PRESSED_3_TIMES
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Energy meter report should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
+        scale = Meter.scale.electric_meter.KILOWATT_HOURS,
+        meter_value = 5})
+      )}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Energy meter report  from source channel 2 should be discarded",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          Meter:Report(
+            {
+              scale = Meter.scale.electric_meter.KILOWATT_HOURS,
+              meter_value = 5
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }              
+          )
+        )
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "Power meter report should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
+        scale = Meter.scale.electric_meter.WATTS,
+        meter_value = 27})
+      )}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27, unit = "W" }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Power meter report  from source channel 2 should be discarded",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { 
+        mock_device.id, 
+        zw_test_utils.zwave_test_build_receive_command(
+          Meter:Report(
+            {
+              scale = Meter.scale.electric_meter.WATTS,
+              meter_value = 5
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 2,
+              dst_channels={0}
+            }              
+          )
+        )
+      }
+    }
+  }
+)
+
 test.register_coroutine_test(
-    "infoChanged() should send the SET command for Configuation value",
+    "infoChanged() should send the SET command for Configuration value",
     function()
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle():__queue_receive({mock_device.id, "init"})

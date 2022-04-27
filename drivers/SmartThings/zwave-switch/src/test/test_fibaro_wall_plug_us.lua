@@ -135,8 +135,8 @@ test.register_message_test(
           meter_value = 55
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 1, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 1,
           dst_channels={}
         })
       )}
@@ -166,8 +166,8 @@ test.register_message_test(
           meter_value = 89
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 2, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 2,
           dst_channels={}
         })
       )}
@@ -197,8 +197,8 @@ test.register_message_test(
           meter_value = 5
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 1, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 1,
           dst_channels={}
         })
       )}
@@ -228,8 +228,8 @@ test.register_message_test(
           meter_value = 5
         },
         {
-          encap = zw.ENCAP.AUTO, 
-          src_channel = 2, 
+          encap = zw.ENCAP.AUTO,
+          src_channel = 2,
           dst_channels={}
         })
       )}

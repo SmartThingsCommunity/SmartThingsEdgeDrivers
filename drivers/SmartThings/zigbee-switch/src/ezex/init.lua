@@ -32,13 +32,13 @@ local is_zigbee_ezex_switch = function(opts, driver, device)
     return false
 end
 
-function energy_meter_handler(driver, device, value, zb_rx)
+local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
   raw_value = raw_value / 1000000
   device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh" }))
 end
 
-function power_meter_handler(driver, device, value, zb_rx)
+local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
   raw_value = raw_value / 1000
   device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W" }))

@@ -17,3 +17,5 @@ components:
 preferences:
   - preferenceId: tempOffset
     explicit: true
+  - preferenceId: humidityOffset
+    explicit: true

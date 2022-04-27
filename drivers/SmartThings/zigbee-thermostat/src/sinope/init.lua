@@ -22,6 +22,7 @@ local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceCon
 local capabilities              = require "st.capabilities"
 local ThermostatMode            = capabilities.thermostatMode
 local ThermostatOperatingState  = capabilities.thermostatOperatingState
+<<<<<<< HEAD
 
 local SINOPE_TECHNOLOGIES_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Sinope Technologies", model = "TH1123ZB" },
@@ -32,6 +33,13 @@ local SINOPE_TECHNOLOGIES_THERMOSTAT_FINGERPRINTS = {
 }
 
 local MFG_CODE = 0x0000
+=======
+local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
+local TemperatureMeasurement    = capabilities.temperatureMeasurement
+
+local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
+
+>>>>>>> main
 local SINOPE_CUSTOM_CLUSTER = 0xFF01
 local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
 local MFR_AIR_FLOOR_MODE_ATTRIBUTE = 0x0105
@@ -41,6 +49,7 @@ local MFR_FLOOR_SENSOR_TYPE_ATTRIBUTE = 0x010B
 local MFR_FLOOR_HIGH_LIMIT_ATTRIBUTE = 0x010A
 local MFR_BACKLIGHT_MODE_ATTRIBUTE = 0x0402
 local MFR_AUXILIARY_CYCLE_LENGTH_ATTRIBUTE = 0x0404
+<<<<<<< HEAD
 local KEYPAD_LOCK = "keypadLock"
 local LOCK = "Lock"
 local UNLOCK = "Unlock"
@@ -52,54 +61,83 @@ local BACKLIGHT_ON_DEMAND = "OnDemand"
 local PREFERENCE_TABLES = {
   keypadLock = {
     prefType = "enumeration",
+=======
+
+local PREFERENCE_TABLES = {
+  keypadLock = {
+>>>>>>> main
     clusterId = ThermostatUserInterfaceConfiguration.ID,
     attributeId = ThermostatUserInterfaceConfiguration.attributes.KeypadLockout.ID,
     dataType = data_types.Enum8
   },
   backlightSetting = {
+<<<<<<< HEAD
     prefType = "enumeration",
+=======
+>>>>>>> main
     clusterId = Thermostat.ID,
     attributeId = MFR_BACKLIGHT_MODE_ATTRIBUTE,
     dataType = data_types.Enum8
   },
   timeFormat = {
+<<<<<<< HEAD
     prefType = "enumeration",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_TIME_FORMAT_ATTRIBUTE,
     dataType = data_types.Enum8
   },
   airFloorMode = {
+<<<<<<< HEAD
     prefType = "enumeration",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_AIR_FLOOR_MODE_ATTRIBUTE,
     dataType = data_types.Enum8
   },
   floorSensorType = {
+<<<<<<< HEAD
     prefType = "enumeration",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_FLOOR_SENSOR_TYPE_ATTRIBUTE,
     dataType = data_types.Enum8
   },
   ambientLimit = {
+<<<<<<< HEAD
     prefType = "integer",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_AMBIENT_LIMIT_ATTRIBUTE,
     dataType = data_types.Int16
   },
   floorLowLimit = {
+<<<<<<< HEAD
     prefType = "integer",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_FLOOR_LOW_LIMIT_ATTRIBUTE,
     dataType = data_types.Int16
   },
   floorHighLimit = {
+<<<<<<< HEAD
     prefType = "integer",
+=======
+>>>>>>> main
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_FLOOR_HIGH_LIMIT_ATTRIBUTE,
     dataType = data_types.Int16
   },
   auxiliaryCycleLength = {
+<<<<<<< HEAD
     prefType = "enumeration",
+=======
+>>>>>>> main
     clusterId = Thermostat.ID,
     attributeId = MFR_AUXILIARY_CYCLE_LENGTH_ATTRIBUTE,
     dataType = data_types.Uint16
@@ -107,12 +145,20 @@ local PREFERENCE_TABLES = {
 }
 
 local is_sinope_thermostat = function(opts, driver, device)
+<<<<<<< HEAD
   for _, fingerprint in ipairs(SINOPE_TECHNOLOGIES_THERMOSTAT_FINGERPRINTS) do
       if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
           return true
       end
   end
   return false
+=======
+  if device:get_manufacturer() == SINOPE_TECHNOLOGIES_MFR_STRING then
+    return true
+  else
+    return false
+  end
+>>>>>>> main
 end
 
 local do_refresh = function(self, device)
@@ -146,6 +192,7 @@ end
 local function info_changed(driver, device, event, args)
   for name, info in pairs(PREFERENCE_TABLES) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+<<<<<<< HEAD
       local input = device.preferences[name]
       if (name == KEYPAD_LOCK) then
         device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, input))
@@ -156,6 +203,17 @@ local function info_changed(driver, device, event, args)
           device:send(cluster_base.write_manufacturer_specific_attribute(device, info.clusterId, info.attributeId, MFG_CODE, info.dataType, input * 100))
         end
       end
+=======
+    local input = device.preferences[name]
+      if (info.dataType.ID == data_types.Int16.ID) then
+        input = input * 100
+      end
+      device:send(cluster_base.write_attribute(device,
+        data_types.ClusterId(info.clusterId),
+        data_types.AttributeId(info.attributeId),
+        data_types.validate_or_build_type(input, info.dataType, "payload")
+      ))
+>>>>>>> main
     end
   end
 end

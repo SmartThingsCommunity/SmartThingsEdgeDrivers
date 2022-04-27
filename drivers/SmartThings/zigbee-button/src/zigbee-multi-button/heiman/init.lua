@@ -56,7 +56,7 @@ local do_configure = function(self, device)
   end
 end
 
-function scenes_cluster_handler(driver, device, zb_rx)
+local function scenes_cluster_handler(driver, device, zb_rx)
   local additional_fields = {
     state_change = true
   }

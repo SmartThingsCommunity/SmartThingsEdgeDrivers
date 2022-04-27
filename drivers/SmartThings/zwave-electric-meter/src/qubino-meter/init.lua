@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -37,11 +37,10 @@ local function can_handle_qubino_meter(opts, driver, device, ...)
   return false
 end
 
-function meter_report_handler(self, device, cmd)
-  local event_arguments = nil
+local function meter_report_handler(self, device, cmd)
 
   if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
-    event_arguments = {
+    local event_arguments = {
       value = cmd.args.meter_value,
       unit = ENERGY_UNIT_KWH
     }
@@ -64,9 +63,9 @@ end
 local function component_to_endpoint(device, component_id)
   local ep_str = component_id:match("endpointMeter(%d)")
   local ep_num = ep_str and math.floor(ep_str + 1)
-  return {ep_num and tonumber(ep_num)} or {}
+  return {ep_num and tonumber(ep_num)}
 end
-  
+
 local function endpoint_to_component(device, ep)
   local meter_comp = string.format("endpointMeter%d", ep - 1)
   if device.profile.components[meter_comp] ~= nil then

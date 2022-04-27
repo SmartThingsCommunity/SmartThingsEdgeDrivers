@@ -32,7 +32,11 @@ local battery_table = {
   [1.50] = 0
 }
 
+<<<<<<< HEAD
 local function init_handler(driver, device) 
+=======
+local function init_handler(driver, device)
+>>>>>>> main
   battery_defaults.enable_battery_voltage_table(device, battery_table)
 end
 

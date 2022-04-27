@@ -49,10 +49,13 @@ local do_refresh = function(self, device)
 end
 
 local device_added = function(self, device)
+<<<<<<< HEAD
   local supported_modes = {
     capabilities.thermostatMode.thermostatMode.heat.NAME
   }
   device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+=======
+>>>>>>> main
   device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
   do_refresh(self, device)
 end

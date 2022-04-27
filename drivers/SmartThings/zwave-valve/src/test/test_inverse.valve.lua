@@ -137,4 +137,8 @@ test.register_coroutine_test(
     end
 )
 
+<<<<<<< HEAD
 test.run_registered_tests()
+=======
+test.run_registered_tests()
+>>>>>>> main

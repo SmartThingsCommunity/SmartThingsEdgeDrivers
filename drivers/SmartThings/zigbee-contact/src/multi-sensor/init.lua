@@ -74,5 +74,9 @@ local multi_sensor = {
   },
   can_handle = can_handle_zigbee_multi_sensor
 }
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> main
 return multi_sensor

@@ -18,7 +18,10 @@ local clusters = require "st.zigbee.zcl.clusters"
 local Basic = clusters.Basic
 local IdentifyCluster = clusters.Identify
 local PowerConfiguration = clusters.PowerConfiguration
+<<<<<<< HEAD
 local zcl_global_commands  = require "st.zigbee.zcl.global_commands"
+=======
+>>>>>>> main
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -57,7 +60,11 @@ local function build_config_response_msg(cluster, status)
     mock_simple_device.fingerprinted_endpoint_id,
     zb_const.HUB.ADDR,
     zb_const.HUB.ENDPOINT,
+<<<<<<< HEAD
     zb_const.HA_PROFILE_ID, 
+=======
+    zb_const.HA_PROFILE_ID,
+>>>>>>> main
     cluster
   )
   local config_response_body = config_reporting_response.ConfigureReportingResponse({}, status)
@@ -88,6 +95,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_simple_device:generate_test_message("main",  capabilities.presenceSensor.presence("present"))
+<<<<<<< HEAD
       },
       {
         channel = "capability",
@@ -99,6 +107,12 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main",  capabilities.signalStrength.rssi({value = 0, unit = 'dBm'}))
       }
+=======
+      }
+    },
+    {
+      inner_block_ordering = "relaxed"
+>>>>>>> main
     }
 )
 
@@ -118,6 +132,21 @@ test.register_message_test(
     }
 )
 
+<<<<<<< HEAD
+=======
+local add_device = function()
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
+  test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
+    capabilities.presenceSensor.presence("present")
+  ))
+  test.socket.zigbee:__expect_send({
+    mock_simple_device.id,
+    PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
+  })
+  test.wait_for_events()
+end
+
+>>>>>>> main
 test.register_coroutine_test(
   "Battery Voltage test cases when polling from hub",
   function()
@@ -134,6 +163,7 @@ test.register_coroutine_test(
         [15] = 0
       }
     }
+<<<<<<< HEAD
     test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")) )
     test.socket.zigbee:__expect_send({
@@ -144,6 +174,15 @@ test.register_coroutine_test(
     for voltage, batt_perc in pairs(battery_test_map[mock_simple_device:get_manufacturer()]) do
       test.socket.zigbee:__queue_receive({ mock_simple_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_simple_device, voltage) })
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
+=======
+    test.socket.capability:__set_channel_ordering("relaxed")
+    add_device()
+    for voltage, batt_perc in pairs(battery_test_map[mock_simple_device:get_manufacturer()]) do
+      local powerConfigurationMessage = PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_simple_device, voltage)
+      test.socket.zigbee:__queue_receive({ mock_simple_device.id, powerConfigurationMessage })
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence.present()))
+>>>>>>> main
       test.wait_for_events()
     end
   end
@@ -165,6 +204,7 @@ test.register_coroutine_test(
         [15] = 0
       }
     }
+<<<<<<< HEAD
     test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added" })
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")) )
     test.socket.zigbee:__expect_send({
@@ -185,20 +225,128 @@ test.register_coroutine_test(
       test.wait_for_events()
     end
     
+=======
+    test.socket.capability:__set_channel_ordering("relaxed")
+    add_device()
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      build_config_response_msg(PowerConfiguration.ID, 0x00)
+    })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
+    for voltage, batt_perc in pairs(battery_test_map[mock_simple_device:get_manufacturer()]) do
+      local powerConfigurationMessage = PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_simple_device, voltage)
+      test.socket.zigbee:__queue_receive({ mock_simple_device.id, powerConfigurationMessage })
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
+      test.wait_for_events()
+    end
+>>>>>>> main
   end
 )
 
 test.register_coroutine_test(
   "Added lifecycle should be handlded",
   function ()
+<<<<<<< HEAD
     test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
       capabilities.presenceSensor.presence("present")
     ))
+=======
+    add_device()
+  end
+)
+
+test.register_coroutine_test(
+  "Device should be marked not present when default check interval elapses without a battery report",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    add_device()
+    -- Have a timer for the no-communication timeout
+    test.timer.__create_and_queue_never_fire_timer("oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      build_config_response_msg(PowerConfiguration.ID, 0x00)
+    })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence.present()))
+    test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+    --test.timer.__create_and_queue_never_fire_timer("oneshot")
+    local powerConfigurationMessage = PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_simple_device, 27)
+    powerConfigurationMessage.lqi = data_types.Uint8(50)
+    powerConfigurationMessage.rssi = data_types.Int8(-50)
+    test.socket.zigbee:__queue_receive({ mock_simple_device.id, powerConfigurationMessage })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence.present()) )
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)) )
+    test.wait_for_events()
+    test.mock_time.advance_time(121)
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
+  end
+)
+
+test.register_coroutine_test(
+  "Device should be marked not present when non-default check interval elapses without a battery report",
+  function()
+    test.timer.__create_and_queue_never_fire_timer("interval", "polling_schedule")
+    test.socket.capability:__set_channel_ordering("relaxed")
+    add_device()
+    test.socket.device_lifecycle():__queue_receive(mock_simple_device:generate_info_changed({preferences = {checkInterval = 300}}))
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      build_config_response_msg(PowerConfiguration.ID, 0x00)
+    })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")) )
+    test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(300, "oneshot")
+    local powerConfigurationMessage = PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_simple_device, 27)
+    test.socket.zigbee:__queue_receive({ mock_simple_device.id, powerConfigurationMessage })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")) )
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)) )
+    test.wait_for_events()
+    test.mock_time.advance_time(200)
+    test.timer.__create_and_queue_test_time_advance_timer(300, "oneshot")
+    test.socket.zigbee:__queue_receive({ mock_simple_device.id, powerConfigurationMessage })
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")) )
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)) )
+    test.wait_for_events()
+    test.mock_time.advance_time(305)
+    test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Device should configure necessary attributes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    mock_simple_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+>>>>>>> main
     test.socket.zigbee:__expect_send({
       mock_simple_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
     })
+<<<<<<< HEAD
+=======
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(
+        mock_simple_device,
+        1,
+        21,
+        1
+      )
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      zigbee_test_utils.build_bind_request(
+        mock_simple_device,
+        zigbee_test_utils.mock_hub_eui,
+        PowerConfiguration.ID
+      )
+    })
+>>>>>>> main
   end
 )
 

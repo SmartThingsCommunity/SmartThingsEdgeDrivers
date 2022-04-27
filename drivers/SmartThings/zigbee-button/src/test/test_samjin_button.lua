@@ -89,14 +89,22 @@ test.register_coroutine_test(
         mock_device, 30, 21600, 16
       )
     })
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> main
     test.socket.zigbee:__expect_send({
       mock_device.id,
       TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
         mock_device, 30, 300, 16
       )
     })
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> main
     test.socket.zigbee:__expect_send({
       mock_device.id,
       IASZone.attributes.IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui)
@@ -105,7 +113,11 @@ test.register_coroutine_test(
       mock_device.id,
       IASZone.server.commands.ZoneEnrollResponse(mock_device, IasEnrollResponseCode.SUCCESS, 0x00)
     })
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> main
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

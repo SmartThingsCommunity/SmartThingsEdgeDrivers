@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"

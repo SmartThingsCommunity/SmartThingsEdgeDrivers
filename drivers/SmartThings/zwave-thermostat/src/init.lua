@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ local function convert_to_device_temp(command_temp, device_scale)
   if (command_temp < 40 and device_scale == ThermostatSetpoint.scale.FAHRENHEIT) then
     command_temp = utils.c_to_f(command_temp)
   elseif (command_temp >= 40 and (device_scale == ThermostatSetpoint.scale.CELSIUS or device_scale == nil)) then
-    command_temp = utils.f_to_c(command_temp)  
+    command_temp = utils.f_to_c(command_temp)
   end
   return command_temp
 end
@@ -59,18 +59,18 @@ local function set_setpoint_factory(setpoint_type)
   return function(driver, device, command)
     local scale = device:get_field(constants.TEMPERATURE_SCALE)
     local value = convert_to_device_temp(command.args.setpoint, scale)
-  
+
     local set = ThermostatSetpoint:Set({
       setpoint_type = setpoint_type,
       scale = scale,
       value = value
     })
     device:send_to_component(set, command.component)
-  
+
     local follow_up_poll = function()
       device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component)
     end
-  
+
     device.thread:call_with_delay(1, follow_up_poll)
   end
 end
@@ -101,7 +101,7 @@ local driver_template = {
     }
   },
   sub_drivers = {
-    require("aeotec-radiator-thermostat"), 
+    require("aeotec-radiator-thermostat"),
     require("popp-radiator-thermostat"),
     require("ct100-thermostat"),
     require("fibaro-heat-controller"),

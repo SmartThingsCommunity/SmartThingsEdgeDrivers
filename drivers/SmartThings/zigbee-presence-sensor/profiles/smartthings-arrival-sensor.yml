@@ -6,8 +6,11 @@ components:
     version: 1
   - id: tone
     version: 1
+<<<<<<< HEAD
   - id: signalStrength
     version: 1
+=======
+>>>>>>> main
   - id: battery
     version: 1
   - id: refresh
@@ -16,6 +19,20 @@ components:
     version: 1
   categories:
   - name: PresenceSensor
+<<<<<<< HEAD
+=======
+preferences:
+  - name: "checkInterval"
+    title: "Presence timeout (minutes)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       120: "2"
+       180: "3"
+       300: "5"
+      default: 120
+>>>>>>> main
 metadata:
   mnmn: SmartThingsEdge
   vid: generic-presence-sensor

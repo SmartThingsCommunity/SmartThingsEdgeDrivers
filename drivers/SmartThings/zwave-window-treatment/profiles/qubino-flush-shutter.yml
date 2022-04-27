@@ -12,6 +12,8 @@ components:
     version: 1
   - id: energyMeter
     version: 1
+  - id: refresh
+    version: 1
   categories:
   - name: Blind
 preferences:
@@ -36,7 +38,7 @@ preferences:
       default: 150
   - name: "slatsPosition"
     title: "Slats position"
-    description: "Configuration defines slats return to previously set position after up/down 
+    description: "Configuration defines slats return to previously set position after up/down
     movement through Z-wave or push-buttons."
     preferenceType: enumeration
     required: true
@@ -47,7 +49,7 @@ preferences:
       default: 0
   - name: "motorUpDownTime"
     title: "Motor up down time"
-    description: "Set the amount of time it takes to completely open or close shutter. 
+    description: "Set the amount of time it takes to completely open or close shutter.
     Check manual for more detailed guidance."
     required: true
     preferenceType: integer
@@ -66,7 +68,7 @@ preferences:
       default: 30
   - name: "forcedCalibration"
     title: "Forced calibration"
-    description: "After selection '1' option, shutter enters the calibration mode. 
+    description: "After selection '1' option, shutter enters the calibration mode.
     When it is finished, completing full cycle - up, down and up, set this parameter value back to first option."
     preferenceType: enumeration
     required: true
