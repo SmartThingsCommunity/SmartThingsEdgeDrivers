@@ -22,7 +22,7 @@ local t_utils = require "integration_test.utils"
 
 local mock_simple_device = test.mock_device.build_test_zigbee_device(
     {
-      profile = t_utils.get_profile_definition("switch-3.yaml"),
+      profile = t_utils.get_profile_definition("switch-3.yml"),
       fingerprinted_endpoint_id = 0x01
     }
 )

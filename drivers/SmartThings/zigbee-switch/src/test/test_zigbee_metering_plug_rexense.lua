@@ -21,7 +21,7 @@ local t_utils = require "integration_test.utils"
 
 local mock_simple_device = test.mock_device.build_test_zigbee_device(
     {
-      profile = t_utils.get_profile_definition("switch-power-energy.yaml"),
+      profile = t_utils.get_profile_definition("switch-power-energy.yml"),
       zigbee_endpoints = {
         [1] = {
           id = 1,

@@ -27,7 +27,7 @@ local SINOPE_MAX_INTENSITY_ON_ATTRIBUTE = 0x0052
 local SINOPE_MAX_INTENSITY_OFF_ATTRIBUTE = 0x0053
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { profile = t_utils.get_profile_definition("switch-led-intensity.yaml"),
+    { profile = t_utils.get_profile_definition("switch-led-intensity.yml"),
       fingerprinted_endpoint_id = 0x01,
       zigbee_endpoints = {
         [1] = {
