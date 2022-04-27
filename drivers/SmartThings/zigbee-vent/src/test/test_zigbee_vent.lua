@@ -27,7 +27,7 @@ local KEEN_PRESSURE_ATTRIBUTE = 0x0020
 local KEEN_MFG_CODE = 0x115B
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { profile = t_utils.get_profile_definition("vent-profile-1.yaml") }
+    { profile = t_utils.get_profile_definition("vent-profile-1.yml") }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
