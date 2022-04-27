@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ local dawon_wall_smart_switch = {
     added = added_handler,
     doConfigure = do_configure,
     infoChanged = info_changed
-  },  
+  },
   can_handle = can_handle_dawon_wall_smart_switch,
 }
 

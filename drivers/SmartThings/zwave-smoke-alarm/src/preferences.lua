@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ local devices = {
             indicatorNotification = {parameter_number = 3},
             soundNotificationStatus = {parameter_number = 4, size = 1},
             tempReportInterval = {parameter_number = 20, size = 2},
-            tempReportHysteresis = {parameter_number = 21, size = 2},  
+            tempReportHysteresis = {parameter_number = 21, size = 2},
             temperatureThreshold = {parameter_number = 30, size = 2},
             overheatInterval = {parameter_number = 31, size = 2},
             outOfRange = {parameter_number = 32, size = 2}

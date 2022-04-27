@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,8 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local utils = require 'st.utils'
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+
 local Level = zcl_clusters.Level
+local PowerConfiguration = zcl_clusters.PowerConfiguration
 
 local capabilities = require "st.capabilities"
 
@@ -92,6 +95,10 @@ local level_step_command_handler = function(driver, device, zb_rx)
   handleStepEvent(device, move_mode)
 end
 
+local battery_perc_attr_handler = function(driver, device, value, zb_rx)
+  device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 100)))
+end
+
 local is_ikea_of_sweden = function(opts, driver, device)
   for _, fingerprint in ipairs(IKEA_OF_SWEDEN_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -111,6 +118,11 @@ local ikea_of_sweden = {
         [Level.server.commands.MoveWithOnOff.ID] = level_move_with_onoff_command_handler,
         [Level.server.commands.MoveToLevelWithOnOff.ID] = level_move_to_level_with_onoff_command_handler,
         [Level.server.commands.Step.ID] = level_step_command_handler
+      }
+    },
+    attr = {
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_perc_attr_handler
       }
     }
   },

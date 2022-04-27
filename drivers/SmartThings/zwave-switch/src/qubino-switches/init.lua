@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ local do_refresh = function(self, device)
   if device:supports_capability_by_id(capabilities.switchLevel.ID) then
     device:send(SwitchMultilevel:Get({}))
   end
-  for component, _ in pairs(device.profile.components) do 
+  for component, _ in pairs(device.profile.components) do
     if device:supports_capability_by_id(capabilities.powerMeter.ID, component) then
       device:send_to_component(Meter:Get({scale = Meter.scale.electric_meter.WATTS}), component)
     end

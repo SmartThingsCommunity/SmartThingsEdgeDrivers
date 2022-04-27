@@ -74,8 +74,24 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.042, unit = "kWh"}))
-    },
+    }
   }
+)
+
+test.register_message_test(
+    "InstaneousDemand Report should be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_device, 32) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 32.0, unit = "W" }))
+      }
+    }
 )
 
 test.run_registered_tests()

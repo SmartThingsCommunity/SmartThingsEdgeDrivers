@@ -50,6 +50,9 @@ local zigbee_valve_driver_template = {
   },
   lifecycle_handlers = {
     added = device_added
+  },
+  sub_drivers = {
+    require("sinope")
   }
 }
 

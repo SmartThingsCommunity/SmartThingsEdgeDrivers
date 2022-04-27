@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ test.register_message_test(
           Basic:Report(
             {
               value = 0x00
-            }, 
+            },
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
@@ -359,7 +359,7 @@ test.register_message_test(
             {
               scale = Meter.scale.electric_meter.KILOWATT_HOURS,
               meter_value = 50.0
-            }, 
+            },
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 3,

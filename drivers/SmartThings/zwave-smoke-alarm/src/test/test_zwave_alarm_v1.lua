@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -130,14 +130,37 @@ test.register_message_test(
         direction = "receive",
         message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
           alarm_type = 12,
-          alarm_level = 0
+          alarm_level = 1
         })) }
       },
       {
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
-      }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+      },
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
+          alarm_type = 12,
+          alarm_level = 0
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+      },
     }
 )
 

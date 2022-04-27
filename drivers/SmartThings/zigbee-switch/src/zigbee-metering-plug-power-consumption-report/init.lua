@@ -19,6 +19,7 @@ local device_management = require "st.zigbee.device_management"
 local messages = require "st.zigbee.messages"
 local bind_request = require "st.zigbee.zdo.bind_request"
 local zdo_messages = require "st.zigbee.zdo"
+local zigbee_constants = require "st.zigbee.constants"
 
 local OnOff = clusters.OnOff
 local SimpleMetering = clusters.SimpleMetering
@@ -26,7 +27,7 @@ local SimpleMetering = clusters.SimpleMetering
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
   local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = 1000
+  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
   raw_value = raw_value * multiplier/divisor
 
   local delta_energy = 0.0
@@ -36,10 +37,10 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value, deltaEnergy = delta_energy }))
 
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh"}))  
+  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh"}))
 end
 
-function build_bind_request(device, cluster, hub_zigbee_eui, src_endpoint)
+local function build_bind_request(device, cluster, hub_zigbee_eui, src_endpoint)
   local addr_header = messages.AddressHeader(constants.HUB.ADDR, constants.HUB.ENDPOINT, device:get_short_address(), device.fingerprinted_endpoint_id, constants.ZDO_PROFILE_ID, bind_request.BindRequest.ID)
   local bind_req = bind_request.BindRequest(device.zigbee_eui, src_endpoint, cluster, bind_request.ADDRESS_MODE_64_BIT, hub_zigbee_eui, constants.HUB.ENDPOINT)
   local message_body = zdo_messages.ZdoMessageBody({
@@ -61,6 +62,10 @@ local do_configure = function(self, device)
   end
 end
 
+local device_init = function(self, device)
+  device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
+end
+
 local zigbee_metering_plug_power_conumption_report = {
   NAME = "zigbee metering plug power conumption report",
   zigbee_handlers = {
@@ -71,6 +76,7 @@ local zigbee_metering_plug_power_conumption_report = {
     }
   },
   lifecycle_handlers = {
+    init = device_init,
     doConfigure = do_configure
   },
   can_handle = function(opts, driver, device, ...)

@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_device_extended.id, 
+        message = { mock_device_extended.id,
                     zw_test_utilities.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 },
                       {encap = zw.ENCAP.AUTO, src_channel = 2, dst_channels = {0}})
                     )

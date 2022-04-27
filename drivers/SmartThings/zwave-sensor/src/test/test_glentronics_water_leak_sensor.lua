@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
@@ -36,7 +34,7 @@ local glentronics_water_leak_sensor_profile = {
 
 local sensor_endpoints = {
   {
-    command_classes = 
+    command_classes =
     {
       {value = zw.NOTIFICATION}
     }

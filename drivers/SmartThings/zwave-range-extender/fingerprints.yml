@@ -24,3 +24,8 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0001
     deviceProfileName: range-extender
+zwaveGeneric:
+  - id: "GenericRemote"
+    deviceLabel: Z-Wave Remote
+    genericType: 0x01
+    deviceProfileName: range-extender

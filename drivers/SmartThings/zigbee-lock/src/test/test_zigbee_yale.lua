@@ -1,3 +1,17 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 -- Mock out globals
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -15,11 +29,11 @@ local DoorLock = clusters.DoorLock
 local DoorLockUserStatus = DoorLock.types.DrlkUserStatus
 local DoorLockUserType = DoorLock.types.DrlkUserType
 
-local mock_device = test.mock_device.build_test_zigbee_device({ 
-  profile = t_utils.get_profile_definition("base-lock.yml"), 
-  zigbee_endpoints ={ 
-    [1] = {id = 1, manufacturer ="Yale", server_clusters = {0x0001}} 
-  } 
+local mock_device = test.mock_device.build_test_zigbee_device({
+  profile = t_utils.get_profile_definition("base-lock.yml"),
+  zigbee_endpoints ={
+    [1] = {id = 1, manufacturer ="Yale", server_clusters = {0x0001}}
+  }
 })
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -77,9 +91,6 @@ test.register_coroutine_test(
                                                                                                                  0,
                                                                                                                  21600,
                                                                                                                  0) })
-    test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)})
-    test.socket.zigbee:__expect_send({mock_device.id, DoorLock.attributes.LockState:read(mock_device)})
-    test.socket.zigbee:__expect_send({mock_device.id, Alarm.attributes.AlarmCount:read(mock_device)})
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
@@ -301,7 +312,7 @@ test.register_coroutine_test(
       init_code_slot(1, "initialName", mock_device)
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}))))
-      test.wait_for_events()  
+      test.wait_for_events()
 
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {})))

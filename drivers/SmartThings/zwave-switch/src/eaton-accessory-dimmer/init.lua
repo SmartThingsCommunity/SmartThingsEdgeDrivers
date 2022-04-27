@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ end
 local function switch_level_set(driver, device, cmd)
   local level = utils.round(cmd.args.level)
   level = utils.clamp_value(level, 0, 99)
-  
+
   device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
 
   local dimmingDuration = cmd.args.rate or constants.DEFAULT_DIMMING_DURATION -- dimming duration in seconds

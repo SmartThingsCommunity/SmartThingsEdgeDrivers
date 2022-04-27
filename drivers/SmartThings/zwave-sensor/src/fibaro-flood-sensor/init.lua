@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
@@ -28,12 +26,16 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 
+local preferences = require "preferences"
+local configurations = require "configurations"
+
 local FIBARO_MFR_ID = 0x010F
 local FIBARO_FLOOD_PROD_TYPES = { 0x0000, 0x0B00 }
 
 local function can_handle_fibaro_flood_sensor(opts, driver, device, ...)
   return device:id_match(FIBARO_MFR_ID, FIBARO_FLOOD_PROD_TYPES, nil)
 end
+
 
 local function basic_set_handler(self, device, cmd)
   local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
@@ -57,6 +59,7 @@ local function sensor_alarm_report_handler(self, device, cmd)
     if event ~= nil then
       device:emit_event(event)
 
+      -- Tamper events are not cleared by the device; we auto clear after 30 seconds.
       device.thread:call_with_delay(30, function(d)
         device:emit_event(capabilities.tamperAlert.tamper.clear())
       end)
@@ -65,7 +68,7 @@ local function sensor_alarm_report_handler(self, device, cmd)
 end
 
 local function sensor_binary_report_handler(self, device, cmd)
-  local event = cmd.args.sensor_value == 0xFF and capabilities.accelerationSensor.acceleration.active() or capabilities.accelerationSensor.acceleration.inactive()
+  local event = cmd.args.sensor_value == 0xFF and capabilities.waterSensor.water.wet() or capabilities.waterSensor.water.dry()
   device:emit_event(event)
 end
 
@@ -74,9 +77,14 @@ local function sensor_multilevel_report_handler(self, device, cmd)
     local scale = 'C'
     if (cmd.args.scale == SensorMultilevel.scale.temperature.FAHRENHEIT) then scale = 'F' end
     device:emit_event(capabilities.temperatureMeasurement.temperature({value = cmd.args.sensor_value, unit = scale}))
-  elseif cmd.args.sensor_type == 0x00 then
-    local event = cmd.args.sensor_value == 0xFF and capabilities.accelerationSensor.acceleration.active() or capabilities.accelerationSensor.acceleration.inactive()
-    device:emit_event(event)
+  end
+end
+
+local function do_configure(driver, device)
+  configurations.initial_configuration(driver, device)
+  -- The flood sensor can be hardwired, so update any preferences
+  if not device:is_cc_supported(cc.WAKE_UP) then
+    preferences.update_preferences(driver, device)
   end
 end
 
@@ -95,6 +103,9 @@ local fibaro_flood_sensor = {
     [cc.SENSOR_MULTILEVEL] = {
       [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
     }
+  },
+  lifecycle_handlers = {
+    doConfigure = do_configure
   },
   can_handle = can_handle_fibaro_flood_sensor
 }

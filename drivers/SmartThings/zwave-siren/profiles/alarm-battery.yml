@@ -1,0 +1,10 @@
+name: alarm-battery
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: battery
+    version: 1
+  categories:
+  - name: Siren

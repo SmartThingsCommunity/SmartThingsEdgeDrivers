@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ local mock_qubino_flush_shutter_venetian = test.mock_device.build_test_zwave_dev
   zwave_product_type = 0x0003,
   zwave_product_id = 0x0052,
 })
-  
 
 local function test_init()
   test.mock_device.add_test_device(mock_qubino_flush_shutter)
@@ -524,6 +523,14 @@ test.register_message_test(
       )
     },
     {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_qubino_flush_shutter,
+        SwitchMultilevel:Get({})
+      )
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
@@ -544,7 +551,7 @@ do
         Configuration:Report({
           parameter_number = 71,
           size = 1,
-          configuration_value = 1 
+          configuration_value = 1
       })
     })
     mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter-venetian" })

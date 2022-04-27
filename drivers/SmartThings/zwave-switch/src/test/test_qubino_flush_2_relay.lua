@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {}
           })
@@ -77,7 +77,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {2}
           })
@@ -86,7 +86,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {}
           })
@@ -95,7 +95,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         Meter:Get({scale = Meter.scale.electric_meter.WATTS},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {}
           })
@@ -104,7 +104,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {2}
           })
@@ -113,7 +113,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         Meter:Get({scale = Meter.scale.electric_meter.WATTS},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {2}
           })
@@ -123,7 +123,7 @@ test.register_coroutine_test(
         mock_qubino_flush_2_relay,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE},
           {
-            encap = zw.ENCAP.AUTO, 
+            encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels = {???}
           })

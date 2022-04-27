@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -68,6 +68,24 @@ test.register_coroutine_test(
     "added lifecycle event",
     function()
         test.socket.capability:__set_channel_ordering("relaxed")
+        test.socket.capability:__expect_send(
+                {
+                    mock_device.id,
+                    {
+                        capability_id = "button", component_id = "main",
+                        attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
+                    }
+                }
+            )
+            test.socket.capability:__expect_send(
+                {
+                    mock_device.id,
+                    {
+                        capability_id = "button", component_id = "main",
+                        attribute_id = "numberOfButtons", state = { value = 4 }
+                    }
+                }
+            )
         for button_number = 1, 4 do
             test.socket.capability:__expect_send(
                 {

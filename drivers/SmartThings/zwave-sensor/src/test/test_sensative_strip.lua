@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-
-
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
@@ -71,6 +69,14 @@ test.register_coroutine_test(
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
+)
+
+test.register_coroutine_test(
+  "Configuration report should update metadata",
+  function()
+    test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
+    mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
+  end
 )
 
 test.run_registered_tests()

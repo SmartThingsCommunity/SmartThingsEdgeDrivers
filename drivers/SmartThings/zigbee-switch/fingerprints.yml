@@ -1598,12 +1598,12 @@ zigbeeManufacturer:
     deviceProfileName: on-off-level
   - id: Megaman/BSZTM002
     deviceLabel: INGENIUM Light
-    manufacturer: Megaman
+    manufacturer: MEGAMAN
     model: BSZTM002
     deviceProfileName: on-off-level
   - id: Megaman/BSZTM003
     deviceLabel: INGENIUM Light
-    manufacturer: Megaman
+    manufacturer: MEGAMAN
     model: BSZTM003
     deviceProfileName: on-off-level
   - id: "innr/RS 125"
@@ -1681,6 +1681,141 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E14-U43
     deviceProfileName: on-off-level
+  - id: "AduroSmart Eria/ZLL-ExtendedColor"
+    deviceLabel: Eria Light
+    manufacturer: AduroSmart Eria
+    model: ZLL-ExtendedColor
+    deviceProfileName: rgbw-bulb
+  - id: GLEDOPTO/GL-C-008
+    deviceLabel: Gledopto Switch
+    manufacturer: GLEDOPTO
+    model: GL-C-008
+    deviceProfileName: rgbw-bulb
+  - id: Megaman/ZLL-ExtendedColor
+    deviceLabel: INGENIUM Light
+    manufacturer: Megaman
+    model: ZLL-ExtendedColor
+    deviceProfileName: rgbw-bulb
+  - id: "innr/RB 185 C"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 185 C
+    deviceProfileName: rgbw-bulb
+  - id: "innr/FL 130 C"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: FL 130 C
+    deviceProfileName: rgbw-bulb
+  - id: "innr/OFL 120 C"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: OFL 120 C
+    deviceProfileName: rgbw-bulb
+  - id: "innr/OFL 140 C"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: OFL 140 C
+    deviceProfileName: rgbw-bulb
+  - id: "innr/OSL 130 C"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: OSL 130 C
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/PAR 16 50 RGBW - LIGHTIFY"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: PAR 16 50 RGBW - LIGHTIFY
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/CLA60 RGBW OSRAM"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: CLA60 RGBW OSRAM
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/Flex RGBW"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Flex RGBW
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/Gardenpole RGBW-Lightify"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Gardenpole RGBW-Lightify
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/LIGHTIFY Outdoor Flex RGBW"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Outdoor Flex RGBW
+    deviceProfileName: rgbw-bulb
+  - id: "OSRAM/LIGHTIFY Indoor Flex RGBW"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Indoor Flex RGBW
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT001
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT001
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT002
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT002
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT003
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT003
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT007
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT007
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT010
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT010
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT011
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT011
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT012
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT012
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT014
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT014
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT015
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT015
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LCT016
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LCT016
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LST001
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LST001
+    deviceProfileName: rgbw-bulb
+  - id: Philips/LST002
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LST002
+    deviceProfileName: rgbw-bulb
+  - id: GLEDOPTO/GL-B-001Z
+    deviceLabel: XLSmart Light
+    manufacturer: GLEDOPTO
+    model: GL-B-001Z
+    deviceProfileName: rgbw-bulb
   - id: "AduroSmart/ZLL-ColorTemperature"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -1771,3 +1906,90 @@ zigbeeManufacturer:
     manufacturer: CentraLite
     model: 4257050-ZHAC
     deviceProfileName: plug-level-power
+  - id: "IKEA/TRADFRI bulb E27 CWS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E27 CWS opal 600lm
+    deviceProfileName: color-bulb
+  - id: "IKEA/TRADFRI bulb E26 CWS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 CWS opal 600lm
+    deviceProfileName: color-bulb
+  - id: Smartenit/ZBMPlug15
+    deviceLabel: Smartenit Outlet
+    manufacturer: Compacta International, Ltd
+    model: ZBMPlug15
+    deviceProfileName: basic-switch
+  - id: "sengled/E13-N11"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E13-N11
+    deviceProfileName: on-off-level-motion-sensor
+  - id: "GE_Appliances/ZLL Light"
+    deviceLabel: GE Light
+    manufacturer: GE_Appliances
+    model: ZLL Light
+    deviceProfileName: ge-link-bulb
+  - id: GE/SoftWhite
+    deviceLabel: GE Light
+    manufacturer: GE
+    model: SoftWhite
+    deviceProfileName: ge-link-bulb
+  - id: GE/Daylight
+    deviceLabel: GE Light
+    manufacturer: GE
+    model: Daylight
+    deviceProfileName: ge-link-bulb
+zigbeeGeneric:
+  - id: "genericSwitch"
+    deviceLabel: Zigbee Switch
+    clusters:
+      server:
+        - 0x0006 #OnOff
+    deviceProfileName: basic-switch
+  - id: "genericDimmer"
+    deviceLabel: Zigbee Dimmer
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+    deviceProfileName: switch-level
+  - id: "genericColorBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceProfileName: rgbw-bulb
+  - id: "genericMeteredSwitch"
+    deviceLabel: Zigbee Switch
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0702 #Simple Metering
+    deviceProfileName: switch-power-energy
+  - id: "genericMeteredDimmer"
+    deviceLabel: Zigbee Dimmer
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0702 #Simple Metering
+    deviceProfileName: switch-dimmer-power-energy
+  - id: "genericMeteredSwitch/2"
+    deviceLabel: Zigbee Switch
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0B04 #Electrical Measurment
+    deviceProfileName: switch-power
+  - id: "genericMeteredDimmer/2"
+    deviceLabel: Zigbee Dimmer
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0B04 #Electrical Measurment
+    deviceProfileName: switch-level-power

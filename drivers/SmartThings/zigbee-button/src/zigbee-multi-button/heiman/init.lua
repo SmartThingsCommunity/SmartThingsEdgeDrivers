@@ -1,4 +1,4 @@
--- Copyright 2021 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ local do_configure = function(self, device)
   end
 end
 
-function scenes_cluster_handler(driver, device, zb_rx)
+local function scenes_cluster_handler(driver, device, zb_rx)
   local additional_fields = {
     state_change = true
   }
