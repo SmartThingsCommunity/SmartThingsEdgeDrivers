@@ -22,7 +22,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { profile = t_utils.get_profile_definition("power-meter.yaml") }
+    { profile = t_utils.get_profile_definition("power-meter.yml") }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
