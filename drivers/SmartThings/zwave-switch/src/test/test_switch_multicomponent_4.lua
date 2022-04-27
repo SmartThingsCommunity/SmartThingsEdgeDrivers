@@ -73,7 +73,7 @@ test.register_coroutine_test(
         mock_switch_multicomponent,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = {}
           })
@@ -82,7 +82,7 @@ test.register_coroutine_test(
         mock_switch_multicomponent,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = {1}
           })
@@ -91,7 +91,7 @@ test.register_coroutine_test(
         mock_switch_multicomponent,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = {2}
           })
@@ -100,7 +100,7 @@ test.register_coroutine_test(
         mock_switch_multicomponent,
         SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = {3}
           })

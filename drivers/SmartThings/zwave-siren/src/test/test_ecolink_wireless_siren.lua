@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ test.register_message_test(
               value = 0x00
             },
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -135,7 +135,7 @@ test.register_message_test(
               value = 0xFF
             },
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 3,
               dst_channels = { 0 }
             }
@@ -195,7 +195,7 @@ test.register_message_test(
               value = 0xFF
             },
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -230,7 +230,7 @@ test.register_message_test(
               value = 0xFF
             },
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 3,
               dst_channels = { 0 }
             }
@@ -257,7 +257,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchBinary:Get({}, {dst_channels={1}})
+        SwitchBinary:Get({})
       )
     )
     test.socket.zwave:__expect_send(

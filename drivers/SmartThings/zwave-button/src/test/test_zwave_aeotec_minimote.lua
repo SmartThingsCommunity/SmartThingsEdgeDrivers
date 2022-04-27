@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ local button_endpoints = {
   {
     command_classes = {
       {value = zw.BASIC},
-      {value = zw.SCENE_ACTIVATION}
+      {value = zw.SCENE_ACTIVATION},
+      {value = zw.BATTERY}
     }
   }
 }
@@ -54,7 +55,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 1 })
+          Basic:Set({ value = 10 })
         )
       }
     },
@@ -80,7 +81,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 21 })
+          Basic:Set({ value = 20 })
         )
       }
     },
@@ -107,7 +108,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 41 })
+          Basic:Set({ value = 40 })
         )
       }
     },
@@ -133,7 +134,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 61 })
+          Basic:Set({ value = 60 })
         )
       }
     },
@@ -159,7 +160,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 81 })
+          Basic:Set({ value = 80 })
         )
       }
     },
@@ -185,7 +186,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 101 })
+          Basic:Set({ value = 100 })
         )
       }
     },
@@ -211,7 +212,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 121 })
+          Basic:Set({ value = 120 })
         )
       }
     },
@@ -237,7 +238,7 @@ test.register_message_test(
       message = {
         mock_aeotec_minimote.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Basic:Set({ value = 141 })
+          Basic:Set({ value = 140 })
         )
       }
     },
@@ -261,6 +262,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_aeotec_minimote.id, "doConfigure" })
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
+        Battery:Get({})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_aeotec_minimote,
         Configuration:Set({parameter_number = 241, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
@@ -277,35 +282,35 @@ test.register_coroutine_test(
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 0, size = 4, configuration_value = 16842752}) --payload="   "
+        Configuration:Set({parameter_number = 0, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 20, size = 4, configuration_value = 18153472}) --payload="  "
+        Configuration:Set({parameter_number = 40, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 40, size = 4, configuration_value = 19464192}) --payload="()  "
+        Configuration:Set({parameter_number = 80, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 60, size = 4, configuration_value = 20774912}) --payload="<=  "
+        Configuration:Set({parameter_number = 120, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 80, size = 4, configuration_value = 22085632}) --payload="PQ  "
+        Configuration:Set({parameter_number = 20, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 100, size = 4, configuration_value = 23396352}) --payload="de  "
+        Configuration:Set({parameter_number = 60, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 120, size = 4, configuration_value = 24707072}) --payload="xy  "
+        Configuration:Set({parameter_number = 100, size = 1, configuration_value = 1})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 140, size = 4, configuration_value = 26017792}) --payload="Œ  "
+        Configuration:Set({parameter_number = 140, size = 1, configuration_value = 1})
     ))
     mock_aeotec_minimote:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -322,13 +327,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 4 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.supportedButtonValues(
         {"pushed", "held"}
       ))
@@ -336,57 +334,8 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button3", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button3", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button4", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button4", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
+      message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.numberOfButtons(
+        { value = 4 }
       ))
     }
   },

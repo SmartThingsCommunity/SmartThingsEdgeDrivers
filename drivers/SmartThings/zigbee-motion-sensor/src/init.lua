@@ -17,6 +17,7 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 
+
 local zigbee_motion_driver = {
   supported_capabilities = {
     capabilities.motionSensor,
@@ -38,15 +39,7 @@ local zigbee_motion_driver = {
                   require("samjin"),
                   require("battery-voltage"),
                   require("centralite"),
-<<<<<<< HEAD
                   require("smartthings")
-=======
-                  require("smartthings"),
-                  require("smartsense")
-  },
-  additional_zcl_profiles = {
-    [0xFC01] = true
->>>>>>> main
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

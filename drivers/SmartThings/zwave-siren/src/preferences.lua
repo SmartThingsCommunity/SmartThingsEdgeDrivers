@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,29 +34,6 @@ local devices = {
       buttonPairingMode = {parameter_number = 49, size = 1},
     }
   },
-  YALE_SIREN = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0129,
-      product_types = 0x6F01,
-      product_ids = 0x0001
-    },
-    PARAMETERS = {
-      alarmLength = {parameter_number = 1, size = 1},
-      alarmLEDflash = {parameter_number = 2, size = 1},
-      comfortLED = {parameter_number = 3, size = 1},
-      tamper = {parameter_number = 4, size = 1},
-    }
-  },
-  EVERSPRING_SIREN = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0060,
-      product_types = 0x000C,
-      product_ids = 0x0002
-    },
-    PARAMETERS = {
-      alarmLength = {parameter_number = 1, size = 2}
-    }
-  }
 }
 
 local preferences = {}

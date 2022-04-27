@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ local driver_template = {
     capabilities.colorTemperature,
     capabilities.powerMeter
   },
-  sub_drivers = {
+  sub_drivers = { 
     require("aeotec-led-bulb-6"),
     require("aeon-multiwhite-bulb"),
     require("fibaro-rgbw-controller")

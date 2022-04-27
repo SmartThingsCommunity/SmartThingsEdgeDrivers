@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version=1 })
 local SceneActivation = (require "st.zwave.CommandClass.SceneActivation")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
-local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 local t_utils = require "integration_test.utils"
 
 local zwave_multi_2_button_profile = t_utils.get_profile_definition("multi-button-2.yml")
@@ -457,10 +456,6 @@ test.register_coroutine_test(
         mock_aeotec_keyfob_button,
         Configuration:Set({parameter_number = 250, size = 1, configuration_value = 1})
     ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_aeotec_keyfob_button,
-        Association:Set({grouping_identifier = 1, node_ids = {}})
-    ))
     mock_aeotec_keyfob_button:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -476,13 +471,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 4 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.supportedButtonValues(
         {"pushed", "held"}
       ))
@@ -490,66 +478,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
+      message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.numberOfButtons(
+        { value = 4 }
       ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button3", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button3", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button4", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_keyfob_button:generate_test_message("button4", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_aeotec_keyfob_button,
-        Battery:Get({})
-      )
     }
   },
   {
@@ -606,13 +537,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 6 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_fibaro_keyfob_button:generate_test_message("main", capabilities.button.supportedButtonValues(
         {"pushed", "held", "double", "down_hold", "pushed_3x"}
       ))
@@ -620,94 +544,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
+      message = mock_fibaro_keyfob_button:generate_test_message("main", capabilities.button.numberOfButtons(
+        { value = 6 }
       ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button3", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button3", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button4", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button4", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button5", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button5", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button6", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_keyfob_button:generate_test_message("button6", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double", "down_hold", "pushed_3x"}
-      ))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_fibaro_keyfob_button,
-        Battery:Get({})
-      )
     }
   },
   {
@@ -726,13 +565,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 4 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.supportedButtonValues(
         {"pushed", "held"}
       ))
@@ -740,66 +572,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
+      message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.numberOfButtons(
+        { value = 4 }
       ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button3", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button3", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button4", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_wallmote_quad:generate_test_message("button4", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_aeotec_wallmote_quad,
-        Battery:Get({})
-      )
     }
   },
   {
@@ -818,13 +593,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_everspring:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 2 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_everspring:generate_test_message("main", capabilities.button.supportedButtonValues(
         {"pushed", "held", "double"}
       ))
@@ -832,38 +600,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_everspring:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
+      message = mock_everspring:generate_test_message("main", capabilities.button.numberOfButtons(
+        { value = 2 }
       ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_everspring:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_everspring:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_everspring:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held", "double"}
-      ))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_everspring,
-        Battery:Get({})
-      )
     }
   },
   {

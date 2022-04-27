@@ -29,7 +29,7 @@ local configurationsMap = require "configurations"
 --- @return table dst_channels destination channels e.g. {2} for Z-Wave channel 2 or {} for unencapsulated
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("switch(%d)")
-  return { ep_num and tonumber(ep_num) }
+  return { ep_num and tonumber(ep_num) } 
 end
 
 --- Map end_point(channel) to Z-Wave endpoint 9 channel)
@@ -112,11 +112,11 @@ local driver_template = {
     require("eaton-anyplace-switch"),
     require("fibaro-wall-plug-us"),
     require("dawon-wall-smart-switch"),
+    require("zooz-switch"),
     require("zooz-power-strip"),
     require("aeon-smart-strip"),
     require("qubino-switches"),
     require("fibaro-double-switch"),
-    require("fibaro-single-switch"),    
     require("eaton-5-scene-keypad"),
     require("ecolink-switch")
   },

@@ -413,7 +413,7 @@ test.register_coroutine_test(
       init_code_slot(1, "initialName", mock_device)
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}))))
-      test.wait_for_events()
+      test.wait_for_events()  
 
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {})))

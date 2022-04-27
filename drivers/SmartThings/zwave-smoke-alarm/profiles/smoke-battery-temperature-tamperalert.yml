@@ -38,11 +38,7 @@ preferences:
         2: "Exceeding temperature threshold"
         4: "Lack of Z-Wave range"
         7: "All"
-<<<<<<< HEAD
       default: 1
-=======
-      default: 2
->>>>>>> main
   - name: "indicatorNotification"
     title: "Indicator notification status"
     description: "Visual indicator notifications status"

@@ -12,6 +12,3 @@ components:
     version: 1
   categories:
   - name: Light
-metadata:
-  mnmn: SmartThings
-  vid: generic-color-temperature-bulb-2700K-6500K

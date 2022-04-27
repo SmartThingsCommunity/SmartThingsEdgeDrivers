@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ local ZwaveDriver = require "st.zwave.driver"
 local configsMap = require "configurations"
 
 local function added_handler(self, device)
-  device:refresh()
   local configs = configsMap.get_device_parameters(device)
   if configs then
-    for _, comp in pairs(device.profile.components) do
-      if device:supports_capability_by_id(capabilities.button.ID, comp.id) then
-        local number_of_buttons = comp.id == "main" and configs.number_of_buttons or 1
-        device:emit_component_event(comp, capabilities.button.numberOfButtons({ value=number_of_buttons }))
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues(configs.supported_button_values))
-      end
-    end
+    device:emit_event(capabilities.button.numberOfButtons({value = configs.number_of_buttons}))
+    device:emit_event(capabilities.button.supportedButtonValues(configs.supported_button_values))
+  else
+    device:emit_event(capabilities.button.numberOfButtons({ value=1 }))
+    device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}))
   end
 end
 

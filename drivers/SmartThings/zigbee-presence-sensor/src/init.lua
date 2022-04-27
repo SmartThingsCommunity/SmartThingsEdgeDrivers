@@ -12,18 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-<<<<<<< HEAD
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local constants = require "st.zigbee.constants"
-=======
-local ZigbeeDriver = require "st.zigbee"
-local defaults = require "st.zigbee.defaults"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local timer_const = require "constants/timer-constants"
->>>>>>> main
 
 -- Capabilities
 local capabilities   = require "st.capabilities"
@@ -39,7 +32,6 @@ local IdentifyCluster      = clusters.Identify
 local zcl_global_commands  = require "st.zigbee.zcl.global_commands"
 local Status               = (require "st.zigbee.zcl.types").ZclStatus
 
-<<<<<<< HEAD
 local BEEP_IDENTIFY_TIME = 5 -- seconds
 local POLL_DEFAULT_INTERVAL = 20 -- seconds
 
@@ -51,26 +43,11 @@ local DEVICE_RESPONDED_TO_POLL_FIELD = "pollStatus"                -- used when 
 -- Timers
 local PRESENCE_CALLBACK_TIMER = "presenceCallbackTimer" -- events are based on battery reports
 local RECURRING_POLL_TIMER = "recurringPollTimer"       -- events are based on recurring poll of Basic cluster's attribute
-=======
-local buf_lib = require "st.buf"
-local zb_messages = require "st.zigbee.messages"
-
-local BEEP_IDENTIFY_TIME = 5 -- seconds
-
-local IS_PRESENCE_BASED_ON_BATTERY_REPORTS = "isPresenceBasedOnBatteryReports"
-local ST_ARRIVAL_SENSOR_CUSTOM_PROFILE = 0xFC01
-
-local DEFAULT_PRESENCE_TIMEOUT_S = 120
->>>>>>> main
 
 local battery_voltage_attr_configuration = {
   cluster = PowerConfiguration.ID,
   attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
-<<<<<<< HEAD
   minimum_interval = 20,
-=======
-  minimum_interval = 1,
->>>>>>> main
   maximum_interval = 21,
   data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
   reportable_change = 1
@@ -93,17 +70,12 @@ local battery_table = {
   [1.50] = 0
 }
 
-<<<<<<< HEAD
 local function send_presence_and_signal_events(device, zb_rx)
   device:emit_event(PresenceSensor.presence("present"))
-=======
-local function emit_signal_strength_events(device, zb_rx)
->>>>>>> main
   device:emit_event(SignalStrength.lqi(zb_rx.lqi.value))
   device:emit_event(SignalStrength.rssi({value = zb_rx.rssi.value, unit = 'dBm'}))
 end
 
-<<<<<<< HEAD
 local function verify_presence_with_battery_report(device, zb_rx)
   send_presence_and_signal_events(device, zb_rx)
   device:set_field(LAST_BATTERY_REPORT_TIMESTAMP, os.time())
@@ -133,20 +105,10 @@ local function battery_config_response_handler(self, device, zb_rx)
     if poll_timer ~= nil then
       device.thread:cancel_timer(poll_timer)
       device:set_field(RECURRING_POLL_TIMER, nil)
-=======
-local function battery_config_response_handler(self, device, zb_rx)
-  if zb_rx.body.zcl_body.global_status.value == Status.SUCCESS then
-    device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, true, {persist = true})
-    local poll_timer = device:get_field(timer_const.RECURRING_POLL_TIMER)
-    if poll_timer ~= nil then
-      device.thread:cancel_timer(poll_timer)
-      device:set_field(timer_const.RECURRING_POLL_TIMER, nil)
->>>>>>> main
     end
   end
 end
 
-<<<<<<< HEAD
 local function device_poll_response_handler(self, device, value, zb_rx)
   send_presence_and_signal_events(device, zb_rx)
   device:set_field(DEVICE_RESPONDED_TO_POLL_FIELD, true)
@@ -172,59 +134,10 @@ local function beep_handler(self, device, command)
 end
 
 local function custom_battery_voltage_config(device)
-=======
-local function create_poll_schedule(device)
-  local should_schedule_recurring_polling = not (device:get_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS) or true)
-  local timer = device:get_field(timer_const.RECURRING_POLL_TIMER)
-  if should_schedule_recurring_polling then
-    if timer ~= nil then
-      device.thread:cancel_timer(timer)
-    end
-    -- Set the poll interval to 1/2 the actual check interval so a single missed message doens't result in not present
-    local new_timer = device.thread:call_on_schedule(math.floor(device.preferences.check_interval / 2) - 1, function()
-      device:send(Basic.attributes.ZCLVersion:read(device))
-    end, "polling_schedule_timer")
-    device:set_field(timer_const.RECURRING_POLL_TIMER, new_timer)
-  elseif timer ~= nil then
-    device.thread:cancel_timer(timer)
-    device:set_field(timer_const.RECURRING_POLL_TIMER, nil)
-  end
-end
-
-local function create_presence_timeout(device)
-  local timer = device:get_field(timer_const.PRESENCE_CALLBACK_TIMER)
-  if timer ~= nil then
-    device.thread:cancel_timer(timer)
-  end
-  local no_rep_timer = device:get_field(timer_const.PRESENCE_CALLBACK_CREATE_FN)
-  if (no_rep_timer ~= nil) then
-    device:set_field(timer_const.PRESENCE_CALLBACK_TIMER, no_rep_timer(device))
-  end
-end
-
-local function info_changed(self, device, event, args)
-  if args.old_st_store.preferences.check_interval ~= device.preferences.check_interval then
-    create_poll_schedule(device)
-  end
-end
-
-local function get_check_interval_int(device)
-  if type(device.preferences.checkInterval) == "number" then
-    return device.preferences.checkInterval
-  elseif type(device.preferences.checkInterval) == "string" and tonumber(device.preferences.checkInterval) ~= nil then
-    return tonumber(device.preferences.checkInterval)
-  end
-  return DEFAULT_PRESENCE_TIMEOUT_S
-end
-
-local function init_handler(self, device, event, args)
-  device:set_field(battery_defaults.DEVICE_VOLTAGE_TABLE_KEY, battery_table)
->>>>>>> main
   device:add_configured_attribute(battery_voltage_attr_configuration)
   device:add_monitored_attribute(battery_voltage_attr_configuration)
   device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
-<<<<<<< HEAD
 end
 
 local function added_handler(self, device)
@@ -235,63 +148,6 @@ local function added_handler(self, device)
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 
-=======
-
-  device:set_field(
-      timer_const.PRESENCE_CALLBACK_CREATE_FN,
-      function(device)
-        return device.thread:call_with_delay(
-                  get_check_interval_int(device),
-                  function()
-                    device:emit_event(PresenceSensor.presence("not present"))
-                    device:emit_event(SignalStrength.lqi(0))
-                    device:emit_event(SignalStrength.rssi({value = -100, unit = 'dBm'}))
-                    device:set_field(timer_const.PRESENCE_CALLBACK_TIMER, nil)
-                  end
-        )
-      end
-  )
-
-  local should_schedule_recurring_polling = not (device:get_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS) or true)
-  if should_schedule_recurring_polling then
-    create_poll_schedule(device)
-    create_presence_timeout(device)
-  end
-end
-
-local function beep_handler(self, device, command)
-  device:send(IdentifyCluster.server.commands.Identify(device, BEEP_IDENTIFY_TIME))
-end
-
-local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
-  device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, false, {persist = true})
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-end
-
-local function poke(device)
-  -- If we receive any message from the device, we should mark it present and start the timeout to mark it offline
-  device:emit_event(PresenceSensor.presence("present"))
-  create_presence_timeout(device)
-end
-
-local function all_zigbee_message_handler(self, message_channel)
-  local device_uuid, data = message_channel:receive()
-  local buf = buf_lib.Reader(data)
-  local zb_rx = zb_messages.ZigbeeMessageRx.deserialize(buf, {additional_zcl_profiles = self.additional_zcl_profiles})
-  local device = self:get_device_info(device_uuid)
-  if zb_rx ~= nil then
-    device.log.info(string.format("received Zigbee message: %s", zb_rx:pretty_print()))
-    device:attribute_monitor(zb_rx)
-    if (device:supports_capability_by_id("signalStrength") and zb_rx.rssi.value ~= nil and zb_rx.lqi.value ~= nil) then
-      emit_signal_strength_events(device, zb_rx)
-    end
-    poke(device)
-    device.thread:queue_event(self.zigbee_message_dispatcher.dispatch, self.zigbee_message_dispatcher, self, device, zb_rx)
-  end
-end
-
->>>>>>> main
 local zigbee_presence_driver = {
   supported_capabilities = {
     capabilities.presenceSensor,
@@ -302,16 +158,11 @@ local zigbee_presence_driver = {
   },
   zigbee_handlers = {
     attr = {
-<<<<<<< HEAD
       [Basic.ID] = {
         [Basic.attributes.ZCLVersion.ID] = device_poll_response_handler
       },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_voltage_handler
-=======
-      [PowerConfiguration.ID] = {
-        [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_defaults.battery_volt_attr_handler
->>>>>>> main
       }
     },
     global = {
@@ -327,25 +178,11 @@ local zigbee_presence_driver = {
   },
   lifecycle_handlers = {
     added = added_handler,
-<<<<<<< HEAD
     init = init_handler
   }--,
   -- sub_drivers = {
   --   require("arrival-sensor-v1")
   -- }
-=======
-    init = init_handler,
-    infoChanged = info_changed,
-  },
-  additional_zcl_profiles = {
-    [ST_ARRIVAL_SENSOR_CUSTOM_PROFILE] = true
-  },
-  -- Custom handler for every Zigbee message
-  zigbee_message_handler = all_zigbee_message_handler,
-  sub_drivers = {
-    require("arrival-sensor-v1")
-  }
->>>>>>> main
 }
 
 defaults.register_for_default_handlers(zigbee_presence_driver, zigbee_presence_driver.supported_capabilities)

@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         model = "SMSZB-120",
         server_clusters = {0x0000,0x0001,0x0003,0x000F,0x0020,0x0500,0x0502}
       }
-    }
+    } 
   }
 )
 

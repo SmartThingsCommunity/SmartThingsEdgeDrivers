@@ -262,7 +262,7 @@ test.register_message_test(
           Basic:Report(
             {
               value = 0x00
-            },
+            }, 
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
@@ -359,7 +359,7 @@ test.register_message_test(
             {
               scale = Meter.scale.electric_meter.KILOWATT_HOURS,
               meter_value = 50.0
-            },
+            }, 
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 3,

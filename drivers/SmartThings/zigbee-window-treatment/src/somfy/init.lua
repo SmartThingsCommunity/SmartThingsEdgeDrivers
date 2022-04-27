@@ -23,8 +23,7 @@ local GLYDEA_MOVE_THRESHOLD = 3
 
 local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
     { mfr = "SOMFY", model = "Glydea Ultra Curtain" },
-    { mfr = "SOMFY", model = "Sonesse 30 WF Roller" },
-    { mfr = "SOMFY", model = "Sonesse 40 Roller" }
+    { mfr = "SOMFY", model = "Roller" },
 }
 
 local MOVE_LESS_THAN_THRESHOLD = "_sameLevelEvent"
@@ -101,6 +100,7 @@ end
 local function window_shade_level_cmd(driver, device, command)
   local level = utils.clamp_value(command.args.shadeLevel, 0, 100)
   local current_level = device:get_latest_state(command.component, capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME, 0)
+  print(current_level)
   if math.abs(level - current_level) <= GLYDEA_MOVE_THRESHOLD then
     device:set_field(MOVE_LESS_THAN_THRESHOLD, true)
   end

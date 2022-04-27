@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
@@ -54,20 +56,15 @@ local function do_configure(driver, device)
   end
 end
 
-local initial_events_map = {
-  [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
-  [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
-  [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
-  [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
-  [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
-  [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
-}
-
 local function added_handler(self, device)
-  for id, event in pairs(initial_events_map) do
-    if device:supports_capability_by_id(id) then
-      device:emit_event(event)
-    end
+  if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
+  if device:supports_capability_by_id(capabilities.waterSensor.ID) then
+    device:emit_event(capabilities.waterSensor.water.dry())
+  end
+  if device:supports_capability_by_id(capabilities.moldHealthConcern.ID) then
+    device:emit_event(capabilities.moldHealthConcern.moldHealthConcern.good())
   end
 end
 
@@ -88,13 +85,7 @@ local driver_template = {
     capabilities.dewPoint,
     capabilities.ultravioletIndex,
     capabilities.accelerationSensor,
-    capabilities.atmosphericPressureMeasurement,
-    capabilities.threeAxis,
-    capabilities.bodyWeightMeasurement,
-    capabilities.voltageMeasurement,
-    capabilities.energyMeter,
-    capabilities.powerMeter,
-    capabilities.smokeDetector
+    capabilities.threeAxis
   },
   sub_drivers = {
     require("zooz-4-in-1-sensor"),
@@ -107,8 +98,7 @@ local driver_template = {
     require("sensative-strip"),
     require("enerwave-motion-sensor"),
     require("aeotec-multisensor"),
-    require("zwave-water-leak-sensor"),
-    require("everspring-motion-light-sensor")
+    require("zwave-water-leak-sensor")
   },
   lifecycle_handlers = {
     added = added_handler,

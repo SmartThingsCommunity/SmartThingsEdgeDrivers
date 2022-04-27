@@ -58,18 +58,11 @@ local function button_pressed_handler(button_number)
 end
 
 local function added_handler(self, device)
-<<<<<<< HEAD
   for button_name, component in pairs(device.profile.components) do
     if button_name ~= "main" then
       device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
       device:emit_component_event(component, capabilities.button.numberOfButtons({value = 1}))
     end
-=======
-  for _, component in pairs(device.profile.components) do
-    local number_of_buttons = component.id == "main" and 2 or 1
-    device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
->>>>>>> main
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end

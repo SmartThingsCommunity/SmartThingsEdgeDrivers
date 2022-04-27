@@ -220,7 +220,7 @@ test.register_coroutine_test(
     local level = math.random(1,100)
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { level, 10 } }})
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))    
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,

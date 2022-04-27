@@ -16,7 +16,7 @@ local MultichannelAssociation = (require "st.zwave.CommandClass.MultiChannelAsso
 
 local QUBINO_FLUSH_1D_RELAY_FINGERPRINT = {mfr = 0x0159, prod = 0x0002, model = 0x0053}
 
-local function can_handle_qubino_flush_1d_relay(opts, driver, device, ...)
+local function can_handle_qubino_flush_1d_relay(opts, driver, device, ...) 
   return device:id_match(QUBINO_FLUSH_1D_RELAY_FINGERPRINT.mfr, QUBINO_FLUSH_1D_RELAY_FINGERPRINT.prod, QUBINO_FLUSH_1D_RELAY_FINGERPRINT.model)
 end
 

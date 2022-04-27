@@ -19,8 +19,7 @@ components:
   categories:
   - name: MotionSensor
 preferences:
-  # Temporary name
-  - name: motionSensitivityLevel
+  - name: motionSensitivity
     title: Motion sensor sensitivity
     required: false
     preferenceType: enumeration
@@ -119,7 +118,7 @@ preferences:
     required: false
     preferenceType: enumeration
     definition:
-      options:
+      options: 
         3: 0.5°F/0.3°C
         6: 1°F/0.6°C
         10: 2°F/1 °C
@@ -133,7 +132,7 @@ preferences:
     required: false
     preferenceType: enumeration
     definition:
-      options:
+      options: 
         0: LED inactive
         1: Temp Dependent (1L)
         2: Flashlight Mode (1L)
@@ -189,3 +188,4 @@ preferences:
       default: 1000
       minimum: 0
       maximum: 32767
+  

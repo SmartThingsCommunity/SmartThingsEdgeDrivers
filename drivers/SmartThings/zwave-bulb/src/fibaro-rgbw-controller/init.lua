@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ local function is_fibaro_rgbw_controller(opts, driver, device, ...)
 end
 
 -- This handler is copied from defaults with scraped of sets for both WHITE channels
-local function set_color(driver, device, command)
+function set_color(driver, device, command)
   local r, g, b = utils.hsl_to_rgb(command.args.color.hue, command.args.color.saturation, command.args.color.lightness)
   if r > 0 or g > 0 or b > 0 then
     device:set_field(CAP_CACHE_KEY, command)
@@ -74,7 +74,7 @@ local function set_color(driver, device, command)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
 end
 
-local function switch_color_report(driver, device, command)
+function switch_color_report(driver, device, command)
   local event
   if command.args.color_component_id == SwitchColor.color_component_id.WARM_WHITE then
     local value = command.args.value
@@ -96,7 +96,7 @@ local function switch_color_report(driver, device, command)
   end
 end
 
-local function switch_multilevel_report(driver, device, command)
+function switch_multilevel_report(driver, device, command)
   local endpoint = command.src_channel
   -- ignore multilevel reports from endpoints [1, 2, 3, 4] which mirror SwitchColor values
   -- and in addition cause wrong SwitchLevel events
@@ -116,7 +116,7 @@ local function switch_multilevel_report(driver, device, command)
   end
 end
 
-local function set_switch(driver, device, command, value)
+function set_switch(driver, device, command, value)
   if command.component == "white" then
     local set = SwitchColor:Set({
       color_components = {
@@ -155,11 +155,11 @@ local function set_switch(driver, device, command, value)
   end
 end
 
-local function set_switch_on(driver, device, command)
+function set_switch_on(driver, device, command)
   set_switch(driver, device, command, 255)
 end
 
-local function set_switch_off(driver, device, command)
+function set_switch_off(driver, device, command)
   set_switch(driver, device, command, 0)
 end
 

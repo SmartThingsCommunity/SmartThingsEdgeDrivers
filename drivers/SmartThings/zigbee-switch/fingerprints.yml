@@ -1598,12 +1598,12 @@ zigbeeManufacturer:
     deviceProfileName: on-off-level
   - id: Megaman/BSZTM002
     deviceLabel: INGENIUM Light
-    manufacturer: MEGAMAN
+    manufacturer: Megaman
     model: BSZTM002
     deviceProfileName: on-off-level
   - id: Megaman/BSZTM003
     deviceLabel: INGENIUM Light
-    manufacturer: MEGAMAN
+    manufacturer: Megaman
     model: BSZTM003
     deviceProfileName: on-off-level
   - id: "innr/RS 125"
@@ -1921,14 +1921,6 @@ zigbeeManufacturer:
     manufacturer: Compacta International, Ltd
     model: ZBMPlug15
     deviceProfileName: basic-switch
-<<<<<<< HEAD
-=======
-  - id: "sengled/E13-N11"
-    deviceLabel: Sengled Light
-    manufacturer: sengled
-    model: E13-N11
-    deviceProfileName: on-off-level-motion-sensor
->>>>>>> main
   - id: "GE_Appliances/ZLL Light"
     deviceLabel: GE Light
     manufacturer: GE_Appliances
@@ -1943,60 +1935,4 @@ zigbeeManufacturer:
     deviceLabel: GE Light
     manufacturer: GE
     model: Daylight
-<<<<<<< HEAD
     deviceProfileName: ge-link-bulb
-=======
-    deviceProfileName: ge-link-bulb
-zigbeeGeneric:
-  - id: "genericSwitch"
-    deviceLabel: Zigbee Switch
-    clusters:
-      server:
-        - 0x0006 #OnOff
-    deviceProfileName: basic-switch
-  - id: "genericDimmer"
-    deviceLabel: Zigbee Dimmer
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0008 #Level
-    deviceProfileName: switch-level
-  - id: "genericColorBulb"
-    deviceLabel: Zigbee Light
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0008 #Level
-        - 0x0300 #Color Control
-    deviceProfileName: rgbw-bulb
-  - id: "genericMeteredSwitch"
-    deviceLabel: Zigbee Switch
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0702 #Simple Metering
-    deviceProfileName: switch-power-energy
-  - id: "genericMeteredDimmer"
-    deviceLabel: Zigbee Dimmer
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0008 #Level
-        - 0x0702 #Simple Metering
-    deviceProfileName: switch-dimmer-power-energy
-  - id: "genericMeteredSwitch/2"
-    deviceLabel: Zigbee Switch
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0B04 #Electrical Measurment
-    deviceProfileName: switch-power
-  - id: "genericMeteredDimmer/2"
-    deviceLabel: Zigbee Dimmer
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0008 #Level
-        - 0x0B04 #Electrical Measurment
-    deviceProfileName: switch-level-power
->>>>>>> main

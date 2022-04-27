@@ -139,7 +139,6 @@ test.register_coroutine_test(
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       test.socket.zigbee:__expect_send({
         mock_device.id,
-<<<<<<< HEAD
         ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(mock_device, 0x0001)
       })
       test.socket.zigbee:__expect_send({
@@ -169,69 +168,6 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({
         mock_device.id,
         cluster_base.write_manufacturer_specific_attribute(mock_device, SINOPE_CUSTOM_CLUSTER, MFR_FLOOR_HIGH_LIMIT_ATTRIBUTE, MFG_CODE, data_types.Int16, 3000)
-=======
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(ThermostatUserInterfaceConfiguration.ID),
-          data_types.AttributeId(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout.ID),
-          data_types.validate_or_build_type(0x0001, data_types.Enum8, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(Thermostat.ID),
-          data_types.AttributeId(MFR_BACKLIGHT_MODE_ATTRIBUTE),
-          data_types.validate_or_build_type(0x0000, data_types.Enum8, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_TIME_FORMAT_ATTRIBUTE),
-          data_types.validate_or_build_type(0x0001, data_types.Enum8, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_AIR_FLOOR_MODE_ATTRIBUTE),
-          data_types.validate_or_build_type(0x0002, data_types.Enum8, "payload")
-      )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_FLOOR_SENSOR_TYPE_ATTRIBUTE),
-          data_types.validate_or_build_type(0x0001, data_types.Enum8, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_AMBIENT_LIMIT_ATTRIBUTE),
-          data_types.validate_or_build_type(1000, data_types.Int16, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_FLOOR_LOW_LIMIT_ATTRIBUTE),
-          data_types.validate_or_build_type(2000, data_types.Int16, "payload")
-        )
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        cluster_base.write_attribute(mock_device,
-          data_types.ClusterId(SINOPE_CUSTOM_CLUSTER),
-          data_types.AttributeId(MFR_FLOOR_HIGH_LIMIT_ATTRIBUTE),
-          data_types.validate_or_build_type(3000, data_types.Int16, "payload")
-        )
->>>>>>> main
       })
     end
 )

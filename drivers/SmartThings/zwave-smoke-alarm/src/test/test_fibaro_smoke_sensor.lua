@@ -42,7 +42,7 @@ local mock_device = test.mock_device.build_test_zwave_device(
     zwave_endpoints = sensor_endpoints,
     zwave_manufacturer_id = 0x010F,
     zwave_product_type = 0x0C02,
-    zwave_product_id = 0x1002
+    zwave_product_id = 0x1002    
   }
 )
 

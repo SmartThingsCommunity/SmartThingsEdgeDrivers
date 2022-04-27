@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
-local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
+local Notification = (require "st.zwave.CommandClass.Notification")({version=8})
 local SoundSwitch =  (require "st.zwave.CommandClass.SoundSwitch")({version=1})
 
 local ON = 0xFF
@@ -91,288 +91,109 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 0  should be handled as alarm off, chime off in the main component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 0)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("main", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 2  should be handled as alarm off, chime off in the sound2 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 2)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 2,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound2", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound2", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 3  should be handled as alarm off, chime off in the sound3 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 3)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 3,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound3", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound3", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 4  should be handled as alarm off, chime off in the sound4 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 4)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 4,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound4", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound4", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 5  should be handled as alarm off, chime off in the sound5 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 5)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 5,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound5", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound5", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 6  should be handled as alarm off, chime off in the sound6 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 6)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 6,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound6", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound6", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 7  should be handled as alarm off, chime off in the sound7 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 7)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 7,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound7", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound7", capabilities.chime.chime.off())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Notification Report (SIREN / STATE_IDLE) - src_channel: 8  should be handled as alarm off, chime off in the sound8 component",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
-    test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    mock_siren:set_field("last_triggered_endpoint", 8)
-
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Notification:Report(
-          {
-            notification_type = Notification.notification_type.SIREN,
-            event = Notification.event.siren.STATE_IDLE
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 8,
-            dst_channels = {0}
-          }
-        )
-      )
-    })
-
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound8", capabilities.alarm.alarm.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("sound8", capabilities.chime.chime.off())
-    )
-  end
+test.register_message_test(
+  "Basic Report (0x00) should be handled as alarm off, chime off in the main and all other components",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(Basic:Report({value = OFF}))}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound2", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound2", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound3", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound3", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound4", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound4", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound5", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound5", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound6", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound6", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound7", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound7", capabilities.chime.chime.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound8", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound8", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 0 should be handled as alarm both, chime in the main component",
+  "Basic Report (0x00) - src_channel: 2  should be handled as alarm off, chime off in the sound2 component",
   {
     {
       channel = "device_lifecycle",
@@ -385,14 +206,10 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = OFF},
             {
               encap = zw.ENCAP.AUTO,
-              src_channel = 0,
+              src_channel = 2,
               dst_channels = {0}
             }
           )
@@ -402,12 +219,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.both())
+      message = mock_siren:generate_test_message("sound2", capabilities.alarm.alarm.off())
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
+      message = mock_siren:generate_test_message("sound2", capabilities.chime.chime.off())
     }
   },
   {
@@ -416,7 +233,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 2 should be handled as alarm both, chime in the sound2 component",
+  "Basic Report (0x00) - src_channel: 3 should be handled as alarm off, chime off in the sound3 component",
   {
     {
       channel = "device_lifecycle",
@@ -429,11 +246,273 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
+          Basic:Report({value = OFF},
             {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+              encap = zw.ENCAP.AUTO,
+              src_channel = 3,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound3", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound3", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) - src_channel: 4 should be handled as alarm off, chime off in the sound4 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = OFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 4,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound4", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound4", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) - src_channel: 5 should be handled as alarm off, chime off in the sound5 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = OFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 5,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound5", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound5", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) - src_channel: 6 should be handled as alarm off, chime off in the sound6 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = OFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 6,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound6", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound6", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) - src_channel: 7  should be handled as alarm off, chime off in the sound7 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = OFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 7,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound7", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound7", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) - src_channel: 8 should be handled as alarm off, chime off in the sound8 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = OFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 8,
+              dst_channels = {0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound8", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("sound8", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0xFF) should be handled as alarm both in the main component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(Basic:Report({value = ON}))}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.both())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0xFF) - src_channel: 2  should be handled as alarm both in the sound2 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_siren.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 2,
@@ -447,11 +526,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound2", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound2", capabilities.chime.chime.chime())
     }
   },
   {
@@ -460,7 +534,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 3 should be handled as alarm both, chime in the sound3 component",
+  "Basic Report (0xFF) - src_channel: 3  should be handled as alarm both in the sound3 component",
   {
     {
       channel = "device_lifecycle",
@@ -473,11 +547,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 3,
@@ -491,11 +561,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound3", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound3", capabilities.chime.chime.chime())
     }
   },
   {
@@ -504,7 +569,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 4 should be handled as alarm both, chime in the sound4 component",
+  "Basic Report (0xFF) - src_channel: 4  should be handled as alarm both in the sound4 component",
   {
     {
       channel = "device_lifecycle",
@@ -517,11 +582,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 4,
@@ -535,11 +596,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound4", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound4", capabilities.chime.chime.chime())
     }
   },
   {
@@ -548,7 +604,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 5 should be handled as alarm both, chime in the sound5 component",
+  "Basic Report (0xFF) - src_channel: 5  should be handled as alarm both in the sound5 component",
   {
     {
       channel = "device_lifecycle",
@@ -561,11 +617,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 5,
@@ -579,11 +631,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound5", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound5", capabilities.chime.chime.chime())
     }
   },
   {
@@ -592,7 +639,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 6 should be handled as alarm both, chime in the sound6 component",
+  "Basic Report (0xFF) - src_channel: 6  should be handled as alarm both in the sound6 component",
   {
     {
       channel = "device_lifecycle",
@@ -605,11 +652,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 6,
@@ -623,11 +666,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound6", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound6", capabilities.chime.chime.chime())
     }
   },
   {
@@ -636,7 +674,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 7 should be handled as alarm both, chime in the sound7 component",
+  "Basic Report (0xFF) - src_channel: 7  should be handled as alarm both in the sound7 component",
   {
     {
       channel = "device_lifecycle",
@@ -649,11 +687,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 7,
@@ -667,11 +701,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound7", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound7", capabilities.chime.chime.chime())
     }
   },
   {
@@ -680,7 +709,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Notification Report (SIREN / ACTIVE) - src_channel: 8 should be handled as alarm both, chime in the sound8 component",
+  "Basic Report (0xFF) - src_channel: 8  should be handled as alarm both in the sound8 component",
   {
     {
       channel = "device_lifecycle",
@@ -693,11 +722,7 @@ test.register_message_test(
       message = {
         mock_siren.id,
         zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report(
-            {
-              notification_type = Notification.notification_type.SIREN,
-              event = Notification.event.siren.ACTIVE
-            },
+          Basic:Report({value = ON},
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 8,
@@ -711,11 +736,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("sound8", capabilities.alarm.alarm.both())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("sound8", capabilities.chime.chime.chime())
     }
   },
   {
@@ -733,13 +753,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -747,14 +767,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -770,13 +789,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -784,14 +803,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -821,14 +839,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -858,14 +875,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -881,13 +897,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -895,14 +911,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -918,13 +933,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -932,14 +947,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -955,13 +969,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -969,14 +983,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -992,13 +1005,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -1006,14 +1019,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -1029,13 +1041,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -1043,14 +1055,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -1066,13 +1077,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -1080,14 +1091,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -1103,13 +1113,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={3}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={3}
+            }
         )
       )
     )
@@ -1117,14 +1127,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -1140,13 +1149,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={4}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={4}
+            }
         )
       )
     )
@@ -1154,14 +1163,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -1177,13 +1185,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -1191,14 +1199,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -1214,13 +1221,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -1228,14 +1235,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -1251,13 +1257,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -1265,14 +1271,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -1288,13 +1293,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -1302,14 +1307,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -1325,13 +1329,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -1339,14 +1343,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -1362,13 +1365,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -1376,14 +1379,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -1399,13 +1401,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={3}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={3}
+            }
         )
       )
     )
@@ -1413,14 +1415,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -1436,13 +1437,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={4}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={4}
+            }
         )
       )
     )
@@ -1450,14 +1451,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -1473,13 +1473,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -1487,14 +1487,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -1510,13 +1509,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -1524,14 +1523,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -1547,13 +1545,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -1561,14 +1559,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -1584,13 +1581,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -1598,14 +1595,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -1621,13 +1617,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -1635,14 +1631,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -1658,13 +1653,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -1672,14 +1667,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -1695,13 +1689,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={3}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={3}
+            }
         )
       )
     )
@@ -1709,14 +1703,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -1732,13 +1725,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={4}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={4}
+            }
         )
       )
     )
@@ -1746,14 +1739,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -1769,13 +1761,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -1783,14 +1775,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -1806,13 +1797,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -1820,14 +1811,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -1843,13 +1833,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -1857,14 +1847,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -1880,13 +1869,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -1894,14 +1883,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -1917,13 +1905,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -1931,14 +1919,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -1954,13 +1941,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -1968,14 +1955,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -1991,13 +1977,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={3}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={3}
+            }
         )
       )
     )
@@ -2005,14 +1991,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -2028,13 +2013,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={4}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={4}
+            }
         )
       )
     )
@@ -2042,14 +2027,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -2065,13 +2049,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -2079,14 +2063,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -2102,13 +2085,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -2116,14 +2099,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -2139,13 +2121,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -2153,14 +2135,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -2176,13 +2157,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = ON},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -2190,14 +2171,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -2213,13 +2193,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={}
+            }
         )
       )
     )
@@ -2227,14 +2207,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={}
-          }
-        )
+          })
       )
     )
   end
@@ -2250,13 +2229,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={2}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={2}
+            }
         )
       )
     )
@@ -2264,14 +2243,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={2}
-          }
-        )
+          })
       )
     )
   end
@@ -2287,13 +2265,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={3}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={3}
+            }
         )
       )
     )
@@ -2301,14 +2279,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={3}
-          }
-        )
+          })
       )
     )
   end
@@ -2324,13 +2301,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={4}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={4}
+            }
         )
       )
     )
@@ -2338,14 +2315,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={4}
-          }
-        )
+          })
       )
     )
   end
@@ -2361,13 +2337,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={5}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={5}
+            }
         )
       )
     )
@@ -2375,14 +2351,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={5}
-          }
-        )
+          })
       )
     )
   end
@@ -2398,13 +2373,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={6}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={6}
+            }
         )
       )
     )
@@ -2412,14 +2387,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={6}
-          }
-        )
+          })
       )
     )
   end
@@ -2435,13 +2409,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={7}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={7}
+            }
         )
       )
     )
@@ -2449,14 +2423,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={7}
-          }
-        )
+          })
       )
     )
   end
@@ -2472,13 +2445,13 @@ test.register_coroutine_test(
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={8}
-          }
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={8}
+            }
         )
       )
     )
@@ -2486,14 +2459,13 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
+              mock_siren,
         Basic:Get({},
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
             dst_channels={8}
-          }
-        )
+          })
       )
     )
   end
@@ -2514,6 +2486,16 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.both())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
     }
   },
   {
@@ -2536,6 +2518,43 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.chime.chime.off())
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Notification report SIREN type STATE_IDLE should be handled as tamper clear, alarm off, chime off",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_siren.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.SIREN,
+        event = Notification.event.siren.STATE_IDLE
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.chime.chime.off())
     }
   },
   {
@@ -2800,56 +2819,6 @@ test.register_message_test(
       message = mock_siren_with_buttons:generate_test_message("sound5", capabilities.battery.battery(BUTTON_BATTERY_NORMAL))
     }
   }
-)
-
-test.register_coroutine_test(
-  "Selecting stop siren parameter should switch the sound off",
-  function()
-    local _preferences = {}
-    _preferences.stopSiren = true
-
-    test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({ preferences = _preferences}))
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
-        Basic:Set({value = OFF},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_siren,
-        Basic:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
-        "PROFILE CHANGE - 1 - should be handled as battery 5% for button 5",
-        function()
-            test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-            mock_siren:set_field("device_profile_change_in_progress", true, { persist = true})
-            mock_siren:set_field("next_button_battery_event_details", { endpoint = 5, batteryStatus = BUTTON_BATTERY_LOW}, { persist = true})
-            local updates = {
-                profile = t_utils.get_profile_definition("aeotec-doorbell-siren-battery.yml")
-            }
-            test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed(updates))
-            test.mock_time.advance_time(1)
-            test.socket.capability:__expect_send(
-                    mock_siren:generate_test_message("sound5", capabilities.battery.battery(BUTTON_BATTERY_LOW))
-            )
-        end
 )
 
 test.run_registered_tests()

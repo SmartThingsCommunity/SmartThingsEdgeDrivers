@@ -102,7 +102,12 @@ test.register_coroutine_test(
 
 test.register_message_test(
     "Refresh should read all necessary attributes",
-    {   
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = {mock_device.id, "added"}
+      },
       {
         channel = "capability",
         direction = "receive",

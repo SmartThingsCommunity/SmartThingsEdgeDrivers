@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -133,14 +133,6 @@ test.register_message_test(
         message = mock:generate_test_message("main", capabilities.button.numberOfButtons(
           { value = 1 }
         ))
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-          mock,
-          Battery:Get({})
-        )
       }
     },
     {

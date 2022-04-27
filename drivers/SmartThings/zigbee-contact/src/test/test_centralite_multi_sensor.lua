@@ -162,11 +162,7 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, 0xFC02, attr_report_data, 0x110A)
     })
-<<<<<<< HEAD
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())) 
-=======
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
->>>>>>> main
 
     test.wait_for_events()
     local attr_report_data = {

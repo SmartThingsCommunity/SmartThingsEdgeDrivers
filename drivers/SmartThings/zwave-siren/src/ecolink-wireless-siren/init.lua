@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -41,11 +41,7 @@ end
 
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("siren(%d)")
-  if ep_num ~= nil then
-    return { tonumber(ep_num) + 1 }
-  else
-    return { 1 }
-  end
+  return { ep_num and tonumber(ep_num) + 1 } or { 1 }
 end
 
 local function endpoint_to_component(device, ep)

@@ -25,7 +25,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 local WindowCovering = clusters.WindowCovering
 
 
-local function build_button_handler(button_name, pressed_type)
+function build_button_handler(button_name, pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true

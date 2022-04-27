@@ -118,15 +118,4 @@ zigbeeManufacturer:
     deviceLabel: C2O Door Lock
     manufacturer:
     model: E261-KR0B0Z0-HA
-<<<<<<< HEAD
-=======
-    deviceProfileName: lock-battery
-zigbeeGeneric:
-  - id: "genericLock"
-    deviceLabel: Zigbee Lock
-    clusters:
-      server:
-        - 0x0101 #Door Lock
-        - 0x0001 #Power Configuration
->>>>>>> main
     deviceProfileName: lock-battery

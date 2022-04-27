@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { profile = t_utils.get_profile_definition("power-meter.yaml") }
+    { profile = t_utils.get_profile_definition("power-meter.yml") }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -34,7 +34,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
+    "ActivePower Report should be handled",
     {
       {
         channel = "zigbee",

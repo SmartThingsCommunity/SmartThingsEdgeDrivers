@@ -47,15 +47,16 @@ local function can_handle_zigbee_multi_button(opts, driver, device, ...)
 end
 
 local function added_handler(self, device)
-  local config = supported_values.get_device_parameters(device)
-  for _, component in pairs(device.profile.components) do
-    local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
-    if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES))
-    else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
+  local sv = supported_values.get_device_parameters(device)
+  for comp_name, comp in pairs(device.profile.components) do
+    if comp_name ~= "main" then
+      if sv ~= nil then
+        device:emit_component_event(comp, capabilities.button.supportedButtonValues(sv.supported_button_values))
+      else
+        device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
+      end
+      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}))
     end
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
 end
 

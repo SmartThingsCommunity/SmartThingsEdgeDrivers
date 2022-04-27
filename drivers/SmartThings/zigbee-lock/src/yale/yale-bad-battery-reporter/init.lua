@@ -20,8 +20,6 @@ local BAD_YALE_LOCK_FINGERPRINTS = {
   { mfr = "Yale", model = "YRL220 TS LL" },
   { mfr = "Yale", model = "YRD210 PB DB" },
   { mfr = "Yale", model = "YRL210 PB LL" },
-  { mfr = "ASSA ABLOY iRevo", model = "c700000202" },
-  { mfr = "ASSA ABLOY iRevo", model = "06ffff2027" }
 }
 
 local is_bad_yale_lock_models = function(opts, driver, device)

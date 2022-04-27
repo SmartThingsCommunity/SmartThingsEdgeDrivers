@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -36,14 +36,8 @@ local do_configure = function(self, device)
 end
 
 local device_init = function(self, device)
-  -- We check the keys to see if they're already set so that we don't clobber the values w/ the defaults if they already exist.
-  if device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == nil then
-    device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
-  end
-
-  if device:get_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) == nil then
-    device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
-  end
+  device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
+  device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
 end
 
 local zigbee_power_meter_driver_template = {

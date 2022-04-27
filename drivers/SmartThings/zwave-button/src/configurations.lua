@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 local devices = {
-  AEOTEC_NANOMOTE_ONE = {
+  AEONTEC_NANOMOTE_ONE = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
       product_types = {0x0002, 0x0102},
@@ -35,7 +35,7 @@ local devices = {
       supported_button_values = {"pushed", "held", "down_hold", "double", "pushed_3x", "pushed_4x", "pushed_5x"}
     }
   },
-  AEOTEC_KEYFOB = {
+  AEONTEC_KEYFOB = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = {0x0001, 0x0101},
@@ -46,7 +46,7 @@ local devices = {
       supported_button_values = {"pushed", "held"}
     }
   },
-  AEOTEC_NANOMOTE_QUAD = {
+  AEONTEC_NANOMOTE_QUAD = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
       product_types = {0x0002, 0x0102},
@@ -57,7 +57,7 @@ local devices = {
       supported_button_values = {"pushed", "held"}
     }
   },
-  AEOTEC_WALLMOTE = {
+  AEONTEC_WALLMOTE = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = {0x0002, 0x0102},
@@ -68,7 +68,7 @@ local devices = {
       supported_button_values = {"pushed", "held"}
     }
   },
-  AEOTEC_WALLMOTE_QUAD = {
+  AEONTEC_WALLMOTE_QUAD = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = {0x0002, 0x0102},
@@ -101,7 +101,7 @@ local devices = {
       supported_button_values = {"pushed", "held", "double"}
     }
   },
-  AEOTEC_MINIMOTE = {
+  AEONTEC_MINIMOTE = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = 0x0001,
@@ -111,34 +111,7 @@ local devices = {
       number_of_buttons = 4,
       supported_button_values = {"pushed", "held"}
     }
-  },
-  AEOTEC_ILLUMINO = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0371,
-      product_types = 0x0102,
-      product_ids = 0x0016
-    },
-    CONFIGS = {
-      number_of_buttons = 2,
-      supported_button_values = {"pushed", "held", "down_hold", "double", "pushed_3x", "pushed_4x", "pushed_5x"}
-    }
-  },
-  AEOTEC_PANIC_BUTTON = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0086,
-      product_types = 0x0001,
-      product_ids = 0x0026
-    },
-    CONFIGS = {
-      number_of_buttons = 1,
-      supported_button_values = {"pushed", "held"}
-    }
   }
-}
-
-local DEFAULT_CONFIGS = {
-  number_of_buttons = 1,
-  supported_button_values = {"pushed", "held"}
 }
 
 local configs = {}
@@ -152,7 +125,7 @@ configs.get_device_parameters = function(zw_device)
       return device.CONFIGS
     end
   end
-  return DEFAULT_CONFIGS
+  return nil
 end
 
 return configs

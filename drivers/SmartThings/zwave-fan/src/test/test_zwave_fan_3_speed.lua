@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1, strict=true })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4, strict=true })
-local SwitchMultilevelV1 = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=1, strict=true })
 local fan_speed_helper = (require "zwave_fan_helpers")
 local t_utils = require "integration_test.utils"
 
@@ -71,6 +70,11 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_fan:generate_test_message("main", capabilities.switchLevel.level(fan_speed_helper.levels_for_3_speed.MEDIUM + 1))
       }
     }
 )
@@ -100,64 +104,11 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
-      }
-    }
-)
-
-test.register_message_test(
-    "3 speed fan SwitchMultiLevelReport should be handled: OFF",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_fan.id,
-          zw_test_utils.zwave_test_build_receive_command(
-            SwitchMultilevel:Report({
-              current_value = 0,
-              target_value = 0,
-              duration = 0
-            })
-          )
-        }
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_fan:generate_test_message("main", capabilities.fanSpeed.fanSpeed({value = fan_speed_helper.fan_speed.OFF}))
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_fan:generate_test_message("main", capabilities.switch.switch.off())
-      }
-    }
-)
-
-test.register_message_test(
-    "3 speed fan SwitchMultiLevelReportV1 should be handled: HIGH",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_fan.id,
-          zw_test_utils.zwave_test_build_receive_command(
-            SwitchMultilevelV1:Report({
-              value = fan_speed_helper.levels_for_3_speed.MEDIUM + 1 -- 66 + 1
-            })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_fan:generate_test_message("main", capabilities.fanSpeed.fanSpeed({value = fan_speed_helper.fan_speed.HIGH}))
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
+        message = mock_fan:generate_test_message("main", capabilities.switchLevel.level(fan_speed_helper.levels_for_3_speed.MEDIUM + 1))
       }
     }
 )

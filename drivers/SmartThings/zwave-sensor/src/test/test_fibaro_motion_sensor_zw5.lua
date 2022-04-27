@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
@@ -90,7 +92,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_sensor:generate_info_changed(
           {
               preferences = {
-                motionSensitivityLevel = 100,
+                motionSensitivity = 100,
                 motionBlindTime = 3,
                 motionCancelationDelay = 100,
                 motionOperatingMode = 1,

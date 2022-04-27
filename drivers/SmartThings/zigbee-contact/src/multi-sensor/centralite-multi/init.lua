@@ -33,11 +33,7 @@ local init_handler = function(self, device)
   -- Centralite Firmware 1.15.7 contains battery smoothing fixes, so versions before that should NOT be smoothed
   if (dev_major < TARGET_DEV_MAJOR) or
      (dev_major == TARGET_DEV_MAJOR and dev_minor < TARGET_DEV_MINOR) or
-<<<<<<< HEAD
      (dev_major == TARGET_DEV_MAJOR and dev_minor == TARGET_DEV_MINOR and dev_build < TARGET_DEV_BUILD) 
-=======
-     (dev_major == TARGET_DEV_MAJOR and dev_minor == TARGET_DEV_MINOR and dev_build < TARGET_DEV_BUILD)
->>>>>>> main
   then
     battery_init_function = battery_defaults.build_linear_voltage_init(2.1, 3.0)
   else

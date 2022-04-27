@@ -67,9 +67,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 0,
               dst_channels={0}
             }
@@ -89,7 +89,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 1 }
         })
@@ -102,7 +102,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 2 }
         })
@@ -128,9 +128,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 0,
               dst_channels={0}
             }
@@ -150,7 +150,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 1 }
         })
@@ -163,7 +163,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 2 }
         })
@@ -189,9 +189,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 1,
               dst_channels={0}
             }
@@ -229,9 +229,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 1,
               dst_channels={0}
             }
@@ -269,9 +269,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -309,9 +309,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -349,9 +349,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 1,
               dst_channels = { 0 }
             }
@@ -378,9 +378,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -397,7 +397,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    }    
   }
 )
 
@@ -419,9 +419,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 1,
               dst_channels = { 0 }
             }
@@ -448,9 +448,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels = { 0 }
             }
@@ -467,7 +467,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
-    }
+    }    
   }
 )
 
@@ -487,7 +487,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -506,7 +506,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 1 }
         })
@@ -519,7 +519,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 2 }
         })
@@ -544,7 +544,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Set({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -563,7 +563,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 1 }
         })
@@ -576,7 +576,7 @@ test.register_message_test(
         mock_device,
         SwitchBinary:Get({},
         {
-          encap = zw.ENCAP.AUTO,
+          encap = zw.ENCAP.AUTO, 
           src_channel = 0,
           dst_channels = { 2 }
         })
@@ -601,7 +601,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -626,7 +626,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -662,7 +662,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -687,7 +687,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -730,7 +730,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -743,7 +743,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })
@@ -775,7 +775,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -788,7 +788,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })
@@ -812,7 +812,7 @@ test.register_message_test(
           mock_device,
           Basic:Set({value=SwitchBinary.value.ON_ENABLE},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -825,7 +825,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -850,7 +850,7 @@ test.register_message_test(
           mock_device,
           Basic:Set({value=SwitchBinary.value.OFF_DISABLE},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -863,7 +863,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 1 }
           })
@@ -887,7 +887,7 @@ test.register_message_test(
           mock_device,
           Basic:Set({value=SwitchBinary.value.ON_ENABLE},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })
@@ -900,7 +900,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })
@@ -925,7 +925,7 @@ test.register_message_test(
           mock_device,
           Basic:Set({value=SwitchBinary.value.OFF_DISABLE},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })
@@ -938,7 +938,7 @@ test.register_message_test(
           mock_device,
           SwitchBinary:Get({},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 0,
             dst_channels = { 2 }
           })

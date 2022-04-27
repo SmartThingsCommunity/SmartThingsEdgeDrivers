@@ -79,7 +79,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -115,7 +115,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -151,7 +151,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 3,
             dst_channels = { 0 }
           })
@@ -187,7 +187,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 4,
             dst_channels = { 0 }
           })
@@ -223,7 +223,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0xFF},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 5,
             dst_channels = { 0 }
           })
@@ -259,7 +259,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 1,
             dst_channels = { 0 }
           })
@@ -295,7 +295,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 2,
             dst_channels = { 0 }
           })
@@ -332,7 +332,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 3,
             dst_channels = { 0 }
           })
@@ -369,7 +369,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 4,
             dst_channels = { 0 }
           })
@@ -406,7 +406,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           Basic:Report({value=0x00},
           {
-            encap = zw.ENCAP.AUTO,
+            encap = zw.ENCAP.AUTO, 
             src_channel = 5,
             dst_channels = { 0 }
           })
@@ -444,9 +444,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 1,
               dst_channels={0}
             }
@@ -484,9 +484,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 2,
               dst_channels={0}
             }
@@ -524,9 +524,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 3,
               dst_channels={0}
             }
@@ -564,9 +564,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 4,
               dst_channels={0}
             }
@@ -604,9 +604,9 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.ON_ENABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
+              encap = zw.ENCAP.AUTO, 
               src_channel = 5,
               dst_channels={0}
             }
@@ -644,10 +644,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 1,
+              encap = zw.ENCAP.AUTO, 
+              src_channel = 1, 
               dst_channels={0}
             }
           )
@@ -684,10 +684,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 2,
+              encap = zw.ENCAP.AUTO, 
+              src_channel = 2, 
               dst_channels={0}
             }
           )
@@ -724,10 +724,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 3,
+              encap = zw.ENCAP.AUTO, 
+              src_channel = 3, 
               dst_channels={0}
             }
           )
@@ -764,10 +764,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 4,
+              encap = zw.ENCAP.AUTO, 
+              src_channel = 4, 
               dst_channels={0}
             }
           )
@@ -804,10 +804,10 @@ test.register_message_test(
           SwitchBinary:Report(
             {
               target_value=SwitchBinary.value.OFF_DISABLE
-            },
+            }, 
             {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 5,
+              encap = zw.ENCAP.AUTO, 
+              src_channel = 5, 
               dst_channels={0}
             }
           )
@@ -838,8 +838,8 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO,
-          src_channel = 1,
+          encap = zw.ENCAP.AUTO, 
+          src_channel = 1, 
           dst_channels={0}
         })
       }
@@ -857,8 +857,8 @@ test.register_coroutine_test(
             duration = 0
           },
           {
-            encap = zw.ENCAP.AUTO,
-            src_channel = i,
+            encap = zw.ENCAP.AUTO, 
+            src_channel = i, 
             dst_channels={0}
           })
         }
@@ -875,8 +875,8 @@ test.register_coroutine_test(
           duration = 0
         },
         {
-          encap = zw.ENCAP.AUTO,
-          src_channel = 1,
+          encap = zw.ENCAP.AUTO, 
+          src_channel = 1, 
           dst_channels={0}
         })
       }

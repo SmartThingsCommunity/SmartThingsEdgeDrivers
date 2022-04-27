@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ local zwave_handlers = {}
 --- @param cmd st.zwave.CommandClass.Configuration.Report
 function zwave_handlers.configuration_report(driver, device, cmd)
   local pn = cmd.args.parameter_number
-  if pn ~= WARM_WHITE_CONFIG and pn ~= COLD_WHITE_CONFIG then
+  if     pn ~= WARM_WHITE_CONFIG
+     and pn ~= COLD_WHITE_CONFIG then
     return
   end
   if cmd.args.configuration_value > 0 then

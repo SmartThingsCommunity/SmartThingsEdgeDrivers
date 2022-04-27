@@ -114,13 +114,10 @@ local function info_changed(driver, device, event, args)
 end
 
 local device_added = function(self, device)
-<<<<<<< HEAD
   local supported_modes = {
     capabilities.thermostatMode.thermostatMode.heat.NAME
   }
   device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
-=======
->>>>>>> main
   device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 

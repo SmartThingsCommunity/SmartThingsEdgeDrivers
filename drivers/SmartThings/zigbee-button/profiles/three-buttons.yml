@@ -2,8 +2,6 @@ name: three-buttons
 components:
   - id: main
     capabilities:
-      - id: button
-        version: 1
       - id: firmwareUpdate
         version: 1
       - id: refresh

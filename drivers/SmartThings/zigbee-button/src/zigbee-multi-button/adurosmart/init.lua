@@ -50,7 +50,7 @@ local do_configuration = function(self, device)
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 
-local function aduro_on_off_attr_handler(button_name, pressed_type)
+function aduro_on_off_attr_handler(button_name, pressed_type)
   return function(driver, device, zb_rx)
     local additional_fields = {
       state_change = true
