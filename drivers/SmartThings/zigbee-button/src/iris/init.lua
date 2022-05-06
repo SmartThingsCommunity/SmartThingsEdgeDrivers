@@ -19,6 +19,7 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local IASZone = zcl_clusters.IASZone
 local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local button_utils = require "button_utils"
 
 local IRIS_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3455-L" },
@@ -33,8 +34,6 @@ local function can_handle_iris_button(opts, driver, device, ...)
   end
   return false
 end
-
-local button_utils = require "button_utils"
 
 local function button_pressed_handler(self, device, value, zb_rx)
   button_utils.init_button_press(device)
@@ -63,6 +62,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 

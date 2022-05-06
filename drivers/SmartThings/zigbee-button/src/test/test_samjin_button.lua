@@ -25,8 +25,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local IasEnrollResponseCode = IASZone.types.EnrollResponseCode
 
-local button_attr = capabilities.button.button
-
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("one-button-temp-battery.yml"),
@@ -127,6 +125,13 @@ test.register_coroutine_test(
       {
         capability_id = "button", component_id = "main",
         attribute_id = "numberOfButtons", state = { value = 1 }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "button", state = { value = "pushed" }
       }
     })
     -- test.socket.zigbee:__expect_send({

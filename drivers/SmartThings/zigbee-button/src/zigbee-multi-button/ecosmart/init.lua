@@ -62,6 +62,7 @@ local emit_pushed_event = function(button_name, device)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
     device:emit_component_event(comp, event)
+    device:emit_event(event)
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end

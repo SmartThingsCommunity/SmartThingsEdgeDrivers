@@ -34,6 +34,9 @@ local generate_event_from_zone_status = function(driver, device, zone_status, zb
     device:emit_event_for_endpoint(
       zb_rx.address_header.src_endpoint.value,
       event)
+    if device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value) ~= "main" then
+      device:emit_event(event)
+    end
   end
 end
 
