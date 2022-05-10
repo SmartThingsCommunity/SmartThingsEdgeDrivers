@@ -103,7 +103,7 @@ zigbeeManufacturer:
     manufacturer: ASSA ABLOY iRevo
     model: 0700000001
     deviceProfileName: base-lock
-  - id: "ASSA ABLOY iRevor/06ffff2027"
+  - id: "ASSA ABLOY iRevo/06ffff2027"
     deviceLabel: "Yale Door Lock"
     manufacturer: ASSA ABLOY iRevo
     model: 06ffff2027
