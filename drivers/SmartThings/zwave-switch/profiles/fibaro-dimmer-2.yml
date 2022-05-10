@@ -1,0 +1,108 @@
+name: fibaro-dimmer-2
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+  - name: "autoStepTime"
+    title: "(Auto) Time of a dimming step"
+    description: "This parameter defines the time of single dimming step during the automatic control."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        1: "10 ms"
+        2: "20 ms"
+        3: "30 ms"
+        4: "40 ms"
+        5: "50 ms"
+        10: "100 ms"
+        20: "200 ms"
+      default: 1
+  - name: "manualStepTime"
+    title: "(Manual) Time of a dimming step"
+    description: "This parameter defines the time of single dimming step during the manual control."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        1: "10 ms"
+        2: "20 ms"
+        3: "30 ms"
+        4: "40 ms"
+        5: "50 ms"
+        10: "100 ms"
+        20: "200 ms"
+      default: 1
+  - name: "autoOff"
+    title: "Timer functionality (auto - off)"
+    description: "This parameter allows to automatically switch off the device after specified time from switching on the light source. It may be useful when the Dimmer 2 is installed in the stairway. (1-32767 sec)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 32767
+      default: 0
+  - name: "autoCalibration"
+    title: "Force auto-calibration"
+    description: "Changing value of this parameter will force the calibration process. During the calibration parameter is set to 1 or 2 and switched to 0 upon completion."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Readout"
+        1: "Auto-calibrate the load w/o Bypass"
+        2: "Auto-calibrate the load with Bypass"
+      default: 0
+  - name: "switchType"
+    title: "Switch type"
+    description: "Choose between momentary, toggle and roller blind switch."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Momentary switch"
+        1: "Toggle switch"
+        2: "Roller blind switch"
+      default: 1
+  - name: "threeWaySwitch"
+    title: "The function of 3-way switch"
+    description: "Switch no. 2 controls the Dimmer 2 additionally (in 3-way switch mode). Function disabled for parameter 20 set to 2 (roller blind switch)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled"
+      default: 0
+  - name: "loadControllMode"
+    title: "Load control mode"
+    description: "This parameter allows to set the desired load control mode. The device automatically adjusts correct control mode, but the installer may force its change using this parameter."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Forced leading edge control"
+        1: "Forced trailing edge control"
+        2: "Control mode selected automatically"
+      default: 2
+  - name: "levelCorrection"
+    title: "Brightness level correction"
+    description: "[Only supported on device versions > 3.04] Correction reduces spontaneous flickering of some capacitive load at certain brightness levels in 2-wire installation. Correction may cause changes in brightness. In this case it is necessary to disable correction or adjust time of correction."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 255
