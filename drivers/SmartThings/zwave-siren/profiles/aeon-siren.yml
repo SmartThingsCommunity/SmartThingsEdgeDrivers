@@ -10,6 +10,9 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: Aeon_Siren
 preferences:
 - name: type
   title: Sound type

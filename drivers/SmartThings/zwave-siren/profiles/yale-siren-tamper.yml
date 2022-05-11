@@ -10,6 +10,9 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-siren-12
 preferences:
 - name: alarmLength
   title: Alarm length
