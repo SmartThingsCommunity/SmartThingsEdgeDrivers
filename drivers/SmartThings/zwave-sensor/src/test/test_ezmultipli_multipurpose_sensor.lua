@@ -18,13 +18,19 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
+local constants = require "st.zwave.constants"
+local capabilities = require "st.capabilities"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
+local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 3 })
 
 
 local sensor_endpoints = {
     {
         command_classes = {
-            {value = zw.CONFIGURATION}
+            {value = zw.BASIC},
+            {value = zw.CONFIGURATION},
+            {value = zw.SWITCH_COLOR}
         }
     }
 }
@@ -42,6 +48,126 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+test.register_message_test(
+    "Basic report with 0xFF should be handled to switch.on()",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Report({ value = 0xFF })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic report with 0x00 should be handled to switch.off(), colorCotrol.hue() and colorControl.saturation()",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Report({ value = 0x00 })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.colorControl.hue(0))
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(0))
+      },      
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+      }
+    }
+)
+
+do
+    local hue = math.random(0, 100)
+    local sat = math.random(0, 100)
+    local r, g, b = utils.hsl_to_rgb(hue, sat)
+    r = (r >= 191) and 255 or 0
+    g = (g >= 191) and 255 or 0
+    b = (b >= 191) and 255 or 0    
+    test.register_coroutine_test(
+        "Color Control capability setColor commands should evoke the correct Z-Wave SETs and GETs",
+        function()
+            test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+            test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", command = "setColor", args = { { hue = hue, saturation = sat, level = 100 } } } })
+            
+            test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+                mock_device,
+                SwitchColor:Set({
+                    color_components = {
+                        { color_component_id = SwitchColor.color_component_id.RED, value = r },
+                        { color_component_id = SwitchColor.color_component_id.GREEN, value = g },
+                        { color_component_id = SwitchColor.color_component_id.BLUE, value = b },
+                        { color_component_id=SwitchColor.color_component_id.WARM_WHITE, value=0 },
+                        { color_component_id=SwitchColor.color_component_id.COLD_WHITE, value=0 }
+                    },
+                    duration = constants.DEFAULT_DIMMING_DURATION
+                })
+            ))
+
+            test.wait_for_events()
+            test.mock_time.advance_time(1)
+            test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+                mock_device,
+                SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
+            ))
+        end
+    )
+end
+
+do
+    local hue = math.random(0, 100)
+    local sat = 100
+    local r, g, b = utils.hsl_to_rgb(hue, sat)
+    r = (r >= 191) and 255 or 0
+    g = (g >= 191) and 255 or 0
+    b = (b >= 191) and 255 or 0
+    test.register_coroutine_test(
+        "Color Control capability setColor commands should evoke the correct Z-Wave SETs and GETs",
+        function()
+            test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+            test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", command = "setColor", args = { { hue = hue, saturation = sat } } } })
+            
+            test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+                mock_device,
+                SwitchColor:Set({
+                    color_components = {
+                        { color_component_id = SwitchColor.color_component_id.RED, value = r },
+                        { color_component_id = SwitchColor.color_component_id.GREEN, value = g },
+                        { color_component_id = SwitchColor.color_component_id.BLUE, value = b },
+                        { color_component_id=SwitchColor.color_component_id.WARM_WHITE, value=0 },
+                        { color_component_id=SwitchColor.color_component_id.COLD_WHITE, value=0 }
+                    },
+                    duration = constants.DEFAULT_DIMMING_DURATION
+                })
+            ))
+
+            test.wait_for_events()
+            test.mock_time.advance_time(1)
+            test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+                mock_device,
+                SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
+            ))
+        end
+    )
+end
 
 test.register_coroutine_test(
     "infoChanged() and doConfigure() should send the SET command for Configuation value",
@@ -139,6 +265,35 @@ test.register_coroutine_test(
                 Configuration:Set({parameter_number=5, size=1, configuration_value=tempAdj})
             )
         )
+
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+                mock_device,
+                Basic:Get({})
+            )
+        )
+        
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
+            )
+        )
+
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.GREEN })
+            )
+        )
+        
+        test.socket.zwave:__expect_send(
+            zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.BLUE })
+            )
+        )
+
         mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
