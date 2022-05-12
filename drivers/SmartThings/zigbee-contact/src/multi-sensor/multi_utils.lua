@@ -1,17 +1,3 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -132,5 +118,25 @@ multi_utils.send_common_configuration = function(driver, device, mfg_code)
   device:send(custom_configure_reporting(device, axis_y_config_base, mfg_code))
   device:send(custom_configure_reporting(device, axis_z_config_base, mfg_code))
 end
+
+
+multi_utils.convert_to_signedInt16 = function(byte1, byte2)
+  local finalValue
+  local swapped = (byte2 << 8) | byte1
+  local sign_mask = 0x8000
+  local int16mask = 0xFF
+  local isNegative = (swapped & sign_mask) >> 15
+
+  if(isNegative == 1) then
+    local negation_plus_one = ~swapped + 1
+    local int16value = negation_plus_one & int16mask
+    finalValue = int16value * (-1)
+  else
+    finalValue = swapped
+  end
+  print("signedInt16 "..finalValue)
+  return finalValue
+end
+
 
 return multi_utils
