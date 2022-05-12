@@ -1066,6 +1066,11 @@ zigbeeManufacturer:
     manufacturer: Ajax online Ltd
     model: AJ_ZB30_GU10
     deviceProfileName: rgbw-bulb
+  - id: "eWeLight/ZB-CL01"
+    deviceLabel: easyiot Light
+    manufacturer: eWeLight
+    model: ZB-CL01
+    deviceProfileName: rgbw-bulb
   - id: "CREE/Connected A-19 60W Equivalent"
     deviceLabel: CREE Bulb
     manufacturer: CREE
