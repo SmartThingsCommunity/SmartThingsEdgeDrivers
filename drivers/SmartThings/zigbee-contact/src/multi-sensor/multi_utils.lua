@@ -133,4 +133,24 @@ multi_utils.send_common_configuration = function(driver, device, mfg_code)
   device:send(custom_configure_reporting(device, axis_z_config_base, mfg_code))
 end
 
+
+multi_utils.convert_to_signedInt16 = function(byte1, byte2)
+  local finalValue
+  local swapped = (byte2 << 8) | byte1
+  local sign_mask = 0x8000
+  local int16mask = 0xFF
+  local isNegative = (swapped & sign_mask) >> 15
+
+  if(isNegative == 1) then
+    local negation_plus_one = ~swapped + 1
+    local int16value = negation_plus_one & int16mask
+    finalValue = int16value * (-1)
+  else
+    finalValue = swapped
+  end
+  print("signedInt16 "..finalValue)
+  return finalValue
+end
+
+
 return multi_utils
