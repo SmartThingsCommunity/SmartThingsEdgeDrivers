@@ -35,8 +35,7 @@ local zigbee_contact_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.battery,
     capabilities.threeAxis,
-    capabilities.accelerationSensor,
-    capabilities.signalStrength
+    capabilities.accelerationSensor
   },
   additional_zcl_profiles = {
     [SMARTSENSE_MULTI_SENSOR_CUSTOM_PROFILE] = true
