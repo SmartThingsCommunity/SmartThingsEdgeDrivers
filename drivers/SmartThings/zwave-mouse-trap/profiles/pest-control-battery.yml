@@ -10,3 +10,6 @@ components:
     version: 1
   categories:
   - name: GenericSensor
+metadata:
+  mnmn: SmartThingsEdge
+  vid: Dome_Mouser
