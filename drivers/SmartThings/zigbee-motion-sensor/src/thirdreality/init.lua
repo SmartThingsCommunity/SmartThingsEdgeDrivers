@@ -24,9 +24,9 @@ local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
 
 local is_third_reality_motion_sensor = function(opts, driver, device)
   for _, fingerprint in ipairs(ZIGBEE_MOTION_SENSOR_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
