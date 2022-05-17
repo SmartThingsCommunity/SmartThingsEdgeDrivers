@@ -17,6 +17,7 @@ local ZigbeeDriver = require "st.zigbee"
 local constants = require "st.zigbee.constants"
 local defaults = require "st.zigbee.defaults"
 local configurationMap = require "configurations"
+local SMARTSENSE_MULTI_SENSOR_CUSTOM_PROFILE = 0xFC01
 
 local function device_init(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
@@ -36,6 +37,9 @@ local zigbee_contact_driver_template = {
     capabilities.threeAxis,
     capabilities.accelerationSensor
   },
+  additional_zcl_profiles = {
+    [SMARTSENSE_MULTI_SENSOR_CUSTOM_PROFILE] = true
+  },
   lifecycle_handlers = {
     init = device_init
   },
@@ -43,7 +47,8 @@ local zigbee_contact_driver_template = {
     require("battery-overrides"),
     require("aurora-contact-sensor"),
     require("contact-temperature-sensor"),
-    require("multi-sensor")
+    require("multi-sensor"),
+    require("smartsense-multi")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

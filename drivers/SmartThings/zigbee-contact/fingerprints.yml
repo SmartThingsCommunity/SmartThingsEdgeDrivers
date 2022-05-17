@@ -169,6 +169,16 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: multi
     deviceProfileName: multi-sensor
+  - id: Smartsense/multi/1
+    deviceLabel: Multipurpose Sensor
+    manufacturer: SmartThings
+    model: PGC313
+    deviceProfileName: smartsense-multi
+  - id: Smartsense/multi/2
+    deviceLabel: Multipurpose Sensor
+    manufacturer: SmartThings
+    model: PGC313EU
+    deviceProfileName: smartsense-multi
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
@@ -186,3 +196,10 @@ zigbeeGeneric:
       client:
         - 0x0000
     deviceProfileName: contact-general
+  - id: SmartSense/MultiSensor/Generic
+    deviceLabel: Multipurpose Sensor
+    zigbeeProfiles:
+      - 0xFC01
+    deviceIdentifiers:
+      - 0x0139
+    deviceProfileName: smartsense-multi

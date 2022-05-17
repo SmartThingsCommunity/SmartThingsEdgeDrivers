@@ -23,6 +23,12 @@ zwaveManufacturer:
     productType: 0x0004
     productId: 0x0071
     deviceProfileName: iblinds-window-treatment-v3
+  - id: "iblinds/blind/v3/2"
+    deviceLabel: iBlinds Window Treatment v3
+    manufacturerId: 0x0287
+    productType: 0x0004
+    productId: 0x0072
+    deviceProfileName: iblinds-window-treatment-v3
   - id: FibaroWalliRollerShutter
     deviceLabel: Fibaro Window Treatment
     manufacturerId: 0x010F

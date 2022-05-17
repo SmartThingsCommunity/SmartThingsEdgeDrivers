@@ -57,7 +57,7 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x0287,
       product_types = 0x0004,
-      product_ids = 0x0071
+      product_ids = {0x0071, 0x0072}
     },
     PARAMETERS = {
       closeInterval = {parameter_number = 1, size = 1},
