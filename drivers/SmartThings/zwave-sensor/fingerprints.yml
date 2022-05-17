@@ -434,6 +434,18 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x000B
     deviceProfileName: contact-battery-tamperalert
+  - id: 0371/0002/000B
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x000B
+    deviceProfileName: contact-battery-tamperalert
+  - id: 0371/0102/000B
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0371
+    productType: 0x0102
+    productId: 0x000B
+    deviceProfileName: contact-battery-tamperalert
   - id: 027A/7000/E001
     deviceLabel: Zooz Open/Closed Sensor
     manufacturerId: 0x027A
