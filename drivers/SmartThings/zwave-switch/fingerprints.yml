@@ -337,11 +337,11 @@ zwaveManufacturer:
 #     productType: 0x574D
 #     productId: 0x0000
 #     deviceProfileName: switch-5-keypad
-#   - id: 014A/0006
-#     deviceLabel: Ecolink Switch
-#     manufacturerId: 0x014A
-#     productType: 0x0006
-#     deviceProfileName: switch-battery
+  - id: 014A/0006
+    deviceLabel: Ecolink Switch
+    manufacturerId: 0x014A
+    productType: 0x0006
+    deviceProfileName: switch-battery
 #   - id: 0086/0003/001B
 #     deviceLabel: Aeotec Dimmer Switch
 #     manufacturerId: 0x0086
