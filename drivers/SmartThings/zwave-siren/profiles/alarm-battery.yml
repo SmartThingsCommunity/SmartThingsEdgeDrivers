@@ -10,4 +10,4 @@ components:
   - name: Siren
 metadata:
   mnmn: SmartThingsEdge
-  vid: generic-siren-13
+  vid: generic-siren-13  # Filtering non-supported alarm values (signal/strobe only)
