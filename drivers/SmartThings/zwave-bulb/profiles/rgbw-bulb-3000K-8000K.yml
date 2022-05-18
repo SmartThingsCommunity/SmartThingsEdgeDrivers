@@ -15,5 +15,5 @@ components:
   categories:
   - name: Light
 metadata:
-  mnmn: SmartThingsEdge
+  mnmn: SmartThings
   vid: generic-rgbw-color-bulb-3000K-8000K
