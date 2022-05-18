@@ -15,26 +15,12 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local log = require "log"
+local button_utils = require "button_utils"
 
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 local Scenes = clusters.Scenes
 local PowerConfiguration = clusters.PowerConfiguration
-
-local function build_button_handler(button_name, pressed_type)
-  return function(driver, device, zb_rx)
-    local additional_fields = {
-      state_change = true
-    }
-    local event = pressed_type(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
-end
 
 local function build_button_payload_handler(pressed_type)
   return function(driver, device, zb_rx)
@@ -49,6 +35,9 @@ local function build_button_payload_handler(pressed_type)
     local comp = device.profile.components[button_name]
     if comp ~= nil then
       device:emit_component_event(comp, event)
+      if button_name ~= "main" then
+        device:emit_event(event)
+      end
     else
       log.warn("Attempted to emit button event for unknown button: " .. button_name)
     end
@@ -69,6 +58,7 @@ local function added_handler(self, device)
     end
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local remote_control = {
@@ -76,13 +66,13 @@ local remote_control = {
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.Toggle.ID] = build_button_handler("button5", capabilities.button.button.pushed)
+        [OnOff.server.commands.Toggle.ID] = button_utils.build_button_handler("button5", capabilities.button.button.pushed)
       },
       [Level.ID] = {
-        [Level.server.commands.Move.ID] = build_button_handler("button3", capabilities.button.button.held),
-        [Level.server.commands.Step.ID] = build_button_handler("button3", capabilities.button.button.pushed),
-        [Level.server.commands.MoveWithOnOff.ID] = build_button_handler("button1", capabilities.button.button.held),
-        [Level.server.commands.StepWithOnOff.ID] = build_button_handler("button1", capabilities.button.button.pushed)
+        [Level.server.commands.Move.ID] = button_utils.build_button_handler("button3", capabilities.button.button.held),
+        [Level.server.commands.Step.ID] = button_utils.build_button_handler("button3", capabilities.button.button.pushed),
+        [Level.server.commands.MoveWithOnOff.ID] = button_utils.build_button_handler("button1", capabilities.button.button.held),
+        [Level.server.commands.StepWithOnOff.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed)
       },
       -- Manufacturer command id used in ikea
       [Scenes.ID] = {

@@ -34,14 +34,14 @@ local battery_table = {
     [0.00] = 0
 }
 
-local function present_value_attr_handler(ZigbeeDriver, ZigbeeDevice, value, zb_rx)
+local function present_value_attr_handler(driver, device, value, zb_rx)
   local event
   local additional_fields = {
     state_change = true
   }
   if value.value == true then
     event = capabilities.button.button.pushed(additional_fields)
-    ZigbeeDevice:emit_event(event)
+    device:emit_event(event)
   end
 end
 
@@ -52,6 +52,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local configure_handler = function(self, device)

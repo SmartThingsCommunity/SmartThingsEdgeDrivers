@@ -57,17 +57,29 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
           mock_device:generate_test_message("button1", (button_attr.pushed({ state_change = true })))
       )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      )
       test.socket.zigbee:__queue_receive({ mock_device.id, OnOff.server.commands.On.build_test_rx(mock_device) })
       test.socket.capability:__expect_send(
           mock_device:generate_test_message("button2", (button_attr.pushed({ state_change = true })))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       )
       test.socket.zigbee:__queue_receive({ mock_device.id, Level.server.commands.Move.build_test_rx(mock_device) })
       test.socket.capability:__expect_send(
           mock_device:generate_test_message("button1", (button_attr.held({ state_change = true })))
       )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+      )
       test.socket.zigbee:__queue_receive({ mock_device.id, Level.server.commands.MoveWithOnOff.build_test_rx(mock_device) })
       test.socket.capability:__expect_send(
           mock_device:generate_test_message("button2", (button_attr.held({ state_change = true })))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
       )
     end
 )
@@ -116,7 +128,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "ZDO Message handler and adding hub to group",
     function()
-      local binding_table = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x01, 0xB9F2)
+      local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
       local response = mgmt_bind_response.MgmtBindResponse({
         status = 0x00,
         total_binding_table_entry_count = 0x01,
@@ -170,6 +182,13 @@ test.register_coroutine_test(
         })
       end
     end
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "button", state = { value = "pushed" }
+      }
+    })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({
