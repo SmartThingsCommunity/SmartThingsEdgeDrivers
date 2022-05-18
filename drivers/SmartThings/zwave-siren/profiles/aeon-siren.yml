@@ -10,6 +10,9 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThings
+  vid: Aeon_Siren  # Filtering non-supported alarm values (signal/strobe only)
 preferences:
 - name: type
   title: Sound type

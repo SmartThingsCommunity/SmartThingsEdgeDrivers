@@ -8,3 +8,6 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThings
+  vid: SmartAlert_Siren  # Filtering non-supported alarm values (signal/strobe only)

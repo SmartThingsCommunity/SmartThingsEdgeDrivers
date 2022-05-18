@@ -8,6 +8,9 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThings
+  vid: generic-siren-13  # Filtering non-supported alarm values (signal/strobe only)
 preferences:
 - name: alarmLength
   title: Alarm length
