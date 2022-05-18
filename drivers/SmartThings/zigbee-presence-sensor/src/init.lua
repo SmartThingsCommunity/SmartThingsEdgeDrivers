@@ -192,7 +192,6 @@ local zigbee_presence_driver = {
   supported_capabilities = {
     capabilities.presenceSensor,
     capabilities.tone,
-    capabilities.signalStrength,
     capabilities.battery,
     capabilities.refresh
   },
