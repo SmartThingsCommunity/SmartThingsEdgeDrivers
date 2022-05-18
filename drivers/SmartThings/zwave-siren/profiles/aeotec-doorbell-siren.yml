@@ -69,7 +69,7 @@ components:
   categories:
   - name: Siren
 metadata:
-  mnmn: SmartThingsEdge
+  mnmn: SmartThings
   vid: Aeotec_Doorbell_Siren_6
 preferences:
   - name: "componentName"
