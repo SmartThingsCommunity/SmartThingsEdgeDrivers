@@ -21,7 +21,6 @@ local timer_const = require "constants/timer-constants"
 local capabilities   = require "st.capabilities"
 local Tone           = capabilities.tone
 local PresenceSensor = capabilities.presenceSensor
-local SignalStrength = capabilities.signalStrength
 
 -- Zigbee Spec Utils
 local clusters             = require "st.zigbee.zcl.clusters"
@@ -35,10 +34,8 @@ local buf_lib = require "st.buf"
 local zb_messages = require "st.zigbee.messages"
 
 local BEEP_IDENTIFY_TIME = 5 -- seconds
-
 local IS_PRESENCE_BASED_ON_BATTERY_REPORTS = "isPresenceBasedOnBatteryReports"
 local ST_ARRIVAL_SENSOR_CUSTOM_PROFILE = 0xFC01
-
 local DEFAULT_PRESENCE_TIMEOUT_S = 120
 
 local battery_voltage_attr_configuration = {
@@ -66,11 +63,6 @@ local battery_table = {
   [1.60] = 1,
   [1.50] = 0
 }
-
-local function emit_signal_strength_events(device, zb_rx)
-  device:emit_event(SignalStrength.lqi(zb_rx.lqi.value))
-  device:emit_event(SignalStrength.rssi({value = zb_rx.rssi.value, unit = 'dBm'}))
-end
 
 local function battery_config_response_handler(self, device, zb_rx)
   if zb_rx.body.zcl_body.global_status.value == Status.SUCCESS then
@@ -141,8 +133,6 @@ local function init_handler(self, device, event, args)
                   get_check_interval_int(device),
                   function()
                     device:emit_event(PresenceSensor.presence("not present"))
-                    device:emit_event(SignalStrength.lqi(0))
-                    device:emit_event(SignalStrength.rssi({value = -100, unit = 'dBm'}))
                     device:set_field(timer_const.PRESENCE_CALLBACK_TIMER, nil)
                   end
         )
@@ -180,9 +170,6 @@ local function all_zigbee_message_handler(self, message_channel)
   if zb_rx ~= nil then
     device.log.info(string.format("received Zigbee message: %s", zb_rx:pretty_print()))
     device:attribute_monitor(zb_rx)
-    if (device:supports_capability_by_id("signalStrength") and zb_rx.rssi.value ~= nil and zb_rx.lqi.value ~= nil) then
-      emit_signal_strength_events(device, zb_rx)
-    end
     poke(device)
     device.thread:queue_event(self.zigbee_message_dispatcher.dispatch, self.zigbee_message_dispatcher, self, device, zb_rx)
   end
@@ -192,7 +179,6 @@ local zigbee_presence_driver = {
   supported_capabilities = {
     capabilities.presenceSensor,
     capabilities.tone,
-    capabilities.signalStrength,
     capabilities.battery,
     capabilities.refresh
   },
