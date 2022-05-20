@@ -14,8 +14,11 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local Basic = zcl_clusters.Basic
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local utils = require "st.utils"
+
+local SOFTWARE_VERSION = "software_version"
 
 local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
   { mfr = "Third Reality, Inc", model = "3RMS16BZ"},
@@ -31,9 +34,29 @@ local is_third_reality_motion_sensor = function(opts, driver, device)
   return false
 end
 
+local device_added = function(self, device)
+  device:set_field(SOFTWARE_VERSION, 0)
+  device:send(Basic.attributes.SWBuildID:read(device))
+end
+
+local function basic_software_version_attr_handler(driver, device, value, zb_rx)
+  -- todo: since I don't have a device, i'm not sure how does the version string usually look like,
+  -- todo: for now I assume the last 2 digits are significant
+  local version = tonumber(string.sub(value.value, -2))
+  device:set_field(SOFTWARE_VERSION, version, {persist = true})
+end
+
 local function battery_percentage_handler(driver, device, raw_value, zb_rx)
   -- if ((manufacturer == "Third Reality, Inc" || manufacturer == "THIRDREALITY") && application.toInteger() <= 17) {
-  local percentage = utils.clamp_value(raw_value.value, 0, 100)
+  local softwareVersion = device:get_field(SOFTWARE_VERSION)
+  local percentage
+
+  if softwareVersion and softwareVersion <= 17 then
+    percentage = utils.clamp_value(raw_value.value, 0, 100)
+  else
+    percentage = utils.clamp_value(utils.round(raw_value.value / 2), 0, 100)
+  end
+
   device:emit_event(capabilities.battery.battery(percentage))
 end
 
@@ -41,10 +64,16 @@ local third_reality_motion_sensor = {
   NAME = "Third reality motion sensor",
   zigbee_handlers = {
     attr = {
+      [Basic.ID] = {
+        [Basic.attributes.SWBuildID.ID] = basic_software_version_attr_handler
+      },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_percentage_handler
       }
     }
+  },
+  lifecycle_handlers = {
+    added = device_added,
   },
   can_handle = is_third_reality_motion_sensor
 }

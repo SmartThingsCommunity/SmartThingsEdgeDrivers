@@ -15,10 +15,15 @@
 -- Mock out globals
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
+local Basic = clusters.Basic
 local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+
+local swbuild_payload_older = "102-5.3.5.16"
+local swbuild_payload_newer = "102-5.3.5.18"
+
 
 local mock_device1 = test.mock_device.build_test_zigbee_device(
   {
@@ -56,68 +61,96 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "Battery percentage (55) report should be handled -> 55%",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device1.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device1, 55) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device1:generate_test_message("main", capabilities.battery.battery(55))
-    }
-  }
+test.register_coroutine_test(
+  "Battery percentage report (55) should be handled -> 55% for a device with FW <= 17 ",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device1.id,
+        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_older)
+      }
+    )
+    test.wait_for_events()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device1.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device1, 55)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device1:generate_test_message("main", capabilities.battery.battery(55))
+    )
+  end
 )
 
-test.register_message_test(
-  "Battery percentage (120) report should be handled -> 100%",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device1.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device1, 120) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device1:generate_test_message("main", capabilities.battery.battery(100))
-    }
-  }
+test.register_coroutine_test(
+  "Battery percentage report (120) should be handled -> 100% for a device with FW <= 17 ",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device1.id,
+        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_older)
+      }
+    )
+    test.wait_for_events()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device1.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device1, 120)
+      }
+    )
+    test.socket.capability:__expect_send(
+        mock_device1:generate_test_message("main", capabilities.battery.battery(100))
+    )
+  end
 )
 
-test.register_message_test(
-  "Battery percentage report (55) should be handled -> 55%",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device2.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device2, 55) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device2:generate_test_message("main", capabilities.battery.battery(55))
-    }
-  }
+test.register_coroutine_test(
+  "Battery percentage report (110) should be handled -> 55% for a device with FW > 17 ",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device2.id,
+        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_newer)
+      }
+    )
+    test.wait_for_events()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device2.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device2, 110)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device2:generate_test_message("main", capabilities.battery.battery(55))
+    )
+  end
 )
 
-test.register_message_test(
-  "Battery percentage (120) report should be handled -> 100%",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device2.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device1, 120) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device2:generate_test_message("main", capabilities.battery.battery(100))
-    }
-  }
+test.register_coroutine_test(
+  "Battery percentage report (240) should be handled -> 100% for a device with FW <= 17 ",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device2.id,
+        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_newer)
+      }
+    )
+    test.wait_for_events()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device2.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device2, 240)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device2:generate_test_message("main", capabilities.battery.battery(100))
+    )
+  end
 )
 
 test.run_registered_tests()
