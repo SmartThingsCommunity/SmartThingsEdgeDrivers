@@ -21,9 +21,8 @@ local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
-local swbuild_payload_older = "102-5.3.5.16"
-local swbuild_payload_newer = "102-5.3.5.18"
-
+local swbuild_payload_older = 0x17 -- "1.0.23"
+local swbuild_payload_newer = 0x18 -- "1.0.24"
 
 local mock_device1 = test.mock_device.build_test_zigbee_device(
   {
@@ -62,12 +61,12 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Battery percentage report (55) should be handled -> 55% for a device with FW <= 17 ",
+  "Battery percentage report (55) should be handled -> 55% for a device with FW <= 0x17 ",
   function()
     test.socket.zigbee:__queue_receive(
       {
         mock_device1.id,
-        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_older)
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device1, swbuild_payload_older)
       }
     )
     test.wait_for_events()
@@ -85,12 +84,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Battery percentage report (120) should be handled -> 100% for a device with FW <= 17 ",
+  "Battery percentage report (120) should be handled -> 100% for a device with FW <= 0x17 ",
   function()
     test.socket.zigbee:__queue_receive(
       {
         mock_device1.id,
-        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_older)
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device1, swbuild_payload_older)
       }
     )
     test.wait_for_events()
@@ -108,12 +107,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Battery percentage report (110) should be handled -> 55% for a device with FW > 17 ",
+  "Battery percentage report (110) should be handled -> 55% for a device with FW > 0x17 ",
   function()
     test.socket.zigbee:__queue_receive(
       {
         mock_device2.id,
-        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_newer)
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device1, swbuild_payload_newer)
       }
     )
     test.wait_for_events()
@@ -131,12 +130,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Battery percentage report (240) should be handled -> 100% for a device with FW <= 17 ",
+  "Battery percentage report (240) should be handled -> 100% for a device with FW > 0x17 ",
   function()
     test.socket.zigbee:__queue_receive(
       {
         mock_device2.id,
-        Basic.attributes.SWBuildID:build_test_attr_report(mock_device1, swbuild_payload_newer)
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device1, swbuild_payload_newer)
       }
     )
     test.wait_for_events()

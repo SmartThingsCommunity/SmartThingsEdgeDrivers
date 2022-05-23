@@ -18,7 +18,7 @@ local Basic = zcl_clusters.Basic
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local utils = require "st.utils"
 
-local SOFTWARE_VERSION = "software_version"
+local APPLICATION_VERSION = "application_version"
 
 local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
   { mfr = "Third Reality, Inc", model = "3RMS16BZ"},
@@ -35,23 +35,21 @@ local is_third_reality_motion_sensor = function(opts, driver, device)
 end
 
 local device_added = function(self, device)
-  device:set_field(SOFTWARE_VERSION, 0)
-  device:send(Basic.attributes.SWBuildID:read(device))
+  device:set_field(APPLICATION_VERSION, 0)
+  device:send(Basic.attributes.ApplicationVersion:read(device))
 end
 
-local function basic_software_version_attr_handler(driver, device, value, zb_rx)
-  -- todo: since I don't have a device, i'm not sure how does the version string usually look like,
-  -- todo: for now I assume the last 2 digits are significant
-  local version = tonumber(string.sub(value.value, -2))
-  device:set_field(SOFTWARE_VERSION, version, {persist = true})
+local function application_version_attr_handler(driver, device, value, zb_rx)
+  local version = tonumber(value.value)
+  device:set_field(APPLICATION_VERSION, version, {persist = true})
 end
 
 local function battery_percentage_handler(driver, device, raw_value, zb_rx)
-  -- if ((manufacturer == "Third Reality, Inc" || manufacturer == "THIRDREALITY") && application.toInteger() <= 17) {
-  local softwareVersion = device:get_field(SOFTWARE_VERSION)
+  local softwareVersion = device:get_field(APPLICATION_VERSION)
   local percentage
 
-  if softwareVersion and softwareVersion <= 17 then
+  if softwareVersion and softwareVersion <= 0x17 then
+    -- Version 1.0.23 (23 == 0x17) and earlier incorrectly reports battery percentage
     percentage = utils.clamp_value(raw_value.value, 0, 100)
   else
     percentage = utils.clamp_value(utils.round(raw_value.value / 2), 0, 100)
@@ -65,7 +63,8 @@ local third_reality_motion_sensor = {
   zigbee_handlers = {
     attr = {
       [Basic.ID] = {
-        [Basic.attributes.SWBuildID.ID] = basic_software_version_attr_handler
+        --[Basic.attributes.SWBuildID.ID] = basic_software_version_attr_handler
+        [Basic.attributes.ApplicationVersion.ID] = application_version_attr_handler
       },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_percentage_handler
