@@ -10,7 +10,7 @@ pipeline {
     docker {
       image 'smartthings-registry.jfrog.io/iot/edge/edblua-formatter:latest'
       label 'production'
-      args '--entrypoint='
+      args '--entrypoint= -u 0:0'
     }
   }
   stages {
