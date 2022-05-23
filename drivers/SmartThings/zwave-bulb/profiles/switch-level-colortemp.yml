@@ -13,5 +13,5 @@ components:
   categories:
   - name: Light
 metadata:
-  mnmn: SmartThingsEdge
+  mnmn: SmartThings
   vid: generic-color-temperature-bulb-2700K-6500K
