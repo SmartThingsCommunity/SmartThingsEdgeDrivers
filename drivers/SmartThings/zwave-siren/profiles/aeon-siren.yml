@@ -11,7 +11,7 @@ components:
   categories:
   - name: Siren
 metadata:
-  mnmn: SmartThings
+  mnmn: SmartThingsEdge
   vid: Aeon_Siren  # Filtering non-supported alarm values (signal/strobe only)
 preferences:
 - name: type

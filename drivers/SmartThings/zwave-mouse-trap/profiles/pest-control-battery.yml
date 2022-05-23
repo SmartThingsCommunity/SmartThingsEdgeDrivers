@@ -11,5 +11,5 @@ components:
   categories:
   - name: GenericSensor
 metadata:
-  mnmn: SmartThings
+  mnmn: SmartThingsEdge
   vid: Dome_Mouser
