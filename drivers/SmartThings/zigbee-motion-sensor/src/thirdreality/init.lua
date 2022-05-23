@@ -63,7 +63,6 @@ local third_reality_motion_sensor = {
   zigbee_handlers = {
     attr = {
       [Basic.ID] = {
-        --[Basic.attributes.SWBuildID.ID] = basic_software_version_attr_handler
         [Basic.attributes.ApplicationVersion.ID] = application_version_attr_handler
       },
       [PowerConfiguration.ID] = {
