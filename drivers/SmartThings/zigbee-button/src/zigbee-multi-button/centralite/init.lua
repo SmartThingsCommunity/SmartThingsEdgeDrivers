@@ -42,9 +42,9 @@ local CENTRALITE_BUTTON_FINGERPRINTS = {
 
 local is_centralite_button = function(opts, driver, device)
   for _, fingerprint in ipairs(CENTRALITE_BUTTON_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end

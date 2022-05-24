@@ -182,6 +182,13 @@ test.register_coroutine_test(
           }
         }
       )
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        {
+          capability_id = "button", component_id = "main",
+          attribute_id = "button", state = { value = "pushed" }
+        }
+      })
       test.wait_for_events()
 
       test.mock_time.advance_time(50000) -- Battery has a max reporting interval of 21600

@@ -15,31 +15,17 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local log = require "log"
+local button_utils = require "button_utils"
 
 local WindowCovering = clusters.WindowCovering
-
-local function build_button_handler(button_name, pressed_type)
-  return function(driver, device, zb_rx)
-    local additional_fields = {
-      state_change = true
-    }
-    local event = pressed_type(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
-end
 
 local open_close_remote = {
   NAME = "Open/Close Remote",
   zigbee_handlers = {
     cluster = {
       [WindowCovering.ID] = {
-        [WindowCovering.server.commands.UpOrOpen.ID] = build_button_handler("button1", capabilities.button.button.pushed),
-        [WindowCovering.server.commands.DownOrClose.ID] = build_button_handler("button2", capabilities.button.button.pushed)
+        [WindowCovering.server.commands.UpOrOpen.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed),
+        [WindowCovering.server.commands.DownOrClose.ID] = button_utils.build_button_handler("button2", capabilities.button.button.pushed)
       }
     }
   },

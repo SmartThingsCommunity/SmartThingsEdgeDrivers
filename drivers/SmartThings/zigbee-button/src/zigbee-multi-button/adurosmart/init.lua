@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local log = require "log"
+local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -34,9 +35,9 @@ local ADURO_BUTTON_FINGERPRINTS = {
 
 local is_aduro_button = function(opts, driver, device)
   for _, fingerprint in ipairs(ADURO_BUTTON_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
@@ -50,21 +51,6 @@ local do_configuration = function(self, device)
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 
-local function aduro_on_off_attr_handler(button_name, pressed_type)
-  return function(driver, device, zb_rx)
-    local additional_fields = {
-      state_change = true
-    }
-    local event = pressed_type(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
-end
-
 local aduro_mfg_cluster_handler = function(driver, device, zb_rx)
   local additional_fields = {
     state_change = true
@@ -76,6 +62,7 @@ local aduro_mfg_cluster_handler = function(driver, device, zb_rx)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
     device:emit_component_event(comp, event)
+    device:emit_event(event)
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end
@@ -89,8 +76,8 @@ local aduro_device_handler = {
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = aduro_on_off_attr_handler("button4", capabilities.button.button.pushed),
-        [OnOff.server.commands.On.ID] = aduro_on_off_attr_handler("button1", capabilities.button.button.pushed)
+        [OnOff.server.commands.Off.ID] = button_utils.build_button_handler("button4", capabilities.button.button.pushed),
+        [OnOff.server.commands.On.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed)
       },
       [ADURO_MANUFACTURER_SPECIFIC_CLUSTER] = {
         [ADURO_MANUFACTURER_SPECIFIC_CMD] = aduro_mfg_cluster_handler

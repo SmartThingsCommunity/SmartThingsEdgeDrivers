@@ -2,9 +2,9 @@ name: one-button-temp-battery
 components:
 - id: main
   capabilities:
-  - id: battery
-    version: 1
   - id: button
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
