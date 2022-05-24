@@ -30,9 +30,9 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
-        "1": "off, heat"
-        "2": "off, cool"
-        "3": "off, heat, cool"
-        "4": "off, auto, heat, cool"
-        "5": "off, emergency heat, heat, cool"
+        1: "off, heat"
+        2: "off, cool"
+        3: "off, heat, cool"
+        4: "off, auto, heat, cool"
+        5: "off, emergency heat, heat, cool"
       default: "3"

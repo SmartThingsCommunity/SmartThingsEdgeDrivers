@@ -393,7 +393,7 @@ do
     "Setup Mode should be changed after changing updating preferences",
     function()
       local _preferences = {}
-      _preferences.thermostatMode = "1"
+      _preferences.thermostatMode = 1
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
 
       test.socket.zwave:__expect_send(
@@ -414,7 +414,7 @@ do
         )
       )
 
-      _preferences.thermostatMode = "0"
+      _preferences.thermostatMode = 0
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
 
       test.socket.zwave:__expect_send(

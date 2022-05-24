@@ -28,6 +28,6 @@ preferences:
     required: true
     definition:
       options:
-        "0": Heat
-        "1": Cool
+        0: Heat
+        1: Cool
       default: "0"
