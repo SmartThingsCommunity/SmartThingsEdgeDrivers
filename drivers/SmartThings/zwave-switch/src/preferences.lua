@@ -266,6 +266,40 @@ local devices = {
       loadControllMode = {parameter_number = 30, size = 1},
       levelCorrection = {parameter_number = 38, size = 2}
     }
+  },
+  ZOOZ_ZEN_30 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0xA000,
+      product_ids = 0xA008
+    },
+    PARAMETERS = {
+      powerFailureParam = {parameter_number = 12, size = 1},
+      ledSceneControlParam = {parameter_number = 7, size = 1},
+      relayLedModeParam = {parameter_number = 2, size = 1},
+      relayLedColorParam = {parameter_number = 4, size = 1},
+      relayLedBrightnessParam = {parameter_number = 6, size = 1},
+      relayAutoOffParam = {parameter_number = 10, size = 4},
+      relayAutoOnParam = {parameter_number = 11, size = 4},
+      relayLoadControlParam = {parameter_number = 20, size = 1},
+      relayPhysicalDisabledBeh = {parameter_number = 25, size = 1},
+      dimmerLedModeParam = {parameter_number = 1, size = 1},
+      dimmerLedColorParam = {parameter_number = 3, size = 1},
+      dimmerLedBrightParam = {parameter_number = 5, size = 1},
+      dimmerAutoOffParam = {parameter_number = 8, size = 4},
+      dimmerAutoOnParam = {parameter_number = 9, size = 4},
+      dimmerRampRateParam = {parameter_number = 13, size = 4},
+      dimmerPaddleRampParam = {parameter_number = 21, size = 1},
+      dimmerMinimumBrightParam = {parameter_number = 14, size = 1},
+      dimmerMaximumBrightParam = {parameter_number = 15, size = 1},
+      dimmerCustomBrightParam = {parameter_number = 23, size = 1},
+      dimmerBrightControlParam = {parameter_number = 18, size = 1},
+      dimmerDoubleTapFuncParam = {parameter_number = 17, size = 1},
+      dimmerLoadControlParam = {parameter_number = 19, size = 1},
+      dimmerPhysDisBehParam = {parameter_number = 24, size = 1},
+      dimmerNightBrightParam = {parameter_number = 26, size = 1},
+      dimmerPaddleControlParam = {parameter_number = 27, size = 1}
+    }
   }
 }
 
