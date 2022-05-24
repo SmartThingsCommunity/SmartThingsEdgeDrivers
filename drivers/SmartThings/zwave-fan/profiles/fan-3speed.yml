@@ -11,5 +11,5 @@ components:
   categories:
   - name: Fan
 metadata:
-  mnmn: SmartThings
+  mnmn: SmartThingsEdge
   vid: generic-fan-3-speed
