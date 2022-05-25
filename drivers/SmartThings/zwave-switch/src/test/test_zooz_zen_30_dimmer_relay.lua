@@ -6,7 +6,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
-local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 
 local zooz_zen_30_dimmer_relay_endpoints = {
   {
@@ -109,14 +108,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.off())
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
-        Meter:Get({scale = Meter.scale.electric_meter.WATTS})
-      )
     }
   }
 )
@@ -147,14 +138,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switchLevel.level(100))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
-        Meter:Get({scale = Meter.scale.electric_meter.WATTS})
-      )
     }
   }
 )
@@ -178,50 +161,6 @@ test.register_message_test(
   }
 )
 
-do
-  local energy = 5
-  test.register_message_test(
-    "Energy meter report should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_zooz_zen_30_dimmer_relay.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
-          scale = Meter.scale.electric_meter.KILOWATT_HOURS,
-          meter_value = energy})
-        )}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" }))
-      }
-    }
-  )
-end
-
-do
-  local power = 89
-  test.register_message_test(
-    "Power meter report should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_zooz_zen_30_dimmer_relay.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
-          scale = Meter.scale.electric_meter.WATTS,
-          meter_value = power})
-        )}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.powerMeter.power({ value = power, unit = "W" }))
-      }
-    }
-  )
-end
-
 test.register_message_test(
   "Refresh Capability Command should refresh device",
   {
@@ -239,22 +178,6 @@ test.register_message_test(
       message = zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
         SwitchMultilevel:Get({})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
-        Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
-        Meter:Get({scale = Meter.scale.electric_meter.WATTS})
       )
     }
   },

@@ -10,7 +10,7 @@ local zooz_zen_dimmer_relay_endpoints = {
       { value = zw.METER },
       { value = zw.BASIC },
       { value = zw.SWITCH_BINARY },
-      { value = zw.SWITCH_MULTILEVEL },
+      { value = zw.SWITCH_MULTILEVEL }
     }
   }
 }
