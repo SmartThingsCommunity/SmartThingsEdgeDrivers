@@ -55,7 +55,7 @@ local function info_changed(self, device, event, args)
   local size = 1
 
   if args.old_st_store.preferences.thermostatMode ~= device.preferences.thermostatMode then
-    new_parameter_value = tonumber(device.preferences.thermostatMode)
+    new_parameter_value = device.preferences.thermostatMode
     parameter_number = DEVICE_MODE_PARAMETER
   end
 

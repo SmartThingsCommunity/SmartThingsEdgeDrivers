@@ -294,7 +294,7 @@ test.register_coroutine_test(
     function()
       local updates = {
         preferences = {
-          systemModes = "4" -- { "off", "auto", "heat", "cool" }
+          systemModes = 4 -- { "off", "auto", "heat", "cool" }
         }
       }
       test.timer.__create_and_queue_test_time_advance_timer(20, "oneshot")
