@@ -2,18 +2,24 @@ name: zooz-zen-30-dimmer-relay
 components:
 - id: main
   capabilities:
-  - id: switch
-    version: 1
-  - id: switchLevel
-    version: 1
-  - id: powerMeter
-    version: 1
-  - id: energyMeter
-    version: 1
-  - id: refresh
-    version: 1
+    - id: switch
+      version: 1
+    - id: switchLevel
+      version: 1
+    - id: powerMeter
+      version: 1
+    - id: energyMeter
+      version: 1
+    - id: refresh
+      version: 1
   categories:
-  - name: Switch
+    - name: Switch
+- id: button1
+  capabilities:
+    - id: button
+      version: 1
+  categories:
+    - name: RemoteController
 preferences:
   - name: "powerFailureParam"
     title: "On Off Status After Power Failure"

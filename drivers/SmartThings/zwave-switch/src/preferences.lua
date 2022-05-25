@@ -288,7 +288,7 @@ local devices = {
       dimmerLedBrightParam = {parameter_number = 5, size = 1},
       dimmerAutoOffParam = {parameter_number = 8, size = 4},
       dimmerAutoOnParam = {parameter_number = 9, size = 4},
-      dimmerRampRateParam = {parameter_number = 13, size = 4},
+      dimmerRampRateParam = {parameter_number = 13, size = 1},
       dimmerPaddleRampParam = {parameter_number = 21, size = 1},
       dimmerMinimumBrightParam = {parameter_number = 14, size = 1},
       dimmerMaximumBrightParam = {parameter_number = 15, size = 1},
