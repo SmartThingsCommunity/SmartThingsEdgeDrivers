@@ -44,3 +44,14 @@ zwaveManufacturer:
     productType: 0x0101
     productId: 0x0036
     deviceProfileName: valve-generic
+
+zwaveGeneric:
+  - id: "GenericValve"
+    deviceLabel: Z-Wave Valve
+    genericType: 0x10
+    specificType:
+      - 0x06
+    commandClasses:
+      supported:
+        - 0x25
+    deviceProfileName: valve-generic
