@@ -50,7 +50,8 @@ local zigbee_water_driver_template = {
   sub_drivers = {
     require("zigbee-water-freeze"),
     require("leaksmart"),
-    require("frient")
+    require("frient"),
+    require("thirdreality")
   },
 }
 
