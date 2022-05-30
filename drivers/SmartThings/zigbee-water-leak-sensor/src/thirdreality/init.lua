@@ -20,13 +20,13 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 
 local APPLICATION_VERSION = "application_version"
 
-local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
+local THIRD_REALITY_WATER_LEAK_SENSOR_FINGERPRINTS = {
   { mfr = "Third Reality, Inc", model = "3RWS18BZ"},
   { mfr = "THIRDREALITY", model = "3RWS18BZ"}
 }
 
 local function can_handle_third_reality_water_leak_sensor(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_MOTION_SENSOR_FINGERPRINTS) do
+  for _, fingerprint in ipairs(THIRD_REALITY_WATER_LEAK_SENSOR_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       return true
     end
