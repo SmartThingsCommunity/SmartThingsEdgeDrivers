@@ -34,7 +34,7 @@ local function can_handle_third_reality_water_leak_sensor(opts, driver, device)
   return false
 end
 
-local device_added = function(self, device)
+local function device_added(driver, device)
   device:set_field(APPLICATION_VERSION, 0)
   device:send(Basic.attributes.ApplicationVersion:read(device))
 end
