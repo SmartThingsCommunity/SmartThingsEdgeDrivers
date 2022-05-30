@@ -1731,6 +1731,11 @@ zigbeeManufacturer:
     manufacturer: innr
     model: OSL 130 C
     deviceProfileName: rgbw-bulb
+  - id: "OSRAM/Classic A60 RGBW"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Classic A60 RGBW
+    deviceProfileName: rgbw-bulb
   - id: "OSRAM/PAR 16 50 RGBW - LIGHTIFY"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
