@@ -13,7 +13,7 @@ components:
   - id: temperatureMeasurement
     version: 1
   categories:
-    - name: RemoteController
+    - name: Button
 preferences:
   - preferenceId: tempOffset
     explicit: true
