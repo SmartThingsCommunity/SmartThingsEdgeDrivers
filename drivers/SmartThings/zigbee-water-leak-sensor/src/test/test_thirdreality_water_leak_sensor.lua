@@ -66,7 +66,6 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -89,7 +88,6 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -112,7 +110,6 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -135,7 +132,6 @@ test.register_coroutine_test(
       }
     )
     test.wait_for_events()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
