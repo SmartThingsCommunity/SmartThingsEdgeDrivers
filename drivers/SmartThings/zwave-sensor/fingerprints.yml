@@ -19,7 +19,7 @@ zwaveManufacturer:
     manufacturerId: 0x0060
     productType: 0x0012
     productId: 0x0001
-    deviceProfileName: motion-switch
+    deviceProfileName: motion-light
   - id: "Dome/DMMS1"
     deviceLabel: Dome Motion/Light Sensor
     manufacturerId: 0x021F
