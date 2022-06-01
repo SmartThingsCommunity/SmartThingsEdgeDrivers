@@ -1,19 +1,21 @@
+local zw = require "st.zwave"
 local test = require "integration_test"
+local zw_test_utils = require "integration_test.zwave_test_utils"
 local test_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local constants = require "st.zwave.constants"
-local zw = require "st.zwave"
-local zw_test_utils = require "integration_test.zwave_test_utils"
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
+local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 
 local zooz_zen_30_dimmer_relay_endpoints = {
   {
     command_classes = {
-      { value = zw.BASIC },
+      { value = zw.SWITCH_BINARY },
       { value = zw.SWITCH_MULTILEVEL },
-      { value = zw.METER },
       { value = zw.CENTRAL_SCENE }
+    },
+    command_classes = {
+      { value = zw.SWITCH_BINARY }
     }
   }
 }
@@ -29,51 +31,153 @@ local mock_zooz_zen_30_dimmer_relay = test.mock_device.build_test_zwave_device({
 local function test_init()
   test.mock_device.add_test_device(mock_zooz_zen_30_dimmer_relay)
 end
+
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Switch capability off commands should evoke the correct Z-Wave SETs and GETs",
+  "Switch capability on command should evoke the correct Z-Wave SETs and GETs with dst_channel 0",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({
       mock_zooz_zen_30_dimmer_relay.id,
-      { capability = "switch", command = "off", args = {} }
+      { capability = "switch", component = "main", command = "on", args = {} }
     })
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchMultilevel:Set({
-          value = SwitchMultilevel.value.OFF_DISABLE,
-          duration = constants.DEFAULT_DIMMING_DURATION
+        SwitchBinary:Set({
+          target_value = SwitchBinary.value.ON_ENABLE,
+          duration = 0
+        },
+        {
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels = {0}
         })
       )
     )
+
+    test.wait_for_events()
+
     test.wait_for_events()
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchMultilevel:Get({})
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {0}
+          })
+      )
+    )
+
+  end
+)
+
+test.register_coroutine_test(
+  "Switch capability off command should evoke the correct Z-Wave SETs and GETs with dst_channel 0",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({
+      mock_zooz_zen_30_dimmer_relay.id,
+      { capability = "switch", component = "main", command = "off", args = {} }
+    })
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Set({
+          target_value = SwitchBinary.value.OFF_DISABLE,
+          duration = 0
+        },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {0}
+          })
+      )
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {0}
+          })
       )
     )
   end
 )
 
 test.register_coroutine_test(
-  "Switch capability on commands should evoke the correct Z-Wave SETs and GETs",
+  "Switch capability on commands should evoke the correct Z-Wave SETs and GETs dst_channel 1",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({
       mock_zooz_zen_30_dimmer_relay.id,
-      { capability = "switch", command = "on", args = {} }
+      { capability = "switch", component = "switch1", command = "on", args = {} }
+    })
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Set({
+          target_value = SwitchBinary.value.ON_ENABLE,
+          duration = 0
+        },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {1}
+          })
+      )
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {1}
+          })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Switch capability off commands should evoke the correct Z-Wave SETs and GETs dst_channel 1",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_zooz_zen_30_dimmer_relay.id,
+      { capability = "switch", component = "switch1", command = "off", args = {} }
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchMultilevel:Set({
-          value = SwitchMultilevel.value.ON_ENABLE,
-          duration = constants.DEFAULT_DIMMING_DURATION
-        })
+        SwitchBinary:Set({
+          target_value = SwitchBinary.value.OFF_DISABLE
+        },
+        {
+          encap = zw.ENCAP.AUTO,
+          src_channel = 0,
+          dst_channels = {1}
+        }
+        )
       )
     )
     test.wait_for_events()
@@ -81,14 +185,19 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchMultilevel:Get({})
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = {1}
+          })
       )
     )
   end
 )
 
 test.register_message_test(
-  "Z-Wave SwitchMultilevel reports with value-off should evoke Switch capability off events",
+  "Z-Wave SwitchMultilevel reports with non-zero values should evoke Switch and Switch Level capability events",
   {
     {
       channel = "zwave",
@@ -98,32 +207,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
             current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
-            duration = 0
-          })
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.off())
-    }
-  }
-)
-
-test.register_message_test(
-  "Z-Wave SwitchMultilevel reports with value-on should evoke Switch and Switch Level capability on events",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_zooz_zen_30_dimmer_relay.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          SwitchMultilevel:Report({
-            current_value = SwitchMultilevel.value.OFF_DISABLE,
-            target_value = SwitchMultilevel.value.ON_ENABLE,
+            target_value = 50,
             duration = 0
           })
         )
@@ -137,52 +221,501 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switchLevel.level(100))
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switchLevel.level(50))
     }
   }
 )
 
 test.register_message_test(
-  "Central Scene notification Button 1 pushed should be handled",
+  "Central Scene notification Button 'up' should be handled",
   {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
-    },
     {
       channel = "zwave",
-      direction = "receive",
-      message = { mock_zooz_zen_30_dimmer_relay.id,
-                  zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = 1},
-                    { encap = zw.ENCAP.AUTO, src_channel = 1, dst_channels = {0} }))
-      }
-    }
-  }
-)
-
-test.register_message_test(
-  "Refresh Capability Command should refresh device",
-  {
-    {
-      channel = "capability",
       direction = "receive",
       message = {
         mock_zooz_zen_30_dimmer_relay.id,
-        { capability = "refresh", command = "refresh", args = {} }
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME
+            }
+          )
+        )
       }
     },
     {
-      channel = "zwave",
+      channel = "capability",
       direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
-        SwitchMultilevel:Get({})
-      )
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up())
     }
-  },
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down' should be handled",
   {
-    inner_block_ordering = "relaxed"
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'pushed' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.pushed())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'up_2x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_2_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up_2x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down_2x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_2_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down_2x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'pushed_2x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_2_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.pushed_2x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'up_3x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up_3x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down_3x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down_3x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'pushed_3x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.pushed_3x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'up_4x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_4_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up_4x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down_4x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_4_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down_4x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'pushed_4x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_4_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.pushed_4x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'up_5x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_5_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up_5x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down_5x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_5_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down_5x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'pushed_5x' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_PRESSED_5_TIMES
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.pushed_5x())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'up_hold' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x01,
+              key_attributes = CentralScene.key_attributes.KEY_HELD_DOWN
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.up_hold())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'down_hold' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x02,
+              key_attributes = CentralScene.key_attributes.KEY_HELD_DOWN
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.down_hold())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'held' should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = CentralScene.key_attributes.KEY_HELD_DOWN
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.button.button.held())
+    }
+  }
+)
+
+test.register_message_test(
+  "Central Scene notification Button 'released' should not be handled, not supported by SmartThings",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification(
+            {
+              scene_number = 0x03,
+              key_attributes = 0x01
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send"
+    }
   }
 )
 
