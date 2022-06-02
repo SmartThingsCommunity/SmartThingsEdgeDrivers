@@ -11,7 +11,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: Light
+  - name: Switch
 preferences:
   - name: "ledIntensity"
     title: "Indicator light intensity"
