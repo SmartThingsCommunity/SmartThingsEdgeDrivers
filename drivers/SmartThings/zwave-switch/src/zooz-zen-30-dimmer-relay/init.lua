@@ -19,6 +19,13 @@ local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, d
   return false
 end
 
+local BUTTON_VALUES = {
+  "up_hold", "down_hold", "held",
+  "up","up_2x","up_3x","up_4x","up_5x",
+  "down","down_2x","down_3x","down_4x","down_5x",
+  "pushed", "pushed_2x","pushed_3x","pushed_4x","pushed_5x"
+}
+
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = {
     [0x01] = capabilities.button.button.up(),
@@ -78,12 +85,14 @@ local function central_scene_notification_handler(driver, device, cmd)
     device:set_field(LAST_SEQ_NUMBER_KEY, cmd.args.sequence_number)
     local event_map = map_key_attribute_to_capability[cmd.args.key_attributes]
     local event = event_map and event_map[cmd.args.scene_number]
-    device:emit_event_for_endpoint("main", event)
+    if event ~= nil then
+      device:emit_event_for_endpoint("main", event)
+    end
   end
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","pushed_2x","pushed_3x","pushed_4x","pushed_5x","down","down_hold","down_2x","down_3x","down_4x","down_5x","up","up_hold","up_2x","up_3x","up_4x","up_5x"}))
+  device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES))
   device:emit_event(capabilities.button.numberOfButtons({value = 3}))
 end
 
