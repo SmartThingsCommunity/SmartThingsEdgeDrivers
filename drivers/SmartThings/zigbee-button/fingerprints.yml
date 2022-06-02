@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.remote.b1acn02"
+    deviceLabel: Aqara Wireless Mini Switch T1
+    manufacturer: LUMI
+    model: lumi.remote.b1acn02
+    deviceProfileName: one-button-battery
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN

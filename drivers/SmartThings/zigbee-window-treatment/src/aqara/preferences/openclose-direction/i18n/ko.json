@@ -1,0 +1,9 @@
+{
+  "tag": "ko",
+  "label": "반전",
+  "description": "커튼 열림/닫힘 방향 반전",
+  "preferenceType": "boolean",
+  "definition": {
+    "default": false
+  }
+}
