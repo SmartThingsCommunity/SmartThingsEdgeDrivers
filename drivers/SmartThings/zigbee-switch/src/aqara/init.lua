@@ -4,9 +4,7 @@ local capabilities = require "st.capabilities"
 local OnOff = clusters.OnOff
 
 local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.switch.b2laus01" },
-  { mfr = "LUMI", model = "lumi.switch.b1laus01" },
-  { mfr = "LUMI", model = "lumi.plug.maeu01" }
+  { mfr = "LUMI", model = "lumi.switch.b1laus01" }
 }
 
 local is_aqara_products = function(opts, driver, device)
