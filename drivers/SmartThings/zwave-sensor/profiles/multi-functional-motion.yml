@@ -17,4 +17,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: MultiFunctionalSensor
+  - name: MotionSensor
