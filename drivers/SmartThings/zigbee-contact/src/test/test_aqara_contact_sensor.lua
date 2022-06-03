@@ -49,46 +49,39 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.wait_for_events()
 
-    test.socket.zigbee:__expect_send({ mock_device.id, IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui) })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
+    })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
     })
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 300, 1)
+      }
+    )
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
       }
     )
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
-    })
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 300, 1)
-      }
-    )
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 300, 1)
-      }
-    )
+
+    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui) })
     test.socket.zigbee:__expect_send({ mock_device.id, IASZone.server.commands.ZoneEnrollResponse(mock_device, EnrollResponseCode.SUCCESS, 0x00) })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
-    })
+    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
+
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

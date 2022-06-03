@@ -10,6 +10,17 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.magnet.agl02" }
 }
 
+local CONFIGURATIONS = {
+  {
+    cluster = IASZone.ID,
+    attribute = IASZone.attributes.ZoneStatus.ID,
+    minimum_interval = 30,
+    maximum_interval = 300,
+    data_type = IASZone.attributes.ZoneStatus.base_type,
+    reportable_change = 1
+  }
+}
+
 local is_aqara_products = function(opts, driver, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -19,48 +30,19 @@ local is_aqara_products = function(opts, driver, device, ...)
   return false
 end
 
-local do_configure = function(self, device)
-  device:configure()
+local function device_init(driver, device)
+  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
 
-  device:send(device_management.build_bind_request(device, IASZone.ID, self.environment_info.hub_zigbee_eui))
-  device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 30, 300, 1))
-
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
-end
-
-local event_from_zone_status = function(driver, device, zone_status, zb_rx)
-  if zone_status.value == 0x0021 then
-    device:emit_event(capabilities.contactSensor.contact.open())
-  elseif zone_status.value == 0x0020 then
-    device:emit_event(capabilities.contactSensor.contact.closed())
+  for _, attribute in ipairs(CONFIGURATIONS) do
+    device:add_configured_attribute(attribute)
+    device:add_monitored_attribute(attribute)
   end
-end
-
-local zone_status_change_handler = function(driver, device, zb_rx)
-  event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
-end
-
-local function zone_status_attr_handler(driver, device, zone_status, zb_rx)
-  event_from_zone_status(driver, device, zone_status, zb_rx)
 end
 
 local aqara_contact_handler = {
   NAME = "Aqara Contact Handler",
   lifecycle_handlers = {
-    init = battery_defaults.build_linear_voltage_init(2.6, 3.0),
-    doConfigure = do_configure
-  },
-  zigbee_handlers = {
-    cluster = {
-      [IASZone.ID] = {
-        [IASZone.client.commands.ZoneStatusChangeNotification.ID] = zone_status_change_handler
-      }
-    },
-    attr = {
-      [IASZone.ID] = {
-        [IASZone.attributes.ZoneStatus.ID] = zone_status_attr_handler
-      }
-    },
+    init = device_init
   },
   can_handle = is_aqara_products
 }
