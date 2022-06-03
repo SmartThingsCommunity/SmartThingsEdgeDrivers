@@ -1,0 +1,24 @@
+name: window-aqara-curtain
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: windowShadeLevel
+    version: 1
+  - id: aqara.initializedstate
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+preferences:
+  - preferenceId: aqara.opencloseDirection
+    explicit: true
+  - preferenceId: aqara.softTouch
+    explicit: true
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: e5126f59-3570-3cbb-9b08-5a838d9e0c22
