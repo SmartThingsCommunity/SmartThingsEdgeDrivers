@@ -20,6 +20,9 @@ components:
     version: 1
   categories:
   - name: Thermostat
+metadata:
+  mnmn: SmartThingsEdge
+  vid: SmartThings-smartthings-Qubino_Flush_Thermostat
 preferences:
   - name: "thermostatMode"
     title: "Thermostat Mode"
