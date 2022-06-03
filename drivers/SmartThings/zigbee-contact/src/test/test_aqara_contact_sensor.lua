@@ -79,7 +79,8 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui) })
-    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.server.commands.ZoneEnrollResponse(mock_device, EnrollResponseCode.SUCCESS, 0x00) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      IASZone.server.commands.ZoneEnrollResponse(mock_device, EnrollResponseCode.SUCCESS, 0x00) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -90,13 +91,14 @@ test.register_coroutine_test(
   "closed contact events",
   function()
     local attr_report_data = {
-      { IASZone.ID, data_types.Int16.ID, 0x0020}
+      { IASZone.attributes.ZoneStatus.ID, data_types.Int16.ID, 0x0020 }
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, IASZone.ID, attr_report_data, 0x115F)
     })
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.contactSensor.contact.closed()))
   end
 )
 
@@ -104,13 +106,14 @@ test.register_coroutine_test(
   "open contact events",
   function()
     local attr_report_data = {
-      { IASZone.ID, data_types.Int16.ID, 0x0021}
+      { IASZone.attributes.ZoneStatus.ID, data_types.Int16.ID, 0x0021 }
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, IASZone.ID, attr_report_data, 0x115F)
     })
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.contactSensor.contact.open()))
   end
 )
 
