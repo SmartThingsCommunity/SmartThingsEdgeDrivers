@@ -78,7 +78,6 @@ local zigbee_switch_driver_template = {
     capabilities.motionSensor
   },
   sub_drivers = {
-    require("aqara"),
     require("ezex"),
     require("rexense"),
     require("sinope"),
