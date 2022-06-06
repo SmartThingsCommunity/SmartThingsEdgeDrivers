@@ -187,7 +187,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels={0}
+              dst_channels = { 0 }
             }
           )
         )
@@ -222,7 +222,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels={0}
+              dst_channels = { 0 }
             }
           )
         )
@@ -257,7 +257,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels={0}
+              dst_channels = { 0 }
             }
           )
         )
@@ -292,7 +292,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels={0}
+              dst_channels = { 0 }
             }
           )
         )
@@ -305,6 +305,7 @@ test.register_message_test(
     }
   }
 )
+
 test.register_coroutine_test(
   "Switch capability on command should evoke the correct Z-Wave SETs and GETs with dst_channel 0",
   function()
@@ -323,7 +324,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels = {0}
+          dst_channels = { 0 }
         })
       )
     )
@@ -336,7 +337,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {0}
+            dst_channels = { 0 }
           })
       )
     )
@@ -362,7 +363,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {0}
+            dst_channels = { 0 }
           })
       )
     )
@@ -375,7 +376,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {0}
+            dst_channels = { 0 }
           })
       )
     )
@@ -400,7 +401,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {1}
+            dst_channels = { 1 }
           })
       )
     )
@@ -413,7 +414,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {1}
+            dst_channels = { 1 }
           })
       )
     )
@@ -437,7 +438,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels = {1}
+          dst_channels = { 1 }
         }
         )
       )
@@ -451,7 +452,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = {1}
+            dst_channels = { 1 }
           })
       )
     )
