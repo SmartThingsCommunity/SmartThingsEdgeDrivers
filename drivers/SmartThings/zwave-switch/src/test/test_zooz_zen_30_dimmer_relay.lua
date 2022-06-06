@@ -2,10 +2,11 @@ local zw = require "st.zwave"
 local test = require "integration_test"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local test_utils = require "integration_test.utils"
-local capabilities = require "st.capabilities"
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
+local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
+local capabilities = require "st.capabilities"
+local constants = require "st.zwave.constants"
 
 local zooz_zen_30_dimmer_relay_endpoints = {
   {
@@ -42,7 +43,6 @@ test.register_coroutine_test(
       mock_zooz_zen_30_dimmer_relay.id,
       { capability = "switch", component = "main", command = "on", args = {} }
     })
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
@@ -57,9 +57,6 @@ test.register_coroutine_test(
         })
       )
     )
-
-    test.wait_for_events()
-
     test.wait_for_events()
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
@@ -73,7 +70,6 @@ test.register_coroutine_test(
           })
       )
     )
-
   end
 )
 
@@ -86,7 +82,6 @@ test.register_coroutine_test(
       mock_zooz_zen_30_dimmer_relay.id,
       { capability = "switch", component = "main", command = "off", args = {} }
     })
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
@@ -101,7 +96,6 @@ test.register_coroutine_test(
           })
       )
     )
-
     test.wait_for_events()
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
@@ -126,7 +120,6 @@ test.register_coroutine_test(
       mock_zooz_zen_30_dimmer_relay.id,
       { capability = "switch", component = "switch1", command = "on", args = {} }
     })
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
@@ -141,7 +134,6 @@ test.register_coroutine_test(
           })
       )
     )
-
     test.wait_for_events()
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
@@ -191,6 +183,39 @@ test.register_coroutine_test(
             src_channel = 0,
             dst_channels = {1}
           })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "SwitchLevel capability setLevel commands should evoke the correct Z-Wave SETs and GETs",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_zooz_zen_30_dimmer_relay.id,
+      { capability = "switchLevel", component = "main", command = "setLevel", args = { 10 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_zooz_zen_30_dimmer_relay:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchMultilevel:Set({
+          value = 10,
+          duration = constants.DEFAULT_DIMMING_DURATION
+        })
+      )
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchMultilevel:Get({})
       )
     )
   end

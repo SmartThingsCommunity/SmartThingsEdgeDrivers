@@ -5,6 +5,8 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 local log = require "log"
 local LAST_SEQ_NUMBER_KEY = "last_sequence_number"
+local utils = require "st.utils"
+local constants = require "st.zwave.constants"
 
 local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
   {mfr = 0x027A, prod = 0xA000, model = 0xA008} -- Zooz Zen 30 Dimmer Relay Double Switch
@@ -102,6 +104,21 @@ local function device_init(self, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
+local function switch_level_set(driver, device, cmd)
+  local level = utils.round(cmd.args.level)
+  level = utils.clamp_value(level, 0, 99)
+
+  device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+
+  local dimmingDuration = cmd.args.rate or constants.DEFAULT_DIMMING_DURATION
+  device:send(SwitchMultilevel:Set({ value=level, duration=dimmingDuration }))
+  local query_level = function()
+    device:send(SwitchMultilevel:Get({}))
+  end
+  local delay = math.max(dimmingDuration + constants.DEFAULT_POST_DIMMING_DELAY , constants.MIN_DIMMING_GET_STATUS_DELAY)
+  device.thread:call_with_delay(delay, query_level)
+end
+
 local do_refresh = function(self, device)
   device:send_to_component(SwitchBinary:Get({}), "main")
   device:send_to_component(SwitchMultilevel:Get({}), "main")
@@ -114,6 +131,9 @@ local zooz_zen_30_dimmer_relay_double_switch = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
+    [capabilities.switchLevel.ID] = {
+      [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_set
     }
   },
   zwave_handlers = {
