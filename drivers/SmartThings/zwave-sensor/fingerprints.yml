@@ -204,7 +204,7 @@ zwaveManufacturer:
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
     productId: 0x0009
-    deviceProfileName: temp-humidity-dew-mold
+    deviceProfileName: aeotec-temp-humidity-dew-mold
   - id: POPP/moldDetector # all regions
     deviceLabel: POPP Multipurpose Sensor
     manufacturerId: 0x0154
