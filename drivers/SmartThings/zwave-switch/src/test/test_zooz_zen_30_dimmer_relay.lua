@@ -3,6 +3,7 @@ local test = require "integration_test"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local test_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local capabilities = require "st.capabilities"
@@ -11,6 +12,7 @@ local constants = require "st.zwave.constants"
 local zooz_zen_30_dimmer_relay_endpoints = {
   {
     command_classes = {
+      {value = zw.BASIC},
       { value = zw.SWITCH_BINARY },
       { value = zw.SWITCH_MULTILEVEL },
       { value = zw.CENTRAL_SCENE }
@@ -35,6 +37,274 @@ end
 
 test.set_test_init_function(test_init)
 
+test.register_message_test(
+  "Basic Report (0x00) should be handled by switch1 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=0x00},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
+              dst_channels = { 0 }
+            })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1",  capabilities.switch.switch.off())
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0x00) should be handled by main component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=0x00},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 0 }
+            })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.off())
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0xFF) should be handled by switch1 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=0xFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
+              dst_channels = { 0 }
+            })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1",  capabilities.switch.switch.on())
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic Report (0xFF) should be handled by main component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=0xFF},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 0 }
+            })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switchLevel.level(100))
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report ON_ENABLE should be handled by main component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.ON_ENABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.on())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report OFF_DISABLE should be handled by main component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.OFF_DISABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.off())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report ON_ENABLE should be handled by switch1 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.ON_ENABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1", capabilities.switch.switch.on())
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch Binary report OFF_DISABLE should be handled by switch1 component",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          SwitchBinary:Report(
+            {
+              target_value=SwitchBinary.value.OFF_DISABLE
+            },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 1,
+              dst_channels={0}
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1", capabilities.switch.switch.off())
+    }
+  }
+)
 test.register_coroutine_test(
   "Switch capability on command should evoke the correct Z-Wave SETs and GETs with dst_channel 0",
   function()
@@ -220,6 +490,7 @@ test.register_coroutine_test(
     )
   end
 )
+
 
 test.register_message_test(
   "Z-Wave SwitchMultilevel reports with non-zero values should evoke Switch and Switch Level capability events",
