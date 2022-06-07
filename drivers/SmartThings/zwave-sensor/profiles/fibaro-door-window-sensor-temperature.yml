@@ -1,0 +1,124 @@
+name: fibaro-door-window-sensor-temperature
+components:
+- id: main
+  capabilities:
+  - id: contactSensor
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+preferences:
+  - name: "alarmStatus"
+    title: "Alarm status"
+    description: "Defines state of the sensor when the magnet is close. If the alarm sensor is connected, it determines the output type."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Door/window closed"
+        1 : "Door/window opened"
+      default: 0
+  - name: "visualLedIndications"
+    title: "Visual LED indications"
+    description: "Events indicated by the LED indicator."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "No indications"
+        1 : "Opening/closing status change (IN)"
+        2 : "Wake up (1 x click or periodical)"
+        3 : "Opening/closing and wake up"
+        4 : "Device tampering"
+        5 : "Opening/closing and tampering"
+        6 : "Wake up and tampering"
+      default: 6
+  - name: "delayOfTamperAlarmCancel"
+    title: "Delay of tamper alarm cancellation"
+    description: "Time period after which a tamper alarm will be cancelled"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 5
+  - name: "reportTamperAlarmCancel"
+    title: "Reporting tamper alarm cancellation"
+    description: "Reporting cancellation of tamper alarm to the controller"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: true
+  - name: "tempMeasurementInterval"
+    title: "Interval of temp measurements"
+    description: "The shorter the time, the more frequently the temperature will be measured (0 - temperature measurements disabled)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 300
+  - name: "tempReportsThreshold"
+    title: "Temperature reports threshold"
+    description: "Defines change of temperature in comparison with last reported (0 - temperature reports based on threshold disabled)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 300
+      default: 10
+  - name: "intervalOfTempReports"
+    title: "Interval of temperature reports"
+    description: "Temperature measurement is performed before sending any report (0 - periodic temperature reports disabled)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 32400
+      default: 0
+  - name: "temperatureOffset"
+    title: "Temperature offset"
+    description: "The value to be added to the actual temperature, measured by the sensor (temperature compensation)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -1000
+      maximum: 1000
+      default: 0
+  - name: "temperatureAlarmReports"
+    title: "Temperature alarm reports"
+    description: "Temperature alarms reported to the controller"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Temperature alarms disabled"
+        1 : "High temperature alarm"
+        2 : "Low temperature alarm"
+        3 : "High and low temp alarms enabled"
+      default: 0
+  - name: "highTempThreshold"
+    title: "High temperature alarm threshold"
+    description: "If temperature > set value, overheat notification will be sent (0 - 100 degrees Celsius, in 0,1 degrees steps)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 1000
+      default: 540
+  - name: "lowTempThreshold"
+    title: "Low temperature alarm threshold"
+    description: "If temperature < set value, underheat notification will be sent (-30 - 70 degrees Celsius, in 0,1 degrees steps)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -300
+      maximum: 700
+      default: 40
