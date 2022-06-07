@@ -19,7 +19,7 @@ zwaveManufacturer:
     manufacturerId: 0x0060
     productType: 0x0012
     productId: 0x0001
-    deviceProfileName: motion-switch
+    deviceProfileName: motion-light
   - id: "Dome/DMMS1"
     deviceLabel: Dome Motion/Light Sensor
     manufacturerId: 0x021F
@@ -204,7 +204,7 @@ zwaveManufacturer:
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
     productId: 0x0009
-    deviceProfileName: temp-humidity-dew-mold
+    deviceProfileName: aeotec-temp-humidity-dew-mold
   - id: POPP/moldDetector # all regions
     deviceLabel: POPP Multipurpose Sensor
     manufacturerId: 0x0154

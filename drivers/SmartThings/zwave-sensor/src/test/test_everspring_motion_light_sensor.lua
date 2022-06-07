@@ -32,7 +32,7 @@ local sensor_endpoints = {
 }
 
 local mock_sensor = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("motion-switch.yml"),
+  profile = t_utils.get_profile_definition("motion-light.yml"),
   zwave_endpoints = sensor_endpoints,
   zwave_manufacturer_id = 0x0060,
   zwave_product_type = 0x0012,

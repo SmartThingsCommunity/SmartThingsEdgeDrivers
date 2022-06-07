@@ -4,9 +4,9 @@ components:
   capabilities:
   - id: switch
     version: 1
-  - id: energyMeter
-    version: 1
   - id: powerMeter
+    version: 1
+  - id: energyMeter
     version: 1
   - id: refresh
     version: 1
