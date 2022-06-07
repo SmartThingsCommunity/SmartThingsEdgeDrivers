@@ -20,6 +20,8 @@ components:
   capabilities:
   - id: windowShadeLevel
     version: 1
+  categories:
+    - name: Blind
 preferences:
   - name: "operatingModes"
     title: "Operating Modes"
