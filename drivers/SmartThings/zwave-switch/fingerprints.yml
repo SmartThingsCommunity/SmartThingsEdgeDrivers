@@ -66,11 +66,11 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0602
 #     deviceProfileName: fibaro-metering-switch
-#   - id: "Dawon/smart/plug"
-#     deviceLabel: Dawon Smart Plug
-#     manufacturerId: 0x018C
-#     productType: 0x0042
-#     deviceProfileName: metering-switch
+  - id: "Dawon/smart/plug"
+    deviceLabel: Dawon Smart Plug
+    manufacturerId: 0x018C
+    productType: 0x0042
+    deviceProfileName: metering-switch
 #   - id: "015D/0221/251C"
 #     deviceLabel: Show Home Outlet
 #     manufacturerId: 0x015D

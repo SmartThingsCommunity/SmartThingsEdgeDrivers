@@ -1,0 +1,24 @@
+name: everspring-sp817
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MotionSensor
+preferences:
+  - name: "retriggerIntervalSetting"
+    title: "Motion reports interval"
+    description: "The setting adjusts the sleep period (in seconds) after the detector has been triggered. No response will be made during this interval if a movement is presented. Longer re-trigger interval will result in longer battery life."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 10
+      maximum: 3600
+      default: 180

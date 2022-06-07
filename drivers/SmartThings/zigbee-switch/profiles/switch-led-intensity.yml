@@ -1,0 +1,22 @@
+name: switch-led-intensity
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Light
+preferences:
+  - name: "ledIntensity"
+    title: "LED Intensity"
+    description: "Indicator light intensity"
+    required: false
+    preferenceType: "integer"
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 50
