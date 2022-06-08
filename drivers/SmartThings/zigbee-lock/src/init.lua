@@ -250,23 +250,32 @@ local request_code = function(driver, device, command)
 end
 
 local set_code = function(driver, device, command)
-  device:send(LockCluster.server.commands.SetPINCode(device,
-          command.args.codeSlot,
-          UserStatusEnum.OCCUPIED_ENABLED,
-          UserTypeEnum.UNRESTRICTED,
-          command.args.codePIN)
-  )
-  if (command.args.codeName ~= nil) then
-    -- wait for confirmation from the lock to commit this to memory
-    -- Groovy driver has a lot more info passed here as a description string, may need to be investigated
-    local codeState = device:get_field(lock_constants.CODE_STATE) or {}
-    codeState["setName"..command.args.codeSlot] = command.args.codeName
-    device:set_field(lock_constants.CODE_STATE, codeState)
-  end
+  if (command.args.codePIN == "") then
+    driver:inject_capability_command(device, {
+      capability = capabilities.lockCodes.ID,
+      command = capabilities.lockCodes.commands.nameSlot.NAME,
+      args = command.args,
+      positional_args = command.positional_args
+    })
+  else
+    device:send(LockCluster.server.commands.SetPINCode(device,
+            command.args.codeSlot,
+            UserStatusEnum.OCCUPIED_ENABLED,
+            UserTypeEnum.UNRESTRICTED,
+            command.args.codePIN)
+    )
+    if (command.args.codeName ~= nil) then
+      -- wait for confirmation from the lock to commit this to memory
+      -- Groovy driver has a lot more info passed here as a description string, may need to be investigated
+      local codeState = device:get_field(lock_constants.CODE_STATE) or {}
+      codeState["setName"..command.args.codeSlot] = command.args.codeName
+      device:set_field(lock_constants.CODE_STATE, codeState)
+    end
 
-  device.thread:call_with_delay(4, function(d)
-    device:send(LockCluster.server.commands.GetPINCode(device, command.args.codeSlot))
-  end)
+    device.thread:call_with_delay(4, function(d)
+      device:send(LockCluster.server.commands.GetPINCode(device, command.args.codeSlot))
+    end)
+  end
 end
 
 local name_slot = function(driver, device, command)
