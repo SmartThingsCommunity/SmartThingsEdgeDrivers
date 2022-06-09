@@ -204,7 +204,7 @@ end
 
 local function pref_attr_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
-  local flag = device:get_field(INIT_STATE) or ''
+  local flag = device:get_field(INIT_STATE) or INIT_STATE_DONE
   if flag == INIT_STATE_DONE then
     device:emit_event(initialized  == 1 and initializedstate.initializedState.initialized() or initializedstate.initializedState.notInitialized())
   end
