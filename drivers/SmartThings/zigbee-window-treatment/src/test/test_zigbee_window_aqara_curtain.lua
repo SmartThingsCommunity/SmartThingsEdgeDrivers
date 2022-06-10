@@ -161,6 +161,9 @@ test.register_coroutine_test(
           { capability = "windowShade", component = "main", command = "open", args = {} }
         }
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
@@ -178,6 +181,9 @@ test.register_coroutine_test(
           { capability = "windowShade", component = "main", command = "close", args = {} }
         }
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
@@ -194,6 +200,9 @@ test.register_coroutine_test(
           mock_device.id,
           { capability = "windowShade", component = "main", command = "pause", args = {} }
         }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,

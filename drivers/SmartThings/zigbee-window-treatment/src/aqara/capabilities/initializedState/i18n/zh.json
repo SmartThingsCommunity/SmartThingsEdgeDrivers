@@ -4,7 +4,7 @@
   "attributes": {
     "initializedState": {
       "label": "初始化",
-      "displayTemplate": "{{attribute}} of {{device.label}} is {{value}}",
+      "displayTemplate": "{{device.label}}的{{attribute}}是{{value}}",
       "i18n": {
         "value": {
           "initializing": {

@@ -4,7 +4,7 @@
   "attributes": {
     "initializedState": {
       "label": "초기화",
-      "displayTemplate": "{{device.label}}의 {{attribute}}는 {{value}}",
+      "displayTemplate": "{{device.label}}의 {{attribute}}은(는) {{value}}",
       "i18n": {
         "value": {
           "initializing": {

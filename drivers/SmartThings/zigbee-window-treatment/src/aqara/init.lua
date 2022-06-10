@@ -91,6 +91,10 @@ local function device_info_changed(driver, device, event, args)
       else
         write_pref_attribute(device, "\x00\x02\x00\x00\x00\x00\x00")
       end
+
+      device.thread:call_with_delay(2, function(d)
+        read_pref_attribute(device)
+      end)
     end
 
     if device.preferences[softTouchPreferenceId] ~= args.old_st_store.preferences[softTouchPreferenceId] then
@@ -108,7 +112,7 @@ local function setInitializedState_handler(driver, device, command)
   device:emit_event(initializedstate.initializedState.initializing())
 
   write_pref_attribute(device, "\x00\x01\x00\x00\x00\x00\x00")
-  device.thread:call_with_delay(3, function(d)
+  device.thread:call_with_delay(2, function(d)
     local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
       device:set_field(INIT_STATE, INIT_STATE_CLOSE)

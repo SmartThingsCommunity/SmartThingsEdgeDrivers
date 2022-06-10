@@ -1,6 +1,6 @@
 {
     "mnmn": "SmartThingsCommunity",
-    "vid": "cc7b2c98-c803-324e-ab32-23f93617d4bb",
+    "vid": "e5126f59-3570-3cbb-9b08-5a838d9e0c22",
     "version": "0.0.1",
     "type": "profile",
     "dashboard": {
@@ -141,6 +141,6 @@
             }
         ]
     },
-    "presentationId": "cc7b2c98-c803-324e-ab32-23f93617d4bb",
+    "presentationId": "e5126f59-3570-3cbb-9b08-5a838d9e0c22",
     "manufacturerName": "SmartThingsCommunity"
 }
