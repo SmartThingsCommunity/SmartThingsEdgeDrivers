@@ -3,21 +3,10 @@ local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
+local Version = (require "st.zwave.CommandClass.Version")({ version=2, strict = true })
+local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
 local log = require "log"
-local LAST_SEQ_NUMBER_KEY = "last_sequence_number"
-
-local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
-  {mfr = 0x027A, prod = 0xA000, model = 0xA008} -- Zooz Zen 30 Dimmer Relay Double Switch
-}
-
-local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
+local LAST_SEQ_NUMBER_KEY = -1
 
 local BUTTON_VALUES = {
   "up_hold", "down_hold", "held",
@@ -59,20 +48,26 @@ local map_key_attribute_to_capability = {
   }
 }
 
-local function endpoint_to_component(device, endpoint)
-  if endpoint == 1 then
-    return "switch1"
-  elseif endpoint == 0 then
-    return "main"
+local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
+  {mfr = 0x027A, prod = 0xA000, model = 0xA008} -- Zooz Zen 30 Dimmer Relay Double Switch
+}
+
+local function version_report_handler(self, device, cmd)
+  if cmd.args.firmware_0_version > 1 or
+  (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4) then
+    local new_profile = "zooz-zen-30-dimmer-relay-new"
+    device:try_update_metadata({profile = new_profile})
+    device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, true, { persist = true})
   end
 end
 
-local function component_to_endpoint(device, component)
-  if component == "switch1" then
-    return {1}
-  elseif component == "main" then
-    return {0}
+local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, device, ...)
+  for _, fingerprint in ipairs(ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+      return true
+    end
   end
+  return false
 end
 
 local function central_scene_notification_handler(driver, device, cmd)
@@ -86,7 +81,7 @@ local function central_scene_notification_handler(driver, device, cmd)
     local event_map = map_key_attribute_to_capability[cmd.args.key_attributes]
     local event = event_map and event_map[cmd.args.scene_number]
     if event ~= nil then
-      device:emit_event_for_endpoint("main", event)
+      device:emit_event_for_endpoint(cmd.src_channel, event)
     end
   end
 end
@@ -96,16 +91,11 @@ local function added_handler(self, device)
   device:emit_event(capabilities.button.numberOfButtons({value = 3}))
 end
 
-local function device_init(self, device)
-  device:set_field(LAST_SEQ_NUMBER_KEY, -1)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-end
-
 local do_refresh = function(self, device)
   device:send_to_component(SwitchBinary:Get({}), "main")
   device:send_to_component(SwitchMultilevel:Get({}), "main")
   device:send_to_component(SwitchBinary:Get({}), "switch1")
+  device:send(Version:Get({}))
 end
 
 local zooz_zen_30_dimmer_relay_double_switch = {
@@ -118,10 +108,12 @@ local zooz_zen_30_dimmer_relay_double_switch = {
   zwave_handlers = {
     [cc.CENTRAL_SCENE] = {
       [CentralScene.NOTIFICATION] = central_scene_notification_handler
+    },
+    [cc.VERSION] = {
+      [Version.REPORT] = version_report_handler
     }
   },
   lifecycle_handlers = {
-    init = device_init,
     added = added_handler
   },
   can_handle = can_handle_zooz_zen_30_dimmer_relay_double_switch

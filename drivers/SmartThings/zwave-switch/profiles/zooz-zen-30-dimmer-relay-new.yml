@@ -1,25 +1,25 @@
-name: zooz-zen-30-dimmer-relay
+name: zooz-zen-30-dimmer-relay-firmware-new
 components:
-- id: main
-  capabilities:
-  - id: switch
-    version: 1
-  - id: switchLevel
-    version: 1
-  - id: button
-    version: 1
-  - id: refresh
-    version: 1
-  categories:
-  - name: Switch
-- id: switch1
-  capabilities:
-  - id: switch
-    version: 1
-  - id: refresh
-    version: 1
-  categories:
-  - name: Switch
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+      - id: button
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch1
+    capabilities:
+      - id: switch
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
 preferences:
   - name: "powerFailure"
     title: "On Off Status After Power Failure"
@@ -242,3 +242,53 @@ preferences:
         1 : "Physical / Digital Enabled"
         2 : "Physical / Digital Disabled"
       default: 1
+  - name: "relayPhysicalDisabledBeh"
+    title: "Relay Physical Disabled Behavior"
+    description: "Relay Physical Disabled Behavior"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Change Status/LED"
+        1: "Don't Change Status/LED"
+      default: 0
+  - name: "dimmerPhysDisBeh"
+    title: "Dimmer Physical Disabled Behavior"
+    description: "Dimmer Physical Disabled Behavior"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Change Status/LED"
+        1: "Don't Change Status/LED"
+      default: 0
+  - name: "dimmerNightBright"
+    title: "Night Mode Brightness (%)"
+    description: "Night Mode Brightness (%)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 20
+  - name: "dimmerPaddleControl"
+    title: "Paddle Orientation for Dimmer"
+    description: "Paddle Orientation for Dimmer"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Normal"
+        1: "Reverse"
+        2: "Toggle"
+      default: 0
+  - name: "relayPhysicalDisabledBeh"
+    title: "Relay Physical Disabled Behavior"
+    description: "Relay Physical Disabled Behavior"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Change Status/LED"
+        1: "Don't Change Status/LED"
+      default: 0
