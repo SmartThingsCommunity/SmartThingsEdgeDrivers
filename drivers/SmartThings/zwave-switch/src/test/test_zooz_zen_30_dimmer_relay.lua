@@ -5,6 +5,7 @@ local test_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2})
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
+local Version = (require "st.zwave.CommandClass.Version")({ version=2, strict = true })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local capabilities = require "st.capabilities"
 local constants = require "st.zwave.constants"
@@ -20,6 +21,7 @@ local zooz_zen_30_dimmer_relay_endpoints = {
   },
   {
     command_classes = {
+      { value = zw.BASIC },
       { value = zw.SWITCH_BINARY }
     }
   }
@@ -33,8 +35,18 @@ local mock_zooz_zen_30_dimmer_relay = test.mock_device.build_test_zwave_device({
   zwave_product_id = 0xA008
 })
 
+local mock_zooz_zen_30_dimmer_relay_new = test.mock_device.build_test_zwave_device({
+  profile = test_utils.get_profile_definition("zooz-zen-30-dimmer-relay-new.yml"),
+  zwave_endpoints = zooz_zen_30_dimmer_relay_endpoints,
+  zwave_manufacturer_id = 0x027A,
+  zwave_product_type = 0xA000,
+  zwave_product_id = 0xA008
+})
+
+
 local function test_init()
   test.mock_device.add_test_device(mock_zooz_zen_30_dimmer_relay)
+  test.mock_device.add_test_device(mock_zooz_zen_30_dimmer_relay_new)
 end
 
 test.set_test_init_function(test_init)
@@ -57,7 +69,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels = { 0 }
+              dst_channels = {}
             })
         )
       }
@@ -65,7 +77,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1",  capabilities.switch.switch.off())
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("switch1", capabilities.switch.switch.off())
     }
   }
 )
@@ -88,7 +100,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels = { 0 }
+              dst_channels = {}
             })
         )
       }
@@ -119,7 +131,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels = { 0 }
+              dst_channels = {}
             })
         )
       }
@@ -150,7 +162,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels = { 0 }
+              dst_channels = {}
             })
         )
       }
@@ -189,7 +201,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels = { 0 }
+              dst_channels = {}
             }
           )
         )
@@ -227,7 +239,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 0,
-              dst_channels = { 0 }
+              dst_channels = {}
             }
           )
         )
@@ -262,7 +274,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels = { 0 }
+              dst_channels = {}
             }
           )
         )
@@ -297,7 +309,7 @@ test.register_message_test(
             {
               encap = zw.ENCAP.AUTO,
               src_channel = 1,
-              dst_channels = { 0 }
+              dst_channels = {}
             }
           )
         )
@@ -329,7 +341,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels = { 0 }
+          dst_channels = {}
         })
       )
     )
@@ -342,7 +354,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 0 }
+            dst_channels = {}
           })
       )
     )
@@ -368,7 +380,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 0 }
+            dst_channels = {}
           })
       )
     )
@@ -381,7 +393,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 0 }
+            dst_channels = {}
           })
       )
     )
@@ -406,7 +418,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 1 }
+            dst_channels={1}
           })
       )
     )
@@ -415,11 +427,12 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchBinary:Get({},
+        SwitchBinary:Get({
+        },
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 1 }
+            dst_channels={1}
           })
       )
     )
@@ -443,7 +456,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels = { 1 }
+          dst_channels = {1}
         }
         )
       )
@@ -457,7 +470,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 1 }
+            dst_channels = {1}
           })
       )
     )
@@ -482,7 +495,7 @@ test.register_coroutine_test(
         {
           encap = zw.ENCAP.AUTO,
           src_channel = 0,
-          dst_channels = { 0 }
+          dst_channels = {}
         })
       )
     )
@@ -495,7 +508,7 @@ test.register_coroutine_test(
           {
             encap = zw.ENCAP.AUTO,
             src_channel = 0,
-            dst_channels = { 0 }
+            dst_channels = {}
           })
       )
     )
@@ -572,7 +585,8 @@ test.register_message_test(
             {
               scene_number = 0x02,
               key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME
-            }
+            },
+            { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {} }
           )
         )
       }
@@ -1024,6 +1038,22 @@ test.register_message_test(
       direction = "send"
     }
   }
+)
+
+test.register_coroutine_test(
+  "PROFILE CHANGE",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_zooz_zen_30_dimmer_relay.id,
+      Version:Report(
+        {
+          firmware_0_version = 1,
+          firmware_0_sub_version = 5
+        }
+      )
+    })
+  end
 )
 
 test.run_registered_tests()
