@@ -12,10 +12,6 @@ jobs:
       drivers: ${{ steps.set-output.outputs.drivers }}
       pr_number: ${{ steps.pr_number.outputs.pr_number }}
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
-    needs:
-      - upload-driver
-      - save-pr-number
-      - save-branch-name
     steps:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v2
