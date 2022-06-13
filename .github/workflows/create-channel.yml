@@ -65,7 +65,7 @@ jobs:
         if: ${{ !contains(steps.channels.outputs.response, needs.download-artifacts.outputs.head_ref) }}
         run: echo 'CHANNEL_JSON=${{ steps.channel.outputs.response }}' >> $GITHUB_ENV
       - name: Get existing channel JSON
-        if: ${{ contains(steps.channels.outputs.response, needs.download-artifacts.outputs.pr_number) }}
+        if: ${{ contains(steps.channels.outputs.response, needs.download-artifacts.outputs.head_ref) }}
         run: |
           jq -r ' .items[] | select(.name=="${{ needs.download-artifacts.outputs.head_ref }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
           echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
