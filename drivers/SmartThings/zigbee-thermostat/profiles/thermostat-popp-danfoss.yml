@@ -8,8 +8,6 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
-  - id: powerSource
-    version: 1
   - id: battery
     version: 1
   - id: temperatureMeasurement
