@@ -76,8 +76,8 @@ local do_configure = function(self, device)
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
 end
 
-local popp_thermostat = {
-  NAME = "POPP Thermostat Handler",
+local popp_danfoss_thermostat = {
+  NAME = "POPP Danfoss Thermostat Handler",
   zigbee_handlers = {
     attr = {
       [Thermostat.ID] = {
@@ -106,4 +106,4 @@ local popp_thermostat = {
   can_handle = is_popp_thermostat
 }
 
-return popp_thermostat
+return popp_danfoss_thermostat
