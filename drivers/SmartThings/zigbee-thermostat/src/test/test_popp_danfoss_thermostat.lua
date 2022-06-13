@@ -1,11 +1,10 @@
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
-local Thermostat = clusters.Thermostat
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local PowerConfiguration = clusters.PowerConfiguration
-
+local Thermostat = clusters.Thermostat
 
 local mock_device_popp = test.mock_device.build_test_zigbee_device(
   {

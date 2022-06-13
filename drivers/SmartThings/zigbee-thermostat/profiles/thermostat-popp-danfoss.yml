@@ -1,4 +1,4 @@
-name: thermostat-battery-powerSource
+name: thermostat-popp-danfoss
 components:
 - id: main
   capabilities:
