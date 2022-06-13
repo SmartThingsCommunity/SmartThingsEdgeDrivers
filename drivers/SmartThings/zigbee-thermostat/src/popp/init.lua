@@ -1,16 +1,19 @@
 local clusters = require "st.zigbee.zcl.clusters"
+local capabilities = require "st.capabilities"
+local utils = require "st.utils"
 local Thermostat = clusters.Thermostat
 local PowerConfiguration = clusters.PowerConfiguration
-local capabilities = require "st.capabilities"
+local PowerSource = capabilities.powerSource
+local Battery = capabilities.battery
 local ThermostatMode = capabilities.thermostatMode
-local utils = require "st.utils"
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatSystemMode = Thermostat.attributes.SystemMode
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-
 
 local DEFAULT_MIN_SETPOINT = 4.0
 local DEFAULT_MAX_SETPOINT = 35.0
+
+local BAT_MIN = 24.0
+local BAT_MAX = 32.0
 
 local POPP_THERMOSTAT_FINGERPRINTS = {
   { mfr = "D5X84YU", model = "eT093WRO" },
@@ -44,12 +47,21 @@ local function set_heating_setpoint(driver, device, command)
   if value >= DEFAULT_MIN_SETPOINT and value <= DEFAULT_MAX_SETPOINT then
     device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, value * 100))
     device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
-    device:send(Thermostat.attributes.PIHeatingDemand:read(device))
   end
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)
   device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 100)))
+end
+
+local battery_voltage_handler = function(driver, device, battery_voltage)
+  if (battery_voltage.value == 0) then -- this means we're plugged in
+    device:emit_event(PowerSource.powerSource.mains())
+    device:emit_event(Battery.battery(100))
+  else
+    local perc_value = utils.round((battery_voltage.value - BAT_MIN)/(BAT_MAX - BAT_MIN) * 100)
+    device:emit_event(Battery.battery(utils.clamp_value(perc_value, 0, 100)))
+  end
 end
 
 local set_thermostat_mode = function(driver, device, command)
@@ -74,6 +86,9 @@ local popp_thermostat = {
       },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_perc_attr_handler
+      },
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_voltage_handler
       }
     }
   },
@@ -86,7 +101,6 @@ local popp_thermostat = {
     }
   },
   lifecycle_handlers = {
-    init = battery_defaults.build_linear_voltage_init(2.4, 3.2),
     doConfigure = do_configure
   },
   can_handle = is_popp_thermostat

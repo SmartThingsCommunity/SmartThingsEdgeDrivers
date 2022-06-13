@@ -4,6 +4,8 @@ local Thermostat = clusters.Thermostat
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local PowerConfiguration = clusters.PowerConfiguration
+
 
 local mock_device_popp = test.mock_device.build_test_zigbee_device(
   {
@@ -13,7 +15,7 @@ local mock_device_popp = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "D5X84YU",
         model = "eT093WRO",
-        server_clusters = {}
+        server_clusters = {0x0001, 0x0201, 0x0402}
       }
     }
   }
@@ -75,7 +77,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Thermostat cooling setpoint reporting should not create setpoint events, the mode is not supported",
+  "Thermostat cooling setpoint reporting should not create setpoint events, the mode is not supported Popp",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device_popp.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device_popp, 2100) })
   end
@@ -111,6 +113,77 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device_danfoss.id, Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device_danfoss, 2100) })
     test.socket.capability:__expect_send(mock_device_danfoss:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 21.0, unit = "C"})))
   end
+)
+
+test.register_coroutine_test(
+  "Thermostat cooling setpoint reporting should not create setpoint events, the mode is not supported Danfoss",
+  function ()
+    test.socket.zigbee:__queue_receive({ mock_device_danfoss.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device_danfoss, 2100) })
+  end
+)
+
+test.register_coroutine_test(
+  "Battery reports test cases",
+  function()
+    local battery_test_map = {
+      ["D5X84YU"] = {
+        [34] = 100,
+        [32] = 100,
+        [30] = 75,
+        [28] = 50,
+        [26] = 25,
+        [24] = 0,
+        [15] = 0
+      },
+      ["Danfoss"] = {
+        [34] = 100,
+        [32] = 100,
+        [30] = 75,
+        [28] = 50,
+        [26] = 25,
+        [24] = 0,
+        [15] = 0
+      }
+    }
+
+    for voltage, batt_perc in pairs(battery_test_map[mock_device_popp:get_manufacturer()]) do
+      test.socket.zigbee:__queue_receive({ mock_device_popp.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device_popp, voltage) })
+      test.socket.capability:__expect_send( mock_device_popp:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
+      test.wait_for_events()
+    end
+  end
+)
+
+test.register_message_test(
+  "Battery percentage report should be handled Popp",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device_danfoss.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_danfoss, 55) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_danfoss:generate_test_message("main", capabilities.battery.battery(28))
+    }
+  }
+)
+
+test.register_message_test(
+  "Battery percentage report should be handled Danfoss",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device_danfoss.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_danfoss, 55) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_danfoss:generate_test_message("main", capabilities.battery.battery(28))
+    }
+  }
 )
 
 test.run_registered_tests()
