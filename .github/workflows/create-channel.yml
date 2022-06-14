@@ -51,7 +51,7 @@ jobs:
       - name: Store channel name
         uses: actions/github-script@v5
         with:
-          script: core.exportVariable('channel_name', '${{ format("{0} {1}", needs.download-artifacts.outputs.head_ref, needs.download-artifacts.outputs.pr_number }}')
+          script: core.exportVariable('channel_name', '${{ format('{0}{1}', needs.download-artifacts.outputs.head_ref, needs.download-artifacts.outputs.pr_number) }}')
       - name: Create the channel
         if: ${{ !contains(steps.channels.outputs.response, env.channel_name) }}
         id: channel
