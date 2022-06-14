@@ -48,26 +48,30 @@ jobs:
           url: 'https://api.smartthings.com/distchannels/'
           method: GET
           bearerToken: ${{ secrets.TOKEN }}
+      - name: Store channel name
+        uses: actions/github-script@v5
+        with:
+          script: core.exportVariable('channel_name', '${{ format("{0} {1}", needs.download-artifacts.outputs.head_ref, needs.download-artifacts.outputs.pr_number }}')
       - name: Create the channel
-        if: ${{ !contains(steps.channels.outputs.response, needs.download-artifacts.outputs.head_ref) }}
+        if: ${{ !contains(steps.channels.outputs.response, env.channel_name) }}
         id: channel
         uses: fjogeleit/http-request-action@master
         with:
           url: 'https://api.smartthings.com/distchannels/'
           bearerToken: ${{ secrets.TOKEN }}
           data: '{
-              "name": "${{ needs.download-artifacts.outputs.head_ref }}",
+              "name": "${{ env.channel_name }}",
               "description": "Automatically generated from PR #${{ needs.download-artifacts.outputs.pr_number }}",
               "type": "DRIVER",
               "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/pull/${{ needs.download-artifacts.outputs.pr_number }}"
             }'
       - name: Set the channel environment variable
-        if: ${{ !contains(steps.channels.outputs.response, needs.download-artifacts.outputs.head_ref) }}
+        if: ${{ !contains(steps.channels.outputs.response, env.channel_name) }}
         run: echo 'CHANNEL_JSON=${{ steps.channel.outputs.response }}' >> $GITHUB_ENV
       - name: Get existing channel JSON
-        if: ${{ contains(steps.channels.outputs.response, needs.download-artifacts.outputs.head_ref) }}
+        if: ${{ contains(steps.channels.outputs.response, env.channel_name) }}
         run: |
-          jq -r ' .items[] | select(.name=="${{ needs.download-artifacts.outputs.head_ref }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
+          jq -r ' .items[] | select(.name=="${{ env.channel_name }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
           echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
       - name: set outputs
         id: set-outputs
