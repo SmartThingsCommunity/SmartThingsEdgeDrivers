@@ -11,7 +11,7 @@
             "label": "正在初始化..."
           },
           "initialized": {
-            "label": "初始化"
+            "label": "已初始化"
           },
           "notInitialized": {
             "label": "未初始化"

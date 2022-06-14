@@ -1,6 +1,6 @@
 {
   "tag": "ru",
-  "label": "Bручную ",
+  "label": "Bручную",
   "description": "Открыть/закрыть шторку вручную",
   "preferenceType": "boolean",
   "definition": {

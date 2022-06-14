@@ -1,7 +1,7 @@
 {
   "tag": "en",
   "label": "Soft touch",
-  "description": "Open/Close Curtain Manually",
+  "description": "Open/Close curtain manually",
   "preferenceType": "boolean",
   "definition": {
     "default": false

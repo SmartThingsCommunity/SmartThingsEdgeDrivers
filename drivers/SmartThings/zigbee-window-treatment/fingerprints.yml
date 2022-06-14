@@ -1,11 +1,11 @@
 zigbeeManufacturer:
   - id: "LUMI/lumi.curtain"
-    deviceLabel: Aqara Curtain Controller
+    deviceLabel: Aqara curtain controller
     manufacturer: LUMI
     model: lumi.curtain
     deviceProfileName: window-aqara-curtain
   - id: "LUMI/lumi.curtain.v1"
-    deviceLabel: Aqara Curtain Controller
+    deviceLabel: Aqara curtain controller
     manufacturer: LUMI
     model: lumi.curtain.v1
     deviceProfileName: window-aqara-curtain
