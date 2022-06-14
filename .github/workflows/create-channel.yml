@@ -1,26 +1,43 @@
-name: Create Driver Channel
+name: Create PR channel
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - 'drivers/**'
+  workflow_run:
+    workflows: [Upload driver packages]
+    types:
+      - completed
+
 jobs:
-  find-changed-drivers:
+  download-artifacts:
     runs-on: ubuntu-latest
     outputs:
-      changed-drivers: ${{ steps.set-outputs.outputs.changed-drivers }}
+      drivers: ${{ steps.set-output.outputs.drivers }}
+      pr_number: ${{ steps.pr_number.outputs.pr_number }}
+      head_ref: ${{ steps.head_ref.outputs.head_ref }}
     steps:
-      - uses: actions/checkout@v2
-      - name: shallow fetch base revision
-        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
-      - name: get changed drivers
-        id: set-outputs
-        run: |
-          echo "::set-output name=changed-drivers::$(git diff --dirstat=files,0 --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oE 'drivers/[^/]+/[^/]+/' | sort -u | jq -Rrsc 'split("\n")[:-1]')"
-      - run: echo ${{ steps.set-outputs.outputs.changed-drivers }}
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: upload-driver-packages.yml
+          run_id: ${{ github.event.workflow_run.id }}
+      - run: echo "pr_number=$(cat pr_number/pr_number.txt)" >> $GITHUB_ENV
+      - run: echo "head_ref=$(cat head_ref/head_ref.txt)" >> $GITHUB_ENV
+      - run: rm -rf pr_number
+      - run: rm -rf head_ref
+      - run: |
+          echo "::set-output name=drivers::$(ls | jq -Rrsc 'split("\n")[:-1]')"
+        id: set-output
+      - id: pr_number
+        uses: actions/github-script@v5
+        with:
+          script: core.setOutput('pr_number', ${{ env.pr_number }})
+      - id: head_ref
+        uses: actions/github-script@v5
+        with:
+          script: core.setOutput('head_ref', '${{ env.head_ref }}')
 
   get-channel:
     runs-on: ubuntu-latest
+    needs:
+      - download-artifacts
     outputs:
       channel-json: ${{ steps.set-outputs.outputs.channel-json }}
     steps:
@@ -31,26 +48,30 @@ jobs:
           url: 'https://api.smartthings.com/distchannels/'
           method: GET
           bearerToken: ${{ secrets.TOKEN }}
+      - name: Store channel name
+        uses: actions/github-script@v5
+        with:
+          script: core.exportVariable('channel_name', '${{ format('{0}{1}', needs.download-artifacts.outputs.head_ref, needs.download-artifacts.outputs.pr_number) }}')
       - name: Create the channel
-        if: ${{ !contains(steps.channels.outputs.response, github.head_ref) }}
+        if: ${{ !contains(steps.channels.outputs.response, env.channel_name) }}
         id: channel
         uses: fjogeleit/http-request-action@master
         with:
           url: 'https://api.smartthings.com/distchannels/'
           bearerToken: ${{ secrets.TOKEN }}
           data: '{
-              "name": "${{ github.head_ref }}",
-              "description": "Automatically generated from PR #${{ github.event.number }}",
+              "name": "${{ env.channel_name }}",
+              "description": "Automatically generated from PR #${{ needs.download-artifacts.outputs.pr_number }}",
               "type": "DRIVER",
-              "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.number }}"
+              "termsOfServiceUrl": "${{ github.server_url }}/${{ github.repository }}/pull/${{ needs.download-artifacts.outputs.pr_number }}"
             }'
       - name: Set the channel environment variable
-        if: ${{ !contains(steps.channels.outputs.response, github.head_ref) }}
+        if: ${{ !contains(steps.channels.outputs.response, env.channel_name) }}
         run: echo 'CHANNEL_JSON=${{ steps.channel.outputs.response }}' >> $GITHUB_ENV
       - name: Get existing channel JSON
-        if: ${{ contains(steps.channels.outputs.response, github.head_ref) }}
+        if: ${{ contains(steps.channels.outputs.response, env.channel_name) }}
         run: |
-          jq -r ' .items[] | select(.name=="${{ github.head_ref }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
+          jq -r ' .items[] | select(.name=="${{ env.channel_name }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
           echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
       - name: set outputs
         id: set-outputs
@@ -58,24 +79,24 @@ jobs:
         with:
           script: core.setOutput('channel-json', ${{ env.CHANNEL_JSON }})
 
-  upload-driver:
+  assign-artifact:
     runs-on: ubuntu-latest
     needs:
-      - find-changed-drivers
+      - download-artifacts
       - get-channel
     strategy:
       matrix:
-        driver: ${{ fromJSON(needs.find-changed-drivers.outputs.changed-drivers) }}
+        driver: ${{ fromJSON(needs.download-artifacts.outputs.drivers) }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Package the driver
-        working-directory: ${{ matrix.driver }}
-        run: |
-          zip ../../../edge.zip $(find . -name "*.yml" -o -name "*.lua" -o -name "*.yaml") -X -x "*test*"
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: upload-driver-packages.yml
+          name: ${{ matrix.driver }}
       - name: Upload the driver
         id: driver
         run: |
-          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @edge.zip)"
+          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)"
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
         uses: actions/github-script@v3
@@ -150,33 +171,23 @@ jobs:
 
   comment-on-pr:
     runs-on: ubuntu-latest
-    needs: get-invite
+    needs:
+      - get-invite
+      - download-artifacts
     steps:
-      - name: Get the comments (action)
-        id: comments-action
-        uses: fjogeleit/http-request-action@master
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
         with:
-          url: 'https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments'
-          bearerToken: ${{ github.token }}
-          method: GET
-      - run: echo '${{ steps.comments-action.outputs.response }}' | jq -r ' .[] | select(.body | startswith("Invitation URL")).url' | xargs -I % echo 'COMMENT_URL=%' >> $GITHUB_ENV
-      - name: Update the comment
-        if: ${{ env.COMMENT_URL != '' }}
-        uses: fjogeleit/http-request-action@master
+          body-includes: Invitation URL
+          comment-author: 'github-actions[bot]'
+          issue-number: ${{ needs.download-artifacts.outputs.pr_number }}
+      - name: post comment
+        if: ${{ steps.fc.outputs.comment-id == 0 }}
+        uses: peter-evans/create-or-update-comment@v2
         with:
-          url: ${{ env.COMMENT_URL }}
-          bearerToken: ${{ github.token }}
-          method: PATCH
-          data: '{
-              "body": "Invitation URL: ${{ needs.get-invite.outputs.invite-url }}"
-            }'
-      - name: Post new comment
-        if: ${{ env.COMMENT_URL == '' }}
-        uses: fjogeleit/http-request-action@master
-        with:
-          url: 'https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments'
-          bearerToken: ${{ github.token }}
-          method: POST
-          data: '{
-              "body": "Invitation URL: ${{ needs.get-invite.outputs.invite-url }}"
-            }'
+          body: |
+            Invitation URL:
+            ${{ needs.get-invite.outputs.invite-url }}
+          edit-mode: replace
+          issue-number: ${{ needs.download-artifacts.outputs.pr_number }}
