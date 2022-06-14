@@ -1,6 +1,6 @@
 {
   "tag": "zh",
-  "label": "手动",
+  "label": "开/关",
   "description": "手动开/关窗帘",
   "preferenceType": "boolean",
   "definition": {

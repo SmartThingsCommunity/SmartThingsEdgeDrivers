@@ -1,6 +1,6 @@
 {
   "tag": "zh",
-  "label": "反向",
+  "label": "方向反向",
   "description": "窗帘开合方向反向",
   "preferenceType": "boolean",
   "definition": {
