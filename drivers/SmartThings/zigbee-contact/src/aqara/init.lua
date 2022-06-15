@@ -1,9 +1,6 @@
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local device_management = require "st.zigbee.device_management"
 
-local PowerConfiguration = clusters.PowerConfiguration
 local IASZone = clusters.IASZone
 
 local FINGERPRINTS = {
