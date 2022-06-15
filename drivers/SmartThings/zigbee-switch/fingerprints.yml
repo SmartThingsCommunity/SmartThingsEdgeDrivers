@@ -1,6 +1,6 @@
 zigbeeManufacturer:
   - id: "LUMI/lumi.switch.b1laus01"
-    deviceLabel: Aqara Wall Switch 1
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
