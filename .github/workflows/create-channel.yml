@@ -93,6 +93,7 @@ jobs:
         with:
           workflow: upload-driver-packages.yml
           name: ${{ matrix.driver }}
+          run_id: ${{ github.event.workflow_run.id }}
       - name: Upload the driver
         id: driver
         run: |

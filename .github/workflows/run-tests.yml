@@ -32,7 +32,6 @@ jobs:
         if: steps.cached-libs.outputs.cache-hit != 'true'
         working-directory: '/home/runner/work/lua_libs'
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
-      - run: ls /home/runner/work/lua_libs
       - name: Install lua
         run: |
           sudo apt-get update
@@ -44,7 +43,9 @@ jobs:
         run: mkdir test-output
       - name: Run the tests
         run: python tools/run_driver_tests.py -j test-output/tests.xml
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Upload test artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: "test-output/*.xml"
+          name: tests
+          path: |
+            test-output/tests.xml
