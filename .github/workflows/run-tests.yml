@@ -50,10 +50,9 @@ jobs:
           path: |
             test-output/tests.xml
 
-    event_file:
-      name: "Event File"
-      runs-on: ubuntu-latest
-      steps:
+  event-file:
+    runs-on: ubuntu-latest
+    steps:
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
