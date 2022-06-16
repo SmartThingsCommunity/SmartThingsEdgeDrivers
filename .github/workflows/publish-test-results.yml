@@ -14,8 +14,10 @@ jobs:
         with:
           workflow: run-tests.yml
           run_id: ${{ github.event.workflow_run.id }}
-          name: tests
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: "*.xml"
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: event-file/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: "tests/*.xml"
