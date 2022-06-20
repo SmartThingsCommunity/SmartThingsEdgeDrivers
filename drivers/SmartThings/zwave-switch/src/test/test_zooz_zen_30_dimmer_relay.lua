@@ -5,10 +5,11 @@ local test_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2})
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local Version = (require "st.zwave.CommandClass.Version")({ version=2, strict = true })
+local Version = (require "st.zwave.CommandClass.Version")({ version=2 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local capabilities = require "st.capabilities"
 local constants = require "st.zwave.constants"
+local mock_devices_api = require "integration_test.mock_devices_api"
 
 local zooz_zen_30_dimmer_relay_endpoints = {
   {
@@ -1041,7 +1042,7 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "PROFILE CHANGE",
+  "Profile change when version is changed bigger than 1,5",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.zwave:__queue_receive({
@@ -1053,6 +1054,17 @@ test.register_coroutine_test(
         }
       )
     })
+
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      mock_devices_api.__expect_update_device(
+        mock_zooz_zen_30_dimmer_relay.id, {
+          deviceId = mock_zooz_zen_30_dimmer_relay.id,
+          profileReference = "zooz-zen-30-dimmer-relay-new"
+        }
+      )
+    )
   end
 )
 

@@ -3,7 +3,7 @@ local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
-local Version = (require "st.zwave.CommandClass.Version")({ version=2, strict = true })
+local Version = (require "st.zwave.CommandClass.Version")({ version=2 })
 local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
 local log = require "log"
 local LAST_SEQ_NUMBER_KEY = -1
