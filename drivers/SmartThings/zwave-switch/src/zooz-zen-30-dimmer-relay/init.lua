@@ -54,10 +54,12 @@ local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
 
 local function version_report_handler(self, device, cmd)
   if cmd.args.firmware_0_version > 1 or
-  (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4) then
+    (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4) then
     local new_profile = "zooz-zen-30-dimmer-relay-new"
     device:try_update_metadata({profile = new_profile})
     device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, true, { persist = true})
+  else
+    device:try_update_metadata({profile = "zooz-zen-30-dimmer-relay"})
   end
 end
 
@@ -95,7 +97,6 @@ local do_refresh = function(self, device)
   device:send_to_component(SwitchBinary:Get({}), "main")
   device:send_to_component(SwitchMultilevel:Get({}), "main")
   device:send_to_component(SwitchBinary:Get({}), "switch1")
-  device:send(Version:Get({}))
 end
 
 local zooz_zen_30_dimmer_relay_double_switch = {
