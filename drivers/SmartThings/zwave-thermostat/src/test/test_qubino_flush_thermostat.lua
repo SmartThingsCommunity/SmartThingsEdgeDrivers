@@ -232,44 +232,28 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
-    "Heat mode should be configured correctly",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_device.id,
-                    zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({ parameter_number = 59, configuration_value = 0 })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+test.register_coroutine_test(
+  "Heat mode should be configured correctly",
+  function ()
+    test.socket.zwave:__queue_receive({mock_device.id, Configuration:Report({ parameter_number = 59, configuration_value = 0 })})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.heat.NAME
-                                                          }))
-      }
-    }
+                                                          })))
+    mock_device:expect_metadata_update({profile = "qubino-flush-thermostat"})
+  end
 )
 
-test.register_message_test(
-    "Cool mode should be configured correctly",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_device.id,
-                    zw_test_utilities.zwave_test_build_receive_command(Configuration:Report({ parameter_number = 59, configuration_value = 1 })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+test.register_coroutine_test(
+  "Heat mode should be configured correctly",
+  function ()
+    test.socket.zwave:__queue_receive({mock_device.id, Configuration:Report({ parameter_number = 59, configuration_value = 1 })})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.cool.NAME
-                                                          }))
-      }
-    }
+                                                          })))
+    mock_device:expect_metadata_update({profile = "qubino-flush-thermostat-cooling"})
+  end
 )
 
 test.register_coroutine_test(
