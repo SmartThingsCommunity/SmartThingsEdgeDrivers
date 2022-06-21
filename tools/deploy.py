@@ -52,6 +52,7 @@ else:
       archiveHash = driver_info_response_json[ARCHIVEHASH]
       packageKey = driver_info_response_json[PACKAGEKEY]
       if VERSION in driver.keys() and DRIVERID in driver.keys():
+        print("Currently-uploaded driver package: {} driver id: {} version: {}".format(packageKey, driver[DRIVERID], driver[VERSION]))
         uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: archiveHash}
 
 # For each driver, first package the driver locally, then upload it
@@ -100,7 +101,8 @@ for driver in drivers:
       # hash matched, use the currently uploaded version of the driver to "update" the channel
 
 for package_key, driver_info in uploaded_drivers.items():
-  driver_updates.append(driver_info)
+  print("Uploading package: {} driver id: {} version: {}".format(package_key, driver_info[DRIVERID], driver_info[VERSION]))
+  driver_updates.append({DRIVERID: driver_info[DRIVERID], VERSION: driver_info[VERSION]})
 
 response = requests.put(
   UPDATE_URL,

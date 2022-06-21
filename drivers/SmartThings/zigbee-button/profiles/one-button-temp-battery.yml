@@ -2,9 +2,9 @@ name: one-button-temp-battery
 components:
 - id: main
   capabilities:
-  - id: battery
-    version: 1
   - id: button
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -13,7 +13,7 @@ components:
   - id: temperatureMeasurement
     version: 1
   categories:
-    - name: RemoteController
+    - name: Button
 preferences:
   - preferenceId: tempOffset
     explicit: true

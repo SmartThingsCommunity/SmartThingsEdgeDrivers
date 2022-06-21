@@ -53,7 +53,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 0.027, deltaEnergy = 0.0 }))
+      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 27, deltaEnergy = 0.0 }))
     },
     {
       channel = "capability",
@@ -68,7 +68,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 0.042, deltaEnergy = 0.015 }))
+      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 42, deltaEnergy = 15 }))
     },
     {
       channel = "capability",
