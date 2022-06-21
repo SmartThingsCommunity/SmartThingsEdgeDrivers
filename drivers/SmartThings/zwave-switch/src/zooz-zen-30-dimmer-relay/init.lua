@@ -4,7 +4,7 @@ local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 local Version = (require "st.zwave.CommandClass.Version")({ version=2 })
-local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
+local DEVICE_PROFILE_CHANGE = "device_profile_change_in_progress"
 local log = require "log"
 local LAST_SEQ_NUMBER_KEY = -1
 
@@ -54,14 +54,14 @@ local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
 
 local function version_report_handler(self, device, cmd)
   if (cmd.args.firmware_0_version > 1 or (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4)) and
-    device:get_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS) == "device_profile_old" then
+    device:get_field(DEVICE_PROFILE_CHANGE) == "device_profile_old" then
       local new_profile = "zooz-zen-30-dimmer-relay-new"
       device:try_update_metadata({profile = new_profile})
-      device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, "device_profile_new", { persist = true})
+      device:set_field(DEVICE_PROFILE_CHANGE, "device_profile_new", { persist = true})
   elseif (cmd.args.firmware_0_version < 1 or (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version < 5)) and
-    device:get_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS) == "device_profile_new" then
+    device:get_field(DEVICE_PROFILE_CHANGE) == "device_profile_new" then
       device:try_update_metadata({profile = "zooz-zen-30-dimmer-relay"})
-      device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, "device_profile_old", { persist = true})
+      device:set_field(DEVICE_PROFILE_CHANGE, "device_profile_old", { persist = true})
   end
 end
 
