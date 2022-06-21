@@ -36,18 +36,8 @@ local mock_zooz_zen_30_dimmer_relay = test.mock_device.build_test_zwave_device({
   zwave_product_id = 0xA008
 })
 
-local mock_zooz_zen_30_dimmer_relay_new = test.mock_device.build_test_zwave_device({
-  profile = test_utils.get_profile_definition("zooz-zen-30-dimmer-relay-new.yml"),
-  zwave_endpoints = zooz_zen_30_dimmer_relay_endpoints,
-  zwave_manufacturer_id = 0x027A,
-  zwave_product_type = 0xA000,
-  zwave_product_id = 0xA008
-})
-
-
 local function test_init()
   test.mock_device.add_test_device(mock_zooz_zen_30_dimmer_relay)
-  test.mock_device.add_test_device(mock_zooz_zen_30_dimmer_relay_new)
 end
 
 test.set_test_init_function(test_init)
@@ -1100,7 +1090,7 @@ test.register_coroutine_test(
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.zwave:__queue_receive({
-      mock_zooz_zen_30_dimmer_relay_new.id,
+      mock_zooz_zen_30_dimmer_relay.id,
       Version:Report(
         {
           firmware_0_version = 1,
@@ -1108,24 +1098,33 @@ test.register_coroutine_test(
         }
       )
     })
-  end
-)
 
-test.register_coroutine_test(
-  "Old profile do not change when version is less than 1,5",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      mock_devices_api.__expect_update_device(
+        mock_zooz_zen_30_dimmer_relay.id, {
+          deviceId = mock_zooz_zen_30_dimmer_relay.id,
+          profileReference = "zooz-zen-30-dimmer-relay-new"
+        }
+      )
+    )
+
+    test.mock_time.advance_time(1)
+
     test.socket.zwave:__queue_receive({
       mock_zooz_zen_30_dimmer_relay.id,
       Version:Report(
         {
           firmware_0_version = 1,
-          firmware_0_sub_version = 4
+          firmware_0_sub_version = 7
         }
       )
     })
+
   end
 )
+
 
 test.run_registered_tests()
 
