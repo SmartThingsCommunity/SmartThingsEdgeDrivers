@@ -28,16 +28,16 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
   local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
   local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
-  raw_value = raw_value * multiplier/divisor
+  local converted_value = raw_value * multiplier/divisor
 
   local delta_energy = 0.0
   local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
   if current_power_consumption ~= nil then
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
-  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value, deltaEnergy = delta_energy }))
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh"}))
+  device:emit_event(capabilities.energyMeter.energy({value = converted_value, unit = "kWh"}))
 end
 
 local function build_bind_request(device, cluster, hub_zigbee_eui, src_endpoint)
