@@ -1096,33 +1096,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Profile do not change when version is less than 1,5",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.zwave:__queue_receive({
-      mock_zooz_zen_30_dimmer_relay.id,
-      Version:Report(
-        {
-          firmware_0_version = 1,
-          firmware_0_sub_version = 4
-        }
-      )
-    })
-
-    test.mock_time.advance_time(1)
-
-    test.socket.zwave:__expect_send(
-      mock_devices_api.__expect_update_device(
-        mock_zooz_zen_30_dimmer_relay.id, {
-          deviceId = mock_zooz_zen_30_dimmer_relay.id,
-          profileReference = "zooz-zen-30-dimmer-relay"
-        }
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
   "New profile do not change when version is bigger than 1,5",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
