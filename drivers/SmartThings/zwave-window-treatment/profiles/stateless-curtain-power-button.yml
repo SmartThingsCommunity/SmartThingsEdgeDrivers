@@ -1,0 +1,22 @@
+name: stateless-curtain-power-button
+components:
+- id: main
+  capabilities:
+  - id: statelessCurtainPowerButton
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+preferences:
+  - preferenceId: reverse
+    explicit: true
+  - name: "openCloseTiming"
+    title: "Open close timing"
+    description: "Set the motor's open/close time"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 255
+      default: 10

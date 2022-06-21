@@ -38,12 +38,12 @@ zwaveManufacturer:
 #     productType: 0x0501
 #     productId: 0x0F06
 #     deviceProfileName: metering-switch
-#   - id: "Eaton/0000"
-#     deviceLabel: Eaton Dimmer Switch
-#     manufacturerId: 0x001A
-#     productType: 0x4441
-#     productId: 0x0000
-#     deviceProfileName: switch-level
+  - id: "Eaton/0000"
+    deviceLabel: Eaton Dimmer Switch
+    manufacturerId: 0x001A
+    productType: 0x4441
+    productId: 0x0000
+    deviceProfileName: switch-level
 #   - id: "Inovelli/Dimmer/Power/Energy"
 #     deviceLabel: Inovelli Dimmer Switch
 #     manufacturerId: 0x031E
@@ -363,23 +363,23 @@ zwaveManufacturer:
 #     productType: 0x5044
 #     productId: 0x3533
 #     deviceProfileName: metering-dimmer
-#   - id: 0086/008B
-#     deviceLabel: Aeon Switch
-#     manufacturerId: 0x0086
-#     productId: 0x008B
-#     deviceProfileName: switch-binary
-#   - id: 027A/A000/A001
-#     deviceLabel: Zooz Switch
-#     manufacturerId: 0x027A
-#     productType: 0xA000
-#     productId: 0xA001
-#     deviceProfileName: switch-binary
-#   - id: 0152/A003/A002
-#     deviceLabel: iTec Switch
-#     manufacturerId: 0x0152
-#     productType: 0xA003
-#     productId: 0xA002
-#     deviceProfileName: switch-binary
+  - id: 0086/008B
+    deviceLabel: Aeon Switch
+    manufacturerId: 0x0086
+    productId: 0x008B
+    deviceProfileName: switch-binary
+  - id: 027A/A000/A001
+    deviceLabel: Zooz Switch
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA001
+    deviceProfileName: switch-binary
+  - id: 0152/A003/A002
+    deviceLabel: iTec Switch
+    manufacturerId: 0x0152
+    productType: 0xA003
+    productId: 0xA002
+    deviceProfileName: switch-binary
   - id: 0063/4952
     deviceLabel: GE Switch
     manufacturerId: 0x0063

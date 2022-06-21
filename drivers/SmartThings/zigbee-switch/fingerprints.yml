@@ -1146,21 +1146,21 @@ zigbeeManufacturer:
 #     manufacturer: innr
 #     model: RB 148 T
 #     deviceProfileName: color-temp-bulb
-#   - id: "OSRAM/Gardenspot RGB"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: Gardenspot RGB
-#     deviceProfileName: color-bulb
-#   - id: "OSRAM/LIGHTIFY Gardenspot RGB"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: LIGHTIFY Gardenspot RGB
-#     deviceProfileName: color-bulb
-#   - id: "LEDVANCE/Outdoor Accent RGB"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: LEDVANCE
-#     model: Outdoor Accent RGB
-#     deviceProfileName: color-bulb
+  - id: "OSRAM/Gardenspot RGB"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: Gardenspot RGB
+    deviceProfileName: color-bulb
+  - id: "OSRAM/LIGHTIFY Gardenspot RGB"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Gardenspot RGB
+    deviceProfileName: color-bulb
+  - id: "LEDVANCE/Outdoor Accent RGB"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: Outdoor Accent RGB
+    deviceProfileName: color-bulb
 #   - id: "Samsung Electronics/ABL-LIGHT-Z-001"
 #     deviceLabel: Juno Connect
 #     manufacturer: Samsung Electronics
