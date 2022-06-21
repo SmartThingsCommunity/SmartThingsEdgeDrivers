@@ -1,0 +1,27 @@
+name: smartthings-arrival-sensor
+components:
+- id: main
+  capabilities:
+  - id: presenceSensor
+    version: 1
+  - id: tone
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  categories:
+  - name: PresenceSensor
+preferences:
+  - name: "checkInterval"
+    title: "Presence timeout (minutes)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       120: "2"
+       180: "3"
+       300: "5"
+      default: 120
