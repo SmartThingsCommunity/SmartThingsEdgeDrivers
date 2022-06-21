@@ -47,16 +47,6 @@ local function button_released_handler(self, device, value, zb_rx)
   button_utils.send_pushed_or_held_button_event_if_applicable(device, 2)
 end
 
-local function button_pressed_handler(button_number)
-  return function(self, device, value, zb_rx)
-    local additional_fields = {state_change = true}
-    local button_name = "button" .. button_number
-    local event = capabilities.button.button.pushed(additional_fields)
-    local component = device.profile.components[button_name]
-    device:emit_component_event(component, event)
-  end
-end
-
 local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and 2 or 1
@@ -64,6 +54,7 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local function do_configure(self, device)
@@ -88,8 +79,8 @@ local dimming_remote = {
         [Level.server.commands.Stop.ID] = button_released_handler
       },
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = button_pressed_handler(2),
-        [OnOff.server.commands.On.ID] = button_pressed_handler(1)
+        [OnOff.server.commands.Off.ID] = button_utils.build_button_handler("button2", capabilities.button.button.pushed),
+        [OnOff.server.commands.On.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed)
       }
     }
   },

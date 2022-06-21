@@ -21,24 +21,9 @@ local mgmt_bind_resp = require "st.zigbee.zdo.mgmt_bind_response"
 local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
 local log = require "log"
 local zdo_messages = require "st.zigbee.zdo"
+local button_utils = require "button_utils"
 local PowerConfiguration = clusters.PowerConfiguration
 local WindowCovering = clusters.WindowCovering
-
-
-local function build_button_handler(button_name, pressed_type)
-  return function(driver, device, zb_rx)
-    local additional_fields = {
-      state_change = true
-    }
-    local event = pressed_type(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
-end
 
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
@@ -73,9 +58,9 @@ local somfy_handler = {
   zigbee_handlers = {
     cluster = {
       [WindowCovering.ID] = {
-        [WindowCovering.server.commands.UpOrOpen.ID] = build_button_handler("button1", capabilities.button.button.pushed),
-        [WindowCovering.server.commands.DownOrClose.ID] = build_button_handler("button3", capabilities.button.button.pushed),
-        [WindowCovering.server.commands.Stop.ID] = build_button_handler("button2", capabilities.button.button.pushed)
+        [WindowCovering.server.commands.UpOrOpen.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed),
+        [WindowCovering.server.commands.DownOrClose.ID] = button_utils.build_button_handler("button3", capabilities.button.button.pushed),
+        [WindowCovering.server.commands.Stop.ID] = button_utils.build_button_handler("button2", capabilities.button.button.pushed)
       }
     }
   },

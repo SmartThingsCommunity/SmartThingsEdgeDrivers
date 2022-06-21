@@ -16,3 +16,6 @@ components:
         version: 1
     categories:
       - name: SmartPlug
+metadata:
+  mnmn: SmartThingsEdge
+  vid: STES-1-Dawon-Zigbee_Smart_Plug

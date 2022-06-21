@@ -56,6 +56,9 @@ local function build_button_handler(pressed_type)
         button_comp = "main"
     end
     device:emit_component_event(device.profile.components[button_comp], event)
+    if button_comp ~= "main" then
+      device:emit_event(event)
+    end
   end
 end
 

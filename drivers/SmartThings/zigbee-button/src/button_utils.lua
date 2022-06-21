@@ -52,8 +52,29 @@ button_utils.send_pushed_or_held_button_event_if_applicable = function(device, b
     local component = device.profile.components[button_name]
     if component ~= nil then
       device:emit_component_event(component, event)
+      if button_name ~= "main" then
+        device:emit_event(event)
+      end
     else
       log.warn("Attempted to emit button event for non-existing component: " .. button_name)
+    end
+  end
+end
+
+button_utils.build_button_handler = function(button_name, pressed_type)
+  return function(driver, device, zb_rx)
+    local additional_fields = {
+      state_change = true
+    }
+    local event = pressed_type(additional_fields)
+    local comp = device.profile.components[button_name]
+    if comp ~= nil then
+      device:emit_component_event(comp, event)
+      if button_name ~= "main" then
+        device:emit_event(event)
+      end
+    else
+      log.warn("Attempted to emit button event for unknown button: " .. button_name)
     end
   end
 end

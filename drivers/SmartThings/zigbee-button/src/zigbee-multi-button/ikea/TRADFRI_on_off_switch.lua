@@ -15,37 +15,23 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local log = require "log"
+local button_utils = require "button_utils"
 
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
-
-local function build_button_handler(button_name, pressed_type)
-  return function(driver, device, zb_rx)
-    local additional_fields = {
-      state_change = true
-    }
-    local event = pressed_type(additional_fields)
-    local comp = device.profile.components[button_name]
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-    else
-      log.warn("Attempted to emit button event for unknown button: " .. button_name)
-    end
-  end
-end
 
 local on_off_switch = {
   NAME = "On/Off Switch",
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = build_button_handler("button1", capabilities.button.button.pushed),
-        [OnOff.server.commands.On.ID] = build_button_handler("button2", capabilities.button.button.pushed)
+        [OnOff.server.commands.Off.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed),
+        [OnOff.server.commands.On.ID] = button_utils.build_button_handler("button2", capabilities.button.button.pushed)
       },
       [Level.ID] = {
-        [Level.server.commands.Move.ID] = build_button_handler("button1", capabilities.button.button.held),
-        [Level.server.commands.MoveWithOnOff.ID] = build_button_handler("button2", capabilities.button.button.held)
+        [Level.server.commands.Move.ID] = button_utils.build_button_handler("button1", capabilities.button.button.held),
+        [Level.server.commands.MoveWithOnOff.ID] = button_utils.build_button_handler("button2", capabilities.button.button.held)
       },
     }
   },
