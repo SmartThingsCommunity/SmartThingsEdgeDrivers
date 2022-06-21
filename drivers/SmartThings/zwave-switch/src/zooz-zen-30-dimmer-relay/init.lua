@@ -49,17 +49,18 @@ local map_key_attribute_to_capability = {
 }
 
 local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
-  {mfr = 0x027A, prod = 0xA000, model = 0xA008} -- Zooz Zen 30 Dimmer Relay Double Switch
+  {mfr = 0x027A, prod = 0xA000, model = 0xA008, deviceProfile = "zooz-zen-30-dimmer-relay"} -- Zooz Zen 30 Dimmer Relay Double Switch
 }
 
 local function version_report_handler(self, device, cmd)
-  if cmd.args.firmware_0_version > 1 or
-    (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4) then
-    local new_profile = "zooz-zen-30-dimmer-relay-new"
-    device:try_update_metadata({profile = new_profile})
-    device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, true, { persist = true})
+  if (cmd.args.firmware_0_version > 1 or
+    (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4)) and
+    ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS.deviceProfile ~= "zooz-zen-30-dimmer-relay-new" then
+      local new_profile = "zooz-zen-30-dimmer-relay-new"
+      device:try_update_metadata({profile = new_profile})
+      device:set_field(DEVICE_PROFILE_CHANGE_IN_PROGRESS, true, { persist = true})
   else
-    device:try_update_metadata({profile = "zooz-zen-30-dimmer-relay"})
+      device:try_update_metadata({profile = "zooz-zen-30-dimmer-relay"})
   end
 end
 
