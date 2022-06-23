@@ -1,0 +1,60 @@
+name: Run driver tests
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**'
+env:
+  LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+jobs:
+  run-driver-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find the lua lib release version
+        id: lib-version
+        run: |
+          curl "https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/releases/latest" -s -L -I -o /dev/null -w '%{url_effective}' > test.log
+          echo "::set-output name=url::$(cat test.log)"
+      - name: Try to retrieve cache
+        id: cached-libs
+        uses: actions/cache@v3
+        with:
+          path: '/home/runner/work/lua_libs'
+          key: ${{ steps.lib-version.outputs.url }}-v1
+      - name: Get the latest release artifact
+        if: steps.cached-libs.outputs.cache-hit != 'true'
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          file: 'lua_libs.*'
+          regex: true
+          target: '/home/runner/work/lua_libs/'
+      - name: Extract the lua libraries
+        if: steps.cached-libs.outputs.cache-hit != 'true'
+        working-directory: '/home/runner/work/lua_libs'
+        run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
+      - name: Install lua
+        run: |
+          sudo apt-get update
+          sudo apt-get install lua5.3
+      - uses: actions/checkout@v2
+      - name: Install Python requirements
+        run: pip install -r tools/requirements.txt
+      - name: Prepare test output directory
+        run: mkdir test-output
+      - name: Run the tests
+        run: python tools/run_driver_tests.py -j test-output/tests.xml
+      - name: Upload test artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests
+          path: |
+            test-output/tests.xml
+
+  event-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: event-file
+          path: ${{ github.event_path }}

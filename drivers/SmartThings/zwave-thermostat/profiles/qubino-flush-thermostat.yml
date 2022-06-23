@@ -2,15 +2,13 @@ name: qubino-flush-thermostat
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
-  - id: thermostatCoolingSetpoint
+  - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
-    version: 1
-  - id: temperatureMeasurement
     version: 1
   - id: powerMeter
     version: 1
@@ -20,6 +18,9 @@ components:
     version: 1
   categories:
   - name: Thermostat
+metadata:
+  mnmn: SmartThingsEdge
+  vid: SmartThings-smartthings-Qubino_Flush_Thermostat
 preferences:
   - name: "thermostatMode"
     title: "Thermostat Mode"
@@ -28,6 +29,6 @@ preferences:
     required: true
     definition:
       options:
-        "0": Heat
-        "1": Cool
-      default: "0"
+        0: Heat
+        1: Cool
+      default: 0

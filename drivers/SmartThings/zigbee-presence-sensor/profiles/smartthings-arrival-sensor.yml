@@ -25,6 +25,3 @@ preferences:
        180: "3"
        300: "5"
       default: 120
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-presence-sensor

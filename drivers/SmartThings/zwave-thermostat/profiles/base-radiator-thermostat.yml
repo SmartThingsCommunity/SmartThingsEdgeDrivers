@@ -2,13 +2,13 @@ name: base-radiator-thermostat
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
-  - id: battery
+  - id: thermostatMode
     version: 1
-  - id: temperatureMeasurement
+  - id: battery
     version: 1
   - id: refresh
     version: 1

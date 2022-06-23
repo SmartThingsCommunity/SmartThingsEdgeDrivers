@@ -15,6 +15,9 @@
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+
 local devices = {
   EVERSPRING_PIR = {
     MATCHING_MATRIX = {

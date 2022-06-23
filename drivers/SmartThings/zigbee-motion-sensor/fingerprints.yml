@@ -164,3 +164,13 @@ zigbeeManufacturer:
     manufacturer: SmartThings
     model: PGC314
     deviceProfileName: smartsense-motion
+  - id: ThirdReality/3RMS16BZ
+    deviceLabel: ThirdReality Motion Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RMS16BZ
+    deviceProfileName: motion-battery
+  - id: THIRDREALITY/3RMS16BZ
+    deviceLabel: ThirdReality Motion Sensor
+    manufacturer: THIRDREALITY
+    model: 3RMS16BZ
+    deviceProfileName: motion-battery

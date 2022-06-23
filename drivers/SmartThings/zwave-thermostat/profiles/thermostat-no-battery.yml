@@ -2,17 +2,17 @@ name: thermostat-no-battery
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
-    version: 1
-  - id: thermostatFanMode
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
   - id: thermostatCoolingSetpoint
     version: 1
-  - id: thermostatOperatingState
+  - id: thermostatMode
     version: 1
-  - id: temperatureMeasurement
+  - id: thermostatFanMode
+    version: 1
+  - id: thermostatOperatingState
     version: 1
   - id: relativeHumidityMeasurement
     version: 1

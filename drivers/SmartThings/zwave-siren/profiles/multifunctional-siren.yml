@@ -16,3 +16,6 @@ components:
     version: 1
   categories:
   - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-siren-11   # Filtering non-supported alarm values

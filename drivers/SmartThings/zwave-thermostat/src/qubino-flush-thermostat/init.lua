@@ -55,7 +55,7 @@ local function info_changed(self, device, event, args)
   local size = 1
 
   if args.old_st_store.preferences.thermostatMode ~= device.preferences.thermostatMode then
-    new_parameter_value = tonumber(device.preferences.thermostatMode)
+    new_parameter_value = device.preferences.thermostatMode
     parameter_number = DEVICE_MODE_PARAMETER
   end
 
@@ -86,9 +86,11 @@ local function configuration_report(driver, device, cmd)
     if configuration_value == 1 then
       device:set_field(CONFIGURED_MODE, COOL_MODE, {persist = true})
       table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
+      device:try_update_metadata({profile = "qubino-flush-thermostat-cooling"})
     elseif configuration_value == 0 then
       device:set_field(CONFIGURED_MODE, HEAT_MODE, {persist = true})
       table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
+      device:try_update_metadata({profile = "qubino-flush-thermostat"})
     end
     device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
   end

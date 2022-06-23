@@ -37,7 +37,7 @@ local PRESENCE_ENDPOINT = 0x02
 
 local mock_simple_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("smartthings-arrival-sensor-signal-strength.yml"),
+    profile = t_utils.get_profile_definition("smartthings-arrival-sensor-v1.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -62,8 +62,6 @@ local build_status_message = function(device, command, payload ,endpoint)
 
   message.body.zcl_header.frame_ctrl.value = FRAME_CTRL
   message.address_header.profile.value = PROFILE_ID
-  message.lqi = data_types.Uint8(50)
-  message.rssi = data_types.Int8(-50)
 
   return message
 end
@@ -73,7 +71,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local add_device = function()
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
-          capabilities.presenceSensor.presence("present")
+    capabilities.presenceSensor.presence("present")
   ))
   test.wait_for_events()
 end
@@ -120,16 +118,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_simple_device:generate_test_message("main",  capabilities.presenceSensor.presence("present"))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_simple_device:generate_test_message("main",  capabilities.signalStrength.lqi(0))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_simple_device:generate_test_message("main",  capabilities.signalStrength.rssi({value = 0, unit = 'dBm'}))
     }
   },
   {
@@ -153,8 +141,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end
 )
 
@@ -168,8 +154,6 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end
 )
 
@@ -183,8 +167,6 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(75)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end
 )
 
@@ -198,8 +180,6 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
-    test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end
 )
 

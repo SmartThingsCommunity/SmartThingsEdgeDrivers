@@ -39,7 +39,8 @@ local zigbee_motion_driver = {
                   require("battery-voltage"),
                   require("centralite"),
                   require("smartthings"),
-                  require("smartsense")
+                  require("smartsense"),
+                  require("thirdreality")
   },
   additional_zcl_profiles = {
     [0xFC01] = true

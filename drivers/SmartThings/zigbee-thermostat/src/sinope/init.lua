@@ -124,15 +124,19 @@ end
 local function info_changed(driver, device, event, args)
   for name, info in pairs(PREFERENCE_TABLES) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
-    local input = device.preferences[name]
-      if (info.dataType.ID == data_types.Int16.ID) then
-        input = input * 100
+      local input = tonumber(device.preferences[name])
+      if type(input) == "number" then
+        if (info.dataType.ID == data_types.Int16.ID) then
+          input = input * 100
+        end
+        device:send(cluster_base.write_attribute(device,
+          data_types.ClusterId(info.clusterId),
+          data_types.AttributeId(info.attributeId),
+          data_types.validate_or_build_type(input, info.dataType, "payload")
+        ))
+      else
+        log.error("Unable to set preference " .. name .. " to " .. device.preferences[name])
       end
-      device:send(cluster_base.write_attribute(device,
-        data_types.ClusterId(info.clusterId),
-        data_types.AttributeId(info.attributeId),
-        data_types.validate_or_build_type(input, info.dataType, "payload")
-      ))
     end
   end
 end

@@ -25,8 +25,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local IasEnrollResponseCode = IASZone.types.EnrollResponseCode
 
-local button_attr = capabilities.button.button
-
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("one-button-temp-battery.yml"),
@@ -89,14 +87,12 @@ test.register_coroutine_test(
         mock_device, 30, 21600, 16
       )
     })
-
     test.socket.zigbee:__expect_send({
       mock_device.id,
       TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
         mock_device, 30, 300, 16
       )
     })
-
     test.socket.zigbee:__expect_send({
       mock_device.id,
       IASZone.attributes.IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui)
@@ -105,7 +101,6 @@ test.register_coroutine_test(
       mock_device.id,
       IASZone.server.commands.ZoneEnrollResponse(mock_device, IasEnrollResponseCode.SUCCESS, 0x00)
     })
-
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -127,6 +122,13 @@ test.register_coroutine_test(
       {
         capability_id = "button", component_id = "main",
         attribute_id = "numberOfButtons", state = { value = 1 }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "button", state = { value = "pushed" }
       }
     })
     -- test.socket.zigbee:__expect_send({

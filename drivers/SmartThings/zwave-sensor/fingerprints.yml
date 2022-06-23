@@ -19,7 +19,7 @@ zwaveManufacturer:
     manufacturerId: 0x0060
     productType: 0x0012
     productId: 0x0001
-    deviceProfileName: motion-switch
+    deviceProfileName: motion-light
   - id: "Dome/DMMS1"
     deviceLabel: Dome Motion/Light Sensor
     manufacturerId: 0x021F
@@ -273,7 +273,7 @@ zwaveManufacturer:
     manufacturerId: 0x0060
     productType: 0x0001
     productId: 0x0006
-    deviceProfileName: everspring-sp817 
+    deviceProfileName: everspring-sp817
   - id: 0063/4953/3133
     deviceLabel: GE Motion Sensor
     manufacturerId: 0x0063
@@ -335,7 +335,7 @@ zwaveManufacturer:
     manufacturerId: 0x014A
     productType: 0x0001
     productId: 0x0003
-    deviceProfileName: contact-battery-tamperalert        
+    deviceProfileName: contact-battery-tamperalert
   - id: 014A/0004/0003
     deviceLabel: Ecolink Open/Closed Sensor
     manufacturerId: 0x014A
@@ -347,7 +347,7 @@ zwaveManufacturer:
     manufacturerId: 0x014A
     productType: 0x0004
     productId: 0x0002
-    deviceProfileName: contact-battery-tamperalert    
+    deviceProfileName: contact-battery-tamperalert
   - id: 011A/0601/0903
     deviceLabel: Enerwave Open/Closed Sensor
     manufacturerId: 0x011A
@@ -432,6 +432,18 @@ zwaveManufacturer:
   - id: 0371/000B
     deviceLabel: Aeotec Open/Closed Sensor
     manufacturerId: 0x0371
+    productId: 0x000B
+    deviceProfileName: contact-battery-tamperalert
+  - id: 0371/0002/000B
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x000B
+    deviceProfileName: contact-battery-tamperalert
+  - id: 0371/0102/000B
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x0371
+    productType: 0x0102
     productId: 0x000B
     deviceProfileName: contact-battery-tamperalert
   - id: 027A/7000/E001

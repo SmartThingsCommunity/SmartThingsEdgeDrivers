@@ -1,0 +1,14 @@
+name: smartthings-arrival-sensor-v1
+components:
+- id: main
+  capabilities:
+  - id: presenceSensor
+    version: 1
+  - id: tone
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: PresenceSensor

@@ -183,11 +183,11 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send({
-	mock_device.id,
-	{
-	  capability_id = "button", component_id = "main",
-	  attribute_id = "button", state = { value = "pushed"}
-	}
+        mock_device.id,
+        {
+          capability_id = "button", component_id = "main",
+          attribute_id = "button", state = { value = "pushed" }
+        }
       })
       test.wait_for_events()
 

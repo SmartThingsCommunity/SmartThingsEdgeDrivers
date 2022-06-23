@@ -120,7 +120,7 @@ preferences:
     required: false
     preferenceType: enumeration
     definition:
-      options: 
+      options:
         30: "5 minutes"
         90: "15 minutes"
         180: "30 minutes"

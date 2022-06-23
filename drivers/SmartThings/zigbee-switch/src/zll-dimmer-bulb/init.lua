@@ -85,13 +85,13 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
     ["Classic A60 W clear"] = true,
     ["Classic A60 W clear - LIGHTIFY"] = true,
     ["CLA60 OFD OSRAM"] = true,
+    ["Classic A60 RGBW"] = true,
     ["PAR 16 50 RGBW - LIGHTIFY"] = true,
     ["CLA60 RGBW OSRAM"] = true,
     ["Flex RGBW"] = true,
     ["Gardenpole RGBW-Lightify"] = true,
     ["LIGHTIFY Outdoor Flex RGBW"] = true,
     ["LIGHTIFY Indoor Flex RGBW"] = true,
-    ["CLA60 OFD OSRAM"] = true,
     ["Classic B40 TW - LIGHTIFY"] = true,
     ["CLA60 TW OSRAM"] = true
   },
@@ -125,6 +125,10 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["sengled"] = {
     ["E14-U43"] = true,
     ["E13-N11"] = true
+  },
+  ["GLEDOPTO"] = {
+    ["GL-C-008"] = true,
+    ["GL-B-001Z"] = true
   },
   ["GLEDOPTO"] = {
     ["GL-C-008"] = true,

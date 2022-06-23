@@ -2,13 +2,13 @@ name: thermostat-temperature-temperaturealarm
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
-  - id: thermostatOperatingState
+  - id: thermostatMode
     version: 1
-  - id: temperatureMeasurement
+  - id: thermostatOperatingState
     version: 1
   - id: temperatureAlarm
     version: 1
