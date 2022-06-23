@@ -53,19 +53,19 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x04) })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+        mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
     )
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+        mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
     )
   end
 )
@@ -78,10 +78,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(0.1)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+        mock_device:generate_test_message("button2", button_attr.held({ state_change = true }))
     )
     test.wait_for_events()
 
@@ -90,10 +90,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(0.1)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+        mock_device:generate_test_message("button1", button_attr.held({ state_change = true }))
     )
   end
 )
@@ -106,10 +106,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(8)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+        mock_device:generate_test_message("button2", button_attr.held({ state_change = true }))
     )
     test.wait_for_events()
 
@@ -118,10 +118,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(8)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+        mock_device:generate_test_message("button1", button_attr.held({ state_change = true }))
     )
   end
 )

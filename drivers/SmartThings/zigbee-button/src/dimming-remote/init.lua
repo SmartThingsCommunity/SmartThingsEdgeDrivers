@@ -53,7 +53,7 @@ local function button_hold_handler(button_number)
 end
 
 local function button_released_handler(self, device, value, zb_rx)
-  local event = capabilities.button.button.held()
+  local event = capabilities.button.button.held({ state_change = true })
   local button_number = device:get_field(string.format(BUTTON_X_HOLD, 1)) and 1 or
                         device:get_field(string.format(BUTTON_X_HOLD, 2)) and 2
   if button_number then
