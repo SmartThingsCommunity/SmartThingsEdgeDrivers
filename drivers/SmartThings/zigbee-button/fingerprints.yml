@@ -24,6 +24,16 @@ zigbeeManufacturer:
     manufacturer: SOMFY
     model: Situo 4 Zigbee
     deviceProfileName: twelve-buttons
+  - id: "eWeLink/WB01" 
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: WB01
+    deviceProfileName: three-buttons-battery
+  - id: "eWeLink/SNZB-01P"
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: SNZB-01P
+    deviceProfileName: three-buttons-battery
   - id: "IKEA of Sweden/TRADFRI on"
     deviceLabel: IKEA Remote Control
     manufacturer: IKEA of Sweden
