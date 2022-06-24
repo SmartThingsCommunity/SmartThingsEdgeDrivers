@@ -18,3 +18,6 @@ components:
     version: 1
   categories:
   - name: Thermostat
+metadata:
+  mnmn: SmartThingsEdge
+  vid: SmartThings-smartthings-Danfoss_Ally_Radiator_Thermostat
