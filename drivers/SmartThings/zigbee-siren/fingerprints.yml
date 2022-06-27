@@ -19,3 +19,8 @@ zigbeeManufacturer :
     manufacturer: Sercomm Corp.
     model: SZ-SRN12N
     deviceProfileName: basic-alarm
+  - id : Heiman/WarningDevice
+    deviceLabel : HEIMAN Siren
+    manufacturer : Heiman
+    model : WarningDevice-EF-3.0
+    deviceProfileName : switch-alarm
