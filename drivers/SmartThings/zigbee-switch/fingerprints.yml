@@ -266,366 +266,366 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMRZB-143
     deviceProfileName: switch-power-energy
-#   - id: "AduroSmart Eria/AD-DimmableLight3001"
-#     deviceLabel: Eria Light
-#     manufacturer: AduroSmart Eria
-#     model: AD-DimmableLight3001
-#     deviceProfileName: on-off-level
-#   - id: Aurora/LCBulb01UK
-#     deviceLabel: AOne Dimmer Switch
-#     manufacturer: Aurora
-#     model: LCBulb01UK
-#     deviceProfileName: switch-level
-#   - id: Aurora/Dimmer
-#     deviceLabel: AOne Dimmer Switch
-#     manufacturer: Aurora
-#     model: Dimmer
-#     deviceProfileName: switch-level
-#   - id: Aurora/FWMPROZXBulb50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWMPROZXBulb50AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/FWBulb51AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWBulb51AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/FWStrip50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWStrip50AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/FWGU10Bulb50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWGU10Bulb50AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/NPD3032
-#     deviceLabel: Aurora Dimmer Switch
-#     manufacturer: Aurora
-#     model: NPD3032
-#     deviceProfileName: switch-level
-#   - id: Aurora/WallDimmerMaster
-#     deviceLabel: Aurora Dimmer Switch
-#     manufacturer: Aurora
-#     model: WallDimmerMaster
-#     deviceProfileName: switch-level
-#   - id: Aurora/FWST64Bulb50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWST64Bulb50AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/FWG125Bulb50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWG125Bulb50AU
-#     deviceProfileName: on-off-level
-#   - id: Aurora/FWA60Bulb50AU
-#     deviceLabel: Aurora Light
-#     manufacturer: Aurora
-#     model: FWA60Bulb50AU
-#     deviceProfileName: on-off-level
-#   - id: "CWD/ZB.A806Edim-A001"
-#     deviceLabel: CWD Light
-#     manufacturer: CWD
-#     model: "ZB.A806Edim-A001"
-#     deviceProfileName: on-off-level
-#   - id: "CWD/ZB.A806Bdim-A001"
-#     deviceLabel: CWD Light
-#     manufacturer: CWD
-#     model: "ZB.A806Bdim-A001"
-#     deviceProfileName: on-off-level
-#   - id: "CWD/ZB.M350dim-A001"
-#     deviceLabel: CWD Light
-#     manufacturer: CWD
-#     model: "ZB.M350dim-A001"
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E27 WW 806lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: "TRADFRI bulb E27 WW 806lm"
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E27 WW clear 250lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: "TRADFRI bulb E27 WW clear 250lm"
-#     deviceProfileName: on-off-level
-#   - id: "ubisys/D1 (5503)"
-#     deviceLabel: INGENIUM Light
-#     manufacturer: ubisys
-#     model: "D1 (5503)"
-#     deviceProfileName: on-off-level
-#   - id: "Megaman/AD-DimmableLight3001"
-#     deviceLabel: INGENIUM Light
-#     manufacturer: Megaman
-#     model: AD-DimmableLight3001
-#     deviceProfileName: on-off-level
-#   - id: "innr/RF 263"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RF 263"
-#     deviceProfileName: on-off-level
-#   - id: "innr/BF 263"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "BF 263"
-#     deviceProfileName: on-off-level
-#   - id: "innr/BF 265"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "BF 265"
-#     deviceProfileName: on-off-level
-#   - id: "innr/AE 260"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "AE 260"
-#     deviceProfileName: on-off-level
-#   - id: "innr/BE 220"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "BE 220"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RF 265"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RF 265"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RB 265"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RB 265"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RB 245"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RB 245"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RS 225"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RS 225"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RF 261"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RF 261"
-#     deviceProfileName: on-off-level
-#   - id: "innr/RF 264"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: "RF 264"
-#     deviceProfileName: on-off-level
-#   - id: "Smarthome/S111-201A"
-#     deviceLabel: Leedarson Light
-#     manufacturer: Smarthome
-#     model: S111-201A
-#     deviceProfileName: on-off-level
-#   - id: "LDS/ZBT-DIMLight-GLS0000"
-#     deviceLabel: Light
-#     manufacturer: LDS
-#     model: ZBT-DIMLight-GLS0000
-#     deviceProfileName: on-off-level
-#   - id: "LDS/ZHA-DIMLight-GLS0000"
-#     deviceLabel: Light
-#     manufacturer: LDS
-#     model: ZHA-DIMLight-GLS0000
-#     deviceProfileName: on-off-level
-#   - id: "LDS/ZBT-DIMLight-GLS"
-#     deviceLabel: Light
-#     manufacturer: LDS
-#     model: ZBT-DIMLight-GLS
-#     deviceProfileName: on-off-level
-#   - id: "LDS/ZBT-DIMLight-GLS0044"
-#     deviceLabel: Light
-#     manufacturer: LDS
-#     model: ZBT-DIMLight-GLS0044
-#     deviceProfileName: on-off-level
-#   - id: Leviton/DL6HD
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: DL6HD
-#     deviceProfileName: switch-level
-#   - id: Leviton/DL3HL
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: DL3HL
-#     deviceProfileName: switch-level
-#   - id: Leviton/DL1KD
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: DL1KD
-#     deviceProfileName: switch-level
-#   - id: Leviton/ZSD07
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: ZSD07
-#     deviceProfileName: switch-level
-#   - id: "lk/ZBT-DIMLight-GLS0010"
-#     deviceLabel: Linkind Light
-#     manufacturer: lk
-#     model: ZBT-DIMLight-GLS0010
-#     deviceProfileName: on-off-level
-#   - id: "MLI/ZBT-DimmableLight"
-#     deviceLabel: Tint Light
-#     manufacturer: MLI
-#     model: ZBT-DimmableLight
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/LIGHTIFY A19 ON/OFF/DIM"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: "LIGHTIFY A19 ON/OFF/DIM"
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/LIGHTIFY A19 10 Year"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: "LIGHTIFY A19 ON/OFF/DIM 10 Year"
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM SYLVANIA/iQBR30"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM SYLVANIA
-#     model: iQBR30
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/LIGHTIFY PAR38 ON/OFF/DIM"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: "LIGHTIFY PAR38 ON/OFF/DIM"
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/LIGHTIFY BR ON/OFF/DIM"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: OSRAM
-#     model: "LIGHTIFY BR ON/OFF/DIM"
-#     deviceProfileName: on-off-level
-#   - id: "LEDVANCE/A19 W 10 year"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: LEDVANCE
-#     model: "A19 W 10 year"
-#     deviceProfileName: on-off-level
-#   - id: "LEDVANCE/BR30 W 10 year"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: LEDVANCE
-#     model: "BR30 W 10 year"
-#     deviceProfileName: on-off-level
-#   - id: "LEDVANCE/PAR38 W 10 year"
-#     deviceLabel: SYLVANIA Light
-#     manufacturer: LEDVANCE
-#     model: "PAR38 W 10 year"
-#     deviceProfileName: on-off-level
-#   - id: "LEEDARSON LIGHTING/M350ST-W1R-01"
-#     deviceLabel: OZOM Light
-#     manufacturer: LEEDARSON LIGHTING
-#     model: M350ST-W1R-01
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-G13"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-G13
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-G14"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-G14
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-G23"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-G23
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-G33"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-G33
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E12-N13"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E12-N13
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E12-N14"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E12-N14
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E12-N15"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E12-N15
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-N13"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-N13
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-N14"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-N14
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E1A-AC2"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E1A-AC2
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-N13A"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-N13A
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-N14A"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-N14A
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E21-N13A"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E21-N13A
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E21-N14A"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E21-N14A
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-U21U31"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-U21U31
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E13-A21"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E13-A21
-#     deviceProfileName: on-off-level
-#   - id: "sengled/E11-N1G"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E11-N1G
-#     deviceProfileName: on-off-level
-#   - id: "LDS/ZBT-DIMLight-GLS0006"
-#     deviceLabel: Light
-#     manufacturer: LDS
-#     model: ZBT-DIMLight-GLS0006
-#     deviceProfileName: on-off-level
-#   - id: MRVL/MZ100
-#     deviceLabel: Wemo Light
-#     manufacturer: MRVL
-#     model: MZ100
-#     deviceProfileName: on-off-level
-#   - id: "Jasco Products/43096"
-#     deviceLabel: Enbrighten Dimmer
-#     manufacturer: Jasco Products
-#     model: 43096
-#     deviceProfileName: switch-level
-#   - id: "Jasco Products/43090"
-#     deviceLabel: Enbrighten Dimmer
-#     manufacturer: Jasco Products
-#     model: 43090
-#     deviceProfileName: switch-level
-#   - id: "Jasco Products/43080"
-#     deviceLabel: Enbrighten Dimmer
-#     manufacturer: Jasco Products
-#     model: 43080
-#     deviceProfileName: switch-level
+  - id: "AduroSmart Eria/AD-DimmableLight3001"
+    deviceLabel: Eria Light
+    manufacturer: AduroSmart Eria
+    model: AD-DimmableLight3001
+    deviceProfileName: on-off-level
+  - id: Aurora/LCBulb01UK
+    deviceLabel: AOne Dimmer Switch
+    manufacturer: Aurora
+    model: LCBulb01UK
+    deviceProfileName: switch-level
+  - id: Aurora/Dimmer
+    deviceLabel: AOne Dimmer Switch
+    manufacturer: Aurora
+    model: Dimmer
+    deviceProfileName: switch-level
+  - id: Aurora/FWMPROZXBulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWMPROZXBulb50AU
+    deviceProfileName: on-off-level
+  - id: Aurora/FWBulb51AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWBulb51AU
+    deviceProfileName: on-off-level
+  - id: Aurora/FWStrip50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWStrip50AU
+    deviceProfileName: on-off-level
+  - id: Aurora/FWGU10Bulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWGU10Bulb50AU
+    deviceProfileName: on-off-level
+  - id: Aurora/NPD3032
+    deviceLabel: Aurora Dimmer Switch
+    manufacturer: Aurora
+    model: NPD3032
+    deviceProfileName: switch-level
+  - id: Aurora/WallDimmerMaster
+    deviceLabel: Aurora Dimmer Switch
+    manufacturer: Aurora
+    model: WallDimmerMaster
+    deviceProfileName: switch-level
+  - id: Aurora/FWST64Bulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWST64Bulb50AU
+    deviceProfileName: on-off-level
+  - id: Aurora/FWG125Bulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWG125Bulb50AU
+    deviceProfileName: on-off-level
+  - id: Aurora/FWA60Bulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: FWA60Bulb50AU
+    deviceProfileName: on-off-level
+  - id: "CWD/ZB.A806Edim-A001"
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: "ZB.A806Edim-A001"
+    deviceProfileName: on-off-level
+  - id: "CWD/ZB.A806Bdim-A001"
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: "ZB.A806Bdim-A001"
+    deviceProfileName: on-off-level
+  - id: "CWD/ZB.M350dim-A001"
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: "ZB.M350dim-A001"
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E27 WW 806lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: "TRADFRI bulb E27 WW 806lm"
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E27 WW clear 250lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: "TRADFRI bulb E27 WW clear 250lm"
+    deviceProfileName: on-off-level
+  - id: "ubisys/D1 (5503)"
+    deviceLabel: INGENIUM Light
+    manufacturer: ubisys
+    model: "D1 (5503)"
+    deviceProfileName: on-off-level
+  - id: "Megaman/AD-DimmableLight3001"
+    deviceLabel: INGENIUM Light
+    manufacturer: Megaman
+    model: AD-DimmableLight3001
+    deviceProfileName: on-off-level
+  - id: "innr/RF 263"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RF 263"
+    deviceProfileName: on-off-level
+  - id: "innr/BF 263"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "BF 263"
+    deviceProfileName: on-off-level
+  - id: "innr/BF 265"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "BF 265"
+    deviceProfileName: on-off-level
+  - id: "innr/AE 260"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "AE 260"
+    deviceProfileName: on-off-level
+  - id: "innr/BE 220"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "BE 220"
+    deviceProfileName: on-off-level
+  - id: "innr/RF 265"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RF 265"
+    deviceProfileName: on-off-level
+  - id: "innr/RB 265"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RB 265"
+    deviceProfileName: on-off-level
+  - id: "innr/RB 245"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RB 245"
+    deviceProfileName: on-off-level
+  - id: "innr/RS 225"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RS 225"
+    deviceProfileName: on-off-level
+  - id: "innr/RF 261"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RF 261"
+    deviceProfileName: on-off-level
+  - id: "innr/RF 264"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: "RF 264"
+    deviceProfileName: on-off-level
+  - id: "Smarthome/S111-201A"
+    deviceLabel: Leedarson Light
+    manufacturer: Smarthome
+    model: S111-201A
+    deviceProfileName: on-off-level
+  - id: "LDS/ZBT-DIMLight-GLS0000"
+    deviceLabel: Light
+    manufacturer: LDS
+    model: ZBT-DIMLight-GLS0000
+    deviceProfileName: on-off-level
+  - id: "LDS/ZHA-DIMLight-GLS0000"
+    deviceLabel: Light
+    manufacturer: LDS
+    model: ZHA-DIMLight-GLS0000
+    deviceProfileName: on-off-level
+  - id: "LDS/ZBT-DIMLight-GLS"
+    deviceLabel: Light
+    manufacturer: LDS
+    model: ZBT-DIMLight-GLS
+    deviceProfileName: on-off-level
+  - id: "LDS/ZBT-DIMLight-GLS0044"
+    deviceLabel: Light
+    manufacturer: LDS
+    model: ZBT-DIMLight-GLS0044
+    deviceProfileName: on-off-level
+  - id: Leviton/DL6HD
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: DL6HD
+    deviceProfileName: switch-level
+  - id: Leviton/DL3HL
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: DL3HL
+    deviceProfileName: switch-level
+  - id: Leviton/DL1KD
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: DL1KD
+    deviceProfileName: switch-level
+  - id: Leviton/ZSD07
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: ZSD07
+    deviceProfileName: switch-level
+  - id: "lk/ZBT-DIMLight-GLS0010"
+    deviceLabel: Linkind Light
+    manufacturer: lk
+    model: ZBT-DIMLight-GLS0010
+    deviceProfileName: on-off-level
+  - id: "MLI/ZBT-DimmableLight"
+    deviceLabel: Tint Light
+    manufacturer: MLI
+    model: ZBT-DimmableLight
+    deviceProfileName: on-off-level
+  - id: "OSRAM/LIGHTIFY A19 ON/OFF/DIM"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: "LIGHTIFY A19 ON/OFF/DIM"
+    deviceProfileName: on-off-level
+  - id: "OSRAM/LIGHTIFY A19 10 Year"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: "LIGHTIFY A19 ON/OFF/DIM 10 Year"
+    deviceProfileName: on-off-level
+  - id: "OSRAM SYLVANIA/iQBR30"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM SYLVANIA
+    model: iQBR30
+    deviceProfileName: on-off-level
+  - id: "OSRAM/LIGHTIFY PAR38 ON/OFF/DIM"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: "LIGHTIFY PAR38 ON/OFF/DIM"
+    deviceProfileName: on-off-level
+  - id: "OSRAM/LIGHTIFY BR ON/OFF/DIM"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: "LIGHTIFY BR ON/OFF/DIM"
+    deviceProfileName: on-off-level
+  - id: "LEDVANCE/A19 W 10 year"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: "A19 W 10 year"
+    deviceProfileName: on-off-level
+  - id: "LEDVANCE/BR30 W 10 year"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: "BR30 W 10 year"
+    deviceProfileName: on-off-level
+  - id: "LEDVANCE/PAR38 W 10 year"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: "PAR38 W 10 year"
+    deviceProfileName: on-off-level
+  - id: "LEEDARSON LIGHTING/M350ST-W1R-01"
+    deviceLabel: OZOM Light
+    manufacturer: LEEDARSON LIGHTING
+    model: M350ST-W1R-01
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-G13"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-G13
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-G14"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-G14
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-G23"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-G23
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-G33"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-G33
+    deviceProfileName: on-off-level
+  - id: "sengled/E12-N13"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E12-N13
+    deviceProfileName: on-off-level
+  - id: "sengled/E12-N14"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E12-N14
+    deviceProfileName: on-off-level
+  - id: "sengled/E12-N15"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E12-N15
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-N13"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-N13
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-N14"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-N14
+    deviceProfileName: on-off-level
+  - id: "sengled/E1A-AC2"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E1A-AC2
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-N13A"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-N13A
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-N14A"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-N14A
+    deviceProfileName: on-off-level
+  - id: "sengled/E21-N13A"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E21-N13A
+    deviceProfileName: on-off-level
+  - id: "sengled/E21-N14A"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E21-N14A
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-U21U31"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-U21U31
+    deviceProfileName: on-off-level
+  - id: "sengled/E13-A21"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E13-A21
+    deviceProfileName: on-off-level
+  - id: "sengled/E11-N1G"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E11-N1G
+    deviceProfileName: on-off-level
+  - id: "LDS/ZBT-DIMLight-GLS0006"
+    deviceLabel: Light
+    manufacturer: LDS
+    model: ZBT-DIMLight-GLS0006
+    deviceProfileName: on-off-level
+  - id: MRVL/MZ100
+    deviceLabel: Wemo Light
+    manufacturer: MRVL
+    model: MZ100
+    deviceProfileName: on-off-level
+  - id: "Jasco Products/43096"
+    deviceLabel: Enbrighten Dimmer
+    manufacturer: Jasco Products
+    model: 43096
+    deviceProfileName: switch-level
+  - id: "Jasco Products/43090"
+    deviceLabel: Enbrighten Dimmer
+    manufacturer: Jasco Products
+    model: 43090
+    deviceProfileName: switch-level
+  - id: "Jasco Products/43080"
+    deviceLabel: Enbrighten Dimmer
+    manufacturer: Jasco Products
+    model: 43080
+    deviceProfileName: switch-level
 #   - id: "Centralite Systems/4200-C"
 #     deviceLabel: Centralite Outlet
 #     manufacturer: Centralite Systems
@@ -1071,11 +1071,11 @@ zigbeeManufacturer:
 #     manufacturer: eWeLight
 #     model: ZB-CL01
 #     deviceProfileName: rgbw-bulb
-#   - id: "CREE/Connected A-19 60W Equivalent"
-#     deviceLabel: CREE Bulb
-#     manufacturer: CREE
-#     model: "Connected A-19 60W Equivalent"
-#     deviceProfileName: on-off-level
+  - id: "CREE/Connected A-19 60W Equivalent"
+    deviceLabel: CREE Bulb
+    manufacturer: CREE
+    model: "Connected A-19 60W Equivalent"
+    deviceProfileName: on-off-level
 #   - id: "Jasco Products/45852"
 #     deviceLabel: GE Dimmer Switch
 #     manufacturer: Jasco Products
@@ -1481,216 +1481,216 @@ zigbeeManufacturer:
 #     manufacturer: Sercomm Corp.
 #     model: SZ-ESW01-AU
 #     deviceProfileName: switch-power-smartplug
-#   - id: "Develco Products/Smart16ARelay51AU"
-#     deviceLabel: Aurora Switch
-#     manufacturer: Develco Products A/S
-#     model: Smart16ARelay51AU
-#     deviceProfileName: switch-power
-#   - id: Aurora/Smart16ARelay51AU
-#     deviceLabel: Aurora Switch
-#     manufacturer: Aurora
-#     model: Smart16ARelay51AU
-#     deviceProfileName: switch-power
-#   - id: eZEX/E210-KR210Z1-HA
-#     deviceLabel: eZEX Switch
-#     manufacturer:
-#     model: E210-KR210Z1-HA
-#     deviceProfileName: switch-power
-#   - id: "Jasco Products/45853"
-#     deviceLabel: GE Outlet
-#     manufacturer: Jasco Products
-#     model: 45853
-#     deviceProfileName: switch-power-smartplug
-#   - id: "Jasco Products/45856"
-#     deviceLabel: GE Switch
-#     manufacturer: Jasco Products
-#     model: 45856
-#     deviceProfileName: switch-power
-#   - id: MEGAMAN/SH-PSUKC44B-E
-#     deviceLabel: INGENIUM Outlet
-#     manufacturer: MEGAMAN
-#     model: SH-PSUKC44B-E
-#     deviceProfileName: switch-power-smartplug
-#   - id: "ClimaxTechnology/PSM_00.00.00.35TC"
-#     deviceLabel: Ozom Outlet
-#     manufacturer: ClimaxTechnology
-#     model: PSM_00.00.00.35TC
-#     deviceProfileName: switch-power-smartplug
-#   - id: "Philio/PAN18-v1.0.7"
-#     deviceLabel: Philio Outlet
-#     manufacturer:
-#     model: PAN18-v1.0.7
-#     deviceProfileName: switch-power-smartplug
-#   - id: SALUS/SX885ZB
-#     deviceLabel: Salus Switch
-#     manufacturer: SALUS
-#     model: SX885ZB
-#     deviceProfileName: switch-power
-#   - id: "AduroSmart Eria/AD-SmartPlug3001"
-#     deviceLabel: Eria Switch
-#     manufacturer: AduroSmart Eria
-#     model: AD-SmartPlug3001
-#     deviceProfileName: switch-power
-#   - id: "AduroSmart Eria/BPU3"
-#     deviceLabel: Eria Switch
-#     manufacturer: AduroSmart Eria
-#     model: BPU3
-#     deviceProfileName: switch-power
-#   - id: "AduroSmart Eria/BDP3001"
-#     deviceLabel: Eria Switch
-#     manufacturer: AduroSmart Eria
-#     model: BDP3001
-#     deviceProfileName: switch-power
-#   - id: "AduroSmart Eria/ZLL-DimmableLight"
-#     deviceLabel: Eria Light
-#     manufacturer: AduroSmart Eria
-#     model: ZLL-DimmableLight
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E26 opal 1000lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E26 opal 1000lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E12 W op/ch 400lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E12 W op/ch 400lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E17 W op/ch 400lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E17 W op/ch 400lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb GU10 W 400lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb GU10 W 400lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E27 W opal 1000lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E27 W opal 1000lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E26 W opal 1000lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E26 W opal 1000lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI bulb E14 W op/ch 400lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E14 W op/ch 400lm
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI transformer 10W"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI transformer 10W
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI Driver 10W"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI Driver 10W
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI transformer 30W"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI transformer 30W
-#     deviceProfileName: on-off-level
-#   - id: "IKEA/TRADFRI Driver 30W"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI Driver 30W
-#     deviceProfileName: on-off-level
-#   - id: Megaman/ZLL-DimmableLight
-#     deviceLabel: INGENIUM Light
-#     manufacturer: Megaman
-#     model: ZLL-DimmableLight
-#     deviceProfileName: on-off-level
-#   - id: Megaman/BSZTM002
-#     deviceLabel: INGENIUM Light
-#     manufacturer: MEGAMAN
-#     model: BSZTM002
-#     deviceProfileName: on-off-level
-#   - id: Megaman/BSZTM003
-#     deviceLabel: INGENIUM Light
-#     manufacturer: MEGAMAN
-#     model: BSZTM003
-#     deviceProfileName: on-off-level
-#   - id: "innr/RS 125"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: RS 125
-#     deviceProfileName: on-off-level
-#   - id: "innr/RB 165"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: RB 165
-#     deviceProfileName: on-off-level
-#   - id: "innr/RB 175 W"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: RB 175 W
-#     deviceProfileName: on-off-level
-#   - id: "innr/RB 145"
-#     deviceLabel: Innr Light
-#     manufacturer: innr
-#     model: RB 145
-#     deviceProfileName: on-off-level
-#   - id: Leviton/DG3HL
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: DG3HL
-#     deviceProfileName: on-off-level
-#   - id: Leviton/DG6HD
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturer: Leviton
-#     model: DG6HD
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/Classic A60 W clear"
-#     deviceLabel: OSRAM Light
-#     manufacturer: OSRAM
-#     model: Classic A60 W clear
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/Classic A60 W clear - LIGHTIFY"
-#     deviceLabel: OSRAM Light
-#     manufacturer: OSRAM
-#     model: Classic A60 W clear - LIGHTIFY
-#     deviceProfileName: on-off-level
-#   - id: "OSRAM/CLA60 OFD OSRAM"
-#     deviceLabel: OSRAM Light
-#     manufacturer: OSRAM
-#     model: CLA60 OFD OSRAM
-#     deviceProfileName: on-off-level
-#   - id: Philips/LWB004
-#     deviceLabel: Philips Light
-#     manufacturer: Philips
-#     model: LWB004
-#     deviceProfileName: on-off-level
-#   - id: Philips/LWB006
-#     deviceLabel: Philips Light
-#     manufacturer: Philips
-#     model: LWB006
-#     deviceProfileName: on-off-level
-#   - id: Philips/LWB007
-#     deviceLabel: Philips Light
-#     manufacturer: Philips
-#     model: LWB007
-#     deviceProfileName: on-off-level
-#   - id: Philips/LWB010
-#     deviceLabel: Philips Light
-#     manufacturer: Philips
-#     model: LWB010
-#     deviceProfileName: on-off-level
-#   - id: Philips/LWB014
-#     deviceLabel: Philips Light
-#     manufacturer: Philips
-#     model: LWB014
-#     deviceProfileName: on-off-level
-#   - id: sengled/E14-U43
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E14-U43
-#     deviceProfileName: on-off-level
+  - id: "Develco Products/Smart16ARelay51AU"
+    deviceLabel: Aurora Switch
+    manufacturer: Develco Products A/S
+    model: Smart16ARelay51AU
+    deviceProfileName: switch-power
+  - id: Aurora/Smart16ARelay51AU
+    deviceLabel: Aurora Switch
+    manufacturer: Aurora
+    model: Smart16ARelay51AU
+    deviceProfileName: switch-power
+  - id: eZEX/E210-KR210Z1-HA
+    deviceLabel: eZEX Switch
+    manufacturer:
+    model: E210-KR210Z1-HA
+    deviceProfileName: switch-power
+  - id: "Jasco Products/45853"
+    deviceLabel: GE Outlet
+    manufacturer: Jasco Products
+    model: 45853
+    deviceProfileName: switch-power-smartplug
+  - id: "Jasco Products/45856"
+    deviceLabel: GE Switch
+    manufacturer: Jasco Products
+    model: 45856
+    deviceProfileName: switch-power
+  - id: MEGAMAN/SH-PSUKC44B-E
+    deviceLabel: INGENIUM Outlet
+    manufacturer: MEGAMAN
+    model: SH-PSUKC44B-E
+    deviceProfileName: switch-power-smartplug
+  - id: "ClimaxTechnology/PSM_00.00.00.35TC"
+    deviceLabel: Ozom Outlet
+    manufacturer: ClimaxTechnology
+    model: PSM_00.00.00.35TC
+    deviceProfileName: switch-power-smartplug
+  - id: "Philio/PAN18-v1.0.7"
+    deviceLabel: Philio Outlet
+    manufacturer:
+    model: PAN18-v1.0.7
+    deviceProfileName: switch-power-smartplug
+  - id: SALUS/SX885ZB
+    deviceLabel: Salus Switch
+    manufacturer: SALUS
+    model: SX885ZB
+    deviceProfileName: switch-power
+  - id: "AduroSmart Eria/AD-SmartPlug3001"
+    deviceLabel: Eria Switch
+    manufacturer: AduroSmart Eria
+    model: AD-SmartPlug3001
+    deviceProfileName: switch-power
+  - id: "AduroSmart Eria/BPU3"
+    deviceLabel: Eria Switch
+    manufacturer: AduroSmart Eria
+    model: BPU3
+    deviceProfileName: switch-power
+  - id: "AduroSmart Eria/BDP3001"
+    deviceLabel: Eria Switch
+    manufacturer: AduroSmart Eria
+    model: BDP3001
+    deviceProfileName: switch-power
+  - id: "AduroSmart Eria/ZLL-DimmableLight"
+    deviceLabel: Eria Light
+    manufacturer: AduroSmart Eria
+    model: ZLL-DimmableLight
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E26 opal 1000lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 opal 1000lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E12 W op/ch 400lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E12 W op/ch 400lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E17 W op/ch 400lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E17 W op/ch 400lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb GU10 W 400lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb GU10 W 400lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E27 W opal 1000lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E27 W opal 1000lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E26 W opal 1000lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 W opal 1000lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI bulb E14 W op/ch 400lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E14 W op/ch 400lm
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI transformer 10W"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI transformer 10W
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI Driver 10W"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI Driver 10W
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI transformer 30W"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI transformer 30W
+    deviceProfileName: on-off-level
+  - id: "IKEA/TRADFRI Driver 30W"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI Driver 30W
+    deviceProfileName: on-off-level
+  - id: Megaman/ZLL-DimmableLight
+    deviceLabel: INGENIUM Light
+    manufacturer: Megaman
+    model: ZLL-DimmableLight
+    deviceProfileName: on-off-level
+  - id: Megaman/BSZTM002
+    deviceLabel: INGENIUM Light
+    manufacturer: MEGAMAN
+    model: BSZTM002
+    deviceProfileName: on-off-level
+  - id: Megaman/BSZTM003
+    deviceLabel: INGENIUM Light
+    manufacturer: MEGAMAN
+    model: BSZTM003
+    deviceProfileName: on-off-level
+  - id: "innr/RS 125"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RS 125
+    deviceProfileName: on-off-level
+  - id: "innr/RB 165"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 165
+    deviceProfileName: on-off-level
+  - id: "innr/RB 175 W"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 175 W
+    deviceProfileName: on-off-level
+  - id: "innr/RB 145"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 145
+    deviceProfileName: on-off-level
+  - id: Leviton/DG3HL
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: DG3HL
+    deviceProfileName: on-off-level
+  - id: Leviton/DG6HD
+    deviceLabel: Leviton Dimmer Switch
+    manufacturer: Leviton
+    model: DG6HD
+    deviceProfileName: on-off-level
+  - id: "OSRAM/Classic A60 W clear"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Classic A60 W clear
+    deviceProfileName: on-off-level
+  - id: "OSRAM/Classic A60 W clear - LIGHTIFY"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Classic A60 W clear - LIGHTIFY
+    deviceProfileName: on-off-level
+  - id: "OSRAM/CLA60 OFD OSRAM"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: CLA60 OFD OSRAM
+    deviceProfileName: on-off-level
+  - id: Philips/LWB004
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LWB004
+    deviceProfileName: on-off-level
+  - id: Philips/LWB006
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LWB006
+    deviceProfileName: on-off-level
+  - id: Philips/LWB007
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LWB007
+    deviceProfileName: on-off-level
+  - id: Philips/LWB010
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LWB010
+    deviceProfileName: on-off-level
+  - id: Philips/LWB014
+    deviceLabel: Philips Light
+    manufacturer: Philips
+    model: LWB014
+    deviceProfileName: on-off-level
+  - id: sengled/E14-U43
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E14-U43
+    deviceProfileName: on-off-level
 #   - id: "AduroSmart Eria/ZLL-ExtendedColor"
 #     deviceLabel: Eria Light
 #     manufacturer: AduroSmart Eria
@@ -1921,16 +1921,16 @@ zigbeeManufacturer:
 #     manufacturer: CentraLite
 #     model: 4257050-ZHAC
 #     deviceProfileName: plug-level-power
-#   - id: "IKEA/TRADFRI bulb E27 CWS opal 600lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E27 CWS opal 600lm
-#     deviceProfileName: color-bulb
-#   - id: "IKEA/TRADFRI bulb E26 CWS opal 600lm"
-#     deviceLabel: IKEA Light
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI bulb E26 CWS opal 600lm
-#     deviceProfileName: color-bulb
+  - id: "IKEA/TRADFRI bulb E27 CWS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E27 CWS opal 600lm
+    deviceProfileName: color-bulb
+  - id: "IKEA/TRADFRI bulb E26 CWS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 CWS opal 600lm
+    deviceProfileName: color-bulb
 #   - id: Smartenit/ZBMPlug15
 #     deviceLabel: Smartenit Outlet
 #     manufacturer: Compacta International, Ltd

@@ -1,0 +1,13 @@
+name: alarm-battery
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: battery
+    version: 1
+  categories:
+  - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-siren-13  # Filtering non-supported alarm values (signal/strobe only)

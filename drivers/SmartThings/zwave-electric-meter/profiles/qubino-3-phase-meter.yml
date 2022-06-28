@@ -1,0 +1,30 @@
+name: qubino-3-phase-meter
+components:
+- id: main
+  capabilities:
+  - id: energyMeter
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: endpointMeter1
+  capabilities:
+  - id: powerMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: endpointMeter2
+  capabilities:
+  - id: powerMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: endpointMeter3
+  capabilities:
+  - id: powerMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter

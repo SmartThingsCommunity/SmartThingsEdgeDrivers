@@ -1,0 +1,21 @@
+name: multifunctional-siren
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  categories:
+  - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-siren-11   # Filtering non-supported alarm values
