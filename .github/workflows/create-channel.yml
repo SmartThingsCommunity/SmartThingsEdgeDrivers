@@ -95,6 +95,7 @@ jobs:
       matrix:
         driver: ${{ fromJSON(needs.download-artifacts.outputs.drivers) }}
     steps:
+      - uses: haya14busa/action-workflow_run-status@v1
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v2
         with:

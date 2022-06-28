@@ -65,7 +65,6 @@ else:
       archiveHash = driver_info_response_json[ARCHIVEHASH]
       packageKey = driver_info_response_json[PACKAGEKEY]
       if VERSION in driver.keys() and DRIVERID in driver.keys():
-        print("Currently-uploaded driver package: {} driver id: {} version: {}".format(packageKey, driver[DRIVERID], driver[VERSION]))
         uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: archiveHash}
 
 # For each driver, first package the driver locally, then upload it
