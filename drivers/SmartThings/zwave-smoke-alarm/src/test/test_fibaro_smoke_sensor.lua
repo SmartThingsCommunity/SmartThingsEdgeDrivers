@@ -60,7 +60,7 @@ test.register_coroutine_test(
           {
               preferences = {
                 smokeSensorSensitivity = 0,
-                zwaveNotificationStatus = 2,
+                zwaveNotificationStatus = 1,
                 indicatorNotification = 4,
                 soundNotificationStatus = 7,
                 tempReportInterval = 30,
@@ -98,7 +98,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_device,
-              Configuration:Set({parameter_number=2, size=1, configuration_value=2})
+              Configuration:Set({parameter_number=2, size=1, configuration_value=1})
           )
       )
 

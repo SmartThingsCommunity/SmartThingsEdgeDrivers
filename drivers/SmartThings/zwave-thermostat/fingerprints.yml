@@ -47,6 +47,12 @@ zwaveManufacturer:
     productType: 0x6501
     productId: 0x000C
     deviceProfileName: base-thermostat
+  - id: "0098/6501/000B"
+    deviceLabel: Iris Thermostat
+    manufacturerId: 0x0098
+    productType: 0x6501
+    productId: 0x000B
+    deviceProfileName: base-thermostat
   - id: "fibaro/thermostat/1"
     deviceLabel: Fibaro Thermostat
     manufacturerId: 0x010F

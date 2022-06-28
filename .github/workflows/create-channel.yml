@@ -88,11 +88,13 @@ jobs:
       matrix:
         driver: ${{ fromJSON(needs.download-artifacts.outputs.drivers) }}
     steps:
+      - uses: haya14busa/action-workflow_run-status@v1
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: upload-driver-packages.yml
           name: ${{ matrix.driver }}
+          run_id: ${{ github.event.workflow_run.id }}
       - name: Upload the driver
         id: driver
         run: |
@@ -174,6 +176,7 @@ jobs:
     needs:
       - get-invite
       - download-artifacts
+      - assign-artifact
     steps:
       - name: Find Comment
         uses: peter-evans/find-comment@v2
