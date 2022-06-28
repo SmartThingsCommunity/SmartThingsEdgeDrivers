@@ -1,0 +1,39 @@
+name: aeon-siren
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Siren
+metadata:
+  mnmn: SmartThingsEdge
+  vid: Aeon_Siren  # Filtering non-supported alarm values (signal/strobe only)
+preferences:
+- name: type
+  title: Sound type
+  description: Type of siren sound
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      1: Siren sound 1
+      2: Siren sound 2
+      3: Siren sound 3
+      4: Siren sound 4
+      5: Siren sound 5
+    default: 1
+- name: volume
+  title: Volume
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      1: 88 dB
+      2: 100 dB
+      3: 105 dB
+    default: 3

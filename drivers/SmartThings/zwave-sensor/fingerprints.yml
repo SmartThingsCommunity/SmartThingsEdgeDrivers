@@ -514,18 +514,18 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0800
 #     deviceProfileName: motion-battery-temperature-illuminance-acceleration
-#   - id: 0084/0063/010C
-#     deviceLabel: SmartThings Water Leak Sensor
-#     manufacturerId: 0x0084
-#     productType: 0x0063
-#     productId: 0x010C
-#     deviceProfileName: water-battery-temperature
-#   - id: 0084/0053/0216
-#     deviceLabel: FortrezZ Water Leak Sensor
-#     manufacturerId: 0x0084
-#     productType: 0x0053
-#     productId: 0x0216
-#     deviceProfileName: water-battery-temperature
+  - id: 0084/0063/010C
+    deviceLabel: SmartThings Water Leak Sensor
+    manufacturerId: 0x0084
+    productType: 0x0063
+    productId: 0x010C
+    deviceProfileName: water-battery-temperature
+  - id: 0084/0053/0216
+    deviceLabel: FortrezZ Water Leak Sensor
+    manufacturerId: 0x0084
+    productType: 0x0053
+    productId: 0x0216
+    deviceProfileName: water-battery-temperature
 #   - id: fibaro/motion/zw5
 #     deviceLabel: Fibaro Motion Sensor
 #     manufacturerId: 0x010F
