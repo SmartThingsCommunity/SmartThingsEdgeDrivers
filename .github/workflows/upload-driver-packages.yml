@@ -33,7 +33,7 @@ jobs:
       - name: Package the driver
         working-directory: ${{ matrix.driver }}
         run: |
-          zip ${{env.package_key}}.zip $(find . -name "*.yml" -o -name "*.lua" -o -name "*.yaml") -X -x "*test*"
+          zip -v ${{env.package_key}}.zip config.yml fingerprints.yml $(find profiles -name "*.y*ml") $(find . -name "*.lua") -x "*test*"
       - name: Upload packaged driver artifact
         uses: actions/upload-artifact@v3
         with:
@@ -41,7 +41,7 @@ jobs:
           path: |
             ${{ matrix.driver }}*.zip
 
-  save-pr-number:
+  save-pr-info:
     runs-on: ubuntu-latest
     steps:
       - run: echo ${{ github.event.number }} > pr_number.txt
@@ -51,10 +51,6 @@ jobs:
           name: pr_number
           path: |
             pr_number.txt
-
-  save-branch-name:
-    runs-on: ubuntu-latest
-    steps:
       - run: echo ${{ github.head_ref }} > head_ref.txt
       - name: Upload packaged driver artifact
         uses: actions/upload-artifact@v3
