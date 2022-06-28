@@ -42,6 +42,56 @@ end
 
 test.set_test_init_function(test_init)
 
+test.register_coroutine_test(
+  "Refresh capability should evoke the correct Z-Wave GETs",
+  function()
+    test.socket.zwave:__set_channel_ordering('relaxed')
+    test.socket.capability:__queue_receive({
+      mock_zooz_zen_30_dimmer_relay.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} }
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels={}
+          })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchMultilevel:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels={}
+          })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels={1}
+          })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_zooz_zen_30_dimmer_relay,
+        Version:Get({})
+      )
+    )
+  end
+)
+
 test.register_message_test(
   "Basic Report (0x00) should be handled by switch1 component",
   {

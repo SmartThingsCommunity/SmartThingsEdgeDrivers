@@ -92,10 +92,9 @@ local function added_handler(self, device)
 end
 
 local do_refresh = function(self, device)
-  device:send_to_component(SwitchBinary:Get({}), "main")
   device:send_to_component(SwitchMultilevel:Get({}), "main")
   device:send_to_component(SwitchBinary:Get({}), "switch1")
-  device:get(Version:Get({}))
+  device:send(Version:Get({}))
 end
 
 local zooz_zen_30_dimmer_relay_double_switch = {
