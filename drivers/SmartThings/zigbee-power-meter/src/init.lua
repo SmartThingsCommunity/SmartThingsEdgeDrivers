@@ -42,7 +42,7 @@ local device_init = function(self, device)
   end
 
   if device:get_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) == nil then
-    device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
+    device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1000, {persist = true})
   end
 end
 
@@ -50,9 +50,14 @@ local zigbee_power_meter_driver_template = {
   supported_capabilities = {
     capabilities.refresh,
     capabilities.powerMeter,
-    capabilities.energyMeter
+    capabilities.energyMeter,
+    capabilities.powerConsumptionReport,
   },
-  sub_drivers = {},
+  sub_drivers = {
+    require("ezex"),
+    require("frient"),
+    require("shinasystems"),
+  },
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,

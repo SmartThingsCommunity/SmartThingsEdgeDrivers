@@ -2,6 +2,21 @@ zigbeeManufacturer:
   - id: "E240-KR080Z0-HA"
     deviceLabel: Energy Monitor
     model: "E240-KR080Z0-HA"
+    deviceProfileName: power-meter-consumption-report
+  - id: "Develco/ZHEMI101"
+    deviceLabel: frient Energy Monitor
+    manufacturer: Develco
+    model: "ZHEMI101"
+    deviceProfileName: power-meter
+  - id: "Develco/EMIZB-132"
+    deviceLabel: frient Energy Monitor
+    manufacturer: Develco Products A/S
+    model: "EMIZB-132"
+    deviceProfileName: power-meter
+  - id: "ShinaSystem/PMM-300Z1"
+    deviceLabel: SiHAS Energy Monitor
+    manufacturer: ShinaSystem
+    model: "PMM-300Z1"
     deviceProfileName: power-meter
 zigbeeGeneric:
   - id: "genericMeter"
