@@ -105,14 +105,15 @@ jobs:
         id: driver
         run: |
           echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)"
-      - name: Mark check as failed
-        if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
-        uses: Sibz/github-status-action@v1
-        with:
-          context: ${{ format('{0} driver upload', matrix.driver) }}
-          description: ${{ steps.driver.outputs.response }}
-          state: 'failure'
-          sha: ${{ needs.download-artifacts.outputs.sha }}
+      # TODO: Most actions on the market don't work on workflow_run events
+      # - name: Mark check as failed
+      #   if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
+      #   uses: Sibz/github-status-action@v1
+      #   with:
+      #     context: ${{ format('{0} driver upload', matrix.driver) }}
+      #     description: ${{ steps.driver.outputs.response }}
+      #     state: 'failure'
+      #     sha: ${{ needs.download-artifacts.outputs.sha }}
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
         uses: actions/github-script@v3
