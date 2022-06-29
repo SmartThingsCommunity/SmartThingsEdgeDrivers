@@ -58,3 +58,10 @@ jobs:
           name: head_ref
           path: |
             head_ref.txt
+      - run: echo ${{ github.event.pull_request.head.sha }} > sha.txt
+      - name: Upload packaged driver artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sha
+          path: |
+            sha.txt
