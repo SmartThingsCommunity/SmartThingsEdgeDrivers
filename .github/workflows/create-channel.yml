@@ -12,7 +12,7 @@ jobs:
       drivers: ${{ steps.set-output.outputs.drivers }}
       pr_number: ${{ steps.pr_number.outputs.pr_number }}
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
-      sha: ${{ steps.head_ref.outpus.sha }}
+      sha: ${{ steps.sha.outputs.sha }}
     steps:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v2
