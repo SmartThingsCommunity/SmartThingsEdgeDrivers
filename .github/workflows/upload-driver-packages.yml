@@ -10,7 +10,7 @@ jobs:
     outputs:
       changed-drivers: ${{ steps.set-outputs.outputs.changed-drivers }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: shallow fetch base revision
         run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - name: get changed drivers
@@ -27,7 +27,7 @@ jobs:
       matrix:
         driver: ${{ fromJSON(needs.find-changed-drivers.outputs.changed-drivers) }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: echo "package_key=$(basename $(pwd))" >> $GITHUB_ENV
         working-directory: ${{ matrix.driver }}
       - name: Package the driver
