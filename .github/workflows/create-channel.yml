@@ -29,15 +29,15 @@ jobs:
           echo "::set-output name=drivers::$(ls | jq -Rrsc 'split("\n")[:-1]')"
         id: set-output
       - id: pr_number
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.setOutput('pr_number', ${{ env.pr_number }})
       - id: head_ref
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.setOutput('head_ref', '${{ env.head_ref }}')
       - id: sha
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.setOutput('sha', '${{ env.sha }}')
 
@@ -56,7 +56,7 @@ jobs:
           method: GET
           bearerToken: ${{ secrets.TOKEN }}
       - name: Store channel name
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.exportVariable('channel_name', '${{ format('{0}{1}', needs.download-artifacts.outputs.head_ref, needs.download-artifacts.outputs.pr_number) }}')
       - name: Create the channel
@@ -82,7 +82,7 @@ jobs:
           echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
       - name: set outputs
         id: set-outputs
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.setOutput('channel-json', ${{ env.CHANNEL_JSON }})
 
@@ -116,7 +116,7 @@ jobs:
       #     sha: ${{ needs.download-artifacts.outputs.sha }}
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           script: |
               core.setFailed('The driver failed to upload: ${{ steps.driver.outputs.response }}')
@@ -182,7 +182,7 @@ jobs:
           echo '${{ steps.current.outputs.response }}' | jq -r ' .items[0].acceptUrl ' | xargs -I % echo 'INVITE_URL=%' >> $GITHUB_ENV
       - name: Set ouput
         id: set-output
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: core.setOutput('invite-url', "${{ env.INVITE_URL }}" )
 
