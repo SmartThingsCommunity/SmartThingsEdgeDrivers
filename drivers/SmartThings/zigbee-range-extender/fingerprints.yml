@@ -22,5 +22,5 @@ zigbeeManufacturer:
   - id: "AEOTEC/WG001-Z01"
     manufacturer: AL001
     model: WG001-Z01
-    deviceLabel: Aeotec Range Extender
+    deviceLabel: Aeotec Range Extender Zi
     deviceProfileName: range-extender
