@@ -293,7 +293,8 @@ local zigbee_thermostat_driver = {
     require("stelpro-ki-zigbee-thermostat"),
     require("stelpro"),
     require("lux-konoz"),
-    require("leviton")
+    require("leviton"),
+    require("popp_danfoss")
   },
 }
 
