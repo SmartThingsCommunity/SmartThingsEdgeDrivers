@@ -1,4 +1,4 @@
-name: zooz-zen-30-dimmer-relay-firmware-new
+name: zooz-zen-30-dimmer-relay-new
 components:
   - id: main
     capabilities:
@@ -281,14 +281,4 @@ preferences:
         0: "Normal"
         1: "Reverse"
         2: "Toggle"
-      default: 0
-  - name: "relayPhysicalDisabledBeh"
-    title: "Relay Physical Disabled Behavior"
-    description: "Relay Physical Disabled Behavior"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        0: "Change Status/LED"
-        1: "Don't Change Status/LED"
       default: 0
