@@ -1320,7 +1320,7 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic A60 TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY A19 Tunable White"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1330,7 +1330,7 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "LEDVANCE/A19 TW 10 year"
     deviceLabel: SYLVANIA Light
     manufacturer: LEDVANCE
@@ -1865,12 +1865,12 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/CLA60 TW OSRAM"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: CLA60 TW OSRAM
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW001
     deviceLabel: Philips Light
     manufacturer: Philips
