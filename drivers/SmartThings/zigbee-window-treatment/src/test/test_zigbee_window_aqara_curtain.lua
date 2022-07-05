@@ -20,6 +20,8 @@ local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local test = require "integration_test"
+test.add_package_capability("initializedState.yaml") -- Need to pass all the TCs in other sub drivers.
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -58,11 +60,11 @@ test.register_coroutine_test(
         attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
       }
     })
-        test.socket.capability:__expect_send({
+    test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "aqara.initializedstate", component_id = "main",
-        attribute_id = "supportedInitializedState", state = {  }
+        attribute_id = "supportedInitializedState", state = { value= {"initialize"} }
       }
     })
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})

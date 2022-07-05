@@ -4,6 +4,9 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
+local test = require "integration_test"
+-- test.add_package_capability("initializedState.yaml") -- Need to pass all the TCs in other sub drivers.
+test.add_package_capability("../src/aqara/capabilities/initializedState/initializedState.yaml")
 
 local initializedstate = capabilities["aqara.initializedstate"]
 
@@ -12,6 +15,7 @@ local softTouchPreferenceId = "aqara.softTouch"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
+local AnalogOutput = clusters.AnalogOutput
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
 local INIT_STATE = "initState"
@@ -246,8 +250,8 @@ local aqara_window_treatment_handler = {
         [0x0404] = motion_state_attr_handler,
         [PREF_ATTRIBUTE_ID] = pref_attr_handler,
       },
-      [0x000D] = {
-        [0x0055] = current_position_attr_handler,
+      [AnalogOutput.ID] = {
+        [AnalogOutput.attributes.PresentValue.ID] = current_position_attr_handler,
       }
     }
   },
