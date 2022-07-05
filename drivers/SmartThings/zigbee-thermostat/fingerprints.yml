@@ -13,7 +13,12 @@ zigbeeManufacturer:
     deviceLabel: Danfoss Thermostat
     manufacturer: Danfoss
     model: eTRV0100
-    deviceProfileName: thermostat-battery-powerSource
+    deviceProfileName: thermostat-popp-danfoss
+  - id: "D5X84YU/eT093WRO"
+    deviceLabel: POPP Thermostat
+    manufacturer: D5X84YU
+    model: eT093WRO
+    deviceProfileName: thermostat-popp-danfoss
   - id: "Zen Within/Zen-01"
     deviceLabel: Zen Thermostat
     manufacturer: Zen Within

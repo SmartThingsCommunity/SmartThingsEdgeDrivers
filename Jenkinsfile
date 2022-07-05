@@ -1,8 +1,9 @@
-def getEnvName(branch) {
-  print(branch)
+def getEnvName() {
+  def branch = "${env.GIT_BRANCH}"
+  print branch
   if (branch == "origin/main") {return "ALPHA"}
-  if (branch == "origin/beta") {return "BETA"}
-  if (branch == "origin/production") {return "PRODUCTION"}
+  else if (branch == "origin/beta") {return "BETA"}
+  else if (branch == "origin/production") {return "PROD"}
 }
 
 pipeline {
@@ -13,19 +14,34 @@ pipeline {
       args '--entrypoint= -u 0:0'
     }
   }
+  environment {
+    BRANCH = getEnvName()
+  }
   stages {
-    stage('update') {
+    stage('requirements') {
       steps {
         script {
-          // ugly hacks to get branch name and correct env variables for that branch
-          branchName = sh(returnStdout: true, script: 'echo $GIT_BRANCH').trim()
-          env_name = getEnvName(branchName)
-          env.ENVIRONMENT_URL = sh(returnStdout: true, script: "echo \$${env_name+'_ENVIRONMENT_URL'}").trim()
-          env.CHANNEL_ID = sh(returnStdout: true, script: "echo \$${env_name+'_CHANNEL_ID'}").trim()
-          env.TOKEN = sh(returnStdout: true, script: "echo \$${env_name+'_TOKEN'}").trim()
+          sh 'pip3 install -r tools/requirements.txt'
         }
-        sh 'pip3 install -r ./tools/requirements.txt'
-        sh 'python3 ./tools/deploy.py'
+      }
+    }
+    stage('update') {
+      matrix {
+        axes {
+          axis {
+            name 'ENVIRONMENT'
+            values 'DEV', 'STAGING', 'ACCEPTANCE', 'PRODUCTION'
+          }
+        }
+        stages {
+          stage('environment_update') {
+            steps {
+              script {
+                sh 'python3 tools/deploy.py'
+              }
+            }
+          }
+        }
       }
     }
   }
