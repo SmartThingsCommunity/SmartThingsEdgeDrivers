@@ -67,13 +67,13 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 300, 1)
+        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 3600, 1)
       }
     )
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
+        PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
       }
     )
 

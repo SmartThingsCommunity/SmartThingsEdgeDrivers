@@ -2,6 +2,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local IASZone = clusters.IASZone
+local PowerConfiguration = clusters.PowerConfiguration
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.magnet.agl02" }
@@ -12,8 +13,16 @@ local CONFIGURATIONS = {
     cluster = IASZone.ID,
     attribute = IASZone.attributes.ZoneStatus.ID,
     minimum_interval = 30,
-    maximum_interval = 300,
+    maximum_interval = 3600,
     data_type = IASZone.attributes.ZoneStatus.base_type,
+    reportable_change = 1
+  },
+  {
+    cluster = PowerConfiguration.ID,
+    attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
+    minimum_interval = 30,
+    maximum_interval = 3600,
+    data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
     reportable_change = 1
   }
 }
