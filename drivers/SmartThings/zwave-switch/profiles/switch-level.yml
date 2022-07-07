@@ -10,3 +10,15 @@ components:
     version: 1
   categories:
   - name: Switch
+preferences:
+    name: "ledIndicator"
+    title: "LED Indicator"
+    description: "Turn LED indicator on..."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "on"
+        1: "off"
+        2: "never"
+      defaultValue: 1
