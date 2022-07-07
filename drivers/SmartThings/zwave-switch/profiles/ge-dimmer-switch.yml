@@ -18,7 +18,7 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
-        0: "on"
-        1: "off"
+        0: "off"
+        1: "on"
         2: "never"
-      defaultValue: 1
+      defaultValue: 0
