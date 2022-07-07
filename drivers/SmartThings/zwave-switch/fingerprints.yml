@@ -21,17 +21,17 @@ zwaveManufacturer:
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x4457
-    deviceProfileName: switch-level
+    deviceProfileName: ge-dimmer-switch
   - id: 0063/4944
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x4944
-    deviceProfileName: switch-level
+    deviceProfileName: ge-dimmer-switch
   - id: 0063/5044
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x5044
-    deviceProfileName: switch-level
+    deviceProfileName: ge-dimmer-switch
   - id: "Fibaro/0F06"
     deviceLabel: Fibaro Outlet
     manufacturerId: 0x0072
