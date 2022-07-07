@@ -266,6 +266,15 @@ local devices = {
       loadControllMode = {parameter_number = 30, size = 1},
       levelCorrection = {parameter_number = 38, size = 2}
     }
+  },
+  GE_DIMMER_SWITCH = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0063,
+      product_types = {0x4457, 0x4944, 0x5044}
+    },
+    PARAMETERS = {
+      ledIndicator = {parameter_number = 3, size = 1}
+    }
   }
 }
 
