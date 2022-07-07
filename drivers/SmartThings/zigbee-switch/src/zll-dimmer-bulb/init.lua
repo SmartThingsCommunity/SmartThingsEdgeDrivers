@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local colorTemperature_defaults = require "st.zigbee.defaults.colorTemperature_defaults"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -177,9 +178,7 @@ local function handle_set_level(driver, device, cmd)
 end
 
 local function handle_set_color_temperature(driver, device, cmd)
-  local temp_in_mired = math.floor(1000000 / cmd.args.temperature)
-  device:send(OnOff.commands.On(device))
-  device:send(ColorControl.commands.MoveToColorTemperature(device, temp_in_mired, 0x0000))
+  colorTemperature_defaults.set_color_temperature(driver, device, cmd)
 
   local function query_device()
     device:refresh()
