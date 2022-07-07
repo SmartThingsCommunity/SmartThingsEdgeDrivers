@@ -19,6 +19,8 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
+local test = require "integration_test"
+test.add_package_capability("initializedState.yaml")
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("window-treatment-profile.yml") }

@@ -23,6 +23,8 @@ local utils = require "st.utils"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local test = require "integration_test"
+test.add_package_capability("initializedState.yaml")
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration

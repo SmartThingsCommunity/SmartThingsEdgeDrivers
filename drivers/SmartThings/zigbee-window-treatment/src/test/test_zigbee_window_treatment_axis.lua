@@ -19,6 +19,8 @@ local clusters = require "st.zigbee.zcl.clusters"
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local test = require "integration_test"
+test.add_package_capability("initializedState.yaml")
 
 local Basic = clusters.Basic
 local Level = clusters.Level

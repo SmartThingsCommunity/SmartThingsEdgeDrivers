@@ -20,13 +20,12 @@ local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local test = require "integration_test"
+test.add_package_capability("initializedState.yaml")
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local Groups = clusters.Groups
-
-local test = require "integration_test"
-test.add_package_capability("initializedState.yaml") -- Need to pass all the TCs in other sub drivers.
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
