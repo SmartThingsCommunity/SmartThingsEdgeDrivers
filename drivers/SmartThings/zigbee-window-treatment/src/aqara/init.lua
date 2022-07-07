@@ -4,9 +4,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
-local test = require "integration_test"
--- test.add_package_capability("initializedState.yaml") -- Need to pass all the TCs in other sub drivers.
-test.add_package_capability("../src/aqara/capabilities/initializedState/initializedState.yaml")
 
 local initializedstate = capabilities["aqara.initializedstate"]
 
@@ -16,6 +13,7 @@ local softTouchPreferenceId = "aqara.softTouch"
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
+local Groups = clusters.Groups
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
 local INIT_STATE = "initState"
@@ -85,6 +83,8 @@ local function device_added(driver, device)
 
   write_pref_attribute(device, "\x00\x02\x00\x00\x00\x00\x00")
   write_pref_attribute(device, "\x00\x08\x00\x00\x00\x00\x00")
+
+  device:send(Groups.server.commands.RemoveAllGroups(device))
 end
 
 local function device_info_changed(driver, device, event, args)
