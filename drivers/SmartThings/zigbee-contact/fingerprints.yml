@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.magnet.agl02"
+    deviceLabel: Aqara Door and Window Sensor T1
+    manufacturer: LUMI
+    model: lumi.magnet.agl02
+    deviceProfileName: contact-battery-profile
   - id: "NYCE/3010"
     deviceLabel: NYCE Open/Closed Sensor
     manufacturer: NYCE
