@@ -23,7 +23,8 @@ local IlluminanceMeasurement = clusters.IlluminanceMeasurement
 
 local zigbee_illuminance_driver = {
   supported_capabilities = {
-    capabilities.illuminanceMeasurement
+    capabilities.illuminanceMeasurement,
+    capabilities.battery
   },
 }
 
