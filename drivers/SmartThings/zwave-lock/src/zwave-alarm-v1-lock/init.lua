@@ -153,6 +153,7 @@ local function alarm_report_handler(driver, device, cmd)
   end
 
   if (event ~= nil) then
+    event["state_change"] = true
     device:emit_event(event)
   end
 end
