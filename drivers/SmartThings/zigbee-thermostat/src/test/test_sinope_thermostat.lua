@@ -158,7 +158,7 @@ test.register_coroutine_test(
           timeFormat = 0 --12h
         }
       }
-      test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
+      test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates2))
       test.socket.zigbee:__expect_send({
         mock_device.id,
         cluster_base.write_attribute(mock_device,

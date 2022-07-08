@@ -302,6 +302,12 @@ zwaveManufacturer:
     productType: 0x0651
     productId: 0xF51C
     deviceProfileName: switch-5
+  - id: 027A/A000/A008
+    deviceLabel: Zooz ZEN 30 Double Switch
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA008
+    deviceProfileName: zooz-zen-30-dimmer-relay
   - id: 0086/0003/000B
     deviceLabel: Aeon Smart Strip
     manufacturerId: 0x0086

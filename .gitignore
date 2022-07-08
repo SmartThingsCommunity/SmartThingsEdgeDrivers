@@ -1,0 +1,5 @@
+*.log
+.idea/
+.vscode/
+docs/
+lua_libs-api_*

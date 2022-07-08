@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.switch.b1laus01"
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.b1laus01
+    deviceProfileName: basic-switch
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch

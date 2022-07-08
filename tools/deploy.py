@@ -1,14 +1,25 @@
 import os, subprocess, requests, json, time, yaml, hashlib
 
-ENVIRONMENT_URL = os.environ.get('ENVIRONMENT_URL')
+BRANCH = os.environ.get('BRANCH')
+ENVIRONMENT = os.environ.get('ENVIRONMENT')
+print(BRANCH)
+print(ENVIRONMENT)
+branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
+ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
-CHANNEL_ID = os.environ.get('CHANNEL_ID')
+CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
+if not CHANNEL_ID:
+  print("No channel id specified, aborting.")
+  exit(0)
+
 UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
-TOKEN = os.environ.get('TOKEN')
+TOKEN = os.environ.get(ENVIRONMENT+'_TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
 ARCHIVEHASH = "archiveHash"
 PACKAGEKEY = "packageKey"
+
+print(ENVIRONMENT_URL)
 
 # Make sure we're running in the root of the git directory
 a = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True)
@@ -52,7 +63,6 @@ else:
       archiveHash = driver_info_response_json[ARCHIVEHASH]
       packageKey = driver_info_response_json[PACKAGEKEY]
       if VERSION in driver.keys() and DRIVERID in driver.keys():
-        print("Currently-uploaded driver package: {} driver id: {} version: {}".format(packageKey, driver[DRIVERID], driver[VERSION]))
         uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: archiveHash}
 
 # For each driver, first package the driver locally, then upload it
