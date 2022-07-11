@@ -250,15 +250,33 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")})
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
+
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
     updates.preferences["aqara.opencloseDirection"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
   end
@@ -277,13 +295,30 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x00\x00")})
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
     updates.preferences["aqara.softTouch"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x01\x00")})
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
   end
 )
 

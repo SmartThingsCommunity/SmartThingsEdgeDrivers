@@ -4,6 +4,6 @@
   "description": "Open/Close the curtain manually",
   "preferenceType": "boolean",
   "definition": {
-    "default": false
+    "default": true
   }
 }

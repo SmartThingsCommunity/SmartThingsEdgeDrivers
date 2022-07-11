@@ -4,6 +4,6 @@
   "description": "Открыть/закрыть шторку вручную",
   "preferenceType": "boolean",
   "definition": {
-    "default": false
+    "default": true
   }
 }

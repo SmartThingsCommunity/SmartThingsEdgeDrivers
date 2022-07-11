@@ -109,6 +109,8 @@ local function device_info_changed(driver, device, event, args)
       end
     end
   end
+
+  device:send(Groups.server.commands.RemoveAllGroups(device))
 end
 
 local function setInitializedState_handler(driver, device, command)

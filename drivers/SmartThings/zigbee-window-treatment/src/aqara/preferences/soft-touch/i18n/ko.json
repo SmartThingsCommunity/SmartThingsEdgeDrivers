@@ -4,6 +4,6 @@
   "description": "수동으로 커튼 열기/닫기",
   "preferenceType": "boolean",
   "definition": {
-    "default": false
+    "default": true
   }
 }

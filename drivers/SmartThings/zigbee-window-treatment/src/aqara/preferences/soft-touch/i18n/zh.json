@@ -4,6 +4,6 @@
   "description": "手动开/关窗帘",
   "preferenceType": "boolean",
   "definition": {
-    "default": false
+    "default": true
   }
 }
