@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.switch.b1laus01"
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.b1laus01
+    deviceProfileName: basic-switch
 #   # EZEX
 #   - id: "eZEX/E220-KR2N0Z0-HA"
 #     deviceLabel: eZEX Switch
@@ -187,11 +192,11 @@ zigbeeManufacturer:
 #     model: DoubleSocket50AU
 #     deviceProfileName: switch-power-2
 #   #Sinope
-#   - id: "Sinope Switch/RM3250ZB"
-#     deviceLabel: "RM3250ZB Sinope Load Controller"
-#     manufacturer: Sinope Technologies
-#     model: RM3250ZB
-#     deviceProfileName: switch-power-smartplug
+  - id: "Sinope Switch/RM3250ZB"
+    deviceLabel: "RM3250ZB Sinope Load Controller"
+    manufacturer: Sinope Technologies
+    model: RM3250ZB
+    deviceProfileName: switch-power-smartplug
 #   - id: "Sinope Dimmer Switch/DM2500ZB"
 #     deviceLabel: "DM2500ZB Sinope Dimmer"
 #     manufacturer: Sinope Technologies
@@ -1076,21 +1081,21 @@ zigbeeManufacturer:
     manufacturer: CREE
     model: "Connected A-19 60W Equivalent"
     deviceProfileName: on-off-level
-#   - id: "Jasco Products/45852"
-#     deviceLabel: GE Dimmer Switch
-#     manufacturer: Jasco Products
-#     model: 45852
-#     deviceProfileName: plug-level-power
-#   - id: "Jasco Products/45857"
-#     deviceLabel: GE Dimmer Switch
-#     manufacturer: Jasco Products
-#     model: 45857
-#     deviceProfileName: switch-level-power
-#   - id: "sengled/Z01-CIA19NAE26"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: Z01-CIA19NAE26
-#     deviceProfileName: light-level-power
+  - id: "Jasco Products/45852"
+    deviceLabel: GE Dimmer Switch
+    manufacturer: Jasco Products
+    model: 45852
+    deviceProfileName: plug-level-power
+  - id: "Jasco Products/45857"
+    deviceLabel: GE Dimmer Switch
+    manufacturer: Jasco Products
+    model: 45857
+    deviceProfileName: switch-level-power
+  - id: "sengled/Z01-CIA19NAE26"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: Z01-CIA19NAE26
+    deviceProfileName: light-level-power
 #   - id: "Eaton/Halo_RL5601"
 #     deviceLabel: Halo Light
 #     manufacturer: Eaton
