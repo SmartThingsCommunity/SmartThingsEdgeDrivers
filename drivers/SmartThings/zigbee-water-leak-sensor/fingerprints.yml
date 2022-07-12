@@ -1,0 +1,96 @@
+zigbeeManufacturer:
+#   - id: "Heiman/Water/1"
+#     deviceLabel: Orvibo Water Leak Sensor
+#     manufacturer: Heiman
+#     model: 2f077707a13f4120846e0775df7e2efe
+#     deviceProfileName: water-battery
+#   - id: "HEIMAN/Water/2"
+#     deviceLabel: Orvibo Water Leak Sensor
+#     manufacturer: HEIMAN
+#     model: da2edf1ded0d44e1815d06f45ce02029
+#     deviceProfileName: water-battery
+#   - id: "HEIMAN/WaterSensor-N"
+#     deviceLabel: HEIMAN Water Leak Sensor
+#     manufacturer: HEIMAN
+#     model: WaterSensor-N
+#     deviceProfileName: water-battery
+#   - id: "Ecolink/FLZB1-ECO"
+#     deviceLabel: Ecolink Water Leak Sensor
+#     manufacturer: Ecolink
+#     model: FLZB1-ECO
+#     deviceProfileName: water-temp-tempalarm-battery
+#   - id: "Sinope/WL4200"
+#     deviceLabel: Sinope Water Leak Sensor
+#     manufacturer: Sinope Technologies
+#     model: WL4200
+#     deviceProfileName: water-temp-battery
+#   - id: "Sinope/WL4200S"
+#     deviceLabel: Sinope Water Leak Sensor
+#     manufacturer: Sinope Technologies
+#     model: WL4200S
+#     deviceProfileName: water-temp-battery
+  - id: "WAXMAN/leakSMART Water Sensor V2"
+    deviceLabel: leakSMART Water Leak Sensor
+    manufacturer: WAXMAN
+    model: leakSMART Water Sensor V2
+    deviceProfileName: water-temp-battery-tempOffset
+#   - id: "CentraLite/Water Leak/3315-S"
+#     deviceLabel: Water Leak Sensor
+#     manufacturer: CentraLite
+#     model: 3315-S
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "CentraLite/Water Leak/3315"
+#     deviceLabel: Water Leak Sensor
+#     manufacturer: CentraLite
+#     model: 3315
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "CentraLite/Water Leak/3315-Seu"
+#     deviceLabel: Water Leak Sensor
+#     manufacturer: CentraLite
+#     model: 3315-Seu
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "CentraLite/Water Leak/3315-L"
+#     deviceLabel: Iris Water Leak Sensor
+#     manufacturer: CentraLite
+#     model: 3315-L
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "CentraLite/Water Leak/3315-G"
+#     deviceLabel: Centralite Water Leak Sensor
+#     manufacturer: CentraLite
+#     model: 3315-G
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "SmartThings/Water Leak/moisturev4"
+#     deviceLabel: Water Leak Sensor
+#     manufacturer: SmartThings
+#     model: moisturev4
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "Samjin/Water Leak/water"
+#     deviceLabel: Water Leak Sensor
+#     manufacturer: Samjin
+#     model: water
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "Sercomm/Water Leak/SZ-WTD03"
+#     deviceLabel: Sercomm Water Leak Sensor
+#     manufacturer: Sercomm Corp.
+#     model: SZ-WTD03
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "frient/Water Leak/FLSZB-110"
+#     deviceLabel: frient Water Leak Sensor
+#     manufacturer: frient A/S
+#     model: FLSZB-110
+#     deviceProfileName: water-temp-battery-tempOffset
+#   - id: "Nortek/F-ADT-WTR-1"
+#     deviceLabel: ADT Water Leak Detector
+#     manufacturer: Nortek Security and Control
+#     model: F-ADT-WTR-1
+#     deviceProfileName: water-temp-battery
+#   - id: ThirdReality/3RWS18BZ/1
+#     deviceLabel: ThirdReality Water Leak Sensor
+#     manufacturer: Third Reality, Inc
+#     model: 3RWS18BZ
+#     deviceProfileName: water-battery
+#   - id: ThirdReality/3RWS18BZ/2
+#     deviceLabel: ThirdReality Water Leak Sensor
+#     manufacturer: THIRDREALITY
+#     model: 3RWS18BZ
+#     deviceProfileName: water-battery

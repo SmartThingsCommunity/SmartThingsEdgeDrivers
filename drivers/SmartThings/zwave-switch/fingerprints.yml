@@ -61,11 +61,11 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0403
 #     deviceProfileName: switch-button-power-energy
-#   - id: 010F/0602
-#     deviceLabel: Fibaro Outlet
-#     manufacturerId: 0x010F
-#     productType: 0x0602
-#     deviceProfileName: fibaro-metering-switch
+  - id: 010F/0602
+    deviceLabel: Fibaro Outlet
+    manufacturerId: 0x010F
+    productType: 0x0602
+    deviceProfileName: fibaro-metering-switch
   - id: "Dawon/smart/plug"
     deviceLabel: Dawon Smart Plug
     manufacturerId: 0x018C
@@ -302,6 +302,12 @@ zwaveManufacturer:
 #     productType: 0x0651
 #     productId: 0xF51C
 #     deviceProfileName: switch-5
+  # - id: 027A/A000/A008
+  #   deviceLabel: Zooz ZEN 30 Double Switch
+  #   manufacturerId: 0x027A
+  #   productType: 0xA000
+  #   productId: 0xA008
+  #   deviceProfileName: zooz-zen-30-dimmer-relay
 #   - id: 0086/0003/000B
 #     deviceLabel: Aeon Smart Strip
 #     manufacturerId: 0x0086
@@ -713,123 +719,123 @@ zwaveManufacturer:
 #     productType: 0x0103
 #     productId: 0x0025
 #     deviceProfileName: switch-level
-#   - id: 0086/0003/0012
-#     deviceLabel: Aeotec Switch
-#     manufacturerId: 0x0086
-#     productType: 0x0003
-#     productId: 0x0012
-#     deviceProfileName: metering-switch
-#   - id: 021F/0003/0087
-#     deviceLabel: Dome Outlet
-#     manufacturerId: 0x021F
-#     productType: 0x0003
-#     productId: 0x0087
-#     deviceProfileName: metering-switch
-#   - id: 0086/0060
-#     deviceLabel: Aeotec Outlet
-#     manufacturerId: 0x0086
-#     productId: 0x0060
-#     deviceProfileName: metering-switch
-#   - id: 0086/0074
-#     deviceLabel: Aeotec Switch
-#     manufacturerId: 0x0086
-#     productId: 0x0074
-#     deviceProfileName: metering-switch
-#   - id: 014F/574F/3535
-#     deviceLabel: GoControl Outlet
-#     manufacturerId: 0x014F
-#     productType: 0x574F
-#     productId: 0x3535
-#     deviceProfileName: metering-switch
-#   - id: 014F/5053/3531
-#     deviceLabel: GoControl Outlet
-#     manufacturerId: 0x014F
-#     productType: 0x5053
-#     productId: 0x3531
-#     deviceProfileName: metering-switch
-#   - id: 0063/4F44/3031
-#     deviceLabel: GE Switch
-#     manufacturerId: 0x0063
-#     productType: 0x4F44
-#     productId: 0x3031
-#     deviceProfileName: metering-switch
-#   - id: 010F/1801/1000
-#     deviceLabel: Fibaro Outlet
-#     manufacturerId: 0x010F
-#     productType: 0x1801
-#     productId: 0x1000
-#     deviceProfileName: metering-switch
-#   - id: 0086/004E
-#     deviceLabel: Aeotec Switch
-#     manufacturerId: 0x0086
-#     productId: 0x004E
-#     deviceProfileName: metering-switch
-#   - id: 0258/0003/0087
-#     deviceLabel: NEO Coolcam Outlet
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x0087
-#     deviceProfileName: metering-switch
-#   - id: 0258/0003/1087
-#     deviceLabel: NEO Coolcam Outlet
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x1087
-#     deviceProfileName: metering-switch
-#   - id: 027A/0101/000D
-#     deviceLabel: Zooz Switch
-#     manufacturerId: 0x027A
-#     productType: 0x0101
-#     productId: 0x000D
-#     deviceProfileName: metering-switch
-#   - id: 0159/0002/0054
-#     deviceLabel: Qubino Outlet
-#     manufacturerId: 0x0159
-#     productType: 0x0002
-#     productId: 0x0054
-#     deviceProfileName: metering-switch
-#   - id: 0371/0003/00AF
-#     deviceLabel: Aeotec Outlet
-#     manufacturerId: 0x0371
-#     productType: 0x0003
-#     productId: 0x00AF
-#     deviceProfileName: metering-switch
-#   - id: 0371/0103/0017
-#     deviceLabel: Aeotec Outlet
-#     manufacturerId: 0x0371
-#     productType: 0x0103
-#     productId: 0x0017
-#     deviceProfileName: metering-switch
-#   - id: 0060/0004/000B
-#     deviceLabel: Everspring Outlet
-#     manufacturerId: 0x0060
-#     productType: 0x0004
-#     productId: 0x000B
-#     deviceProfileName: metering-switch
-#   - id: 031E/0002/0001
-#     deviceLabel: Inovelli Switch
-#     manufacturerId: 0x031E
-#     productType: 0x0002
-#     productId: 0x0001
-#     deviceProfileName: metering-switch
-#   - id: 0154/0003/000A
-#     deviceLabel: POPP Outlet
-#     manufacturerId: 0x0154
-#     productType: 0x0003
-#     productId: 0x000A
-#     deviceProfileName: metering-switch
-#   - id: 010F/1F01/1000
-#     deviceLabel: Fibaro Outlet
-#     manufacturerId: 0x010F
-#     productType: 0x1F01
-#     productId: 0x1000
-#     deviceProfileName: metering-switch
-#   - id: 0312/FF00/FF0E
-#     deviceLabel: Minoston Outlet
-#     manufacturerId: 0x0312
-#     productType: 0xFF00
-#     productId: 0xFF0E
-#     deviceProfileName: metering-switch
+  - id: 0086/0003/0012
+    deviceLabel: Aeotec Switch
+    manufacturerId: 0x0086
+    productType: 0x0003
+    productId: 0x0012
+    deviceProfileName: metering-switch
+  - id: 021F/0003/0087
+    deviceLabel: Dome Outlet
+    manufacturerId: 0x021F
+    productType: 0x0003
+    productId: 0x0087
+    deviceProfileName: metering-switch
+  - id: 0086/0060
+    deviceLabel: Aeotec Outlet
+    manufacturerId: 0x0086
+    productId: 0x0060
+    deviceProfileName: metering-switch
+  - id: 0086/0074
+    deviceLabel: Aeotec Switch
+    manufacturerId: 0x0086
+    productId: 0x0074
+    deviceProfileName: metering-switch
+  - id: 014F/574F/3535
+    deviceLabel: GoControl Outlet
+    manufacturerId: 0x014F
+    productType: 0x574F
+    productId: 0x3535
+    deviceProfileName: metering-switch
+  - id: 014F/5053/3531
+    deviceLabel: GoControl Outlet
+    manufacturerId: 0x014F
+    productType: 0x5053
+    productId: 0x3531
+    deviceProfileName: metering-switch
+  - id: 0063/4F44/3031
+    deviceLabel: GE Switch
+    manufacturerId: 0x0063
+    productType: 0x4F44
+    productId: 0x3031
+    deviceProfileName: metering-switch
+  - id: 010F/1801/1000
+    deviceLabel: Fibaro Outlet
+    manufacturerId: 0x010F
+    productType: 0x1801
+    productId: 0x1000
+    deviceProfileName: metering-switch
+  - id: 0086/004E
+    deviceLabel: Aeotec Switch
+    manufacturerId: 0x0086
+    productId: 0x004E
+    deviceProfileName: metering-switch
+  - id: 0258/0003/0087
+    deviceLabel: NEO Coolcam Outlet
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x0087
+    deviceProfileName: metering-switch
+  - id: 0258/0003/1087
+    deviceLabel: NEO Coolcam Outlet
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x1087
+    deviceProfileName: metering-switch
+  - id: 027A/0101/000D
+    deviceLabel: Zooz Switch
+    manufacturerId: 0x027A
+    productType: 0x0101
+    productId: 0x000D
+    deviceProfileName: metering-switch
+  - id: 0159/0002/0054
+    deviceLabel: Qubino Outlet
+    manufacturerId: 0x0159
+    productType: 0x0002
+    productId: 0x0054
+    deviceProfileName: metering-switch
+  - id: 0371/0003/00AF
+    deviceLabel: Aeotec Outlet
+    manufacturerId: 0x0371
+    productType: 0x0003
+    productId: 0x00AF
+    deviceProfileName: metering-switch
+  - id: 0371/0103/0017
+    deviceLabel: Aeotec Outlet
+    manufacturerId: 0x0371
+    productType: 0x0103
+    productId: 0x0017
+    deviceProfileName: metering-switch
+  - id: 0060/0004/000B
+    deviceLabel: Everspring Outlet
+    manufacturerId: 0x0060
+    productType: 0x0004
+    productId: 0x000B
+    deviceProfileName: metering-switch
+  - id: 031E/0002/0001
+    deviceLabel: Inovelli Switch
+    manufacturerId: 0x031E
+    productType: 0x0002
+    productId: 0x0001
+    deviceProfileName: metering-switch
+  - id: 0154/0003/000A
+    deviceLabel: POPP Outlet
+    manufacturerId: 0x0154
+    productType: 0x0003
+    productId: 0x000A
+    deviceProfileName: metering-switch
+  - id: 010F/1F01/1000
+    deviceLabel: Fibaro Outlet
+    manufacturerId: 0x010F
+    productType: 0x1F01
+    productId: 0x1000
+    deviceProfileName: metering-switch
+  - id: 0312/FF00/FF0E
+    deviceLabel: Minoston Outlet
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF0E
+    deviceProfileName: metering-switch
 #   - id: Evolve/RelaySwitch
 #     deviceLabel: Evolve Switch
 #     manufacturerId: 0x0113

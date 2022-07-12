@@ -1,0 +1,15 @@
+name: pest-control-battery
+components:
+- id: main
+  capabilities:
+  - id: pestControl
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor
+metadata:
+  mnmn: SmartThingsEdge
+  vid: Dome_Mouser

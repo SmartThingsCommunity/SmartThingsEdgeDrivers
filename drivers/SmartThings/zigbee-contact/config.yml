@@ -1,0 +1,4 @@
+name: 'Zigbee Contact'
+packageKey: 'zigbee-contact'
+permissions:
+  zigbee: {}

@@ -1,0 +1,4 @@
+name: 'Zigbee Humidity Sensor'
+packageKey: 'zigbee-humidity-sensor'
+permissions:
+  zigbee: {}

@@ -20,30 +20,30 @@ zwaveManufacturer:
 #     productType: 0x0012
 #     productId: 0x0001
 #     deviceProfileName: motion-light
-#   - id: "Dome/DMMS1"
-#     deviceLabel: Dome Motion/Light Sensor
-#     manufacturerId: 0x021F
-#     productType: 0x0003
-#     productId: 0x0083
-#     deviceProfileName: motion-battery-illuminance
-#   - id: "NEOCoolcam/008D"
-#     deviceLabel: NEO Coolcam Motion/Light Sensor
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x008D
-#     deviceProfileName: motion-battery-illuminance
-#   - id: "NEOCoolcam/108D"
-#     deviceLabel: NEO Coolcam Motion/Light Sensor
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x108D
-#     deviceProfileName: motion-battery-illuminance
-#   - id: "Wink/0001"
-#     deviceLabel: Wink Motion Sensor
-#     manufacturerId: 0x017F
-#     productType: 0x0101
-#     productId: 0x0001
-#     deviceProfileName: motion-battery-illuminance
+  - id: "Dome/DMMS1"
+    deviceLabel: Dome Motion/Light Sensor
+    manufacturerId: 0x021F
+    productType: 0x0003
+    productId: 0x0083
+    deviceProfileName: motion-battery-illuminance
+  - id: "NEOCoolcam/008D"
+    deviceLabel: NEO Coolcam Motion/Light Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x008D
+    deviceProfileName: motion-battery-illuminance
+  - id: "NEOCoolcam/108D"
+    deviceLabel: NEO Coolcam Motion/Light Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x108D
+    deviceProfileName: motion-battery-illuminance
+  - id: "Wink/0001"
+    deviceLabel: Wink Motion Sensor
+    manufacturerId: 0x017F
+    productType: 0x0101
+    productId: 0x0001
+    deviceProfileName: motion-battery-illuminance
 #   - id: "Ecolink/0x0010"
 #     deviceLabel: Ecolink Water Leak Sensor
 #     manufacturerId: 0x014A
@@ -68,24 +68,24 @@ zwaveManufacturer:
 #     productType: 0x0001
 #     productId: 0x0004
 #     deviceProfileName: motion-battery-temperature-humidity-tamperalert
-#   - id: "Aeotec/ZW005-C"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0371
-#     productType: 0x0002
-#     productId: 0x0005
-#     deviceProfileName: motion-battery-illuminance-temperature
-#   - id: "Aeotec/ZW005-A"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0371
-#     productType: 0x0102
-#     productId: 0x0005
-#     deviceProfileName: motion-battery-illuminance-temperature
-#   - id: "Aeotec/ZW005-B"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0371
-#     productType: 0x0202
-#     productId: 0x0005
-#     deviceProfileName: motion-battery-illuminance-temperature
+  - id: "Aeotec/ZW005-C"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x0005
+    deviceProfileName: motion-battery-illuminance-temperature
+  - id: "Aeotec/ZW005-A"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productType: 0x0102
+    productId: 0x0005
+    deviceProfileName: motion-battery-illuminance-temperature
+  - id: "Aeotec/ZW005-B"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productType: 0x0202
+    productId: 0x0005
+    deviceProfileName: motion-battery-illuminance-temperature
 #   - id: "0x001E/0x0004/0x0001"
 #     deviceLabel: EZmultiPli multipurpose sensor
 #     manufacturerId: 0x001E
@@ -200,17 +200,17 @@ zwaveManufacturer:
 #     productType: 0x0100
 #     productId: 0x0001
 #     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: Aotec/aerQ # all regions
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0371
-#     productId: 0x0009
-#     deviceProfileName: aeotec-temp-humidity-dew-mold
-#   - id: POPP/moldDetector # all regions
-#     deviceLabel: POPP Multipurpose Sensor
-#     manufacturerId: 0x0154
-#     productType: 0x0004
-#     productId: 0x0014
-#     deviceProfileName: temp-humidity-dew-mold
+  - id: Aotec/aerQ # all regions
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productId: 0x0009
+    deviceProfileName: aeotec-temp-humidity-dew-mold
+  - id: POPP/moldDetector # all regions
+    deviceLabel: POPP Multipurpose Sensor
+    manufacturerId: 0x0154
+    productType: 0x0004
+    productId: 0x0014
+    deviceProfileName: temp-humidity-dew-mold
 #   - id: 015D/2003
 #     deviceLabel: Inovelli Open/Closed Sensor
 #     manufacturerId: 0x015D
@@ -234,12 +234,12 @@ zwaveManufacturer:
 #     productType: 0xC100
 #     productId: 0xC100
 #     deviceProfileName: contact-battery-temperature
-#   - id: 019A/0003/000A
-#     deviceLabel: Sensative Water Leak Sensor
-#     manufacturerId: 0x019A
-#     productType: 0x0003
-#     productId: 0x000A
-#     deviceProfileName: water-illuminance-temperature
+  - id: 019A/0003/000A
+    deviceLabel: Sensative Water Leak Sensor
+    manufacturerId: 0x019A
+    productType: 0x0003
+    productId: 0x000A
+    deviceProfileName: water-illuminance-temperature
 #   - id: 0109/2001/0106
 #     deviceLabel: Open/Closed Sensor
 #     manufacturerId: 0x0109
