@@ -10,6 +10,10 @@ components:
       - values:
           key: "level.value"
           range: [1, 100]
+      configuration:
+      - values:
+          key: "level.value"
+          range: [1, 100]
     - id: button
       version: 1
     - id: firmwareUpdate
