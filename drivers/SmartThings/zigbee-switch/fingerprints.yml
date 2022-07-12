@@ -1320,72 +1320,72 @@ zigbeeManufacturer:
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY BR Tunable White
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY RT Tunable White"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY RT Tunable White
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/Classic A60 TW"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic A60 TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY A19 Tunable White"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY A19 Tunable White
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/Classic B40 TW - LIGHTIFY"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "LEDVANCE/A19 TW 10 year"
     deviceLabel: SYLVANIA Light
     manufacturer: LEDVANCE
     model: A19 TW 10 year
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY Conv Under Cabinet TW"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY Conv Under Cabinet TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: OSRAM/ColorstripRGBW
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: ColorstripRGBW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: OSRAM/LIGHTIFYEdgelitFlushmountTW
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY Edge-lit Flushmount TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "LEDVANCE/MR16 TW"
     deviceLabel: SYLVANIA Light
     manufacturer: LEDVANCE
     model: MR16 TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY Surface TW"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY Surface TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY Under Cabinet TW"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY Under Cabinet TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "LEDVANCE/BR30 TW"
     deviceLabel: SYLVANIA Light
     manufacturer: LEDVANCE
     model: BR30 TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "LEDVANCE/RT TW"
     deviceLabel: SYLVANIA Light
     manufacturer: LEDVANCE
     model: RT TW
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1395,47 +1395,47 @@ zigbeeManufacturer:
     deviceLabel: Leedarson Light
     manufacturer: Smarthome
     model: S111-202A
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: lk/ZBT-CCTLight-GLS0108
     deviceLabel: Linkind Light
     manufacturer: lk
     model: ZBT-CCTLight-GLS0108
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: MLI/ZBT-ColorTemperature
     deviceLabel: Tint Light
     manufacturer: MLI
     model: ZBT-ColorTemperature
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: sengled/Z01-A19NAE26
     deviceLabel: Sengled Light
     manufacturer: sengled
     model: Z01-A19NAE26
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: sengled/Z01-A191AE26W
     deviceLabel: Sengled Light
     manufacturer: sengled
     model: Z01-A191AE26W
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: sengled/Z01-A60EAB22
     deviceLabel: Sengled Light
     manufacturer: sengled
     model: Z01-A60EAB22
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: sengled/Z01-A60EAE27
     deviceLabel: Sengled Light
     manufacturer: sengled
     model: Z01-A60EAE27
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "Third Reality/3RSL011Z"
     deviceLabel: RealityLight Light
     manufacturer: Third Reality, Inc
     model: 3RSL011Z
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "Third Reality/3RSL012Z"
     deviceLabel: RealityLight Light
     manufacturer: Third Reality, Inc
     model: 3RSL012Z
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "Ajax Online/CCT"
     deviceLabel: Ajax Light
     manufacturer: Ajax Online
@@ -1875,57 +1875,57 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "OSRAM/CLA60 TW OSRAM"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: CLA60 TW OSRAM
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW001
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW001
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW004
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW004
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW010
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW010
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW011
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW011
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW012
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW012
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW013
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW013
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW014
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW014
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Philips/LTW015
     deviceLabel: Philips Light
     manufacturer: Philips
     model: LTW015
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Ubec/BBB65L-HY
     deviceLabel: XLSmart Light
     manufacturer: Ubec
     model: BBB65L-HY
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: CentraLite/4257050-ZHAC
     deviceLabel: Centralite Dimmer Switch
     manufacturer: CentraLite
