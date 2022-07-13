@@ -4,8 +4,8 @@ components:
   capabilities:
   - id: switch
     version: 1
-    - id: switchLevel
-    version: 1
+  - id: switchLevel
+    version: 1s
     configuration:
     - values:
         key: "level.value"
