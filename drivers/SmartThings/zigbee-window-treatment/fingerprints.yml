@@ -3,12 +3,12 @@ zigbeeManufacturer:
     deviceLabel: Vimar Smart Roller Shutter
     manufacturer: Vimar
     model: Window_Cov_v1.0
-    deviceProfileName: window-treatment-profile
+    deviceProfileName: vimar-window-treatment-profile
   - id: "Vimar/03982-roller-shutter-module"
     deviceLabel: Vimar Smart Roller Shutter Module
     manufacturer: Vimar
     model: Window_Cov_Module_v1.0
-    deviceProfileName: window-treatment-profile
+    deviceProfileName: vimar-window-treatment-profile
   - id: "REXENSE/KG0001"
     deviceLabel: Window Treatment
     manufacturer: REXENSE
