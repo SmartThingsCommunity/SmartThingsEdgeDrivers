@@ -391,7 +391,7 @@ test.register_coroutine_test(
         mock_zooz_zen_30_dimmer_relay,
         SwitchMultilevel:Set({
           value = SwitchBinary.value.ON_ENABLE,
-          duration = 0
+          duration = constants.DEFAULT_DIMMING_DURATION
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -430,7 +430,7 @@ test.register_coroutine_test(
         mock_zooz_zen_30_dimmer_relay,
         SwitchMultilevel:Set({
           value = SwitchBinary.value.OFF_DISABLE,
-          duration = 0
+          duration = constants.DEFAULT_DIMMING_DURATION
         },
           {
             encap = zw.ENCAP.AUTO,
