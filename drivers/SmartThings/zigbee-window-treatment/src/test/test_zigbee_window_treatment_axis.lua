@@ -27,9 +27,6 @@ local WindowCovering = clusters.WindowCovering
 
 local swbuild_payload_newer = "102-5.3.5.1125"
 
-local test = require "integration_test"
-test.add_package_capability("initializedState.yaml")
-
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("window-treatment-battery.yml"),
       fingerprinted_endpoint_id = 0x01,

@@ -23,6 +23,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
+local Groups = clusters.Groups
 
 local test = require "integration_test"
 test.add_package_capability("initializedState.yaml")
@@ -70,6 +71,14 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x00\x00")})
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
+
     test.wait_for_events()
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })

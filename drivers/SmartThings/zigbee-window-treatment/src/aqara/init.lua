@@ -6,11 +6,14 @@ local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
 
 local initializedstate = capabilities["aqara.initializedstate"]
+local initializedStateId = "aqara.initializedstate"
+local setInitializedStateCommandName = "setInitializedState"
 
 local opencloseDirectionPreferenceId = "aqara.opencloseDirection"
 local softTouchPreferenceId = "aqara.softTouch"
 
 local Basic = clusters.Basic
+local Groups = clusters.Groups
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 local MFG_CODE = 0x115F
@@ -82,6 +85,8 @@ local function device_added(driver, device)
 
   write_pref_attribute(device, "\x00\x02\x00\x00\x00\x00\x00")
   write_pref_attribute(device, "\x00\x08\x00\x00\x00\x00\x00")
+
+  device:send(Groups.server.commands.RemoveAllGroups(device))
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -234,8 +239,8 @@ local aqara_window_treatment_handler = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
-    [initializedstate.ID] = {
-      [initializedstate.commands.setInitializedState.NAME] = setInitializedState_handler
+    [initializedStateId] = {
+      [setInitializedStateCommandName] = setInitializedState_handler
     }
   },
   zigbee_handlers = {
