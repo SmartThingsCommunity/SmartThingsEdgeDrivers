@@ -1,9 +1,0 @@
-{
-  "tag": "ru",
-  "label": "Oбратном направлении",
-  "description": "Открыть/закрыть штору в обратном",
-  "preferenceType": "boolean",
-  "definition": {
-    "default": false
-  }
-}

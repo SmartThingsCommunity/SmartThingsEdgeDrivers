@@ -64,7 +64,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send({
       mock_device.id,
       {
-        capability_id = "aqara.initializedstate", component_id = "main",
+        capability_id = "stse.initializedstate", component_id = "main",
         attribute_id = "supportedInitializedState", state = { value= {"initialize"} }
       }
     })
@@ -246,7 +246,7 @@ test.register_coroutine_test(
       preferences = {
       }
     }
-    updates.preferences["aqara.opencloseDirection"] = true
+    updates.preferences["stse.opencloseDirection"] = true
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")})
@@ -267,7 +267,7 @@ test.register_coroutine_test(
         Groups.server.commands.RemoveAllGroups(mock_device)
       }
     )
-    updates.preferences["aqara.opencloseDirection"] = false
+    updates.preferences["stse.opencloseDirection"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})
@@ -291,7 +291,7 @@ test.register_coroutine_test(
       preferences = {
       }
     }
-    updates.preferences["aqara.softTouch"] = true
+    updates.preferences["stse.softTouch"] = true
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x00\x00")})
@@ -309,7 +309,7 @@ test.register_coroutine_test(
         Groups.server.commands.RemoveAllGroups(mock_device)
       }
     )
-    updates.preferences["aqara.softTouch"] = false
+    updates.preferences["stse.softTouch"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x01\x00")})

@@ -1,9 +1,0 @@
-{
-  "tag": "en",
-  "label": "Reverse direction",
-  "description": "Open/Close curtain in reverse direction",
-  "preferenceType": "boolean",
-  "definition": {
-    "default": false
-  }
-}

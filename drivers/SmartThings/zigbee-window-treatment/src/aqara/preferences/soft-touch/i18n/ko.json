@@ -1,9 +1,0 @@
-{
-  "tag": "ko",
-  "label": "소프트 터치",
-  "description": "수동으로 커튼 열기/닫기",
-  "preferenceType": "boolean",
-  "definition": {
-    "default": true
-  }
-}

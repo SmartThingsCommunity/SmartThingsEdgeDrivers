@@ -5,10 +5,10 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
 
-local initializedstate = capabilities["aqara.initializedstate"]
+local initializedstate = capabilities["stse.initializedstate"]
 
-local opencloseDirectionPreferenceId = "aqara.opencloseDirection"
-local softTouchPreferenceId = "aqara.softTouch"
+local opencloseDirectionPreferenceId = "stse.opencloseDirection"
+local softTouchPreferenceId = "stse.softTouch"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
