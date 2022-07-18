@@ -4,9 +4,9 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
-
 local initializedstate = capabilities["stse.initializedstate"]
-
+local initializedStateId = "stse.initializedstate"
+local setInitializedStateCommandName = "setInitializedState"
 local opencloseDirectionPreferenceId = "stse.opencloseDirection"
 local softTouchPreferenceId = "stse.softTouch"
 
@@ -17,10 +17,9 @@ local Groups = clusters.Groups
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
 local INIT_STATE = "initState"
-local INIT_STATE_INIT = "init"
 local INIT_STATE_OPEN = "open"
 local INIT_STATE_CLOSE = "close"
-local INIT_STATE_NEXT = "next"
+local INIT_STATE_REVERSE = "reverse"
 local INIT_STATE_DONE = "done"
 local SHADE_LEVEL = "shadeLevel"
 local SHADE_STATE = "shadeState"
@@ -114,10 +113,9 @@ local function device_info_changed(driver, device, event, args)
 end
 
 local function setInitializedState_handler(driver, device, command)
-  device:set_field(INIT_STATE, INIT_STATE_INIT)
+  write_pref_attribute(device, "\x00\x01\x00\x00\x00\x00\x00")
   device:emit_event(initializedstate.initializedState.initializing())
 
-  write_pref_attribute(device, "\x00\x01\x00\x00\x00\x00\x00")
   device.thread:call_with_delay(2, function(d)
     local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
@@ -142,29 +140,26 @@ end
 
 local function window_shade_level_cmd(driver, device, command)
   local level = command.args.shadeLevel
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
 end
 
 local function window_shade_open_cmd(driver, device, command)
   local shadeLevel = device:get_field(SHADE_LEVEL) or 0
-  emit_level_event(device, shadeLevel)
-
   send_open_cmd(device, command.component)
+  emit_level_event(device, shadeLevel)
 end
 
 local function window_shade_close_cmd(driver, device, command)
   local shadeLevel = device:get_field(SHADE_LEVEL) or 0
-  emit_level_event(device, shadeLevel)
-
   send_close_cmd(device, command.component)
+  emit_level_event(device, shadeLevel)
 end
 
 local function window_shade_pause_cmd(driver, device, command)
   local shadeLevel = device:get_field(SHADE_LEVEL) or 0
-  emit_level_event(device, shadeLevel)
-
   device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
+  emit_level_event(device, shadeLevel)
 end
 
 local function motion_state_attr_handler(driver, device, value, zb_rx)
@@ -177,12 +172,12 @@ local function motion_state_attr_handler(driver, device, value, zb_rx)
 
     local flag = device:get_field(INIT_STATE) or INIT_STATE_DONE
     if flag == INIT_STATE_CLOSE then
-      device:set_field(INIT_STATE, INIT_STATE_NEXT)
+      device:set_field(INIT_STATE, INIT_STATE_REVERSE)
       send_open_cmd(device, "main")
     elseif flag == INIT_STATE_OPEN then
-      device:set_field(INIT_STATE, INIT_STATE_NEXT)
+      device:set_field(INIT_STATE, INIT_STATE_REVERSE)
       send_close_cmd(device, "main")
-    elseif flag == INIT_STATE_NEXT then
+    elseif flag == INIT_STATE_REVERSE then
       device:set_field(INIT_STATE, INIT_STATE_DONE)
       read_pref_attribute(device)
     end
@@ -239,8 +234,8 @@ local aqara_window_treatment_handler = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
-    [initializedstate.ID] = {
-      [initializedstate.commands.setInitializedState.NAME] = setInitializedState_handler
+    [initializedStateId] = {
+      [setInitializedStateCommandName] = setInitializedState_handler
     }
   },
   zigbee_handlers = {
