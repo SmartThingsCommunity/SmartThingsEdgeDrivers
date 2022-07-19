@@ -142,7 +142,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        ColorControl.commands.MoveToColorTemperature(mock_device, temp_in_mired, 0x0100)
+        ColorControl.commands.MoveToColorTemperature(mock_device, temp_in_mired, 0x0000)
       }
     )
 
