@@ -20,8 +20,7 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
-local BUTTON_X_HOLD = "button_%d_hold"
-local TIMEOUT_THRESHOLD = 10
+local button_utils = require "button_utils"
 
 local ZIBEE_DIMMING_SWITCH_FINGERPRINTS = {
   { mfr = "OSRAM", model = "LIGHTIFY Dimming Switch" },
@@ -38,44 +37,14 @@ local function can_handle_zigbee_dimming_remote(opts, driver, device, ...)
 end
 
 local function button_pushed_handler(button_number)
-  return function(driver, device, value, zb_rx)
-    local event = capabilities.button.button.pushed({ state_change = true })
-    local comp = device.profile.components[string.format("button%d", button_number)]
-
-    device:emit_event(event)
-    device:emit_component_event(comp, event)
-  end
-end
-
-local function button_hold_handler(button_number)
-  return function(driver, device, value, zb_rx)
-    device:set_field(string.format(BUTTON_X_HOLD, button_number), os.time())
-  end
-end
-
-local function get_button_hold_time(device, button_number)
-  local button_x_hold_time = device:get_field(string.format(BUTTON_X_HOLD, button_number))
-  local current_time = os.time()
-
-  return button_x_hold_time and current_time - button_x_hold_time or nil
-end
-
-local function send_held_event_if_applicable(device, button_number)
-  local event = capabilities.button.button.held({ state_change = true })
-  local comp = device.profile.components[string.format("button%d", button_number)]
-  local button_hold_time = get_button_hold_time(device, button_number)
-
-  device:set_field(string.format(BUTTON_X_HOLD, button_number), nil)
-
-  if button_hold_time and button_hold_time < TIMEOUT_THRESHOLD then
-    device:emit_event(event)
-    device:emit_component_event(comp, event)
+  return function(self, device, value, zb_rx)
+    button_utils.init_button_press(device, button_number)
   end
 end
 
 local function button_released_handler(self, device, value, zb_rx)
-  send_held_event_if_applicable(device, 1)
-  send_held_event_if_applicable(device, 2)
+  button_utils.send_pushed_or_held_button_event_if_applicable(device, 1)
+  button_utils.send_pushed_or_held_button_event_if_applicable(device, 2)
 end
 
 local function added_handler(self, device)
@@ -105,13 +74,13 @@ local dimming_remote = {
   zigbee_handlers = {
     cluster = {
       [Level.ID] = {
-        [Level.server.commands.Move.ID] = button_hold_handler(2),
-        [Level.server.commands.MoveWithOnOff.ID] = button_hold_handler(1),
+        [Level.server.commands.Move.ID] = button_pushed_handler(2),
+        [Level.server.commands.MoveWithOnOff.ID] = button_pushed_handler(1),
         [Level.server.commands.Stop.ID] = button_released_handler
       },
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = button_pushed_handler(2),
-        [OnOff.server.commands.On.ID] = button_pushed_handler(1)
+        [OnOff.server.commands.Off.ID] = button_utils.build_button_handler("button2", capabilities.button.button.pushed),
+        [OnOff.server.commands.On.ID] = button_utils.build_button_handler("button1", capabilities.button.button.pushed)
       }
     }
   },
