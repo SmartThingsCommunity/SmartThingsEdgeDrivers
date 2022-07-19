@@ -1,0 +1,17 @@
+name: switch-level-colortemp
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: colorTemperature
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-color-temperature-bulb-2700K-6500K

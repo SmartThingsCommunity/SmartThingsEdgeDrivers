@@ -129,9 +129,6 @@ local white_color_temp_bulb = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature_handler
     }
   },
-  sub_drivers = {
-    require("white-color-temp-bulb/sengled")
-  },
   can_handle = can_handle_white_color_temp_bulb
 }
 
