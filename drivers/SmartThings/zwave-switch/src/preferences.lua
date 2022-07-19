@@ -267,10 +267,10 @@ local devices = {
       levelCorrection = {parameter_number = 38, size = 2}
     }
   },
-  GE_DIMMER_SWITCH = {
+  DIMMER_SWITCH = {
     MATCHING_MATRIX = {
-      mfrs = 0x0063,
-      product_types = {0x4457, 0x4944, 0x5044}
+      mfrs = {0x0063, 0x0113},
+      product_types = {0x4457, 0x4944, 0x5044, 0x5257}
     },
     PARAMETERS = {
       ledIndicator = {parameter_number = 3, size = 1}
