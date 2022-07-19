@@ -1,4 +1,4 @@
-name: ge-dimmer-switch
+name: dimmer-switch
 components:
   - id: main
     capabilities:
@@ -18,7 +18,7 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
-        0: "off"
-        1: "on"
-        2: "never"
+        0: "When Off"
+        1: "When On"
+        2: "Never"
       defaultValue: 0
