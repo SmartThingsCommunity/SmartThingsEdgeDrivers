@@ -267,10 +267,19 @@ local devices = {
       levelCorrection = {parameter_number = 38, size = 2}
     }
   },
-  DIMMER_SWITCH = {
+  SWITCH_LEVEL_INDICATOR = {
     MATCHING_MATRIX = {
-      mfrs = {0x0063, 0x0113},
-      product_types = {0x4457, 0x4944, 0x5044, 0x5257}
+      mfrs = 0x0063,
+      product_types = {0x4457, 0x4944, 0x5044}
+    },
+    PARAMETERS = {
+      ledIndicator = {parameter_number = 3, size = 1}
+    }
+  },
+  SWITCH_BINARY_INDICATOR = {
+    MATCHING_MATRIX = {
+      mfrs = {0x0063, 0113},
+      product_types = {0x4952, 0x5257, 0x5052, 5257}
     },
     PARAMETERS = {
       ledIndicator = {parameter_number = 3, size = 1}
