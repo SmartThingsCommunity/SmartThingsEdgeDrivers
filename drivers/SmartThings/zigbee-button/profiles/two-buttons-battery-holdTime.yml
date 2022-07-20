@@ -1,4 +1,4 @@
-name: osram-two-buttons-battery
+name: two-buttons-battery-holdTime
 components:
   - id: main
     capabilities:

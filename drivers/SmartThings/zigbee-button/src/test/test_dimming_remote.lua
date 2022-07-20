@@ -28,7 +28,7 @@ local button_attr = capabilities.button.button
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("two-buttons-battery.yml"),
+    profile = t_utils.get_profile_definition("two-buttons-battery-holdTime.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
