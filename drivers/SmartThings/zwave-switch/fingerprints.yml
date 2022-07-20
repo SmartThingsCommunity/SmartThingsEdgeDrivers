@@ -21,17 +21,17 @@ zwaveManufacturer:
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x4457
-    deviceProfileName: dimmer-switch
+    deviceProfileName: switch-level-indicator
   - id: 0063/4944
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x4944
-    deviceProfileName: dimmer-switch
+    deviceProfileName: switch-level-indicator
   - id: 0063/5044
     deviceLabel: GE Dimmer Switch
     manufacturerId: 0x0063
     productType: 0x5044
-    deviceProfileName: dimmer-switch
+    deviceProfileName: switch-level-indicator
   - id: "Fibaro/0F06"
     deviceLabel: Fibaro Outlet
     manufacturerId: 0x0072
@@ -390,22 +390,22 @@ zwaveManufacturer:
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x4952
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0063/5257
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x5257
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0063/5052
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x5052
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0113/5257
     deviceLabel: Evolve Switch
     manufacturerId: 0x0113
     productType: 0x5257
-    deviceProfileName: dimmer-switch
+    deviceProfileName: switch-binary-indicator
   - id: 001D/1A02/0334
     deviceLabel: Leviton Outlet
     manufacturerId: 0x001D
