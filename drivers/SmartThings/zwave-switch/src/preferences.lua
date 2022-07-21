@@ -300,6 +300,24 @@ local devices = {
       dimmerNightBright = {parameter_number = 26, size = 1},
       dimmerPaddleControl = {parameter_number = 27, size = 1}
     }
+  },
+  SWITCH_LEVEL_INDICATOR = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0063,
+      product_types = {0x4457, 0x4944, 0x5044}
+    },
+    PARAMETERS = {
+      ledIndicator = {parameter_number = 3, size = 1}
+    }
+  },
+  SWITCH_BINARY_INDICATOR = {
+    MATCHING_MATRIX = {
+      mfrs = {0x0063, 0113},
+      product_types = {0x4952, 0x5257, 0x5052, 5257}
+    },
+    PARAMETERS = {
+      ledIndicator = {parameter_number = 3, size = 1}
+    }
   }
 }
 
