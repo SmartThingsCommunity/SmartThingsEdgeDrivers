@@ -631,246 +631,246 @@ zigbeeManufacturer:
     manufacturer: Jasco Products
     model: 43080
     deviceProfileName: switch-level
-#   - id: "Centralite Systems/4200-C"
-#     deviceLabel: Centralite Outlet
-#     manufacturer: Centralite Systems
-#     model: 4200-C
-#     deviceProfileName: basic-switch
-#   - id: "eWeLink/SA-003-Zigbee"
-#     deviceLabel: eWeLink Outlet
-#     manufacturer: eWeLink
-#     model: SA-003-Zigbee
-#     deviceProfileName: basic-switch
-#   - id: "eWeLink/ZB-SW01"
-#     deviceLabel: eWeLink Switch
-#     manufacturer: eWeLink
-#     model: ZB-SW01
-#     deviceProfileName: basic-switch
-#   - id: "LELLKI/JZ-ZB-001"
-#     deviceLabel: LELLKI Switch
-#     manufacturer: LELLKI
-#     model: JZ-ZB-001
-#     deviceProfileName: basic-switch
-#   - id: "None/E220-KR1N0Z0-HA"
-#     deviceLabel: eZEX Switch
-#     manufacturer: None
-#     model: E220-KR1N0Z0-HA
-#     deviceProfileName: basic-switch
-#   - id: REXENSE/HY0001
-#     deviceLabel: GDKES Switch
-#     manufacturer: REXENSE
-#     model: HY0001
-#     deviceProfileName: basic-switch
-#   - id: REXENSE/RH5006
-#     deviceLabel: GDKES Outlet
-#     manufacturer: REXENSE
-#     model: RH5006
-#     deviceProfileName: basic-switch
-#   - id: REXENSE/RH5005
-#     deviceLabel: GDKES Outlet
-#     manufacturer: REXENSE
-#     model: RH5005
-#     deviceProfileName: basic-switch
-#   - id: "HEIMAN/HS2SW1L-EFR-3.0"
-#     deviceLabel: HEIMAN Switch
-#     manufacturer: HEIMAN
-#     model: "HS2SW1L-EFR-3.0"
-#     deviceProfileName: basic-switch
-#   - id: REX/HY0095
-#     deviceLabel: HONYAR Switch
-#     manufacturer: REX
-#     model: HY0095
-#     deviceProfileName: basic-switch
-#   - id: IKEA/TRADFRI control outlet
-#     deviceLabel: IKEA Outlet
-#     manufacturer: IKEA of Sweden
-#     model: "TRADFRI control outlet"
-#     deviceProfileName: basic-switch
-#   - id: MEGAMAN/BSZTM005
-#     deviceLabel: INGENIUM Switch
-#     manufacturer: MEGAMAN
-#     model: BSZTM005
-#     deviceProfileName: basic-switch
-#   - id: "innr/SP 220"
-#     deviceLabel: Innr Outlet
-#     manufacturer: innr
-#     model: "SP 220"
-#     deviceProfileName: basic-switch
-#   - id: "innr/SP 222"
-#     deviceLabel: Innr Outlet
-#     manufacturer: innr
-#     model: "SP 222"
-#     deviceProfileName: basic-switch
-#   - id: "innr/SP 224"
-#     deviceLabel: Innr Outlet
-#     manufacturer: innr
-#     model: "SP 224"
-#     deviceProfileName: basic-switch
-#   - id: "iMagic by GreatStar/1113-S"
-#     deviceLabel: Iris Outlet
-#     manufacturer: iMagic by GreatStar
-#     model: 1113-S
-#     deviceProfileName: basic-switch
-#   - id: "Leviton/ZSS-10"
-#     deviceLabel: Leviton Switch
-#     manufacturer: Leviton
-#     model: ZSS-10
-#     deviceProfileName: basic-switch
-#   - id: "HAI/65A21-1"
-#     deviceLabel: Leviton Switch
-#     manufacturer: HAI
-#     model: 65A21-1
-#     deviceProfileName: basic-switch
-#   - id: Leviton/DL15A
-#     deviceLabel: Leviton Outlet
-#     manufacturer: Leviton
-#     model: DL15A
-#     deviceProfileName: basic-switch
-#   - id: Leviton/DL15S
-#     deviceLabel: Leviton Switch
-#     manufacturer: Leviton
-#     model: DL15S
-#     deviceProfileName: basic-switch
-#   - id: Leviton/DG15S
-#     deviceLabel: Leviton Switch
-#     manufacturer: Leviton
-#     model: DG15S
-#     deviceProfileName: basic-switch
-#   - id: Leviton/DG15A
-#     deviceLabel: Leviton Outlet
-#     manufacturer: Leviton
-#     model: DG15A
-#     deviceProfileName: basic-switch
-#   - id: ORVIBO/switch/1
-#     deviceLabel: Orvibo Switch
-#     manufacturer: ORVIBO
-#     model: 095db3379e414477ba6c2f7e0c6aa026
-#     deviceProfileName: basic-switch
-#   - id: ORVIBO/switch/2
-#     deviceLabel: Orvibo Outlet
-#     manufacturer: ORVIBO
-#     model: fdd5fce51a164c7ab73b2f4d8d84c88e
-#     deviceProfileName: basic-switch
-#   - id: "OSRAM/Plug 01"
-#     deviceLabel: OSRAM Outlet
-#     manufacturer: OSRAM
-#     model: "Plug 01"
-#     deviceProfileName: basic-switch
-#   - id: "LEDVANCE/PLUG"
-#     deviceLabel: SYLVANIA Outlet
-#     manufacturer: LEDVANCE
-#     model: PLUG
-#     deviceProfileName: basic-switch
-#   - id: "sengled/E1C-NB6"
-#     deviceLabel: Sengled Outlet
-#     manufacturer: sengled
-#     model: E1C-NB6
-#     deviceProfileName: basic-switch
-#   - id: "Sinope Technologies/SP2600ZB"
-#     deviceLabel: Sinope Outlet
-#     manufacturer: Sinope Technologies
-#     model: SP2600ZB
-#     deviceProfileName: basic-switch
-#   - id: "Sinope Technologies/SP2610ZB"
-#     deviceLabel: Sinope Outlet
-#     manufacturer: Sinope Technologies
-#     model: SP2610ZB
-#     deviceProfileName: basic-switch
-#   - id: "SONOFF/BASICZBR3"
-#     deviceLabel: SONOFF Outlet
-#     manufacturer: SONOFF
-#     model: BASICZBR3
-#     deviceProfileName: basic-switch
-#   - id: "SONOFF/S31 Lite zb"
-#     deviceLabel: S31 Outlet
-#     manufacturer: SONOFF
-#     model: "S31 Lite zb"
-#     deviceProfileName: basic-switch
-#   - id: SONOFF/01MINIZB
-#     deviceLabel: SONOFF 01MINIZB
-#     manufacturer: SONOFF
-#     model: 01MINIZB
-#     deviceProfileName: basic-switch
-#   - id: "/TERNCY-LS01"
-#     deviceLabel: Terncy Switch
-#     manufacturer:
-#     model: TERNCY-LS01
-#     deviceProfileName: basic-switch
-#   - id: Third Reality/3RSS009Z
-#     deviceLabel: ThirdReality Switch
-#     manufacturer: Third Reality, Inc
-#     model: 3RSS009Z
-#     deviceProfileName: basic-switch
-#   - id: Third Reality/3RSS008Z
-#     deviceLabel: ThirdReality Switch
-#     manufacturer: Third Reality, Inc
-#     model: 3RSS008Z
-#     deviceProfileName: basic-switch
-#   - id: Third Reality/3RSS007Z
-#     deviceLabel: ThirdReality Switch
-#     manufacturer: Third Reality, Inc
-#     model: 3RSS007Z
-#     deviceProfileName: basic-switch
-#   - id: Third Reality/3RSP019BZ
-#     deviceLabel: ThirdReality Plug
-#     manufacturer: Third Reality, Inc
-#     model: 3RSP019BZ
-#     deviceProfileName: basic-switch
-#   - id: "DAWON_DNS/PM-S140-ZB"
-#     deviceLabel: Dawon Switch
-#     manufacturer: DAWON_DNS
-#     model: PM-S140-ZB
-#     deviceProfileName: basic-switch
-#   - id: "DAWON_DNS/PM-S140R-ZB"
-#     deviceLabel: Dawon Switch
-#     manufacturer: DAWON_DNS
-#     model: PM-S140R-ZB
-#     deviceProfileName: basic-switch
-#   - id: "DAWON_DNS/PM-S150-ZB"
-#     deviceLabel: Dawon Switch
-#     manufacturer: DAWON_DNS
-#     model: PM-S150-ZB
-#     deviceProfileName: basic-switch
-#   - id: "DAWON_DNS/ST-S150-ZB"
-#     deviceLabel: Dawon Switch
-#     manufacturer: DAWON_DNS
-#     model: ST-S150-ZB
-#     deviceProfileName: basic-switch
-#   - id: "Jasco Products/43100"
-#     deviceLabel: Enbrighten Switch
-#     manufacturer: Jasco Products
-#     model: 43100
-#     deviceProfileName: basic-switch
-#   - id: "Jasco Products/43084"
-#     deviceLabel: Enbrighten Switch
-#     manufacturer: Jasco Products
-#     model: 43084
-#     deviceProfileName: basic-switch
-#   - id: "Jasco Products/43094"
-#     deviceLabel: Enbrighten Switch
-#     manufacturer: Jasco Products
-#     model: 43094
-#     deviceProfileName: basic-switch
-#   - id: "Jasco Products/43102"
-#     deviceLabel: Enbrighten Outlet
-#     manufacturer: Jasco Products
-#     model: 43102
-#     deviceProfileName: basic-switch
-#   - id: "Jasco Products/43076"
-#     deviceLabel: Enbrighten Switch
-#     manufacturer: Jasco Products
-#     model: 43076
-#     deviceProfileName: basic-switch
-#   - id: Focalcrest/SRB01
-#     deviceLabel: Focalcrest Switch
-#     manufacturer: Focalcrest
-#     model: SRB01
-#     deviceProfileName: basic-switch
-#   - id: ShinaSystem/SBM300Z1
-#     deviceLabel: SiHAS Switch
-#     manufacturer: ShinaSystem
-#     model: SBM300Z1
-#     deviceProfileName: basic-switch
+  - id: "Centralite Systems/4200-C"
+    deviceLabel: Centralite Outlet
+    manufacturer: Centralite Systems
+    model: 4200-C
+    deviceProfileName: basic-switch
+  - id: "eWeLink/SA-003-Zigbee"
+    deviceLabel: eWeLink Outlet
+    manufacturer: eWeLink
+    model: SA-003-Zigbee
+    deviceProfileName: basic-switch
+  - id: "eWeLink/ZB-SW01"
+    deviceLabel: eWeLink Switch
+    manufacturer: eWeLink
+    model: ZB-SW01
+    deviceProfileName: basic-switch
+  - id: "LELLKI/JZ-ZB-001"
+    deviceLabel: LELLKI Switch
+    manufacturer: LELLKI
+    model: JZ-ZB-001
+    deviceProfileName: basic-switch
+  - id: "None/E220-KR1N0Z0-HA"
+    deviceLabel: eZEX Switch
+    manufacturer: None
+    model: E220-KR1N0Z0-HA
+    deviceProfileName: basic-switch
+  - id: REXENSE/HY0001
+    deviceLabel: GDKES Switch
+    manufacturer: REXENSE
+    model: HY0001
+    deviceProfileName: basic-switch
+  - id: REXENSE/RH5006
+    deviceLabel: GDKES Outlet
+    manufacturer: REXENSE
+    model: RH5006
+    deviceProfileName: basic-switch
+  - id: REXENSE/RH5005
+    deviceLabel: GDKES Outlet
+    manufacturer: REXENSE
+    model: RH5005
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS2SW1L-EFR-3.0"
+    deviceLabel: HEIMAN Switch
+    manufacturer: HEIMAN
+    model: "HS2SW1L-EFR-3.0"
+    deviceProfileName: basic-switch
+  - id: REX/HY0095
+    deviceLabel: HONYAR Switch
+    manufacturer: REX
+    model: HY0095
+    deviceProfileName: basic-switch
+  - id: IKEA/TRADFRI control outlet
+    deviceLabel: IKEA Outlet
+    manufacturer: IKEA of Sweden
+    model: "TRADFRI control outlet"
+    deviceProfileName: basic-switch
+  - id: MEGAMAN/BSZTM005
+    deviceLabel: INGENIUM Switch
+    manufacturer: MEGAMAN
+    model: BSZTM005
+    deviceProfileName: basic-switch
+  - id: "innr/SP 220"
+    deviceLabel: Innr Outlet
+    manufacturer: innr
+    model: "SP 220"
+    deviceProfileName: basic-switch
+  - id: "innr/SP 222"
+    deviceLabel: Innr Outlet
+    manufacturer: innr
+    model: "SP 222"
+    deviceProfileName: basic-switch
+  - id: "innr/SP 224"
+    deviceLabel: Innr Outlet
+    manufacturer: innr
+    model: "SP 224"
+    deviceProfileName: basic-switch
+  - id: "iMagic by GreatStar/1113-S"
+    deviceLabel: Iris Outlet
+    manufacturer: iMagic by GreatStar
+    model: 1113-S
+    deviceProfileName: basic-switch
+  - id: "Leviton/ZSS-10"
+    deviceLabel: Leviton Switch
+    manufacturer: Leviton
+    model: ZSS-10
+    deviceProfileName: basic-switch
+  - id: "HAI/65A21-1"
+    deviceLabel: Leviton Switch
+    manufacturer: HAI
+    model: 65A21-1
+    deviceProfileName: basic-switch
+  - id: Leviton/DL15A
+    deviceLabel: Leviton Outlet
+    manufacturer: Leviton
+    model: DL15A
+    deviceProfileName: basic-switch
+  - id: Leviton/DL15S
+    deviceLabel: Leviton Switch
+    manufacturer: Leviton
+    model: DL15S
+    deviceProfileName: basic-switch
+  - id: Leviton/DG15S
+    deviceLabel: Leviton Switch
+    manufacturer: Leviton
+    model: DG15S
+    deviceProfileName: basic-switch
+  - id: Leviton/DG15A
+    deviceLabel: Leviton Outlet
+    manufacturer: Leviton
+    model: DG15A
+    deviceProfileName: basic-switch
+  - id: ORVIBO/switch/1
+    deviceLabel: Orvibo Switch
+    manufacturer: ORVIBO
+    model: 095db3379e414477ba6c2f7e0c6aa026
+    deviceProfileName: basic-switch
+  - id: ORVIBO/switch/2
+    deviceLabel: Orvibo Outlet
+    manufacturer: ORVIBO
+    model: fdd5fce51a164c7ab73b2f4d8d84c88e
+    deviceProfileName: basic-switch
+  - id: "OSRAM/Plug 01"
+    deviceLabel: OSRAM Outlet
+    manufacturer: OSRAM
+    model: "Plug 01"
+    deviceProfileName: basic-switch
+  - id: "LEDVANCE/PLUG"
+    deviceLabel: SYLVANIA Outlet
+    manufacturer: LEDVANCE
+    model: PLUG
+    deviceProfileName: basic-switch
+  - id: "sengled/E1C-NB6"
+    deviceLabel: Sengled Outlet
+    manufacturer: sengled
+    model: E1C-NB6
+    deviceProfileName: basic-switch
+  - id: "Sinope Technologies/SP2600ZB"
+    deviceLabel: Sinope Outlet
+    manufacturer: Sinope Technologies
+    model: SP2600ZB
+    deviceProfileName: basic-switch
+  - id: "Sinope Technologies/SP2610ZB"
+    deviceLabel: Sinope Outlet
+    manufacturer: Sinope Technologies
+    model: SP2610ZB
+    deviceProfileName: basic-switch
+  - id: "SONOFF/BASICZBR3"
+    deviceLabel: SONOFF Outlet
+    manufacturer: SONOFF
+    model: BASICZBR3
+    deviceProfileName: basic-switch
+  - id: "SONOFF/S31 Lite zb"
+    deviceLabel: S31 Outlet
+    manufacturer: SONOFF
+    model: "S31 Lite zb"
+    deviceProfileName: basic-switch
+  - id: SONOFF/01MINIZB
+    deviceLabel: SONOFF 01MINIZB
+    manufacturer: SONOFF
+    model: 01MINIZB
+    deviceProfileName: basic-switch
+  - id: "/TERNCY-LS01"
+    deviceLabel: Terncy Switch
+    manufacturer:
+    model: TERNCY-LS01
+    deviceProfileName: basic-switch
+  - id: Third Reality/3RSS009Z
+    deviceLabel: ThirdReality Switch
+    manufacturer: Third Reality, Inc
+    model: 3RSS009Z
+    deviceProfileName: basic-switch
+  - id: Third Reality/3RSS008Z
+    deviceLabel: ThirdReality Switch
+    manufacturer: Third Reality, Inc
+    model: 3RSS008Z
+    deviceProfileName: basic-switch
+  - id: Third Reality/3RSS007Z
+    deviceLabel: ThirdReality Switch
+    manufacturer: Third Reality, Inc
+    model: 3RSS007Z
+    deviceProfileName: basic-switch
+  - id: Third Reality/3RSP019BZ
+    deviceLabel: ThirdReality Plug
+    manufacturer: Third Reality, Inc
+    model: 3RSP019BZ
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S140-ZB"
+    deviceLabel: Dawon Switch
+    manufacturer: DAWON_DNS
+    model: PM-S140-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S140R-ZB"
+    deviceLabel: Dawon Switch
+    manufacturer: DAWON_DNS
+    model: PM-S140R-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S150-ZB"
+    deviceLabel: Dawon Switch
+    manufacturer: DAWON_DNS
+    model: PM-S150-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/ST-S150-ZB"
+    deviceLabel: Dawon Switch
+    manufacturer: DAWON_DNS
+    model: ST-S150-ZB
+    deviceProfileName: basic-switch
+  - id: "Jasco Products/43100"
+    deviceLabel: Enbrighten Switch
+    manufacturer: Jasco Products
+    model: 43100
+    deviceProfileName: basic-switch
+  - id: "Jasco Products/43084"
+    deviceLabel: Enbrighten Switch
+    manufacturer: Jasco Products
+    model: 43084
+    deviceProfileName: basic-switch
+  - id: "Jasco Products/43094"
+    deviceLabel: Enbrighten Switch
+    manufacturer: Jasco Products
+    model: 43094
+    deviceProfileName: basic-switch
+  - id: "Jasco Products/43102"
+    deviceLabel: Enbrighten Outlet
+    manufacturer: Jasco Products
+    model: 43102
+    deviceProfileName: basic-switch
+  - id: "Jasco Products/43076"
+    deviceLabel: Enbrighten Switch
+    manufacturer: Jasco Products
+    model: 43076
+    deviceProfileName: basic-switch
+  - id: Focalcrest/SRB01
+    deviceLabel: Focalcrest Switch
+    manufacturer: Focalcrest
+    model: SRB01
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z1
+    deviceLabel: SiHAS Switch
+    manufacturer: ShinaSystem
+    model: SBM300Z1
+    deviceProfileName: basic-switch
 #   - id: Samsung/SAMSUNG-ITM-Z-002
 #     deviceLabel: Samsung Light
 #     manufacturer: Samsung Electronics
@@ -1436,56 +1436,56 @@ zigbeeManufacturer:
 #     manufacturer: Ajax Online
 #     model: CCT
 #     deviceProfileName: color-temp-bulb
-#   - id: CentraLite/3200
-#     deviceLabel: SmartThings Outlet
-#     manufacturer: CentraLite
-#     model: 3200
-#     deviceProfileName: switch-power-smartplug
-#   - id: CentraLite/3200-Sgb
-#     deviceLabel: SmartThings Outlet
-#     manufacturer: CentraLite
-#     model: 3200-Sgb
-#     deviceProfileName: switch-power-smartplug
-#   - id: CentraLite/4257050-RZHAC
-#     deviceLabel: Centralite Outlet
-#     manufacturer: CentraLite
-#     model: 4257050-RZHAC
-#     deviceProfileName: switch-power-smartplug
-#   - id: SmartThings/outletv4
-#     deviceLabel: SmartThings Outlet
-#     manufacturer: SmartThings
-#     model: outletv4
-#     deviceProfileName: switch-power-smartplug
-#   - id: Samjin/outlet
-#     deviceLabel: SmartThings Outlet
-#     manufacturer: Samjin
-#     model: outlet
-#     deviceProfileName: switch-power-smartplug
-#   - id: "innr/SP 120"
-#     deviceLabel: Innr Outlet
-#     manufacturer: innr
-#     model: SP 120
-#     deviceProfileName: switch-power-smartplug
-#   - id: Aurora/SmartPlug51AU
-#     deviceLabel: Aurora Outlet
-#     manufacturer: Aurora
-#     model: SmartPlug51AU
-#     deviceProfileName: switch-power-smartplug
-#   - id: Aurora/SingleSocket50AU
-#     deviceLabel: Aurora Outlet
-#     manufacturer: Aurora
-#     model: SingleSocket50AU
-#     deviceProfileName: switch-power-smartplug
-#   - id: CentraLite/3210-L
-#     deviceLabel: Iris Outlet
-#     manufacturer: CentraLite
-#     model: 3210-L
-#     deviceProfileName: switch-power-smartplug
-#   - id: Sercomm/SZ-ESW01-AU
-#     deviceLabel: Sercomm Outlet
-#     manufacturer: Sercomm Corp.
-#     model: SZ-ESW01-AU
-#     deviceProfileName: switch-power-smartplug
+  - id: CentraLite/3200
+    deviceLabel: SmartThings Outlet
+    manufacturer: CentraLite
+    model: 3200
+    deviceProfileName: switch-power-smartplug
+  - id: CentraLite/3200-Sgb
+    deviceLabel: SmartThings Outlet
+    manufacturer: CentraLite
+    model: 3200-Sgb
+    deviceProfileName: switch-power-smartplug
+  - id: CentraLite/4257050-RZHAC
+    deviceLabel: Centralite Outlet
+    manufacturer: CentraLite
+    model: 4257050-RZHAC
+    deviceProfileName: switch-power-smartplug
+  - id: SmartThings/outletv4
+    deviceLabel: SmartThings Outlet
+    manufacturer: SmartThings
+    model: outletv4
+    deviceProfileName: switch-power-smartplug
+  - id: Samjin/outlet
+    deviceLabel: SmartThings Outlet
+    manufacturer: Samjin
+    model: outlet
+    deviceProfileName: switch-power-smartplug
+  - id: "innr/SP 120"
+    deviceLabel: Innr Outlet
+    manufacturer: innr
+    model: SP 120
+    deviceProfileName: switch-power-smartplug
+  - id: Aurora/SmartPlug51AU
+    deviceLabel: Aurora Outlet
+    manufacturer: Aurora
+    model: SmartPlug51AU
+    deviceProfileName: switch-power-smartplug
+  - id: Aurora/SingleSocket50AU
+    deviceLabel: Aurora Outlet
+    manufacturer: Aurora
+    model: SingleSocket50AU
+    deviceProfileName: switch-power-smartplug
+  - id: CentraLite/3210-L
+    deviceLabel: Iris Outlet
+    manufacturer: CentraLite
+    model: 3210-L
+    deviceProfileName: switch-power-smartplug
+  - id: Sercomm/SZ-ESW01-AU
+    deviceLabel: Sercomm Outlet
+    manufacturer: Sercomm Corp.
+    model: SZ-ESW01-AU
+    deviceProfileName: switch-power-smartplug
   - id: "Develco Products/Smart16ARelay51AU"
     deviceLabel: Aurora Switch
     manufacturer: Develco Products A/S
@@ -1946,21 +1946,21 @@ zigbeeManufacturer:
 #     manufacturer: sengled
 #     model: E13-N11
 #     deviceProfileName: on-off-level-motion-sensor
-#   - id: "GE_Appliances/ZLL Light"
-#     deviceLabel: GE Light
-#     manufacturer: GE_Appliances
-#     model: ZLL Light
-#     deviceProfileName: ge-link-bulb
-#   - id: GE/SoftWhite
-#     deviceLabel: GE Light
-#     manufacturer: GE
-#     model: SoftWhite
-#     deviceProfileName: ge-link-bulb
-#   - id: GE/Daylight
-#     deviceLabel: GE Light
-#     manufacturer: GE
-#     model: Daylight
-#     deviceProfileName: ge-link-bulb
+  - id: "GE_Appliances/ZLL Light"
+    deviceLabel: GE Light
+    manufacturer: GE_Appliances
+    model: ZLL Light
+    deviceProfileName: ge-link-bulb
+  - id: GE/SoftWhite
+    deviceLabel: GE Light
+    manufacturer: GE
+    model: SoftWhite
+    deviceProfileName: ge-link-bulb
+  - id: GE/Daylight
+    deviceLabel: GE Light
+    manufacturer: GE
+    model: Daylight
+    deviceProfileName: ge-link-bulb
 # zigbeeGeneric:
 #   - id: "genericSwitch"
 #     deviceLabel: Zigbee Switch
