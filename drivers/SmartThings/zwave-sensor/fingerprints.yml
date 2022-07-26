@@ -130,12 +130,12 @@ zwaveManufacturer:
 #     productType: 0x0007
 #     productId: 0x0001
 #     deviceProfileName: illuminance-battery
-#   - id: "0084/0093/0114"
-#     deviceLabel: Glentronics Water Leak Sensor
-#     manufacturerId: 0x0084
-#     productType: 0x0093
-#     productId: 0x0114
-#     deviceProfileName: water-battery-powersource
+  - id: "0084/0093/0114"
+    deviceLabel: Glentronics Water Leak Sensor
+    manufacturerId: 0x0084
+    productType: 0x0093
+    productId: 0x0114
+    deviceProfileName: water-battery-powersource
 #   - id: "homeseer/multi/hsm100"
 #     deviceLabel: Homeseer Multi Sensor HSM100
 #     manufacturerId: 0x001E
