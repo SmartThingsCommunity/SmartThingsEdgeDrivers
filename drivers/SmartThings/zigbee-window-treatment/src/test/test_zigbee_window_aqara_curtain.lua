@@ -20,7 +20,6 @@ local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local test = require "integration_test"
 test.add_package_capability("initializedState.yaml")
 
 local Basic = clusters.Basic
@@ -36,7 +35,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "LUMI",
         model = "lumi.curtain",
-        server_clusters = {0x0000, 0x000D, 0x0013, 0x0102}
+        server_clusters = { 0x0000, 0x000D, 0x0013, 0x0102 }
       }
     }
   }
@@ -53,23 +52,35 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Handle Configure lifecycle",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "windowShade", component_id = "main",
-        attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
+        attribute_id = "supportedWindowShadeCommands", state = { value = { "open", "close", "pause" } }
       }
     })
     test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "stse.initializedstate", component_id = "main",
-        attribute_id = "supportedInitializedState", state = { value= {"initialize"} }
+        attribute_id = "supportedInitializedState", state = { value = { "initialize" } }
       }
     })
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x00\x00")})
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x02\x00\x00\x00\x00\x00") })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x08\x00\x00\x00\x00\x00") })
 
     test.socket.zigbee:__expect_send(
       {
@@ -77,7 +88,7 @@ test.register_coroutine_test(
         Groups.server.commands.RemoveAllGroups(mock_device)
       }
     )
-    
+
     test.wait_for_events()
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -100,7 +111,7 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, 0x0000, {0x0401}, 0x115F)
+      zigbee_test_utils.build_attribute_read(mock_device, 0x0000, { 0x0401 }, 0x115F)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -167,10 +178,10 @@ test.register_coroutine_test(
   "WindowShade open cmd handler",
   function()
     test.socket.capability:__queue_receive(
-        {
-          mock_device.id,
-          { capability = "windowShade", component = "main", command = "open", args = {} }
-        }
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
@@ -187,10 +198,10 @@ test.register_coroutine_test(
   "WindowShade close cmd handler",
   function()
     test.socket.capability:__queue_receive(
-        {
-          mock_device.id,
-          { capability = "windowShade", component = "main", command = "close", args = {} }
-        }
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "close", args = {} }
+      }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
@@ -207,10 +218,10 @@ test.register_coroutine_test(
   "WindowShade pause cmd handler",
   function()
     test.socket.capability:__queue_receive(
-        {
-          mock_device.id,
-          { capability = "windowShade", component = "main", command = "pause", args = {} }
-        }
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "pause", args = {} }
+      }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
@@ -240,7 +251,8 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
     test.wait_for_events()
-    test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.socket.environment_update:__queue_receive({ "zigbee",
+      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
 
     local updates = {
       preferences = {
@@ -249,43 +261,33 @@ test.register_coroutine_test(
     updates.preferences["stse.opencloseDirection"] = true
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")})
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
-
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x02\x00\x01\x00\x00\x00") })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.windowShade.windowShade.closed()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.windowShadeLevel.shadeLevel(0)))
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
     updates.preferences["stse.opencloseDirection"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x02\x00\x00\x00\x00\x00")})
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x02\x00\x00\x00\x00\x00") })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.windowShade.windowShade.open()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.windowShadeLevel.shadeLevel(100)))
   end
 )
 
 test.register_coroutine_test(
   "Handle softTouch in infochanged",
   function()
-    test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.socket.environment_update:__queue_receive({ "zigbee",
+      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
 
     local updates = {
       preferences = {
@@ -294,31 +296,17 @@ test.register_coroutine_test(
     updates.preferences["stse.softTouch"] = true
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x00\x00")})
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x08\x00\x00\x00\x00\x00") })
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
     updates.preferences["stse.softTouch"] = false
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString, "\x00\x08\x00\x00\x00\x01\x00")})
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x08\x00\x00\x00\x01\x00") })
   end
 )
 
@@ -334,7 +322,7 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, 0x0000, {0x0401}, 0x115F)
+      zigbee_test_utils.build_attribute_read(mock_device, 0x0000, { 0x0401 }, 0x115F)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,

@@ -23,6 +23,15 @@ local INIT_STATE_REVERSE = "reverse"
 local INIT_STATE_DONE = "done"
 local SHADE_LEVEL = "shadeLevel"
 local SHADE_STATE = "shadeState"
+local SHADE_STATE_ATTR_ID = 0x0404
+local SHADE_STATE_STOP = 0
+local SHADE_STATE_OPEN = 1
+local SHADE_STATE_CLOSE = 2
+local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
+local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
+local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
+local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
+local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.curtain" },
@@ -31,9 +40,9 @@ local FINGERPRINTS = {
 
 local is_aqara_products = function(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
@@ -50,7 +59,8 @@ local read_pref_attribute = function(device)
 end
 
 local write_pref_attribute = function(device, str)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE, data_types.CharString, str))
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+    data_types.CharString, str))
 end
 
 local function send_open_cmd(device, component)
@@ -72,27 +82,33 @@ local do_configure = function(self, device)
 
   device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui))
 
+  device:send(Groups.server.commands.RemoveAllGroups(device))
+
   do_refresh(self, device)
 end
 
 local function device_added(driver, device)
   local main_comp = device.profile.components["main"]
-  device:emit_component_event(main_comp,capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
-  device:emit_component_event(main_comp,initializedstate.supportedInitializedState({"initialize"}))
-
-  write_pref_attribute(device, "\x00\x02\x00\x00\x00\x00\x00")
-  write_pref_attribute(device, "\x00\x08\x00\x00\x00\x00\x00")
+  device:emit_component_event(main_comp,
+    capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+  device:emit_component_event(main_comp, initializedstate.supportedInitializedState({ "initialize" }))
 
   device:send(Groups.server.commands.RemoveAllGroups(device))
+
+  -- Set the device's initial setting values.
+  write_pref_attribute(device, PREF_REVERSE_OFF)
+  write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
+
 end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    if device.preferences[opencloseDirectionPreferenceId] ~= args.old_st_store.preferences[opencloseDirectionPreferenceId] then
+    if device.preferences[opencloseDirectionPreferenceId] ~=
+        args.old_st_store.preferences[opencloseDirectionPreferenceId] then
       if device.preferences[opencloseDirectionPreferenceId] == true then
-        write_pref_attribute(device, "\x00\x02\x00\x01\x00\x00\x00")
+        write_pref_attribute(device, PREF_REVERSE_ON)
       else
-        write_pref_attribute(device, "\x00\x02\x00\x00\x00\x00\x00")
+        write_pref_attribute(device, PREF_REVERSE_OFF)
       end
 
       device.thread:call_with_delay(2, function(d)
@@ -102,22 +118,21 @@ local function device_info_changed(driver, device, event, args)
 
     if device.preferences[softTouchPreferenceId] ~= args.old_st_store.preferences[softTouchPreferenceId] then
       if device.preferences[softTouchPreferenceId] == true then
-        write_pref_attribute(device, "\x00\x08\x00\x00\x00\x00\x00")
+        write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
       else
-        write_pref_attribute(device, "\x00\x08\x00\x00\x00\x01\x00")
+        write_pref_attribute(device, PREF_SOFT_TOUCH_OFF)
       end
     end
   end
-
-  device:send(Groups.server.commands.RemoveAllGroups(device))
 end
 
 local function setInitializedState_handler(driver, device, command)
-  write_pref_attribute(device, "\x00\x01\x00\x00\x00\x00\x00")
+  write_pref_attribute(device, PREF_INITIALIZE)
   device:emit_event(initializedstate.initializedState.initializing())
 
   device.thread:call_with_delay(2, function(d)
-    local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+    local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
+      capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
       device:set_field(INIT_STATE, INIT_STATE_CLOSE)
       send_close_cmd(device, command.component)
@@ -162,11 +177,11 @@ local function window_shade_pause_cmd(driver, device, command)
   emit_level_event(device, shadeLevel)
 end
 
-local function motion_state_attr_handler(driver, device, value, zb_rx)
+local function shade_state_attr_handler(driver, device, value, zb_rx)
   local state = value.value
   device:set_field(SHADE_STATE, state)
 
-  if state == 0 then
+  if state == SHADE_STATE_STOP then
     local shadeLevel = device:get_field(SHADE_LEVEL) or 0
     emit_level_event(device, shadeLevel)
 
@@ -181,9 +196,9 @@ local function motion_state_attr_handler(driver, device, value, zb_rx)
       device:set_field(INIT_STATE, INIT_STATE_DONE)
       read_pref_attribute(device)
     end
-  elseif state == 1 then
+  elseif state == SHADE_STATE_OPEN then
     device:emit_event(capabilities.windowShade.windowShade.opening())
-  elseif state == 2 then
+  elseif state == SHADE_STATE_CLOSE then
     device:emit_event(capabilities.windowShade.windowShade.closing())
   end
 end
@@ -191,6 +206,7 @@ end
 local function current_position_attr_handler(driver, device, value, zb_rx)
   local level = value.value
   if level == 5.8774717541114e-39 then
+    -- float 5.8774717541114e-39 is 0
     level = 0
   end
   if level > 100 then
@@ -201,8 +217,8 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   device:set_field(SHADE_LEVEL, level)
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
 
-  local shadeState = device:get_field(SHADE_STATE) or 0
-  if shadeState == 0 then
+  local shadeState = device:get_field(SHADE_STATE) or SHADE_STATE_STOP
+  if shadeState == SHADE_STATE_STOP then
     emit_level_event(device, level)
   end
 end
@@ -211,7 +227,8 @@ local function pref_attr_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
   local flag = device:get_field(INIT_STATE) or INIT_STATE_DONE
   if flag == INIT_STATE_DONE then
-    device:emit_event(initialized  == 1 and initializedstate.initializedState.initialized() or initializedstate.initializedState.notInitialized())
+    device:emit_event(initialized == 1 and initializedstate.initializedState.initialized() or
+      initializedstate.initializedState.notInitialized())
   end
 end
 
@@ -244,7 +261,7 @@ local aqara_window_treatment_handler = {
         [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = current_position_attr_handler
       },
       [Basic.ID] = {
-        [0x0404] = motion_state_attr_handler,
+        [SHADE_STATE_ATTR_ID] = shade_state_attr_handler,
         [PREF_ATTRIBUTE_ID] = pref_attr_handler,
       },
       [AnalogOutput.ID] = {
