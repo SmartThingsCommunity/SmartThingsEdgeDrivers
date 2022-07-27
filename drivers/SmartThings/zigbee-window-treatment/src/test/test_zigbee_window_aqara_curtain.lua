@@ -52,14 +52,6 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Handle Configure lifecycle",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        Groups.server.commands.RemoveAllGroups(mock_device)
-      }
-    )
-
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send({
       mock_device.id,
@@ -75,19 +67,18 @@ test.register_coroutine_test(
         attribute_id = "supportedInitializedState", state = { value = { "initialize" } }
       }
     })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
-        "\x00\x02\x00\x00\x00\x00\x00") })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
-        "\x00\x08\x00\x00\x00\x00\x00") })
-
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
         Groups.server.commands.RemoveAllGroups(mock_device)
       }
     )
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x02\x00\x00\x00\x00\x00") })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, 0x0401, 0x115F, data_types.CharString,
+        "\x00\x08\x00\x00\x00\x00\x00") })
 
     test.wait_for_events()
 
@@ -105,6 +96,13 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, WindowCovering.ID)
     })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Groups.server.commands.RemoveAllGroups(mock_device)
+      }
+    )
+
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
