@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "Vimar/xx594-roller-shutter"
+    deviceLabel: Vimar Smart Roller Shutter
+    manufacturer: Vimar
+    model: Window_Cov_v1.0
+    deviceProfileName: vimar-window-treatment-profile
+  - id: "Vimar/03982-roller-shutter-module"
+    deviceLabel: Vimar Smart Roller Shutter Module
+    manufacturer: Vimar
+    model: Window_Cov_Module_v1.0
+    deviceProfileName: vimar-window-treatment-profile
   - id: "LUMI/lumi.curtain"
     deviceLabel: Aqara Curtain Controller
     manufacturer: LUMI
