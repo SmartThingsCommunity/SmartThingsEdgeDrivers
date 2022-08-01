@@ -19,7 +19,8 @@ local OnOff = clusters.OnOff
 local button = capabilities.button.button
 
 local EWELINK_BUTTON_FINGERPRINTS = {
-  { mfr = "eWeLink", model = "WB01" }
+  { mfr = "eWeLink", model = "WB01" },
+  { mfr = "eWeLink", model = "SNZB-01P" }
 }
 
 local function can_handle_ewelink_button(opts, driver, device, ...)
