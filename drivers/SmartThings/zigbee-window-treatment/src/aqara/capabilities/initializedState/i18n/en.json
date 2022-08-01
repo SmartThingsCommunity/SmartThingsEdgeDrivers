@@ -1,0 +1,26 @@
+{
+  "tag": "en",
+  "label": "Initialization",
+  "attributes": {
+    "initializedState": {
+      "label": "Initialization",
+      "displayTemplate": "{{attribute}} of {{device.label}} is {{value}}",
+      "i18n": {
+        "value": {
+          "initializing": {
+            "label": "Initializing..."
+          },
+          "initialized": {
+            "label": "Initialized"
+          },
+          "notInitialized": {
+            "label": "Not initialized"
+          },
+          "initialize": {
+            "label": "Start initialization"
+          }
+        }
+      }
+    }
+  }
+}

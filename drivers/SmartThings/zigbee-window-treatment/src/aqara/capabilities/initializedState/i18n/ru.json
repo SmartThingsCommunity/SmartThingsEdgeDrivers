@@ -1,0 +1,26 @@
+{
+  "tag": "ru",
+  "label": "Инициализация",
+  "attributes": {
+    "initializedState": {
+      "label": "Инициализация",
+      "displayTemplate": "{{attribute}} {{device.label}} является {{value}}",
+      "i18n": {
+        "value": {
+          "initializing": {
+            "label": "Инициализация..."
+          },
+          "initialized": {
+            "label": "Инициализировано"
+          },
+          "notInitialized": {
+            "label": "Не инициализирован"
+          },
+          "initialize": {
+            "label": "Начать инициализацию"
+          }
+        }
+      }
+    }
+  }
+}
