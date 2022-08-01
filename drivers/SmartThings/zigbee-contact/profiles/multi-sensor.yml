@@ -21,9 +21,5 @@ components:
 preferences:
   - preferenceId: tempOffset
     explicit: true
-  - name: "garageSensor"
-    title: "Use on garage door"
-    required: false
-    preferenceType: boolean
-    definition:
-      default: false
+  - preferenceId: certifiedpreferences.garageSensor
+    explicit: true
