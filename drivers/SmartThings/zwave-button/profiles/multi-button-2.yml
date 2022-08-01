@@ -22,3 +22,5 @@ components:
       version: 1
     categories:
     - name: RemoteController
+preferences:
+- name: "This preference name is way too long and should be rejected"

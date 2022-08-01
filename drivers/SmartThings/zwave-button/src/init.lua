@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+
 local capabilities = require "st.capabilities"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
