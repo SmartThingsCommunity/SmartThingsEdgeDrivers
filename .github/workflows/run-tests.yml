@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install lua5.3
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Python requirements
         run: pip install -r tools/requirements.txt
       - name: Prepare test output directory
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: event-file
           path: ${{ github.event_path }}
