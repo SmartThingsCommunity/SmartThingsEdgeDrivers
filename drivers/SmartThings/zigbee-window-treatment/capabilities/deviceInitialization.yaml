@@ -1,7 +1,7 @@
-id: stse.initializedstate
+id: stse.deviceInitialization
 version: 1
 status: proposed
-name: initializedState
+name: device initialization
 ephemeral: false
 attributes:
   initializedState:
@@ -11,10 +11,9 @@ attributes:
         value:
           type: string
           enum:
+            - initialized
             - notInitialized
             - initializing
-            - initialized
-            - initialize
       additionalProperties: false
       required:
         - value
@@ -29,11 +28,9 @@ attributes:
           items:
             type: string
             enum:
+              - initialized
               - notInitialized
               - initializing
-              - initialized
-              - initialize
-    type: JSON_OBJECT
 commands:
   setInitializedState:
     name: setInitializedState
@@ -43,4 +40,6 @@ commands:
         schema:
           type: string
           enum:
-            - initialize
+            - initialized
+            - notInitialized
+            - initializing

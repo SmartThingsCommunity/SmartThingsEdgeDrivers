@@ -1,4 +1,4 @@
-name: window-aqara-curtain
+name: window-treatment-aqara
 components:
   - id: main
     capabilities:
@@ -6,7 +6,7 @@ components:
         version: 1
       - id: windowShadeLevel
         version: 1
-      - id: stse.initializedstate
+      - id: stse.deviceInitialization
         version: 1
       - id: firmwareUpdate
         version: 1
@@ -15,7 +15,7 @@ components:
     categories:
       - name: Blind
 preferences:
-  - preferenceId: stse.opencloseDirection
+  - preferenceId: stse.reverseCurtainDirection
     explicit: true
   - preferenceId: stse.softTouch
     explicit: true
