@@ -20,6 +20,12 @@ components:
     version: 1
   - id: powerSource
     version: 1
+    configuration:
+      - values:
+        key: "powerSource.value"
+        enabledValues:
+          - battery
+          - mains
   categories:
   - name: MultiFunctionalSensor
 preferences:
