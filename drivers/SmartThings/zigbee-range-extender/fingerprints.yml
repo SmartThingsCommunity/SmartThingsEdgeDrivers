@@ -19,3 +19,8 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: TRADFRI signal repeater
     deviceProfileName: range-extender
+  - id: "AEOTEC/WG001-Z01"
+    manufacturer: AL001
+    model: WG001-Z01
+    deviceLabel: Aeotec Range Extender Zi
+    deviceProfileName: range-extender
