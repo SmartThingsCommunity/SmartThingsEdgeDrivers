@@ -234,12 +234,12 @@ zwaveManufacturer:
 #     productType: 0xC100
 #     productId: 0xC100
 #     deviceProfileName: contact-battery-temperature
-  - id: 019A/0003/000A
-    deviceLabel: Sensative Water Leak Sensor
-    manufacturerId: 0x019A
-    productType: 0x0003
-    productId: 0x000A
-    deviceProfileName: water-illuminance-temperature
+  # - id: 019A/0003/000A
+  #   deviceLabel: Sensative Water Leak Sensor
+  #   manufacturerId: 0x019A
+  #   productType: 0x0003
+  #   productId: 0x000A
+  #   deviceProfileName: water-illuminance-temperature
 #   - id: 0109/2001/0106
 #     deviceLabel: Open/Closed Sensor
 #     manufacturerId: 0x0109
