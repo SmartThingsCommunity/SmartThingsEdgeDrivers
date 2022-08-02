@@ -21,17 +21,17 @@ zwaveManufacturer:
 #     deviceLabel: GE Dimmer Switch
 #     manufacturerId: 0x0063
 #     productType: 0x4457
-#     deviceProfileName: switch-level
+#     deviceProfileName: switch-level-indicator
 #   - id: 0063/4944
 #     deviceLabel: GE Dimmer Switch
 #     manufacturerId: 0x0063
 #     productType: 0x4944
-#     deviceProfileName: switch-level
+#     deviceProfileName: switch-level-indicator
 #   - id: 0063/5044
 #     deviceLabel: GE Dimmer Switch
 #     manufacturerId: 0x0063
 #     productType: 0x5044
-#     deviceProfileName: switch-level
+#     deviceProfileName: switch-level-indicator
 #   - id: "Fibaro/0F06"
 #     deviceLabel: Fibaro Outlet
 #     manufacturerId: 0x0072
@@ -348,27 +348,27 @@ zwaveManufacturer:
     manufacturerId: 0x014A
     productType: 0x0006
     deviceProfileName: switch-battery
-#   - id: 0086/0003/001B
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x001B
-#     deviceProfileName: switch-level
-#   - id: 0086/0063
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x0063
-#     deviceProfileName: metering-dimmer
-#   - id: 0086/006F
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x006F
-#     deviceProfileName: aeotec-nano-dimmer
-#   - id: 014F/5044/3533
-#     deviceLabel: GoControl Dimmer Switch
-#     manufacturerId: 0x014F
-#     productType: 0x5044
-#     productId: 0x3533
-#     deviceProfileName: metering-dimmer
+  - id: 0086/0003/001B
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x001B
+    deviceProfileName: switch-level
+  - id: 0086/0063
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x0063
+    deviceProfileName: metering-dimmer
+  - id: 0086/006F
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x006F
+    deviceProfileName: aeotec-nano-dimmer
+  - id: 014F/5044/3533
+    deviceLabel: GoControl Dimmer Switch
+    manufacturerId: 0x014F
+    productType: 0x5044
+    productId: 0x3533
+    deviceProfileName: metering-dimmer
   - id: 0086/008B
     deviceLabel: Aeon Switch
     manufacturerId: 0x0086
@@ -390,22 +390,22 @@ zwaveManufacturer:
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x4952
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0063/5257
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x5257
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0063/5052
     deviceLabel: GE Switch
     manufacturerId: 0x0063
     productType: 0x5052
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 0113/5257
     deviceLabel: Evolve Switch
     manufacturerId: 0x0113
     productType: 0x5257
-    deviceProfileName: switch-binary
+    deviceProfileName: switch-binary-indicator
   - id: 001D/1A02/0334
     deviceLabel: Leviton Outlet
     manufacturerId: 0x001D

@@ -1,10 +1,10 @@
 zwaveManufacturer:
-#   - id: "FirstAlert"
-#     deviceLabel: First Alert Smoke Detector
-#     manufacturerId: 0x0138
-#     productType: 0x0001
-#     productId: 0x0002
-#     deviceProfileName: smoke-co-battery
+  - id: "FirstAlert"
+    deviceLabel: First Alert Smoke Detector
+    manufacturerId: 0x0138
+    productType: 0x0001
+    productId: 0x0002
+    deviceProfileName: smoke-co-battery
 #   - id: 026F/0001/0002
 #     deviceLabel: FireAngel Smoke Detector
 #     manufacturerId: 0x026F
@@ -51,15 +51,15 @@ zwaveManufacturer:
 #     productType: 0x0100
 #     productId: 0x0201
 #     deviceProfileName: smoke-battery
-#   - id: 0138/0001/0003
-#     deviceLabel: First Alert Smoke Detector
-#     manufacturerId: 0x0138
-#     productType: 0x0001
-#     productId: 0x0003
-#     deviceProfileName: smoke-co-battery
-#   - id: 0154/0004/0003
-#     deviceLabel: POPP Carbon Monoxide Sensor
-#     manufacturerId: 0x0154
-#     productType: 0x0004
-#     productId: 0x0003
-#     deviceProfileName: co-battery
+  - id: 0138/0001/0003
+    deviceLabel: First Alert Smoke Detector
+    manufacturerId: 0x0138
+    productType: 0x0001
+    productId: 0x0003
+    deviceProfileName: smoke-co-battery
+  - id: 0154/0004/0003
+    deviceLabel: POPP Carbon Monoxide Sensor
+    manufacturerId: 0x0154
+    productType: 0x0004
+    productId: 0x0003
+    deviceProfileName: co-battery
