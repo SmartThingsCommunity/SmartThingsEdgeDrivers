@@ -4,6 +4,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  # VIMAR
+  - id: "Vimar/xx593-smart-actuator-power"
+    deviceLabel: Vimar Smart Actuator with Power Metering
+    model: "Mains_Power_Outlet_v1.0"
+    deviceProfileName: vimar-switch-power-smartplug
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch

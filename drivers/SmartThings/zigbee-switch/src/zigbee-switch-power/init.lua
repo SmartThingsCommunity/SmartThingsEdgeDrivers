@@ -20,6 +20,7 @@ local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 local SWITCH_POWER_FINGERPRINTS = {
+  { mfr = "Vimar", model = "Mains_Power_Outlet_v1.0" },
   { model = "PAN18-v1.0.7" },
   { model = "E210-KR210Z1-HA" },
   { mfr = "Aurora", model = "Smart16ARelay51AU" },
@@ -74,7 +75,8 @@ local zigbee_switch_power = {
     }
   },
   sub_drivers = {
-    require("zigbee-switch-power/aurora-relay")
+    require("zigbee-switch-power/aurora-relay"),
+    require("zigbee-switch-power/vimar")
   },
   can_handle = can_handle_zigbee_switch_power
 }
