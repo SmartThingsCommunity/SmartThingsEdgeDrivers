@@ -1,0 +1,55 @@
+id: stse.sensitivityAdjustment
+version: 1
+status: proposed
+name: Sensitivity Adjustment
+ephemeral: false
+attributes:
+  sensitivityAdjustment:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - High
+            - Medium
+            - Low
+            - Desc
+      additionalProperties: false
+      required:
+        - value
+    setter: setSensitivityAdjustment
+    enumCommands:
+      - command: High
+        value: High
+      - command: Medium
+        value: Medium
+      - command: Low
+        value: Low
+      - command: Desc
+        value: Desc
+commands:
+  High:
+    name: High
+    arguments: []
+  Desc:
+    name: Desc
+    arguments: []
+  setSensitivityAdjustment:
+    name: setSensitivityAdjustment
+    arguments:
+      - name: sensitivity
+        optional: false
+        schema:
+          type: string
+          enum:
+            - High
+            - Medium
+            - Low
+            - Desc
+  Low:
+    name: Low
+    arguments: []
+  Medium:
+    name: Medium
+    arguments: []
