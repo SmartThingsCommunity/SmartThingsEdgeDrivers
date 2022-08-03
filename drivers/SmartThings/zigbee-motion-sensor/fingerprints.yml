@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.motion.agl02"
+    deviceLabel: Aqara Motion Sensor T1
+    manufacturer: LUMI
+    model: lumi.motion.agl02
+    deviceProfileName: motion-illuminance-battery-aqara
+  - id: "LUMI/lumi.motion.agl04"
+    deviceLabel: Aqara High Precision Motion Sensor
+    manufacturer: LUMI
+    model: lumi.motion.agl04
+    deviceProfileName: motion-battery-aqara
   - id: "eWeLink/MS01"
     deviceLabel: eWeLink Motion Sensor
     manufacturer: eWeLink
@@ -153,7 +163,7 @@ zigbeeManufacturer:
     manufacturer: Compacta
     model: ZBMS3-1
     deviceProfileName: motion-temp-battery
-# This model has been seen to have an invisible character in the model string
+  # This model has been seen to have an invisible character in the model string
   - id: Compacta/ZBMS3-1/0x1F
     deviceLabel: Smartenit Motion Sensor
     manufacturer: Compacta
