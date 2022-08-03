@@ -8,13 +8,13 @@ components:
     version: 1
     configuration:
           - values:
-            key: "temperature.value"
+            key: "heatingSetpoint.value"
             range: [8, 20]
   - id: thermostatCoolingSetpoint
     version: 1
     configuration:
           - values:
-            key: "temperature.value"
+            key: "coolingSetpoint.value"
             range: [8, 20]
   - id: thermostatMode
     version: 1
