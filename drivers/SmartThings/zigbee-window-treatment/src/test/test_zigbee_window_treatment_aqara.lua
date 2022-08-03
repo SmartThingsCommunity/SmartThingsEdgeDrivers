@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -124,6 +125,63 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Window Shade state closed",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, -127, 0))
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Window Shade state open",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 6, 0.5625))
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Window Shade state partially open",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 5, 0.5625))
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+  end
+)
+
+test.register_coroutine_test(
   "WindowShade open cmd handler",
   function()
     mock_device:set_field(SHADE_LEVEL, 100)
@@ -140,7 +198,6 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
-    test.wait_for_events()
   end
 )
 
@@ -161,7 +218,6 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
-    test.wait_for_events()
   end
 )
 
@@ -182,7 +238,6 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.Stop(mock_device)
     })
-    test.wait_for_events()
   end
 )
 
