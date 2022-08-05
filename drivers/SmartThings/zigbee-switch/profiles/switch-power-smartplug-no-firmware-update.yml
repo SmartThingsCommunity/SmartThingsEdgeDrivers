@@ -1,4 +1,4 @@
-name: vimar-switch-power-smartplug
+name: switch-power-smartplug-no-firmware-update
 components:
 - id: main
   capabilities:
