@@ -98,6 +98,11 @@ zigbeeManufacturer:
     manufacturer: _TZE204_fzbskaga
     model: TS0601
     deviceProfileName: window-treatment-hanssem
+  - id: "Insta GmbH/Blinds Actuator"
+    deviceLabel: NEXENTRO Blinds Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Blinds Actuator
+    deviceProfileName: window-treatment-profile
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment

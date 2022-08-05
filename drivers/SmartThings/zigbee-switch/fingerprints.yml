@@ -2075,6 +2075,21 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  - id: "Insta GmbH/Switching Actuator"
+    deviceLabel: NEXENTRO Switching Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Switching Actuator
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Dimming Actuator"
+    deviceLabel: NEXENTRO Dimming Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Dimming Actuator
+    deviceProfileName: on-off-level
+  - id: "Insta GmbH/DALI TW control unit"
+    deviceLabel: NEXENTRO DALI TW control unit
+    manufacturer: Insta GmbH
+    model: NEXENTRO DALI TW control unit
+    deviceProfileName: color-temp-bulb
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

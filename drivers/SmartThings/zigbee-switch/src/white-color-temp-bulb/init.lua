@@ -107,7 +107,10 @@ local WHITE_COLOR_TEMP_BULB_FINGERPRINTS = {
   },
   ["Ajax Online"] = {
     ["CCT"] = true
-  }
+  },
+  ["Insta GmbH"] = {
+    ["NEXENTRO DALI TW control unit"] = true,
+  },
 }
 
 local function can_handle_white_color_temp_bulb(opts, driver, device)
