@@ -47,11 +47,11 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   -- Shade level is inverted
   local level = 100 - value.value
   -- Get the new shades level
-  local current_level = device:get_latest_state(
+  local current_shades_level = device:get_latest_state(
     device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
     capabilities.windowShadeLevel.ID, 
     capabilities.windowShadeLevel.shadeLevel.NAME)
-  current_level = current_level or 0
+  current_shades_level = current_shades_level or 0
   
   -- Clear states
   device:set_field(VIMAR_SHADES_CLOSING, false)
@@ -64,14 +64,14 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   if level == 0 or level == 100 then
     event = level == 0 and windowShade.closed() or windowShade.open()
   else 
-  -- Ignore current_level = level / current_level != level
+  -- Ignore current_shades_level = level / current_shades_level != level
     local timer = device.thread:call_with_delay(2, function(d)
-      local current_level = device:get_latest_state(
+      local current_shades_level = device:get_latest_state(
         device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
         capabilities.windowShadeLevel.ID, 
         capabilities.windowShadeLevel.shadeLevel.NAME)
       -- Set as partially open
-      if current_level > 0 and current_level < 100 then
+      if current_shades_level > 0 and current_shades_level < 100 then
         device:emit_event(windowShade.partially_open())
       end
     end)
@@ -89,21 +89,21 @@ end
 -- COMMAND HANDLER for SetLevel
 local function window_shade_set_level_handler(driver, device, command)
   local level = utils.clamp_value(command.args.shadeLevel, 0, 100)
-  local current_level = device:get_latest_state(command.component, capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME, 0)
+  local current_shades_level = device:get_latest_state(command.component, capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME, 0)
   local vimar_opening = device:get_field(VIMAR_SHADES_OPENING)
   local vimar_closing = device:get_field(VIMAR_SHADES_CLOSING)
 
   -- User wants to change the current level when shades are currently moving
   -- in this case, the roller shutter ignores the command
-  if current_level ~= level and (vimar_opening or vimar_closing) then
-    device:emit_event(capabilities.windowShadeLevel.shadeLevel(current_level))
+  if current_shades_level ~= level and (vimar_opening or vimar_closing) then
+    device:emit_event(capabilities.windowShadeLevel.shadeLevel(current_shades_level))
     return
   end
 
-  if current_level > level then
+  if current_shades_level > level then
     device:set_field(VIMAR_SHADES_CLOSING, true)
     device:emit_event(windowShade.closing())
-  elseif current_level < level then
+  elseif current_shades_level < level then
     device:set_field(VIMAR_SHADES_OPENING, true)
     device:emit_event(windowShade.opening())
   end
