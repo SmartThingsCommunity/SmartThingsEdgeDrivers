@@ -1,4 +1,4 @@
-name: vimar-window-treatment-profile
+name: window-treatment-profile-no-firmware-update
 components:
 - id: main
   capabilities:
