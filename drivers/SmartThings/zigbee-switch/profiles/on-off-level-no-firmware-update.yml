@@ -1,4 +1,4 @@
-name: vimar-on-off-level
+name: on-off-level-no-firmware-update
 components:
 - id: main
   capabilities:

@@ -1,4 +1,4 @@
-name: vimar-on-off-bulb
+name: on-off-bulb-no-firmware-update
 components:
 - id: main
   capabilities:

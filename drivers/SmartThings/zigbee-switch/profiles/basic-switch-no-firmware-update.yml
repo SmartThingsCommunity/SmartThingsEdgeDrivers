@@ -1,4 +1,4 @@
-name: vimar-basic-switch
+name: basic-switch-no-firmware-update
 components:
 - id: main
   capabilities:
