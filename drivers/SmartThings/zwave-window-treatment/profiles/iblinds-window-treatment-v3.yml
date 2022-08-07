@@ -21,7 +21,9 @@ preferences:
     required: true
     preferenceType: integer
     definition:
-      default: 22
+      minimum: 16
+      default: 24
+      maximum: 32
   - preferenceId: reverse
     explicit: true
   - name: "defaultOnValue"
@@ -53,9 +55,9 @@ preferences:
     required: true
     preferenceType: integer
     definition:
-      minimum: 16
-      maximum: 32
-      default: 24
+      minimum: 0
+      maximum: 100
+      default: 0
   - name: "remoteCalibration"
     title: "Remote Calibration"
     description: "Recalibrate upon next recieved command"
