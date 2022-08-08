@@ -6,6 +6,10 @@ components:
     version: 1
   - id: thermostatCoolingSetpoint
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-13, 176]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
