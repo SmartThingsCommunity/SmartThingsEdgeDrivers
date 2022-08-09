@@ -32,7 +32,7 @@ local get_lock_codes = function(device)
 end
 
 local lock_codes_event = function(device, lock_codes)
-  device:set_field(lock_constants.LOCK_CODES, lock_codes)
+  device:set_field(lock_constants.LOCK_CODES, lock_codes, { persist = true } )
   device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_codes)))
 end
 

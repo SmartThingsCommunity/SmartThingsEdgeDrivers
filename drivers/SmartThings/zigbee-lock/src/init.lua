@@ -28,7 +28,6 @@ local capabilities              = require "st.capabilities"
 local Battery                   = capabilities.battery
 local Lock                      = capabilities.lock
 local LockCodes                 = capabilities.lockCodes
-local Tamper                    = capabilities.tamperAlert
 
 -- Enums
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
@@ -37,14 +36,15 @@ local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
 local lock_constants = require "lock_constants"
 
+local utils = require "st.utils"
 local json = require "dkjson"
 
 local get_lock_codes = function(device)
-  return device:get_field(lock_constants.LOCK_CODES) or {}
+  return utils.deep_copy(device:get_field(lock_constants.LOCK_CODES)) or {}
 end
 
 local lock_codes_event = function(device, lock_codes)
-  device:set_field(lock_constants.LOCK_CODES, lock_codes)
+  device:set_field(lock_constants.LOCK_CODES, lock_codes, {persist = true} )
   device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_codes)))
 end
 
@@ -280,8 +280,8 @@ end
 
 local name_slot = function(driver, device, command)
   local code_slot = tostring(command.args.codeSlot)
-  if (get_lock_codes(device)[code_slot] ~= nil) then
-    local lock_codes = get_lock_codes(device)
+  local lock_codes = get_lock_codes(device)
+  if (lock_codes[code_slot] ~= nil) then
     lock_codes[code_slot] = command.args.codeName
     device:emit_event(LockCodes.codeChanged(code_slot .. " renamed"))
     lock_codes_event(device, lock_codes)
