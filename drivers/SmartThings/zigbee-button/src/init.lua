@@ -95,7 +95,8 @@ local zigbee_button_driver_template = {
     require("zigbee-multi-button"),
     require("dimming-remote"),
     require("iris"),
-    require("samjin")
+    require("samjin"),
+    require("ewelink")
   },
   lifecycle_handlers = {
     added = added_handler,

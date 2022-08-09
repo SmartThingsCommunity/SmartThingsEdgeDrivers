@@ -406,6 +406,12 @@ zwaveManufacturer:
     manufacturerId: 0x0113
     productType: 0x5257
     deviceProfileName: switch-binary-indicator
+  - id: 011A/0102/0202
+    deviceLabel: Enerwave Dimmer Switch
+    manufacturerId: 0x011A
+    productType: 0x0102
+    productId: 0x0202
+    deviceProfileName: switch-level
   - id: 001D/1A02/0334
     deviceLabel: Leviton Outlet
     manufacturerId: 0x001D

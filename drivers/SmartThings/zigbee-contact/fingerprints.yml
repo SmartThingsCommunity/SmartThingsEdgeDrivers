@@ -149,31 +149,31 @@ zigbeeManufacturer:
     manufacturer: Compacta
     model: ZBWDS
     deviceProfileName: contact-battery-temperature
-#   - id: CentraLite/3320
-#     deviceLabel: Multipurpose Sensor
-#     manufacturer: CentraLite
-#     model: 3320
-#     deviceProfileName: multi-sensor
-#   - id: CentraLite/3321
-#     deviceLabel: Multipurpose Sensor
-#     manufacturer: CentraLite
-#     model: 3321
-#     deviceProfileName: multi-sensor
-#   - id: CentraLite/3321-S
-#     deviceLabel: Multipurpose Sensor
-#     manufacturer: CentraLite
-#     model: 3321-S
-#     deviceProfileName: multi-sensor
-#   - id: SmartThings/multiv4
-#     deviceLabel: Multipurpose Sensor
-#     manufacturer: SmartThings
-#     model: multiv4
-#     deviceProfileName: multi-sensor
-#   - id: Samjin/multi
-#     deviceLabel: Multipurpose Sensor
-#     manufacturer: Samjin
-#     model: multi
-#     deviceProfileName: multi-sensor
+  - id: CentraLite/3320
+    deviceLabel: Multipurpose Sensor
+    manufacturer: CentraLite
+    model: 3320
+    deviceProfileName: multi-sensor
+  - id: CentraLite/3321
+    deviceLabel: Multipurpose Sensor
+    manufacturer: CentraLite
+    model: 3321
+    deviceProfileName: multi-sensor
+  - id: CentraLite/3321-S
+    deviceLabel: Multipurpose Sensor
+    manufacturer: CentraLite
+    model: 3321-S
+    deviceProfileName: multi-sensor
+  - id: SmartThings/multiv4
+    deviceLabel: Multipurpose Sensor
+    manufacturer: SmartThings
+    model: multiv4
+    deviceProfileName: multi-sensor
+  - id: Samjin/multi
+    deviceLabel: Multipurpose Sensor
+    manufacturer: Samjin
+    model: multi
+    deviceProfileName: multi-sensor
 #   - id: Smartsense/multi/1
 #     deviceLabel: Multipurpose Sensor
 #     manufacturer: SmartThings
