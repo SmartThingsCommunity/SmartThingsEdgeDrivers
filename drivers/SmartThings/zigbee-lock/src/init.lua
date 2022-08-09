@@ -284,7 +284,7 @@ local name_slot = function(driver, device, command)
     local lock_codes = get_lock_codes(device)
     lock_codes[code_slot] = command.args.codeName
     device:emit_event(LockCodes.codeChanged(code_slot .. " renamed"))
-    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device))))
+    lock_codes_event(device, lock_codes)
   end
 end
 
