@@ -609,7 +609,7 @@ do
         mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(targetValue))
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(10))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
       )
     end
   )
@@ -640,7 +640,7 @@ do
         )
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(0))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
       )
     end
   )
@@ -665,7 +665,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy(50))
+      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy({value = 50, unit = "kWh"}))
     }
   }
 )
