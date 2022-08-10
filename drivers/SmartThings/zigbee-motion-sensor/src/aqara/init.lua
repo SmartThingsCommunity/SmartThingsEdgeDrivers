@@ -18,7 +18,7 @@ local OccupancySensing = clusters.OccupancySensing
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
-local MOTION_TEMP_ATTRIBUTE_ID = 0x0112
+local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
 local FREQUENCY_ATTRIBUTE_ID = 0x0102
 local SENSITIVITY_ATTRIBUTE_ID = 0x010C
 local FREQUENCY_DEFAULT_VALUE = 120
@@ -50,8 +50,9 @@ end
 
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
-  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
+  device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
   device:emit_event(detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE))
+  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
   device:emit_event(capabilities.battery.battery(100))
 end
 
@@ -148,7 +149,7 @@ local aqara_motion_handler = {
       },
       -- Motion Sensor T1
       [PRIVATE_CLUSTER_ID] = {
-        [MOTION_TEMP_ATTRIBUTE_ID] = attr_handler,
+        [MOTION_ILLUMINANCE_ATTRIBUTE_ID] = attr_handler,
       }
     }
   },
