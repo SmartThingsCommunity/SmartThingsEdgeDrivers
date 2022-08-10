@@ -87,12 +87,14 @@ end
 local function attr_handler(driver, device, value, zb_rx)
   -- The low 16 bits for Illuminance
   -- The high 16 bits for Motion Detection
+
   if value.value > 65536 then
-    -- active
-    local lux = value.value - 65536
-    device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
+    -- motion detected
 
     motion_active_handler(driver, device, value, zb_rx)
+
+    local lux = value.value - 65536
+    device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
   end
 end
 
@@ -140,9 +142,11 @@ local aqara_motion_handler = {
   },
   zigbee_handlers = {
     attr = {
+      -- High Precision Motion Sensor
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
       },
+      -- Motion Sensor T1
       [PRIVATE_CLUSTER_ID] = {
         [MOTION_TEMP_ATTRIBUTE_ID] = attr_handler,
       }

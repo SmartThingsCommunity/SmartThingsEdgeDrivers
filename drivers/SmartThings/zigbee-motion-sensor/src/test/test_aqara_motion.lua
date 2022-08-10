@@ -20,7 +20,6 @@ local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
-local test = require "integration_test"
 test.add_package_capability("sensitivityAdjustment.yaml")
 test.add_package_capability("detectionFrequency.yaml")
 
