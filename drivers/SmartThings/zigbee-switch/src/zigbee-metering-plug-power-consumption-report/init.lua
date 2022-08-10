@@ -15,7 +15,6 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
-local device_management = require "st.zigbee.device_management"
 local messages = require "st.zigbee.messages"
 local bind_request = require "st.zigbee.zdo.bind_request"
 local zdo_messages = require "st.zigbee.zdo"

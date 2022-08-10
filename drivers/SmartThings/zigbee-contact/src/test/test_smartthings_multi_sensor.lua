@@ -192,7 +192,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
 
     test.wait_for_events()
-    local attr_report_data = {
+    attr_report_data = {
       { 0x0012, data_types.Int16.ID, -50}
     }
     test.socket.zigbee:__queue_receive({

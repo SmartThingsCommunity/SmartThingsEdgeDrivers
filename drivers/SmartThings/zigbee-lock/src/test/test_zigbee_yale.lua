@@ -22,7 +22,6 @@ local capabilities = require "st.capabilities"
 local json = require "dkjson"
 
 local PowerConfiguration = clusters.PowerConfiguration
-local DoorLock = clusters.DoorLock
 local Alarm = clusters.Alarms
 
 local DoorLock = clusters.DoorLock
