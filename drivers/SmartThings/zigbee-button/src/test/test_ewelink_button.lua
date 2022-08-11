@@ -19,6 +19,7 @@ local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
+local PowerConfiguration = clusters.PowerConfiguration
 
 local button = capabilities.button
 
@@ -57,6 +58,20 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.pushed({ state_change = false }))
     )
+  end
+)
+
+test.register_coroutine_test(
+  "doConfigure lifecycle event",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID) })
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
+
+    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1) })
+
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
