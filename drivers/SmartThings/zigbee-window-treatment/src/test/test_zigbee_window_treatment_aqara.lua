@@ -245,8 +245,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle reverseCurtainDirection in infochanged",
   function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.environment_update:__queue_receive({ "zigbee",
       { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
@@ -273,7 +275,7 @@ test.register_coroutine_test(
           data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")
       }
     )
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.wait_for_events()
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send(
