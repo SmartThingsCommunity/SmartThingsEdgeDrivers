@@ -21,6 +21,7 @@ local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local deviceInitialization = capabilities["stse.deviceInitialization"]
 test.add_package_capability("deviceInitialization.yaml")
 
 local Basic = clusters.Basic
@@ -244,51 +245,55 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle reverseCurtainDirection in infochanged",
   function()
+    test.socket.environment_update:__queue_receive({ "zigbee",
+      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
       }
     )
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
-    test.wait_for_events()
-    test.socket.environment_update:__queue_receive({ "zigbee",
-      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
-
     local updates = {
       preferences = {
       }
     }
     updates.preferences["stse.reverseCurtainDirection"] = true
-    test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
-        data_types.CharString,
-        "\x00\x02\x00\x01\x00\x00\x00") })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShade.windowShade.closed()))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(0)))
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+          data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")
+      }
+    )
+
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    updates.preferences["stse.reverseCurtainDirection"] = false
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_attribute_read(mock_device, Basic.ID, { PREF_ATTRIBUTE_ID }, MFG_CODE)
+      }
+    )
+
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
-        data_types.CharString,
-        "\x00\x02\x00\x00\x00\x00\x00") })
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x01\x00\x00\x00\x00" }
+    }
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShade.windowShade.open()))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(100)))
+      deviceInitialization.initializedState.initialized()))
   end
 )
 
