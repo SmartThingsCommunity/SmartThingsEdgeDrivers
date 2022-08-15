@@ -16,13 +16,14 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local json = require "dkjson"
-local constants = require "st.zwave.constants"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
+local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 
 local SCHLAGE_MANUFACTURER_ID = 0x003B
 local SCHLAGE_PRODUCT_TYPE = 0x0002
@@ -33,7 +34,7 @@ local zwave_lock_endpoints = {
   {
     command_classes = {
       {value = zw.BATTERY},
-      {value = DoorLock},
+      {value = zw.DOOR_LOCK},
       {value = zw.USER_CODE},
       {value = zw.NOTIFICATION}
     }
@@ -116,15 +117,83 @@ local expect_reload_all_codes_messages = function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
           capabilities.lockCodes.lockCodes(json.encode({} ))
   ))
-  zw_test_utils.zwave_test_build_send_command(
+  test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
     mock_device,
     UserCode:UsersNumberGet({})
-  )
+  ))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
-  zw_test_utils.zwave_test_build_send_command(
+  test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
     mock_device,
     UserCode:Get({ user_identifier = 1 })
-  )
+  ))
 end
+
+test.register_coroutine_test(
+  "Reload all codes should complete as expected",
+  function ()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {}, component = "main"}
+    })
+    expect_reload_all_codes_messages()
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Get({
+          parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Device should send appropriate configuration messages",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Get({
+          parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number
+        })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Association:Set({
+          grouping_identifier = 2,
+          node_ids = {}
+        })
+      )
+    )
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_coroutine_test(
+  "Basic Sets should result in an Association remove",
+  function ()
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      Basic:Set({
+        value = 0x00
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({}))
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Association:Remove({
+          grouping_identifier = 1,
+          node_ids = {}
+        })
+      )
+    )
+  end
+)
 
 test.run_registered_tests()

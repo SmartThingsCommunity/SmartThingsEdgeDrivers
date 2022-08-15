@@ -22,6 +22,8 @@ local user_id_status = UserCode.user_id_status
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local access_control_event = Notification.event.access_control
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2})
+local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
+local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
@@ -48,7 +50,7 @@ end
 local function reload_all_codes(self, device, cmd)
   LockCodesDefaults.capability_handlers[capabilities.lockCodes.commands.reloadAllCodes](self, device, cmd)
   local current_code_length = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  if current_code_length ~= nil then
+  if current_code_length == nil then
     device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
   end
 end
@@ -79,6 +81,12 @@ end
 
 local function do_configure(self, device)
   device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
+  device:send(Association:Set({grouping_identifier = 2, node_ids = {self.environment_info.hub_zwave_id}}))
+end
+
+local function basic_set_handler(self, device, cmd)
+  device:emit_event(cmd.args.value == 0 and capabilities.lock.lock.unlocked() or capabilities.lock.lock.locked())
+  device:send(Association:Remove({grouping_identifier = 1, node_ids = {self.environment_info.hub_zwave_id}}))
 end
 
 local function configuration_report(self, device, cmd)
@@ -131,7 +139,7 @@ local function user_code_report_handler(self, device, cmd)
     elseif code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE then
       local lock_codes = LockCodesDefaults.get_lock_codes(device)
       for _code_id, _ in pairs(lock_codes) do
-        code_deleted(device, _code_id)
+        LockCodesDefaults.code_deleted(device, _code_id)
       end
       device:emit_event(capabilities.lockCodes.lockCodes(json.encode(LockCodesDefaults.get_lock_codes(device))))
     else -- user_id_status.STATUS_NOT_AVAILABLE
@@ -162,10 +170,13 @@ local schlage_lock = {
     },
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
+    },
+    [cc.BASIC] = {
+      [Basic.SET] = basic_set_handler
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
   can_handle = can_handle_schlage_lock,
