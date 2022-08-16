@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local device_management = require "st.zigbee.device_management"
 
 local OnOff = clusters.OnOff
 local button = capabilities.button.button
@@ -32,6 +33,11 @@ local function can_handle_ewelink_button(opts, driver, device, ...)
   return false
 end
 
+local function do_configure(driver, device)
+  device:configure()
+  device:send(device_management.build_bind_request(device, OnOff.ID, driver.environment_info.hub_zigbee_eui))
+end
+
 local function button_handler(event)
   return function(driver, device, value, zb_rx)
     device:emit_event(event)
@@ -40,6 +46,9 @@ end
 
 local ewelink_button = {
   NAME = "eWeLink Button",
+  lifecycle_handlers = {
+    doConfigure = do_configure
+  },
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {

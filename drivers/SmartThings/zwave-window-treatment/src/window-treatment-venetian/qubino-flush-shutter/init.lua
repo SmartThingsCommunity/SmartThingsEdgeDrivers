@@ -24,8 +24,6 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ver
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 
-local WindowShadeDefaults = require "st.zwave.defaults.windowShade"
-local WindowShadeLevelDefaults = require "st.zwave.defaults.windowShadeLevel"
 local preferencesMap = require "preferences"
 
 local utils = require "st.utils"
@@ -37,7 +35,6 @@ local OPERATING_MODE_CONFIGURATION = 71
 local SLATS_TURN_TIME = "slatsTurnTime"
 
 -- fieldnames
-local OPERATING_MODE = "operating_mode"
 local BLINDS_LAST_COMMAND = "blinds_last_command"
 local SHADE_TARGET = "shade_target"
 
@@ -96,7 +93,6 @@ local function close(driver, device, cmd)
 end
 
 local function multilevel_set_handler(self, device, cmd)
-  local event = nil
   local targetLevel = cmd.args.value
   local currentLevel = device:get_latest_state("main",  capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
   local blindsCommand = nil

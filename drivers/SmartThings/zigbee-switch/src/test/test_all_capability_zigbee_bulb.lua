@@ -22,7 +22,6 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 
 local zigbee_bulb_all_caps = {
   components = {
