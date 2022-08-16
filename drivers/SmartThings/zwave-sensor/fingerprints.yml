@@ -103,16 +103,16 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0B01
 #     deviceProfileName: water-battery-tamper-temperature
-#   - id: "010F/0000"
-#     deviceLabel: Fibaro Water Leak Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0000
-#     deviceProfileName: water-temperature-battery-tamper
-#   - id: "010F/0B00"
-#     deviceLabel: Fibaro Water Leak Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0B00
-#     deviceProfileName: water-temperature-battery-tamper
+  - id: "010F/0000"
+    deviceLabel: Fibaro Water Leak Sensor
+    manufacturerId: 0x010F
+    productType: 0x0000
+    deviceProfileName: water-temperature-battery-tamper
+  - id: "010F/0B00"
+    deviceLabel: Fibaro Water Leak Sensor
+    manufacturerId: 0x010F
+    productType: 0x0B00
+    deviceProfileName: water-temperature-battery-tamper
   - id: "aeotec/water/7"
     deviceLabel: Aeotec Water Sensor 7 Pro
     manufacturerId: 0x0371

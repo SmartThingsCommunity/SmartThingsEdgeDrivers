@@ -1,0 +1,29 @@
+name: thermostat-heating-battery
+components:
+- id: main
+  capabilities:
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - name: "isLocked"
+    title: "is locked"
+    description: "Disable the buttons on the thermostat"
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: "reportingInterval"
+    title: "reporting Interval"
+    description: "Device wakeup interval"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 60
+      default: 5
