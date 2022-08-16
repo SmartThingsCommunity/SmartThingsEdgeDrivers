@@ -1,0 +1,34 @@
+name: qubino-flush-thermostat
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+metadata:
+  mnmn: SmartThingsEdge
+  vid: SmartThings-smartthings-Qubino_Flush_Thermostat
+preferences:
+  - name: "thermostatMode"
+    title: "Thermostat Mode"
+    description: "This setting allows to change mode of the device. Remember to unpair to pair device again after change."
+    preferenceType: enumeration
+    required: true
+    definition:
+      options:
+        0: Heat
+        1: Cool
+      default: 0
