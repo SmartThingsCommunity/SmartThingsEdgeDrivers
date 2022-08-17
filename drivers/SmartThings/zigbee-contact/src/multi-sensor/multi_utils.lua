@@ -148,7 +148,6 @@ multi_utils.convert_to_signedInt16 = function(byte1, byte2)
   else
     finalValue = swapped
   end
-  print("signedInt16 "..finalValue)
   return finalValue
 end
 
