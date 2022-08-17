@@ -1,0 +1,38 @@
+name: thermostat-popp
+components:
+- id: main
+  capabilities:
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: preparestream40760.heatMode
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: preparestream40760.windowOpenDetection
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: powerSource
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: preparestream40760.keypadLock
+    explicit: true
+  - preferenceId: preparestream40760.viewingDirection
+    explicit: true
+  - preferenceId: preparestream40760.eTRVOrientation
+    explicit: true
+  - preferenceId: preparestream40760.regulationSetPointOffset
+    explicit: true
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: a20ec19d-7558-3373-90b9-3dd45494f1be
