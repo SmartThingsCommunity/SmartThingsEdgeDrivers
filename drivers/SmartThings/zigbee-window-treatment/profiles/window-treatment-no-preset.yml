@@ -1,0 +1,24 @@
+name: window-treatment-no-preset
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: battery
+    version: 1
+  - id: windowShadeLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+preferences:
+  - name: "invert"
+    title: "Invert"
+    description: "Invert curtain direction"
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false

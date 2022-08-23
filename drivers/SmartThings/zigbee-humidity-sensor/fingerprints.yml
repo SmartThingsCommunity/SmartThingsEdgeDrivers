@@ -3,21 +3,21 @@ zigbeeManufacturer:
     deviceLabel: eZEX Multipurpose Sensor
     model: E282-KR0B0Z1-HA
     deviceProfileName: humidity-temperature
-#   - id: "PLAID SYSTEMS/PS-SPRZMS-01"
-#     deviceLabel: Spruce Irrigation
-#     manufacturer: PLAID SYSTEMS
-#     model: PS-SPRZMS-01
-#     deviceProfileName: humidity-temp-battery
-#   - id: "PLAID SYSTEMS/PS-SPRZMS-SLP1"
-#     deviceLabel: Spruce Irrigation
-#     manufacturer: PLAID SYSTEMS
-#     model: PS-SPRZMS-SLP1
-#     deviceProfileName: humidity-temp-battery
-#   - id: "PLAID SYSTEMS/PS-SPRZMS-SLP3"
-#     deviceLabel: Spruce Irrigation
-#     manufacturer: PLAID SYSTEMS
-#     model: PS-SPRZMS-SLP3
-#     deviceProfileName: humidity-temp-battery
+  - id: "PLAID SYSTEMS/PS-SPRZMS-01"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-01
+    deviceProfileName: humidity-temp-battery
+  - id: "PLAID SYSTEMS/PS-SPRZMS-SLP1"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-SLP1
+    deviceProfileName: humidity-temp-battery
+  - id: "PLAID SYSTEMS/PS-SPRZMS-SLP3"
+    deviceLabel: Spruce Irrigation
+    manufacturer: PLAID SYSTEMS
+    model: PS-SPRZMS-SLP3
+    deviceProfileName: humidity-temp-battery
   - id: CentraLite/3310-S
     deviceLabel: Multipurpose Sensor
     manufacturer: CentraLite

@@ -240,12 +240,12 @@ zwaveManufacturer:
   #   productType: 0x0003
   #   productId: 0x000A
   #   deviceProfileName: water-illuminance-temperature
-#   - id: 0109/2001/0106
-#     deviceLabel: Open/Closed Sensor
-#     manufacturerId: 0x0109
-#     productType: 0x2001
-#     productId: 0x0106
-#     deviceProfileName: base-contact
+  - id: 0109/2001/0106
+    deviceLabel: Open/Closed Sensor
+    manufacturerId: 0x0109
+    productType: 0x2001
+    productId: 0x0106
+    deviceProfileName: base-contact
   - id: 0214/0003/0002
     deviceLabel: BeSense Motion Sensor
     manufacturerId: 0x0214

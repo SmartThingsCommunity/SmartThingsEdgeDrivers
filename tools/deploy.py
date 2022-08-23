@@ -73,7 +73,7 @@ for driver in drivers:
   with open(driver+"/config.yml", 'r') as config_file:
     package_key = yaml.safe_load(config_file)["packageKey"]
     print(package_key)
-  subprocess.run(["zip -r ../edge.zip $(find . -name \"*.yml\" -o -name \"*.lua\" -o -name \"*.yaml\") -X -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
+  subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
   with open("edge.zip", 'rb') as driver_package:
     data = driver_package.read()
     # TODO: This does not yet work, hash returned by server does not match
