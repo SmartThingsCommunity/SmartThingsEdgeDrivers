@@ -118,12 +118,12 @@ zwaveManufacturer:
 #     productType: 0x2009
 #     productId: 0x0908
 #     deviceProfileName: alarm-battery
-#   - id: 0084/0313/010B
-#     deviceLabel: FortrezZ Siren
-#     manufacturerId: 0x0084
-#     productType: 0x0313
-#     productId: 0x010B
-#     deviceProfileName: alarm-switch
+  - id: 0084/0313/010B
+    deviceLabel: FortrezZ Siren
+    manufacturerId: 0x0084
+    productType: 0x0313
+    productId: 0x010B
+    deviceProfileName: alarm-switch
 # zwaveGeneric:
 #   - id: "SmartAlert/Siren"
 #     deviceLabel: Siren
