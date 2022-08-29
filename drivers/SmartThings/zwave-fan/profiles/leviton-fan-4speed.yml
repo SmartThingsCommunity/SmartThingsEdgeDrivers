@@ -24,13 +24,14 @@ preferences:
     default: 3
 - name: "statusLEDConfiguration"
   title: "Status LED"
+  description: "Status LED On when"
   preferenceType: enumeration
   required: true
   definition:
     options:
-      254: "Status LED On when the fan is On"
-      255: "Status LED On when the fan is Off"
-      0:   "Status LED is always Off"
+      254: "Fan is On"
+      255: "Fan is Off"
+      0:   "Always Off"
     default: 255
 - name: "minimumFanSpeedLevel"
   title: "Minimum Fan Speed Level"
