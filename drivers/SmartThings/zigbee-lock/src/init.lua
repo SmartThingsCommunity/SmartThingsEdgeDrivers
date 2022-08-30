@@ -249,12 +249,19 @@ local name_slot = function(driver, device, command)
 end
 
 local function device_added(driver, device)
+  lock_utils.populate_state_from_data(device)
+
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
 end
+
+local function init(driver, device)
+  lock_utils.populate_state_from_data(device)
+end
+
 
 local zigbee_lock_driver = {
   supported_capabilities = {
@@ -301,7 +308,8 @@ local zigbee_lock_driver = {
   },
   lifecycle_handlers = {
     doConfigure = do_configure,
-    added = device_added
+    added = device_added,
+    init = init,
   }
 }
 
