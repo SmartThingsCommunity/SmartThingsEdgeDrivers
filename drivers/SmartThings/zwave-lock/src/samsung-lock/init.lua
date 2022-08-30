@@ -70,7 +70,7 @@ local function notification_report_handler(self, device, cmd)
       -- Update Master Code in the same way as in defaults...
       LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
       -- ...and delete rest of them, as lock does
-      local lock_codes = utils.deep_copy(get_lock_codes(device))
+      local lock_codes = get_lock_codes(device)
       for code_id, _ in pairs(lock_codes) do
         if code_id ~= "0" then
           code_deleted(device, code_id)
