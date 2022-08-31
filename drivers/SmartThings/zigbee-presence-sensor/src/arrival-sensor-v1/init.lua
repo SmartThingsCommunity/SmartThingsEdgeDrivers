@@ -122,6 +122,7 @@ local function init_handler(self, device, event, args)
       )
     end
   )
+  presence_utils.create_presence_timeout(device)
 end
 
 local arrival_sensor_v1 = {

@@ -89,17 +89,6 @@ local function create_poll_schedule(device)
     device:set_field(presence_utils.RECURRING_POLL_TIMER, new_timer)
   elseif timer ~= nil then
     device.thread:cancel_timer(timer)
-    device:set_field(timer_const.RECURRING_POLL_TIMER, nil)
-  end
-end
-
-local function create_presence_timeout(device)
-  local timer = device:get_field(timer_const.PRESENCE_CALLBACK_TIMER)
-  if timer ~= nil then
-    device.thread:cancel_timer(timer)
-  end
-  local no_rep_timer = device:get_field(timer_const.PRESENCE_CALLBACK_CREATE_FN)
-  if (no_rep_timer ~= nil) then
     device:set_field(presence_utils.RECURRING_POLL_TIMER, nil)
   end
 end
@@ -142,8 +131,8 @@ local function init_handler(self, device, event, args)
   local should_schedule_recurring_polling = not (device:get_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS) or true)
   if should_schedule_recurring_polling then
     create_poll_schedule(device)
-    create_presence_timeout(device)
   end
+  presence_utils.create_presence_timeout(device)
 end
 
 local function beep_handler(self, device, command)
@@ -159,7 +148,7 @@ end
 local function poke(device)
   -- If we receive any message from the device, we should mark it present and start the timeout to mark it offline
   device:emit_event(PresenceSensor.presence("present"))
-  create_presence_timeout(device)
+  presence_utils.create_presence_timeout(device)
 end
 
 local function all_zigbee_message_handler(self, message_channel)
