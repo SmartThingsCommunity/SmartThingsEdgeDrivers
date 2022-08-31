@@ -12,9 +12,17 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-return {
-  LAST_CHECKIN_TIMESTAMP = "lastCheckinTimestamp", -- used when presence events are based on battery reports
-  PRESENCE_CALLBACK_CREATE_FN = "presenceCallbackCreateFn",
-  PRESENCE_CALLBACK_TIMER = "presenceCallbackTimer", -- events are based on battery reports
-  RECURRING_POLL_TIMER = "recurringPollTimer"       -- events are based on recurring poll of Basic cluster's attribute
-}
+local presence_utils = {}
+
+-- used when presence events are based on battery reports
+presence_utils.LAST_CHECKIN_TIMESTAMP = "lastCheckinTimestamp"
+
+presence_utils.PRESENCE_CALLBACK_CREATE_FN = "presenceCallbackCreateFn"
+
+-- events are based on battery reports
+presence_utils.PRESENCE_CALLBACK_TIMER = "presenceCallbackTimer"
+
+-- events are based on recurring poll of Basic cluster's attribute
+presence_utils.RECURRING_POLL_TIMER = "recurringPollTimer"
+
+return presence_utils
