@@ -117,8 +117,6 @@ local function init_handler(self, device, event, args)
               3 * CHECKIN_INTERVAL + 1,
               function()
                 device:emit_event(PresenceSensor.presence("not present"))
-                device:emit_event(SignalStrength.lqi(0))
-                device:emit_event(SignalStrength.rssi({value = -100, unit = 'dBm'}))
                 device:set_field(presence_utils.PRESENCE_CALLBACK_TIMER, nil)
               end
       )
