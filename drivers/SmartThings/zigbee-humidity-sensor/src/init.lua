@@ -37,6 +37,7 @@ local zigbee_humidity_driver = {
     init = device_init
   },
   sub_drivers = {
+    require("aqara"),
     require("plant-link"),
     require("plaid-systems"),
     require("centralite-sensor"),
