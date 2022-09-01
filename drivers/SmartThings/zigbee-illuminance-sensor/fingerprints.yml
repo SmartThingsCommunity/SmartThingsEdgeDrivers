@@ -1,3 +1,9 @@
+zigbeeManufacturer:
+  - id: "LUMI/lumi.sen_ill.agl01"
+    deviceLabel: Aqara Illuminance Sensor T1
+    manufacturer: LUMI
+    model: lumi.sen_ill.agl01
+    deviceProfileName: battery-illuminance
 zigbeeGeneric:
   - id: "generic-illuminance-sensor"
     deviceLabel: Illuminance Sensor
