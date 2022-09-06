@@ -184,11 +184,29 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Added lifecycle should be handlded",
-  function ()
-    add_device()
-  end
+    "Added lifecycle should be handlded",
+    function ()
+      add_device()
+    end
 )
+
+test.register_coroutine_test(
+    "init followed by no action should result in timeout",
+    function ()
+      test.mock_device.add_test_device(mock_simple_device)
+      test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+      test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "init"})
+      test.wait_for_events()
+      test.mock_time.advance_time(121)
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
+    end,
+    {
+      test_init = function()
+        zigbee_test_utils.init_noop_health_check_timer()
+      end
+    }
+)
+
 
 test.register_coroutine_test(
   "Device should be marked not present when default check interval elapses without a battery report",
