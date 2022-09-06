@@ -1,0 +1,4 @@
+name: 'Z-Wave Lock'
+packageKey: 'zwave-lock'
+permissions:
+  zwave: {}

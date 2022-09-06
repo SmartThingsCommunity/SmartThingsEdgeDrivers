@@ -24,18 +24,18 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMSZB-120
     deviceProfileName: smoke-battery
-  # - id: "Heiman/Orvibo/Gas3"
-  #   deviceLabel: Orvibo Gas Detector
-  #   manufacturer: Heiman
-  #   model: d0e857bfd54f4a12816295db3945a421
-  #   deviceProfileName: smoke-detector
-  # - id: "Heiman/Orvibo/Gas4"
-  #   deviceLabel: Orvibo Gas Detector
-  #   manufacturer: HEIMAN
-  #   model: 358e4e3e03c644709905034dae81433e
-  #   deviceProfileName: smoke-detector
-  # - id: "HEIMAN/GASSensor-N"
-  #   deviceLabel: HEIMAN Gas Detector
-  #   manufacturer: HEIMAN
-  #   model: GASSensor-N
-  #   deviceProfileName: smoke-detector
+  - id: "Heiman/Orvibo/Gas3"
+    deviceLabel: Orvibo Gas Detector
+    manufacturer: Heiman
+    model: d0e857bfd54f4a12816295db3945a421
+    deviceProfileName: smoke-detector
+  - id: "Heiman/Orvibo/Gas4"
+    deviceLabel: Orvibo Gas Detector
+    manufacturer: HEIMAN
+    model: 358e4e3e03c644709905034dae81433e
+    deviceProfileName: smoke-detector
+  - id: "HEIMAN/GASSensor-N"
+    deviceLabel: HEIMAN Gas Detector
+    manufacturer: HEIMAN
+    model: GASSensor-N
+    deviceProfileName: smoke-detector

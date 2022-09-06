@@ -204,6 +204,33 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Contact events should not be generatd from zone status reports when device is mounted on a garage door",
+  function ()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0001)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+    )
+    test.wait_for_events()
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
+      {
+        preferences = {
+          garageSensor = true
+        }
+      }
+    ))
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0001)
+    })
+  end
+)
+
+test.register_coroutine_test(
   "Refresh necessary attributes",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
