@@ -52,12 +52,12 @@ local ewelink_button = {
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.On.ID] = button_handler(button.double()),
-        [OnOff.server.commands.Off.ID] = button_handler(button.held()),
-        [OnOff.server.commands.OffWithEffect.ID] = button_handler(button.pushed()),
-        [OnOff.server.commands.OnWithRecallGlobalScene.ID] = button_handler(button.pushed()),
-        [OnOff.server.commands.OnWithTimedOff.ID] = button_handler(button.pushed()),
-        [OnOff.server.commands.Toggle.ID] = button_handler(button.pushed())
+        [OnOff.server.commands.On.ID] = button_handler(button.double({ state_change = true })),
+        [OnOff.server.commands.Off.ID] = button_handler(button.held({ state_change = true })),
+        [OnOff.server.commands.OffWithEffect.ID] = button_handler(button.pushed({ state_change = true })),
+        [OnOff.server.commands.OnWithRecallGlobalScene.ID] = button_handler(button.pushed({ state_change = true })),
+        [OnOff.server.commands.OnWithTimedOff.ID] = button_handler(button.pushed({ state_change = true })),
+        [OnOff.server.commands.Toggle.ID] = button_handler(button.pushed({ state_change = true }))
       }
     }
   },
