@@ -14,12 +14,12 @@ zwaveManufacturer:
 #     manufacturerId: 0x0086
 #     productId: 0x007A
 #     deviceProfileName: base-water
-#   - id: "Everspring/0001"
-#     deviceLabel: Everspring Light
-#     manufacturerId: 0x0060
-#     productType: 0x0012
-#     productId: 0x0001
-#     deviceProfileName: motion-light
+  - id: "Everspring/0001"
+    deviceLabel: Everspring Light
+    manufacturerId: 0x0060
+    productType: 0x0012
+    productId: 0x0001
+    deviceProfileName: motion-light
   - id: "Dome/DMMS1"
     deviceLabel: Dome Motion/Light Sensor
     manufacturerId: 0x021F
@@ -462,53 +462,53 @@ zwaveManufacturer:
 #     manufacturerId: 0x0086
 #     productId: 0x0005
 #     deviceProfileName: motion-battery-temperature-illuminance-humidity
-#   - id: 021F/0003/0085
-#     deviceLabel: Dome Water Leak Sensor
-#     manufacturerId: 0x021F
-#     productType: 0x0003
-#     productId: 0x0085
-#     deviceProfileName: base-water
+  - id: 021F/0003/0085
+    deviceLabel: Dome Water Leak Sensor
+    manufacturerId: 0x021F
+    productType: 0x0003
+    productId: 0x0085
+    deviceProfileName: base-water
 #   - id: 0258/0003/0085
 #     deviceLabel: NEO Coolcam Water Leak Sensor
 #     manufacturerId: 0x0258
 #     productType: 0x0003
 #     productId: 0x0085
 #     deviceProfileName: base-water
-#   - id: 0258/0003/1085
-#     deviceLabel: NEO Coolcam Water Leak Sensor
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x1085
-#     deviceProfileName: base-water
+  - id: 0258/0003/1085
+    deviceLabel: NEO Coolcam Water Leak Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x1085
+    deviceProfileName: base-water
 #   - id: 0258/0003/2085
 #     deviceLabel: NEO Coolcam Water Leak Sensor
 #     manufacturerId: 0x0258
 #     productType: 0x0003
 #     productId: 0x2085
 #     deviceProfileName: base-water
-#   - id: 0086/007A
-#     deviceLabel: Aeotec Water Leak Sensor
-#     manufacturerId: 0x0086
-#     productId: 0x007A
-#     deviceProfileName: base-water
-#   - id: 000C/0201/000A
-#     deviceLabel: HomeSeer Water Leak Sensor
-#     manufacturerId: 0x000C
-#     productType: 0x0201
-#     productId: 0x000A
-#     deviceProfileName: base-water
-#   - id: 0173/4C47/4C44
-#     deviceLabel: Leak Gopher Water Leak Sensor
-#     manufacturerId: 0x0173
-#     productType: 0x4C47
-#     productId: 0x4C44
-#     deviceProfileName: base-water
-#   - id: 027A/7000/E002
-#     deviceLabel: Zooz Water Leak Sensor
-#     manufacturerId: 0x027A
-#     productType: 0x7000
-#     productId: 0xE002
-#     deviceProfileName: base-water
+  - id: 0086/007A
+    deviceLabel: Aeotec Water Leak Sensor
+    manufacturerId: 0x0086
+    productId: 0x007A
+    deviceProfileName: base-water
+  - id: 000C/0201/000A
+    deviceLabel: HomeSeer Water Leak Sensor
+    manufacturerId: 0x000C
+    productType: 0x0201
+    productId: 0x000A
+    deviceProfileName: base-water
+  - id: 0173/4C47/4C44
+    deviceLabel: Leak Gopher Water Leak Sensor
+    manufacturerId: 0x0173
+    productType: 0x4C47
+    productId: 0x4C44
+    deviceProfileName: base-water
+  - id: 027A/7000/E002
+    deviceLabel: Zooz Water Leak Sensor
+    manufacturerId: 0x027A
+    productType: 0x7000
+    productId: 0xE002
+    deviceProfileName: base-water
 #   - id: 010F/0800
 #     deviceLabel: Fibaro Motion Sensor
 #     manufacturerId: 0x010F
@@ -531,18 +531,18 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0801
 #     deviceProfileName: fibaro-motion-sensor
-#   - id: everspring/flood/ST812/1
-#     deviceLabel: Everspring Water Sensor
-#     manufacturerId: 0x0060
-#     productType: 0x000B
-#     productId: 0x0001
-#     deviceProfileName: base-water
-#   - id: everspring/flood/ST812/2
-#     deviceLabel: Everspring Water Sensor
-#     manufacturerId: 0x0060
-#     productType: 0x0000
-#     productId: 0x0001
-#     deviceProfileName: base-water
+  - id: everspring/flood/ST812/1
+    deviceLabel: Everspring Water Sensor
+    manufacturerId: 0x0060
+    productType: 0x000B
+    productId: 0x0001
+    deviceProfileName: base-water
+  - id: everspring/flood/ST812/2
+    deviceLabel: Everspring Water Sensor
+    manufacturerId: 0x0060
+    productType: 0x0000
+    productId: 0x0001
+    deviceProfileName: base-water
 # zwaveGeneric:
 #   - id: "GenericSensorAlarm"
 #     deviceLabel: Z-Wave Sensor

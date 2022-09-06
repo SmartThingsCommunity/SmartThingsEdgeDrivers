@@ -11,16 +11,16 @@ zwaveManufacturer:
     productType: 0x4252
     productId: 0x5A31
     deviceProfileName: battery
-  # - id: "Fibaro/Button"
-  #   deviceLabel: Fibaro Button
-  #   manufacturerId: 0x010F
-  #   productType: 0x0F01
-  #   deviceProfileName: button-generic
-  # - id: "Aeotec/Button"
-  #   deviceLabel: Aeotec Button
-  #   manufacturerId: 0x0371
-  #   productId: 0x0004
-  #   deviceProfileName: button-generic
+  - id: "Fibaro/Button"
+    deviceLabel: Fibaro Button
+    manufacturerId: 0x010F
+    productType: 0x0F01
+    deviceProfileName: button-generic
+  - id: "Aeotec/Button"
+    deviceLabel: Aeotec Button
+    manufacturerId: 0x0371
+    productId: 0x0004
+    deviceProfileName: button-generic
   # - id: Fibaro/keyfob
   #   deviceLabel: Fibaro KeyFob
   #   manufacturerId: 0x010F
