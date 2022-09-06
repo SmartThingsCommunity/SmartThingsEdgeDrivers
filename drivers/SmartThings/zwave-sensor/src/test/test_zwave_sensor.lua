@@ -329,6 +329,42 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_motion_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_motion_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+      }
+    }
+)
+
+test.register_message_test(
     "Sensor Binary report (v1) should be handled",
     {
       {
