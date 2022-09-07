@@ -71,7 +71,16 @@ local do_configure = function(self, device)
   device:send(Thermostat.attributes.ThermostatRunningState:configure_reporting(device, 5, 300))
   device:send(FanControl.attributes.FanMode:configure_reporting(device, 5, 300))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
-  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[3]))-- default: { ModeAttribute.off.NAME, ModeAttribute.heat.NAME, ModeAttribute.cool.NAME }
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[3]))-- default: { "off", "heat", "cool" }
+end
+
+local battery_voltage_handler = function(driver, device, battery_voltage)
+  local perc_value = utils.round((battery_voltage.value - BAT_MIN)/(BAT_MAX - BAT_MIN) * 100)
+  if (perc_value < 100) then
+    device:emit_event(Battery.battery(utils.clamp_value(perc_value, 0, 100)))
+  else
+    device:emit_event(Battery.battery(100))
+  end
 end
 
 local supported_thermostat_modes_handler = function(driver, device, supported_modes)
@@ -184,7 +193,7 @@ end
 local function info_changed(driver, device, event, args)
   local modes_index = tonumber(device.preferences.systemModes)
   local new_supported_modes = SUPPORTED_THERMOSTAT_MODES[modes_index]
-  device:emit_event(ThermostatMode.supportedThermostatModes(new_supported_modes))
+  device:emit_event(ThermostatMode.supportedThermostatModes(new_supported_modes, { visibility = { displayed = false } }))
 end
 
 local zenwithin_thermostat = {
