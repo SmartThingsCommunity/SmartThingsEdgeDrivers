@@ -32,6 +32,7 @@ local zigbee_humidity_driver = {
     capabilities.battery,
     capabilities.relativeHumidityMeasurement,
     capabilities.temperatureMeasurement,
+    capabilities.atmosphericPressureMeasurement,
   },
   lifecycle_handlers = {
     init = device_init
