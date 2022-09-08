@@ -67,17 +67,6 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zooz_zen_30_dimmer_relay,
-        SwitchBinary:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels={}
-          })
-      )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_zooz_zen_30_dimmer_relay,
         SwitchMultilevel:Get({},
           {
             encap = zw.ENCAP.AUTO,

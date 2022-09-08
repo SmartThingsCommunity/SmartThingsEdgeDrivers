@@ -90,7 +90,7 @@ test.register_coroutine_test(
   "closed contact events",
   function()
     local attr_report_data = {
-      { IASZone.ID, data_types.Int16.ID, 0x0020}
+      { IASZone.attributes.ZoneStatus.ID, data_types.Bitmap16.ID, 0x0020 }
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -104,7 +104,7 @@ test.register_coroutine_test(
   "open contact events",
   function()
     local attr_report_data = {
-      { IASZone.ID, data_types.Int16.ID, 0x0021}
+      { IASZone.attributes.ZoneStatus.ID, data_types.Bitmap16.ID, 0x0021}
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
