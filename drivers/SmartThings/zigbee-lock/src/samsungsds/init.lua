@@ -46,7 +46,7 @@ local function unlock_cmd_handler(driver, device, command)
           DoorLock.ID,
           SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND,
           SAMSUNG_SDS_MFR_CODE,
-          "1235"))
+          "\x10\x04\x31\x32\x33\x35"))
 end
 
 local device_added = function(self, device)
