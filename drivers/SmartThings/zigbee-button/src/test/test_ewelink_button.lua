@@ -81,7 +81,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On.build_test_rx(mock_device)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.double())
+      mock_device:generate_test_message("main", button.button.double({ state_change = true }))
     )
   end
 )
@@ -94,7 +94,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off.build_test_rx(mock_device)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.held())
+      mock_device:generate_test_message("main", button.button.held({ state_change = true }))
     )
   end
 )
@@ -107,7 +107,7 @@ test.register_coroutine_test(
       OnOff.server.commands.OffWithEffect.build_test_rx(mock_device, 0x00, 0x00)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed())
+      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
     )
 
     test.socket.zigbee:__queue_receive({
@@ -115,7 +115,7 @@ test.register_coroutine_test(
       OnOff.server.commands.OnWithRecallGlobalScene.build_test_rx(mock_device)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed())
+      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
     )
 
     test.socket.zigbee:__queue_receive({
@@ -123,7 +123,7 @@ test.register_coroutine_test(
       OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x01, 0x00, 0x00)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed())
+      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
     )
 
     test.socket.zigbee:__queue_receive({
@@ -131,7 +131,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Toggle.build_test_rx(mock_device)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed())
+      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
     )
   end
 )

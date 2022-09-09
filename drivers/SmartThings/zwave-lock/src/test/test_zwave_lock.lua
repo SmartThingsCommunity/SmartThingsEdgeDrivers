@@ -287,7 +287,7 @@ test.register_coroutine_test(
                   capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"} ))
           ))
           test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed",
-                  {})))
+                  {state_change = true})))
         end
 )
 

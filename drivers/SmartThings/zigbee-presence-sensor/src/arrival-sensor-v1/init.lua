@@ -43,7 +43,7 @@ local NUMBER_OF_BEEPS = 5
 local LEGACY_DEVICE_BATTERY_COMMAND = 0x00
 local LEGACY_DEVICE_PRESENCE_COMMAND = 0x01
 local LEGACY_DEVICE_PRESENCE_REPORT_EXT = 0x02
-local timer_const = require "constants/timer-constants"
+local presence_utils = require "presence_utils"
 
 local CHECKIN_INTERVAL = 20 -- seconds
 
@@ -111,19 +111,18 @@ end
 
 local function init_handler(self, device, event, args)
   device:set_field(
-    timer_const.PRESENCE_CALLBACK_CREATE_FN,
+    presence_utils.PRESENCE_CALLBACK_CREATE_FN,
     function(device)
       return device.thread:call_with_delay(
               3 * CHECKIN_INTERVAL + 1,
               function()
                 device:emit_event(PresenceSensor.presence("not present"))
-                device:emit_event(SignalStrength.lqi(0))
-                device:emit_event(SignalStrength.rssi({value = -100, unit = 'dBm'}))
-                device:set_field(timer_const.PRESENCE_CALLBACK_TIMER, nil)
+                device:set_field(presence_utils.PRESENCE_CALLBACK_TIMER, nil)
               end
       )
     end
   )
+  presence_utils.create_presence_timeout(device)
 end
 
 local arrival_sensor_v1 = {

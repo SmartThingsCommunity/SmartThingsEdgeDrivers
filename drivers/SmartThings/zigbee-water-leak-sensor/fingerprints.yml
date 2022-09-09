@@ -83,7 +83,7 @@ zigbeeManufacturer:
     deviceLabel: ADT Water Leak Detector
     manufacturer: Nortek Security and Control
     model: F-ADT-WTR-1
-    deviceProfileName: water-temp-battery
+    deviceProfileName: water-temp-battery-tempOffset
   - id: ThirdReality/3RWS18BZ/1
     deviceLabel: ThirdReality Water Leak Sensor
     manufacturer: Third Reality, Inc
