@@ -19,4 +19,4 @@ preferences:
         0: "When Off"
         1: "When On"
         2: "Never"
-      defaultValue: 0
+      default: 0
