@@ -22,7 +22,6 @@ zwaveGeneric:
     commandClasses:
       supported:
         - 0x66
-        - 0x98
         - 0x71
         - 0x72
     deviceProfileName: base-garage-door
@@ -32,7 +31,4 @@ zwaveGeneric:
     specificType:
       - 0x06
       - 0x07
-    commandClasses:
-      supported:
-        - 0x98
-    deviceProfileName: base-garage-door    
+    deviceProfileName: base-garage-door
