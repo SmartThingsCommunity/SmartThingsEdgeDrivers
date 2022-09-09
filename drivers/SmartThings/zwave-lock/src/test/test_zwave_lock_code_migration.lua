@@ -68,10 +68,10 @@ local mock_device_no_data = test.mock_device.build_test_zwave_device(
 
 local expect_reload_all_codes_messages = function(dev, lc)
   test.socket.capability:__expect_send(dev:generate_test_message("main",
-      capabilities.lockCodes.lockCodes(json.encode(lc))
+      capabilities.lockCodes.lockCodes(json.encode(lc), { visibility = { displayed = false } })
   ))
   test.socket.zwave:__expect_send( UserCode:UsersNumberGet({}):build_test_tx(dev.id) )
-  test.socket.capability:__expect_send(dev:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
+  test.socket.capability:__expect_send(dev:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send( UserCode:Get({ user_identifier = 1 }):build_test_tx(dev.id) )
 end
 
