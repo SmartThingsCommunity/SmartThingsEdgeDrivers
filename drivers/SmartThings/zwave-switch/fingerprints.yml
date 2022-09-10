@@ -725,6 +725,12 @@ zwaveManufacturer:
     productType: 0x0103
     productId: 0x0025
     deviceProfileName: switch-level
+  - id: 0060/1101/0003
+    deviceLabel: Everspring Dimmer Switch
+    manufacturerId: 0x0060
+    productType: 0x1101
+    productId: 0x0003
+    deviceProfileName: switch-level
   - id: 0086/0003/0012
     deviceLabel: Aeotec Switch
     manufacturerId: 0x0086
