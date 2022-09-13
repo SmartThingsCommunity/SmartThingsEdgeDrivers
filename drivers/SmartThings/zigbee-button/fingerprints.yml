@@ -44,41 +44,41 @@ zigbeeManufacturer:
   #   manufacturer: KE
   #   model: TRADFRI open/close remote
   #   deviceProfileName: two-buttons-battery
-  # - id: "CentraLite/3450-L"
-  #   deviceLabel: Iris Remote Control
-  #   manufacturer: CentraLite
-  #   model: 3450-L
-  #   deviceProfileName: four-buttons-battery
-  # - id: "CentraLite/3450-L2"
-  #   deviceLabel: Iris Remote Control
-  #   manufacturer: CentraLite
-  #   model: 3450-L2
-  #   deviceProfileName: four-buttons-battery
-  # - id: "HEIMAN/SceneSwitch-EM-3.0"
-  #   deviceLabel: HEIMAN Remote Control
-  #   manufacturer: HEIMAN
-  #   model: SceneSwitch-EM-3.0
-  #   deviceProfileName: four-buttons-battery
-  # - id: "AduroSmart Eria/Adurolight_NCC"
-  #   deviceLabel: Eria Remote Control
-  #   manufacturer: AduroSmart Eria
-  #   model: Adurolight_NCC
-  #   deviceProfileName: four-buttons
-  # - id: "AduroSmart Eria/ADUROLIGHT_CSC"
-  #   deviceLabel: Eria Remote Control
-  #   manufacturer: AduroSmart Eria
-  #   model: ADUROLIGHT_CSC
-  #   deviceProfileName: four-buttons
-  # - id: "ADUROLIGHT/Adurolight_NCC"
-  #   deviceLabel: Eria Remote Control
-  #   manufacturer: ADUROLIGHT
-  #   model: Adurolight_NCC
-  #   deviceProfileName: four-buttons
-  # - id: "ADUROLIGHT/ADUROLIGHT_CSC"
-  #   deviceLabel: Eria Remote Control
-  #   manufacturer: ADUROLIGHT
-  #   model: ADUROLIGHT_CSC
-  #   deviceProfileName: four-buttons
+  - id: "CentraLite/3450-L"
+    deviceLabel: Iris Remote Control
+    manufacturer: CentraLite
+    model: 3450-L
+    deviceProfileName: four-buttons-battery
+  - id: "CentraLite/3450-L2"
+    deviceLabel: Iris Remote Control
+    manufacturer: CentraLite
+    model: 3450-L2
+    deviceProfileName: four-buttons-battery
+  - id: "HEIMAN/SceneSwitch-EM-3.0"
+    deviceLabel: HEIMAN Remote Control
+    manufacturer: HEIMAN
+    model: SceneSwitch-EM-3.0
+    deviceProfileName: four-buttons-battery
+  - id: "AduroSmart Eria/Adurolight_NCC"
+    deviceLabel: Eria Remote Control
+    manufacturer: AduroSmart Eria
+    model: Adurolight_NCC
+    deviceProfileName: four-buttons
+  - id: "AduroSmart Eria/ADUROLIGHT_CSC"
+    deviceLabel: Eria Remote Control
+    manufacturer: AduroSmart Eria
+    model: ADUROLIGHT_CSC
+    deviceProfileName: four-buttons
+  - id: "ADUROLIGHT/Adurolight_NCC"
+    deviceLabel: Eria Remote Control
+    manufacturer: ADUROLIGHT
+    model: Adurolight_NCC
+    deviceProfileName: four-buttons
+  - id: "ADUROLIGHT/ADUROLIGHT_CSC"
+    deviceLabel: Eria Remote Control
+    manufacturer: ADUROLIGHT
+    model: ADUROLIGHT_CSC
+    deviceProfileName: four-buttons
   # - id: "ShinaSystem/MSM-300Z"
   #   deviceLabel: SiHAS Remote Control
   #   manufacturer: ShinaSystem

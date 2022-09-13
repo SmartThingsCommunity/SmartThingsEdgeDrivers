@@ -9,55 +9,55 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.curtain.v1
     deviceProfileName: window-treatment-aqara
-  # - id: "REXENSE/KG0001"
-  #   deviceLabel: Window Treatment
-  #   manufacturer: REXENSE
-  #   model: KG0001
-  #   deviceProfileName: window-treatment-profile
-  # - id: "REXENSE/DY0010"
-  #   deviceLabel: Window Treatment
-  #   manufacturer: REXENSE
-  #   model: DY0010
-  #   deviceProfileName: window-treatment-profile
-  # - id: "Feibit Co.Ltd/FTB56-ZT218AK1.6"
-  #   deviceLabel: Wistar Window Treatment
-  #   manufacturer: Feibit Co.Ltd
-  #   model: FTB56-ZT218AK1.6
-  #   deviceProfileName: window-treatment-profile
-  # - id: "Feibit Co.Ltd/FTB56-ZT218AK1.8"
-  #   deviceLabel: Wistar Window Treatment
-  #   manufacturer: Feibit Co.Ltd
-  #   model: FTB56-ZT218AK1.8
-  #   deviceProfileName: window-treatment-profile
-  # - id: "SOMFY/Glydea Ultra Curtain"
-  #   deviceLabel: SOMFY Window Treatment
-  #   manufacturer: SOMFY
-  #   model: Glydea Ultra Curtain
-  #   deviceProfileName: window-treatment-profile
-  # - id: "SOMFY/Sonesse 30 WF Roller"
-  #   deviceLabel: SOMFY Window Treatment
-  #   manufacturer: SOMFY
-  #   model: Sonesse 30 WF Roller
-  #   deviceProfileName: window-treatment-profile
-  # - id: "SOMFY/Sonesse 40 Roller"
-  #   deviceLabel: SOMFY Window Treatment
-  #   manufacturer: SOMFY
-  #   model: Sonesse 40 Roller
-  #   deviceProfileName: window-treatment-profile
-  # - id: "/E2B0-KR000Z0-HA"
-  #   deviceLabel: eZEX Window Treatment
-  #   model: E2B0-KR000Z0-HA
-  #   deviceProfileName: window-treatment-profile
-  # - id: "IKEA/KADRILJ"
-  #   deviceLabel: IKEA Window Treatment
-  #   manufacturer: IKEA of Sweden
-  #   model: KADRILJ roller blind
-  #   deviceProfileName: window-treatment-battery
-  # - id: "IKEA/FYRTUR"
-  #   deviceLabel: IKEA Window Treatment
-  #   manufacturer: IKEA of Sweden
-  #   model: FYRTUR block-out roller blind
-  #   deviceProfileName: window-treatment-battery
+  - id: "REXENSE/KG0001"
+    deviceLabel: Window Treatment
+    manufacturer: REXENSE
+    model: KG0001
+    deviceProfileName: window-treatment-profile
+  - id: "REXENSE/DY0010"
+    deviceLabel: Window Treatment
+    manufacturer: REXENSE
+    model: DY0010
+    deviceProfileName: window-treatment-profile
+  - id: "Feibit Co.Ltd/FTB56-ZT218AK1.6"
+    deviceLabel: Wistar Window Treatment
+    manufacturer: Feibit Co.Ltd
+    model: FTB56-ZT218AK1.6
+    deviceProfileName: window-treatment-profile
+  - id: "Feibit Co.Ltd/FTB56-ZT218AK1.8"
+    deviceLabel: Wistar Window Treatment
+    manufacturer: Feibit Co.Ltd
+    model: FTB56-ZT218AK1.8
+    deviceProfileName: window-treatment-profile
+  - id: "SOMFY/Glydea Ultra Curtain"
+    deviceLabel: SOMFY Window Treatment
+    manufacturer: SOMFY
+    model: Glydea Ultra Curtain
+    deviceProfileName: window-treatment-profile
+  - id: "SOMFY/Sonesse 30 WF Roller"
+    deviceLabel: SOMFY Window Treatment
+    manufacturer: SOMFY
+    model: Sonesse 30 WF Roller
+    deviceProfileName: window-treatment-profile
+  - id: "SOMFY/Sonesse 40 Roller"
+    deviceLabel: SOMFY Window Treatment
+    manufacturer: SOMFY
+    model: Sonesse 40 Roller
+    deviceProfileName: window-treatment-profile
+  - id: "/E2B0-KR000Z0-HA"
+    deviceLabel: eZEX Window Treatment
+    model: E2B0-KR000Z0-HA
+    deviceProfileName: window-treatment-profile
+  - id: "IKEA/KADRILJ"
+    deviceLabel: IKEA Window Treatment
+    manufacturer: IKEA of Sweden
+    model: KADRILJ roller blind
+    deviceProfileName: window-treatment-battery
+  - id: "IKEA/FYRTUR"
+    deviceLabel: IKEA Window Treatment
+    manufacturer: IKEA of Sweden
+    model: FYRTUR block-out roller blind
+    deviceProfileName: window-treatment-battery
   # - id: "Yookee/D10110"
   #   deviceLabel: Yookee Window Treatment
   #   manufacturer: Yookee
@@ -73,11 +73,11 @@ zigbeeManufacturer:
   #   manufacturer: Rooms Beautiful
   #   model: C001
   #   deviceProfileName: window-treatment-no-preset
-  # - id: "AXIS/Gear"
-  #   deviceLabel: AXIS Window Treatment
-  #   manufacturer: AXIS
-  #   model: Gear
-  #   deviceProfileName: window-treatment-battery
+  - id: "AXIS/Gear"
+    deviceLabel: AXIS Window Treatment
+    manufacturer: AXIS
+    model: Gear
+    deviceProfileName: window-treatment-battery
 # zigbeeGeneric:
   # - id: "genericShade"
   #   deviceLabel: Zigbee Window Treatment

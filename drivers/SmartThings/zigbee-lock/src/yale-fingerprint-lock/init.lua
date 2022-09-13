@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local LockCluster = clusters.DoorLock
 local LockCodes = capabilities.lockCodes
 
-local lock_constants = (require "lock_constants")
-
 local YALE_FINGERPRINT_MAX_CODES = 0x1E
 
 local YALE_FINGERPRINT_LOCK = {

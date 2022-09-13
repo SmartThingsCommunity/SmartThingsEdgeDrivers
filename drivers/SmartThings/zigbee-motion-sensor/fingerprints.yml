@@ -19,21 +19,21 @@ zigbeeManufacturer:
 #     manufacturer: Megaman
 #     model: PS601/z1
 #     deviceProfileName: motion-battery
-#   - id: "NYCE/3041"
-#     deviceLabel: NYCE Motion Sensor
-#     manufacturer: NYCE
-#     model: 3041
-#     deviceProfileName: motion-battery
-#   - id: "NYCE/3043"
-#     deviceLabel: NYCE Motion Sensor
-#     manufacturer: NYCE
-#     model: 3043
-#     deviceProfileName: motion-battery
-#   - id: "NYCE/3045"
-#     deviceLabel: NYCE Motion Sensor
-#     manufacturer: NYCE
-#     model: 3045
-#     deviceProfileName: motion-battery
+  - id: "NYCE/3041"
+    deviceLabel: NYCE Motion Sensor
+    manufacturer: NYCE
+    model: 3041
+    deviceProfileName: motion-battery
+  - id: "NYCE/3043"
+    deviceLabel: NYCE Motion Sensor
+    manufacturer: NYCE
+    model: 3043
+    deviceProfileName: motion-battery
+  - id: "NYCE/3045"
+    deviceLabel: NYCE Motion Sensor
+    manufacturer: NYCE
+    model: 3045
+    deviceProfileName: motion-battery
 #   - id: "iMagic by GreatStar/1117-S"
 #     deviceLabel: Iris Multipurpose Sensor
 #     manufacturer: iMagic by GreatStar
