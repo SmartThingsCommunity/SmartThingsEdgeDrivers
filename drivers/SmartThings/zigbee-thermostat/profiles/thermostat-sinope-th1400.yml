@@ -1,0 +1,103 @@
+name: thermostat-sinope-th1400
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - name: "keypadLock"
+    title: "Keypad Lock"
+    description: "Enable or disable the device's buttons."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "Unlock"
+       1: "Lock"
+      default: 0
+  - name: "backlightSetting"
+    title: "Backlight Setting"
+    description: "On Demand or Always ON"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "On Demand"
+       1: "Always ON"
+      default: 1
+  - name: "timeFormat"
+    title: "Time Format"
+    description: "Time format displayed by the device."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "24h"
+       1: "12h AM/PM"
+      default: 0
+  - name: "airFloorMode"
+    title: "Air Floor Mode"
+    description: "Control mode using the floor or ambient temperature."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       1: "Ambient"
+       2: "Floor"
+      default: 1
+  - name: "floorSensorType"
+    title: "Floor Sensor Type"
+    description: "Choose floor sensors probe. The floor sensor provided with the thermostats are 10K."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "10k"
+       1: "12k"
+      default: 0
+  - name: "ambientLimit"
+    title: "Ambient Limit"
+    description: "The maximum ambient temperature limit in Celsius when in floor control mode.(5C to 36C)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 36
+  - name: "floorLowLimit"
+    title: "Floor Low Limit"
+    description: "The minimum temperature limit in Celsius of the floor when in ambient control mode.(5C to 34C)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 34
+  - name: "floorHighLimit"
+    title: "Floor High Limit"
+    description: "The maximum temperature limit of the floor in Celsius when in ambient control mode.(7C to 36C)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 7
+      maximum: 36
+  - name: "auxiliaryCycleLength"
+    title: "Auxiliary Cycle Length"
+    description: "Auxiliary cycle length"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "disable"
+       15: "15 seconds"
+       1800: "30 minutes"

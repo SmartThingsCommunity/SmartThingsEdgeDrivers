@@ -70,17 +70,17 @@ zwaveManufacturer:
 #     productType: 0x0005
 #     productId: 0x0054
 #     deviceProfileName: qubino-flush-thermostat
-#   - id: "0039/0011/0001"
-#     deviceLabel: Honeywell Thermostat
-#     manufacturerId: 0x0039
-#     productType: 0x0011
-#     productId: 0x0001
-#     deviceProfileName: thermostat-no-battery
-#   - id: "008B/5452"
-#     deviceLabel: Trane Thermostat
-#     manufacturerId: 0x008B
-#     productType: 0x5452
-#     deviceProfileName: base-thermostat-without-battery
+  - id: "0039/0011/0001"
+    deviceLabel: Honeywell Thermostat
+    manufacturerId: 0x0039
+    productType: 0x0011
+    productId: 0x0001
+    deviceProfileName: thermostat-no-battery
+  - id: "008B/5452"
+    deviceLabel: Trane Thermostat
+    manufacturerId: 0x008B
+    productType: 0x5452
+    deviceProfileName: base-thermostat-without-battery
 #   - id: "Danfoss/thermostat/0005"
 #     deviceLabel: Danfoss LC13 Thermostat
 #     manufacturerId: 0x0002

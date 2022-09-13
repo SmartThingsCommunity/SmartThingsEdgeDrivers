@@ -1,0 +1,50 @@
+name: thermostat-sinope
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - name: "keypadLock"
+    title: "Keypad Lock"
+    description: "Enable or disable the device's buttons."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "Unlock"
+       1: "Lock"
+      default: 0
+  - name: "backlightSetting"
+    title: "Backlight Setting"
+    description: "On Demand or Always ON"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "On Demand"
+       1: "Always ON"
+      default: 1
+  - name: "timeFormat"
+    title: "Time Format"
+    description: "Time format displayed by the device."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "24h"
+       1: "12h AM/PM"
+      default: 0
+

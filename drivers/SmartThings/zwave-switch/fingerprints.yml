@@ -272,30 +272,30 @@ zwaveManufacturer:
 #     productType: 0xA000
 #     productId: 0xA004
 #     deviceProfileName: switch-multicomponent-generic-5
-#   - id: 0159/0001/0051
-#     deviceLabel: Qubino Dimmer
-#     manufacturerId: 0x0159
-#     productType: 0x0001
-#     productId: 0x0051
-#     deviceProfileName: qubino-flush-dimmer
-#   - id: 0159/0001/0052
-#     deviceLabel: Qubino Dimmer
-#     manufacturerId: 0x0159
-#     productType: 0x0001
-#     productId: 0x0052
-#     deviceProfileName: qubino-din-dimmer
-#   - id: 0159/0001/0053
-#     deviceLabel: Qubino Dimmer
-#     manufacturerId: 0x0159
-#     productType: 0x0001
-#     productId: 0x0053
-#     deviceProfileName: qubino-flush-dimmer-0-10V
-#   - id: 0159/0001/0055
-#     deviceLabel: Qubino Dimmer
-#     manufacturerId: 0x0159
-#     productType: 0x0001
-#     productId: 0x0055
-#     deviceProfileName: qubino-mini-dimmer
+  - id: 0159/0001/0051
+    deviceLabel: Qubino Dimmer
+    manufacturerId: 0x0159
+    productType: 0x0001
+    productId: 0x0051
+    deviceProfileName: qubino-flush-dimmer
+  - id: 0159/0001/0052
+    deviceLabel: Qubino Dimmer
+    manufacturerId: 0x0159
+    productType: 0x0001
+    productId: 0x0052
+    deviceProfileName: qubino-din-dimmer
+  - id: 0159/0001/0053
+    deviceLabel: Qubino Dimmer
+    manufacturerId: 0x0159
+    productType: 0x0001
+    productId: 0x0053
+    deviceProfileName: qubino-flush-dimmer-0-10V
+  - id: 0159/0001/0055
+    deviceLabel: Qubino Dimmer
+    manufacturerId: 0x0159
+    productType: 0x0001
+    productId: 0x0055
+    deviceProfileName: qubino-mini-dimmer
 #   - id: 015D/0651/F51C
 #     deviceLabel: Zooz ZEN 20 Power Strip
 #     manufacturerId: 0x015D

@@ -374,8 +374,7 @@ test.register_coroutine_test(
   "Device should be configured after changing device settings",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    local _preferences = {}
-    _preferences.zwaveNotifications = 3 -- "Both actions enabled"
+    local _preferences = {zwaveNotifications = 3} --"Both actions enabled"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
@@ -405,8 +404,7 @@ test.register_coroutine_test(
 
     test.mock_time.advance_time(1)
 
-    local _preferences = {}
-    _preferences.overheatThreshold = 50 --"120 °F / 50°C"
+    _preferences = {overheatThreshold = 50} --"120 °F / 50°C"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
