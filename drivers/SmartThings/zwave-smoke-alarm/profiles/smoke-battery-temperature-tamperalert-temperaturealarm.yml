@@ -22,7 +22,7 @@ preferences:
   - preferenceId: certifiedpreferences.zwaveNotificationStatus
     explicit: true
   - preferenceId: certifiedpreferences.indicatorNotification
-    explecit: true
+    explicit: true
   - preferenceId: certifiedpreferences.soundNotificationStatus
     explicit: true
   - preferenceId: certifiedpreferences.tempReportInterval
