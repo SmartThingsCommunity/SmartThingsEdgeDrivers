@@ -1,10 +1,10 @@
-name: humidity-temp-pressure-battery
+name: temp-humidity-pressure-battery
 components:
   - id: main
     capabilities:
-      - id: relativeHumidityMeasurement
-        version: 1
       - id: temperatureMeasurement
+        version: 1
+      - id: relativeHumidityMeasurement
         version: 1
       - id: atmosphericPressureMeasurement
         version: 1
