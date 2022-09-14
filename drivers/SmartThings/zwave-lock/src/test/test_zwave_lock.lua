@@ -56,10 +56,10 @@ test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-          capabilities.lockCodes.lockCodes(json.encode({} ))
+          capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
   ))
   test.socket.zwave:__expect_send( UserCode:UsersNumberGet({}):build_test_tx(mock_device.id) )
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send( UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device.id) )
 end
 
@@ -149,13 +149,13 @@ test.register_message_test(
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.lockCodes(json.encode({["2"] = "Code 2"})) )
+                    capabilities.lockCodes.lockCodes(json.encode({["2"] = "Code 2"}), { visibility = { displayed = false } }) )
           },
           {
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 set",
-                    { data = { codeName = "Code 2"} }))
+                    { data = { codeName = "Code 2"}, state_change = true }))
           }
         },
         {
@@ -210,7 +210,7 @@ test.register_message_test(
           {
             channel = "capability",
             direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16))
+            message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16, { visibility = { displayed = false } }))
           }
         }
 )
@@ -261,10 +261,10 @@ test.register_coroutine_test(
           test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}) })
           test.socket.capability:__set_channel_ordering("relaxed")
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
+                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
           ))
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
+                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
           )
         end
 )
@@ -284,7 +284,7 @@ test.register_coroutine_test(
           init_code_slot(1, "initialName", mock_device)
           test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"} ))
+                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"} ), { visibility = { displayed = false } })
           ))
           test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed",
                   {state_change = true})))
@@ -352,7 +352,7 @@ test.register_message_test(
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"} })
+                    capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"}, state_change = true  })
             )
           }
         }
@@ -373,13 +373,13 @@ test.register_message_test(
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"})) )
+                    capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } }) )
           },
           {
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "Code 1"} }))
+                    capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "Code 1"}, state_change = true  }))
           }
         },
         {
@@ -399,11 +399,11 @@ test.register_coroutine_test(
           )
           test.socket.capability:__expect_send(
                   mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"} })
+                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"}, state_change = true  })
                   )
           )
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({} ))
+                  capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
           ))
         end
 )
@@ -427,23 +427,23 @@ test.register_coroutine_test(
           test.socket.capability:__set_channel_ordering("relaxed")
           test.socket.capability:__expect_send(
                   mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"} })
+                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"}, state_change = true  })
                   )
           )
 
           test.socket.capability:__expect_send(
                   mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"} })
+                          capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"}, state_change = true  })
                   )
           )
 
           test.socket.capability:__expect_send(
                   mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"} })
+                          capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"}, state_change = true  })
                   )
           )
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({} ))
+                  capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
           ))
         end
 )
@@ -477,7 +477,7 @@ test.register_coroutine_test(
           expect_reload_all_codes_messages()
           test.wait_for_events()
           test.socket.zwave:__queue_receive({mock_device.id, UserCode:UsersNumberReport({ supported_users = 4 }) })
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4)))
+          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4, { visibility = { displayed = false } })))
           for i = 1, 4 do
             if (i ~= 1) then
               test.socket.zwave:__expect_send(UserCode:Get({user_identifier = i}):build_test_tx(mock_device.id))
@@ -488,12 +488,12 @@ test.register_coroutine_test(
             })})
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message("main",
-                            capabilities.lockCodes.codeChanged(i.." unset")
+                            capabilities.lockCodes.codeChanged(i.." unset", { state_change = true })
                     )
             )
           end
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.scanCodes("Complete")
+                  capabilities.lockCodes.scanCodes("Complete", { visibility = { displayed = false } })
           ))
         end
 )
@@ -655,7 +655,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({})))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false } }))
     },
     {
       channel = "zwave",
@@ -668,12 +668,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["5"] = "Code 5"})))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["5"] = "Code 5"}), { visibility = { displayed = false } }))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("5 set", {data={codeName="Code 5"}}))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("5 set", {data={codeName="Code 5"}, state_change = true }))
     },
     {
       channel = "zwave",
@@ -686,7 +686,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed"))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed", { state_change = true }))
     },
     {
       channel = "zwave",
@@ -744,10 +744,10 @@ test.register_coroutine_test(
           }) })
           test.socket.capability:__set_channel_ordering("relaxed")
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
+                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
           ))
           test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
+                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
           )
         end
 )

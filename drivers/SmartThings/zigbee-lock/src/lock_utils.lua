@@ -32,7 +32,7 @@ end
 
 lock_utils.lock_codes_event = function(device, lock_codes)
   device:set_field(lock_utils.LOCK_CODES, lock_codes, { persist = true } )
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes))))
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes)), { visibility = { displayed = false } }))
 end
 
 
@@ -66,7 +66,7 @@ end
 
 function lock_utils.code_deleted(device, code_slot)
   local lock_codes = lock_utils.get_lock_codes(device)
-  local event = LockCodes.codeChanged(code_slot.." deleted")
+  local event = LockCodes.codeChanged(code_slot.." deleted", { state_change = true })
   event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
   lock_codes[code_slot] = nil
   device:emit_event(event)

@@ -36,7 +36,7 @@ local yale_fingerprint_lock_models = function(opts, driver, device)
 end
 
 local handle_max_codes = function(driver, device, value)
-  device:emit_event(LockCodes.maxCodes(YALE_FINGERPRINT_MAX_CODES))
+  device:emit_event(LockCodes.maxCodes(YALE_FINGERPRINT_MAX_CODES), { visibility = { displayed = false } })
 end
 
 local yale_fingerprint_lock_driver = {

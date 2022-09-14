@@ -49,7 +49,7 @@ local reload_all_codes = function(driver, device, command)
     device:send(LockCluster.attributes.NumberOfPINUsersSupported:read(device))
   end
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then device:set_field(lock_utils.CHECKING_CODE, 0) end
-  device:emit_event(LockCodes.scanCodes("Scanning"))
+  device:emit_event(LockCodes.scanCodes("Scanning", { visibility = { displayed = false } }))
   device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
 end
 
@@ -90,7 +90,7 @@ local alarm_handler = function(driver, device, zb_mess)
 end
 
 local get_pin_response_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("")
+  local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
   event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
   if (zb_mess.body.zcl_body.user_status.value == UserStatusEnum.OCCUPIED_ENABLED) then
@@ -117,7 +117,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   if (code_slot == device:get_field(lock_utils.CHECKING_CODE)) then
     -- the code we're checking has arrived
     if (code_slot >= device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)) then
-      device:emit_event(LockCodes.scanCodes("Complete"))
+      device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
       local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
@@ -128,7 +128,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
 end
 
 local programming_event_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("")
+  local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
   event.data = {}
   if (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.MASTER_CODE_CHANGED) then
@@ -164,15 +164,15 @@ local programming_event_handler = function(driver, device, zb_mess)
 end
 
 local handle_max_codes = function(driver, device, value)
-  device:emit_event(LockCodes.maxCodes(value.value))
+  device:emit_event(LockCodes.maxCodes(value.value, { visibility = { displayed = false } }))
 end
 
 local handle_max_code_length = function(driver, device, value)
-  device:emit_event(LockCodes.maxCodeLength(value.value))
+  device:emit_event(LockCodes.maxCodeLength(value.value, { visibility = { displayed = false } }))
 end
 
 local handle_min_code_length = function(driver, device, value)
-  device:emit_event(LockCodes.minCodeLength(value.value))
+  device:emit_event(LockCodes.minCodeLength(value.value, { visibility = { displayed = false } }))
 end
 
 local update_codes = function(driver, device, command)

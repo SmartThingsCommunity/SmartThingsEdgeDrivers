@@ -39,7 +39,7 @@ local reload_all_codes = function(driver, device, command)
     device:send(LockCluster.attributes.NumberOfPINUsersSupported:read(device))
   end
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then device:set_field(lock_utils.CHECKING_CODE, 1) end
-  device:emit_event(LockCodes.scanCodes("Scanning"))
+  device:emit_event(LockCodes.scanCodes("Scanning", { visibility = { displayed = false } }))
   device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
 end
 
@@ -96,7 +96,7 @@ local update_codes = function(driver, device, command)
 end
 
 local get_pin_response_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("")
+  local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
   local localCode = device:get_field(lock_utils.CODE_STATE)
   if localCode ~= nil then localCode = localCode["setCode"..code_slot] end
@@ -149,7 +149,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
     -- the code we're checking has arrived
     local defaultMaxCodes = 8
     if (code_slot >= defaultMaxCodes) then
-      device:emit_event(LockCodes.scanCodes("Complete"))
+      device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
       local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
