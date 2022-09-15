@@ -4,7 +4,6 @@ local capabilities = require "st.capabilities"
 
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local RelativeHumidity = clusters.RelativeHumidity
-local PressureMeasurement = clusters.PressureMeasurement
 local PowerConfiguration = clusters.PowerConfiguration
 
 local FINGERPRINTS = {
@@ -26,14 +25,6 @@ local configuration = {
     minimum_interval = 1,
     maximum_interval = 3600,
     data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
-    reportable_change = 1
-  },
-  {
-    cluster = PressureMeasurement.ID,
-    attribute = PressureMeasurement.attributes.MeasuredValue.ID,
-    minimum_interval = 1,
-    maximum_interval = 3600,
-    data_type = PressureMeasurement.attributes.MeasuredValue.base_type,
     reportable_change = 1
   },
   {
@@ -69,7 +60,6 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" }))
   device:emit_event(capabilities.relativeHumidityMeasurement.humidity(0))
-  device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 0, unit = "kPa" }))
   device:emit_event(capabilities.battery.battery(100))
 end
 
