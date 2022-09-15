@@ -16,8 +16,3 @@ components:
         version: 1
     categories:
       - name: MultiFunctionalSensor
-preferences:
-  - preferenceId: tempOffset
-    explicit: true
-  - preferenceId: humidityOffset
-    explicit: true
