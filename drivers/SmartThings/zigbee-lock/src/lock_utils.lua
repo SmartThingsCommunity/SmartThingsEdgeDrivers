@@ -78,7 +78,8 @@ function lock_utils.populate_state_from_data(device)
   if device.data.lockCodes ~= nil and device:get_field(lock_utils.MIGRATION_COMPLETE) ~= true then
     -- build the lockCodes table
     local lockCodes = {}
-    for k, v in pairs(device.data.lockCodes) do
+    local lc_data = json.decode(device.data.lockCodes)
+    for k, v in pairs(lc_data) do
       lockCodes[k] = v
     end
     -- Populate the devices `lockCodes` field
