@@ -13,7 +13,7 @@ local configuration = {
   {
     cluster = IlluminanceMeasurement.ID,
     attribute = IlluminanceMeasurement.attributes.MeasuredValue.ID,
-    minimum_interval = 30,
+    minimum_interval = 5,
     maximum_interval = 3600,
     data_type = IlluminanceMeasurement.attributes.MeasuredValue.base_type,
     reportable_change = 10
