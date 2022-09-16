@@ -25,7 +25,7 @@ local RelativeHumidity = clusters.RelativeHumidity
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("temp-humidity-battery.yml"),
+    profile = t_utils.get_profile_definition("humidity-temp-battery-aqara.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,

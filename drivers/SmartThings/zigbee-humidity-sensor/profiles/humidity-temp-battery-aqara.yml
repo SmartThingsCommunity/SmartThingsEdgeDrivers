@@ -1,4 +1,4 @@
-name: temp-humidity-battery
+name: humidity-temp-battery-aqara
 components:
   - id: main
     capabilities:
