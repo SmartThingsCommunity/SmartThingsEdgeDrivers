@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local base64 = require "st.base64"
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -24,7 +25,7 @@ local RelativeHumidity = clusters.RelativeHumidity
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("temp-humidity-pressure-battery.yml"),
+    profile = t_utils.get_profile_definition("temp-humidity-battery.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -121,6 +122,25 @@ test.register_message_test(
         capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
     }
   }
+)
+
+test.register_coroutine_test(
+  "Handle tempOffset preference in infochanged",
+  function()
+    test.socket.environment_update:__queue_receive({ "zigbee",
+      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ preferences = { tempOffset = -5 } }))
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 2500)
+      }
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })))
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()
