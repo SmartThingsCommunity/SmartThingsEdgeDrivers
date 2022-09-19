@@ -14,15 +14,15 @@ local configuration = {
   {
     cluster = TemperatureMeasurement.ID,
     attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
-    minimum_interval = 1,
-    maximum_interval = 3600,
+    minimum_interval = 30,
+    maximum_interval = 300,
     data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
     reportable_change = 1
   },
   {
     cluster = RelativeHumidity.ID,
     attribute = RelativeHumidity.attributes.MeasuredValue.ID,
-    minimum_interval = 1,
+    minimum_interval = 30,
     maximum_interval = 3600,
     data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
     reportable_change = 1
