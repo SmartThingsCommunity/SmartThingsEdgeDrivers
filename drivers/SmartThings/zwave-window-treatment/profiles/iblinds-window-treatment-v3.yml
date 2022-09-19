@@ -62,7 +62,7 @@ preferences:
     title: "Remote Calibration"
     description: "Recalibrate upon next recieved command"
     required: false
-    preferemceType: boolean
+    preferenceType: boolean
     definition:
       default: false
   - name: "minTilt"
