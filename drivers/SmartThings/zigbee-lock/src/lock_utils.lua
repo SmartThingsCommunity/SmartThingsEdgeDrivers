@@ -21,7 +21,8 @@ local lock_utils =  {
   -- Constants
   LOCK_CODES      = "lockCodes",
   CHECKING_CODE   = "checkingCode",
-  CODE_STATE      = "codeState"
+  CODE_STATE      = "codeState",
+  MIGRATION_COMPLETE = "migrationComplete",
 }
 
 lock_utils.get_lock_codes = function(device)
@@ -31,7 +32,7 @@ end
 
 lock_utils.lock_codes_event = function(device, lock_codes)
   device:set_field(lock_utils.LOCK_CODES, lock_codes, { persist = true } )
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes))))
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes)), { visibility = { displayed = false } }))
 end
 
 
@@ -65,12 +66,30 @@ end
 
 function lock_utils.code_deleted(device, code_slot)
   local lock_codes = lock_utils.get_lock_codes(device)
-  local event = LockCodes.codeChanged(code_slot.." deleted")
+  local event = LockCodes.codeChanged(code_slot.." deleted", { state_change = true })
   event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
   lock_codes[code_slot] = nil
   device:emit_event(event)
   lock_utils.reset_code_state(device, code_slot)
   return lock_codes
+end
+
+function lock_utils.populate_state_from_data(device)
+  if device.data.lockCodes ~= nil and device:get_field(lock_utils.MIGRATION_COMPLETE) ~= true then
+    -- build the lockCodes table
+    local lockCodes = {}
+    for k, v in pairs(device.data.lockCodes) do
+      lockCodes[k] = v
+    end
+    -- Populate the devices `lockCodes` field
+    device:set_field(lock_utils.LOCK_CODES, utils.deep_copy(lockCodes), { persist = true })
+    -- Populate the devices state history cache
+    device.state_cache["main"] = device.state_cache["main"] or {}
+    device.state_cache["main"][capabilities.lockCodes.ID] = device.state_cache["main"][capabilities.lockCodes.ID] or {}
+    device.state_cache["main"][capabilities.lockCodes.ID][capabilities.lockCodes.lockCodes.NAME] = {value = json.encode(utils.deep_copy(lockCodes))}
+
+    device:set_field(lock_utils.MIGRATION_COMPLETE, true, { persist = true })
+  end
 end
 
 return lock_utils

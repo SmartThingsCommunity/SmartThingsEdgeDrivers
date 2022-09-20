@@ -121,7 +121,7 @@ local function is_user_code_report_mfr_specific(device, cmd)
   if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
       (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
     local code_state = device:get_field(constants.CODE_STATE)
-    return user_code == "**********" or user_code == nil or code_state["setName"..cmd.args.user_identifier] ~= nil
+    return user_code == "**********" or user_code == nil or (code_state ~= nil and code_state["setName"..cmd.args.user_identifier] ~= nil)
   else
     return (code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE) or
           reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE
@@ -139,7 +139,7 @@ local function user_code_report_handler(self, device, cmd)
         (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
       local code_name = LockCodesDefaults.get_code_name(device, code_id)
       local change_type = LockCodesDefaults.get_change_type(device, code_id)
-      event = capabilities.lockCodes.codeChanged(code_id..""..change_type)
+      event = capabilities.lockCodes.codeChanged(code_id..""..change_type, { state_change = true })
       event.data = {codeName = code_name}
       if code_id ~= 0 then -- ~= MASTER_CODE
         LockCodesDefaults.code_set_event(device, code_id, code_name)
@@ -149,9 +149,9 @@ local function user_code_report_handler(self, device, cmd)
       for _code_id, _ in pairs(lock_codes) do
         LockCodesDefaults.code_deleted(device, _code_id)
       end
-      device:emit_event(capabilities.lockCodes.lockCodes(json.encode(LockCodesDefaults.get_lock_codes(device))))
+      device:emit_event(capabilities.lockCodes.lockCodes(json.encode(LockCodesDefaults.get_lock_codes(device)), { visibility = { displayed = false } }))
     else -- user_id_status.STATUS_NOT_AVAILABLE
-      event = capabilities.lockCodes.codeChanged(code_id.." failed")
+      event = capabilities.lockCodes.codeChanged(code_id.." failed", { state_change = true })
     end
 
     if event ~= nil then

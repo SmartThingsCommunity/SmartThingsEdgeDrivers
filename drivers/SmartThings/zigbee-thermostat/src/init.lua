@@ -151,7 +151,7 @@ local set_thermostat_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(THERMOSTAT_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
       device:send_to_component(command.component, Thermostat.attributes.SystemMode:write(device, zigbee_attr_val))
-      device.thread:call_with_delay(2, function(d)
+      device.thread:call_with_delay(1, function(d)
         device:send_to_component(command.component, Thermostat.attributes.SystemMode:read(device))
       end)
       break
@@ -169,7 +169,7 @@ local set_thermostat_fan_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(FAN_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
       device:send_to_component(command.component, FanControl.attributes.FanMode:write(device, zigbee_attr_val))
-      device.thread:call_with_delay(2, function(d)
+      device.thread:call_with_delay(1, function(d)
         device:send_to_component(command.component, FanControl.attributes.FanMode:read(device))
       end)
       break

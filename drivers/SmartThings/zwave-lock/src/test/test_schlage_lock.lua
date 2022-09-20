@@ -70,10 +70,10 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}) })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-            capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
+            capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
     ))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-            capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
+            capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true }))
     )
   end
 )
@@ -115,13 +115,13 @@ test.register_coroutine_test(
 
 local expect_reload_all_codes_messages = function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-          capabilities.lockCodes.lockCodes(json.encode({} ))
+          capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
   ))
   test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
     mock_device,
     UserCode:UsersNumberGet({})
   ))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
     mock_device,
     UserCode:Get({ user_identifier = 1 })

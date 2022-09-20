@@ -43,11 +43,11 @@ zigbeeManufacturer:
     deviceLabel: eZEX Motion Sensor
     model: E280-KR0A0Z0-HA
     deviceProfileName: motion
-#   - id: "ikea/motion"
-#     deviceLabel: IKEA motion Sensor
-#     manufacturer: IKEA of Sweden
-#     model: TRADFRI motion sensor
-#     deviceProfileName: motion-battery
+  - id: "ikea/motion"
+    deviceLabel: IKEA motion Sensor
+    manufacturer: IKEA of Sweden
+    model: TRADFRI motion sensor
+    deviceProfileName: motion-battery
 #   - id: "GatorSystem/GSHW01"
 #     deviceLabel: GatorSystem Multipurpose Sensor
 #     manufacturer: GatorSystem
