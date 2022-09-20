@@ -600,131 +600,131 @@ zwaveManufacturer:
     productType: 0x0103
     productId: 0x0026
     deviceProfileName: switch-binary
-#   - id: 001D/1902
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturerId: 0x001D
-#     productType: 0x1902
-#     deviceProfileName: switch-level
-#   - id: 001D/3301/0001
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturerId: 0x001D
-#     productId: 0x0001
-#     deviceProfileName: switch-level
-#   - id: 001D/1B03/0334
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturerId: 0x001D
-#     productId: 0x0334
-#     deviceProfileName: switch-level
-#   - id: 011A/0102/0201
-#     deviceLabel: Enerwave Dimmer Switch
-#     manufacturerId: 0x011A
-#     productType: 0x0102
-#     productId: 0x0201
-#     deviceProfileName: switch-level
-#   - id: 001D/0401/0334
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturerId: 0x001D
-#     productType: 0x0401
-#     productId: 0x0334
-#     deviceProfileName: switch-level
-#   - id: 0111/8200/0200
-#     deviceLabel: Remotec Dimmer Switch
-#     manufacturerId: 0x0111
-#     productType: 0x8200
-#     productId: 0x0200
-#     deviceProfileName: switch-level
-#   - id: 1104/001D/0501
-#     deviceLabel: Leviton Dimmer Switch
-#     manufacturerId: 0x1104
-#     productType: 0x001D
-#     productId: 0x0501
-#     deviceProfileName: switch-level
-#   - id: 0039/5044/3033
-#     deviceLabel: Honeywell Dimmer Switch
-#     manufacturerId: 0x0039
-#     productType: 0x5044
-#     deviceProfileName: switch-level
-#   - id: 0039/4944/3038
-#     deviceLabel: Honeywell Dimmer Switch
-#     manufacturerId: 0x0039
-#     productType: 0x4944
-#     deviceProfileName: switch-level
-#   - id: 001A/4449/0101
-#     deviceLabel: Eaton Dimmer Switch
-#     manufacturerId: 0x001A
-#     productType: 0x4449
-#     deviceProfileName: switch-level
-#   - id: 014F/5744/3530
-#     deviceLabel: GoControl Dimmer Switch
-#     manufacturerId: 0x014F
-#     productType: 0x5744
-#     productId: 0x3530
-#     deviceProfileName: switch-level
-#   - id: 0307/4447/3034
-#     deviceLabel: Satco Dimmer Switch
-#     manufacturerId: 0x0307
-#     productType: 0x4447
-#     productId: 0x3034
-#     deviceProfileName: switch-level
-#   - id: 0184/4744/3032
-#     deviceLabel: Satco Dimmer Switch
-#     manufacturerId: 0x0184
-#     productType: 0x4744
-#     productId: 0x3032
-#     deviceProfileName: switch-level
-#   - id: 0330/0201/D002
-#     deviceLabel: RGBgenie Dimmer Switch
-#     manufacturerId: 0x0330
-#     productType: 0x0201
-#     productId: 0xD002
-#     deviceProfileName: switch-level
-#   - id: 027A/B112/1F1C
-#     deviceLabel: Zooz Dimmer Switch
-#     manufacturerId: 0x027A
-#     productType: 0xB112
-#     deviceProfileName: switch-level
-#   - id: 027A/A000/A002
-#     deviceLabel: Zooz Dimmer Switch
-#     manufacturerId: 0x027A
-#     productType: 0xA000
-#     productId: 0xA002
-#     deviceProfileName: switch-level
-#   - id: 0300/0003/0005
-#     deviceLabel: ilumin Light
-#     manufacturerId: 0x0300
-#     productType: 0x0003
-#     productId: 0x0005
-#     deviceProfileName: switch-level
-#   - id: 0312/FF00/FF04
-#     deviceLabel: Minoston Dimmer Switch
-#     manufacturerId: 0x0312
-#     productType: 0xFF00
-#     productId: 0xFF04
-#     deviceProfileName: switch-level
-#   - id: 0312/FF00/FF02
-#     deviceLabel: Minoston Dimmer Switch
-#     manufacturerId: 0x0312
-#     productType: 0xFF00
-#     productId: 0xFF02
-#     deviceProfileName: switch-level
-#   - id: 0312/AA00/AA02
-#     deviceLabel: Evalogik Dimmer Switch
-#     manufacturerId: 0x0312
-#     productType: 0xAA00
-#     productId: 0xAA02
-#     deviceProfileName: switch-level
-#   - id: 0312/C000/C002
-#     deviceLabel: Evalogik Dimmer Switch
-#     manufacturerId: 0x0312
-#     productType: 0xC000
-#     productId: 0xC002
-#     deviceProfileName: switch-level
-#   - id: 0371/0103/0025
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0371
-#     productType: 0x0103
-#     productId: 0x0025
-#     deviceProfileName: switch-level
+  - id: 001D/1902
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productType: 0x1902
+    deviceProfileName: switch-level
+  - id: 001D/3301/0001
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productId: 0x0001
+    deviceProfileName: switch-level
+  - id: 001D/1B03/0334
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productId: 0x0334
+    deviceProfileName: switch-level
+  - id: 011A/0102/0201
+    deviceLabel: Enerwave Dimmer Switch
+    manufacturerId: 0x011A
+    productType: 0x0102
+    productId: 0x0201
+    deviceProfileName: switch-level
+  - id: 001D/0401/0334
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productType: 0x0401
+    productId: 0x0334
+    deviceProfileName: switch-level
+  - id: 0111/8200/0200
+    deviceLabel: Remotec Dimmer Switch
+    manufacturerId: 0x0111
+    productType: 0x8200
+    productId: 0x0200
+    deviceProfileName: switch-level
+  - id: 1104/001D/0501
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x1104
+    productType: 0x001D
+    productId: 0x0501
+    deviceProfileName: switch-level
+  - id: 0039/5044/3033
+    deviceLabel: Honeywell Dimmer Switch
+    manufacturerId: 0x0039
+    productType: 0x5044
+    deviceProfileName: switch-level
+  - id: 0039/4944/3038
+    deviceLabel: Honeywell Dimmer Switch
+    manufacturerId: 0x0039
+    productType: 0x4944
+    deviceProfileName: switch-level
+  - id: 001A/4449/0101
+    deviceLabel: Eaton Dimmer Switch
+    manufacturerId: 0x001A
+    productType: 0x4449
+    deviceProfileName: switch-level
+  - id: 014F/5744/3530
+    deviceLabel: GoControl Dimmer Switch
+    manufacturerId: 0x014F
+    productType: 0x5744
+    productId: 0x3530
+    deviceProfileName: switch-level
+  - id: 0307/4447/3034
+    deviceLabel: Satco Dimmer Switch
+    manufacturerId: 0x0307
+    productType: 0x4447
+    productId: 0x3034
+    deviceProfileName: switch-level
+  - id: 0184/4744/3032
+    deviceLabel: Satco Dimmer Switch
+    manufacturerId: 0x0184
+    productType: 0x4744
+    productId: 0x3032
+    deviceProfileName: switch-level
+  - id: 0330/0201/D002
+    deviceLabel: RGBgenie Dimmer Switch
+    manufacturerId: 0x0330
+    productType: 0x0201
+    productId: 0xD002
+    deviceProfileName: switch-level
+  - id: 027A/B112/1F1C
+    deviceLabel: Zooz Dimmer Switch
+    manufacturerId: 0x027A
+    productType: 0xB112
+    deviceProfileName: switch-level
+  - id: 027A/A000/A002
+    deviceLabel: Zooz Dimmer Switch
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA002
+    deviceProfileName: switch-level
+  - id: 0300/0003/0005
+    deviceLabel: ilumin Light
+    manufacturerId: 0x0300
+    productType: 0x0003
+    productId: 0x0005
+    deviceProfileName: switch-level
+  - id: 0312/FF00/FF04
+    deviceLabel: Minoston Dimmer Switch
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF04
+    deviceProfileName: switch-level
+  - id: 0312/FF00/FF02
+    deviceLabel: Minoston Dimmer Switch
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF02
+    deviceProfileName: switch-level
+  - id: 0312/AA00/AA02
+    deviceLabel: Evalogik Dimmer Switch
+    manufacturerId: 0x0312
+    productType: 0xAA00
+    productId: 0xAA02
+    deviceProfileName: switch-level
+  - id: 0312/C000/C002
+    deviceLabel: Evalogik Dimmer Switch
+    manufacturerId: 0x0312
+    productType: 0xC000
+    productId: 0xC002
+    deviceProfileName: switch-level
+  - id: 0371/0103/0025
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0371
+    productType: 0x0103
+    productId: 0x0025
+    deviceProfileName: switch-level
   - id: 0086/0003/0012
     deviceLabel: Aeotec Switch
     manufacturerId: 0x0086

@@ -29,36 +29,36 @@ zigbeeManufacturer:
 #     manufacturer: Visonic
 #     model: MCT-340 SMA
 #     deviceProfileName: contact-profile
-#   - id: "eWeLink/DS01"
-#     deviceLabel: eWeLink Open/Closed Sensor
-#     manufacturer: eWeLink
-#     model: DS01
-#     deviceProfileName: contact-battery-profile
-#   - id: "ORVIBO/e70f..."
-#     deviceLabel: Orvibo Open/Closed Sensor
-#     manufacturer: ORVIBO
-#     model: e70f96b3773a4c9283c6862dbafb6a99
-#     deviceProfileName: contact-battery-profile
-#   - id: "Aurora/WindowSensor51AU"
-#     deviceLabel: Aurora Open/Closed Sensor
-#     manufacturer: Aurora
-#     model: WindowSensor51AU
-#     deviceProfileName: contact-battery-profile
-#   - id: "Aurora/DoorSensor50AU"
-#     deviceLabel: Aurora Open/Closed Sensor
-#     manufacturer: Aurora
-#     model: DoorSensor50AU
-#     deviceProfileName: contact-battery-profile
-#   - id: "HEIMAN/DoorSensor-N"
-#     deviceLabel: HEIMAN Open/Closed Sensor
-#     manufacturer: HEIMAN
-#     model: DoorSensor-N
-#     deviceProfileName: contact-battery-profile
-#   - id: "Third Reality/3RDS17BZ"
-#     deviceLabel: ThirdReality Door Sensor
-#     manufacturer: Third Reality, Inc
-#     model: 3RDS17BZ
-#     deviceProfileName: contact-battery-profile
+  - id: "eWeLink/DS01"
+    deviceLabel: eWeLink Open/Closed Sensor
+    manufacturer: eWeLink
+    model: DS01
+    deviceProfileName: contact-battery-profile
+  - id: "ORVIBO/e70f..."
+    deviceLabel: Orvibo Open/Closed Sensor
+    manufacturer: ORVIBO
+    model: e70f96b3773a4c9283c6862dbafb6a99
+    deviceProfileName: contact-battery-profile
+  - id: "Aurora/WindowSensor51AU"
+    deviceLabel: Aurora Open/Closed Sensor
+    manufacturer: Aurora
+    model: WindowSensor51AU
+    deviceProfileName: contact-battery-profile
+  - id: "Aurora/DoorSensor50AU"
+    deviceLabel: Aurora Open/Closed Sensor
+    manufacturer: Aurora
+    model: DoorSensor50AU
+    deviceProfileName: contact-battery-profile
+  - id: "HEIMAN/DoorSensor-N"
+    deviceLabel: HEIMAN Open/Closed Sensor
+    manufacturer: HEIMAN
+    model: DoorSensor-N
+    deviceProfileName: contact-battery-profile
+  - id: "Third Reality/3RDS17BZ"
+    deviceLabel: ThirdReality Door Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RDS17BZ
+    deviceProfileName: contact-battery-profile
   - id: "CentraLite/3300-S"
     deviceLabel: Open/Closed Sensor
     manufacturer: CentraLite
