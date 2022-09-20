@@ -30,10 +30,10 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     {
       profile = t_utils.get_profile_definition("base-lock.yml"),
       data = {
-        lockCodes = {
+        lockCodes = json.encode({
           ["1"] = "Zach",
           ["2"] = "Steven"
-        }
+        })
       }
     }
 )
@@ -155,7 +155,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_device_no_data:generate_info_changed(
           {
             data = {
-              lockCodes = { ["1"] = "Zach", ["2"] = "Steven" }
+              lockCodes = json.encode({ ["1"] = "Zach", ["2"] = "Steven" })
             }
           }
       ))
