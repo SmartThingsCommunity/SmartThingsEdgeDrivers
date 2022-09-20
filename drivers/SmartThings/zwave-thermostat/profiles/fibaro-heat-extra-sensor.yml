@@ -9,7 +9,7 @@ components:
     configuration:
       - values:
         key: "heatingSetpoint.value"
-        range: [ 4, 28 ]
+        range: [ 10, 30 ]
   - id: battery
     version: 1
   - id: refresh
