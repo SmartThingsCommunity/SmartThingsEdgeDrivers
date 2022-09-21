@@ -11,11 +11,7 @@
         "version": 1,
         "idx": 0,
         "group": "main",
-        "values": [
-          {
-            "label": "{{temperature.value}} {{temperature.unit}}"
-          }
-        ],
+        "values": [],
         "composite": true
       },
       {
