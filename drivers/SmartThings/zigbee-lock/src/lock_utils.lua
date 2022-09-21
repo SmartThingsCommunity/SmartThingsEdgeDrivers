@@ -23,6 +23,7 @@ local lock_utils =  {
   CHECKING_CODE   = "checkingCode",
   CODE_STATE      = "codeState",
   MIGRATION_COMPLETE = "migrationComplete",
+  MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped"
 }
 
 lock_utils.get_lock_codes = function(device)
