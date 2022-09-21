@@ -2,8 +2,6 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 
-local TemperatureMeasurement = clusters.TemperatureMeasurement
-local RelativeHumidity = clusters.RelativeHumidity
 local PowerConfiguration = clusters.PowerConfiguration
 
 local FINGERPRINTS = {
