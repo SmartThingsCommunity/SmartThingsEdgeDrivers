@@ -12,11 +12,3 @@ components:
         version: 1
     categories:
       - name: SmartPlug
-  - id: switch1
-    capabilities:
-      - id: switch
-        version: 1
-      - id: powerMeter
-        version: 1
-    categories:
-      - name: SmartPlug
