@@ -69,13 +69,18 @@ local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, Alarm.ID, self.environment_info.hub_zigbee_eui))
   device:send(Alarm.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
 
-  device.thread:call_with_delay(2, function(d)
-    self:inject_capability_command(device, {
-      capability = capabilities.lockCodes.ID,
-      command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-      args = {}
-    })
-  end)
+  -- Don't send a reload all codes if this is a part of migration
+  if device.data.lockCodes == nil or device:get_field(lock_utils.MIGRATION_RELOAD_SKIPPED) == true then
+    device.thread:call_with_delay(2, function(d)
+      self:inject_capability_command(device, {
+        capability = capabilities.lockCodes.ID,
+        command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+        args = {}
+      })
+    end)
+  else
+    device:set_field(lock_utils.MIGRATION_RELOAD_SKIPPED, true, { persist = true })
+  end
 end
 
 local alarm_handler = function(driver, device, zb_mess)
