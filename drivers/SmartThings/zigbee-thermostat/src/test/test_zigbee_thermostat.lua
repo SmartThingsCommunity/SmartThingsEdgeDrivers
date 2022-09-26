@@ -156,7 +156,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "auto", "cool", "emergency heat" }))
+        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "auto", "cool", "emergency heat" }, { visibility = { displayed = false } }))
       }
     }
 )
@@ -173,7 +173,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }))
+        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }, { visibility = { displayed = false } }))
       }
     }
 )
@@ -207,7 +207,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }))
+        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }, { visibility = { displayed = false } }))
       },
       {
         channel = "zigbee",
@@ -219,7 +219,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on({
-          data = {supportedThermostatFanModes = {"on", "auto"}}
+          data = {supportedThermostatFanModes = {"on", "auto"}, visibility = { displayed = false }}
         }))
       }
     }

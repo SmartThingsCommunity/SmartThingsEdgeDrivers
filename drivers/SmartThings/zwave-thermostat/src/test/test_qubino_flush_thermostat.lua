@@ -251,7 +251,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.heat.NAME
-                                                          })))
+                                                          }, { visibility = { displayed = false } })))
     mock_device:expect_metadata_update({profile = "qubino-flush-thermostat"})
   end
 )
@@ -263,7 +263,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.cool.NAME
-                                                          })))
+                                                          }, { visibility = { displayed = false } })))
     mock_device:expect_metadata_update({profile = "qubino-flush-thermostat-cooling"})
   end
 )
