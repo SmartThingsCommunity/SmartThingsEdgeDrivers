@@ -47,9 +47,9 @@ end
 local function added_handler(self, device)
   for comp_name, comp in pairs(device.profile.components) do
     if comp_name == "button5" then
-      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}, { visibility = { displayed = false } }))
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}))
     else
-      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } }))
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
     end
     if comp_name == "main" then
       device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 5}))
