@@ -13,7 +13,7 @@ components:
       - id: refresh
         version: 1
     categories:
-      - name: MultiFunctionalSensor
+      - name: Thermostat
 preferences:
   - preferenceId: tempOffset
     explicit: true
@@ -21,4 +21,4 @@ preferences:
     explicit: true
 metadata:
   mnmn: SmartThingsCommunity
-  vid: c46d0006-c415-3de5-b493-3114b8ebc0fc
+  vid: 642c4a5e-afa7-38a0-863d-c3f4ed9b4aa3

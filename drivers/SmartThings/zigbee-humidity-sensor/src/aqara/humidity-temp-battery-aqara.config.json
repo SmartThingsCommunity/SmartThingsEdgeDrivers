@@ -122,12 +122,6 @@
       }
     ]
   },
-  "icons": [
-    {
-      "group": "main",
-      "iconUrl": "icon://thermostat"
-    }
-  ],
   "presentationId": "568db25b-36d8-3366-b5a5-5233642fc58e",
   "manufacturerName": "SmartThingsCommunity"
 }
