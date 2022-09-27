@@ -21,7 +21,9 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
-  { model = "PMM-300Z1" }
+  { model = "PMM-300Z1" },
+  { model = "PMM-300Z2" },
+  { model = "PMM-300Z3" }
 }
 
 local is_shinasystems_power_meter = function(opts, driver, device)
