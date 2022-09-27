@@ -1,0 +1,4 @@
+name: 'Zigbee Power/Meter'
+packageKey: 'zigbee-power-meter'
+permissions:
+  zigbee: {}

@@ -54,7 +54,7 @@ local mock_device = test.mock_device.build_test_zwave_device(
       profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
       zwave_endpoints = zwave_lock_endpoints,
       data = {
-        lockCodes = utils.deep_copy(lockCodes)
+        lockCodes = json.encode(utils.deep_copy(lockCodes))
       }
     }
 )
@@ -171,7 +171,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Device init after added shouldn't change the datastores",
+    "Device init after added with no data should update the datastores",
     function()
       test.mock_device.add_test_device(mock_device_no_data)
       test.socket.device_lifecycle:__queue_receive({ mock_device_no_data.id, "added" })
@@ -199,7 +199,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_device_no_data:generate_info_changed(
           {
             data = {
-              lockCodes = utils.deep_copy(lockCodes)
+              lockCodes = json.encode(utils.deep_copy(lockCodes))
             }
           }
       ))

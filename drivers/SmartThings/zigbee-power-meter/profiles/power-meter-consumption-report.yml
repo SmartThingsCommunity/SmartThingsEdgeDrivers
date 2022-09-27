@@ -1,0 +1,19 @@
+name: power-meter-consumption-report
+components:
+- id: main
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1    
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+metadata:
+  mnmn: SmartThingsEdge
+  vid: STES-1-EZEX-Zigbee_Power_Meter
