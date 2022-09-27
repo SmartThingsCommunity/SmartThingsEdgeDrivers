@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.sensor_ht.agl02"
+    deviceLabel: Aqara Temperature and Humidity Sensor T1
+    manufacturer: LUMI
+    model: lumi.sensor_ht.agl02
+    deviceProfileName: humidity-temp-battery-aqara
   - id: "eZEX/E282-KR0B0Z1-HA"
     deviceLabel: eZEX Multipurpose Sensor
     model: E282-KR0B0Z1-HA
