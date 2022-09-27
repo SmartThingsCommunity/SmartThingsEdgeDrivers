@@ -241,8 +241,8 @@ do
           mock_zwave_bulb.id,
           zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-              current_value = 0,
-              target_value = level,
+              target_value = 0,
+              current_value = level,
               duration = 0
             })
           )

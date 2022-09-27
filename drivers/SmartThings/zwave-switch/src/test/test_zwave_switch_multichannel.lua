@@ -98,7 +98,7 @@ local mock_switch = test.mock_device.build_test_zwave_device({
 
 local zwave_binary_switch_on_report_ch_0 = zw_test_utils.zwave_test_build_receive_command(
   SwitchBinary:Report(
-    {target_value=0xFF},
+    {current_value=0xFF},
     {
       encap = zw.ENCAP.AUTO,
       src_channel = 0,
@@ -109,7 +109,7 @@ local zwave_binary_switch_on_report_ch_0 = zw_test_utils.zwave_test_build_receiv
 
 local zwave_binary_switch_on_report_ch_2 = zw_test_utils.zwave_test_build_receive_command(
   SwitchBinary:Report(
-    {target_value=0xFF},
+    {current_value=0xFF},
     {
       encap = zw.ENCAP.AUTO,
       src_channel = 2,

@@ -40,7 +40,7 @@ local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
 end
 
 local function dimmer_event(driver, device, cmd)
-  local level = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  local level = cmd.args.value and cmd.args.value or cmd.args.target_value
 
   device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
 

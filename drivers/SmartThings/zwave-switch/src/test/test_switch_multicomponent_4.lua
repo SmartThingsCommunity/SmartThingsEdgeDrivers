@@ -183,7 +183,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "receive",
       message = { mock_switch_multicomponent.id,
-                  zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ target_value=0xFF },
+                  zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value=0xFF },
                   {encap = zw.ENCAP.AUTO, src_channel = 1, dst_channels = {0}}))}
     },
     {
@@ -208,7 +208,7 @@ test.register_message_test(
       message = {
         mock_switch_multicomponent.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({ target_value=0x00 })
+          SwitchBinary:Report({ current_value=0x00 })
         )
       }
     },
