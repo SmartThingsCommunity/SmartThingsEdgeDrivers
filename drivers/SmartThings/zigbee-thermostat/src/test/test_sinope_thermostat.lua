@@ -151,6 +151,7 @@ test.register_coroutine_test(
           data_types.validate_or_build_type(0x0001, data_types.Enum8, "payload")
         )
       })
+      test.wait_for_events()
       local updates2 = {
         preferences = {
           keypadLock = 0, --Lock
@@ -183,6 +184,7 @@ test.register_coroutine_test(
           data_types.validate_or_build_type(0x0000, data_types.Enum8, "payload")
         )
       })
+      test.wait_for_events()
     end
 )
 
