@@ -52,13 +52,13 @@ local function multi_sensor_report_handler(driver, device, zb_rx)
 end
 
 local function zone_status_change_handler(driver, device, zb_rx)
-  if not device.preferences["garageSensor"] then
+  if not device.preferences["certifiedpreferences.garageSensor"] then
     contactSensor_defaults.ias_zone_status_change_handler(driver, device, zb_rx)
   end
 end
 
 local function zone_status_handler(driver, device, zone_status, zb_rx)
-  if not device.preferences["garageSensor"] then
+  if not device.preferences["certifiedpreferences.garageSensor"] then
     contactSensor_defaults.ias_zone_status_attr_handler(driver, device, zone_status, zb_rx)
   end
 end
