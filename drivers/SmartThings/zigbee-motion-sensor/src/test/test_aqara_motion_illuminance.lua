@@ -26,7 +26,7 @@ test.add_package_capability("detectionFrequency.yaml")
 local detectionFrequency = capabilities["stse.detectionFrequency"]
 
 local PowerConfiguration = clusters.PowerConfiguration
-local FREQUENCY_DEFAULT_VALUE = 120
+local PREF_FREQUENCY_VALUE_DEFAULT = 120
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
@@ -66,7 +66,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.illuminanceMeasurement.illuminance(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE)))
+      detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
 
     test.socket.zigbee:__expect_send({ mock_device.id,
