@@ -41,10 +41,10 @@ local devices = {
       product_ids = 0x0001
     },
     PARAMETERS = {
-      alarmLength = {parameter_number = 1, size = 1},
-      alarmLEDflash = {parameter_number = 2, size = 1},
-      comfortLED = {parameter_number = 3, size = 1},
-      tamper = {parameter_number = 4, size = 1},
+      ["certifiedpreferences.alarmLength"] = {parameter_number = 1, size = 1},
+      ["certifiedpreferences.alarmLEDflash"] = {parameter_number = 2, size = 1},
+      ["certifiedpreferences.comfortLED"] = {parameter_number = 3, size = 1},
+      ["certifiedpreferences.tamper"] = {parameter_number = 4, size = 1},
     }
   },
   EVERSPRING_SIREN = {
