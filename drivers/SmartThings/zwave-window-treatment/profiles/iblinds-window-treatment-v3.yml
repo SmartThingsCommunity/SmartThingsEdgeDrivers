@@ -80,15 +80,15 @@ preferences:
     required: true
     preferenceType: integer
     definition:
-      minimum: 100
-      maximum: 75
+      minimum: 75
+      maximum: 100
       default: 100
   - name: "remap"
     title: "Remap ON value"
     description: "Use if ON sends tilt all the way up instead of desired level or default ON value"
     required: true
     preferenceType: boolean
-    definition: 
+    definition:
       default: false
-    
+
 
