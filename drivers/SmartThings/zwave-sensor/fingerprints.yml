@@ -50,24 +50,24 @@ zwaveManufacturer:
 #     productType: 0x0005
 #     productId: 0x0010
 #     deviceProfileName: water-battery-tempalarm
-#   - id: "zooz/4in1"
-#     deviceLabel: Zooz 4-in-1 sensor
-#     manufacturerId: 0x027A
-#     productType: 0x2021
-#     productId: 0x2101
-#     deviceProfileName: multi-functional-motion
-#   - id: "zp3111us/4in1"
-#     deviceLabel: ZP3111US 4-in-1 Motion
-#     manufacturerId: 0x0109
-#     productType: 0x2021
-#     productId: 0x2101
-#     deviceProfileName: multi-functional-motion
-#   - id: "everspring/multi/sp815"
-#     deviceLabel: Everspring Immune Pet PIR Sensor SP815
-#     manufacturerId: 0x0060
-#     productType: 0x0001
-#     productId: 0x0004
-#     deviceProfileName: motion-battery-temperature-humidity-tamperalert
+  - id: "zooz/4in1"
+    deviceLabel: Zooz 4-in-1 sensor
+    manufacturerId: 0x027A
+    productType: 0x2021
+    productId: 0x2101
+    deviceProfileName: multi-functional-motion
+  - id: "zp3111us/4in1"
+    deviceLabel: ZP3111US 4-in-1 Motion
+    manufacturerId: 0x0109
+    productType: 0x2021
+    productId: 0x2101
+    deviceProfileName: multi-functional-motion
+  - id: "everspring/multi/sp815"
+    deviceLabel: Everspring Immune Pet PIR Sensor SP815
+    manufacturerId: 0x0060
+    productType: 0x0001
+    productId: 0x0004
+    deviceProfileName: motion-battery-temperature-humidity-tamperalert
   - id: "Aeotec/ZW005-C"
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
@@ -98,11 +98,11 @@ zwaveManufacturer:
 #     productType: 0x2002
 #     productId: 0x0205
 #     deviceProfileName: motion-temp-sensor
-#   - id: "fibaro/flood/zw5"
-#     deviceLabel: Fibaro Flood Sensor ZW5
-#     manufacturerId: 0x010F
-#     productType: 0x0B01
-#     deviceProfileName: water-battery-tamper-temperature
+  - id: "fibaro/flood/zw5"
+    deviceLabel: Fibaro Flood Sensor ZW5
+    manufacturerId: 0x010F
+    productType: 0x0B01
+    deviceProfileName: water-battery-tamper-temperature
   - id: "010F/0000"
     deviceLabel: Fibaro Water Leak Sensor
     manufacturerId: 0x010F
