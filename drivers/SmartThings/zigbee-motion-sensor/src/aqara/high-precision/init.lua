@@ -1,9 +1,8 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local zcl_commands = require "st.zigbee.zcl.global_commands"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local aqara_utils = require "aqara/aqara_utils"
 
 local PowerConfiguration = clusters.PowerConfiguration
@@ -48,15 +47,6 @@ local CONFIGURATIONS = {
   }
 }
 
-local is_aqara_products = function(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
 
@@ -64,6 +54,15 @@ local function device_init(driver, device)
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
   end
+end
+
+local is_aqara_products = function(opts, driver, device)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
+  end
+  return false
 end
 
 local function added_handler(self, device)
@@ -82,7 +81,7 @@ local function added_handler(self, device)
 end
 
 local aqara_motion_handler = {
-  NAME = "Aqara Motion Handler",
+  NAME = "Aqara High Precision Motion Handler",
   lifecycle_handlers = {
     init = device_init,
     added = added_handler
@@ -90,25 +89,14 @@ local aqara_motion_handler = {
   capability_handlers = {
     [aqara_utils.sensitivityAdjustmentId] = {
       [aqara_utils.sensitivityAdjustmentCommand] = aqara_utils.sensitivity_adjustment_handler,
-    },
-    [aqara_utils.detectionFrequencyId] = {
-      [aqara_utils.detectionFrequencyCommand] = aqara_utils.detection_frequency_handler,
     }
   },
   zigbee_handlers = {
-    global = {
-      [aqara_utils.PRIVATE_CLUSTER_ID] = {
-        [zcl_commands.WriteAttributeResponse.ID] = aqara_utils.write_attr_res_handler
-      }
-    },
     attr = {
-      -- High Precision Motion Sensor
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = aqara_utils.occupancy_attr_handler
       },
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
-        -- Prefs
-        [aqara_utils.FREQUENCY_ATTRIBUTE_ID] = aqara_utils.frequency_attr_handler,
         [aqara_utils.SENSITIVITY_ATTRIBUTE_ID] = aqara_utils.sensitivity_attr_handler
       }
     }

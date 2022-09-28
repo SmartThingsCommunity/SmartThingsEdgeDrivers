@@ -1,16 +1,15 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local zcl_commands = require "st.zigbee.zcl.global_commands"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local aqara_utils = require "aqara/aqara_utils"
-
-local PowerConfiguration = clusters.PowerConfiguration
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.motion.agl02" }
 }
+
+local PowerConfiguration = clusters.PowerConfiguration
 
 local CONFIGURATIONS = {
   {
@@ -23,14 +22,6 @@ local CONFIGURATIONS = {
   },
   {
     cluster = aqara_utils.PRIVATE_CLUSTER_ID,
-    attribute = aqara_utils.MOTION_ILLUMINANCE_ATTRIBUTE_ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = data_types.Uint32.ID,
-    reportable_change = 1
-  },
-  {
-    cluster = aqara_utils.PRIVATE_CLUSTER_ID,
     attribute = aqara_utils.FREQUENCY_ATTRIBUTE_ID,
     minimum_interval = 30,
     maximum_interval = 3600,
@@ -39,15 +30,6 @@ local CONFIGURATIONS = {
   }
 }
 
-local is_aqara_products = function(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
 
@@ -55,6 +37,15 @@ local function device_init(driver, device)
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
   end
+end
+
+local is_aqara_products = function(opts, driver, device)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
+  end
+  return false
 end
 
 local function added_handler(self, device)
@@ -75,23 +66,10 @@ local aqara_motion_handler = {
     init = device_init,
     added = added_handler
   },
-  capability_handlers = {
-    [aqara_utils.detectionFrequencyId] = {
-      [aqara_utils.detectionFrequencyCommand] = aqara_utils.detection_frequency_handler,
-    }
-  },
   zigbee_handlers = {
-    global = {
-      [aqara_utils.PRIVATE_CLUSTER_ID] = {
-        [zcl_commands.WriteAttributeResponse.ID] = aqara_utils.write_attr_res_handler
-      }
-    },
     attr = {
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
-        -- Motion Sensor T1
         [aqara_utils.MOTION_ILLUMINANCE_ATTRIBUTE_ID] = aqara_utils.motion_illuminance_attr_handler,
-        -- Prefs
-        [aqara_utils.FREQUENCY_ATTRIBUTE_ID] = aqara_utils.frequency_attr_handler
       }
     }
   },
