@@ -14,19 +14,21 @@
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
-local Version = (require "st.zwave.CommandClass.Version")({ version=2 })
-local PROFILE_CHANGED = "profile_changed"
+local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
+local Version = (require "st.zwave.CommandClass.Version")({ version = 2 })
+local constants = require "st.zwave.constants"
 local log = require "log"
+
+local PROFILE_CHANGED = "profile_changed"
 local LAST_SEQ_NUMBER_KEY = -1
 
 local BUTTON_VALUES = {
   "up_hold", "down_hold", "held",
-  "up","up_2x","up_3x","up_4x","up_5x",
-  "down","down_2x","down_3x","down_4x","down_5x",
-  "pushed", "pushed_2x","pushed_3x","pushed_4x","pushed_5x"
+  "up", "up_2x", "up_3x", "up_4x", "up_5x",
+  "down", "down_2x", "down_3x", "down_4x", "down_5x",
+  "pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"
 }
 
 local map_key_attribute_to_capability = {
@@ -63,15 +65,15 @@ local map_key_attribute_to_capability = {
 }
 
 local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
-  {mfr = 0x027A, prod = 0xA000, model = 0xA008} -- Zooz Zen 30 Dimmer Relay Double Switch
+  { mfr = 0x027A, prod = 0xA000, model = 0xA008 } -- Zooz Zen 30 Dimmer Relay Double Switch
 }
 
-local function version_report_handler(self, device, cmd)
+local function version_report_handler(driver, device, cmd)
   if (cmd.args.firmware_0_version > 1 or (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4)) and
     device:get_field(PROFILE_CHANGED) ~= true then
-      local new_profile = "zooz-zen-30-dimmer-relay-new"
-      device:try_update_metadata({profile = new_profile})
-      device:set_field(PROFILE_CHANGED, true, { persist = true})
+    local new_profile = "zooz-zen-30-dimmer-relay-new"
+    device:try_update_metadata({ profile = new_profile })
+    device:set_field(PROFILE_CHANGED, true, { persist = true })
   end
 end
 
@@ -85,7 +87,7 @@ local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, d
 end
 
 local function central_scene_notification_handler(driver, device, cmd)
-  if(cmd.args.key_attributes == 0x01) then
+  if (cmd.args.key_attributes == 0x01) then
     log.error("Button Value 'released' is not supported by SmartThings")
     return
   end
@@ -100,15 +102,36 @@ local function central_scene_notification_handler(driver, device, cmd)
   end
 end
 
-local function added_handler(self, device)
+local function added_handler(driver, device)
   device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES))
-  device:emit_event(capabilities.button.numberOfButtons({value = 3}))
+  device:emit_event(capabilities.button.numberOfButtons({ value = 3 }))
 end
 
-local do_refresh = function(self, device)
+local function do_refresh(driver, device)
   device:send_to_component(SwitchMultilevel:Get({}), "main")
   device:send_to_component(SwitchBinary:Get({}), "switch1")
   device:send(Version:Get({}))
+end
+
+local function switch_set_on_off_handler(value)
+  return function(driver, device, command)
+    local get, set
+
+    if command.component == "main" then
+      set = SwitchMultilevel:Set({ value = value, duration = constants.DEFAULT_DIMMING_DURATION })
+      get = SwitchMultilevel:Get({})
+    elseif command.component == "switch1" then
+      set = SwitchBinary:Set({ target_value = value, duration = 0 })
+      get = SwitchBinary:Get({})
+    end
+
+    local query_device = function()
+      device:send_to_component(get, command.component)
+    end
+
+    device:send_to_component(set, command.component)
+    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_device)
+  end
 end
 
 local zooz_zen_30_dimmer_relay_double_switch = {
@@ -116,6 +139,10 @@ local zooz_zen_30_dimmer_relay_double_switch = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
+    [capabilities.switch.ID] = {
+      [capabilities.switch.switch.on.NAME] = switch_set_on_off_handler(SwitchBinary.value.ON_ENABLE),
+      [capabilities.switch.switch.off.NAME] = switch_set_on_off_handler(SwitchBinary.value.OFF_DISABLE)
     }
   },
   zwave_handlers = {

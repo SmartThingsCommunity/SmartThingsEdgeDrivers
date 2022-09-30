@@ -189,7 +189,7 @@ local zigbee_siren_driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,    
+    added = device_added,
     doConfigure = do_configure
   },
   sub_drivers = { require("ozom"), require("frient") },

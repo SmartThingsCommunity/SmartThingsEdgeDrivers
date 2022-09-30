@@ -116,7 +116,7 @@ local driver_template = {
     require("aeon-smart-strip"),
     require("qubino-switches"),
     require("fibaro-double-switch"),
-    require("fibaro-single-switch"),    
+    require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
     require("zooz-zen-30-dimmer-relay")

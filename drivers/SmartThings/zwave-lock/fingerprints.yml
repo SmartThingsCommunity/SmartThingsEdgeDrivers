@@ -195,6 +195,30 @@ zwaveManufacturer:
     productType: 0x803A
     productId: 0x0508
     deviceProfileName: base-lock
+  - id: "Yale/YRD410"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D1
+    deviceProfileName: base-lock
+  - id: "Yale/YRD420"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D2
+    deviceProfileName: base-lock
+  - id: "Yale/YRD430"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D3
+    deviceProfileName: base-lock
+  - id: "Yale/YRD440"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D4
+    deviceProfileName: base-lock
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock

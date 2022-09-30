@@ -36,7 +36,8 @@ response = requests.get(
   ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers",
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
-    "Authorization": "Bearer "+TOKEN
+    "Authorization": "Bearer "+TOKEN,
+    "X-ST-LOG-LEVEL": "TRACE"
   }
 )
 if response.status_code != 200:
@@ -51,7 +52,8 @@ else:
       ENVIRONMENT_URL+"/drivers/search",
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
-        "Authorization": "Bearer "+TOKEN
+        "Authorization": "Bearer "+TOKEN,
+        "X-ST-LOG-LEVEL": "TRACE"
       },
       json = {
         DRIVERID: driver[DRIVERID],
@@ -73,7 +75,7 @@ for driver in drivers:
   with open(driver+"/config.yml", 'r') as config_file:
     package_key = yaml.safe_load(config_file)["packageKey"]
     print(package_key)
-  subprocess.run(["zip -r ../edge.zip $(find . -name \"*.yml\" -o -name \"*.lua\" -o -name \"*.yaml\") -X -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
+  subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
   with open("edge.zip", 'rb') as driver_package:
     data = driver_package.read()
     # TODO: This does not yet work, hash returned by server does not match
@@ -87,7 +89,8 @@ for driver in drivers:
           headers={
             "Content-Type": "application/zip",
             "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN},
+            "Authorization": "Bearer "+TOKEN,
+            "X-ST-LOG-LEVEL": "TRACE"},
           data=data)
         if response.status_code != 200:
           print("Failed to upload driver "+driver)
@@ -119,7 +122,8 @@ response = requests.put(
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "X-ST-LOG-LEVEL": "TRACE"
   },
   data=json.dumps(driver_updates)
 )

@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
-local cc = require "st.zwave.CommandClass"
 local ButtonDefaults = require "st.zwave.defaults.button"
 local EnergyMeterDefaults = require "st.zwave.defaults.energyMeter"
 local PowerMeterDefaults = require "st.zwave.defaults.powerMeter"

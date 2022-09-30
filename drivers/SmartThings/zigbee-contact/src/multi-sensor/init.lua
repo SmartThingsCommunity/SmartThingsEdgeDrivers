@@ -15,6 +15,8 @@
 local capabilities = require "st.capabilities"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
+local zcl_clusters = require "st.zigbee.zcl.clusters"
+local contactSensor_defaults = require "st.zigbee.defaults.contactSensor_defaults"
 
 local MULTI_SENSOR_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3320" },
@@ -49,6 +51,18 @@ local function multi_sensor_report_handler(driver, device, zb_rx)
   multi_utils.handle_three_axis_report(device, x, y, z)
 end
 
+local function zone_status_change_handler(driver, device, zb_rx)
+  if not device.preferences["certifiedpreferences.garageSensor"] then
+    contactSensor_defaults.ias_zone_status_change_handler(driver, device, zb_rx)
+  end
+end
+
+local function zone_status_handler(driver, device, zone_status, zb_rx)
+  if not device.preferences["certifiedpreferences.garageSensor"] then
+    contactSensor_defaults.ias_zone_status_attr_handler(driver, device, zone_status, zb_rx)
+  end
+end
+
 local function added_handler(self, device)
   device:emit_event(capabilities.accelerationSensor.acceleration.inactive())
   device:refresh()
@@ -64,6 +78,16 @@ local multi_sensor = {
       [multi_utils.CUSTOM_ACCELERATION_CLUSTER] = {
         [zcl_commands.ReportAttribute.ID] = multi_sensor_report_handler,
         [zcl_commands.ReadAttributeResponse.ID] = multi_sensor_report_handler
+      }
+    },
+    cluster = {
+      [zcl_clusters.IASZone.ID] = {
+        [zcl_clusters.IASZone.client.commands.ZoneStatusChangeNotification.ID] = zone_status_change_handler
+      }
+    },
+    attr = {
+      [zcl_clusters.IASZone.ID] = {
+        [zcl_clusters.IASZone.attributes.ZoneStatus.ID] = zone_status_handler
       }
     }
   },

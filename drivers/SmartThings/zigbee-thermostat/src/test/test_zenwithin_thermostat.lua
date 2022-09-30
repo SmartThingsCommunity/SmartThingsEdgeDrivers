@@ -347,35 +347,30 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_device.id,
-          { capability = "thermostatMode", command = "auto", args = {} }
+          { capability = "thermostatMode", command = "auto", args = {} , component = "main"}
         }
       )
-      test.socket.zigbee:__expect_send(
-        {
-          mock_device.id,
-          Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2100.0)
-        }
-      )
-      test.socket.zigbee:__expect_send(
-        {
-          mock_device.id,
-          Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2500.0)
-        }
-      )
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
       test.socket.zigbee:__expect_send(
         {
           mock_device.id,
           Thermostat.attributes.SystemMode:write(mock_device, 0x01) -- SystemMode.AUTO = 0x01
         }
       )
-      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.mock_time.advance_time(2)
+      test.socket.zigbee:__expect_send(
+          {
+            mock_device.id,
+            Thermostat.attributes.SystemMode:read(mock_device)
+          }
+      )
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
       test.socket.capability:__queue_receive(
         {
           mock_device.id,
           { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 27 } }
         }
       )
-      test.wait_for_events()
       test.mock_time.advance_time(2)
       test.socket.zigbee:__expect_send(
         {
@@ -383,6 +378,7 @@ test.register_coroutine_test(
           Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2700)
         }
       )
+      test.wait_for_events()
       test.socket.capability:__queue_receive(
         {
           mock_device.id,
@@ -403,23 +399,21 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }}}))
       )
       test.wait_for_events()
-      test.mock_time.advance_time(10)
-      test.wait_for_events()
-      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
       test.socket.capability:__queue_receive(
         {
           mock_device.id,
           { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 29 } }
         }
       )
-      test.wait_for_events()
-      test.mock_time.advance_time(2)
       test.socket.zigbee:__expect_send(
         {
           mock_device.id,
           Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2900)
         }
       )
+      test.mock_time.advance_time(2)
+      test.wait_for_events()
     end
 )
 

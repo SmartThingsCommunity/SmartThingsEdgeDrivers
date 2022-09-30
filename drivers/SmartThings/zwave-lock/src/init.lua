@@ -23,8 +23,13 @@ local defaults = require "st.zwave.defaults"
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+local constants = require "st.zwave.constants"
+local utils = require "st.utils"
+local json = require "st.json"
 
 local SCAN_CODES_CHECK_INTERVAL = 30
+local MIGRATION_COMPLETE = "migrationComplete"
+local MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped"
 
 local function periodic_codes_state_verification(driver, device)
   local scan_codes_state = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME)
@@ -44,28 +49,56 @@ local function periodic_codes_state_verification(driver, device)
   end
 end
 
+local function populate_state_from_data(device)
+  if device.data.lockCodes ~= nil and device:get_field(MIGRATION_COMPLETE) ~= true then
+    -- build the lockCodes table
+    local lockCodes = {}
+    local lc_data = json.decode(device.data.lockCodes)
+    for k, v in pairs(lc_data) do
+      lockCodes[k] = v
+    end
+    -- Populate the devices `lockCodes` field
+    device:set_field(constants.LOCK_CODES, utils.deep_copy(lockCodes), { persist = true })
+    -- Populate the devices state history cache
+    device.state_cache["main"] = device.state_cache["main"] or {}
+    device.state_cache["main"][capabilities.lockCodes.ID] = device.state_cache["main"][capabilities.lockCodes.ID] or {}
+    device.state_cache["main"][capabilities.lockCodes.ID][capabilities.lockCodes.lockCodes.NAME] = {value = json.encode(utils.deep_copy(lockCodes))}
+
+    device:set_field(MIGRATION_COMPLETE, true, { persist = true })
+  end
+end
+
 --- Builds up initial state for the device
 ---
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local function added_handler(self, device)
-  if (device:supports_capability(capabilities.lockCodes)) then
-    self:inject_capability_command(device,
-            { capability = capabilities.lockCodes.ID,
-              command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-              args = {} })
-    device.thread:call_with_delay(
-      SCAN_CODES_CHECK_INTERVAL,
-      function(d)
-        periodic_codes_state_verification(self, device)
-      end
-    )
+  populate_state_from_data(device)
+  if device.data.lockCodes == nil or device:get_field(MIGRATION_RELOAD_SKIPPED) == true then
+    if (device:supports_capability(capabilities.lockCodes)) then
+      self:inject_capability_command(device,
+          { capability = capabilities.lockCodes.ID,
+            command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+            args = {} })
+      device.thread:call_with_delay(
+          SCAN_CODES_CHECK_INTERVAL,
+          function(d)
+            periodic_codes_state_verification(self, device)
+          end
+      )
+    end
+  else
+    device:set_field(MIGRATION_RELOAD_SKIPPED, true, { persist = true })
   end
   device:send(DoorLock:OperationGet({}))
   device:send(Battery:Get({}))
   if (device:supports_capability(capabilities.tamperAlert)) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+end
+
+local init_handler = function(driver, device, event)
+  populate_state_from_data(device)
 end
 
 local driver_template = {
@@ -76,7 +109,8 @@ local driver_template = {
     capabilities.tamperAlert
   },
   lifecycle_handlers = {
-    added = added_handler
+    added = added_handler,
+    init = init_handler,
   },
   sub_drivers = {
     require("zwave-alarm-v1-lock"),

@@ -28,7 +28,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         [1] = {
           id = 1,
           model = "E240-KR080Z0-HA",
-          server_clusters = {}
+          server_clusters = {SimpleMetering.ID, ElectricalMeasurement.ID}
         }
       }
     }
@@ -144,6 +144,5 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
-
 
 test.run_registered_tests()
