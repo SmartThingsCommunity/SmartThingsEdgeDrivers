@@ -66,6 +66,11 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
+      if preferences[id].size == 2 and new_parameter_value > 32767 and new_parameter_value < 65536 then
+        new_parameter_value = new_parameter_value - 65536
+      elseif preferences[id].size == 1 and new_parameter_value > 127 and new_parameter_value < 256 then
+        new_parameter_value = new_parameter_value - 256
+      end
       device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
     end
   end
