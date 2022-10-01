@@ -301,6 +301,23 @@ local devices = {
       dimmerPaddleControl = {parameter_number = 27, size = 1}
     }
   },
+  LEVITON_DIMMER = {
+    MATCHING_MATRIX = {
+      mfrs = 0x001D,
+      product_types = {0x3201, 0x3301},
+      product_ids = 0x0001
+    },
+    PARAMETERS = {
+      fadeOnTime = {parameter_number = 1, size = 1},
+      fadeOffTime = {parameter_number = 2, size = 1},
+      minimumLightLevel = {parameter_number = 3, size = 1},
+      maximumLightLevel = {parameter_number = 4, size = 1},
+      presetLightLevel = {parameter_number = 5, size = 1},
+      levelIndicatorTimeout = {parameter_number = 6, size = 1},
+      locatorLedStatus = {parameter_number = 7, size = 1},
+      loadType = {parameter_number = 8, size = 1}
+    }
+  },
   SWITCH_LEVEL_INDICATOR = {
     MATCHING_MATRIX = {
       mfrs = 0x0063,
