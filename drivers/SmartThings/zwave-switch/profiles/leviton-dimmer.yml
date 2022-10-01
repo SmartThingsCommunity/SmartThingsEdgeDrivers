@@ -1,0 +1,77 @@
+name: leviton-dimmer
+components:
+- id: main
+  capabilities:
+    - id: switch
+      version: 1
+    - id: switchLevel
+      version: 1
+    - id: refresh
+      version: 1
+  categories:
+    - name: Switch
+preferences:
+  - name: "fadeOnTime"
+    title: "Fade On Time"
+    description: "0 = Instant On; 1 - 127 = Seconds: 1 - 127 seconds; 128 - 253 = Minutes: 1 - 126 minutes"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 253
+      default: 2
+  - name: "fadeOffTime"
+    title: "Fade Off Time"
+    description: "0 = Instant Off; 1 - 127 = Seconds: 1 - 127 seconds; 128 - 253 = Minutes: 1 - 126 minutes"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 253
+      default: 2
+  - name: "minimumLightLevel"
+    title: "Minimum Light Level"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 10
+  - name: "maximumLightLevel"
+    title: "Maximum Light Level"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 100
+  - name: "presetLightLevel"
+    title: "Preset Light Level"
+    description: "0 = Memory Dim - Last dim state; 1 - 100 = Level"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 0
+  - name: "levelIndicatorTimeout"
+    title: "LED Dim Level Indicator Timeout"
+    description: "0 = Level Indicators Off; 1 - 254 = Level Indicator Timeout (seconds); 255 = Levels Always On"
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 3
+  - name: "locatorLedStatus"
+    title: "Locator LED Status"
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "LED Off"
+        254: "Status Mode"
+        255: "Locator Mode"
+      default: 255
+  - name: "loadType"
+    title: "Load Type"
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Incandescent"
+        1: "LED"
+        2: "CFL"
+      default: 0
