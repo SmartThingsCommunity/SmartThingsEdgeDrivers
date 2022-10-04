@@ -1,4 +1,4 @@
-name: color-temp-bulb
+name: color-temp-bulb-2700K-6500K
 components:
 - id: main
   capabilities:
