@@ -54,7 +54,6 @@ end
 
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
-  device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
   device:emit_event(aqara_utils.detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT))
   device:emit_event(aqara_utils.sensitivityAdjustment.sensitivityAdjustment.Medium())
   device:emit_event(capabilities.battery.battery(100))
