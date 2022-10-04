@@ -31,12 +31,13 @@ local zigbee_humidity_driver = {
   supported_capabilities = {
     capabilities.battery,
     capabilities.relativeHumidityMeasurement,
-    capabilities.temperatureMeasurement,
+    capabilities.temperatureMeasurement
   },
   lifecycle_handlers = {
     init = device_init
   },
   sub_drivers = {
+    require("aqara"),
     require("plant-link"),
     require("plaid-systems"),
     require("centralite-sensor"),

@@ -77,7 +77,7 @@ multi_utils.handle_three_axis_report = function(device, x, y, z)
   if x ~= nil and y ~= nil and z ~= nil then
     device:emit_event(capabilities.threeAxis.threeAxis({value = {x, y, z}}))
   end
-  if z ~= nil and device.preferences["garageSensor"] then
+  if z ~= nil and device.preferences["certifiedpreferences.garageSensor"] then
     handle_garage_event(device, math.abs(z))
   end
 end

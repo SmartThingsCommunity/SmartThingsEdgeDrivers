@@ -1921,11 +1921,11 @@ zigbeeManufacturer:
 #     manufacturer: Ubec
 #     model: BBB65L-HY
 #     deviceProfileName: color-temp-bulb
-#   - id: CentraLite/4257050-ZHAC
-#     deviceLabel: Centralite Dimmer Switch
-#     manufacturer: CentraLite
-#     model: 4257050-ZHAC
-#     deviceProfileName: plug-level-power
+  - id: CentraLite/4257050-ZHAC
+    deviceLabel: Centralite Dimmer Switch
+    manufacturer: CentraLite
+    model: 4257050-ZHAC
+    deviceProfileName: plug-level-power
   - id: "IKEA/TRADFRI bulb E27 CWS opal 600lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden

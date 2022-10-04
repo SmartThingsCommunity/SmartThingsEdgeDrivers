@@ -92,12 +92,12 @@ zwaveManufacturer:
 #     productType: 0x0004
 #     productId: 0x0001
 #     deviceProfileName: motion-switch-color-illuminance-temperature
-#   - id: "vision/motion"
-#     deviceLabel: Vision Motion Detector ZP3102
-#     manufacturerId: 0x0109
-#     productType: 0x2002
-#     productId: 0x0205
-#     deviceProfileName: motion-temp-sensor
+  - id: "vision/motion"
+    deviceLabel: Vision Motion Detector ZP3102
+    manufacturerId: 0x0109
+    productType: 0x2002
+    productId: 0x0205
+    deviceProfileName: motion-temp-sensor
   - id: "fibaro/flood/zw5"
     deviceLabel: Fibaro Flood Sensor ZW5
     manufacturerId: 0x010F
@@ -153,11 +153,11 @@ zwaveManufacturer:
 #     productType: 0x0701
 #     productId: 0x2001
 #     deviceProfileName: fibaro-door-window-sensor-temperature
-#   - id: 010F/0702
-#     deviceLabel: Fibaro Open/Closed Sensor 2
-#     manufacturerId: 0x010F
-#     productType: 0x0702
-#     deviceProfileName: fibaro-door-window-sensor-2
+  - id: 010F/0702
+    deviceLabel: Fibaro Open/Closed Sensor 2
+    manufacturerId: 0x010F
+    productType: 0x0702
+    deviceProfileName: fibaro-door-window-sensor-2
 #   - id: 0086/0102/0061
 #     deviceLabel: Aeotec Door/Window Sensor
 #     manufacturerId: 0x0086
@@ -462,24 +462,24 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x0085
     deviceProfileName: base-water
-#   - id: 0258/0003/0085
-#     deviceLabel: NEO Coolcam Water Leak Sensor
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x0085
-#     deviceProfileName: base-water
+  - id: 0258/0003/0085
+    deviceLabel: NEO Coolcam Water Leak Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x0085
+    deviceProfileName: base-water
   - id: 0258/0003/1085
     deviceLabel: NEO Coolcam Water Leak Sensor
     manufacturerId: 0x0258
     productType: 0x0003
     productId: 0x1085
     deviceProfileName: base-water
-#   - id: 0258/0003/2085
-#     deviceLabel: NEO Coolcam Water Leak Sensor
-#     manufacturerId: 0x0258
-#     productType: 0x0003
-#     productId: 0x2085
-#     deviceProfileName: base-water
+  - id: 0258/0003/2085
+    deviceLabel: NEO Coolcam Water Leak Sensor
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x2085
+    deviceProfileName: base-water
   - id: 0086/007A
     deviceLabel: Aeotec Water Leak Sensor
     manufacturerId: 0x0086

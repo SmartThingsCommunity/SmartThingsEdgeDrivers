@@ -14,11 +14,11 @@ zigbeeManufacturer:
 #     manufacturer: HEIMAN
 #     model: WaterSensor-N
 #     deviceProfileName: water-battery
-#   - id: "Ecolink/FLZB1-ECO"
-#     deviceLabel: Ecolink Water Leak Sensor
-#     manufacturer: Ecolink
-#     model: FLZB1-ECO
-#     deviceProfileName: water-temp-tempalarm-battery
+  - id: "Ecolink/FLZB1-ECO"
+    deviceLabel: Ecolink Water Leak Sensor
+    manufacturer: Ecolink
+    model: FLZB1-ECO
+    deviceProfileName: water-temp-tempalarm-battery
 #   - id: "Sinope/WL4200"
 #     deviceLabel: Sinope Water Leak Sensor
 #     manufacturer: Sinope Technologies

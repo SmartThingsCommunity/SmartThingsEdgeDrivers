@@ -150,7 +150,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
         {
             preferences = {
-              garageSensor = true
+              ["certifiedpreferences.garageSensor"] = true
             }
         }
     ))
