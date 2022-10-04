@@ -79,31 +79,31 @@ zigbeeManufacturer:
     manufacturer: ADUROLIGHT
     model: ADUROLIGHT_CSC
     deviceProfileName: four-buttons
-  # - id: "ShinaSystem/MSM-300Z"
-  #   deviceLabel: SiHAS Remote Control
-  #   manufacturer: ShinaSystem
-  #   model: MSM-300Z
-  #   deviceProfileName: four-buttons-battery
-  # - id: "ShinaSystem/BSM-300Z"
-  #   deviceLabel: SiHAS Remote Control
-  #   manufacturer: ShinaSystem
-  #   model: BSM-300Z
-  #   deviceProfileName: one-button-battery
-  # - id: "ShinaSystem/SBM300ZB1"
-  #   deviceLabel: SiHAS Remote Control
-  #   manufacturer: ShinaSystem
-  #   model: SBM300ZB1
-  #   deviceProfileName: one-button-battery
-  # - id: "ShinaSystem/SBM300ZB2"
-  #   deviceLabel: SiHAS Remote Control
-  #   manufacturer: ShinaSystem
-  #   model: SBM300ZB2
-  #   deviceProfileName: two-buttons-battery
-  # - id: "ShinaSystem/SBM300ZB3"
-  #   deviceLabel: SiHAS Remote Control
-  #   manufacturer: ShinaSystem
-  #   model: SBM300ZB3
-  #   deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/MSM-300Z"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: MSM-300Z
+    deviceProfileName: four-buttons-battery
+  - id: "ShinaSystem/BSM-300Z"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: BSM-300Z
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZB1"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB1
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZB2"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB2
+    deviceProfileName: two-buttons-battery
+  - id: "ShinaSystem/SBM300ZB3"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZB3
+    deviceProfileName: three-buttons-battery
   # - id: OSRAM/LIGHTIFY Dimming Switch
   #   deviceLabel: OSRAM Button
   #   manufacturer: OSRAM

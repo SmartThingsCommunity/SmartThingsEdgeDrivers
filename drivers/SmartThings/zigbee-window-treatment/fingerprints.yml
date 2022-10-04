@@ -58,16 +58,16 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: FYRTUR block-out roller blind
     deviceProfileName: window-treatment-battery
-  # - id: "Yookee/D10110"
-  #   deviceLabel: Yookee Window Treatment
-  #   manufacturer: Yookee
-  #   model: D10110
-  #   deviceProfileName: window-treatment-battery
-  # - id: "yooksmart/D10110"
-  #   deviceLabel: yooksmart Window Treatment
-  #   manufacturer: yooksmart
-  #   model: D10110
-  #   deviceProfileName: window-treatment-battery
+  - id: "Yookee/D10110"
+    deviceLabel: Yookee Window Treatment
+    manufacturer: Yookee
+    model: D10110
+    deviceProfileName: window-treatment-battery
+  - id: "yooksmart/D10110"
+    deviceLabel: yooksmart Window Treatment
+    manufacturer: yooksmart
+    model: D10110
+    deviceProfileName: window-treatment-battery
   # - id: "Rooms Beautiful/C001"
   #   deviceLabel: Rooms Beautiful Window Treatment
   #   manufacturer: Rooms Beautiful

@@ -297,23 +297,23 @@ zwaveManufacturer:
     productId: 0x0055
     deviceProfileName: qubino-mini-dimmer
   - id: 015D/0651/F51C
-    deviceLabel: Zooz ZEN 20 Power Strip
+    deviceLabel: Zooz Outlet
     manufacturerId: 0x015D
     productType: 0x0651
     productId: 0xF51C
     deviceProfileName: switch-5
   # - id: 027A/A000/A008
-  #   deviceLabel: Zooz ZEN 30 Double Switch
+  #   deviceLabel: Zooz Outlet
   #   manufacturerId: 0x027A
   #   productType: 0xA000
   #   productId: 0xA008
   #   deviceProfileName: zooz-zen-30-dimmer-relay
-#   - id: 0086/0003/000B
-#     deviceLabel: Aeon Smart Strip
-#     manufacturerId: 0x0086
-#     productType: 0x0003
-#     productId: 0x000B
-#     deviceProfileName: metering-switch-5
+  - id: 0086/0003/000B
+    deviceLabel: Aeon Outlet
+    manufacturerId: 0x0086
+    productType: 0x0003
+    productId: 0x000B
+    deviceProfileName: metering-switch-5
 #   - id: 0159/0002/0051
 #     deviceLabel: Qubino Switch
 #     manufacturerId: 0x0159

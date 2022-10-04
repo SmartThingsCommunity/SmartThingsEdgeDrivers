@@ -1,16 +1,16 @@
 zigbeeManufacturer:
   #Aurora
-  # - id: "Aurora/Remote50AU"
-  #   deviceLabel: "Aurora Dimmer Switch"
-  #   manufacturer: Aurora
-  #   model: Remote50AU
-  #   deviceProfileName: switch-level-button
+  - id: "Aurora/Remote50AU"
+    deviceLabel: "Aurora Dimmer Switch"
+    manufacturer: Aurora
+    model: Remote50AU
+    deviceProfileName: switch-level-button
   #LDS
-  # - id: "LDS/ZBT-DIMController-D0800"
-  #   deviceLabel: "Tint Dimmer Switch"
-  #   manufacturer: LDS
-  #   model: ZBT-DIMController-D0800
-  #   deviceProfileName: switch-level-button
+  - id: "LDS/ZBT-DIMController-D0800"
+    deviceLabel: "Tint Dimmer Switch"
+    manufacturer: LDS
+    model: ZBT-DIMController-D0800
+    deviceProfileName: switch-level-button
   #sengled
   - id: "sengled/E1E-G7F"
     deviceLabel: "Sengled Dimmer Switch"

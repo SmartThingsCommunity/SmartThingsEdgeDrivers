@@ -59,15 +59,15 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
           {
               preferences = {
-                smokeSensorSensitivity = 0,
-                zwaveNotificationStatus = 1,
-                indicatorNotification = 4,
-                soundNotificationStatus = 7,
-                tempReportInterval = 30,
-                tempReportHysteresis= 50,
-                temperatureThreshold= 75,
-                overheatInterval= 90,
-                outOfRange= 4320
+                ["certifiedpreferences.smokeSensorSensitivity"] = 0,
+                ["certifiedpreferences.zwaveNotificationStatus"] = 1,
+                ["certifiedpreferences.indicatorNotification"] = 4,
+                ["certifiedpreferences.soundNotificationStatus"] = 7,
+                ["certifiedpreferences.tempReportInterval"] = 30,
+                ["certifiedpreferences.tempReportHysteresis"] = 50,
+                ["certifiedpreferences.temperatureThreshold"] = 75,
+                ["certifiedpreferences.overheatInterval"] = 90,
+                ["certifiedpreferences.outOfRange"] = 4320
               }
           }
       ))

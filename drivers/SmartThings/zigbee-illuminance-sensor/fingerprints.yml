@@ -1,0 +1,18 @@
+zigbeeGeneric:
+  - id: "generic-illuminance-sensor"
+    deviceLabel: Illuminance Sensor
+    deviceIdentifiers:
+      - 0x0106
+    clusters: 
+      server: 
+        - 0x0400 # Illuminance Measurement Cluster
+    deviceProfileName: base-illuminance
+  - id: "battery-illuminance-sensor"
+    deviceLabel: Illuminance Sensor
+    deviceIdentifiers:
+      - 0x0106
+    clusters:
+      server:
+        - 0x0400 # Illuminance Measurement Cluster
+        - 0x0001 # PowerConfiguration
+    deviceProfileName: battery-illuminance

@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.sensor_ht.agl02"
+    deviceLabel: Aqara Temperature and Humidity Sensor T1
+    manufacturer: LUMI
+    model: lumi.sensor_ht.agl02
+    deviceProfileName: humidity-temp-battery-aqara
   - id: "eZEX/E282-KR0B0Z1-HA"
     deviceLabel: eZEX Multipurpose Sensor
     model: E282-KR0B0Z1-HA
@@ -63,11 +68,11 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: TH01
     deviceProfileName: humidity-temp-battery
-#   - id: eWeLink/SNZB-02P
-#     deviceLabel: eWeLink Multipurpose Sensor
-#     manufacturer: eWeLink
-#     model: SNZB-02P
-#     deviceProfileName: humidity-temp-battery
+  - id: eWeLink/SNZB-02P
+    deviceLabel: eWeLink Multipurpose Sensor
+    manufacturer: eWeLink
+    model: SNZB-02P
+    deviceProfileName: humidity-temp-battery
 # zigbeeGeneric:
 #   - id: "HumidityTempGeneric"
 #     deviceLabel: Multipurpose Sensor

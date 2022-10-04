@@ -1,24 +1,24 @@
 zigbeeManufacturer:
-#   - id: "eWeLink/MS01"
-#     deviceLabel: eWeLink Motion Sensor
-#     manufacturer: eWeLink
-#     model: MS01
-#     deviceProfileName: motion-battery
-#   - id: "ORVIBO/895a2d80097f4ae2b2d40500d5e0"
-#     deviceLabel: Orvibo Motion Sensor
-#     manufacturer: ORVIBO
-#     model: 895a2d80097f4ae2b2d40500d5e03dcc
-#     deviceProfileName: motion-battery
-#   - id: "HEIMAN/PIRSensor-N"
-#     deviceLabel: HEIMAN Motion Sensor
-#     manufacturer: HEIMAN
-#     model: PIRSensor-N
-#     deviceProfileName: motion-battery
-#   - id: "Megaman/PS601/z1"
-#     deviceLabel: INGENIUM Motion Sensor
-#     manufacturer: Megaman
-#     model: PS601/z1
-#     deviceProfileName: motion-battery
+  - id: "eWeLink/MS01"
+    deviceLabel: eWeLink Motion Sensor
+    manufacturer: eWeLink
+    model: MS01
+    deviceProfileName: motion-battery
+  - id: "ORVIBO/895a2d80097f4ae2b2d40500d5e0"
+    deviceLabel: Orvibo Motion Sensor
+    manufacturer: ORVIBO
+    model: 895a2d80097f4ae2b2d40500d5e03dcc
+    deviceProfileName: motion-battery
+  - id: "HEIMAN/PIRSensor-N"
+    deviceLabel: HEIMAN Motion Sensor
+    manufacturer: HEIMAN
+    model: PIRSensor-N
+    deviceProfileName: motion-battery
+  - id: "Megaman/PS601/z1"
+    deviceLabel: INGENIUM Motion Sensor
+    manufacturer: Megaman
+    model: PS601/z1
+    deviceProfileName: motion-battery
   - id: "NYCE/3041"
     deviceLabel: NYCE Motion Sensor
     manufacturer: NYCE
@@ -34,11 +34,11 @@ zigbeeManufacturer:
     manufacturer: NYCE
     model: 3045
     deviceProfileName: motion-battery
-#   - id: "iMagic by GreatStar/1117-S"
-#     deviceLabel: Iris Multipurpose Sensor
-#     manufacturer: iMagic by GreatStar
-#     model: 1117-S
-#     deviceProfileName: motion-humidity-temp-battery
+  - id: "iMagic by GreatStar/1117-S"
+    deviceLabel: Iris Multipurpose Sensor
+    manufacturer: iMagic by GreatStar
+    model: 1117-S
+    deviceProfileName: motion-humidity-temp-battery
   - id: "eZEX/E280-KR0A0Z0-HA"
     deviceLabel: eZEX Motion Sensor
     model: E280-KR0A0Z0-HA
@@ -159,18 +159,18 @@ zigbeeManufacturer:
     manufacturer: Compacta
     model: ZBMS3-1
     deviceProfileName: motion-temp-battery
-#   - id: SmartThings/PGC314
-#     deviceLabel: SmartThings Motion Sensor
-#     manufacturer: SmartThings
-#     model: PGC314
-#     deviceProfileName: smartsense-motion
-#   - id: ThirdReality/3RMS16BZ
-#     deviceLabel: ThirdReality Motion Sensor
-#     manufacturer: Third Reality, Inc
-#     model: 3RMS16BZ
-#     deviceProfileName: motion-battery
-#   - id: THIRDREALITY/3RMS16BZ
-#     deviceLabel: ThirdReality Motion Sensor
-#     manufacturer: THIRDREALITY
-#     model: 3RMS16BZ
-#     deviceProfileName: motion-battery
+  - id: SmartThings/PGC314
+    deviceLabel: SmartThings Motion Sensor
+    manufacturer: SmartThings
+    model: PGC314
+    deviceProfileName: smartsense-motion
+  - id: ThirdReality/3RMS16BZ
+    deviceLabel: ThirdReality Motion Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RMS16BZ
+    deviceProfileName: motion-battery
+  - id: THIRDREALITY/3RMS16BZ
+    deviceLabel: ThirdReality Motion Sensor
+    manufacturer: THIRDREALITY
+    model: 3RMS16BZ
+    deviceProfileName: motion-battery
