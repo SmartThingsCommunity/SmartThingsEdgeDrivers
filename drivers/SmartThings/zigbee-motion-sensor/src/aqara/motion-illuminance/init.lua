@@ -5,10 +5,6 @@ local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local aqara_utils = require "aqara/aqara_utils"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.motion.agl02" }
-}
-
 local PowerConfiguration = clusters.PowerConfiguration
 
 local CONFIGURATIONS = {
@@ -39,15 +35,6 @@ local function device_init(driver, device)
   end
 end
 
-local is_aqara_products = function(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
   device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
@@ -61,7 +48,7 @@ local function added_handler(self, device)
 end
 
 local aqara_motion_handler = {
-  NAME = "Aqara Motion Handler",
+  NAME = "Aqara Motion Illuminance Handler",
   lifecycle_handlers = {
     init = device_init,
     added = added_handler
@@ -73,7 +60,9 @@ local aqara_motion_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = function(opts, driver, device, ...)
+    return device:get_model() == "lumi.motion.agl02"
+  end
 }
 
 return aqara_motion_handler

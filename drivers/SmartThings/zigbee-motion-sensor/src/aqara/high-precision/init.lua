@@ -8,10 +8,6 @@ local aqara_utils = require "aqara/aqara_utils"
 local PowerConfiguration = clusters.PowerConfiguration
 local OccupancySensing = clusters.OccupancySensing
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.motion.agl04" }
-}
-
 local CONFIGURATIONS = {
   {
     cluster = OccupancySensing.ID,
@@ -56,15 +52,6 @@ local function device_init(driver, device)
   end
 end
 
-local is_aqara_products = function(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
   device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
@@ -101,7 +88,9 @@ local aqara_motion_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = function(opts, driver, device, ...)
+    return device:get_model() == "lumi.motion.agl04"
+  end
 }
 
 return aqara_motion_handler
