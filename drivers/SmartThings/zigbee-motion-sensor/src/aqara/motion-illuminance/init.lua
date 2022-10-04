@@ -47,7 +47,7 @@ local function added_handler(self, device)
     aqara_utils.FREQUENCY_ATTRIBUTE_ID))
 end
 
-local aqara_motion_handler = {
+local aqara_motion_illuminance_handler = {
   NAME = "Aqara Motion Illuminance Handler",
   lifecycle_handlers = {
     init = device_init,
@@ -65,4 +65,4 @@ local aqara_motion_handler = {
   end
 }
 
-return aqara_motion_handler
+return aqara_motion_illuminance_handler

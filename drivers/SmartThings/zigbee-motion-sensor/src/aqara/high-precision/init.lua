@@ -66,7 +66,7 @@ local function added_handler(self, device)
     aqara_utils.SENSITIVITY_ATTRIBUTE_ID))
 end
 
-local aqara_motion_handler = {
+local aqara_high_precision_motion_handler = {
   NAME = "Aqara High Precision Motion Handler",
   lifecycle_handlers = {
     init = device_init,
@@ -92,4 +92,4 @@ local aqara_motion_handler = {
   end
 }
 
-return aqara_motion_handler
+return aqara_high_precision_motion_handler
