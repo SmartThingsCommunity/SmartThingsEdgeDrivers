@@ -1,11 +1,14 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local zcl_commands = require "st.zigbee.zcl.global_commands"
 local aqara_utils = require "aqara/aqara_utils"
 
 local PowerConfiguration = clusters.PowerConfiguration
+
+local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
+local MOTION_DETECTED_UINT32 = 65536
 
 local CONFIGURATIONS = {
   {
@@ -41,10 +44,25 @@ local function added_handler(self, device)
   device:emit_event(aqara_utils.detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT))
   device:emit_event(capabilities.battery.battery(100))
 
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    aqara_utils.PRIVATE_CLUSTER_ID, aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
-  device:send(aqara_utils.read_custom_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
-    aqara_utils.FREQUENCY_ATTRIBUTE_ID))
+  aqara_utils.enable_custom_cluster_attribute(device)
+  aqara_utils.read_custom_attribute(device, aqara_utils.FREQUENCY_ATTRIBUTE_ID)
+end
+
+local function write_attr_res_handler(driver, device, zb_rx)
+  aqara_utils.detection_frequency_res_handler(device)
+end
+
+local function motion_illuminance_attr_handler(driver, device, value, zb_rx)
+  -- The low 16 bits for Illuminance
+  -- The high 16 bits for Motion Detection
+
+  if value.value > MOTION_DETECTED_UINT32 then
+    -- motion detected
+    aqara_utils.motion_detected(driver, device, value, zb_rx)
+
+    local lux = value.value - MOTION_DETECTED_UINT32
+    device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
+  end
 end
 
 local aqara_motion_illuminance_handler = {
@@ -54,9 +72,14 @@ local aqara_motion_illuminance_handler = {
     added = added_handler
   },
   zigbee_handlers = {
+    global = {
+      [aqara_utils.PRIVATE_CLUSTER_ID] = {
+        [zcl_commands.WriteAttributeResponse.ID] = write_attr_res_handler
+      }
+    },
     attr = {
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
-        [aqara_utils.MOTION_ILLUMINANCE_ATTRIBUTE_ID] = aqara_utils.motion_illuminance_attr_handler,
+        [MOTION_ILLUMINANCE_ATTRIBUTE_ID] = motion_illuminance_attr_handler,
       }
     }
   },
