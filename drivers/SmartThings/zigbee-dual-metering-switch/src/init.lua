@@ -33,13 +33,12 @@ end
 local zigbee_dual_metering_switch = {
   supported_capabilities = {
     capabilities.switch,
-    capabilities.switchLevel,
     capabilities.powerMeter
   },
   lifecycle_handlers = {
     added = added,
     init =  init,
-  },
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_dual_metering_switch, zigbee_dual_metering_switch.supported_capabilities)
