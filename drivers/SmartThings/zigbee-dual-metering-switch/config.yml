@@ -1,0 +1,4 @@
+name: 'Zigbee Dual Metering Switch'
+packageKey: 'zigbee-dual-metering-switch'
+permissions:
+  zigbee: {}
