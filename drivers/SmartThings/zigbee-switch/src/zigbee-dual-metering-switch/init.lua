@@ -4,8 +4,9 @@ local defaults = require "st.zigbee.defaults"
 local device_lib = require "st.device"
 
 local function added(driver, device, event)
+  -- Only create children for the actual Zigbee device and not the children
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
-    for i = 1,2 do
+    for i = 2,5,1 do
       local name = string.format("%s outlet %d", device.label, i)
       local metadata = {
         type = "EDGE_CHILD",
@@ -42,5 +43,5 @@ local zigbee_dual_metering_switch = {
 }
 
 defaults.register_for_default_handlers(zigbee_dual_metering_switch, zigbee_dual_metering_switch.supported_capabilities)
-local zigbee_light_switch = ZigbeeDriver("Zigbee Dual Metering Switch", zigbee_dual_metering_switch)
+local zigbee_light_switch = ZigbeeDriver("zigbee_dual_metering_switch_child_device", zigbee_dual_metering_switch)
 zigbee_light_switch:run()
