@@ -1,7 +1,33 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local device_lib = require "st.device"
+
+local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
+	{mfr = "Aurora", model = "DoubleSocket50AU"}
+}
+
+local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
+	for _, fingerprint in ipairs(ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT) do
+		if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+			return true
+		end
+	end
+	return false
+end
 
 local function added(driver, device, event)
 	if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
@@ -31,16 +57,16 @@ local function init(driver, device, event)
 end
 
 local zigbee_dual_metering_switch = {
+	NAME = "zigbee dual metering switch",
 	supported_capabilities = {
 		capabilities.switch,
 		capabilities.powerMeter
 	},
 	lifecycle_handlers = {
 		added = added,
-		init =  init,
-	}
+		init =  init
+	},
+	can_handle = can_handle_zigbee_dual_metering_switch
 }
 
-defaults.register_for_default_handlers(zigbee_dual_metering_switch, zigbee_dual_metering_switch.supported_capabilities)
-local zigbee_light_switch = ZigbeeDriver("Zigbee Dual Metering Switch", zigbee_dual_metering_switch)
-zigbee_light_switch:run()
+return zigbee_dual_metering_switch
