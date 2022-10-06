@@ -22,6 +22,8 @@ local PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID = 0x0201
 local PREF_VALUE_MAX_POWER_DEFAULT = 23
 local PREF_VALUE_RESTORE_POWER_STATE_DEFAULT = false
 
+local LAST_REPORT_TIME = "LAST_REPORT_TIME"
+
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" }
 }
@@ -110,9 +112,30 @@ local function device_info_changed(driver, device, event, args)
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
+  -- energyMeter
   local raw_value = value.value
-  raw_value = raw_value / 10000
+  raw_value = raw_value / 1000
   device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "kWh" }))
+
+  -- powerConsumptionReport
+
+  -- check the minimum interval
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_REPORT_TIME) or 0
+  local next_time = last_time + 60 * 15 -- minimum interval of 15 mins
+  if current_time < next_time then
+    return
+  end
+  device:set_field(LAST_REPORT_TIME, current_time)
+
+  -- report
+  local delta_energy = 0.0
+  local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
+  if current_power_consumption ~= nil then
+    delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
+  end
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 end
 
 local function power_meter_handler(driver, device, value, zb_rx)

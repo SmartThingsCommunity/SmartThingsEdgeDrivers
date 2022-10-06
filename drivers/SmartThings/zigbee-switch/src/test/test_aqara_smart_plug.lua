@@ -204,7 +204,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.energyMeter.energy({ value = 0.0346, unit = "kWh" }))
+        capabilities.energyMeter.energy({ value = 0.346, unit = "kWh" }))
     }
   }
 )
