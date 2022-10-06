@@ -144,7 +144,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.thermostatFanMode.thermostatFanMode.on(
-          { data = {supportedThermostatFanModes = {"on", "auto"}} }
+          { data = {supportedThermostatFanModes = {"on", "auto"}, visibility = { displayed = false }}}
         )
       )
     )
@@ -271,7 +271,7 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
       })
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false } }))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false }}))
       )
       test.socket.zigbee:__queue_receive(
         {
@@ -309,7 +309,7 @@ test.register_coroutine_test(
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat", "cool" },{ visibility = { displayed = false } }))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat", "cool" },{ visibility = { displayed = false }}))
       )
       test.wait_for_events()
       test.socket.zigbee:__queue_receive(
@@ -319,7 +319,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false } }}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
       )
       test.wait_for_events()
       test.mock_time.advance_time(10)
@@ -402,7 +402,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false } }}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
       )
       test.wait_for_events()
       test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
