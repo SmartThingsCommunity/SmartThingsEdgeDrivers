@@ -139,7 +139,7 @@ local thermostat_fan_mode_handler = function(driver, device, attr_fan_mode)
   if (FAN_MODE_MAP[attr_fan_mode.value]) then
     local supported_fan_modes = device:get_latest_state("main", ThermostatFanMode.ID, ThermostatFanMode.supportedThermostatFanModes.NAME)
     if supported_fan_modes then
-      device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]({data = {supportedThermostatFanModes = supported_fan_modes, visibility = { displayed = false }} }))
+      device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]({data = {supportedThermostatFanModes = supported_fan_modes}}))
     else
       device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]())
     end
