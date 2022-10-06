@@ -20,15 +20,15 @@ local devices = {
             product_ids = {0x1002, 0x1003, 0x3002, 0x4002}
         },
         PARAMETERS = {
-            smokeSensorSensitivity = {parameter_number = 1, size = 1},
-            zwaveNotificationStatus = {parameter_number = 2, size = 1},
-            indicatorNotification = {parameter_number = 3},
-            soundNotificationStatus = {parameter_number = 4, size = 1},
-            tempReportInterval = {parameter_number = 20, size = 2},
-            tempReportHysteresis = {parameter_number = 21, size = 2},
-            temperatureThreshold = {parameter_number = 30, size = 2},
-            overheatInterval = {parameter_number = 31, size = 2},
-            outOfRange = {parameter_number = 32, size = 2}
+            ["certifiedpreferences.smokeSensorSensitivity"] = {parameter_number = 1, size = 1},
+            ["certifiedpreferences.zwaveNotificationStatus"] = {parameter_number = 2, size = 1},
+            ["certifiedpreferences.indicatorNotification"] = {parameter_number = 3},
+            ["certifiedpreferences.soundNotificationStatus"] = {parameter_number = 4, size = 1},
+            ["certifiedpreferences.tempReportInterval"] = {parameter_number = 20, size = 2},
+            ["certifiedpreferences.tempReportHysteresis"] = {parameter_number = 21, size = 2},
+            ["certifiedpreferences.temperatureThreshold"] = {parameter_number = 30, size = 2},
+            ["certifiedpreferences.overheatInterval"] = {parameter_number = 31, size = 2},
+            ["certifiedpreferences.outOfRange"] = {parameter_number = 32, size = 2}
         }
     },
     FIBARO_CO_SENSOR_ZW5= {

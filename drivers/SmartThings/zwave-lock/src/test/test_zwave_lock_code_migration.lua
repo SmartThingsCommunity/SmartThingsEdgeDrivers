@@ -54,7 +54,7 @@ local mock_device = test.mock_device.build_test_zwave_device(
       profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
       zwave_endpoints = zwave_lock_endpoints,
       data = {
-        lockCodes = utils.deep_copy(lockCodes)
+        lockCodes = json.encode(utils.deep_copy(lockCodes))
       }
     }
 )
@@ -80,7 +80,6 @@ test.register_coroutine_test(
     function()
       test.mock_device.add_test_device(mock_device)
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      expect_reload_all_codes_messages(mock_device, lockCodes)
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_device,
@@ -138,7 +137,6 @@ test.register_coroutine_test(
     function()
       test.mock_device.add_test_device(mock_device)
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      expect_reload_all_codes_messages(mock_device, lockCodes)
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_device,
@@ -171,10 +169,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Device init after added shouldn't change the datastores",
+    "Device init after added with no data should update the datastores",
     function()
       test.mock_device.add_test_device(mock_device_no_data)
       test.socket.device_lifecycle:__queue_receive({ mock_device_no_data.id, "added" })
+      -- This should happen as the data is empty at this point
       expect_reload_all_codes_messages(mock_device_no_data, {})
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -199,7 +198,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_device_no_data:generate_info_changed(
           {
             data = {
-              lockCodes = utils.deep_copy(lockCodes)
+              lockCodes = json.encode(utils.deep_copy(lockCodes))
             }
           }
       ))
@@ -211,6 +210,39 @@ test.register_coroutine_test(
       assert(mock_device_no_data.state_cache.main.lockCodes.lockCodes.value == json.encode(utils.deep_copy(lockCodes)))
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", true)
+    end
+)
+
+
+test.register_coroutine_test(
+    "Device added data lock codes population, should not reload all codes",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(31, "oneshot")
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              DoorLock:OperationGet({})
+          )
+      )
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_device,
+              Battery:Get({})
+          )
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      test.wait_for_events()
+      -- Validate lockCodes field
+      mock_datastore.__assert_device_store_contains(mock_device.id, "_lock_codes", { ["1"] = "Zach", ["2"] = "Steven" })
+      -- Validate state cache
+      assert(mock_device.state_cache.main.lockCodes.lockCodes.value == json.encode(utils.deep_copy(lockCodes)))
+      -- Validate migration complete flag
+      mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
+      test.wait_for_events()
+      test.mock_time.advance_time(35)
+      -- Nothing should happen
     end
 )
 

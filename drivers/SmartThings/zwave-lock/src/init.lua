@@ -29,6 +29,7 @@ local json = require "st.json"
 
 local SCAN_CODES_CHECK_INTERVAL = 30
 local MIGRATION_COMPLETE = "migrationComplete"
+local MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped"
 
 local function periodic_codes_state_verification(driver, device)
   local scan_codes_state = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME)
@@ -52,7 +53,8 @@ local function populate_state_from_data(device)
   if device.data.lockCodes ~= nil and device:get_field(MIGRATION_COMPLETE) ~= true then
     -- build the lockCodes table
     local lockCodes = {}
-    for k, v in pairs(device.data.lockCodes) do
+    local lc_data = json.decode(device.data.lockCodes)
+    for k, v in pairs(lc_data) do
       lockCodes[k] = v
     end
     -- Populate the devices `lockCodes` field
@@ -72,17 +74,21 @@ end
 --- @param device st.zwave.Device
 local function added_handler(self, device)
   populate_state_from_data(device)
-  if (device:supports_capability(capabilities.lockCodes)) then
-    self:inject_capability_command(device,
-            { capability = capabilities.lockCodes.ID,
-              command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-              args = {} })
-    device.thread:call_with_delay(
-      SCAN_CODES_CHECK_INTERVAL,
-      function(d)
-        periodic_codes_state_verification(self, device)
-      end
-    )
+  if device.data.lockCodes == nil or device:get_field(MIGRATION_RELOAD_SKIPPED) == true then
+    if (device:supports_capability(capabilities.lockCodes)) then
+      self:inject_capability_command(device,
+          { capability = capabilities.lockCodes.ID,
+            command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+            args = {} })
+      device.thread:call_with_delay(
+          SCAN_CODES_CHECK_INTERVAL,
+          function(d)
+            periodic_codes_state_verification(self, device)
+          end
+      )
+    end
+  else
+    device:set_field(MIGRATION_RELOAD_SKIPPED, true, { persist = true })
   end
   device:send(DoorLock:OperationGet({}))
   device:send(Battery:Get({}))
