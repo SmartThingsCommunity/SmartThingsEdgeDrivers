@@ -103,14 +103,14 @@ local function alarm_report_handler(driver, device, cmd)
     for code_id, _ in pairs(lock_codes) do
       lock_code_defaults.code_deleted(device, code_id)
     end
-    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device))))
+    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
   elseif (alarm_type == 33) then
     -- user code deleted
     if (code_id ~= nil) then
       lock_code_defaults.clear_code_state(device, code_id)
       if (lock_codes[code_id] ~= nil) then
         lock_code_defaults.code_deleted(device, code_id)
-        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device))))
+        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
       end
     end
   elseif (alarm_type == 13 or alarm_type == 112) then
