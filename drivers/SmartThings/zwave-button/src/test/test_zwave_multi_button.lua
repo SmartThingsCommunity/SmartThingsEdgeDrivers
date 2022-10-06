@@ -84,11 +84,11 @@ local function added_events(device, numberOfButtons, supportedButtonValues)
   end
   for _, component in pairs(components) do
     if (component == "main") then
-      test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.numberOfButtons({value = numberOfButtons})))
+      test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.numberOfButtons({value = numberOfButtons}, {visibility = { displayed = false }})))
     else
-      test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.numberOfButtons({value = 1})))
+      test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }})))
     end
-    test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.supportedButtonValues(supportedButtonValues)))
+    test.socket.capability:__expect_send(device:generate_test_message(component, capabilities.button.supportedButtonValues(supportedButtonValues, {visibility = { displayed = false }})))
   end
 end
 
@@ -487,7 +487,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "V2 - Device added event should make proper event for aeotec keyfob",
+  "Device added event should make proper event for aeotec keyfob",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_aeotec_keyfob_button.id, "added" })
@@ -610,7 +610,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "V2 - Device added event should make proper event for fibaro keyfob",
+  "Device added event should make proper event for fibaro keyfob",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_fibaro_keyfob_button.id, "added" })
@@ -723,7 +723,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "V2 - Device added event should make proper event for aeotec wallmote quad",
+  "Device added event should make proper event for aeotec wallmote quad",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_aeotec_wallmote_quad.id, "added" })
