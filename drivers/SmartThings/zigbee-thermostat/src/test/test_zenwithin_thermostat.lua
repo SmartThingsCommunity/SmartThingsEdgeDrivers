@@ -144,7 +144,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.thermostatFanMode.thermostatFanMode.on(
-          { data = {supportedThermostatFanModes = {"on", "auto"}, visibility = { displayed = false }}}
+          { data = {supportedThermostatFanModes = {"on", "auto"}}}
         )
       )
     )
