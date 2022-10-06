@@ -17,7 +17,6 @@ local ZigbeeDriver      = require "st.zigbee"
 local device_management = require "st.zigbee.device_management"
 local defaults          = require "st.zigbee.defaults"
 local utils             = require "st.utils"
-local log               = require "log"
 
 -- Zigbee Spec Utils
 local clusters                      = require "st.zigbee.zcl.clusters"
@@ -133,14 +132,14 @@ local thermostat_operating_state_handler = function(driver, device, operating_st
 end
 
 local supported_fan_modes_handler = function(driver, device, fan_mode)
-  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value], { visibility = { displayed = false } }))
+  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value], { visibility = { displayed = false }}))
 end
 
 local thermostat_fan_mode_handler = function(driver, device, attr_fan_mode)
   if (FAN_MODE_MAP[attr_fan_mode.value]) then
     local supported_fan_modes = device:get_latest_state("main", ThermostatFanMode.ID, ThermostatFanMode.supportedThermostatFanModes.NAME)
     if supported_fan_modes then
-      device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]({data = {supportedThermostatFanModes = supported_fan_modes}}))
+      device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]({data = {supportedThermostatFanModes = supported_fan_modes}, visibility = { displayed = false }}))
     else
       device:emit_event(FAN_MODE_MAP[attr_fan_mode.value]())
     end
