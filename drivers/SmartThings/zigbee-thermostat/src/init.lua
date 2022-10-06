@@ -111,8 +111,7 @@ local power_source_handler = function(driver, device, battery_alarm_mask)
 end
 
 local supported_thermostat_modes_handler = function(driver, device, supported_modes)
-  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[supported_modes.value]))
-  --device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[supported_modes.value], { visibility = { displayed = false } }))
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[supported_modes.value], { visibility = { displayed = false } }))
 end
 
 local thermostat_mode_handler = function(driver, device, thermostat_mode)
@@ -134,8 +133,7 @@ local thermostat_operating_state_handler = function(driver, device, operating_st
 end
 
 local supported_fan_modes_handler = function(driver, device, fan_mode)
-  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value]))
-  --device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value], { visibility = { displayed = false } }))
+  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value], { visibility = { displayed = false } }))
 end
 
 local thermostat_fan_mode_handler = function(driver, device, attr_fan_mode)
