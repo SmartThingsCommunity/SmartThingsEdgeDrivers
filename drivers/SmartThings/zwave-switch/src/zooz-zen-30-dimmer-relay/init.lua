@@ -103,7 +103,7 @@ local function central_scene_notification_handler(driver, device, cmd)
 end
 
 local function added_handler(driver, device)
-  device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES))
   device:emit_event(capabilities.button.numberOfButtons({ value = 3 }))
 end
 
