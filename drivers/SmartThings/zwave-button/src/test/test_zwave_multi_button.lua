@@ -808,7 +808,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "V2 - Device added event should make proper event for everspring wall switch",
+  "Device added event should make proper event for everspring wall switch",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_everspring.id, "added" })
