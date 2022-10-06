@@ -204,34 +204,43 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
-    "Fan operating state reports are handled",
-    {
+test.register_coroutine_test(
+  "Fan operating state reports are handled",
+  function()
+    test.socket.zigbee:__queue_receive(
       {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, FanControl.attributes.FanModeSequence:build_test_attr_report(mock_device,
-                                                                                                 04) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }, { visibility = { displayed = false } }))
-      },
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, FanControl.attributes.FanMode:build_test_attr_report(mock_device,
-                                                                                         4), }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on({
-          data = {supportedThermostatFanModes = {"on", "auto"}}
-        }))
+        mock_device.id,
+        FanControl.attributes.FanModeSequence:build_test_attr_report(mock_device, 04)
       }
-    }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.thermostatFanMode.supportedThermostatFanModes(
+          { "on", "auto" },
+          { visibility = { displayed = false }}
+        )
+      )
+    )
+
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        FanControl.attributes.FanMode:build_test_attr_report(mock_device, 04)
+      }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+          capabilities.thermostatFanMode.thermostatFanMode.on(
+          { data = {supportedThermostatFanModes = {"on", "auto"}} }
+        )
+      )
+    )
+
+  end
 )
 
 test.register_message_test(
