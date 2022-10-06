@@ -7,9 +7,9 @@ components:
   - id: thermostatHeatingSetpoint
     version: 1
     configuration:
-      - values:
-        key: "heatingSetpoint.value"
-        range: [ 5, 30 ]
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 30 ]
   - id: thermostatOperatingState
     version: 1
   - id: temperatureAlarm
