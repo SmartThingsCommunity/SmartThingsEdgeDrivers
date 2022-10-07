@@ -11,8 +11,8 @@ components:
   - id: temperatureMeasurement
     version: 1
     configuration:
-      - values:
-          key: "temperature.value"
+      values:
+        - key: "temperature.value"
           range: [-20, 100]
   - id: tamperAlert
     version: 1
