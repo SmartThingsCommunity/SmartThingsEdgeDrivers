@@ -9,9 +9,9 @@ components:
   - id: illuminanceMeasurement
     version: 1
     configuration:
-      - values:
-        key: "illuminance.value"
-        range: [0, 32000]
+      values:
+        - key: "illuminance.value"
+          range: [0, 32000]
   - id: refresh
     version: 1
   categories:
