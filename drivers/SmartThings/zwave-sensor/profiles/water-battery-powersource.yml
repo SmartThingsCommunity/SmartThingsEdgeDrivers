@@ -9,11 +9,11 @@ components:
   - id: powerSource
     version: 1
     configuration:
-      - values:
+      values:
         key: "powerSource.value"
-        enabledValues:
-          - battery
-          - mains
+          enabledValues:
+            - battery
+            - mains
   - id: refresh
     version: 1
   categories:

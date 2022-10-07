@@ -21,11 +21,11 @@ components:
   - id: powerSource
     version: 1
     configuration:
-      - values:
+      values:
         key: "powerSource.value"
-        enabledValues:
-          - battery
-          - mains
+          enabledValues:
+            - battery
+            - mains
   categories:
   - name: MultiFunctionalSensor
 preferences:
@@ -33,7 +33,7 @@ preferences:
     title: "Motion Sensor Delay Time"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         20: "20 seconds"
         30: "30 seconds"
@@ -47,7 +47,7 @@ preferences:
     title: "Motion Sensor Sensitivity"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         5: "maximum"
         3: "normal"
@@ -59,7 +59,7 @@ preferences:
     description: "How often the device should report"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         60: "1 minute"
         120: "2 minutes"
