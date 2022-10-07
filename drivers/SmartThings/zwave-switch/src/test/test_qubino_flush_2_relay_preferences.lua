@@ -31,7 +31,7 @@ local qubino_flush_2_relay_endpoints = {
 }
 
 local mock_qubino_flush_2_relay = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("qubino-flush2-relay-temperature.yml"),
+  profile = t_utils.get_profile_definition("qubino-flush2-relay.yml"),
   zwave_endpoints = qubino_flush_2_relay_endpoints,
   zwave_manufacturer_id = 0x0159,
   zwave_product_type = 0x0002,

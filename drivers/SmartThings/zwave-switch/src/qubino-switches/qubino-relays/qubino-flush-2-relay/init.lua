@@ -13,28 +13,36 @@
 -- limitations under the License.
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
-local cc  = require "st.zwave.CommandClass"
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
-local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
-local SensorMultilevel = require "st.zwave.CommandClass.SensorMultilevel"
+local capabilities_defaults = require "st.capabilities.defaults"
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
+--- @type st.zwave.CommandClass.Basic
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
+--- @type st.zwave.CommandClass.SwitchBinary
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 1 })
+--- @type st.zwave.CommandClass.Meter
+local Meter = (require "st.zwave.CommandClass.Meter")({ version = 4 })
+--- @type st.zwave.CommandClass.SensorMultilevel
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
+--- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 
-local QUBINO_FLUSH_2_RELAY_FINGERPRINT = {mfr = 0x0159, prod = 0x0002, model = 0x0051}
+local QUBINO_FLUSH_2_RELAY_FINGERPRINT = { mfr = 0x0159, prod = 0x0002, model = 0x0051 }
 
 local function can_handle_qubino_flush_2_relay(opts, driver, device, ...)
   return device:id_match(QUBINO_FLUSH_2_RELAY_FINGERPRINT.mfr, QUBINO_FLUSH_2_RELAY_FINGERPRINT.prod, QUBINO_FLUSH_2_RELAY_FINGERPRINT.model)
 end
 
 local function component_to_endpoint(device, component_id)
-    if component_id == "main" then
-      return { 0, 1, 2 }
-    else
-      return {}
-    end
+  if component_id == "main" then
+    return { 0, 1, 2 }
+  else
+    return {}
+  end
 end
 
 local function endpoint_to_component(device, ep)
-    return "main"
+  return "main"
 end
 
 local function find_child(parent, src_channel)
@@ -46,11 +54,9 @@ local function find_child(parent, src_channel)
 end
 
 local function device_init(driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_find_child(find_child)
-  else
     device:set_component_to_endpoint_fn(component_to_endpoint)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
   end
 end
 
@@ -61,9 +67,10 @@ local function get_child_metadata(device, endpoint)
     name = string.format("%s relay %d", device.label, endpoint)
     profile_name = "metering-switch"
   else
-    name = string.format("%s extra temperature sensor")
+    name = string.format("%s extra temperature sensor", device.label)
     profile_name = "child-temperature"
   end
+
   return {
     type = "EDGE_CHILD",
     label = name,
@@ -76,71 +83,82 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    for i = 1, 3, 1 do
+    for i = 1, 2, 1 do
       driver:try_create_device(get_child_metadata(device, i))
     end
+    if device:is_cc_supported(cc.SENSOR_MULTILEVEL) then
+      driver:try_create_device(get_child_metadata(device, 3))
+    end
+  end
+
+  for _, comp in pairs(device.st_store.profile.components) do
+    capabilities_defaults.emit_default_events(device, comp.capabilities)
   end
 end
 
 local function send_refresh_to_endpoint(ep, driver, device)
-  if device:supports_capability_by_id(capabilities.switch.ID) then
-    device:send(SwitchBinary:Get({}, {dst_channels = {ep}}))
-  end
-  if device:supports_capability_by_id(capabilities.powerMeter.ID) then
-    device:send(Meter:Get({scale = Meter.scale.electric_meter.WATTS}, {dst_channels = {ep}}))
-  end
-  if device:supports_capability_by_id(capabilities.energyMeter.ID) then
-    device:send(Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}, {dst_channels = {ep}}))
-  end
-  if device:supports_capability_by_id(capabilities.temperatureMeasurement.ID) then
-    device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels = {ep}}))
+  if ep ~= 3 then
+    device:send(SwitchBinary:Get({}, { dst_channels = { ep } }))
+    device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }, { dst_channels = { ep } }))
+    device:send(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }, { dst_channels = { ep } }))
+  else
+    device:send(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }, { dst_channels = { ep } }))
   end
 end
 
 local function do_refresh(driver, device)
-  for i= 0,3,1 do
+  for i = 0, 2, 1 do
     send_refresh_to_endpoint(i, driver, device)
+  end
+  if device:is_cc_supported(cc.SENSOR_MULTILEVEL, 3) then
+    send_refresh_to_endpoint(3, driver, device)
   end
 end
 
 local function switch_report_handler(driver, device, cmd)
   local event
-  if cmd.args.value ~= nil then
-    if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
-      event = capabilities.switch.switch.off()
-    else
-      event = capabilities.switch.switch.on()
-    end
-  else
-    if cmd.args.target_value == SwitchBinary.value.OFF_DISABLE then
+  local value = cmd.args.target_value or cmd.args.value
+
+  if value ~= nil then
+    if value == SwitchBinary.value.OFF_DISABLE then
       event = capabilities.switch.switch.off()
     else
       event = capabilities.switch.switch.on()
     end
   end
+
   if cmd.src_channel ~= 0 then
     send_refresh_to_endpoint(0, driver, device)
   end
+
   device:emit_event_for_endpoint(cmd.src_channel, event)
 end
 
 local function set_switch(value)
   return function(driver, device, cmd)
-    local delay = constants.DEFAULT_GET_STATUS_DELAY
-    local set = SwitchBinary:Set({
-      target_value = value,
-      duration = 0
-    },{
-      dst_channels = device:component_to_endpoint(cmd.component)
-    })
     local query_device = function()
       do_refresh(driver, device)
     end
-    device:send(set)
+    local delay = constants.DEFAULT_GET_STATUS_DELAY
+    for _, ep in ipairs(device:component_to_endpoint(cmd.component)) do
+      device:send(SwitchBinary:Set({ switch_value = value }, { dst_channels = { ep } }))
+    end
     device.thread:call_with_delay(delay, query_device)
   end
 end
 
+local function sensor_multilevel_report(driver, device, cmd)
+  if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
+    local scale = 'C'
+    if (cmd.args.scale == SensorMultilevel.scale.temperature.FARENHEIT) then
+      scale = 'F'
+    end
+    device:emit_event_for_endpoint(
+        cmd.src_channel,
+        capabilities.temperatureMeasurement.temperature({ value = cmd.args.sensor_value, unit = scale })
+    )
+  end
+end
 
 local qubino_flush_2_relay = {
   NAME = "qubino flush 2 relay",
@@ -149,8 +167,14 @@ local qubino_flush_2_relay = {
     added = device_added
   },
   zwave_handlers = {
+    [cc.BASIC] = {
+      [Basic.REPORT] = switch_report_handler
+    },
     [cc.SWITCH_BINARY] = {
       [SwitchBinary.REPORT] = switch_report_handler
+    },
+    [cc.SENSOR_MULTILEVEL] = {
+      [SensorMultilevel.REPORT] = sensor_multilevel_report
     }
   },
   capability_handlers = {
