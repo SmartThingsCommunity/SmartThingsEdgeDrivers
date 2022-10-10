@@ -609,4 +609,166 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+    "Switch capability on command should evoke the correct Z-Wave SETs and GETs with dest_channel 1",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_child_1_device.id,
+        { capability = "switch", component = "main", command = "on", args = {} }
+      })
+
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_parent_device,
+              SwitchBinary:Set(
+                  { switch_value = SwitchBinary.value.ON_ENABLE },
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 1 } }
+              )
+          )
+      )
+
+      test.wait_for_events()
+      test.mock_time.advance_time(1)
+
+      for i = 0, 2, 1 do
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            SwitchBinary:Get({}, { dst_channels = { i } })
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.WATTS },
+                { dst_channels = { i } }
+            )
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+                { dst_channels = { i } }
+            )
+        ))
+      end
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SensorMultilevel:Get(
+              { sensor_type = SensorMultilevel.sensor_type.TEMPERATURE },
+              { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
+          )
+      ))
+    end
+)
+
+test.register_coroutine_test(
+    "Switch capability off command should evoke the correct Z-Wave SETs and GETs with dest_channel 2",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_child_1_device.id,
+        { capability = "switch", component = "main", command = "off", args = {} }
+      })
+
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_parent_device,
+              SwitchBinary:Set(
+                  { switch_value = SwitchBinary.value.OFF_DISABLE },
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
+              )
+          )
+      )
+
+      test.wait_for_events()
+      test.mock_time.advance_time(1)
+
+      for i = 0, 2, 1 do
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            SwitchBinary:Get({}, { dst_channels = { i } })
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.WATTS },
+                { dst_channels = { i } }
+            )
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+                { dst_channels = { i } }
+            )
+        ))
+      end
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SensorMultilevel:Get(
+              { sensor_type = SensorMultilevel.sensor_type.TEMPERATURE },
+              { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
+          )
+      ))
+    end
+)
+
+test.register_coroutine_test(
+    "Switch capability on command should evoke the correct Z-Wave SETs and GETs with dest_channel 2",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_child_1_device.id,
+        { capability = "switch", component = "main", command = "on", args = {} }
+      })
+
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_parent_device,
+              SwitchBinary:Set(
+                  { switch_value = SwitchBinary.value.ON_ENABLE },
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
+              )
+          )
+      )
+
+      test.wait_for_events()
+      test.mock_time.advance_time(1)
+
+      for i = 0, 2, 1 do
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            SwitchBinary:Get({}, { dst_channels = { i } })
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.WATTS },
+                { dst_channels = { i } }
+            )
+        ))
+        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+            mock_parent_device,
+            Meter:Get(
+                { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+                { dst_channels = { i } }
+            )
+        ))
+      end
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SensorMultilevel:Get(
+              { sensor_type = SensorMultilevel.sensor_type.TEMPERATURE },
+              { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
+          )
+      ))
+    end
+)
+
 test.run_registered_tests()
