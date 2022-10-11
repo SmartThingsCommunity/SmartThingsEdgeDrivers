@@ -35,6 +35,7 @@ components:
       version: 1
   categories:
     - name: RemoteController
+
 preferences:
   - name: "dimmingSpeed"
     title: "Dimming Speed"
