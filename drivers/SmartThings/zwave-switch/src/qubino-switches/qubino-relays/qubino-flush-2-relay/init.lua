@@ -13,7 +13,6 @@
 -- limitations under the License.
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
-local capabilities_defaults = require "st.capabilities.defaults"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Basic
@@ -21,7 +20,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 1 })
 --- @type st.zwave.CommandClass.Meter
-local Meter = (require "st.zwave.CommandClass.Meter")({ version = 4 })
+local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
 --- @type st.zwave.constants
@@ -34,19 +33,11 @@ local function can_handle_qubino_flush_2_relay(opts, driver, device, ...)
 end
 
 local function component_to_endpoint(device, component_id)
-  if component_id == "main" then
-    return { 0, 1, 2 }
-  else
-    return {}
-  end
-end
-
-local function endpoint_to_component(device, ep)
-  return "main"
+  return { 1 }
 end
 
 local function find_child(parent, src_channel)
-  if src_channel == 0 then
+  if src_channel == 1 then
     return parent
   else
     return parent:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
@@ -64,10 +55,10 @@ local function get_child_metadata(device, endpoint)
   local name
   local profile_name
   if endpoint ~= 3 then
-    name = string.format("%s relay %d", device.label, endpoint)
+    name = string.format("Qubino Switch %d", endpoint)
     profile_name = "metering-switch"
   else
-    name = string.format("%s extra temperature sensor", device.label)
+    name = "Qubino Temperature Sensor"
     profile_name = "child-temperature"
   end
 
@@ -83,16 +74,10 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    for i = 1, 2, 1 do
-      driver:try_create_device(get_child_metadata(device, i))
-    end
+    driver:try_create_device(get_child_metadata(device, 2))
     if device:is_cc_supported(cc.SENSOR_MULTILEVEL) then
       driver:try_create_device(get_child_metadata(device, 3))
     end
-  end
-
-  for _, comp in pairs(device.st_store.profile.components) do
-    capabilities_defaults.emit_default_events(device, comp.capabilities)
   end
 end
 
@@ -107,11 +92,11 @@ local function send_refresh_to_endpoint(ep, driver, device)
 end
 
 local function do_refresh(driver, device)
-  for i = 0, 2, 1 do
-    send_refresh_to_endpoint(i, driver, device)
+  for i = 1, 2, 1 do
+    send_refresh_to_endpoint(i , driver, device)
   end
   if device:is_cc_supported(cc.SENSOR_MULTILEVEL, 3) then
-    send_refresh_to_endpoint(3, driver, device)
+    send_refresh_to_endpoint(3 , driver, device)
   end
 end
 
@@ -127,22 +112,20 @@ local function switch_report_handler(driver, device, cmd)
     end
   end
 
-  if cmd.src_channel ~= 0 then
-    send_refresh_to_endpoint(0, driver, device)
-  end
-
   device:emit_event_for_endpoint(cmd.src_channel, event)
 end
 
 local function set_switch(value)
   return function(driver, device, cmd)
-    local query_device = function()
-      do_refresh(driver, device)
-    end
+    local endpoint = device:component_to_endpoint(cmd.component)
     local delay = constants.DEFAULT_GET_STATUS_DELAY
-    for _, ep in ipairs(device:component_to_endpoint(cmd.component)) do
-      device:send(SwitchBinary:Set({ switch_value = value }, { dst_channels = { ep } }))
+    local query_device = function()
+      for _, ep in pairs(endpoint) do
+        send_refresh_to_endpoint(ep, driver, device)
+      end
     end
+
+    device:send(SwitchBinary:Set({ switch_value = value }, { dst_channels = endpoint }))
     device.thread:call_with_delay(delay, query_device)
   end
 end
