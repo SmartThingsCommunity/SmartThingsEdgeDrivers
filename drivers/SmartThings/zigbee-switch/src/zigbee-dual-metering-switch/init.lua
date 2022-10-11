@@ -11,6 +11,13 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+local capabilities = require "st.capabilities"
+local st_device = require "st.device"
+local clusters = require "st.zigbee.zcl.clusters"
+local OnOff = clusters.OnOff
+local SimpleMetering = clusters.SimpleMetering
+
+local CURRENT_STATUS = "current_status"
 
 local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
   {mfr = "Aurora", model = "DoubleSocket50AU"}
@@ -25,31 +32,91 @@ local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
   return false
 end
 
-local function endpoint_to_component(device, endpoint)
-  if endpoint == 2 then
-    return "switch1"
-  else
-    return "main"
+local function device_added(driver, device, event)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+    for i = 1,1 do
+      local name = "AURORA Outlet 2"
+      local metadata = {
+        type = "EDGE_CHILD",
+        label = name,
+        profile = "switch-power-2",
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%02X", i),
+        vendor_provided_label = name,
+      }
+      driver:try_create_device(metadata)
+    end
   end
 end
 
-local function component_to_endpoint(device, component)
-  if component == "switch1" then
-    return 2
-  else
-    return 1
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+end
+
+local function device_init(driver, device)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+    device:set_find_child(find_child)
   end
 end
 
-local function map_components(self, device)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
+local function switch_on_command_handler(driver, device, command)
+  device:send(OnOff.server.commands.On(device))
+  
+end
+
+local switch_off_command_handler = function(driver, device, command)
+  device:send(OnOff.server.commands.Off(device))
+end
+
+local function on_off_command_handler(driver, device, value, zb_rx)
+  local event
+  
+  if value == OnOff.server.commands.On.ID then
+    event = capabilities.switch.switch.on()
+    device:set_field(CURRENT_STATUS, "on")
+  elseif value == OnOff.server.commands.Off.ID then
+    event = capabilities.switch.switch.off()
+    device:set_field(CURRENT_STATUS, "off")
+  end
+  
+  if event ~= nil then
+    device:emit_event(event)
+  end
+end
+
+local function do_refresh(self, device)
+  device:send(OnOff.attributes.OnOff:read(device))
+  device:send(SimpleMetering.attributes.Divisor:read(device))
+  device:send(SimpleMetering.attributes.Multiplier:read(device))
 end
 
 local zigbee_dual_metering_switch = {
   NAME = "zigbee dual metering switch",
+  supported_capabilities = {
+    capabilities.switch,
+    capabilities.refresh,
+    capabilities.powerMeter
+  },
+  zigbee_handlers = {
+    cluster = {
+      [OnOff.ID] = {
+        [OnOff.server.commands.On.ID] = on_off_command_handler,
+        [OnOff.server.commands.Off.ID] = on_off_command_handler
+      }
+    }
+  },
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = switch_on_command_handler,
+      [capabilities.switch.commands.off.NAME] = switch_off_command_handler
+    }
+  },
   lifecycle_handlers = {
-    init = map_components
+    init = device_init,
+    added = device_added
   },
   can_handle = can_handle_zigbee_dual_metering_switch
 }
