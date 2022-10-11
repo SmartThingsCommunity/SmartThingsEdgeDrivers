@@ -70,10 +70,10 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
     if binding_table.dest_addr_mode.value == binding_table.DEST_ADDR_MODE_SHORT then
       -- send add hub to zigbee group command
       driver:add_hub_to_zigbee_group(binding_table.dest_addr.value)
-    else
-      driver:add_hub_to_zigbee_group(0x0000)
+      return
     end
   end
+  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)
