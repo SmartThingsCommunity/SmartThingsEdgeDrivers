@@ -154,12 +154,12 @@ zwaveManufacturer:
 #     productType: 0xC000
 #     productId: 0xC007
 #     deviceProfileName: dual-switch
-#   - id: 001A/4243/0000
-#     deviceLabel: Eaton Anyplace Switch
-#     manufacturerId: 0x001A
-#     productType: 0x4243
-#     productId: 0x0000
-#     deviceProfileName: switch-binary
+  - id: 001A/4243/0000
+    deviceLabel: Eaton Anyplace Switch
+    manufacturerId: 0x001A
+    productType: 0x4243
+    productId: 0x0000
+    deviceProfileName: switch-binary
 #   - id: 010F/1401
 #     deviceLabel: Fibaro Outlet
 #     manufacturerId: 0x010F
@@ -842,24 +842,24 @@ zwaveManufacturer:
     productType: 0xFF00
     productId: 0xFF0E
     deviceProfileName: metering-switch
-#   - id: Evolve/RelaySwitch
-#     deviceLabel: Evolve Switch
-#     manufacturerId: 0x0113
-#     productType: 0x5246
-#     productId: 0x3133
-#     deviceProfileName: switch-binary
-#   - id: Linear/RelaySwitch
-#     deviceLabel: Linear Switch
-#     manufacturerId: 0x0014
-#     productType: 0x5246
-#     productId: 0x3133
-#     deviceProfileName: switch-binary
-#   - id: Remotec/RelaySwitch
-#     deviceLabel: Remotec Switch
-#     manufacturerId: 0x5254
-#     productType: 0x8000
-#     productId: 0x0002
-#     deviceProfileName: switch-binary
+  - id: Evolve/RelaySwitch
+    deviceLabel: Evolve Switch
+    manufacturerId: 0x0113
+    productType: 0x5246
+    productId: 0x3133
+    deviceProfileName: switch-binary
+  - id: Linear/RelaySwitch
+    deviceLabel: Linear Switch
+    manufacturerId: 0x0014
+    productType: 0x5246
+    productId: 0x3133
+    deviceProfileName: switch-binary
+  - id: Remotec/RelaySwitch
+    deviceLabel: Remotec Switch
+    manufacturerId: 0x5254
+    productType: 0x8000
+    productId: 0x0002
+    deviceProfileName: switch-binary
 #   - id: 0086/004B # Aeotec/Aeon Smart Switch Gen5
 #     deviceLabel: Aeotec Outlet
 #     manufacturerId: 0x0086
