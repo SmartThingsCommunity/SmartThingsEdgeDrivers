@@ -423,4 +423,36 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "Setting a setpoint in Fahrenheit should be handled",
+  function()
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- SystemMode.HEAT = 0x04
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+    )
+    test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 74 } }
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2333)
+      }
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
