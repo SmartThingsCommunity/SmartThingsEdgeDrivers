@@ -34,7 +34,7 @@ end
 
 -- LUX KONOz reports extra ["auto", "emergency heat"] which, actually, aren't supported
 local supported_thermostat_modes_handler = function(driver, device, supported_modes)
-  device:emit_event(ThermostatMode.supportedThermostatModes({"off", "heat", "cool"}))
+  device:emit_event(ThermostatMode.supportedThermostatModes({"off", "heat", "cool"}, { visibility = { displayed = false } }))
 end
 
 local lux_konoz = {
