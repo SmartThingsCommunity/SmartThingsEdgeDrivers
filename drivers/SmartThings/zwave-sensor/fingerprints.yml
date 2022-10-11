@@ -44,12 +44,12 @@ zwaveManufacturer:
     productType: 0x0101
     productId: 0x0001
     deviceProfileName: motion-battery-illuminance
-#   - id: "Ecolink/0x0010"
-#     deviceLabel: Ecolink Water Leak Sensor
-#     manufacturerId: 0x014A
-#     productType: 0x0005
-#     productId: 0x0010
-#     deviceProfileName: water-battery-tempalarm
+  - id: "Ecolink/0x0010"
+    deviceLabel: Ecolink Water Leak Sensor
+    manufacturerId: 0x014A
+    productType: 0x0005
+    productId: 0x0010
+    deviceProfileName: water-battery-tempalarm
   - id: "zooz/4in1"
     deviceLabel: Zooz 4-in-1 sensor
     manufacturerId: 0x027A

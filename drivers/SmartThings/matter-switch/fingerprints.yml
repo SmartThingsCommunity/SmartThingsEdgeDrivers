@@ -1,0 +1,75 @@
+matterManufacturer:
+  - id: "Samsung/OnOff/Android"
+    deviceLabel: Samsung OnOff Switch Android
+    vendorId: 0x10E1
+    productId: 0x1001
+    deviceProfileName: switch-binary
+  - id: "Samsung/OnOff/Thread"
+    deviceLabel: Samsung OnOff Switch Thread
+    vendorId: 0x10E1
+    productId: 0x2001
+    deviceProfileName: switch-binary
+  - id: "Samsung/OnOff/Wifi"
+    deviceLabel: Samsung OnOff Switch WiFi
+    vendorId: 0x10E1
+    productId: 0x3001
+    deviceProfileName: switch-binary
+
+matterGeneric:
+  - id: "matter/on-off/light"
+    deviceLabel: Matter OnOff Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+    deviceProfileName: light-binary
+  - id: "matter/dimmable/light"
+    deviceLabel: Matter Dimmable Light
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: light-level
+  - id: "matter/colorTemperature/light"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
+  - id: "matter/color/light"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: light-color-level
+  - id: "matter/color/temp/light"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-color-level
+  - id: "matter/on-off/plug"
+    deviceLabel: Matter OnOff Plug
+    deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
+    deviceProfileName: plug-binary
+  - id: "matter/dimmable/plug"
+    deviceLabel: Matter Dimmable Plug
+    deviceTypes:
+      - id: 0x010B # Dimmable Plug-in Unit
+    deviceProfileName: plug-level
+  - id: "matter/on-off/switch"
+    deviceLabel: Matter OnOff Switch
+    deviceTypes:
+      - id: 0x0103 # OnOff Switch
+    deviceProfileName: switch-binary
+  - id: "matter/dimmable/switch"
+    deviceLabel: Matter Dimmable Switch
+    deviceTypes:
+      - id: 0x0104 # Dimmable Switch
+    deviceProfileName: switch-level
+  - id: "matter/color/switch"
+    deviceLabel: Matter Color Switch
+    deviceTypes:
+      - id: 0x0105 # Color Dimmer Switch
+    deviceProfileName: switch-color-level
+
+matterThing:
+  - id: SmartThings/MatterThing
+    deviceLabel: Matter Thing
+    deviceProfileName: matter-thing
+    isJoinable: true
