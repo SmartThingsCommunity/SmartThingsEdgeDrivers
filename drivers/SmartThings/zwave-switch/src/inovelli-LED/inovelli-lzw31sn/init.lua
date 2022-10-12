@@ -24,16 +24,12 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 --- @type st.zwave.CommandClass.CentralScene
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 
-local log = require "log"
-
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
 
 local function device_added(driver, device)
-  log.info("device_added.......")
   for _, component in pairs(device.profile.components) do
-    log.info("component.id ->"..component.id)
     if component.id ~= "main" then
       device:emit_component_event(
         component,
