@@ -20,8 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local t_utils = require "integration_test.utils"
 
-local log = require "log"
-
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
@@ -70,7 +68,6 @@ test.register_coroutine_test(
 
     for button_name, _ in pairs(mock_inovelli_dimmer.profile.components) do
       if button_name ~= "main" then
-        log.info("button_name "..button_name)
         test.socket.capability:__expect_send(
           mock_inovelli_dimmer:generate_test_message(
             button_name,
