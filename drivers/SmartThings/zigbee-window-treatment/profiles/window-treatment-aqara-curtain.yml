@@ -1,4 +1,4 @@
-name: window-treatment-aqara
+name: window-treatment-aqara-curtain
 components:
   - id: main
     capabilities:
