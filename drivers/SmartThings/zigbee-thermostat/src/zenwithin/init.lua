@@ -85,11 +85,6 @@ local setpoint_limit_handler = function(limit_type)
   end
 end
 
--- Unrounded conversion function
-local f_to_c = function(fahrenheit)
-  return (fahrenheit - 32) * (5 / 9.0)
-end
-
 -- Set heating setpoint -> wait 2 seconds
 --  -> if in heat mode, set heating setpoint
 -- Set cooling setpoint -> wait 2 seconds
@@ -135,7 +130,7 @@ end
 local set_cooling_setpoint = function(driver, device, command)
   local value = command.args.setpoint
   if value >= 40 then -- we got a command in fahrenheit
-    value = f_to_c(value)
+    value = utils.f_to_c(value)
   end
   value = utils.clamp_value(value,
     device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
@@ -155,7 +150,7 @@ end
 local set_heating_setpoint = function(driver, device, command)
   local value = command.args.setpoint
   if value >= 40 then -- we got a command in fahrenheit
-    value = f_to_c(value)
+    value = utils.f_to_c(value)
   end
   value = utils.clamp_value(value,
     device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
