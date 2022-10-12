@@ -17,8 +17,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local SimpleMetering = clusters.SimpleMetering
 
-local CURRENT_STATUS = "current_status"
-
 local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
   {mfr = "Aurora", model = "DoubleSocket50AU"}
 }
@@ -71,10 +69,8 @@ local function on_off_command_handler(driver, device, value, zb_rx)
   
   if value == OnOff.server.commands.On.ID then
     event = capabilities.switch.switch.on()
-    device:set_field(CURRENT_STATUS, "on")
   elseif value == OnOff.server.commands.Off.ID then
     event = capabilities.switch.switch.off()
-    device:set_field(CURRENT_STATUS, "off")
   end
   
   if event ~= nil then
