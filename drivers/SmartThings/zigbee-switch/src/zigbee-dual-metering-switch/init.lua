@@ -34,18 +34,16 @@ end
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
-    for i = 1,1 do
-      local name = "AURORA Outlet 2"
-      local metadata = {
-        type = "EDGE_CHILD",
-        label = name,
-        profile = "switch-power-2",
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%02X", i),
-        vendor_provided_label = name,
-      }
-      driver:try_create_device(metadata)
-    end
+    local name = "AURORA Outlet 2"
+    local metadata = {
+      type = "EDGE_CHILD",
+      label = name,
+      profile = "switch-power-2",
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%02X", 1),
+      vendor_provided_label = name,
+    }
+    driver:try_create_device(metadata)
   end
 end
 
@@ -64,7 +62,7 @@ local function switch_on_command_handler(driver, device, command)
   
 end
 
-local switch_off_command_handler = function(driver, device, command)
+local function switch_off_command_handler(driver, device, command)
   device:send(OnOff.server.commands.Off(device))
 end
 
@@ -92,11 +90,6 @@ end
 
 local zigbee_dual_metering_switch = {
   NAME = "zigbee dual metering switch",
-  supported_capabilities = {
-    capabilities.switch,
-    capabilities.refresh,
-    capabilities.powerMeter
-  },
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
