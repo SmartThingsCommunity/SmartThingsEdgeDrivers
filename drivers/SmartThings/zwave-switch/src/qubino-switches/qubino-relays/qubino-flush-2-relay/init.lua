@@ -26,6 +26,9 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 
+local CHILD_SWITCH_EP = 2
+local CHILD_TEMP_SENSOR_EP = 3
+
 local QUBINO_FLUSH_2_RELAY_FINGERPRINT = { mfr = 0x0159, prod = 0x0002, model = 0x0051 }
 
 local function can_handle_qubino_flush_2_relay(opts, driver, device, ...)
@@ -54,7 +57,7 @@ end
 local function get_child_metadata(device, endpoint)
   local name
   local profile_name
-  if endpoint ~= 3 then
+  if endpoint ~= CHILD_TEMP_SENSOR_EP then
     name = string.format("Qubino Switch %d", endpoint)
     profile_name = "metering-switch"
   else
@@ -74,29 +77,27 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    driver:try_create_device(get_child_metadata(device, 2))
+    driver:try_create_device(get_child_metadata(device, CHILD_SWITCH_EP))
     if device:is_cc_supported(cc.SENSOR_MULTILEVEL) then
-      driver:try_create_device(get_child_metadata(device, 3))
+      driver:try_create_device(get_child_metadata(device, CHILD_TEMP_SENSOR_EP))
     end
   end
 end
 
 local function send_refresh_to_endpoint(ep, driver, device)
-  if ep ~= 3 then
+  if ep ~= CHILD_TEMP_SENSOR_EP then
     device:send(SwitchBinary:Get({}, { dst_channels = { ep } }))
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }, { dst_channels = { ep } }))
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }, { dst_channels = { ep } }))
-  else
+  elseif device:is_cc_supported(cc.SENSOR_MULTILEVEL, ep) then
     device:send(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }, { dst_channels = { ep } }))
   end
 end
 
-local function do_refresh(driver, device)
-  for i = 1, 2, 1 do
-    send_refresh_to_endpoint(i , driver, device)
-  end
-  if device:is_cc_supported(cc.SENSOR_MULTILEVEL, 3) then
-    send_refresh_to_endpoint(3 , driver, device)
+local function do_refresh(driver, device, cmd)
+  local endpoints = device:component_to_endpoint(cmd.component)
+  for _, ep in pairs(endpoints) do
+    send_refresh_to_endpoint(ep , driver, device)
   end
 end
 

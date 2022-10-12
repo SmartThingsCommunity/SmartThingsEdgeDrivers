@@ -62,14 +62,12 @@ local mock_parent_device = test.mock_device.build_test_zwave_device({
 
 local mock_child_2_device = test.mock_device.build_test_child_device({
   profile = child_relay_profile,
-  device_network_id = string.format("%s:%02X", mock_parent_device.device_network_id, 2),
   parent_device_id = mock_parent_device.id,
   parent_assigned_child_key = string.format("%02X", 2)
 })
 
 local mock_child_3_device = test.mock_device.build_test_child_device({
   profile = child_temperature_profile,
-  device_network_id = string.format("%s:%02X", mock_parent_device.device_network_id, 3),
   parent_device_id = mock_parent_device.id,
   parent_assigned_child_key = string.format("%02X", 3)
 })
@@ -83,33 +81,71 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-    "Refresh sends commands to all endpoints including base device",
+    "Refresh should evoke correct GETs for endpoint matching the device (parent, ep=1)",
     function()
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({
         mock_parent_device.id,
         { capability = "refresh", component = "main", command = "refresh", args = { } }
       })
-      for i = 1, 2, 1 do
-        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-            mock_parent_device,
-            SwitchBinary:Get({}, { dst_channels = { i } })
-        ))
-        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-            mock_parent_device,
-            Meter:Get(
-                { scale = Meter.scale.electric_meter.WATTS },
-                { dst_channels = { i } }
-            )
-        ))
-        test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-            mock_parent_device,
-            Meter:Get(
-                { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
-                { dst_channels = { i } }
-            )
-        ))
-      end
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SwitchBinary:Get({}, { dst_channels = { 1 } })
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+              { scale = Meter.scale.electric_meter.WATTS },
+              { dst_channels = { 1 } }
+          )
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+              { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+              { dst_channels = { 1 } }
+          )
+      ))
+    end
+)
+
+test.register_coroutine_test(
+    "Refresh should evoke correct GETs for endpoint matching the device (child2, ep=2)",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_child_2_device.id,
+        { capability = "refresh", component = "main", command = "refresh", args = { } }
+      })
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SwitchBinary:Get({}, { dst_channels = { 2 } })
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+              { scale = Meter.scale.electric_meter.WATTS },
+              { dst_channels = { 2 } }
+          )
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+              { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+              { dst_channels = { 2 } }
+          )
+      ))
+    end
+)
+
+test.register_coroutine_test(
+    "Refresh should evoke correct GETs for endpoint matching the device (child3, ep=3)",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_child_3_device.id,
+        { capability = "refresh", component = "main", command = "refresh", args = { } }
+      })
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_parent_device,
           SensorMultilevel:Get(
