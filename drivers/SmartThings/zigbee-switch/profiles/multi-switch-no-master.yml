@@ -1,4 +1,4 @@
-name: multi-switch
+name: multi-switch-no-master
 components:
   - id: main
     capabilities:
