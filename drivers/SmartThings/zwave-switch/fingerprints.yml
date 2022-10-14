@@ -303,7 +303,7 @@ zwaveManufacturer:
     productId: 0xF51C
     deviceProfileName: switch-5
   - id: 027A/A000/A008
-    deviceLabel: Zooz ZEN 30 Double Switch
+    deviceLabel: Zooz Switch
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA008
