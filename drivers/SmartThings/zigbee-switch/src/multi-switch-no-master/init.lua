@@ -15,7 +15,6 @@ local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
-local SimpleMetering = clusters.SimpleMetering
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -52,7 +51,6 @@ local function is_multi_switch_no_master(opts, driver, device)
         return true
       end
   end
-  
   return false
 end
 
@@ -68,7 +66,7 @@ local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local children_amount = get_children_amount(device)
     for i = 1, children_amount do
-      local name = string.format("%s outlet %d", device.label, i)
+      local name = string.format("%s %d", device.label, i)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
@@ -117,8 +115,6 @@ end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
-  device:send(SimpleMetering.attributes.Divisor:read(device))
-  device:send(SimpleMetering.attributes.Multiplier:read(device))
 end
   
 local multi_switch_no_master = {
