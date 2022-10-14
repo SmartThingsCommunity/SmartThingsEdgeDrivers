@@ -84,20 +84,16 @@ local function device_added(driver, device)
   end
 end
 
-local function send_refresh_to_endpoint(ep, driver, device)
-  if ep ~= CHILD_TEMP_SENSOR_EP then
-    device:send(SwitchBinary:Get({}, { dst_channels = { ep } }))
-    device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }, { dst_channels = { ep } }))
-    device:send(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }, { dst_channels = { ep } }))
-  elseif device:is_cc_supported(cc.SENSOR_MULTILEVEL, ep) then
-    device:send(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }, { dst_channels = { ep } }))
-  end
-end
-
 local function do_refresh(driver, device, cmd)
-  local endpoints = device:component_to_endpoint(cmd.component)
-  for _, ep in pairs(endpoints) do
-    send_refresh_to_endpoint(ep , driver, device)
+  if device:supports_capability(capabilities.switch) then
+    device:send_to_component(SwitchBinary:Get({}), "main")
+  end
+  if device:supports_capability(capabilities.powerMeter) or device:supports_capability(capabilities.energyMeter) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), "main")
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), "main")
+  end
+  if device:supports_capability(capabilities.temperatureMeasurement) then
+    device:send_to_component(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }), "main")
   end
 end
 
@@ -118,15 +114,12 @@ end
 
 local function set_switch(value)
   return function(driver, device, cmd)
-    local endpoint = device:component_to_endpoint(cmd.component)
     local delay = constants.DEFAULT_GET_STATUS_DELAY
     local query_device = function()
-      for _, ep in pairs(endpoint) do
-        send_refresh_to_endpoint(ep, driver, device)
-      end
+      do_refresh(driver, device, nil)
     end
 
-    device:send(SwitchBinary:Set({ switch_value = value }, { dst_channels = endpoint }))
+    device:send_to_component(SwitchBinary:Set({ switch_value = value }), "main")
     device.thread:call_with_delay(delay, query_device)
   end
 end
