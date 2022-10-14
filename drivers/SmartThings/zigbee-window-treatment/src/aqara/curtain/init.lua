@@ -36,10 +36,6 @@ local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.curtain" },
-  { mfr = "LUMI", model = "lumi.curtain.v1" }
-}
 
 local function setInitializationField(device, value)
   device:set_field(INIT_STATE, value)
@@ -225,10 +221,10 @@ local aqara_curtain_handler = {
     }
   },
   can_handle = function(opts, driver, device)
-    for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:get_model() == fingerprint.model then
-        return true
-      end
+    if device:get_model() == "lumi.curtain" then
+      return true
+    elseif device:get_model() == "lumi.curtain.v1" then
+      return true
     end
     return false
   end

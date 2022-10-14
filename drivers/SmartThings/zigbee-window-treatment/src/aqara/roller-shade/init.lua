@@ -33,11 +33,6 @@ local SHADE_STATE_ATTR_ID = 0x0404
 local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.curtain.aq2" }
-
-}
-
 local function setInitializationField(device, value)
   device:set_field(INIT_STATE, value)
 end
@@ -206,10 +201,8 @@ local aqara_roller_shade_handler = {
     }
   },
   can_handle = function(opts, driver, device)
-    for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:get_model() == fingerprint.model then
-        return true
-      end
+    if device:get_model() == "lumi.curtain.aq2" then
+      return true
     end
     return false
   end
