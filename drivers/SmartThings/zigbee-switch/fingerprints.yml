@@ -8,23 +8,23 @@ zigbeeManufacturer:
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch
     model: "E220-KR2N0Z0-HA"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eZEX/E220-KR3N0Z0-HA"
     deviceLabel: eZEX Switch
     model: "E220-KR3N0Z0-HA"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eZEX/E220-KR4N0Z0-HA"
     deviceLabel: eZEX Switch
     model: "E220-KR4N0Z0-HA"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eZEX/E220-KR5N0Z0-HA"
     deviceLabel: eZEX Switch
     model: "E220-KR5N0Z0-HA"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eZEX/E220-KR6N0Z0-HA"
     deviceLabel: eZEX Switch
     model: "E220-KR6N0Z0-HA"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eZEX/E240-KR116Z-HA"
     deviceLabel: eZEX Switch
     model: "E240-KR116Z-HA"
@@ -34,23 +34,23 @@ zigbeeManufacturer:
     deviceLabel: Orvibo Switch
     manufacturer: ORVIBO
     model: "074b3ffba5a045b7afd94c47079dd553"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "Orvibo/9f76c"
     deviceLabel: Orvibo Switch
     manufacturer: ORVIBO
     model: "9f76c9f31b4c4a499e3aca0977ac4494"
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   #REXENSE
   - id: "REXENSE/HY0003"
     deviceLabel: "GDKES Switch"
     manufacturer: REXENSE
     model: HY0003
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "REXENSE/HY0002"
     deviceLabel: "GDKES Switch"
     manufacturer: REXENSE
     model: HY0002
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "REXENSE/HY0105"
     deviceLabel: "HONYAR Outlet"
     manufacturer: REXENSE
@@ -66,23 +66,23 @@ zigbeeManufacturer:
     deviceLabel: "HONYAR Switch"
     manufacturer: REX
     model: HY0097
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "REX/HY0096"
     deviceLabel: "HONYAR Switch"
     manufacturer: REX
     model: HY0096
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   #HEIMAN
   - id: "HEIMAN/HS2SW3L-EFR-3.0"
     deviceLabel: "HEIMAN Switch"
     manufacturer: HEIMAN
     model: HS2SW3L-EFR-3.0
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "HEIMAN/HS2SW2L-EFR-3.0"
     deviceLabel: "HEIMAN Switch"
     manufacturer: HEIMAN
     model: HS2SW2L-EFR-3.0
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
@@ -93,42 +93,42 @@ zigbeeManufacturer:
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S240-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-S240R-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S240R-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-S340-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S340-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-S340R-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S340R-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-S250-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S250-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-S350-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: PM-S350-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/ST-S250-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: ST-S250-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/ST-S350-ZB"
     deviceLabel: "Dawon Switch"
     manufacturer: DAWON_DNS
     model: ST-S350-ZB
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "DAWON_DNS/PM-B430-ZB"
     deviceLabel: "Dawon Outlet"
     manufacturer: DAWON_DNS
@@ -174,17 +174,17 @@ zigbeeManufacturer:
     deviceLabel: "eWeLink Switch"
     manufacturer: eWeLink
     model: ZB-SW02
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eWeLink/ZB-SW03"
     deviceLabel: "eWeLink Switch"
     manufacturer: eWeLink
     model: ZB-SW03
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   - id: "eWeLink/ZB-SW04"
     deviceLabel: "eWeLink Switch"
     manufacturer: eWeLink
     model: ZB-SW04
-    deviceProfileName: multi-switch-no-master
+    deviceProfileName: multi-switch
   #Aurora
   - id: Aurora/DoubleSocket50AU
     deviceLabel: AURORA Outlet 1

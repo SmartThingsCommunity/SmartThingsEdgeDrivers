@@ -85,7 +85,7 @@ local zigbee_switch_driver_template = {
     require("zigbee-dimmer-power-energy"),
     require("zigbee-metering-plug-power-consumption-report"),
     require("jasco"),
-    require("multi-switch-no-master"),
+    require("multi-switch"),
     require("zigbee-dual-metering-switch"),
     require("rgb-bulb"),
     require("zigbee-dimming-light"),
