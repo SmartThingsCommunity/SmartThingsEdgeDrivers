@@ -121,7 +121,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.double({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_2x({
         state_change = true }))
     }
   }
@@ -261,7 +261,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.double({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_2x({
         state_change = true }))
     }
   }
