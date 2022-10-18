@@ -235,36 +235,32 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held", "double" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 4 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } })
+      )
+    )
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "supportedButtonValues", state = { value = { "pushed", "held", "double" } }
-          }
-        })
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        })
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
       end
     end
     test.socket.capability:__expect_send({

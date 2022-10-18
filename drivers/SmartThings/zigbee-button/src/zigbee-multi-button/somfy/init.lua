@@ -19,6 +19,7 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
     if binding_table.dest_addr_mode.value == binding_table.DEST_ADDR_MODE_SHORT then
       -- send add hub to zigbee group command
       driver:add_hub_to_zigbee_group(binding_table.dest_addr.value)
+      return
     end
   end
 end

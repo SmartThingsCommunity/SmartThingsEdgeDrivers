@@ -1,0 +1,4 @@
+name: 'Matter Media'
+packageKey: 'matter-media'
+permissions:
+  matter: {}

@@ -69,41 +69,31 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "main",
-            attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-          }
-        }
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
       )
-      test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "main",
-            attribute_id = "numberOfButtons", state = { value = 4 }
-          }
-        }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } })
       )
+    )
+
     for button_number = 1, 4 do
       test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "button" .. button_number,
-            attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-          }
-        }
+        mock_device:generate_test_message(
+          "button" .. button_number,
+          capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+        )
       )
       test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "button" .. button_number,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        }
+        mock_device:generate_test_message(
+          "button" .. button_number,
+          capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+        )
       )
     end
     test.socket.capability:__expect_send({

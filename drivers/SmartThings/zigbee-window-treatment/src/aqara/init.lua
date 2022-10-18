@@ -88,7 +88,7 @@ end
 local function device_added(driver, device)
   local main_comp = device.profile.components["main"]
   device:emit_component_event(main_comp,
-    capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+    capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, { visibility = { displayed = false } }))
   device:emit_component_event(main_comp,
     deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }))
 

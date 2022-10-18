@@ -21,8 +21,6 @@ local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
-local log = require "log"
-local utils = require "st.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
@@ -115,34 +113,42 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
-    "fan mode reports are handled with supported thermostat mode",
-    {
+test.register_coroutine_test(
+  "fan mode reports are handled with supported thermostat mode",
+  function()
+    test.socket.zigbee:__queue_receive(
       {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, FanControl.attributes.FanModeSequence:build_test_attr_report(mock_device,
-                                                                                                 4) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto" }))
-      },
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, FanControl.attributes.FanMode:build_test_attr_report(mock_device,
-                                                                                         4), }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on({
-          data = {supportedThermostatFanModes = {"on", "auto"}}
-        }))
+        mock_device.id,
+        FanControl.attributes.FanModeSequence:build_test_attr_report(mock_device, 4)
       }
-    }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.thermostatFanMode.supportedThermostatFanModes(
+          { "on", "auto" },
+          { visibility = { displayed = false }}
+        )
+      )
+    )
+
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        FanControl.attributes.FanMode:build_test_attr_report(mock_device, 4)
+      }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.thermostatFanMode.thermostatFanMode.on(
+          { data = {supportedThermostatFanModes = {"on", "auto"}}}
+        )
+      )
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -202,7 +208,7 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
       })
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false } }))
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
@@ -265,7 +271,7 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
       })
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false }}))
       )
       test.socket.zigbee:__queue_receive(
         {
@@ -303,7 +309,7 @@ test.register_coroutine_test(
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
       test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat", "cool" }))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat", "cool" },{ visibility = { displayed = false }}))
       )
       test.wait_for_events()
       test.socket.zigbee:__queue_receive(
@@ -313,7 +319,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }}}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
       )
       test.wait_for_events()
       test.mock_time.advance_time(10)
@@ -396,7 +402,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }}}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
       )
       test.wait_for_events()
       test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
@@ -415,6 +421,38 @@ test.register_coroutine_test(
       test.mock_time.advance_time(2)
       test.wait_for_events()
     end
+)
+
+test.register_coroutine_test(
+  "Setting a setpoint in Fahrenheit should be handled",
+  function()
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- SystemMode.HEAT = 0x04
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+    )
+    test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 74 } }
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2333)
+      }
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()

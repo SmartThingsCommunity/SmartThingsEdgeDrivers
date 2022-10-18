@@ -1,0 +1,4 @@
+name: 'Matter Thermostat'
+packageKey: 'matter-thermostat'
+permissions:
+  matter: {}

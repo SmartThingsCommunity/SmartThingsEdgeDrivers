@@ -56,7 +56,7 @@ local function added(driver, device)
     capabilities.thermostatMode.thermostatMode.heat.NAME,
     capabilities.thermostatMode.thermostatMode.cool.NAME,
     capabilities.thermostatMode.thermostatMode.auto.NAME
-  }))
+  }, { visibility = { displayed = false } } ))
   do_refresh(driver, device, nil)
 end
 
