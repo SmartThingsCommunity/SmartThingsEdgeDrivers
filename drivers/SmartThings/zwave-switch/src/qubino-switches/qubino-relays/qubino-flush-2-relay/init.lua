@@ -95,9 +95,17 @@ local function send_refresh_to_endpoint(ep, driver, device)
 end
 
 local function do_refresh(driver, device, cmd)
-  local endpoints = device:component_to_endpoint(cmd.component)
-  for _, ep in pairs(endpoints) do
-    send_refresh_to_endpoint(ep , driver, device)
+  if device:supports_capability(capabilities.switch) then
+    device:send_to_component(SwitchBinary:Get({}), cmd.component)
+  end
+  if device:supports_capability(capabilities.powerMeter) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), cmd.component)
+  end
+  if device:supports_capability(capabilities.energyMeter) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), cmd.component)
+  end
+  if device:supports_capability(capabilities.temperatureMeasurement) then
+    device:send_to_component(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }), cmd.component)
   end
 end
 
