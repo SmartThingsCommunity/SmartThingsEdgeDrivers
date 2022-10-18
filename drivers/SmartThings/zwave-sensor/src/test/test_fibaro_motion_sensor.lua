@@ -206,7 +206,7 @@ test.register_message_test(
     }
 )
 
---[[
+
 test.register_message_test(
   "Illuminance reports should be handled",
   {
@@ -318,5 +318,5 @@ test.register_message_test(
     }
   }
 )
-]]
+
 test.run_registered_tests()
