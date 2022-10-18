@@ -309,7 +309,7 @@ test.register_coroutine_test(
               mock_parent,
               SwitchMultilevel:Set(
                   { value = SwitchBinary.value.ON_ENABLE, duration = constants.DEFAULT_DIMMING_DURATION },
-                  { dst_channels = {} }
+                  { dst_channels = { 0 } }
               )
           )
       )
@@ -318,7 +318,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({}, { dst_channels = {} })
+              SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
     end
@@ -336,7 +336,8 @@ test.register_coroutine_test(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
               SwitchMultilevel:Set(
-                  { value = SwitchBinary.value.OFF_DISABLE, duration = constants.DEFAULT_DIMMING_DURATION }
+                  { value = SwitchBinary.value.OFF_DISABLE, duration = constants.DEFAULT_DIMMING_DURATION },
+                  { dst_channels = { 0 } }
               )
           )
       )
@@ -345,7 +346,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({})
+              SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
     end
@@ -363,7 +364,8 @@ test.register_coroutine_test(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
               SwitchBinary:Set(
-                  { target_value = SwitchBinary.value.ON_ENABLE, duration = 0 }
+                  { target_value = SwitchBinary.value.ON_ENABLE, duration = 0 },
+                  { dst_channels = { 1 } }
               )
           )
       )
@@ -372,7 +374,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({})
+              SwitchBinary:Get({}, { dst_channels = { 1 } })
           )
       )
     end
@@ -390,7 +392,8 @@ test.register_coroutine_test(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
               SwitchBinary:Set(
-                  { target_value = SwitchBinary.value.OFF_DISABLE, duration = 0 }
+                  { target_value = SwitchBinary.value.OFF_DISABLE, duration = 0 },
+                  { dst_channels = { 1 } }
               )
           )
       )
@@ -399,7 +402,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({})
+              SwitchBinary:Get({}, { dst_channels = { 1 } })
           )
       )
     end
@@ -419,12 +422,11 @@ test.register_coroutine_test(
               SwitchMultilevel:Set({
                 value = 50,
                 duration = constants.DEFAULT_DIMMING_DURATION
-              },
-                  {
-                    encap = zw.ENCAP.AUTO,
-                    src_channel = 0,
-                    dst_channels = {}
-                  })
+              }, {
+                encap = zw.ENCAP.AUTO,
+                src_channel = 0,
+                dst_channels = { 0 }
+              })
           )
       )
       test.wait_for_events()
@@ -432,7 +434,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({})
+              SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
     end
@@ -920,89 +922,89 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "Profile change when version is changed bigger than 1,5",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.zwave:__queue_receive({
-      mock_parent.id,
-      Version:Report({
+    "Profile change when version is changed bigger than 1,5",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zwave:__queue_receive({
+        mock_parent.id,
+        Version:Report({
           firmware_0_version = 1,
           firmware_0_sub_version = 5
         })
-    })
+      })
 
-    test.mock_time.advance_time(1)
+      test.mock_time.advance_time(1)
 
-    test.socket.zwave:__expect_send(
-      mock_devices_api.__expect_update_device(
-          mock_parent.id, {
-          deviceId = mock_parent.id,
-          profileReference = "zooz-zen-30-dimmer-relay-new"
-        }
+      test.socket.zwave:__expect_send(
+          mock_devices_api.__expect_update_device(
+              mock_parent.id, {
+                deviceId = mock_parent.id,
+                profileReference = "zooz-zen-30-dimmer-relay-new"
+              }
+          )
       )
-    )
-  end
+    end
 )
 
 test.register_coroutine_test(
-  "Profile change when version is changed bigger than 1,5",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.zwave:__queue_receive({
-      mock_parent.id,
-      Version:Report({
+    "Profile change when version is changed bigger than 1,5",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zwave:__queue_receive({
+        mock_parent.id,
+        Version:Report({
           firmware_0_version = 2,
           firmware_0_sub_version = 9
         })
-    })
+      })
 
-    test.mock_time.advance_time(1)
+      test.mock_time.advance_time(1)
 
-    test.socket.zwave:__expect_send(
-      mock_devices_api.__expect_update_device(
-          mock_parent.id, {
-          deviceId = mock_parent.id,
-          profileReference = "zooz-zen-30-dimmer-relay-new"
-        }
+      test.socket.zwave:__expect_send(
+          mock_devices_api.__expect_update_device(
+              mock_parent.id, {
+                deviceId = mock_parent.id,
+                profileReference = "zooz-zen-30-dimmer-relay-new"
+              }
+          )
       )
-    )
-  end
+    end
 )
 
 test.register_coroutine_test(
-  "New profile do not change when version is bigger than 1,5",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.zwave:__queue_receive({
-      mock_parent.id,
-      Version:Report({
+    "New profile do not change when version is bigger than 1,5",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zwave:__queue_receive({
+        mock_parent.id,
+        Version:Report({
           firmware_0_version = 1,
           firmware_0_sub_version = 6
         })
-    })
+      })
 
-    test.mock_time.advance_time(1)
+      test.mock_time.advance_time(1)
 
-    test.socket.zwave:__expect_send(
-      mock_devices_api.__expect_update_device(
-          mock_parent.id, {
-          deviceId = mock_parent.id,
-          profileReference = "zooz-zen-30-dimmer-relay-new"
-        }
+      test.socket.zwave:__expect_send(
+          mock_devices_api.__expect_update_device(
+              mock_parent.id, {
+                deviceId = mock_parent.id,
+                profileReference = "zooz-zen-30-dimmer-relay-new"
+              }
+          )
       )
-    )
 
-    test.mock_time.advance_time(1)
+      test.mock_time.advance_time(1)
 
-    test.socket.zwave:__queue_receive({
-      mock_parent.id,
-      Version:Report({
+      test.socket.zwave:__queue_receive({
+        mock_parent.id,
+        Version:Report({
           firmware_0_version = 1,
           firmware_0_sub_version = 7
         })
-    })
+      })
 
-  end
+    end
 )
 
 test.run_registered_tests()

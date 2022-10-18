@@ -91,9 +91,38 @@ local function find_child(parent, src_channel)
   end
 end
 
+local function component_to_endpoint(device, component)
+  return { ENDPOINTS.dimmer }
+end
+
+local function endpoint_to_component(device, endpoint)
+  return "main"
+end
+
+local function do_refresh(driver, device, cmd)
+  local component = cmd and cmd.component and cmd.component or "main"
+  local endpoints = device:component_to_endpoint(component)
+  for _, ep in pairs(endpoints) do
+    if ep == ENDPOINTS.dimmer then
+      device:send_to_component(SwitchMultilevel:Get({}), component)
+      device:send(Version:Get({}))
+    elseif ep == ENDPOINTS.relay then
+      device:send_to_component(SwitchBinary:Get({}), component)
+    end
+  end
+  --if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+  --  device:send(SwitchMultilevel:Get({}, { dst_channels = { ENDPOINTS.dimmer } }))
+  --  device:send(Version:Get({}))
+  --else
+  --  device:send(SwitchBinary:Get({}, { dst_channels = { ENDPOINTS.relay } }))
+  --end
+end
+
 local function device_init(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:set_find_child(find_child)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
 
@@ -113,6 +142,7 @@ local function device_added(driver, device)
     device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))
     device:emit_event(capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false } }))
   end
+  do_refresh(driver, device)
 end
 
 local function version_report_handler(driver, device, cmd)
@@ -140,32 +170,24 @@ local function central_scene_notification_handler(driver, device, cmd)
   end
 end
 
-local function do_refresh(driver, device)
-  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-    device:send(SwitchMultilevel:Get({}, { dst_channels = { ENDPOINTS.dimmer } }))
-    device:send(Version:Get({}))
-  else
-    device:send(SwitchBinary:Get({}, { dst_channels = { ENDPOINTS.relay } }))
-  end
-end
-
 local function switch_set_on_off_handler(value)
   return function(driver, device, command)
+    local ep = device:component_to_endpoint(command.component)[1]
     local get, set
 
-    if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+    if ep == ENDPOINTS.dimmer then
       set = SwitchMultilevel:Set({ value = value, duration = constants.DEFAULT_DIMMING_DURATION })
       get = SwitchMultilevel:Get({})
-    elseif device.network_type == st_device.NETWORK_TYPE_CHILD then
+    elseif ep == ENDPOINTS.relay then
       set = SwitchBinary:Set({ target_value = value, duration = 0 })
       get = SwitchBinary:Get({})
     end
 
     local query_device = function()
-      device:send(get)
+      device:send_to_component(get, command.component)
     end
 
-    device:send(set)
+    device:send_to_component(set, command.component)
     device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_device)
   end
 end
