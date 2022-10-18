@@ -117,7 +117,6 @@ local driver_template = {
     require("qubino-switches"),
     require("fibaro-double-switch"),
     require("fibaro-single-switch"),
-    require("fibaro-walli-double-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
     require("zooz-zen-30-dimmer-relay")

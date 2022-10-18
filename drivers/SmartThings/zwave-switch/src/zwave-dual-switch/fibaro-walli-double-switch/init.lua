@@ -11,6 +11,7 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+local st_device = require "st.device"
 
 local FIBARO_WALLI_DOUBLE_SWITCH_FINGERPRINT = {mfr = 0x010F, prod = 0x1B01, model = 0x1000}
 
@@ -18,33 +19,36 @@ local function can_handle_fibaro_walli_double_switch(opts, driver, device, ...)
   return device:id_match(FIBARO_WALLI_DOUBLE_SWITCH_FINGERPRINT.mfr, FIBARO_WALLI_DOUBLE_SWITCH_FINGERPRINT.prod, FIBARO_WALLI_DOUBLE_SWITCH_FINGERPRINT.model)
 end
 
-local function endpoint_to_component(device, endpoint)
-  if endpoint == 2 then
-    return "switch1"
+local function generate_child_name(parent_label)
+  if string.sub(parent_label, -1) == '1' then
+    return string.format("%s2", string.sub(parent_label, 0, -2))
   else
-    return "main"
+    return string.format("%s 2", parent_label)
   end
 end
 
-local function component_to_endpoint(device, component)
-  if component == "switch1" then
-    return {2}
-  else
-    return {1}
+local function device_added(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    local name = generate_child_name(device.label)
+    local metadata = {
+      type = "EDGE_CHILD",
+      label = name,
+      profile = "metering-switch",
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%02X", 2),
+      vendor_provided_label = name
+    }
+    driver:try_create_device(metadata)
   end
-end
-
-local function map_components(self, device)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:refresh()
 end
 
 local fibaro_walli_double_switch = {
   NAME = "fibaro walli double switch",
   lifecycle_handlers = {
-    init = map_components
+    added = device_added
   },
-  can_handle = can_handle_fibaro_walli_double_switch,
+  can_handle = can_handle_fibaro_walli_double_switch
 }
 
 return fibaro_walli_double_switch

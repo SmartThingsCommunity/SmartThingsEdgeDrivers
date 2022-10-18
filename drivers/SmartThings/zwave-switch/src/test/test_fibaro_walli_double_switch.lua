@@ -45,7 +45,7 @@ local double_switch_endpoints = {
   }
 }
 
-local mock_device = test.mock_device.build_test_zwave_device({
+local mock_parent = test.mock_device.build_test_zwave_device({
   profile = t_utils.get_profile_definition("fibaro-walli-double-switch.yml"),
   zwave_endpoints = double_switch_endpoints,
   zwave_manufacturer_id = 0x010F,
@@ -53,24 +53,32 @@ local mock_device = test.mock_device.build_test_zwave_device({
   zwave_product_id = 0x1000
 })
 
+local mock_child = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("metering-switch.yml"),
+  parent_device_id = mock_parent.id,
+  parent_assigned_child_key = string.format("%02X", 2)
+})
+
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_parent)
+  test.mock_device.add_test_device(mock_child)
 end
+
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-    "Switch Binary report ON_ENABLE should be handled by main component",
+    "Switch Binary report ON_ENABLE should be handled by a parent",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_parent.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_parent.id,
           zw_test_utils.zwave_test_build_receive_command(
               SwitchBinary:Report({
                 current_value = SwitchBinary.value.ON_ENABLE,
@@ -86,13 +94,13 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+        message = mock_parent:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
         channel = "zwave",
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
-            mock_device,
+            mock_parent,
             Meter:Get({
               scale = Meter.scale.electric_meter.WATTS
             }, {
@@ -106,18 +114,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Switch Binary report OFF_DISABLE should be handled by main component",
+    "Switch Binary report OFF_DISABLE should be handled by a parent",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_parent.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_parent.id,
           zw_test_utils.zwave_test_build_receive_command(
               SwitchBinary:Report({
                 current_value = SwitchBinary.value.OFF_DISABLE,
@@ -133,13 +141,13 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+        message = mock_parent:generate_test_message("main", capabilities.switch.switch.off())
       },
       {
         channel = "zwave",
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
-            mock_device,
+            mock_parent,
             Meter:Get({
               scale = Meter.scale.electric_meter.WATTS
             }, {
@@ -153,18 +161,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Power meter report should be handled by main component",
+    "Power meter report should be handled by a parent",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_parent.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_parent.id,
           zw_test_utils.zwave_test_build_receive_command(
               Meter:Report({
                 scale = Meter.scale.electric_meter.WATTS,
@@ -180,23 +188,28 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
+        message = mock_parent:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
       }
     }
 )
 
 test.register_message_test(
-    "Energy meter report should be handled by main component",
+    "Energy meter report should be handled by a parent",
     {
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_parent.id,
           zw_test_utils.zwave_test_build_receive_command(
               Meter:Report({
                 scale = Meter.scale.electric_meter.KILOWATT_HOURS,
                 meter_value = 5
+              },
+              {
+                encap = zw.ENCAP.AUTO,
+                src_channel = 1,
+                dst_channels = { 0 }
               })
           )
         }
@@ -204,24 +217,24 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+        message = mock_parent:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
     }
 )
 
 test.register_message_test(
-    "Switch Binary report ON_ENABLE should be handled by switch1 component",
+    "Switch Binary report ON_ENABLE should be handled by a child",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_child.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_child.id,
           zw_test_utils.zwave_test_build_receive_command(
               SwitchBinary:Report({
                 current_value = SwitchBinary.value.ON_ENABLE,
@@ -237,13 +250,13 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("switch1", capabilities.switch.switch.on())
+        message = mock_child:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
         channel = "zwave",
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
-            mock_device,
+            mock_child,
             Meter:Get({
               scale = Meter.scale.electric_meter.WATTS
             }, {
@@ -257,18 +270,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Switch Binary report OFF_DISABLE should be handled by switch1 component",
+    "Switch Binary report OFF_DISABLE should be handled by a child",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_child.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_child.id,
           zw_test_utils.zwave_test_build_receive_command(
               SwitchBinary:Report({
                 current_value = SwitchBinary.value.OFF_DISABLE,
@@ -284,13 +297,13 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("switch1", capabilities.switch.switch.off())
+        message = mock_child:generate_test_message("main", capabilities.switch.switch.off())
       },
       {
         channel = "zwave",
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
-            mock_device,
+            mock_child,
             Meter:Get({
               scale = Meter.scale.electric_meter.WATTS
             }, {
@@ -304,18 +317,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Power meter report should be handled by switch1 component",
+    "Power meter report should be handled by a child",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_child.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_child.id,
           zw_test_utils.zwave_test_build_receive_command(
               Meter:Report({
                 scale = Meter.scale.electric_meter.WATTS,
@@ -331,24 +344,24 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("switch1", capabilities.powerMeter.power({ value = 55, unit = "W" }))
+        message = mock_child:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
       }
     }
 )
 
 test.register_message_test(
-    "Energy meter report should be handled by switch1 component",
+    "Energy meter report should be handled by a child",
     {
       {
         channel = "device_lifecycle",
         direction = "receive",
-        message = { mock_device.id, "init" }
+        message = { mock_child.id, "init" }
       },
       {
         channel = "zwave",
         direction = "receive",
         message = {
-          mock_device.id,
+          mock_child.id,
           zw_test_utils.zwave_test_build_receive_command(
               Meter:Report({
                 scale = Meter.scale.electric_meter.KILOWATT_HOURS,
@@ -363,7 +376,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("switch1", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+        message = mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
     }
 )
@@ -375,13 +388,13 @@ test.register_coroutine_test(
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               SwitchBinary:Set({
                 target_value = SwitchBinary.value.ON_ENABLE,
                 duration = 0
@@ -396,24 +409,24 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zwave:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         SwitchBinary:Report({
           current_value = SwitchBinary.value.ON_ENABLE,
           target_value = SwitchBinary.value.ON_ENABLE
         }, {
           encap = zw.ENCAP.AUTO,
-          src_channel = 0,
-          dst_channels = { 1 }
+          src_channel = 1,
+          dst_channels = { 0 }
         })
       })
 
       test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.switch.switch.on())
+        mock_parent:generate_test_message("main", capabilities.switch.switch.on())
       )
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               Meter:Get({
                 scale = Meter.scale.electric_meter.WATTS
               }, {
@@ -433,13 +446,13 @@ test.register_coroutine_test(
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         { capability = "switch", component = "main", command = "off", args = {} }
       })
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               SwitchBinary:Set({
                 target_value = SwitchBinary.value.OFF_DISABLE,
                 duration = 0
@@ -454,23 +467,23 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zwave:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         SwitchBinary:Report({
           target_value = SwitchBinary.value.OFF_DISABLE
         }, {
           encap = zw.ENCAP.AUTO,
-          src_channel = 0,
-          dst_channels = { 1 }
+          src_channel = 1,
+          dst_channels = { 0 }
         })
       })
 
       test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.switch.switch.off())
+        mock_parent:generate_test_message("main", capabilities.switch.switch.off())
       )
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               Meter:Get({
                 scale = Meter.scale.electric_meter.WATTS
               }, {
@@ -490,13 +503,13 @@ test.register_coroutine_test(
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               SwitchBinary:Set({
                 target_value = SwitchBinary.value.ON_ENABLE,
                 duration = 0
@@ -511,7 +524,7 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zwave:__queue_receive({
-        mock_device.id,
+        mock_parent.id,
         SwitchBinary:Report({
           current_value = SwitchBinary.value.ON_ENABLE,
           target_value = SwitchBinary.value.ON_ENABLE
@@ -523,12 +536,12 @@ test.register_coroutine_test(
       })
 
       test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.switch.switch.on())
+        mock_parent:generate_test_message("main", capabilities.switch.switch.on())
       )
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_parent,
               Meter:Get({
                 scale = Meter.scale.electric_meter.WATTS
               },
@@ -543,19 +556,19 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Switch capability off commands should evoke the correct Z-Wave SETs and GETs with dest_channel 2",
+    "Switch capability off command should evoke the correct Z-Wave SETs and GETs with dest_channel 2",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({
-        mock_device.id,
-        { capability = "switch", component = "switch1", command = "off", args = {} }
+        mock_child.id,
+        { capability = "switch", component = "main", command = "off", args = {} }
       })
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_child,
               SwitchBinary:Set({
                 target_value = SwitchBinary.value.OFF_DISABLE,
                 duration = 0
@@ -570,7 +583,7 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zwave:__queue_receive({
-        mock_device.id,
+        mock_child.id,
         SwitchBinary:Report({
           target_value = SwitchBinary.value.OFF_DISABLE
         }, {
@@ -581,12 +594,12 @@ test.register_coroutine_test(
       })
 
       test.socket.capability:__expect_send(
-          mock_device:generate_test_message("switch1", capabilities.switch.switch.off())
+        mock_child:generate_test_message("main", capabilities.switch.switch.off())
       )
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
-              mock_device,
+              mock_child,
               Meter:Get({
                 scale = Meter.scale.electric_meter.WATTS
               }, {

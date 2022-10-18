@@ -32,6 +32,7 @@ local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
   { mfr = 0x0312, prod = 0xC000, model = 0xC004 }, -- EVA Switch 1
   { mfr = 0x0312, prod = 0xFF00, model = 0xFF05 }, -- Minoston Switch 1
   { mfr = 0x0312, prod = 0xC000, model = 0xC007 }, -- Evalogik Switch 1
+  { mfr = 0x010F, prod = 0x1B01, model = 0x1000 }, -- Fibaro Walli Double Switch
   { mfr = 0x027A, prod = 0xA000, model = 0xA003 } -- Zooz Double Plug
 }
 
@@ -134,6 +135,9 @@ local zwave_dual_switch = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
+  },
+  sub_drivers = {
+    require("zwave-dual-switch/fibaro-walli-double-switch")
   },
   lifecycle_handlers = {
     added = device_added,
