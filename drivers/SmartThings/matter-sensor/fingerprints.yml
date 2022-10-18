@@ -1,20 +1,3 @@
-matterManufacturer:
-  - id: "Samsung/Temperature/Android"
-    deviceLabel: Samsung Temperature Sensor Android
-    vendorId: 0x10E1
-    productId: 0x1003
-    deviceProfileName: temperature
-  - id: "Samsung/Temperature/Thread"
-    deviceLabel: Samsung Temperature Sensor Thread
-    vendorId: 0x10E1
-    productId: 0x2003
-    deviceProfileName: temperature
-  - id: "Samsung/Temperature/Wifi"
-    deviceLabel: Samsung Temperature Sensor WiFi
-    vendorId: 0x10E1
-    productId: 0x3003
-    deviceProfileName: temperature
-
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
