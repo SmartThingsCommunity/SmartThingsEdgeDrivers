@@ -122,7 +122,8 @@ local driver_template = {
     require("aeotec-multisensor"),
     require("zwave-water-leak-sensor"),
     require("everspring-motion-light-sensor"),
-    require("ezmultipli-multipurpose-sensor")
+    require("ezmultipli-multipurpose-sensor"),
+    require("fibaro-motion-sensor")
   },
   lifecycle_handlers = {
     added = added_handler,
