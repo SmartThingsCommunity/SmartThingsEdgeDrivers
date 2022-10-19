@@ -336,7 +336,7 @@ zwaveManufacturer:
     deviceLabel: Fibaro Double Switch
     manufacturerId: 0x010F
     productType: 0x0203
-    deviceProfileName: switch-1-button-6-power-energy
+    deviceProfileName: fibaro-double-switch
   - id: "Eaton/5740/0000"
     deviceLabel: Eaton 5-Scene Keypad
     manufacturerId: 0x001A
