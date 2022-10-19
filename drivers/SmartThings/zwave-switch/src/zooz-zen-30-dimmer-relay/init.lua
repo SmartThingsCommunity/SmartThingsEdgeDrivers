@@ -110,12 +110,6 @@ local function do_refresh(driver, device, cmd)
       device:send_to_component(SwitchBinary:Get({}), component)
     end
   end
-  --if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-  --  device:send(SwitchMultilevel:Get({}, { dst_channels = { ENDPOINTS.dimmer } }))
-  --  device:send(Version:Get({}))
-  --else
-  --  device:send(SwitchBinary:Get({}, { dst_channels = { ENDPOINTS.relay } }))
-  --end
 end
 
 local function device_init(driver, device)
