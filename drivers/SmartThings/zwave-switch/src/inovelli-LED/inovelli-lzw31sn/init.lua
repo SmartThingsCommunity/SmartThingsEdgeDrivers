@@ -27,7 +27,7 @@ local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
-local LED_BAR_COMPONENT_NAME = "ledBar"
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function device_added(driver, device)
   for _, component in pairs(device.profile.components) do
