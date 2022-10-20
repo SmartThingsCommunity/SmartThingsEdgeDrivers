@@ -15,10 +15,15 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
+--- @type st.Device
+local st_device = require "st.device"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
+local utils = require "st.utils"
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
@@ -46,13 +51,31 @@ local function endpoint_to_component(device, ep)
   end
 end
 
+--- Find child function
+---
+--- @param device st.zwave.Device
+--- @param src_channel number
+local find_child = function(device, src_channel)
+  if src_channel == 0 then
+    return device
+  else
+    return device:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
+  end
+end
+
 --- Initialize device
 ---
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+  if (device.network_type == st_device.NETWORK_TYPE_ZWAVE) then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+
+    if device:is_cc_supported(cc.MULTI_CHANNEL) then
+      device:set_find_child(find_child)
+    end
+  end
 end
 
 --- Handle preference changes
@@ -66,7 +89,7 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
+      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value }))
     end
   end
 end
@@ -79,12 +102,46 @@ local function do_configure(driver, device)
   local configuration = configurationsMap.get_device_configuration(device)
   if configuration ~= nil then
     for _, value in ipairs(configuration) do
-      device:send(Configuration:Set({parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value}))
+      device:send(Configuration:Set({ parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value }))
     end
   end
 end
 
+--- Prepare metadata for child device
+---
+--- @param device st.zwave.Device Parent device
+--- @param endpoint number Child endpoint number
+--- @param command_classes table Supported command classes
+local function prepareMetadata(device, endpoint, command_classes)
+  local name = string.format("%s %d", device.label, endpoint)
+  local profile = "switch-binary"
+  for _, command_class in pairs(command_classes) do
+    if command_class == cc.SWITCH_MULTILEVEL then
+      profile = "switch-level"
+    end
+  end
+  return {
+    type = "EDGE_CHILD",
+    label = name,
+    profile = profile,
+    parent_device_id = device.id,
+    parent_assigned_child_key = string.format("%02X", endpoint),
+    vendor_provided_label = name
+  }
+end
+
 local function device_added(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+      device:is_cc_supported(cc.MULTI_CHANNEL) then
+    for index, endpoint in pairs(device.zwave_endpoints) do
+      if index > 1 then
+        print(string.format("Created device for endpoint %d", index and index - 1 or -1 ))
+        local metedata = prepareMetadata(device, index - 1, endpoint.command_classes)
+        print(utils.stringify_table(metedata, "child metadata"))
+        driver:try_create_device(prepareMetadata(device, index - 1, endpoint.command_classes))
+      end
+    end
+  end
   device:refresh()
 end
 
