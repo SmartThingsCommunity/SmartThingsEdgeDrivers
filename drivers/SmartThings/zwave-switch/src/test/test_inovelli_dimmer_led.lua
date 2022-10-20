@@ -132,12 +132,12 @@ do
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
+        message = mock_inovelli_dimmer:generate_test_message("ledBar", capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
+        message = mock_inovelli_dimmer:generate_test_message("ledBar", capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
       }
     }
   )

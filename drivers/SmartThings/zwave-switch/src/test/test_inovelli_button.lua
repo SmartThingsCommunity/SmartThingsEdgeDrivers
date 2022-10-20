@@ -23,6 +23,7 @@ local t_utils = require "integration_test.utils"
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "ledBar"
 
 local inovelli_dimmer_endpoints = {
   {
@@ -67,7 +68,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "added" })
 
     for button_name, _ in pairs(mock_inovelli_dimmer.profile.components) do
-      if button_name ~= "main" then
+      if button_name ~= "main" and button_name ~= LED_BAR_COMPONENT_NAME then
         test.socket.capability:__expect_send(
           mock_inovelli_dimmer:generate_test_message(
             button_name,
