@@ -24,6 +24,7 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
+local Groups = clusters.Groups
 
 local IKEA_MOTION_SENSOR_FINGERPRINTS = {
     { mfr = "IKEA of Sweden", model = "TRADFRI motion sensor" }
@@ -63,6 +64,8 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
       return
     end
   end
+  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
+  device:send(Groups.commands.AddGroup(device, 0x0000))
 end
 
 local function device_added(self, device)
