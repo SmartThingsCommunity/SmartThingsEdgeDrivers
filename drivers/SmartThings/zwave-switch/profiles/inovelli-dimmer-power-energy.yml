@@ -10,8 +10,6 @@ components:
     version: 1
   - id: energyMeter
     version: 1
-  - id: colorControl
-    version: 1
   - id: refresh
     version: 1
   categories:
