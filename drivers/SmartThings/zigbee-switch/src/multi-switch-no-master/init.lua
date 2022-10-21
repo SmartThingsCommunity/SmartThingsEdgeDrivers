@@ -45,11 +45,11 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
 
 local function is_multi_switch_no_master(opts, driver, device)
   for _, fingerprint in ipairs(MULTI_SWITCH_NO_MASTER_FINGERPRINTS) do
-      if device:get_manufacturer() == nil and device:get_model() == fingerprint.model then
-        return true
-      elseif device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-        return true
-      end
+    if device:get_manufacturer() == nil and device:get_model() == fingerprint.model then
+      return true
+    elseif device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
