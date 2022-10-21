@@ -33,7 +33,6 @@ local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
   { mfr = 0x0312, prod = 0xFF00, model = 0xFF05 }, -- Minoston Switch 1
   { mfr = 0x0312, prod = 0xC000, model = 0xC007 }, -- Evalogik Switch 1
   { mfr = 0x010F, prod = 0x1B01, model = 0x1000 }, -- Fibaro Walli Double Switch
-  { mfr = 0x027A, prod = 0xA000, model = 0xA003 } -- Zooz Double Plug
 }
 
 local function can_handle_zwave_dual_switch(opts, driver, device, ...)
@@ -77,10 +76,6 @@ local function device_added(driver, device)
   device:refresh()
 end
 
-local function endpoint_to_component(device, endpoint)
-  return "main"
-end
-
 local function component_to_endpoint(device, component)
   return { 1 }
 end
@@ -88,7 +83,6 @@ end
 local function device_init(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_find_child(find_child)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
