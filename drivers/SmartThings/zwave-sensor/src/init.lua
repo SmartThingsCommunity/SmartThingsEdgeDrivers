@@ -17,6 +17,8 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
+--- @type st.Device
+local st_device = require "st.device"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
@@ -76,10 +78,34 @@ local initial_events_map = {
   [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
 }
 
+--- Prepare metadata for child device
+---
+--- @param device st.zwave.Device Parent device
+--- @param endpoint number Child endpoint number
+local function prepare_metadata(device, endpoint)
+  local name = string.format("%s %d", device.label, endpoint)
+  return {
+    type = "EDGE_CHILD",
+    label = name,
+    profile = "generic-sensor",
+    parent_device_id = device.id,
+    parent_assigned_child_key = string.format("%02X", endpoint),
+    vendor_provided_label = name
+  }
+end
+
 local function added_handler(self, device)
   for id, event in pairs(initial_events_map) do
     if device:supports_capability_by_id(id) then
       device:emit_event(event)
+    end
+  end
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+      device:is_cc_supported(cc.MULTI_CHANNEL) then
+    for index, endpoint in pairs(device.zwave_endpoints) do
+      if index > 1 then
+        self:try_create_device(prepare_metadata(device, index - 1))
+      end
     end
   end
 end
