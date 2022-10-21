@@ -23,7 +23,6 @@ local ZwaveDriver = require "st.zwave.driver"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
-local utils = require "st.utils"
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
@@ -135,9 +134,6 @@ local function device_added(driver, device)
       device:is_cc_supported(cc.MULTI_CHANNEL) then
     for index, endpoint in pairs(device.zwave_endpoints) do
       if index > 1 then
-        print(string.format("Created device for endpoint %d", index and index - 1 or -1 ))
-        local metedata = prepareMetadata(device, index - 1, endpoint.command_classes)
-        print(utils.stringify_table(metedata, "child metadata"))
         driver:try_create_device(prepareMetadata(device, index - 1, endpoint.command_classes))
       end
     end
