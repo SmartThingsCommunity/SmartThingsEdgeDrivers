@@ -95,27 +95,20 @@ local function component_to_endpoint(device, component)
   return { ENDPOINTS.dimmer }
 end
 
-local function endpoint_to_component(device, endpoint)
-  return "main"
-end
-
 local function do_refresh(driver, device, cmd)
   local component = cmd and cmd.component and cmd.component or "main"
-  local endpoints = device:component_to_endpoint(component)
-  for _, ep in pairs(endpoints) do
-    if ep == ENDPOINTS.dimmer then
-      device:send_to_component(SwitchMultilevel:Get({}), component)
-      device:send(Version:Get({}))
-    elseif ep == ENDPOINTS.relay then
-      device:send_to_component(SwitchBinary:Get({}), component)
-    end
+
+  if device:supports_capability(capabilities.switchLevel) then
+    device:send_to_component(SwitchMultilevel:Get({}), component)
+    device:send(Version:Get({}))
+  elseif device:supports_capability(capabilities.switch) then
+    device:send_to_component(SwitchBinary:Get({}), component)
   end
 end
 
 local function device_init(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:set_find_child(find_child)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
@@ -166,13 +159,12 @@ end
 
 local function switch_set_on_off_handler(value)
   return function(driver, device, command)
-    local ep = device:component_to_endpoint(command.component)[1]
     local get, set
 
-    if ep == ENDPOINTS.dimmer then
+    if device:supports_capability(capabilities.switchLevel) then
       set = SwitchMultilevel:Set({ value = value, duration = constants.DEFAULT_DIMMING_DURATION })
       get = SwitchMultilevel:Get({})
-    elseif ep == ENDPOINTS.relay then
+    elseif device:supports_capability(capabilities.switch) then
       set = SwitchBinary:Set({ target_value = value, duration = 0 })
       get = SwitchBinary:Get({})
     end
