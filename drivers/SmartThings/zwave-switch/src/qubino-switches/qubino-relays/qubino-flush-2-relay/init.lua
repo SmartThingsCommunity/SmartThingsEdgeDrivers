@@ -128,6 +128,10 @@ end
 
 local function sensor_multilevel_report(driver, device, cmd)
   if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
+    if cmd.src_channel == CHILD_TEMP_SENSOR_EP and find_child(device, cmd.src_channel) == nil then
+      driver:try_create_device(get_child_metadata(device, cmd.src_channel))
+    end
+
     local scale = 'C'
     if (cmd.args.scale == SensorMultilevel.scale.temperature.FARENHEIT) then
       scale = 'F'
