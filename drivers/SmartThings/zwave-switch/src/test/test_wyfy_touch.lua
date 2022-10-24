@@ -21,28 +21,12 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 local t_utils = require "integration_test.utils"
 
 local WYFY_MANUFACTURER_ID = 0x015F
-local WYFY_PRODUCT_TYPE = 0x3141
+local WYFY_PRODUCT_TYPE = 0x3121
 local WYFY_PRODUCT_ID = 0x5102
 
+local profile = t_utils.get_profile_definition("switch-binary.yml")
+
 local WYFY_multicomponent_endpoints = {
-  {
-    command_classes = {
-      { value = zw.BASIC },
-      { value = zw.SWITCH_BINARY },
-    }
-  },
-  {
-    command_classes = {
-      { value = zw.BASIC },
-      { value = zw.SWITCH_BINARY },
-    }
-  },
-  {
-    command_classes = {
-      { value = zw.BASIC },
-      { value = zw.SWITCH_BINARY },
-    }
-  },
   {
     command_classes = {
       { value = zw.BASIC },
@@ -51,26 +35,41 @@ local WYFY_multicomponent_endpoints = {
   }
 }
 
-local mock_switch_multicomponent = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("switch-multicomponent-4.yml"),
+local mock_parent = test.mock_device.build_test_zwave_device({
+  profile = profile,
   zwave_endpoints = WYFY_multicomponent_endpoints,
   zwave_manufacturer_id = WYFY_MANUFACTURER_ID,
   zwave_product_type = WYFY_PRODUCT_TYPE,
   zwave_product_id = WYFY_PRODUCT_ID
 })
 
+local mock_first_child = test.mock_device.build_test_child_device({
+  profile = profile,
+  parent_device_id = mock_parent.id,
+  parent_assigned_child_key = string.format("%02X", 1)
+})
+
+local mock_second_child = test.mock_device.build_test_child_device({
+  profile = profile,
+  parent_device_id = mock_parent.id,
+  parent_assigned_child_key = string.format("%02X", 2)
+})
+
+
 local function test_init()
-  test.mock_device.add_test_device(mock_switch_multicomponent)
+  test.mock_device.add_test_device(mock_parent)
+  test.mock_device.add_test_device(mock_first_child)
+  test.mock_device.add_test_device(mock_second_child)
 end
+
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Refresh sends commands to all components including base device",
+  "Refresh sends commands to parent device",
   function()
-    -- refresh commands for zwave devices do not have guaranteed ordering
     test.socket.zwave:__set_channel_ordering("relaxed")
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+      mock_parent,
         SwitchBinary:Get({},
           {
             encap = zw.ENCAP.AUTO,
@@ -78,35 +77,8 @@ test.register_coroutine_test(
             dst_channels = {}
           })
       ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
-        SwitchBinary:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels = {1}
-          })
-      ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
-        SwitchBinary:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels = {2}
-          })
-      ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
-        SwitchBinary:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels = {3}
-          })
-      ))
     test.socket.capability:__queue_receive({
-      mock_switch_multicomponent.id,
+      mock_parent.id,
       { capability = "refresh", component = "main", command = "refresh", args = { } }
     })
   end
@@ -114,36 +86,105 @@ test.register_coroutine_test(
 
 
 test.register_message_test(
-  "Multichannel switch on/off capability command on from component 1 should be handled: on",
+  "Switch on/off capability command on from parent device should be handled",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_switch_multicomponent.id,
-        { capability = "switch", command = "on", component = "switch1", args = {} }
+        mock_parent.id,
+        { capability = "switch", command = "on", component = "main", args = {} }
       }
     },
     {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+        mock_parent,
         SwitchBinary:Set({ target_value=0xFF },
-          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {1}})
+          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {}})
       )
     }
   }
 )
 
 test.register_message_test(
-  "Multichannel switch on/off capability command off from main component should be handled: off",
+  "Switch on/off capability command on from first child device should be handled",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_switch_multicomponent.id,
+        mock_first_child.id,
+        { capability = "switch", command = "on", component = "main", args = {} }
+      }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        SwitchBinary:Set({ target_value=0xFF },
+          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {}})
+      )
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch on/off capability command on from second child device should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_second_child.id,
+        { capability = "switch", command = "on", component = "main", args = {} }
+      }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        SwitchBinary:Set({ target_value=0xFF },
+          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {}})
+      )
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch on/off capability command on from fourth child device should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_first_child.id,
+        { capability = "switch", command = "on", component = "main", args = {} }
+      }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        SwitchBinary:Set({ target_value=0xFF },
+          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {}})
+      )
+    }
+  }
+)
+
+test.register_message_test(
+  "Switch on/off capability command off from parent device component should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_parent.id,
         { capability = "switch", command = "off", component = "main", args = {} }
       }
     },
@@ -151,7 +192,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+        mock_parent,
         SwitchBinary:Set({ target_value=0x00 })
       )
     }
@@ -162,34 +203,34 @@ test.register_coroutine_test(
   "doConfigure lifecycle event should generate proper configuration commands",
   function()
     test.socket.zwave:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_switch_multicomponent.id, "doConfigure" })
+    test.socket.device_lifecycle:__queue_receive({ mock_parent.id, "doConfigure" })
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+      mock_parent,
         Configuration:Set({parameter_number = 2, size = 1, configuration_value = 1})
     ))
-    mock_switch_multicomponent:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    mock_parent:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
 test.register_message_test(
-  "Binary switch on/off report from channel 1 should be handled: on",
+  "Binary switch on/off report from parent device should be handled: on",
   {
     {
     channel = "device_lifecycle",
     direction = "receive",
-    message = { mock_switch_multicomponent.id, "init" },
+    message = { mock_parent.id, "init" },
     },
     {
       channel = "zwave",
       direction = "receive",
-      message = { mock_switch_multicomponent.id,
-                  zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value=0xFF },
-                  {encap = zw.ENCAP.AUTO, src_channel = 1, dst_channels = {0}}))}
+      message = { mock_parent.id,
+                  zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ target_value=0xFF },
+                  {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {0}}))}
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_switch_multicomponent:generate_test_message("switch1", capabilities.switch.switch.on())
+      message = mock_parent:generate_test_message("main", capabilities.switch.switch.on())
     }
   }
 )
@@ -200,22 +241,22 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { mock_switch_multicomponent.id, "init" },
+      message = { mock_parent.id, "init" },
     },
     {
       channel = "zwave",
       direction = "receive",
       message = {
-        mock_switch_multicomponent.id,
+        mock_parent.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({ current_value=0x00 })
+          SwitchBinary:Report({ target_value=0x00 })
         )
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_switch_multicomponent:generate_test_message("main", capabilities.switch.switch.off())
+      message = mock_parent:generate_test_message("main", capabilities.switch.switch.off())
     }
   }
 )
@@ -225,12 +266,12 @@ test.register_coroutine_test(
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({
-      mock_switch_multicomponent.id,
+      mock_parent.id,
       { capability = "switch", command = "off", args = {} }
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+        mock_parent,
         SwitchBinary:Set({
           target_value = SwitchBinary.value.OFF_DISABLE
         })
@@ -240,7 +281,7 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+        mock_parent,
         SwitchBinary:Get({})
       )
     )
@@ -252,15 +293,15 @@ test.register_coroutine_test(
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({
-      mock_switch_multicomponent.id,
-      { capability = "switch", command = "off", component = "switch1", args = {} }
+      mock_parent.id,
+      { capability = "switch", command = "off", component = "main", args = {} }
     })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
+        mock_parent,
         SwitchBinary:Set({
           target_value = SwitchBinary.value.OFF_DISABLE
-        }, { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {1} }
+        }, { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {} }
         )
       )
     )
@@ -268,8 +309,8 @@ test.register_coroutine_test(
     test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
-        mock_switch_multicomponent,
-        SwitchBinary:Get({}, { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {1} })
+        mock_parent,
+        SwitchBinary:Get({}, { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {} })
       )
     )
   end
