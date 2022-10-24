@@ -23,6 +23,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict=true
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
+local dualSwitchConfigurationsMap = require "zwave-dual-switch/dual_switch_configurations"
 
 local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
   { mfr = 0x0086, prod = 0x0103, model = 0x008C }, -- Aeotec Switch 1
@@ -62,16 +63,21 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    local name = generate_child_name(device.label)
-    local metadata = {
-      type = "EDGE_CHILD",
-      label = name,
-      profile = "switch-binary",
-      parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", 2),
-      vendor_provided_label = name
-    }
-    driver:try_create_device(metadata)
+    local dual_switch_configuration = dualSwitchConfigurationsMap.get_child_device_configuration(device)
+
+    if dual_switch_configuration ~= nil then
+      local name = generate_child_name(device.label)
+      local childDeviceProfile = dual_switch_configuration.child_switch_device_profile
+      local metadata = {
+        type = "EDGE_CHILD",
+        label = name,
+        profile = childDeviceProfile,
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%02X", 2),
+        vendor_provided_label = name
+      }
+      driver:try_create_device(metadata)
+    end
   end
   device:refresh()
 end
@@ -129,9 +135,6 @@ local zwave_dual_switch = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
-  },
-  sub_drivers = {
-    require("zwave-dual-switch/fibaro-walli-double-switch")
   },
   lifecycle_handlers = {
     added = device_added,
