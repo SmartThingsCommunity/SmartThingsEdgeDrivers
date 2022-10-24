@@ -35,10 +35,60 @@ local sensor_endpoints = {
   },
   {
     command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY},
-      {value = zw.SWITCH_MULTILEVEL},
-      {value = zw.METER}
+      {value = zw.CENTRAL_SCENE}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CENTRAL_SCENE}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CENTRAL_SCENE}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CENTRAL_SCENE}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CENTRAL_SCENE}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CENTRAL_SCENE}
+    }
+  }
+}
+
+local switch_endpoints = {
+  {
+    command_classes = {
+      {value = zw.SWITCH_BINARY}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.SWITCH_BINARY}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.SWITCH_BINARY}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.SWITCH_BINARY}
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.SWITCH_BINARY}
     }
   }
 }
@@ -422,7 +472,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.pushed({
+      message = mock_parent:generate_test_message("button1", capabilities.button.button.pushed({
         state_change = true }))
     }
   }
@@ -442,7 +492,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.held({
+      message = mock_parent:generate_test_message("button1", capabilities.button.button.held({
         state_change = true }))
     }
   }
@@ -462,7 +512,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.down_hold({
+      message = mock_parent:generate_test_message("button1", capabilities.button.button.down_hold({
         state_change = true }))
     }
   }
@@ -482,7 +532,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.double({
+      message = mock_parent:generate_test_message("button3", capabilities.button.button.double({
         state_change = true }))
     }
   }
@@ -502,7 +552,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_3x({
+      message = mock_parent:generate_test_message("button5", capabilities.button.button.pushed_3x({
         state_change = true }))
     }
   }
@@ -522,7 +572,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.pushed({
+      message = mock_parent:generate_test_message("button2", capabilities.button.button.pushed({
         state_change = true }))
     }
   }
@@ -542,7 +592,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.held({
+      message = mock_parent:generate_test_message("button2", capabilities.button.button.held({
         state_change = true }))
     }
   }
@@ -562,7 +612,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.down_hold({
+      message = mock_parent:generate_test_message("button2", capabilities.button.button.down_hold({
         state_change = true }))
     }
   }
@@ -582,7 +632,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.double({
+      message = mock_parent:generate_test_message("button4", capabilities.button.button.double({
         state_change = true }))
     }
   }
@@ -602,7 +652,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_3x({
+      message = mock_parent:generate_test_message("button6", capabilities.button.button.pushed_3x({
         state_change = true }))
     }
   }
