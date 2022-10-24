@@ -49,10 +49,21 @@ local function central_scene_notification_handler(self, device, cmd)
     [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = capabilities.button.button.double,
     [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = capabilities.button.button.pushed_3x
   }
-
+  
   local event = map_key_attribute_to_capability[cmd.args.key_attributes]
-  device:emit_event(event({state_change = true}))
-
+  local button_number = 0
+  if cmd.args.key_attributes == 0 or cmd.args.key_attributes == 1 or cmd.args.key_attributes == 2 then
+    button_number = cmd.args.scene_number
+  elseif cmd.args.key_attributes == 3 then
+    button_number = cmd.args.scene_number + 2
+  elseif cmd.args.key_attributes == 4 then
+    button_number = cmd.args.scene_number + 4
+  end
+  local component = device.profile.components["button" .. button_number]
+  
+  if component ~= nil then
+    device:emit_component_event(component, event({state_change = true}))
+  end
 end
 
 local function device_added(driver, device, event)
