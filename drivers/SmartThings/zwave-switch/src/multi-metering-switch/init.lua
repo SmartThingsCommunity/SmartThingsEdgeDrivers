@@ -65,7 +65,8 @@ local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     local children_amount = get_children_amount(device)
     for i = 2, children_amount+1 do
-      local name = string.format("%s %d", device.label, i)
+      local device_name_without_number = string.sub(driver.label, 0,-2)
+      local name = print(string.format("%s%d", device_name_without_number, i))
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
@@ -87,10 +88,6 @@ local function find_child(parent, ep_id)
   end
 end
 
-local function endpoint_to_component(device, endpoint)
-  return "main"
-end
-
 local function component_to_endpoint(device, component)
   return { 1 }
 end
@@ -98,7 +95,6 @@ end
 local function device_init(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_find_child(find_child)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
