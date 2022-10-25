@@ -1,4 +1,4 @@
-name: fibaro-double-switch
+name: fibaro_double_switch
 components:
   - id: main
     capabilities:
@@ -16,40 +16,40 @@ components:
     - name: Switch
   - id: button1
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
   - id: button2
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
   - id: button3
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
   - id: button4
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
   - id: button5
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
   - id: button6
     capabilities:
-      - id: button
-        version: 1
+    - id: button
+      version: 1
     categories:
-      - name: RemoteController
+    - name: RemoteController
 preferences:
   - name: "restoreState"
     title: "Restore state"
