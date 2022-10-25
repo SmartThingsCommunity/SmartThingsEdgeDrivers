@@ -32,22 +32,23 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
         model = "PM-S340R-ZB",
         server_clusters = {}
       }
-    }
+    },
+    fingerprinted_endpoint_id = 0x01
   }
 )
 
 local mock_first_child = test.mock_device.build_test_child_device({
   profile = profile,
-  device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 1),
+  device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 2),
   parent_device_id = mock_parent_device.id,
-  parent_assigned_child_key = string.format("%02X", 1)
+  parent_assigned_child_key = string.format("%02X", 2)
 })
 
 local mock_second_child = test.mock_device.build_test_child_device({
   profile = profile,
-  device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 2),
+  device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 3),
   parent_device_id = mock_parent_device.id,
-  parent_assigned_child_key = string.format("%02X", 2)
+  parent_assigned_child_key = string.format("%02X", 3)
 })
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -72,7 +73,7 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_parent_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
-        true):from_endpoint(0x00) }
+        true):from_endpoint(0x01) }
     },
     {
       channel = "capability",
@@ -94,7 +95,7 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_first_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
-        true):from_endpoint(0x01) }
+        true):from_endpoint(0x02) }
     },
     {
       channel = "capability",
@@ -219,7 +220,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x01) }
+      message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
     }
   }
 )
@@ -235,7 +236,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
+      message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x03) }
     }
   }
 )
@@ -267,7 +268,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x01) }
+      message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
     }
   }
 )
@@ -283,7 +284,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
+      message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x03) }
     }
   }
 )

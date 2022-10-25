@@ -65,8 +65,9 @@ end
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local children_amount = get_children_amount(device)
-    for i = 1, children_amount do
-      local name = string.format("%s %d", device.label, i)
+    for i = 2, children_amount+1 do
+      local device_name_without_number = string.sub(driver.label, 0,-2)
+      local name = string.format("%s%d", device_name_without_number, i)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
@@ -81,35 +82,21 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  if ep_id == 1 then
+    return parent
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  end
+end
+
+local function component_to_endpoint(device, component)
+  return 1
 end
 
 local function device_init(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
-  end
-end
-
-local function switch_on_command_handler(driver, device, command)
-  device:send(OnOff.server.commands.On(device))
-
-end
-
-local function switch_off_command_handler(driver, device, command)
-  device:send(OnOff.server.commands.Off(device))
-end
-
-local function on_off_command_handler(driver, device, value, zb_rx)
-  local event
-  
-  if value == OnOff.server.commands.On.ID then
-    event = capabilities.switch.switch.on()
-  elseif value == OnOff.server.commands.Off.ID then
-    event = capabilities.switch.switch.off()
-  end
-  
-  if event ~= nil then
-    device:emit_event(event)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
 
@@ -119,21 +106,9 @@ end
   
 local multi_switch_no_master = {
   NAME = "multi switch no master",
-  zigbee_handlers = {
-    cluster = {
-      [OnOff.ID] = {
-        [OnOff.server.commands.On.ID] = on_off_command_handler,
-        [OnOff.server.commands.Off.ID] = on_off_command_handler
-      }
-    }
-  },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    },
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.on.NAME] = switch_on_command_handler,
-      [capabilities.switch.commands.off.NAME] = switch_off_command_handler
     }
   },
   lifecycle_handlers = {
