@@ -64,20 +64,6 @@ local function device_init(driver, device)
   end
 end
 
-local function on_off_command_handler(driver, device, value, zb_rx)
-  local event
-  
-  if value == OnOff.server.commands.On.ID then
-    event = capabilities.switch.switch.on()
-  elseif value == OnOff.server.commands.Off.ID then
-    event = capabilities.switch.switch.off()
-  end
-  
-  if event ~= nil then
-    device:emit_event(event)
-  end
-end
-
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
   device:send(SimpleMetering.attributes.Divisor:read(device))
@@ -86,14 +72,6 @@ end
 
 local zigbee_dual_metering_switch = {
   NAME = "zigbee dual metering switch",
-  zigbee_handlers = {
-    cluster = {
-      [OnOff.ID] = {
-        [OnOff.server.commands.On.ID] = on_off_command_handler,
-        [OnOff.server.commands.Off.ID] = on_off_command_handler
-      }
-    }
-  },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
