@@ -55,9 +55,9 @@ local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
     if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES))
+      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES), {visibility = { displayed = false }})
     else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
+      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
     end
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
@@ -70,10 +70,10 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
     if binding_table.dest_addr_mode.value == binding_table.DEST_ADDR_MODE_SHORT then
       -- send add hub to zigbee group command
       driver:add_hub_to_zigbee_group(binding_table.dest_addr.value)
-    else
-      driver:add_hub_to_zigbee_group(0x0000)
+      return
     end
   end
+  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)

@@ -181,24 +181,31 @@ local handle_min_code_length = function(driver, device, value)
 end
 
 local update_codes = function(driver, device, command)
+  local delay = 0
   -- args.codes is json
   for name, code in pairs(command.args.codes) do
     -- these seem to come in the format "code[slot#]: code"
     local code_slot = tonumber(string.gsub(name, "code", ""), 10)
     if (code_slot ~= nil) then
-      if (code ~= nil and code ~= "0") then
-        device:send(LockCluster.server.commands.SetPINCode(device,
+      if (code ~= nil and (code ~= "0" and code ~= "")) then
+        device.thread:call_with_delay(delay, function ()
+          device:send(LockCluster.server.commands.SetPINCode(device,
                 code_slot,
                 UserStatusEnum.OCCUPIED_ENABLED,
                 UserTypeEnum.UNRESTRICTED,
-                code)
-        )
-      else
-        device:send(LockCluster.client.commands.ClearPINCode(device, code_slot))
-        device.thread:call_with_delay(2, function(d)
-          device:send(LockCluster.server.commands.GetPINCode(device, code_slot))
+                code))
         end)
+        delay = delay + 2
+      else
+        device.thread:call_with_delay(delay, function ()
+          device:send(LockCluster.server.commands.ClearPINCode(device, code_slot))
+        end)
+        delay = delay + 2
       end
+      device.thread:call_with_delay(delay, function(d)
+        device:send(LockCluster.server.commands.GetPINCode(device, code_slot))
+      end)
+      delay = delay + 2
     end
   end
 end

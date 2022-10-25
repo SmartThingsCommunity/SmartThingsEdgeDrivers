@@ -26,21 +26,23 @@ local zigbee_motion_driver = {
     capabilities.presenceSensor,
     capabilities.contactSensor
   },
-  sub_drivers = { require("aurora"),
-                  require("ikea"),
-                  require("iris"),
-                  require("gatorsystem"),
-                  require("motion_timeout"),
-                  require("nyce"),
-                  require("zigbee-plugin-motion-sensor"),
-                  require("compacta"),
-                  require("frient"),
-                  require("samjin"),
-                  require("battery-voltage"),
-                  require("centralite"),
-                  require("smartthings"),
-                  require("smartsense"),
-                  require("thirdreality")
+  sub_drivers = {
+    require("aqara"),
+    require("aurora"),
+    require("ikea"),
+    require("iris"),
+    require("gatorsystem"),
+    require("motion_timeout"),
+    require("nyce"),
+    require("zigbee-plugin-motion-sensor"),
+    require("compacta"),
+    require("frient"),
+    require("samjin"),
+    require("battery-voltage"),
+    require("centralite"),
+    require("smartthings"),
+    require("smartsense"),
+    require("thirdreality")
   },
   additional_zcl_profiles = {
     [0xFC01] = true
