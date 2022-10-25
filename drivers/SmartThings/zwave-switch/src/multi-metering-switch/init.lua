@@ -66,7 +66,7 @@ local function device_added(driver, device, event)
     local children_amount = get_children_amount(device)
     for i = 2, children_amount+1 do
       local device_name_without_number = string.sub(driver.label, 0,-2)
-      local name = print(string.format("%s%d", device_name_without_number, i))
+      local name = string.format("%s%d", device_name_without_number, i)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
@@ -89,7 +89,7 @@ local function find_child(parent, ep_id)
 end
 
 local function component_to_endpoint(device, component)
-  return { 1 }
+  return 1
 end
 
 local function device_init(driver, device, event)
