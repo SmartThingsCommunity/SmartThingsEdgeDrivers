@@ -20,9 +20,8 @@ pipeline {
   stages {
     stage('requirements') {
       steps {
-        script {
-          sh 'pip3 install -r tools/requirements.txt'
-        }
+        sh 'git clean -xfd'
+        sh 'pip3 install -r tools/requirements.txt'
       }
     }
     stage('update') {
