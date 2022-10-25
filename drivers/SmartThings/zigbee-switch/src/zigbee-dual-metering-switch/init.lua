@@ -38,7 +38,7 @@ local function device_added(driver, device, event)
       label = name,
       profile = "switch-power-2",
       parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", 1),
+      parent_assigned_child_key = string.format("%02X", 2),
       vendor_provided_label = name,
     }
     driver:try_create_device(metadata)
@@ -46,22 +46,22 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  if ep_id == 1 then
+    return parent
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  end
+end
+
+local function component_to_endpoint(device, component)
+  return 1
 end
 
 local function device_init(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
   end
-end
-
-local function switch_on_command_handler(driver, device, command)
-  device:send(OnOff.server.commands.On(device))
-  
-end
-
-local function switch_off_command_handler(driver, device, command)
-  device:send(OnOff.server.commands.Off(device))
 end
 
 local function on_off_command_handler(driver, device, value, zb_rx)
@@ -97,10 +97,6 @@ local zigbee_dual_metering_switch = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    },
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.on.NAME] = switch_on_command_handler,
-      [capabilities.switch.commands.off.NAME] = switch_off_command_handler
     }
   },
   lifecycle_handlers = {
