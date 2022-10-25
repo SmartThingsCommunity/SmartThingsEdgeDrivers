@@ -161,7 +161,7 @@ local function device_added(self, device)
   device:send(Association:Set({grouping_identifier = 7, node_ids = {self.environment_info.hub_zwave_id}}))
   device:send(Configuration:Set({parameter_number = 40, size = 1, configuration_value = 1}))
   device:send(Configuration:Set({parameter_number = 71, size = 1, configuration_value = 0}))
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
   device:refresh()
 end
 
