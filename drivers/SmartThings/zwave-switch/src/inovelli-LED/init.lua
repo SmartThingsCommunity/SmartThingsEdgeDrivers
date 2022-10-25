@@ -28,6 +28,7 @@ local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_LZW31_PRODUCT_TYPE = 0x0003
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function huePercentToZwaveValue(value)
   if value <= 2 then
@@ -52,8 +53,12 @@ end
 local function configuration_report(driver, device, cmd)
   if cmd.args.parameter_number == LED_COLOR_CONTROL_PARAMETER_NUMBER then
     local hue = zwaveValueToHuePercent(cmd.args.configuration_value)
-    device:emit_event(capabilities.colorControl.hue(hue))
-    device:emit_event(capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
+
+    local ledBarComponent = device.profile.components[LED_BAR_COMPONENT_NAME]
+    if ledBarComponent ~= nil then
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.hue(hue))
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
+    end
   end
 end
 

@@ -421,6 +421,54 @@ test.register_message_test(
           clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.NUMBERS1)
       }
     },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+          mock_device.id,
+          { capability = "keypadInput", component = "main", command = "sendKey", args = { "MENU" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+          mock_device.id,
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.CONTENTS_MENU)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+          mock_device.id,
+          { capability = "keypadInput", component = "main", command = "sendKey", args = { "SETTINGS" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+          mock_device.id,
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.SETUP_MENU)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+          mock_device.id,
+          { capability = "keypadInput", component = "main", command = "sendKey", args = { "HOME" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+          mock_device.id,
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.ROOT_MENU)
+      }
+    }
   }
 )
 

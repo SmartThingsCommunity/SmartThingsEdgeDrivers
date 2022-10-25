@@ -28,6 +28,11 @@ local inovelli_dimmer_endpoints = {
       { value = zw.SWITCH_MULTILEVEL },
       { value = zw.METER }
     }
+  },
+  {
+    command_classes = {
+      {value = zw.CONFIGURATION}
+    }
   }
 }
 
@@ -209,7 +214,7 @@ do
           mock_inovelli_dimmer.id,
           zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-              current_value = 0,
+              current_value = level,
               target_value = level,
               duration = 0
             })

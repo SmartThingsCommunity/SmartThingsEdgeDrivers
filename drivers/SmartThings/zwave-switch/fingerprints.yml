@@ -303,7 +303,7 @@ zwaveManufacturer:
     productId: 0xF51C
     deviceProfileName: switch-5
   - id: 027A/A000/A008
-    deviceLabel: Zooz ZEN 30 Double Switch
+    deviceLabel: Zooz Switch
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA008
@@ -315,7 +315,7 @@ zwaveManufacturer:
     productId: 0x000B
     deviceProfileName: metering-switch-5
   - id: 0159/0002/0051
-    deviceLabel: Qubino Switch
+    deviceLabel: Qubino Switch 1
     manufacturerId: 0x0159
     productType: 0x0002
     productId: 0x0051
