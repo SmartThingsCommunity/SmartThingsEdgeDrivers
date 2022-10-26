@@ -39,7 +39,9 @@ local MIMOLITE_GARAGE_DOOR_FINGERPRINTS = {
 --- @return boolean true if the device proper, else false
 local function can_handle_mimolite_garage_door(opts, driver, device, ...)
   for _, fingerprint in ipairs(MIMOLITE_GARAGE_DOOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
+---    Removed fingerprint.ProductId from validation, as it was preventing certain mimolite devices from working
+---    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
+    if device:id_match(fingerprint.manufacturerId, fingerprint.productType) then
       return true
     end
   end
