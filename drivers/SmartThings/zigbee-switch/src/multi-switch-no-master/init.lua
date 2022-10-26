@@ -64,11 +64,15 @@ local function get_children_amount(device)
   end
 end
 
+local function do_refresh(self, device)
+  device:send(OnOff.attributes.OnOff:read(device))
+end
+
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local children_amount = get_children_amount(device)
-    for i = 2, children_amount+1 do
-      local device_name_without_number = string.sub(driver.label, 0,-2)
+    for i = 2, children_amount+1, 1 do
+      local device_name_without_number = string.sub(device.label, 0,-2)
       local name = string.format("%s%d", device_name_without_number, i)
       local metadata = {
         type = "EDGE_CHILD",
@@ -81,6 +85,7 @@ local function device_added(driver, device, event)
       driver:try_create_device(metadata)
     end
   end
+  do_refresh(driver, device)
 end
 
 local function find_child(parent, ep_id)
@@ -102,10 +107,6 @@ local function device_init(driver, device, event)
   end
 end
 
-local function do_refresh(self, device)
-  device:send(OnOff.attributes.OnOff:read(device))
-end
-  
 local multi_switch_no_master = {
   NAME = "multi switch no master",
   capability_handlers = {
