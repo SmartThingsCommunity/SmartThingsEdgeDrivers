@@ -17,6 +17,11 @@ local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local SimpleMetering = clusters.SimpleMetering
 
+local ENDPOINTS = {
+  parent = 1,
+  child = 2
+}
+
 local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
   {mfr = "Aurora", model = "DoubleSocket50AU"}
 }
@@ -38,7 +43,7 @@ local function device_added(driver, device, event)
       label = name,
       profile = "switch-power-2",
       parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", 2),
+      parent_assigned_child_key = string.format("%02X", ENDPOINTS.child),
       vendor_provided_label = name,
     }
     driver:try_create_device(metadata)
@@ -54,7 +59,7 @@ local function find_child(parent, ep_id)
 end
 
 local function component_to_endpoint(device, component)
-  return 1
+  return ENDPOINTS.parent -- in zigbee drivers we are mapping components to numbers, not to array of numbers as in zwave cases
 end
 
 local function device_init(driver, device)
