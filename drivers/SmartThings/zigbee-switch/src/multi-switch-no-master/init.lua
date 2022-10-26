@@ -65,7 +65,10 @@ local function get_children_amount(device)
 end
 
 local function do_refresh(self, device)
-  device:send(OnOff.attributes.OnOff:read(device))
+  local children_amount = get_children_amount(device)
+  for endpoint = PARENT_ENDPOINT, children_amount+1, 1 do
+    device:send(OnOff.attributes.OnOff:read(device):to_endpoint(endpoint))
+  end
 end
 
 local function device_added(driver, device, event)
