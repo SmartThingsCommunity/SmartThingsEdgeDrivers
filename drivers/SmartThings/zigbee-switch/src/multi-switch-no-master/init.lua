@@ -16,7 +16,7 @@ local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 
-local parent_endpoint = 1
+local PARENT_ENDPOINT = 1
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -28,7 +28,7 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "ST-S250-ZB", children = 1 },
   { mfr = "DAWON_DNS", model = "ST-S350-ZB", children = 2 },
   { mfr = "ORVIBO", model = "074b3ffba5a045b7afd94c47079dd553", children = 2 },
-  { mfr = "ORVIBO", model = "9f76c9f31b4c4a499e3aca0977ac4494", children = 2 },
+  { mfr = "ORVIBO", model = "9f76c9f31b4c4a499e3aca0977ac4494", children = 3 },
   { mfr = "REXENSE", model = "HY0002", children = 2 },
   { mfr = "REXENSE", model = "HY0003", children = 3 },
   { mfr = "REX", model = "HY0096", children = 2 },
@@ -92,7 +92,7 @@ local function find_child(parent, ep_id)
 end
 
 local function component_to_endpoint(device, component)
-  return parent_endpoint
+  return PARENT_ENDPOINT
 end
 
 local function device_init(driver, device, event)
