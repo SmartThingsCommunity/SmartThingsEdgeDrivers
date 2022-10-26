@@ -16,6 +16,7 @@ local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 local ENDPOINTS = {
   parent = 1,
@@ -35,6 +36,16 @@ local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
   return false
 end
 
+local function do_refresh(self, device)
+  for endpoint = ENDPOINTS.parent, ENDPOINTS.child do
+    device:send(OnOff.attributes.OnOff:read(device):to_endpoint(endpoint))
+    device:send(SimpleMetering.attributes.Divisor:read(device):to_endpoint(endpoint))
+    device:send(SimpleMetering.attributes.Multiplier:read(device):to_endpoint(endpoint))
+    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device):to_endpoint(endpoint))
+    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device):to_endpoint(endpoint))
+  end
+end
+
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local name = "AURORA Outlet 2"
@@ -48,6 +59,7 @@ local function device_added(driver, device, event)
     }
     driver:try_create_device(metadata)
   end
+  do_refresh(driver, device)
 end
 
 local function find_child(parent, ep_id)
@@ -67,12 +79,6 @@ local function device_init(driver, device)
     device:set_find_child(find_child)
     device:set_component_to_endpoint_fn(component_to_endpoint)
   end
-end
-
-local function do_refresh(self, device)
-  device:send(OnOff.attributes.OnOff:read(device))
-  device:send(SimpleMetering.attributes.Divisor:read(device))
-  device:send(SimpleMetering.attributes.Multiplier:read(device))
 end
 
 local zigbee_dual_metering_switch = {
