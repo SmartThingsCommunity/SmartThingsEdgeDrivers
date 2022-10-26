@@ -26,6 +26,11 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 
+local ENDPOINTS = {
+  parent = 1,
+  child = 2
+}
+
 local FIBARO_DOUBLE_SWITCH_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x0203, model = 0x1000}, -- Fibaro Switch
   {mfr = 0x010F, prod = 0x0203, model = 0x2000}, -- Fibaro Switch
@@ -66,6 +71,14 @@ local function central_scene_notification_handler(self, device, cmd)
   end
 end
 
+local function do_refresh(driver, device, command)
+  local component = command and command.component and command.component or "main"
+  device:send_to_component(SwitchBinary:Get({}), component)
+  device:send_to_component(Basic:Get({}), component)
+  device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), component)
+  device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
+end
+
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     local name = string.format("%s %s", device.label, "(CH2)")
@@ -74,11 +87,12 @@ local function device_added(driver, device, event)
       label = name,
       profile = "metering-switch",
       parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", 2),
+      parent_assigned_child_key = string.format("%02X", ENDPOINTS.child),
       vendor_provided_label = name,
     }
     driver:try_create_device(metadata)
   end
+  do_refresh(driver, device)
 end
 
 local function find_child(parent, ep_id)
@@ -89,31 +103,14 @@ local function find_child(parent, ep_id)
   end
 end
 
-local function endpoint_to_component(device, endpoint)
-  return "main"
-end
-
 local function component_to_endpoint(device, component)
-  return { 1 }
+  return { ENDPOINTS.parent }
 end
 
 local function device_init(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_find_child(find_child)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_component_to_endpoint_fn(component_to_endpoint)
-  end
-end
-
-local function do_refresh(driver, device, command)
-  if device:is_cc_supported(cc.SWITCH_BINARY) then
-    device:send_to_component(SwitchBinary:Get({}), command.component)
-  elseif device:is_cc_supported(cc.BASIC) then
-    device:send_to_component(Basic:Get({}), command.component)
-  end
-  if device:supports_capability_by_id(capabilities.powerMeter.ID) or device:supports_capability_by_id(capabilities.energyMeter.ID) then
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), command.component)
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), command.component)
   end
 end
 
