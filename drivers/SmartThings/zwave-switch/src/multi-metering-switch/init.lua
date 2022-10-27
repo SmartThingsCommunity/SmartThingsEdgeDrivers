@@ -48,10 +48,23 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
+local function do_refresh(driver, device, command)
+  local component = command and command.component and command.component or "main"
+  if device:is_cc_supported(cc.SWITCH_BINARY) then
+    device:send_to_component(SwitchBinary:Get({}), component)
+  elseif device:is_cc_supported(cc.BASIC) then
+    device:send_to_component(Basic:Get({}), component)
+  end
+  if device:supports_capability_by_id(capabilities.powerMeter.ID) or device:supports_capability_by_id(capabilities.energyMeter.ID) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), component)
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
+  end
+end
+
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
-    for i = 2, children_amount+1 do
+    for i = 2, children_amount+1, 1 do
       local device_name_without_number = string.sub(driver.label, 0,-2)
       local name = string.format("%s%d", device_name_without_number, i)
       local metadata = {
@@ -65,6 +78,7 @@ local function device_added(driver, device, event)
       driver:try_create_device(metadata)
     end
   end
+  do_refresh(driver, device)
 end
 
 local function find_child(parent, ep_id)
@@ -83,18 +97,6 @@ local function device_init(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_find_child(find_child)
     device:set_component_to_endpoint_fn(component_to_endpoint)
-  end
-end
-
-local function do_refresh(driver, device, command)
-  if device:is_cc_supported(cc.SWITCH_BINARY) then
-    device:send_to_component(SwitchBinary:Get({}), command.component)
-  elseif device:is_cc_supported(cc.BASIC) then
-    device:send_to_component(Basic:Get({}), command.component)
-  end
-  if device:supports_capability_by_id(capabilities.powerMeter.ID) or device:supports_capability_by_id(capabilities.energyMeter.ID) then
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), command.component)
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), command.component)
   end
 end
 
