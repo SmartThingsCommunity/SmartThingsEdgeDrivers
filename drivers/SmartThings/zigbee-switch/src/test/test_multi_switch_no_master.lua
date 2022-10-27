@@ -62,6 +62,50 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
+  "Refresh on parent device should read all necessary attributes",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {mock_parent_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_parent_device.id,
+        OnOff.attributes.OnOff:read(mock_parent_device):to_endpoint(0x01)
+      }
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "Refresh on child device should read all necessary attributes",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {mock_first_child.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_parent_device.id,
+        OnOff.attributes.OnOff:read(mock_parent_device):to_endpoint(0x02)
+      }
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
   "Reported on off status should be handled by parent device: on",
   {
     {
