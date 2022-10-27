@@ -57,7 +57,7 @@ local function device_added(driver, device, event)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
-        profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_device_configuration(device),
+        profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device),
         parent_device_id = device.id,
         parent_assigned_child_key = string.format("%02X", i),
         vendor_provided_label = name,

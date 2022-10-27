@@ -138,7 +138,7 @@ local devices = {
 
 local multi_metering_switch_configurations = {}
 
-multi_metering_switch_configurations.get_child_device_configuration = function(zw_device)
+multi_metering_switch_configurations.get_child_switch_device_profile = function(zw_device)
   for _, device in pairs(devices) do
     if zw_device:id_match(
       device.MATCHING_MATRIX.mfrs,
