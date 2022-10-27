@@ -38,10 +38,7 @@ end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
-  device:send(SimpleMetering.attributes.Divisor:read(device))
-  device:send(SimpleMetering.attributes.Multiplier:read(device))
-  device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-  device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
+  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
 end
 
 local function device_added(driver, device, event)

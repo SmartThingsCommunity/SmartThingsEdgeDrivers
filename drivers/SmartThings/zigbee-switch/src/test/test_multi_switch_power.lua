@@ -77,31 +77,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_parent_device.id,
-        ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_parent_device):to_endpoint(0x01)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_parent_device):to_endpoint(0x01)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        SimpleMetering.attributes.Multiplier:read(mock_parent_device):to_endpoint(0x01)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        SimpleMetering.attributes.Divisor:read(mock_parent_device):to_endpoint(0x01)
+        ElectricalMeasurement.attributes.ActivePower:read(mock_parent_device):to_endpoint(0x01)
       }
     }
   },
@@ -131,31 +107,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_parent_device.id,
-        ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_parent_device):to_endpoint(0x02)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_parent_device):to_endpoint(0x02)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        SimpleMetering.attributes.Multiplier:read(mock_parent_device):to_endpoint(0x02)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        SimpleMetering.attributes.Divisor:read(mock_parent_device):to_endpoint(0x02)
+        ElectricalMeasurement.attributes.ActivePower:read(mock_parent_device):to_endpoint(0x02)
       }
     }
   },
