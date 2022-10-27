@@ -17,7 +17,6 @@ local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -230,13 +229,9 @@ test.register_coroutine_test(
     "Refresh necessary attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -257,13 +252,9 @@ test.register_coroutine_test(
     "Configure should configure all necessary attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
 
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })

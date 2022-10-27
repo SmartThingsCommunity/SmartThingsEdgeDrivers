@@ -1,0 +1,66 @@
+matterManufacturer:
+  - id: "Samsung/Thermostat/Android"
+    deviceLabel: Samsung Thermostat Android
+    vendorId: 0x10E1
+    productId: 0x1004
+    deviceProfileName: thermostat
+  - id: "Samsung/Thermostat/Thread"
+    deviceLabel: Samsung Thermostat Thread
+    vendorId: 0x10E1
+    productId: 0x2004
+    deviceProfileName: thermostat
+  - id: "Samsung/Thermostat/Wifi"
+    deviceLabel: Samsung Thermostat WiFi
+    vendorId: 0x10E1
+    productId: 0x3004
+    deviceProfileName: thermostat
+
+matterGeneric:
+  - id: "matter/hvac/heatcool"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+    deviceProfileName: thermostat
+  - id: "matter/hvac/thermostat"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+    deviceProfileName: thermostat
+  - id: "matter/hvac/heatcool/humidity"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: thermostat-humidity
+  - id: "matter/hvac/themostat/humidity"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: thermostat-humidity
+  - id: "matter/hvac/heatcool/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-fan
+  - id: "matter/hvac/thermostat/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-fan
+  - id: "matter/hvac/heatcool/humidity/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-humidity-fan
+  - id: "matter/hvac/themostat/humidity/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-humidity-fan

@@ -20,7 +20,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.types.EnrollResponseCode"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
@@ -165,22 +164,16 @@ test.register_coroutine_test(
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "main",
-            attribute_id = "supportedButtonValues", state = { value= { "pushed", "held", "double" } }
-          }
-        }
+        mock_device:generate_test_message(
+          "main",
+          capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+        )
       )
       test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "button", component_id = "main",
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        }
+        mock_device:generate_test_message(
+          "main",
+          capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+        )
       )
       test.socket.capability:__expect_send({
         mock_device.id,
