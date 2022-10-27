@@ -1,4 +1,4 @@
-name: fibaro-double-switch
+name: switch-1-button-6-power-energy
 components:
   - id: main
     capabilities:
@@ -11,6 +11,16 @@ components:
     - id: button
       version: 1
     - id: refresh
+      version: 1
+    categories:
+    - name: Switch
+  - id: switch1
+    capabilities:
+    - id: switch
+      version: 1
+    - id: powerMeter
+      version: 1
+    - id: energyMeter
       version: 1
     categories:
     - name: Switch
