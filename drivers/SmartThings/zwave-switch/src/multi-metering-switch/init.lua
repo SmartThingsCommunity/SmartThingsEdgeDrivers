@@ -21,19 +21,22 @@ local Meter = (require "st.zwave.CommandClass.Meter")({version = 3})
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version = 1})
 local Basic = (require "st.zwave.CommandClass.Basic")({version = 1})
+local MULTI_METERING_SWITCH_CONFIGURATION_MAP = require "multi-metering-switch/multi_metering_switch_configurations"
+
+local PARENT_ENDPOINT = 1
 
 local MULTI_METERING_SWITCH_FINGERPRINTS = {
-  {mfr = 0x0086, prod = 0x0003, model = 0x0084, children = 2}, -- Aeotec Nano Switch 1
-  {mfr = 0x0086, prod = 0x0103, model = 0x0084, children = 2}, -- Aeotec Nano Switch 1
-  {mfr = 0x0086, prod = 0x0203, model = 0x0084, children = 2}, -- AU Aeotec Nano Switch 1
-  {mfr = 0x027A, prod = 0xA000, model = 0xA003, children = 2}, -- Zooz Double Plug 1
-  {mfr = 0x027A, prod = 0xA000, model = 0xA004, children = 5}, -- Zooz ZEN Power Strip 1
-  {mfr = 0x015F, prod = 0x3102, model = 0x0201, children = 1}, -- WYFY Touch 1-button Switch
-  {mfr = 0x015F, prod = 0x3102, model = 0x0202, children = 2}, -- WYFY Touch 2-button Switch
-  {mfr = 0x015F, prod = 0x3102, model = 0x0204, children = 4}, -- WYFY Touch 4-button Switch
-  {mfr = 0x015F, prod = 0x3111, model = 0x5102, children = 1}, -- WYFY Touch 1-button Switch
-  {mfr = 0x015F, prod = 0x3121, model = 0x5102, children = 2}, -- WYFY Touch 2-button Switch
-  {mfr = 0x015F, prod = 0x3141, model = 0x5102, children = 4}, -- WYFY Touch 4-button Switch
+  {mfr = 0x0086, prod = 0x0003, model = 0x0084}, -- Aeotec Nano Switch 1
+  {mfr = 0x0086, prod = 0x0103, model = 0x0084}, -- Aeotec Nano Switch 1
+  {mfr = 0x0086, prod = 0x0203, model = 0x0084}, -- AU Aeotec Nano Switch 1
+  {mfr = 0x027A, prod = 0xA000, model = 0xA003}, -- Zooz Double Plug 1
+  {mfr = 0x027A, prod = 0xA000, model = 0xA004}, -- Zooz ZEN Power Strip 1
+  {mfr = 0x015F, prod = 0x3102, model = 0x0201}, -- WYFY Touch 1-button Switch
+  {mfr = 0x015F, prod = 0x3102, model = 0x0202}, -- WYFY Touch 2-button Switch
+  {mfr = 0x015F, prod = 0x3102, model = 0x0204}, -- WYFY Touch 4-button Switch
+  {mfr = 0x015F, prod = 0x3111, model = 0x5102}, -- WYFY Touch 1-button Switch
+  {mfr = 0x015F, prod = 0x3121, model = 0x5102}, -- WYFY Touch 2-button Switch
+  {mfr = 0x015F, prod = 0x3141, model = 0x5102}, -- WYFY Touch 4-button Switch
 }
 
 local function can_handle_multi_metering_switch(opts, driver, device, ...)
@@ -45,32 +48,16 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
-local function get_children_amount(device)
-  for _, fingerprint in ipairs(MULTI_METERING_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return fingerprint.children
-    end
-  end
-end
-
-local function get_profile(device)
-  if device:get_manufacturer() == 0x015F then
-    return "switch-binary"
-  else
-    return "metering-switch"
-  end
-end
-
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-    local children_amount = get_children_amount(device)
+    local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
     for i = 2, children_amount+1 do
       local device_name_without_number = string.sub(driver.label, 0,-2)
       local name = string.format("%s%d", device_name_without_number, i)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
-        profile = get_profile(device),
+        profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_device_configuration(device),
         parent_device_id = device.id,
         parent_assigned_child_key = string.format("%02X", i),
         vendor_provided_label = name,
@@ -81,7 +68,7 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  if ep_id == 1 then
+  if ep_id == PARENT_ENDPOINT then
     return parent
   else
     return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
@@ -89,7 +76,7 @@ local function find_child(parent, ep_id)
 end
 
 local function component_to_endpoint(device, component)
-  return 1
+  return PARENT_ENDPOINT
 end
 
 local function device_init(driver, device, event)
@@ -114,7 +101,7 @@ end
 local function switch_binary_report_handler(driver, device, cmd)
   local event
   local newValue
-  if(cmd.args.target_value ~= nil) then
+  if (cmd.args.target_value ~= nil) then
     newValue = cmd.args.target_value
   elseif cmd.args.value ~= nil then
     newValue = cmd.args.value
