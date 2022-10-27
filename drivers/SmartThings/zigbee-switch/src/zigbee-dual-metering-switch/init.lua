@@ -37,13 +37,11 @@ local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
 end
 
 local function do_refresh(self, device)
-  for endpoint = ENDPOINTS.parent, ENDPOINTS.child do
-    device:send(OnOff.attributes.OnOff:read(device):to_endpoint(endpoint))
-    device:send(SimpleMetering.attributes.Divisor:read(device):to_endpoint(endpoint))
-    device:send(SimpleMetering.attributes.Multiplier:read(device):to_endpoint(endpoint))
-    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device):to_endpoint(endpoint))
-    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device):to_endpoint(endpoint))
-  end
+  device:send(OnOff.attributes.OnOff:read(device))
+  device:send(SimpleMetering.attributes.Divisor:read(device))
+  device:send(SimpleMetering.attributes.Multiplier:read(device))
+  device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
+  device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
 end
 
 local function device_added(driver, device, event)
@@ -63,7 +61,7 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  if ep_id == 1 then
+  if ep_id == ENDPOINTS.parent then
     return parent
   else
     return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
