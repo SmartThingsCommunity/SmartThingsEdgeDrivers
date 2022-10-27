@@ -75,6 +75,22 @@ local function get_child_metadata(device, endpoint)
   }
 end
 
+local function do_refresh(driver, device, cmd)
+  local component = cmd and cmd.component and cmd.component or "main"
+  if device:supports_capability(capabilities.switch) then
+    device:send_to_component(SwitchBinary:Get({}), component)
+  end
+  if device:supports_capability(capabilities.powerMeter) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), component)
+  end
+  if device:supports_capability(capabilities.energyMeter) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
+  end
+  if device:supports_capability(capabilities.temperatureMeasurement) then
+    device:send_to_component(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }), component)
+  end
+end
+
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     driver:try_create_device(get_child_metadata(device, CHILD_SWITCH_EP))
@@ -82,21 +98,7 @@ local function device_added(driver, device)
       driver:try_create_device(get_child_metadata(device, CHILD_TEMP_SENSOR_EP))
     end
   end
-end
-
-local function do_refresh(driver, device, cmd)
-  if device:supports_capability(capabilities.switch) then
-    device:send_to_component(SwitchBinary:Get({}), cmd.component)
-  end
-  if device:supports_capability(capabilities.powerMeter) then
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), cmd.component)
-  end
-  if device:supports_capability(capabilities.energyMeter) then
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), cmd.component)
-  end
-  if device:supports_capability(capabilities.temperatureMeasurement) then
-    device:send_to_component(SensorMultilevel:Get({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE }), cmd.component)
-  end
+  do_refresh(driver, device)
 end
 
 local function switch_report_handler(driver, device, cmd)
