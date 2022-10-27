@@ -38,6 +38,18 @@ zwaveManufacturer:
     productType: 0x0501
     productId: 0x0F06
     deviceProfileName: metering-switch
+  - id: 0208/0101/0005
+    deviceLabel: Hank SO01 smart plug
+    manufacturerId: 0x0208
+    productType: 0x0101
+    productId: 0x0005
+    deviceProfileName: metering-switch
+  - id: 0208/0101/000A
+    deviceLabel:  Hank SO03 smart plug
+    manufacturerId: 0x0208
+    productType: 0x0101
+    productId: 0x000A
+    deviceProfileName: metering-switch
   - id: "Eaton/0000"
     deviceLabel: Eaton Dimmer Switch
     manufacturerId: 0x001A
