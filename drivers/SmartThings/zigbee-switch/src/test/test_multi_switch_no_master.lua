@@ -67,7 +67,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "receive",
-      message = {mock_parent_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+      message = { mock_parent_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}} }
     },
     {
       channel = "zigbee",
@@ -89,7 +89,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "receive",
-      message = {mock_first_child.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+      message = { mock_first_child.id, {capability = "refresh", component = "main", command = "refresh", args = {}} }
     },
     {
       channel = "zigbee",
