@@ -96,7 +96,7 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  if ep_id == 1 then
+  if ep_id == ENDPOINTS.parent then
     return parent
   else
     return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
