@@ -147,7 +147,7 @@ local function power_energy_meter_report_handler(self, device, cmd)
 end
 
 local multi_metering_switch = {
-  NAME = "Multi Metering Switch",
+  NAME = "multi metering switch",
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
