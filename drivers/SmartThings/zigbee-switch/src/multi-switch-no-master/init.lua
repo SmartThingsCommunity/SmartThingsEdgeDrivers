@@ -16,8 +16,6 @@ local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 
-local PARENT_ENDPOINT = 1
-
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
   { mfr = "DAWON_DNS", model = "PM-S240R-ZB", children = 1 },
@@ -89,21 +87,12 @@ local function device_added(driver, device, event)
 end
 
 local function find_child(parent, ep_id)
-  if ep_id == PARENT_ENDPOINT then
-    return parent
-  else
-    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-  end
-end
-
-local function component_to_endpoint(device, component)
-  return PARENT_ENDPOINT
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
 local function device_init(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
-    device:set_component_to_endpoint_fn(component_to_endpoint)
   end
 end
 
