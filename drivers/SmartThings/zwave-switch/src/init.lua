@@ -119,7 +119,8 @@ local driver_template = {
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
-    require("zooz-zen-30-dimmer-relay")
+    require("zooz-zen-30-dimmer-relay"),
+    require("zooz-switch")
   },
   lifecycle_handlers = {
     init = device_init,
