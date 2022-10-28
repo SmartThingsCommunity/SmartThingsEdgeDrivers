@@ -150,7 +150,9 @@ local programming_event_handler = function(driver, device, zb_mess)
       lock_utils.lock_codes_event(device, {})
     else
       -- One code deleted
-      lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
+      if (lock_utils.get_lock_codes(device)[code_slot] ~= nil) then
+        lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
+      end
     end
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_ADDED or
           zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
