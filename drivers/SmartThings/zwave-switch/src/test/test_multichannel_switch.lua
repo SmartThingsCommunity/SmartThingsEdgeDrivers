@@ -18,7 +18,6 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4,strict=true})
-local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
 -- supported command classes
@@ -54,24 +53,24 @@ local switch_endpoints = {
 
 local mock_parent = test.mock_device.build_test_zwave_device({
   label = "Z-Wave Switch Multichannel",
-  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  profile = t_utils.get_profile_definition("multichannel-switch-binary.yml"),
   zwave_endpoints = switch_endpoints
 })
 
 local mock_child = test.mock_device.build_test_child_device({
-  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  profile = t_utils.get_profile_definition("multichannel-switch-binary.yml"),
   parent_device_id = mock_parent.id,
   parent_assigned_child_key = string.format("%02X", 1)
 })
 
 local mock_child_2 = test.mock_device.build_test_child_device({
-  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  profile = t_utils.get_profile_definition("multichannel-switch-binary.yml"),
   parent_device_id = mock_parent.id,
   parent_assigned_child_key = string.format("%02X", 2)
 })
 
 local mock_child_3 = test.mock_device.build_test_child_device({
-  profile = t_utils.get_profile_definition("switch-level.yml"),
+  profile = t_utils.get_profile_definition("multichannel-switch-level.yml"),
   parent_device_id = mock_parent.id,
   parent_assigned_child_key = string.format("%02X", 3)
 })

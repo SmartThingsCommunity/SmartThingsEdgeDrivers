@@ -52,7 +52,7 @@ end
 
 --- Find child function
 ---
---- @param device st.zwave.Device
+--- @param device st.Device|st.zwave.Device
 --- @param src_channel number
 local find_child = function(device, src_channel)
   if src_channel == 0 then
@@ -67,11 +67,11 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
-  if (device.network_type == st_device.NETWORK_TYPE_ZWAVE) then
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
 
-    if device:is_cc_supported(cc.MULTI_CHANNEL) then
+    if device:supports_capability(capabilities.zwMultichannel) then
       device:set_find_child(find_child)
     end
   end
@@ -131,11 +131,9 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
-      device:is_cc_supported(cc.MULTI_CHANNEL) then
+    device:supports_capability(capabilities.zwMultichannel) then
     for index, endpoint in pairs(device.zwave_endpoints) do
-      if index > 1 then
-        driver:try_create_device(prepareMetadata(device, index - 1, endpoint.command_classes))
-      end
+      driver:try_create_device(prepareMetadata(device, index, endpoint.command_classes))
     end
   end
   device:refresh()
@@ -154,7 +152,8 @@ local driver_template = {
     capabilities.colorControl,
     capabilities.button,
     capabilities.temperatureMeasurement,
-    capabilities.relativeHumidityMeasurement
+    capabilities.relativeHumidityMeasurement,
+    capabilities.zwMultichannel
   },
   sub_drivers = {
     require("eaton-accessory-dimmer"),
@@ -167,7 +166,7 @@ local driver_template = {
     require("dawon-wall-smart-switch"),
     require("zooz-power-strip"),
     require("aeon-smart-strip"),
-    require("qubino-switches"),
+    --require("qubino-switches"),
     require("fibaro-double-switch"),
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
