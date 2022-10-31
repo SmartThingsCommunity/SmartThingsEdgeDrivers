@@ -8,7 +8,7 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
-    configuration:
+    config:
       values:
         - key: "temperature.value"
           range: [-20, 100]

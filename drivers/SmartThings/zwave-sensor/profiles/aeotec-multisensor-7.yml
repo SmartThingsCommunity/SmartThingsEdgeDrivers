@@ -6,7 +6,7 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
-    configuration:
+    config:
       values:
         - key: "temperature.value"
           range: [-20, 100]
@@ -31,7 +31,7 @@ preferences:
     title: "Motion Sensor Delay Time"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         20: "20 seconds"
         30: "30 seconds"
@@ -45,7 +45,7 @@ preferences:
     title: "Motion Sensor Sensitivity"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         11: "maximum"
         6: "normal"
@@ -57,7 +57,7 @@ preferences:
     description: "How often the device should report"
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         60: "1 minute"
         120: "2 minutes"
