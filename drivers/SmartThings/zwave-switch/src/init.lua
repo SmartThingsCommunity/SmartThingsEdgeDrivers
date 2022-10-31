@@ -166,7 +166,7 @@ local driver_template = {
     require("dawon-wall-smart-switch"),
     require("zooz-power-strip"),
     require("aeon-smart-strip"),
-    --require("qubino-switches"),
+    require("qubino-switches"),
     require("fibaro-double-switch"),
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
