@@ -6,7 +6,7 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
-    configuration:
+    config:
       values:
         - key: "heatingSetpoint.value"
           range: [ 5, 30 ]
