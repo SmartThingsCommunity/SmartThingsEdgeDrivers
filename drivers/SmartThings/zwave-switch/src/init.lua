@@ -120,7 +120,7 @@ local driver_template = {
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
     require("zooz-zen-30-dimmer-relay"),
-    require("zooz-switch")
+    --require("zooz-switch")
   },
   lifecycle_handlers = {
     init = device_init,

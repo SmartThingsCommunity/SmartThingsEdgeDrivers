@@ -223,7 +223,7 @@ zwaveManufacturer:
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA003
-    deviceProfileName: dual-metering-switch
+    deviceProfileName: metering-switch
   - id: 015F/3102/0201
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
