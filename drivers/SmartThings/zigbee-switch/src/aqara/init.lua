@@ -4,23 +4,23 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 
-local maxPowerPreferenceId = "stse.maxPower"
-local restorePowerStatePreferenceId = "stse.restorePowerState"
-
 local Groups = clusters.Groups
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+
+local MAX_POWER_ID = "stse.maxPower" -- maximum allowable power
+local RESTORE_STATE_ID = "stse.restorePowerState" -- remember previous state
 
 local MFG_CODE = 0x115F
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 
 local PREF_CLUSTER_ID = 0xFCC0
-local PREF_ATTRIBUTE_MAX_POWER_ID = 0x020B
-local PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID = 0x0201
+local PREF_MAX_POWER_ATTR_ID = 0x020B
+local PREF_RESTORE_STATE_ATTR_ID = 0x0201
 
-local PREF_VALUE_MAX_POWER_DEFAULT = 23
-local PREF_VALUE_RESTORE_POWER_STATE_DEFAULT = false
+local PREF_MAX_POWER_DEFAULT_VALUE = 23
+local PREF_RESTORE_STATE_DEFAULT_VALUE = false
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 
@@ -28,7 +28,9 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" }
 }
 
-local max_power_table = {
+-- Range from 100 to 2300 (100w ~ 2300w)
+-- Data type conversion table
+local max_power_data_type_table = {
   SinglePrecisionFloat(0, 6, 0.5625),
   SinglePrecisionFloat(0, 7, 0.5625),
   SinglePrecisionFloat(0, 8, 0.171875),
@@ -87,25 +89,25 @@ local function device_added(driver, device)
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
 
   -- Set default value to the device.
-  write_pref_attribute(device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_MAX_POWER_ID, data_types.SinglePrecisionFloat,
-    max_power_table[PREF_VALUE_MAX_POWER_DEFAULT])
-  write_pref_attribute(device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID, data_types.Boolean,
-    PREF_VALUE_RESTORE_POWER_STATE_DEFAULT)
+  write_pref_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID, data_types.SinglePrecisionFloat,
+    max_power_data_type_table[PREF_MAX_POWER_DEFAULT_VALUE])
+  write_pref_attribute(device, PREF_CLUSTER_ID, PREF_RESTORE_STATE_ATTR_ID, data_types.Boolean,
+    PREF_RESTORE_STATE_DEFAULT_VALUE)
 end
 
 local function device_info_changed(driver, device, event, args)
-  local maxPowerPreferenceValue = device.preferences[maxPowerPreferenceId]
-  local restorePowerStatePreferenceValue = device.preferences[restorePowerStatePreferenceId]
+  local maxPowerPreferenceValue = device.preferences[MAX_POWER_ID]
+  local restorePowerStatePreferenceValue = device.preferences[RESTORE_STATE_ID]
 
   if device.preferences ~= nil then
-    if maxPowerPreferenceValue ~= args.old_st_store.preferences[maxPowerPreferenceId] then
+    if maxPowerPreferenceValue ~= args.old_st_store.preferences[MAX_POWER_ID] then
       local value = tonumber(maxPowerPreferenceValue)
-      write_pref_attribute(device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_MAX_POWER_ID, data_types.SinglePrecisionFloat,
-        max_power_table[value])
+      write_pref_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID, data_types.SinglePrecisionFloat,
+        max_power_data_type_table[value])
     end
 
-    if restorePowerStatePreferenceValue ~= args.old_st_store.preferences[restorePowerStatePreferenceId] then
-      write_pref_attribute(device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID, data_types.Boolean,
+    if restorePowerStatePreferenceValue ~= args.old_st_store.preferences[RESTORE_STATE_ID] then
+      write_pref_attribute(device, PREF_CLUSTER_ID, PREF_RESTORE_STATE_ATTR_ID, data_types.Boolean,
         restorePowerStatePreferenceValue)
     end
   end

@@ -33,8 +33,10 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 
 local PREF_CLUSTER_ID = 0xFCC0
-local PREF_ATTRIBUTE_MAX_POWER_ID = 0x020B
-local PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID = 0x0201
+local PREF_MAX_POWER_ATTR_ID = 0x020B
+local PREF_RESTORE_STATE_ATTR_ID = 0x0201
+
+local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -89,13 +91,13 @@ test.register_coroutine_test(
     )
 
     test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_MAX_POWER_ID,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
         MFG_CODE,
         data_types.SinglePrecisionFloat,
         SinglePrecisionFloat(0, 11, 0.123046875)) })
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID,
-        PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID, MFG_CODE,
+        PREF_RESTORE_STATE_ATTR_ID, MFG_CODE,
         data_types.Boolean,
         false) })
   end
@@ -191,22 +193,24 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Handle Energy meter",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id,
-        SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 0x15a) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.energyMeter.energy({ value = 0.346, unit = "kWh" }))
-    }
-  }
+  function()
+    local current_time = os.time() - 60 * 20
+    mock_device:set_field(LAST_REPORT_TIME, current_time)
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 60)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.06, unit = "kWh" }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 0.06 }))
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -224,7 +228,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_MAX_POWER_ID,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
         MFG_CODE,
         data_types.SinglePrecisionFloat,
         SinglePrecisionFloat(0, 11, 0.123046875)) })
@@ -233,7 +237,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_ATTRIBUTE_MAX_POWER_ID,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
         MFG_CODE,
         data_types.SinglePrecisionFloat,
         SinglePrecisionFloat(0, 6, 0.5625)) })
@@ -256,7 +260,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID,
-        PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID, MFG_CODE,
+        PREF_RESTORE_STATE_ATTR_ID, MFG_CODE,
         data_types.Boolean,
         true) })
 
@@ -265,7 +269,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PREF_CLUSTER_ID,
-        PREF_ATTRIBUTE_RESTORE_POWER_STATE_ID, MFG_CODE,
+        PREF_RESTORE_STATE_ATTR_ID, MFG_CODE,
         data_types.Boolean,
         false) })
   end
