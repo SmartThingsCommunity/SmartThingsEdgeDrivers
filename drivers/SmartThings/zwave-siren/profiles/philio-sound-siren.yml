@@ -4,7 +4,7 @@ components:
   capabilities:
   - id: alarm
     version: 1
-    configuration:
+    config:
       values:
         - key: "alarm.value"
           enabledValues:
