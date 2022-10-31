@@ -71,7 +71,7 @@ local do_configure = function(self, device)
   device:send(Thermostat.attributes.ThermostatRunningState:configure_reporting(device, 5, 300))
   device:send(FanControl.attributes.FanMode:configure_reporting(device, 5, 300))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
-  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[3]))-- default: { ModeAttribute.off.NAME, ModeAttribute.heat.NAME, ModeAttribute.cool.NAME }
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[3], { visibility = { displayed = false } }))-- default: { ModeAttribute.off.NAME, ModeAttribute.heat.NAME, ModeAttribute.cool.NAME }
 end
 
 local supported_thermostat_modes_handler = function(driver, device, supported_modes)
@@ -83,11 +83,6 @@ local setpoint_limit_handler = function(limit_type)
   return function(driver, device, limit)
     device:set_field(limit_type, limit.value, {persist = true})
   end
-end
-
--- Unrounded conversion function
-local f_to_c = function(fahrenheit)
-  return (fahrenheit - 32) * (5 / 9.0)
 end
 
 -- Set heating setpoint -> wait 2 seconds
@@ -135,7 +130,7 @@ end
 local set_cooling_setpoint = function(driver, device, command)
   local value = command.args.setpoint
   if value >= 40 then -- we got a command in fahrenheit
-    value = f_to_c(value)
+    value = utils.f_to_c(value)
   end
   value = utils.clamp_value(value,
     device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
@@ -155,7 +150,7 @@ end
 local set_heating_setpoint = function(driver, device, command)
   local value = command.args.setpoint
   if value >= 40 then -- we got a command in fahrenheit
-    value = f_to_c(value)
+    value = utils.f_to_c(value)
   end
   value = utils.clamp_value(value,
     device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
@@ -173,7 +168,7 @@ local thermostat_mode_handler = function(driver, device, thermostat_mode)
   if THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value] then
     local current_supported_modes = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.supportedThermostatModes.NAME)
     if current_supported_modes then
-      device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]({data = {supportedThermostatModes = current_supported_modes}}))
+      device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]({data = {supportedThermostatModes = current_supported_modes, visibility = { displayed = false } }}))
     else
       device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]())
     end
@@ -184,7 +179,7 @@ end
 local function info_changed(driver, device, event, args)
   local modes_index = tonumber(device.preferences.systemModes)
   local new_supported_modes = SUPPORTED_THERMOSTAT_MODES[modes_index]
-  device:emit_event(ThermostatMode.supportedThermostatModes(new_supported_modes))
+  device:emit_event(ThermostatMode.supportedThermostatModes(new_supported_modes, { visibility = { displayed = false } }))
 end
 
 local zenwithin_thermostat = {

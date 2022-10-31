@@ -19,6 +19,8 @@ VERSION = "version"
 ARCHIVEHASH = "archiveHash"
 PACKAGEKEY = "packageKey"
 
+BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
+
 print(ENVIRONMENT_URL)
 
 # Make sure we're running in the root of the git directory
@@ -75,6 +77,9 @@ for driver in drivers:
   with open(driver+"/config.yml", 'r') as config_file:
     package_key = yaml.safe_load(config_file)["packageKey"]
     print(package_key)
+  if package_key == "bose" and BOSE_APPKEY:
+    # write the app key into a app_key.lua (overwrite if exists already)
+    subprocess.run(["touch -a ./src/app_key.lua && echo \'return \"" + BOSE_APPKEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
   subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
   with open("edge.zip", 'rb') as driver_package:
     data = driver_package.read()

@@ -1,0 +1,38 @@
+matterGeneric:
+  - id: "matter/contact/sensor"
+    deviceLabel: Matter Contact Sensor
+    deviceTypes:
+      - id: 0x0015 # Contact Sensor
+    deviceProfileName: contact-battery
+  - id: "matter/light/sensor"
+    deviceLabel: Matter Light Sensor
+    deviceTypes:
+      - id: 0x0106 # Light Sensor
+    deviceProfileName: illuminance-battery
+  - id: "matter/temperature/sensor"
+    deviceLabel: Matter Temperature Sensor
+    deviceTypes:
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: temperature-battery
+  - id: "matter/humidity/sensor"
+    deviceLabel: Matter Humidity Sensor
+    deviceTypes:
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: humidity-battery
+  - id: "matter/temperature-humidity/sensor"
+    deviceLabel: Matter Humidity Sensor
+    deviceTypes:
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: temperature-humidity-battery
+  - id: "matter/motion-illuminance"
+    deviceLabel: Matter Motion/Illuminance Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+      - id: 0x0106 # Light Sensor
+    deviceProfileName: matter-motion-battery-illuminance
+  - id: "matter/motion-sensor"
+    deviceLabel: Matter Motion Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+    deviceProfileName: matter-motion-battery

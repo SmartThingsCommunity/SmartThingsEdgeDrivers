@@ -361,7 +361,7 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                 mock_device:generate_test_message(
                     "main",
-                    capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 25, unit = "C"})
+                    capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 25.0, unit = "C"})
                 )
             )
 
@@ -509,7 +509,7 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message(
                             "main",
-                            capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15, unit = "C"})
+                            capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15.0, unit = "C"})
                     ))
 
             test.socket.zwave:__expect_send(
@@ -600,7 +600,7 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message(
                             "main",
-                            capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15, unit = "C"})
+                            capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 15.0, unit = "C"})
                     ))
 
             test.socket.zwave:__expect_send(

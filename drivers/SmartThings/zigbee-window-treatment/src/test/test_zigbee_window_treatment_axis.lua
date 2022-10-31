@@ -512,13 +512,9 @@ test.register_coroutine_test(
     function()
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.socket.zigbee:__expect_send({
         mock_device.id,
         Basic.attributes.SWBuildID:read(mock_device)
@@ -558,13 +554,9 @@ test.register_coroutine_test(
     function()
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.socket.zigbee:__expect_send({
         mock_device.id,
         Basic.attributes.SWBuildID:read(mock_device)
@@ -597,13 +589,9 @@ test.register_coroutine_test(
     function()
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.socket.zigbee:__expect_send({
         mock_device.id,
         Basic.attributes.SWBuildID:read(mock_device)
