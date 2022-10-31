@@ -16,7 +16,7 @@ components:
     version: 1
   - id: powerSource
     version: 1
-    configuration:
+    config:
       values:
         - key: "powerSource.value"
           enabledValues:
