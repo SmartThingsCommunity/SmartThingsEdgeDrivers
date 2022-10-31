@@ -8,7 +8,7 @@ components:
     version: 1
   - id: colorTemperature
     version: 1
-    configuration:
+    config:
       values:
         - key: "colorTemperature.value"
           range: [ 2700, 6500 ]
