@@ -288,18 +288,18 @@ zwaveManufacturer:
     productType: 0x0005
     productId: 0x0001
     deviceProfileName: lock-battery
-# zwaveGeneric:
-#   - id: "GenericZwaveLock"
-#     deviceLabel: Door Lock
-#     commandClasses:
-#       supported:
-#         - 0x62 # door lock
-#         - 0x63 # user code
-#     deviceProfileName: base-lock
-#   - id: "GenericZwaveLock2"
-#     deviceLabel: Door Lock
-#     commandClasses:
-#       supported:
-#         - 0x62 # door lock
-#         - 0x80 # battery
-#     deviceProfileName: lock-battery
+zwaveGeneric:
+  - id: "GenericZwaveLock"
+    deviceLabel: Door Lock
+    commandClasses:
+      supported:
+        - 0x62 # door lock
+        - 0x63 # user code
+    deviceProfileName: base-lock
+  - id: "GenericZwaveLock2"
+    deviceLabel: Door Lock
+    commandClasses:
+      supported:
+        - 0x62 # door lock
+        - 0x80 # battery
+    deviceProfileName: lock-battery

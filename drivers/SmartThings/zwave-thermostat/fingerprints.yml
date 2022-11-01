@@ -86,24 +86,24 @@ zwaveManufacturer:
 #     manufacturerId: 0x0002
 #     productType: 0x0005
 #     deviceProfileName: thermostat-heating-battery
-# zwaveGeneric:
-#   - id: "GenericBatteryThermostat"
-#     deviceLabel: Z-Wave Battery Thermostat
-#     commandClasses:
-#       supported:
-#         - 0x43
-#         - 0x40
-#         - 0x44
-#         - 0x31
-#         - 0x80
-#     deviceProfileName: base-thermostat
-#   - id: "GenericThermostat"
-#     deviceLabel: Z-Wave Thermostat
-#     commandClasses:
-#       supported:
-#         - 0x43
-#         - 0x40
-#         - 0x44
-#         - 0x31
-#     deviceProfileName: base-thermostat-without-battery
+zwaveGeneric:
+  - id: "GenericBatteryThermostat"
+    deviceLabel: Z-Wave Battery Thermostat
+    commandClasses:
+      supported:
+        - 0x43
+        - 0x40
+        - 0x44
+        - 0x31
+        - 0x80
+    deviceProfileName: base-thermostat
+  - id: "GenericThermostat"
+    deviceLabel: Z-Wave Thermostat
+    commandClasses:
+      supported:
+        - 0x43
+        - 0x40
+        - 0x44
+        - 0x31
+    deviceProfileName: base-thermostat-without-battery
 
