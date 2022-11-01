@@ -451,11 +451,11 @@ zwaveManufacturer:
 #     manufacturerId: 0x0371
 #     productId: 0x0018
 #     deviceProfileName: aeotec-multisensor-7
-#   - id: "aeon/multisensor"
-#     deviceLabel: Aeon Multipurpose Sensor
-#     manufacturerId: 0x0086
-#     productId: 0x0005
-#     deviceProfileName: motion-battery-temperature-illuminance-humidity
+  - id: "aeon/multisensor"
+    deviceLabel: Aeon Multipurpose Sensor
+    manufacturerId: 0x0086
+    productId: 0x0005
+    deviceProfileName: motion-battery-temperature-illuminance-humidity
   - id: 021F/0003/0085
     deviceLabel: Dome Water Leak Sensor
     manufacturerId: 0x021F
@@ -503,11 +503,11 @@ zwaveManufacturer:
     productType: 0x7000
     productId: 0xE002
     deviceProfileName: base-water
-#   - id: 010F/0800
-#     deviceLabel: Fibaro Motion Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0800
-#     deviceProfileName: motion-battery-temperature-illuminance-acceleration
+  - id: 010F/0800
+    deviceLabel: Fibaro Motion Sensor
+    manufacturerId: 0x010F
+    productType: 0x0800
+    deviceProfileName: motion-battery-temperature-illuminance-acceleration
   - id: 0084/0063/010C
     deviceLabel: SmartThings Water Leak Sensor
     manufacturerId: 0x0084
@@ -537,20 +537,20 @@ zwaveManufacturer:
     productType: 0x0000
     productId: 0x0001
     deviceProfileName: base-water
-# zwaveGeneric:
-#   - id: "GenericSensorAlarm"
-#     deviceLabel: Z-Wave Sensor
-#     genericType: 0xA1 # GENERIC_TYPE_SENSOR_ALARM
-#     deviceProfileName: generic-sensor
-#   - id: "GenericSensorMultilevel"
-#     deviceLabel: Z-Wave Sensor
-#     genericType: 0x21 # GENERIC_TYPE_SENSOR_MULTILEVEL
-#     deviceProfileName: generic-sensor
-#   - id: "GenericSensorBinary"
-#     deviceLabel: Z-Wave Sensor
-#     genericType: 0x20 # GENERIC_TYPE_SENSOR_BINARY
-#     deviceProfileName: generic-sensor
-#   - id: "GenericSensorNotification"
-#     deviceLabel: Z-Wave Sensor
-#     genericType: 0x07 # GENERIC_TYPE_SENSOR_NOTIFICATION
-#     deviceProfileName: generic-sensor
+zwaveGeneric:
+  - id: "GenericSensorAlarm"
+    deviceLabel: Z-Wave Sensor
+    genericType: 0xA1 # GENERIC_TYPE_SENSOR_ALARM
+    deviceProfileName: generic-sensor
+  - id: "GenericSensorMultilevel"
+    deviceLabel: Z-Wave Sensor
+    genericType: 0x21 # GENERIC_TYPE_SENSOR_MULTILEVEL
+    deviceProfileName: generic-sensor
+  - id: "GenericSensorBinary"
+    deviceLabel: Z-Wave Sensor
+    genericType: 0x20 # GENERIC_TYPE_SENSOR_BINARY
+    deviceProfileName: generic-sensor
+  - id: "GenericSensorNotification"
+    deviceLabel: Z-Wave Sensor
+    genericType: 0x07 # GENERIC_TYPE_SENSOR_NOTIFICATION
+    deviceProfileName: generic-sensor

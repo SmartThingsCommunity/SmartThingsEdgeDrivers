@@ -6,12 +6,18 @@ components:
         version: 1
       - id: switchLevel
         version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+  - id: LEDColorConfiguration
+    capabilities:
       - id: colorControl
         version: 1
       - id: refresh
         version: 1
     categories:
-      - name: Switch
+      - name: Light
 preferences:
   - name: "dimmingSpeed"
     title: "Dimming Speed"

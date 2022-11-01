@@ -885,33 +885,33 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0102
 #     deviceProfileName: fibaro-dimmer-2
-# zwaveGeneric:
-#   - id: "GenericSwitch/1"
-#     deviceLabel: Switch
-#     commandClasses:
-#       supported:
-#         - 0x25 # binary switch
-#     deviceProfileName: switch-binary
-#   - id: "GenericSwitch/2"
-#     deviceLabel: Switch
-#     genericType: 0x10 # GENERIC_TYPE_SWITCH_BINARY
-#     deviceProfileName: switch-binary
-#   - id: "GenericSwitch/3"
-#     deviceLabel: Dimmer Switch
-#     genericType: 0x02 # GENERIC_TYPE_SWITCH_BINARY
-#     deviceProfileName: switch-binary
-#   - id: "GenericDimmerSwitch/1"
-#     deviceLabel: Dimmer Switch
-#     commandClasses:
-#       supported:
-#         - 0x26 # switch multilevel
-#     deviceProfileName: switch-level
-#   - id: "GenericDimmerSwitch/2"
-#     deviceLabel: Dimmer Switch
-#     genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
-#     deviceProfileName: switch-level
-# zwaveThing :
-#   - id: SmartThings/Z-WaveThing
-#     deviceLabel: Z-Wave Device
-#     deviceProfileName: switch-level
-#     isJoinable: true
+zwaveGeneric:
+  - id: "GenericSwitch/1"
+    deviceLabel: Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+    deviceProfileName: switch-binary
+  - id: "GenericSwitch/2"
+    deviceLabel: Switch
+    genericType: 0x10 # GENERIC_TYPE_SWITCH_BINARY
+    deviceProfileName: switch-binary
+  - id: "GenericSwitch/3"
+    deviceLabel: Dimmer Switch
+    genericType: 0x02 # GENERIC_TYPE_SWITCH_BINARY
+    deviceProfileName: switch-binary
+  - id: "GenericDimmerSwitch/1"
+    deviceLabel: Dimmer Switch
+    commandClasses:
+      supported:
+        - 0x26 # switch multilevel
+    deviceProfileName: switch-level
+  - id: "GenericDimmerSwitch/2"
+    deviceLabel: Dimmer Switch
+    genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
+    deviceProfileName: switch-level
+zwaveThing :
+  - id: SmartThings/Z-WaveThing
+    deviceLabel: Z-Wave Device
+    deviceProfileName: switch-level
+    isJoinable: true

@@ -25,6 +25,7 @@ local LED_GENERIC_SATURATION = 100
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_PRODUCT_TYPE = 0x0003
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function huePercentToZwaveValue(value)
   if value <= 2 then
@@ -132,12 +133,12 @@ do
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
+        message = mock_inovelli_dimmer:generate_test_message(LED_BAR_COMPONENT_NAME, capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
+        message = mock_inovelli_dimmer:generate_test_message(LED_BAR_COMPONENT_NAME, capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
       }
     }
   )

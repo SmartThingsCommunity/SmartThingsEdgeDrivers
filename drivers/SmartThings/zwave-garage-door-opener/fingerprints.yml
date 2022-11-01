@@ -16,23 +16,23 @@ zwaveManufacturer:
 #     manufacturerId: 0x0084
 #     productType: 0x0453
 #     deviceProfileName: base-garage-door
-# zwaveGeneric:
-#   - id: "GenericGarageDoor"
-#     deviceLabel: Garage Door
-#     commandClasses:
-#       supported:
-#         - 0x66
-#         - 0x98
-#         - 0x71
-#         - 0x72
-#     deviceProfileName: base-garage-door
-#   - id: "GenericGarageDoor2"
-#     deviceLabel: Garage Door
-#     genericType: 0x40
-#     specificType:
-#       - 0x06
-#       - 0x07
-#     commandClasses:
-#       supported:
-#         - 0x98
-#     deviceProfileName: base-garage-door
+zwaveGeneric:
+  - id: "GenericGarageDoor"
+    deviceLabel: Garage Door
+    commandClasses:
+      supported:
+        - 0x66
+        - 0x98
+        - 0x71
+        - 0x72
+    deviceProfileName: base-garage-door
+  - id: "GenericGarageDoor2"
+    deviceLabel: Garage Door
+    genericType: 0x40
+    specificType:
+      - 0x06
+      - 0x07
+    commandClasses:
+      supported:
+        - 0x98
+    deviceProfileName: base-garage-door
