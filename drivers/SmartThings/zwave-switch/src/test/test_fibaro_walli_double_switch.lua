@@ -518,7 +518,7 @@ test.register_coroutine_test(
       mock_parent.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -648,7 +648,7 @@ test.register_coroutine_test(
       mock_parent.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,
