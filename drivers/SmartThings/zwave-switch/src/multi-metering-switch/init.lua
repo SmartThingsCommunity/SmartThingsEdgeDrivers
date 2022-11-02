@@ -18,8 +18,10 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({version = 3})
+--- @type st.zwave.CommandClass.Basic
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 --- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version = 1})
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version = 2, strict = true })
 local MULTI_METERING_SWITCH_CONFIGURATION_MAP = require "multi-metering-switch/multi_metering_switch_configurations"
 
 local PARENT_ENDPOINT = 1
@@ -28,7 +30,6 @@ local MULTI_METERING_SWITCH_FINGERPRINTS = {
   {mfr = 0x0086, prod = 0x0003, model = 0x0084}, -- Aeotec Nano Switch 1
   {mfr = 0x0086, prod = 0x0103, model = 0x0084}, -- Aeotec Nano Switch 1
   {mfr = 0x0086, prod = 0x0203, model = 0x0084}, -- AU Aeotec Nano Switch 1
-  {mfr = 0x027A, prod = 0xA000, model = 0xA003}, -- Zooz Double Plug 1
   {mfr = 0x027A, prod = 0xA000, model = 0xA004}, -- Zooz ZEN Power Strip 1
   {mfr = 0x015F, prod = 0x3102, model = 0x0201}, -- WYFY Touch 1-button Switch
   {mfr = 0x015F, prod = 0x3102, model = 0x0202}, -- WYFY Touch 2-button Switch
@@ -45,17 +46,6 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
     end
   end
   return false
-end
-
-local function do_refresh(driver, device, command)
-  local component = command and command.component and command.component or "main"
-  if device:is_cc_supported(cc.SWITCH_BINARY) then
-    device:send_to_component(SwitchBinary:Get({}), component)
-  end
-  if device:supports_capability_by_id(capabilities.powerMeter.ID) or device:supports_capability_by_id(capabilities.energyMeter.ID) then
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), component)
-    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
-  end
 end
 
 local function device_added(driver, device, event)
@@ -75,7 +65,7 @@ local function device_added(driver, device, event)
       driver:try_create_device(metadata)
     end
   end
-  do_refresh(driver, device)
+  device:refresh()
 end
 
 local function find_child(parent, ep_id)
@@ -87,7 +77,7 @@ local function find_child(parent, ep_id)
 end
 
 local function component_to_endpoint(device, component)
-  return PARENT_ENDPOINT
+  return { PARENT_ENDPOINT }
 end
 
 local function device_init(driver, device, event)
@@ -97,49 +87,16 @@ local function device_init(driver, device, event)
   end
 end
 
-local function switch_binary_report_handler(driver, device, cmd)
-  local event
-  local newValue
-  if (cmd.args.target_value ~= nil) then
-    newValue = cmd.args.target_value
-  elseif cmd.args.value ~= nil then
-    newValue = cmd.args.value
+local function do_refresh(driver, device, command)
+  local component = command and command.component and command.component or "main"
+  if device:is_cc_supported(cc.SWITCH_BINARY) then
+    device:send_to_component(SwitchBinary:Get({}), component)
+  elseif device:is_cc_supported(cc.BASIC) then
+    device:send_to_component(Basic:Get({}), component)
   end
-  
-  if newValue ~= nil and cmd.src_channel > 0 then
-    if newValue == SwitchBinary.value.OFF_DISABLE then
-      event = capabilities.switch.switch.off()
-    else
-      event = capabilities.switch.switch.on()
-    end
-    device:emit_event_for_endpoint(cmd.src_channel, event)
-  end
-end
-
-local map_unit = {
-  [Meter.scale.electric_meter.WATTS] = "W",
-  [Meter.scale.electric_meter.KILOWATT_HOURS] = "kWh"
-}
-
-local map_scale_to_capability = {
-  [Meter.scale.electric_meter.WATTS] = capabilities.powerMeter.power,
-  [Meter.scale.electric_meter.KILOWATT_HOURS] = capabilities.energyMeter.energy,
-}
-
-local function power_energy_meter_report_handler(self, device, cmd)
-  local supportedUnit = map_unit[cmd.args.scale]
-  
-  if cmd.src_channel > 0 and supportedUnit ~=nil then
-    local event_arguments = {
-      value = cmd.args.meter_value,
-      unit = supportedUnit
-    }
-    
-    local capabilityAttribute = map_scale_to_capability[cmd.args.scale]
-    device:emit_event_for_endpoint(
-      cmd.src_channel,
-      capabilityAttribute(event_arguments)
-    )
+  if device:supports_capability_by_id(capabilities.powerMeter.ID) or device:supports_capability_by_id(capabilities.energyMeter.ID) then
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }), component)
+    device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
   end
 end
 
@@ -148,14 +105,6 @@ local multi_metering_switch = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    }
-  },
-  zwave_handlers = {
-    [cc.SWITCH_BINARY] = {
-      [SwitchBinary.REPORT] = switch_binary_report_handler
-    },
-    [cc.METER] = {
-      [Meter.REPORT] = power_energy_meter_report_handler
     }
   },
   lifecycle_handlers = {

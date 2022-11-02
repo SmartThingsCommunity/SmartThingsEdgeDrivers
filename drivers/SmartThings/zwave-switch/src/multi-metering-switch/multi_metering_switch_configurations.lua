@@ -46,17 +46,6 @@ local devices = {
       child_switch_device_profile = "metering-switch"
     }
   },
-  ZOOZ_DOUBLE_PLUG = {
-    MATCHING_MATRIX = {
-      mfrs = 0x027A,
-      product_types = 0xA000,
-      product_ids = 0xA003,
-      children = 2
-    },
-    CONFIGURATION = {
-      child_switch_device_profile = "metering-switch"
-    }
-  },
   ZOOZ_ZEN_POWER_STRIP = {
     MATCHING_MATRIX = {
       mfrs = 0x027A,

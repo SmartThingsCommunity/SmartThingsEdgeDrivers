@@ -217,7 +217,7 @@ zwaveManufacturer:
     deviceLabel: Aeotec Switch 1
     manufacturerId: 0x0086
     productId: 0x0084
-    deviceProfileName: dual-metering-switch
+    deviceProfileName: metering-switch
   - id: 027A/A000/A003
     deviceLabel: Zooz Switch
     manufacturerId: 0x027A
@@ -235,13 +235,13 @@ zwaveManufacturer:
     manufacturerId: 0x015F
     productType: 0x3102
     productId: 0x0202
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 015F/3102/0204
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3102
     productId: 0x0204
-    deviceProfileName: switch-multicomponent-4
+    deviceProfileName: switch-binary
   - id: 015F/3111/5102
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
@@ -253,13 +253,13 @@ zwaveManufacturer:
     manufacturerId: 0x015F
     productType: 0x3121
     productId: 0x5102
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 015F/3141/5102
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3141
     productId: 0x5102
-    deviceProfileName: switch-multicomponent-4
+    deviceProfileName: switch-binary
   - id: 010F/1C01/1000
     deviceLabel: Fibaro Walli Dimmer Switch
     manufacturerId: 0x010F
@@ -271,7 +271,7 @@ zwaveManufacturer:
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA004
-    deviceProfileName: switch-multicomponent-generic-5
+    deviceProfileName: metering-switch
   - id: 0159/0001/0051
     deviceLabel: Qubino Dimmer
     manufacturerId: 0x0159
