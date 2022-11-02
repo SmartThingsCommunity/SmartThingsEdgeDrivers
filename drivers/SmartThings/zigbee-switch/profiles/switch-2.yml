@@ -1,4 +1,4 @@
-name: multi-switch-no-master-1
+name: switch-2
 components:
   - id: main
     capabilities:
@@ -11,6 +11,12 @@ components:
     categories:
       - name: Switch
   - id: switch1
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch2
     capabilities:
       - id: switch
         version: 1

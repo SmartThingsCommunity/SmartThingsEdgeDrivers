@@ -19,8 +19,7 @@ local capabilities = require "st.capabilities"
 local OnOff = clusters.OnOff
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
-local profile = t_utils.get_profile_definition("multi-switch-no-master.yml")
-
+local profile = t_utils.get_profile_definition("basic-switch.yml")
 
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
   {
@@ -60,50 +59,6 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
-
-test.register_message_test(
-  "Refresh on parent device should read all necessary attributes",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_parent_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}} }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        OnOff.attributes.OnOff:read(mock_parent_device):to_endpoint(0x01)
-      }
-    }
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
-
-test.register_message_test(
-  "Refresh on child device should read all necessary attributes",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_first_child.id, {capability = "refresh", component = "main", command = "refresh", args = {}} }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_parent_device.id,
-        OnOff.attributes.OnOff:read(mock_parent_device):to_endpoint(0x02)
-      }
-    }
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
 
 test.register_message_test(
   "Reported on off status should be handled by parent device: on",
@@ -332,6 +287,5 @@ test.register_message_test(
     }
   }
 )
-
 
 test.run_registered_tests()

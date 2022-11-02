@@ -11,10 +11,7 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local capabilities = require "st.capabilities"
 local st_device = require "st.device"
-local clusters = require "st.zigbee.zcl.clusters"
-local OnOff = clusters.OnOff
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -62,10 +59,6 @@ local function get_children_amount(device)
   end
 end
 
-local function do_refresh(self, device)
-  device:send(OnOff.attributes.OnOff:read(device))
-end
-
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local children_amount = get_children_amount(device)
@@ -75,7 +68,7 @@ local function device_added(driver, device, event)
       local metadata = {
         type = "EDGE_CHILD",
         label = name,
-        profile = "multi-switch-no-master",
+        profile = "basic-switch",
         parent_device_id = device.id,
         parent_assigned_child_key = string.format("%02X", i),
         vendor_provided_label = name,
@@ -83,7 +76,7 @@ local function device_added(driver, device, event)
       driver:try_create_device(metadata)
     end
   end
-  do_refresh(driver, device)
+  device:refresh()
 end
 
 local function find_child(parent, ep_id)
@@ -98,11 +91,6 @@ end
 
 local multi_switch_no_master = {
   NAME = "multi switch no master",
-  capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    }
-  },
   lifecycle_handlers = {
     init = device_init,
     added = device_added
