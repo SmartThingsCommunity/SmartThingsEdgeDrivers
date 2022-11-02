@@ -99,4 +99,3 @@ local multi_switch_no_master = {
 }
 
 return multi_switch_no_master
-  
