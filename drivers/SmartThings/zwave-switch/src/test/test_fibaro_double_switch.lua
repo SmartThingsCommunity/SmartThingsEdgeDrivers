@@ -22,7 +22,6 @@ local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 
--- supported comand classes
 local sensor_endpoints = {
   {
     command_classes = {
@@ -61,34 +60,6 @@ local sensor_endpoints = {
   {
     command_classes = {
       {value = zw.CENTRAL_SCENE}
-    }
-  }
-}
-
-local switch_endpoints = {
-  {
-    command_classes = {
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.SWITCH_BINARY}
     }
   }
 }
