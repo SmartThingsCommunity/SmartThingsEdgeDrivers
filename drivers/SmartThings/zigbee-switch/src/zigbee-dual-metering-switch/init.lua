@@ -43,7 +43,7 @@ local function device_added(driver, device, event)
     local metadata = {
       type = "EDGE_CHILD",
       label = name,
-      profile = "switch-power-2",
+      profile = "switch-power-smartplug",
       parent_device_id = device.id,
       parent_assigned_child_key = string.format("%02X", CHILD_ENDPOINT),
       vendor_provided_label = name,

@@ -21,7 +21,7 @@ local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
-local profile = t_utils.get_profile_definition("switch-power-2.yml")
+local profile = t_utils.get_profile_definition("switch-power-smartplug.yml")
 
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
   {
