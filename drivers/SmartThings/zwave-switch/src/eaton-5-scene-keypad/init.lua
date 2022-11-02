@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local bit32 = require "bit32"
+
 --- @type st.capabilities
 local capabilities = require "st.capabilities"
 --- @type st.zwave.constants
