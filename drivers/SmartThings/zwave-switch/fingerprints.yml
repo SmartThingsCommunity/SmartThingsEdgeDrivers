@@ -314,12 +314,12 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x000B
     deviceProfileName: metering-switch-5
-#  - id: 0159/0002/0051
-#    deviceLabel: Qubino Switch 1
-#    manufacturerId: 0x0159
-#    productType: 0x0002
-#    productId: 0x0051
-#    deviceProfileName: qubino-flush2-relay
+  - id: 0159/0002/0051
+    deviceLabel: Qubino Switch 1
+    manufacturerId: 0x0159
+    productType: 0x0002
+    productId: 0x0051
+    deviceProfileName: qubino-flush2-relay
   - id: 0159/0002/0052
     deviceLabel: Qubino Switch
     manufacturerId: 0x0159
