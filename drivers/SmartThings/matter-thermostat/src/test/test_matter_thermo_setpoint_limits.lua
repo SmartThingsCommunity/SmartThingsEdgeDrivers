@@ -75,13 +75,19 @@ local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSe
 local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" })
 
 local function configure(device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.device_lifecycle:__queue_receive({ device.id, "doConfigure" })
   local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
   read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
   read_limits:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
   read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
   read_limits:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
   test.socket.matter:__expect_send({device.id, read_limits})
+  test.socket.matter:__expect_send({
+    device.id,
+    clusters.Thermostat.attributes.AttributeList:read(device, 1)
+  })
+
+  --Note nostate profile updates only happen when we receive and process an attribute list report
   mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.wait_for_events()
@@ -122,6 +128,7 @@ local function configure(device)
   test.socket.capability:__expect_send(
     device:generate_test_message("main", cached_cooling_setpoint)
   )
+
   test.wait_for_events()
 end
 

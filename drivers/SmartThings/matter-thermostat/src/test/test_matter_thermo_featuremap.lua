@@ -14,7 +14,7 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-
+local Uint32 = require "st.matter.data_types".Uint32
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -179,43 +179,78 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_coroutine_test(
-  "Profile change on doConfigure lifecycle event due to cluster feature map",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
+local function configure(device, is_heat)
+  test.socket.device_lifecycle:__queue_receive({ device.id, "doConfigure" })
+  local read_limits
+  if is_heat then
+    read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
     read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-    test.socket.matter:__expect_send({mock_device.id, read_limits})
-    --TODO why does provisiong state get added in the do configure event handle, but not the refres?
+  else
+    read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
+    read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
+  end
+  test.socket.matter:__expect_send({device.id, read_limits})
+  test.socket.matter:__expect_send({
+    device.id,
+    clusters.Thermostat.attributes.AttributeList:read(device, 1)
+  })
+end
+
+test.register_coroutine_test(
+  "Profile change on doConfigure lifecycle event due to cluster heating feature map",
+  function()
+    configure(mock_device, true)
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_simple.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {Uint32(0x2)}),
+    })
 end
 )
 
 test.register_coroutine_test(
-  "Profile change on doConfigure lifecycle event due to cluster feature map",
+  "Profile change on doConfigure lifecycle event due to cluster cooling feature map",
   function()
-    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-    for i, cluster in ipairs(cluster_subscribe_list) do
-      if i > 1 then
-        subscribe_request:merge(cluster:subscribe(mock_device))
-      end
-    end
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
-end
-)
-
-test.register_coroutine_test(
-  "Profile change on doConfigure lifecycle event due to cluster feature map",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
-    local read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
-    read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-    test.socket.matter:__expect_send({mock_device_simple.id, read_limits})
+    configure(mock_device_simple, false)
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_simple.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {Uint32(0x1)}),
+    })
+end
+)
+
+test.register_coroutine_test(
+  "Profile change due to Thermostat attribute list",
+  function()
+    configure(mock_device_simple, false)
+    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
+    mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_simple.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {Uint32(0x29)}),
+    })
+    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only" })
+end
+)
+
+test.register_coroutine_test(
+  "Profile change due to Thermostat attribute list no battery",
+  function()
+    configure(mock_device_no_battery, false)
+    mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
+    mock_device_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_no_battery.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_no_battery, 1, {Uint32(0x29)}),
+    })
+    mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nobattery" })
 end
 )
 
@@ -224,6 +259,10 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_no_battery.id, "doConfigure" })
     local read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
+    test.socket.matter:__expect_send({
+      mock_device_no_battery.id,
+      clusters.Thermostat.attributes.AttributeList:read(mock_device_no_battery, 1)
+    })
     read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
     test.socket.matter:__expect_send({mock_device_no_battery.id, read_limits})
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })

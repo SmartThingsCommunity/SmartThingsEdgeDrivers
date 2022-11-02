@@ -120,6 +120,7 @@ local function do_configure(driver, device)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID)
   local profile_name = "thermostat"
+
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if #thermo_eps == 1 then
     if #humidity_eps > 0 and #fan_eps > 0 then
@@ -139,15 +140,15 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-cooling-only"
     end
 
-    -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-    -- to determine support for ThermostatRunningState
-    -- Add nobattery profiles if updated
+    -- Note that Thermostat.AttributeList report will correct this if the optional cluster
+    -- elements are present
     profile_name = profile_name .. "-nostate"
-
     if #battery_eps == 0 then
       profile_name = profile_name .. "-nobattery"
     end
 
+    device:set_field("profile_name", profile_name)
+    device:send(clusters.Thermostat.attributes.AttributeList:read(device, thermo_eps[1]))
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   else
@@ -209,6 +210,17 @@ local function system_mode_handler(driver, device, ib, response)
     -- if we get here, then the reported mode was not in our mode map
     table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(sm))
+  end
+end
+
+local function attr_list_handler(driver, device, ib, response)
+  for _, attr_id in ipairs (ib.data.elements or {}) do
+    if attr_id.value == clusters.Thermostat.attributes.ThermostatRunningState.ID then
+      local new_profile = string.gsub(device:get_field("profile_name"), "-nostate", "")
+      device.log.info(string.format("Updating device profile to %s.", new_profile))
+      device:try_update_metadata({ profile = new_profile })
+      return
+    end
   end
 end
 
@@ -415,6 +427,7 @@ local matter_driver_template = {
         [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_COOL),
         [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_COOL),
         [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = min_deadband_limit_handler,
+        [clusters.Thermostat.attributes.AttributeList.ID] = attr_list_handler
       },
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
