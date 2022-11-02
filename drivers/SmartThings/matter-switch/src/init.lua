@@ -15,10 +15,6 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
--- TODO remove require hack from sdk renames
-local ColorTemperatureAttribute = pcall(function() return clusters.ColorControl.attributes.ColorTemperature end) and
-                                  clusters.ColorControl.attributes.ColorTemperature or
-                                  clusters.ColorControl.attributes.ColorTemperatureMireds
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
@@ -242,7 +238,7 @@ local matter_driver_template = {
       [clusters.ColorControl.ID] = {
         [clusters.ColorControl.attributes.CurrentHue.ID] = hue_attr_handler,
         [clusters.ColorControl.attributes.CurrentSaturation.ID] = sat_attr_handler,
-        [ColorTemperatureAttribute.ID] = temp_attr_handler,
+        [clusters.ColorControl.attributes.ColorTemperatureMireds.ID] = temp_attr_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
@@ -264,7 +260,7 @@ local matter_driver_template = {
       clusters.ColorControl.attributes.CurrentY,
     },
     [capabilities.colorTemperature.ID] = {
-      ColorTemperatureAttribute,
+      clusters.ColorControl.attributes.ColorTemperatureMireds,
     },
   },
   capability_handlers = {
