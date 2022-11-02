@@ -314,12 +314,12 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x000B
     deviceProfileName: metering-switch-5
-  - id: 0159/0002/0051
-    deviceLabel: Qubino Switch 1
-    manufacturerId: 0x0159
-    productType: 0x0002
-    productId: 0x0051
-    deviceProfileName: qubino-flush2-relay
+#  - id: 0159/0002/0051
+#    deviceLabel: Qubino Switch 1
+#    manufacturerId: 0x0159
+#    productType: 0x0002
+#    productId: 0x0051
+#    deviceProfileName: qubino-flush2-relay
   - id: 0159/0002/0052
     deviceLabel: Qubino Switch
     manufacturerId: 0x0159
@@ -912,22 +912,23 @@ zwaveGeneric:
     deviceProfileName: switch-level
   - id: "GenericMultiChannelSwitch/1"
     deviceLabel: Z-Wave Switch Multichannel
+    genericType: 0x10
     commandClasses:
       supported:
         - 0x60 # multi channel
     deviceProfileName: multichannel-switch-binary
   - id: "GenericMultiChannelSwitch/2"
     deviceLabel: Z-Wave Switch Multichannel
+    genericType: 0x31
     commandClasses:
       supported:
-        - 0x25 # switch binary
         - 0x60 # multi channel
     deviceProfileName: multichannel-switch-binary
   - id: "GenericMultiChannelDimmer/1"
     deviceLabel: Z-Wave Dimmer Multichannel
+    genericType: 0x11
     commandClasses:
       supported:
-        - 0x26 # switch multilevel
         - 0x60 # multi channel
     deviceProfileName: multichannel-switch-level
 zwaveThing :

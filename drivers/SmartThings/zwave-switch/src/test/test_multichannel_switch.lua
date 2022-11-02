@@ -17,7 +17,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4,strict=true})
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4, strict = true })
 local t_utils = require "integration_test.utils"
 
 -- supported command classes
@@ -25,6 +25,8 @@ local switch_endpoints = {
   {
     command_classes = {
       { value = zw.BASIC },
+      { value = zw.SWITCH_BINARY },
+      { value = zw.SWITCH_MULTILEVEL },
       { value = zw.MULTI_CHANNEL }
     }
   },
@@ -38,6 +40,7 @@ local switch_endpoints = {
   {
     command_classes = {
       { value = zw.BASIC },
+      { value = zw.SWITCH_BINARY },
       { value = zw.MULTI_CHANNEL }
     }
   },
@@ -636,6 +639,123 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switchLevel.level(50))
+      }
+    }
+)
+
+test.register_message_test(
+    "Refresh command for parent device should send correct GETs",
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent.id, "init" }
+      },
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          { capability = "refresh", command = "refresh", args = {} }
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = {} })
+        )
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = { 1 } })
+        )
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = { 2 } })
+        )
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = { 3 } })
+        )
+      },
+    }
+)
+
+test.register_message_test(
+    "Refresh command for child 1 device should send correct GETs",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_child.id,
+          { capability = "refresh", command = "refresh", args = {} }
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = { 1 } })
+        )
+      }
+    }
+)
+
+test.register_message_test(
+    "Refresh command for child 2 device should send correct GETs",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_child_2.id,
+          { capability = "refresh", command = "refresh", args = {} }
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchBinary:Get({}, { dst_channels = { 2 } })
+        )
+      }
+    }
+)
+
+test.register_message_test(
+    "Refresh command for child 3 device should send correct GETs",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_child_3.id,
+          { capability = "refresh", command = "refresh", args = {} }
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            SwitchMultilevel:Get({}, { dst_channels = { 3 } })
+        )
       }
     }
 )

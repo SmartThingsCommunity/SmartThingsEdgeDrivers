@@ -70,7 +70,6 @@ local device_init = function(self, device)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-
     if device:supports_capability(capabilities.zwMultichannel) then
       device:set_find_child(find_child)
     end
@@ -166,7 +165,7 @@ local driver_template = {
     require("dawon-wall-smart-switch"),
     require("zooz-power-strip"),
     require("aeon-smart-strip"),
-    require("qubino-switches"),
+    --require("qubino-switches"),
     require("fibaro-double-switch"),
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),

@@ -39,8 +39,29 @@ local function info_changed(self, device, event, args)
   end
 end
 
+--- Find child function
+---
+--- @param device st.Device|st.zwave.Device
+--- @param src_channel number
+local function find_child(device, src_channel)
+  if src_channel == 0 then
+    return device
+  else
+    return device:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
+  end
+end
+
+--- Initialize device
+---
+--- @param self st.zwave.Driver
+--- @param device st.zwave.Device
 local function device_init(self, device)
-  device:set_update_preferences_fn(preferences.update_preferences)
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+    device:set_update_preferences_fn(preferences.update_preferences)
+    if device:supports_capability(capabilities.zwMultichannel) then
+      device:set_find_child(find_child)
+    end
+  end
 end
 
 --- These are non-standard uses of the basic set command, but some devices (mainly aeotec)
@@ -101,11 +122,9 @@ local function added_handler(self, device)
     end
   end
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
-      device:is_cc_supported(cc.MULTI_CHANNEL) then
+      device:supports_capability(capabilities.zwMultichannel) then
     for index, endpoint in pairs(device.zwave_endpoints) do
-      if index > 1 then
-        self:try_create_device(prepare_metadata(device, index - 1))
-      end
+      self:try_create_device(prepare_metadata(device, index))
     end
   end
 end
