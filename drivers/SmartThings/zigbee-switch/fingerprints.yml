@@ -190,7 +190,7 @@ zigbeeManufacturer:
     deviceLabel: AURORA Outlet 1
     manufacturer: Aurora
     model: DoubleSocket50AU
-    deviceProfileName: switch-power-2
+    deviceProfileName: switch-power-smartplug
   #Sinope
   - id: "Sinope Switch/RM3250ZB"
     deviceLabel: "RM3250ZB Sinope Load Controller"
