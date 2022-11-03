@@ -42,23 +42,15 @@ local mock_parent_device = test.mock_device.build_test_zwave_device({
   zwave_product_id = WYFY_PRODUCT_ID
 })
 
-local mock_first_child_device = test.mock_device.build_test_child_device({
+local mock_child_device = test.mock_device.build_test_child_device({
   profile = profile,
   parent_device_id = mock_parent_device.id,
   parent_assigned_child_key = string.format("%02X", 2)
 })
 
-local mock_second_child_device = test.mock_device.build_test_child_device({
-  profile = profile,
-  parent_device_id = mock_parent_device.id,
-  parent_assigned_child_key = string.format("%02X", 3)
-})
-
-
 local function test_init()
   test.mock_device.add_test_device(mock_parent_device)
-  test.mock_device.add_test_device(mock_first_child_device)
-  test.mock_device.add_test_device(mock_second_child_device)
+  test.mock_device.add_test_device(mock_child_device)
 end
 
 test.set_test_init_function(test_init)
@@ -102,13 +94,13 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch on/off capability command on from first child device should be handled",
+  "Switch on/off capability command on from child device should be handled",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_first_child_device.id,
+        mock_child_device.id,
         { capability = "switch", command = "on", component = "main", args = {} }
       }
     },
@@ -120,31 +112,6 @@ test.register_message_test(
         SwitchBinary:Set(
           { target_value = SwitchBinary.value.ON_ENABLE },
           { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
-        )
-      )
-    }
-  }
-)
-
-test.register_message_test(
-  "Switch on/off capability command on from second child device should be handled",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_second_child_device.id,
-        { capability = "switch", command = "on", component = "main", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_parent_device,
-        SwitchBinary:Set(
-          { target_value = SwitchBinary.value.ON_ENABLE },
-          { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
         )
       )
     }
@@ -177,13 +144,13 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch on/off capability command from first child device should be handled: off",
+  "Switch on/off capability command from child device should be handled: off",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_first_child_device.id,
+        mock_child_device.id,
         { capability = "switch", command = "off", component = "main", args = {} }
       }
     },
@@ -195,31 +162,6 @@ test.register_message_test(
         SwitchBinary:Set(
           { target_value = SwitchBinary.value.OFF_DISABLE },
           { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
-        )
-      )
-    }
-  }
-)
-
-test.register_message_test(
-  "Switch on/off capability command from first child device should be handled: off",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_second_child_device.id,
-        { capability = "switch", command = "off", component = "main", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_parent_device,
-        SwitchBinary:Set(
-          { target_value = SwitchBinary.value.OFF_DISABLE },
-          { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
         )
       )
     }
@@ -262,13 +204,13 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { mock_first_child_device.id, "init" },
+      message = { mock_child_device.id, "init" },
     },
     {
       channel = "zwave",
       direction = "receive",
       message = {
-        mock_first_child_device.id,
+        mock_child_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             { target_value = SwitchBinary.value.ON_ENABLE,
@@ -281,7 +223,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_first_child_device:generate_test_message("main", capabilities.switch.switch.on())
+      message = mock_child_device:generate_test_message("main", capabilities.switch.switch.on())
     }
   }
 )
@@ -317,11 +259,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Switch capability off commands from first child device should evoke the correct Z-Wave SETs and GETs",
+  "Switch capability off commands from child device should evoke the correct Z-Wave SETs and GETs",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({
-      mock_first_child_device.id,
+      mock_child_device.id,
       { capability = "switch", command = "off", component = "main", args = {} }
     })
     test.socket.zwave:__expect_send(
@@ -340,36 +282,6 @@ test.register_coroutine_test(
         mock_parent_device,
         SwitchBinary:Get({},
           { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
-        )
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Switch capability off commands from second child device should evoke the correct Z-Wave SETs and GETs",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.capability:__queue_receive({
-      mock_second_child_device.id,
-      { capability = "switch", command = "off", component = "main", args = {} }
-    })
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent_device,
-        SwitchBinary:Set(
-          { target_value = SwitchBinary.value.OFF_DISABLE },
-          { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
-        )
-      )
-    )
-    test.wait_for_events()
-    test.mock_time.advance_time(1)
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent_device,
-        SwitchBinary:Get({},
-          { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 3 } }
         )
       )
     )

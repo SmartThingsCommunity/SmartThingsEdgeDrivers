@@ -18,7 +18,7 @@ local devices = {
       mfrs = 0x0086,
       product_types = 0x0003,
       product_ids = 0x0084,
-      children = 2
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "metering-switch"
@@ -29,7 +29,7 @@ local devices = {
       mfrs = 0x0086,
       product_types = 0x0103,
       product_ids = 0x0084,
-      children = 2
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "metering-switch"
@@ -40,7 +40,7 @@ local devices = {
       mfrs = 0x0086,
       product_types = 0x0203,
       product_ids = 0x0084,
-      children = 2
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "metering-switch"
@@ -51,7 +51,7 @@ local devices = {
       mfrs = 0x027A,
       product_types = 0xA000,
       product_ids = 0xA004,
-      children = 5
+      children = 4
     },
     CONFIGURATION = {
       child_switch_device_profile = "metering-switch"
@@ -62,7 +62,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3102,
       product_ids = 0x0201,
-      children = 1
+      children = 0
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
@@ -73,7 +73,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3102,
       product_ids = 0x0202,
-      children = 2
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
@@ -84,7 +84,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3102,
       product_ids = 0x0204,
-      children = 4
+      children = 3
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
@@ -95,7 +95,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3111,
       product_ids = 0x5102,
-      children = 1
+      children = 0
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
@@ -106,7 +106,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3121,
       product_ids = 0x5102,
-      children = 2
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
@@ -117,7 +117,7 @@ local devices = {
       mfrs = 0x015F,
       product_types = 0x3141,
       product_ids = 0x5102,
-      children = 4
+      children = 3
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
