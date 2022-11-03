@@ -56,13 +56,10 @@ local function motion_illuminance_attr_handler(driver, device, value, zb_rx)
   -- The low 16 bits for Illuminance
   -- The high 16 bits for Motion Detection
 
-  if value.value > MOTION_DETECTED_UINT32 then
-    -- motion detected
-    aqara_utils.motion_detected(driver, device, value, zb_rx)
+  aqara_utils.motion_detected(driver, device, value, zb_rx)
 
-    local lux = value.value - MOTION_DETECTED_UINT32
-    device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
-  end
+  local lux = value.value - MOTION_DETECTED_UINT32
+  device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
 end
 
 local aqara_motion_illuminance_handler = {
