@@ -141,7 +141,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send(
           {
             mock_device.id,
-            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2600)
+            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2556)
           }
       )
       test.wait_for_events()

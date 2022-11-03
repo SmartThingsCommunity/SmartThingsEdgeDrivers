@@ -22,13 +22,6 @@ local MatterDriver = require "st.matter.driver"
 -- local global variables
 local DEFAULT_LEVEL = 0
 local OPERATIONAL_STATUS_MASK = 0x3 -- only check the last two bits
---TODO remove once the device:refresh() functionality present
-local CLUSTER_SUBSCRIBE_LIST = {
-  clusters.LevelControl.server.attributes.CurrentLevel,
-  clusters.WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
-  clusters.WindowCovering.server.attributes.OperationalStatus,
-  clusters.PowerSource.server.attributes.BatPercentRemaining,
-}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -43,20 +36,6 @@ end
 local function device_removed(driver, device) log.info("device removed") end
 
 -- capability handlers
-local function handle_refresh(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  for _, attr in ipairs(CLUSTER_SUBSCRIBE_LIST) do
-    if device:supports_server_cluster(attr._cluster.ID) then
-      local req = attr:read(device)
-      if read_request == nil then
-        read_request = req
-      else
-        read_request:merge(req)
-      end
-    end
-  end
-  device:send(read_request)
-end
 
 local function handle_preset(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)

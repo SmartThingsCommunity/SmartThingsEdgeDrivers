@@ -64,7 +64,7 @@ end
 --- @param device st.zwave.Device
 --- @param event table
 --- @param args
-local function info_changed(driver, device, event, args)
+local function info_changed(self, device, event, args)
   if not device:is_cc_supported(cc.WAKE_UP) then
     update_preferences(self, device, args)
   end

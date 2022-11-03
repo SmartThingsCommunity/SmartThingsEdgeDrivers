@@ -74,7 +74,7 @@ local function set_color(driver, device, command)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
 end
 
-local function switch_color_report(driver, device, command)
+local function switch_color_report(self, device, command)
   local event
   if command.args.color_component_id == SwitchColor.color_component_id.WARM_WHITE then
     local value = command.args.value
@@ -96,7 +96,7 @@ local function switch_color_report(driver, device, command)
   end
 end
 
-local function switch_multilevel_report(driver, device, command)
+local function switch_multilevel_report(self, device, command)
   local endpoint = command.src_channel
   -- ignore multilevel reports from endpoints [1, 2, 3, 4] which mirror SwitchColor values
   -- and in addition cause wrong SwitchLevel events

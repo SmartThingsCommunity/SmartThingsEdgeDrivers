@@ -76,8 +76,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -106,8 +106,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           })
         )
@@ -136,8 +136,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 99,
+            target_value = 0,
+            current_value = 99,
             duration = 0
           })
         )
@@ -306,8 +306,8 @@ test.register_message_test(
         mock_qubino_flush_shutter_venetian.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           },{encap = zw.ENCAP.AUTO, src_channel = 2, dst_channels = {0}})
         )
@@ -609,7 +609,7 @@ do
         mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(targetValue))
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(10))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
       )
     end
   )
@@ -640,7 +640,7 @@ do
         )
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(0))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
       )
     end
   )
@@ -665,7 +665,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy(50))
+      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy({value = 50, unit = "kWh"}))
     }
   }
 )

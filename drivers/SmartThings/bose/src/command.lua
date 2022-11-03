@@ -13,10 +13,10 @@
 
 local cosock = require "cosock"
 local http = cosock.asyncify "socket.http" -- TODO use luncheon instead
+local log = require "log"
 local ltn12 = require "ltn12"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
-local utils = require "st.utils"
 
 local SOUNDTOUCH_HTTP_PORT = 8090
 
