@@ -1,7 +1,9 @@
-name: alarm-battery-tamper
+name: switch-alarm-generic-siren-7
 components:
 - id: main
   capabilities:
+  - id: switch
+    version: 1
   - id: alarm
     version: 1
     config:
@@ -9,14 +11,14 @@ components:
         - key: "alarm.value"
           enabledValues:
             - off
-            - both
+            - siren
         - key: "{{enumCommands}}"
           enabledValues:
             - off
-            - both
-  - id: battery
+            - siren
+  - id: firmwareUpdate
     version: 1
-  - id: tamperAlert
+  - id: refresh
     version: 1
-  categories:
+  categories :
   - name: Siren

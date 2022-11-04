@@ -17,30 +17,30 @@ zwaveManufacturer:
     productType: 0x0005
     productId: 0x000F
     deviceProfileName: base-sound
-#   - id: "014A/0005/000A"
-#     deviceLabel: Ecolink Siren
-#     manufacturerId: 0x014A
-#     productType: 0x0005
-#     productId: 0x000A
-#     deviceProfileName: alarm-switch-3
-#   - id: 013C/0004/000A
-#     deviceLabel: Philio Siren
-#     manufacturerId: 0x013C
-#     productType: 0x0004
-#     productId: 0x000A
-#     deviceProfileName: philio-sound-siren
-#   - id: 0371/00A2 # Aeotec Doorbell 6, productType: 0x0003 (EU), 0x0103 (US), 0x0203 (AU)
-#     deviceLabel: Aeotec Doorbell
-#     manufacturerId: 0x0371
-#     # productType purposefully left off to match all variants
-#     productId: 0x00A2
-#     deviceProfileName: aeotec-doorbell-siren
-#   - id: 0371/00A4 # Aeotec Siren 6, productType: 0x0003 (EU), 0x0103 (US), 0x0203 (AU)
-#     deviceLabel: Aeotec Siren
-#     manufacturerId: 0x0371
-#     # productType purposefully left off to match all variants
-#     productId: 0x00A4
-#     deviceProfileName: aeotec-doorbell-siren
+  - id: "014A/0005/000A"
+    deviceLabel: Ecolink Siren
+    manufacturerId: 0x014A
+    productType: 0x0005
+    productId: 0x000A
+    deviceProfileName: ecolink-wireless-siren
+  - id: 013C/0004/000A
+    deviceLabel: Philio Siren
+    manufacturerId: 0x013C
+    productType: 0x0004
+    productId: 0x000A
+    deviceProfileName: philio-sound-siren
+  - id: 0371/00A2 # Aeotec Doorbell 6, productType: 0x0003 (EU), 0x0103 (US), 0x0203 (AU)
+    deviceLabel: Aeotec Doorbell
+    manufacturerId: 0x0371
+    # productType purposefully left off to match all variants
+    productId: 0x00A2
+    deviceProfileName: aeotec-doorbell-siren
+  - id: 0371/00A4 # Aeotec Siren 6, productType: 0x0003 (EU), 0x0103 (US), 0x0203 (AU)
+    deviceLabel: Aeotec Siren
+    manufacturerId: 0x0371
+    # productType purposefully left off to match all variants
+    productId: 0x00A4
+    deviceProfileName: aeotec-doorbell-siren
   - id: 0086/0050
     deviceLabel: Aeon Siren
     manufacturerId: 0x0086

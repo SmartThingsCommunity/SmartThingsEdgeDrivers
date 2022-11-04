@@ -8,8 +8,12 @@ components:
       values:
         - key: "alarm.value"
           enabledValues:
-            - both
             - off
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - off
+            - both
   - id: chime
     version: 1
   - id: switch
