@@ -35,18 +35,14 @@ local function info_changed(self, device, event, args)
 end
 
 local function switch_off(driver, device)
-  print("off")
   device:send(Basic:Set({value = SwitchBinary.value.OFF_DISABLE}))
   device:send(SwitchBinary:Get({}))
 end
 
 local function momentary_switch_on(driver, device)
-  print("On")
   device:send(Basic:Set({value = SwitchBinary.value.ON_ENABLE}))
   device:send(SwitchBinary:Get({}))
-  print("call delay")
   driver:call_with_delay(3, function() switch_off(driver, device) end)
-  --device.thread:call_with_delay(3, switch_off(driver, device))
 end
 
 -------------------------------------------------------------------------------------------
