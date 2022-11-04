@@ -910,23 +910,8 @@ zwaveGeneric:
     deviceLabel: Dimmer Switch
     genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
     deviceProfileName: switch-level
-  - id: "GenericMultiChannelSwitch/1"
-    deviceLabel: Z-Wave Switch Multichannel
-    genericType: 0x10
-    commandClasses:
-      supported:
-        - 0x60 # multi channel
-    deviceProfileName: multichannel-switch-binary
-  - id: "GenericMultiChannelSwitch/2"
-    deviceLabel: Z-Wave Switch Multichannel
-    genericType: 0x31
-    commandClasses:
-      supported:
-        - 0x60 # multi channel
-    deviceProfileName: multichannel-switch-binary
-  - id: "GenericMultiChannelDimmer/1"
-    deviceLabel: Z-Wave Dimmer Multichannel
-    genericType: 0x11
+  - id: "GenericMultiChannelDevice/1"
+    deviceLabel: Z-Wave Device Multichannel
     commandClasses:
       supported:
         - 0x60 # multi channel

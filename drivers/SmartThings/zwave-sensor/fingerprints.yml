@@ -554,31 +554,3 @@ zwaveGeneric:
     deviceLabel: Z-Wave Sensor
     genericType: 0x07 # GENERIC_TYPE_SENSOR_NOTIFICATION
     deviceProfileName: generic-sensor
-  - id: "GenericMultiChannelSensor/1"
-    deviceLabel: Z-Wave Sensor Multichannel
-    genericType: 0x08
-    commandClasses:
-      supported:
-        - 0x60
-    deviceProfileName: generic-sensor
-  - id: "GenericMultiChannelSensor/2"
-    deviceLabel: Z-Wave Sensor Multichannel
-    genericType: 0x21
-    commandClasses:
-      supported:
-        - 0x60
-    deviceProfileName: generic-sensor
-  - id: "GenericMultiChannelSensor/3"
-    deviceLabel: Z-Wave Sensor Multichannel
-    genericType: 0x20
-    commandClasses:
-      supported:
-        - 0x60
-    deviceProfileName: generic-sensor
-  - id: "GenericMultiChannelSensor/4"
-    deviceLabel: Z-Wave Sensor Multichannel
-    genericType: 0xA1
-    commandClasses:
-      supported:
-        - 0x60
-    deviceProfileName: generic-sensor

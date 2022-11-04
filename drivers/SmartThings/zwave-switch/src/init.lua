@@ -105,23 +105,31 @@ local function do_configure(driver, device)
   end
 end
 
+local function get_profile(command_classes)
+  for _, command_class in pairs(command_classes) do
+    if command_class.value == cc.SENSOR_MULTILEVEL or
+        command_class.value == cc.SENSOR_BINARY or
+        command_class.value == cc.SENSOR_ALARM or
+        command_class.value == cc.NOTIFICATION then
+      return "child-generic-sensor"
+    elseif command_class.value == cc.SWITCH_MULTILEVEL then
+      return "switch-level"
+    end
+  end
+  return "child-switch"
+end
+
 --- Prepare metadata for child device
 ---
 --- @param device st.zwave.Device Parent device
 --- @param endpoint number Child endpoint number
 --- @param command_classes table Supported command classes
-local function prepareMetadata(device, endpoint, command_classes)
+local function prepare_metadata(device, endpoint, command_classes)
   local name = string.format("%s %d", device.label, endpoint)
-  local profile = "switch-binary"
-  for _, command_class in pairs(command_classes) do
-    if command_class == cc.SWITCH_MULTILEVEL then
-      profile = "switch-level"
-    end
-  end
   return {
     type = "EDGE_CHILD",
     label = name,
-    profile = profile,
+    profile = get_profile(command_classes),
     parent_device_id = device.id,
     parent_assigned_child_key = string.format("%02X", endpoint),
     vendor_provided_label = name
@@ -130,9 +138,10 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
-    device:supports_capability(capabilities.zwMultichannel) then
+      device:supports_capability(capabilities.zwMultichannel) then
     for index, endpoint in pairs(device.zwave_endpoints) do
-      driver:try_create_device(prepareMetadata(device, index, endpoint.command_classes))
+      print(string.format("Endpoint: %d; %s; profile: %s", index, require("st.utils").stringify_table(endpoint.command_classes, "cc"), get_profile(endpoint.command_classes)))
+      driver:try_create_device(prepare_metadata(device, index, endpoint.command_classes))
     end
   end
   device:refresh()
@@ -152,6 +161,15 @@ local driver_template = {
     capabilities.button,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
+    capabilities.contactSensor,
+    capabilities.motionSensor,
+    capabilities.smokeDetector,
+    capabilities.waterSensor,
+    capabilities.tamperAlert,
+    capabilities.atmosphericPressureMeasurement,
+    capabilities.bodyWeightMeasurement,
+    capabilities.illuminanceMeasurement,
+    capabilities.voltageMeasurement,
     capabilities.zwMultichannel
   },
   sub_drivers = {

@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
---- @type st.Device
-local st_device = require "st.device"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
@@ -39,29 +37,8 @@ local function info_changed(self, device, event, args)
   end
 end
 
---- Find child function
----
---- @param device st.Device|st.zwave.Device
---- @param src_channel number
-local function find_child(device, src_channel)
-  if src_channel == 0 then
-    return device
-  else
-    return device:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
-  end
-end
-
---- Initialize device
----
---- @param self st.zwave.Driver
---- @param device st.zwave.Device
 local function device_init(self, device)
-  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-    device:set_update_preferences_fn(preferences.update_preferences)
-    if device:supports_capability(capabilities.zwMultichannel) then
-      device:set_find_child(find_child)
-    end
-  end
+  device:set_update_preferences_fn(preferences.update_preferences)
 end
 
 --- These are non-standard uses of the basic set command, but some devices (mainly aeotec)
@@ -99,32 +76,10 @@ local initial_events_map = {
   [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
 }
 
---- Prepare metadata for child device
----
---- @param device st.zwave.Device Parent device
---- @param endpoint number Child endpoint number
-local function prepare_metadata(device, endpoint)
-  local name = string.format("%s %d", device.label, endpoint)
-  return {
-    type = "EDGE_CHILD",
-    label = name,
-    profile = "generic-sensor",
-    parent_device_id = device.id,
-    parent_assigned_child_key = string.format("%02X", endpoint),
-    vendor_provided_label = name
-  }
-end
-
 local function added_handler(self, device)
   for id, event in pairs(initial_events_map) do
     if device:supports_capability_by_id(id) then
       device:emit_event(event)
-    end
-  end
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
-      device:supports_capability(capabilities.zwMultichannel) then
-    for index, endpoint in pairs(device.zwave_endpoints) do
-      self:try_create_device(prepare_metadata(device, index))
     end
   end
 end

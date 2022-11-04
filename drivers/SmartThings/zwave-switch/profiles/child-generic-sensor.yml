@@ -1,4 +1,4 @@
-name: multichannel-generic-sensor
+name: child-generic-sensor
 components:
 - id: main
   capabilities:
@@ -35,8 +35,6 @@ components:
   - id: battery
     version: 1
   - id: refresh
-    version: 1
-  - id: zwMultichannel
     version: 1
   categories:
   - name: GenericSensor
