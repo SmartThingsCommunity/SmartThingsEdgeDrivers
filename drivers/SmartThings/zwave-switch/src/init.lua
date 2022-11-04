@@ -140,7 +140,6 @@ local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
       device:supports_capability(capabilities.zwMultichannel) then
     for index, endpoint in pairs(device.zwave_endpoints) do
-      print(string.format("Endpoint: %d; %s; profile: %s", index, require("st.utils").stringify_table(endpoint.command_classes, "cc"), get_profile(endpoint.command_classes)))
       driver:try_create_device(prepare_metadata(device, index, endpoint.command_classes))
     end
   end
