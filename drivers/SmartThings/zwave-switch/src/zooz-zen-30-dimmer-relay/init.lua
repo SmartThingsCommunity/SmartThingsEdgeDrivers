@@ -11,12 +11,13 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
+local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4, strict = true })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 2 })
 local constants = require "st.zwave.constants"
 local log = require "log"
@@ -29,6 +30,11 @@ local BUTTON_VALUES = {
   "up", "up_2x", "up_3x", "up_4x", "up_5x",
   "down", "down_2x", "down_3x", "down_4x", "down_5x",
   "pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"
+}
+
+local ENDPOINTS = {
+  dimmer = 0,
+  relay = 1
 }
 
 local map_key_attribute_to_capability = {
@@ -68,15 +74,6 @@ local ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS = {
   { mfr = 0x027A, prod = 0xA000, model = 0xA008 } -- Zooz Zen 30 Dimmer Relay Double Switch
 }
 
-local function version_report_handler(driver, device, cmd)
-  if (cmd.args.firmware_0_version > 1 or (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4)) and
-    device:get_field(PROFILE_CHANGED) ~= true then
-    local new_profile = "zooz-zen-30-dimmer-relay-new"
-    device:try_update_metadata({ profile = new_profile })
-    device:set_field(PROFILE_CHANGED, true, { persist = true })
-  end
-end
-
 local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(ZOOZ_ZEN_30_DIMMER_RELAY_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
@@ -84,6 +81,64 @@ local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, d
     end
   end
   return false
+end
+
+local function find_child(parent, src_channel)
+  if src_channel == 0 then
+    return parent
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
+  end
+end
+
+local function component_to_endpoint(device, component)
+  return { ENDPOINTS.dimmer }
+end
+
+local function do_refresh(driver, device, cmd)
+  local component = cmd and cmd.component and cmd.component or "main"
+
+  if device:supports_capability(capabilities.switchLevel) then
+    device:send_to_component(SwitchMultilevel:Get({}), component)
+    device:send(Version:Get({}))
+  elseif device:supports_capability(capabilities.switch) then
+    device:send_to_component(SwitchBinary:Get({}), component)
+  end
+end
+
+local function device_init(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:set_find_child(find_child)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+  end
+end
+
+local function device_added(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    local child_metadata = {
+      type = "EDGE_CHILD",
+      label = string.format("%s Relay", device.label),
+      profile = "child-switch",
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
+      vendor_provided_label = string.format("%s Relay", device.label)
+    }
+
+    driver:try_create_device(child_metadata)
+
+    device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false } }))
+  end
+  do_refresh(driver, device)
+end
+
+local function version_report_handler(driver, device, cmd)
+  if (cmd.args.firmware_0_version > 1 or (cmd.args.firmware_0_version == 1 and cmd.args.firmware_0_sub_version > 4)) and
+      device:get_field(PROFILE_CHANGED) ~= true then
+    local new_profile = "zooz-zen-30-dimmer-relay-new"
+    device:try_update_metadata({ profile = new_profile })
+    device:set_field(PROFILE_CHANGED, true, { persist = true })
+  end
 end
 
 local function central_scene_notification_handler(driver, device, cmd)
@@ -102,25 +157,14 @@ local function central_scene_notification_handler(driver, device, cmd)
   end
 end
 
-local function added_handler(driver, device)
-  device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false }}))
-  device:emit_event(capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false }}))
-end
-
-local function do_refresh(driver, device)
-  device:send_to_component(SwitchMultilevel:Get({}), "main")
-  device:send_to_component(SwitchBinary:Get({}), "switch1")
-  device:send(Version:Get({}))
-end
-
 local function switch_set_on_off_handler(value)
   return function(driver, device, command)
     local get, set
 
-    if command.component == "main" then
+    if device:supports_capability(capabilities.switchLevel) then
       set = SwitchMultilevel:Set({ value = value, duration = constants.DEFAULT_DIMMING_DURATION })
       get = SwitchMultilevel:Get({})
-    elseif command.component == "switch1" then
+    elseif device:supports_capability(capabilities.switch) then
       set = SwitchBinary:Set({ target_value = value, duration = 0 })
       get = SwitchBinary:Get({})
     end
@@ -154,7 +198,8 @@ local zooz_zen_30_dimmer_relay_double_switch = {
     }
   },
   lifecycle_handlers = {
-    added = added_handler
+    init = device_init,
+    added = device_added
   },
   can_handle = can_handle_zooz_zen_30_dimmer_relay_double_switch
 }

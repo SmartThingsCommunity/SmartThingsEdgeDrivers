@@ -75,46 +75,6 @@ test.register_message_test(
       direction = "receive",
       message = { mock_inovelli_dimmer.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
         scene_number = 1,
-        key_attributes=CentralScene.key_attributes.KEY_RELEASED}))
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.held({
-        state_change = true }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Central Scene notification Button held should be handled",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_inovelli_dimmer.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-        scene_number = 1,
-        key_attributes=CentralScene.key_attributes.KEY_HELD_DOWN}))
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.down_hold({
-        state_change = true }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Central Scene notification Button held should be handled",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_inovelli_dimmer.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-        scene_number = 1,
         key_attributes=CentralScene.key_attributes.KEY_PRESSED_2_TIMES}))
       }
     },
@@ -202,46 +162,6 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({
-        state_change = true }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Central Scene notification Button held should be handled",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_inovelli_dimmer.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-        scene_number = 2,
-        key_attributes=CentralScene.key_attributes.KEY_RELEASED}))
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.held({
-        state_change = true }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Central Scene notification Button held should be handled",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_inovelli_dimmer.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-        scene_number = 2,
-        key_attributes=CentralScene.key_attributes.KEY_HELD_DOWN}))
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.down_hold({
         state_change = true }))
     }
   }

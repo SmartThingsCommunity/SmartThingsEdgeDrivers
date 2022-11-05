@@ -1,20 +1,3 @@
-matterManufacturer:
-  - id: "Samsung/Thermostat/Android"
-    deviceLabel: Samsung Thermostat Android
-    vendorId: 0x10E1
-    productId: 0x1004
-    deviceProfileName: thermostat
-  - id: "Samsung/Thermostat/Thread"
-    deviceLabel: Samsung Thermostat Thread
-    vendorId: 0x10E1
-    productId: 0x2004
-    deviceProfileName: thermostat
-  - id: "Samsung/Thermostat/Wifi"
-    deviceLabel: Samsung Thermostat WiFi
-    vendorId: 0x10E1
-    productId: 0x3004
-    deviceProfileName: thermostat
-
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat

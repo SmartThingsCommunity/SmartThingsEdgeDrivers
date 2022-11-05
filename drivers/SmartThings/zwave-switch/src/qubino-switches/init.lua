@@ -54,7 +54,7 @@ local function getDeviceProfile(device, isTemperatureSensorOnboard)
 end
 
 local function can_handle_qubino_flush_relay(opts, driver, device, cmd, ...)
-  return device.zwave_manufacturer_id == constants.QUBINO_MFR
+  return device:id_match(constants.QUBINO_MFR)
 end
 
 local function add_temperature_sensor_if_needed(device)

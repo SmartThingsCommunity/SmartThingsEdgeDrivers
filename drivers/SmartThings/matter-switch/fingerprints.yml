@@ -1,20 +1,3 @@
-matterManufacturer:
-  - id: "Samsung/OnOff/Android"
-    deviceLabel: Samsung OnOff Switch Android
-    vendorId: 0x10E1
-    productId: 0x1001
-    deviceProfileName: switch-binary
-  - id: "Samsung/OnOff/Thread"
-    deviceLabel: Samsung OnOff Switch Thread
-    vendorId: 0x10E1
-    productId: 0x2001
-    deviceProfileName: switch-binary
-  - id: "Samsung/OnOff/Wifi"
-    deviceLabel: Samsung OnOff Switch WiFi
-    vendorId: 0x10E1
-    productId: 0x3001
-    deviceProfileName: switch-binary
-
 matterGeneric:
   - id: "matter/on-off/light"
     deviceLabel: Matter OnOff Light

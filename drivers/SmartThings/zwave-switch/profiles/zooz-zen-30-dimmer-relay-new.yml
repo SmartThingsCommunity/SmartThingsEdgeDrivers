@@ -12,14 +12,6 @@ components:
         version: 1
     categories:
       - name: Switch
-  - id: switch1
-    capabilities:
-      - id: switch
-        version: 1
-      - id: refresh
-        version: 1
-    categories:
-      - name: Switch
 preferences:
   - name: "powerFailure"
     title: "On Off Status After Power Failure"
