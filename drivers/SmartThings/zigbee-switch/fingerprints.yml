@@ -2112,6 +2112,14 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0300 #Color Control
     deviceProfileName: rgbw-bulb
+  - id: "genericTWBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceProfileName: color-temp-bulb
   - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
     clusters:
