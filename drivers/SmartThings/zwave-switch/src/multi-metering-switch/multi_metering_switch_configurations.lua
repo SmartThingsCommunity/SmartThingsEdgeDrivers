@@ -17,110 +17,110 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = 0x0003,
-      product_ids = 0x0084,
-      children = 1
+      product_ids = 0x0084
     },
     CONFIGURATION = {
-      child_switch_device_profile = "metering-switch"
+      child_switch_device_profile = "metering-switch",
+      children = 1
     }
   },
   AEOTEC_NANO_SWITCH_2 = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = 0x0103,
-      product_ids = 0x0084,
-      children = 1
+      product_ids = 0x0084
     },
     CONFIGURATION = {
-      child_switch_device_profile = "metering-switch"
+      child_switch_device_profile = "metering-switch",
+      children = 1
     }
   },
   AEOTEC_NANO_SWITCH_3 = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
       product_types = 0x0203,
-      product_ids = 0x0084,
-      children = 1
+      product_ids = 0x0084
     },
     CONFIGURATION = {
-      child_switch_device_profile = "metering-switch"
+      child_switch_device_profile = "metering-switch",
+      children = 1
     }
   },
   ZOOZ_ZEN_POWER_STRIP = {
     MATCHING_MATRIX = {
       mfrs = 0x027A,
       product_types = 0xA000,
-      product_ids = 0xA004,
-      children = 4
+      product_ids = 0xA004
     },
     CONFIGURATION = {
-      child_switch_device_profile = "metering-switch"
+      child_switch_device_profile = "metering-switch",
+      children = 4
     }
   },
   WYFY_TOUCH_1 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3102,
-      product_ids = 0x0201,
-      children = 0
+      product_ids = 0x0201
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 0
     }
   },
   WYFY_TOUCH_2 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3102,
-      product_ids = 0x0202,
-      children = 1
+      product_ids = 0x0202
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 1
     }
   },
   WYFY_TOUCH_4 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3102,
-      product_ids = 0x0204,
-      children = 3
+      product_ids = 0x0204
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 3
     }
   },
   WYFY_TOUCH_1_1 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3111,
-      product_ids = 0x5102,
-      children = 0
+      product_ids = 0x5102
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 0
     }
   },
   WYFY_TOUCH_2_1 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3121,
-      product_ids = 0x5102,
-      children = 1
+      product_ids = 0x5102
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 1
     }
   },
   WYFY_TOUCH_4_1 = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = 0x3141,
-      product_ids = 0x5102,
-      children = 3
+      product_ids = 0x5102
     },
     CONFIGURATION = {
-      child_switch_device_profile = "switch-binary"
+      child_switch_device_profile = "switch-binary",
+      children = 3
     }
   }
 }
@@ -138,13 +138,13 @@ multi_metering_switch_configurations.get_child_switch_device_profile = function(
   end
 end
 
-multi_metering_switch_configurations.get_child_amount = function(zw_device)
+multi_metering_switch_configurations.get_children_amount = function(zw_device)
   for _, device in pairs(devices) do
     if zw_device:id_match(
       device.MATCHING_MATRIX.mfrs,
       device.MATCHING_MATRIX.product_types,
       device.MATCHING_MATRIX.product_ids) then
-      return device.MATCHING_MATRIX.children
+      return device.CONFIGURATION.children
     end
   end
 end

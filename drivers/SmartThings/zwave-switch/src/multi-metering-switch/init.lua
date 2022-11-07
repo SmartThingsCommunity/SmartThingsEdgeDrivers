@@ -48,28 +48,42 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
+local function get_profile(device)
+  if device:get_manufacturer() == 0x015F then -- only WYFY have switch-binary
+    return "switch-binary"
+  else
+    return "metering-switch"
+  end
+end
+
+local function create_child_device(driver, device, children_amount)
+  if children_amount == 0 then return end
+  for i = 2, children_amount+1, 1 do
+    local device_name_without_number = string.sub(driver.label, 0,-2)
+    local name = string.format("%s%d", device_name_without_number, i)
+    local metadata = {
+      type = "EDGE_CHILD",
+      label = name,
+      profile = get_profile(device),
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%02X", i),
+      vendor_provided_label = name,
+    }
+    driver:try_create_device(metadata)
+  end
+end
+
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-    local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
-    if children_amount > 0 then
-      for i = 2, children_amount+1, 1 do
-        local device_name_without_number = string.sub(driver.label, 0,-2)
-        local name = string.format("%s%d", device_name_without_number, i)
-        local metadata = {
-          type = "EDGE_CHILD",
-          label = name,
-          profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device),
-          parent_device_id = device.id,
-          parent_assigned_child_key = string.format("%02X", i),
-          vendor_provided_label = name,
-        }
-        driver:try_create_device(metadata)
-      end
+    local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_children_amount(device)
+    if children_amount == nil then
+      children_amount = device.zwave_endpoints
     end
+    create_child_device(driver, device, children_amount)
   end
   device:refresh()
 end
-
+  
 local function find_child(parent, ep_id)
   if ep_id == PARENT_ENDPOINT then
     return parent
@@ -117,3 +131,4 @@ local multi_metering_switch = {
 }
 
 return multi_metering_switch
+  
