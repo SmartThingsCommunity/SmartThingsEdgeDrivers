@@ -3,10 +3,10 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
+local constants = require "st.zigbee.constants"
 
 local Groups = clusters.Groups
 local SimpleMetering = clusters.SimpleMetering
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 local MAX_POWER_ID = "stse.maxPower" -- maximum allowable power
 local RESTORE_STATE_ID = "stse.restorePowerState" -- remember previous state
@@ -73,6 +73,7 @@ end
 
 local do_configure = function(self, device)
   device:configure()
+  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10)
 
   device:send(Groups.server.commands.RemoveAllGroups(device))
 end
@@ -140,12 +141,6 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 end
 
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 10
-  device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
-end
-
 local aqara_smart_plug_handler = {
   NAME = "Aqara Smart Plug Handler",
   lifecycle_handlers = {
@@ -156,11 +151,7 @@ local aqara_smart_plug_handler = {
   zigbee_handlers = {
     attr = {
       [SimpleMetering.ID] = {
-        [SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
-      },
-      [ElectricalMeasurement.ID] = {
-        [ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
       }
     }
   },
