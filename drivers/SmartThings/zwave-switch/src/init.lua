@@ -112,11 +112,6 @@ local driver_template = {
     capabilities.motionSensor,
     capabilities.smokeDetector,
     capabilities.waterSensor,
-    capabilities.tamperAlert,
-    capabilities.atmosphericPressureMeasurement,
-    capabilities.bodyWeightMeasurement,
-    capabilities.illuminanceMeasurement,
-    capabilities.voltageMeasurement,
     capabilities.zwMultichannel
   },
   sub_drivers = {
