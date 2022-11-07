@@ -50,18 +50,6 @@ local function endpoint_to_component(device, ep)
   end
 end
 
---- Find child function
----
---- @param device st.Device|st.zwave.Device
---- @param src_channel number
-local find_child = function(device, src_channel)
-  if src_channel == 0 then
-    return device
-  else
-    return device:get_child_by_parent_assigned_key(string.format("%02X", src_channel))
-  end
-end
-
 --- Initialize device
 ---
 --- @param self st.zwave.Driver
@@ -70,9 +58,6 @@ local device_init = function(self, device)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-    if device:supports_capability(capabilities.zwMultichannel) then
-      device:set_find_child(find_child)
-    end
   end
 end
 
@@ -105,44 +90,7 @@ local function do_configure(driver, device)
   end
 end
 
-local function get_profile(command_classes)
-  for _, command_class in pairs(command_classes) do
-    if command_class.value == cc.SENSOR_MULTILEVEL or
-        command_class.value == cc.SENSOR_BINARY or
-        command_class.value == cc.SENSOR_ALARM or
-        command_class.value == cc.NOTIFICATION then
-      return "child-generic-sensor"
-    elseif command_class.value == cc.SWITCH_MULTILEVEL then
-      return "switch-level"
-    end
-  end
-  return "child-switch"
-end
-
---- Prepare metadata for child device
----
---- @param device st.zwave.Device Parent device
---- @param endpoint number Child endpoint number
---- @param command_classes table Supported command classes
-local function prepare_metadata(device, endpoint, command_classes)
-  local name = string.format("%s %d", device.label, endpoint)
-  return {
-    type = "EDGE_CHILD",
-    label = name,
-    profile = get_profile(command_classes),
-    parent_device_id = device.id,
-    parent_assigned_child_key = string.format("%02X", endpoint),
-    vendor_provided_label = name
-  }
-end
-
 local function device_added(driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
-      device:supports_capability(capabilities.zwMultichannel) then
-    for index, endpoint in pairs(device.zwave_endpoints) do
-      driver:try_create_device(prepare_metadata(device, index, endpoint.command_classes))
-    end
-  end
   device:refresh()
 end
 
@@ -187,7 +135,8 @@ local driver_template = {
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
-    require("zooz-zen-30-dimmer-relay")
+    require("zooz-zen-30-dimmer-relay"),
+    require("multichannel-device")
   },
   lifecycle_handlers = {
     init = device_init,

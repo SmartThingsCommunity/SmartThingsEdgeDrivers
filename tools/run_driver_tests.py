@@ -53,7 +53,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         last_line = ""
         in_progress_test_name = ""
         test_cases = []
-        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).rindex('/')+1:])
+        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).find('/')+1:])
         test_case = None
         test_logs = ""
         test_title = ""
