@@ -223,7 +223,7 @@ zwaveManufacturer:
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA003
-    deviceProfileName: dual-metering-switch
+    deviceProfileName: metering-switch
   - id: 015F/3102/0201
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
@@ -336,7 +336,7 @@ zwaveManufacturer:
     deviceLabel: Fibaro Double Switch
     manufacturerId: 0x010F
     productType: 0x0203
-    deviceProfileName: switch-1-button-6-power-energy
+    deviceProfileName: fibaro-double-switch
   - id: "Eaton/5740/0000"
     deviceLabel: Eaton 5-Scene Keypad
     manufacturerId: 0x001A

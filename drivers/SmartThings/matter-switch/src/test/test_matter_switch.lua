@@ -17,10 +17,6 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
--- TODO remove require hack from sdk renames
-local ColorTemperatureAttribute = pcall(function() return clusters.ColorControl.attributes.ColorTemperature end) and
-                                  clusters.ColorControl.attributes.ColorTemperature or
-                                  clusters.ColorControl.attributes.ColorTemperatureMireds
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
   manufacturer_info = {
@@ -75,7 +71,7 @@ local function test_init()
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY,
-    ColorTemperatureAttribute,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -350,7 +346,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        ColorTemperatureAttribute:build_test_report_data(mock_device, 1, 556)
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 556)
       }
     },
     {

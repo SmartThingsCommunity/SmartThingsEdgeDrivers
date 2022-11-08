@@ -109,9 +109,6 @@ local aeon_smart_strip = {
       [Meter.REPORT] = meter_report_handler
     }
   },
-  lifecycle_handlers = {
-    init = device_init
-  },
   can_handle = can_handle_aeon_smart_strip,
 }
 

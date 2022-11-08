@@ -65,7 +65,21 @@ function Listener:now_playing_update(info)
     if not is_empty(info.artist) then trackdata.artist = info.artist end
     if not is_empty(info.album) then trackdata.album = info.album end
     if not is_empty(info.art_url) then trackdata.albumArtUrl = info.art_url end
-    if not is_empty(info.source) then trackdata.mediaSource = info.source end
+    if not is_empty(info.source) then
+      trackdata.mediaSource = info.source
+      -- Note changing supportedTrackControlCommands after join does not seem to take effect in the app immediately.
+      -- This indicates a bug in the mobile app.
+      if info.source == "TUNEIN" and
+        utils.table_size(self.device.state_cache.main.mediaTrackControl.supportedTrackControlCommands.value) > 0 then
+        -- Switching to radio source which disables track controls
+        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
+      elseif utils.table_size(self.device.state_cache.main.mediaTrackControl.supportedTrackControlCommands.value) == 0 then
+        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+          capabilities.mediaTrackControl.commands.nextTrack.NAME,
+          capabilities.mediaTrackControl.commands.previousTrack.NAME,
+        }))
+      end
+    end
     if not is_empty(info.track) then
       trackdata.title = info.track
     elseif not is_empty(info.station) then
