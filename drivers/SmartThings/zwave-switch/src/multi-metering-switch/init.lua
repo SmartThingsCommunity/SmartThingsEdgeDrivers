@@ -83,7 +83,8 @@ local function device_added(driver, device, event)
     if is_zooz_power_strip(device) then
       children_amount = 4;
     else
-      children_amount = device.zwave_endpoints
+      local endpoints = device.zwave_endpoints
+      children_amount = (#endpoints)-1
     end
     create_child_device(driver, device, children_amount)
   end
@@ -137,4 +138,3 @@ local multi_metering_switch = {
 }
 
 return multi_metering_switch
-  
