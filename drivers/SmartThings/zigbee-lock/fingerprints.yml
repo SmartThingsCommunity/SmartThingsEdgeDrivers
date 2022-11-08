@@ -124,11 +124,11 @@ zigbeeManufacturer:
     manufacturer:
     model: E261-KR0B0Z0-HA
     deviceProfileName: lock-battery
-# zigbeeGeneric:
-#   - id: "genericLock"
-#     deviceLabel: Zigbee Lock
-#     clusters:
-#       server:
-#         - 0x0101 #Door Lock
-#         - 0x0001 #Power Configuration
-#     deviceProfileName: lock-battery
+zigbeeGeneric:
+  - id: "genericLock"
+    deviceLabel: Zigbee Lock
+    clusters:
+      server:
+        - 0x0101 #Door Lock
+        - 0x0001 #Power Configuration
+    deviceProfileName: lock-battery

@@ -184,27 +184,27 @@ zigbeeManufacturer:
 #     manufacturer: SmartThings
 #     model: PGC313EU
 #     deviceProfileName: smartsense-multi
-# zigbeeGeneric:
-#   - id: "contact-generic"
-#     deviceLabel: "Zigbee Contact Sensor"
-#     zigbeeProfiles:
-#       - 0x0104
-#     deviceIdentifiers:
-#       - 0x0402
-#     clusters:
-#       server:
-#         - 0x0000
-#         - 0x0001
-#         - 0x0003
-#         - 0x0009
-#         - 0x0500
-#       client:
-#         - 0x0000
-#     deviceProfileName: contact-general
-#   - id: SmartSense/MultiSensor/Generic
-#     deviceLabel: Multipurpose Sensor
-#     zigbeeProfiles:
-#       - 0xFC01
-#     deviceIdentifiers:
-#       - 0x0139
-#     deviceProfileName: smartsense-multi
+zigbeeGeneric:
+  - id: "contact-generic"
+    deviceLabel: "Zigbee Contact Sensor"
+    zigbeeProfiles:
+      - 0x0104
+    deviceIdentifiers:
+      - 0x0402
+    clusters:
+      server:
+        - 0x0000
+        - 0x0001
+        - 0x0003
+        - 0x0009
+        - 0x0500
+      client:
+        - 0x0000
+    deviceProfileName: contact-general
+  - id: SmartSense/MultiSensor/Generic
+    deviceLabel: Multipurpose Sensor
+    zigbeeProfiles:
+      - 0xFC01
+    deviceIdentifiers:
+      - 0x0139
+    deviceProfileName: smartsense-multi

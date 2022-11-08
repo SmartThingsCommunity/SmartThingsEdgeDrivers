@@ -1,24 +1,6 @@
-matterManufacturer:
-  - id: "Samsung/WindowCovering/Android"
-    deviceLabel: Samsung Window Covering Android
-    vendorId: 0x10E1
-    productId: 0x1005
-    deviceProfileName: window-covering-profile
-  - id: "Samsung/WindowCovering/Thread"
-    deviceLabel: Samsung Window Covering Thread
-    vendorId: 0x10E1
-    productId: 0x2005
-    deviceProfileName: window-covering-profile
-  - id: "Samsung/WindowCovering/Wifi"
-    deviceLabel: Samsung Window Covering WiFi
-    vendorId: 0x10E1
-    productId: 0x3005
-    deviceProfileName: window-covering-profile
-
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
     deviceTypes:
       - id: 0x0202 # Window Covering
     deviceProfileName: window-covering-profile
-  

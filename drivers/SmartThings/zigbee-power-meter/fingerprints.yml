@@ -18,10 +18,10 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: "PMM-300Z1"
     deviceProfileName: power-meter
-# zigbeeGeneric:
-#   - id: "genericMeter"
-#     deviceLabel: Zigbee Meter
-#     clusters:
-#       server:
-#         - 0x0702 #Simple Metering
-#     deviceProfileName: power-meter
+zigbeeGeneric:
+  - id: "genericMeter"
+    deviceLabel: Zigbee Meter
+    clusters:
+      server:
+        - 0x0702 #Simple Metering
+    deviceProfileName: power-meter

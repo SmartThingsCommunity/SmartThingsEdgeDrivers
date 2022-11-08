@@ -17,12 +17,12 @@ zwaveManufacturer:
     productType: 0x0007
     productId: 0x0052
     deviceProfileName: base-electric-meter
-#   - id: "Qubino3PhaseMeter"
-#     deviceLabel: Qubino Energy Monitor
-#     manufacturerId: 0x0159
-#     productType: 0x0007
-#     productId: 0x0054
-#     deviceProfileName: qubino-3-phase-meter
+  - id: "Qubino3PhaseMeter"
+    deviceLabel: Qubino Energy Monitor
+    manufacturerId: 0x0159
+    productType: 0x0007
+    productId: 0x0054
+    deviceProfileName: qubino-3-phase-meter
 #   - id: "AeonHomeEnergyMeter/1"
 #     deviceLabel: Aeon Energy Monitor
 #     manufacturerId: 0x0086

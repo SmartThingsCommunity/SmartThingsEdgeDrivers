@@ -78,17 +78,17 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
-# zigbeeGeneric:
-  # - id: "genericShade"
-  #   deviceLabel: Zigbee Window Treatment
-  #   clusters:
-  #     server:
-  #       - 0x0102 #Window Covering
-  #   deviceProfileName: window-treatment-profile
-  # - id: "genericShade-battery"
-  #   deviceLabel: Zigbee Window Treatment
-  #   clusters:
-  #     server:
-  #       - 0x0102 #Window Covering
-  #       - 0x0001 #Power Configuration
-  #   deviceProfileName: window-treatment-battery
+zigbeeGeneric:
+  - id: "genericShade"
+    deviceLabel: Zigbee Window Treatment
+    clusters:
+      server:
+        - 0x0102 #Window Covering
+    deviceProfileName: window-treatment-profile
+  - id: "genericShade-battery"
+    deviceLabel: Zigbee Window Treatment
+    clusters:
+      server:
+        - 0x0102 #Window Covering
+        - 0x0001 #Power Configuration
+    deviceProfileName: window-treatment-battery
