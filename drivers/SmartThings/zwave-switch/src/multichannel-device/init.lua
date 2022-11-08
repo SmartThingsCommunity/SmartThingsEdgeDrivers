@@ -64,7 +64,7 @@ end
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD  then
     for index, endpoint in pairs(device.zwave_endpoints) do
-      device:send(MultiChannel:CapabilityGet({ end_point = index - 1 }))
+      device:send(MultiChannel:CapabilityGet({ end_point = index }))
     end
   end
   device:refresh()

@@ -2110,16 +2110,6 @@ test.register_message_test(
         message = zw_test_utils.zwave_test_build_send_command(
             mock_parent,
             MultiChannel:CapabilityGet({
-              end_point = 0
-            })
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            MultiChannel:CapabilityGet({
               end_point = 1
             })
         )
@@ -2161,6 +2151,16 @@ test.register_message_test(
             mock_parent,
             MultiChannel:CapabilityGet({
               end_point = 5
+            })
+        )
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            MultiChannel:CapabilityGet({
+              end_point = 6
             })
         )
       },
