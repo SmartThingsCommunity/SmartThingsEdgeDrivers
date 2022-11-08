@@ -57,6 +57,7 @@ local function added_handler(self, device)
       device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
     end
   end
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
