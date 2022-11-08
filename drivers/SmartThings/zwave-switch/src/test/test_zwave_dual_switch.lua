@@ -312,7 +312,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -347,7 +347,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -382,7 +382,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -417,7 +417,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,

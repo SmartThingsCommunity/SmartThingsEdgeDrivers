@@ -73,39 +73,39 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-02P
     deviceProfileName: humidity-temp-battery
-# zigbeeGeneric:
-#   - id: "HumidityTempGeneric"
-#     deviceLabel: Multipurpose Sensor
-#     deviceIdentifiers:
-#       - 0x0302
-#     clusters:
-#       server:
-#         - 0x0402 # Temperature Measurement Cluster
-#         - 0x0405 # Relative Humidity Measurement Cluster
-#     deviceProfileName: humidity-temperature
-#   - id: "PlantLinkClusterSpecific"
-#     deviceLabel: Plant Link Humidity Sensor
-#     zigbeeProfiles:
-#       - 0x0104
-#     clusters:
-#       server:
-#         - 0x0000
-#         - 0x0003
-#         - 0x0405
-#         - 0xFC08 # Plant Link Manufacturer specific cluster
-#       client:
-#         - 0x0003
-#     deviceProfileName: humidity-battery
-#   - id: "PlantLinkHumiditySensor"
-#     deviceLabel: Plant Link Humidity Sensor
-#     zigbeeProfiles:
-#       - 0x0104
-#     clusters:
-#       server:
-#         - 0x0000
-#         - 0x0001
-#         - 0x0003
-#         - 0x0B04
-#       client:
-#         - 0x0003
-#     deviceProfileName: humidity-battery
+zigbeeGeneric:
+  - id: "HumidityTempGeneric"
+    deviceLabel: Multipurpose Sensor
+    deviceIdentifiers:
+      - 0x0302
+    clusters:
+      server:
+        - 0x0402 # Temperature Measurement Cluster
+        - 0x0405 # Relative Humidity Measurement Cluster
+    deviceProfileName: humidity-temperature
+  - id: "PlantLinkClusterSpecific"
+    deviceLabel: Plant Link Humidity Sensor
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000
+        - 0x0003
+        - 0x0405
+        - 0xFC08 # Plant Link Manufacturer specific cluster
+      client:
+        - 0x0003
+    deviceProfileName: humidity-battery
+  - id: "PlantLinkHumiditySensor"
+    deviceLabel: Plant Link Humidity Sensor
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000
+        - 0x0001
+        - 0x0003
+        - 0x0B04
+      client:
+        - 0x0003
+    deviceProfileName: humidity-battery

@@ -1,20 +1,3 @@
-matterManufacturer:
-  # Samsung SVT
-  - id: "Samsung/DoorLock/Android"
-    deviceLabel: Samsung Door Lock Android
-    vendorId: 0x10E1
-    productId: 0x1002
-    deviceProfileName: base-lock
-  - id: "Samsung/DoorLock/Thread"
-    deviceLabel: Samsung Door Lock Thread
-    vendorId: 0x10E1
-    productId: 0x2002
-    deviceProfileName: base-lock
-  - id: "Samsung/DoorLock/Wifi"
-    deviceLabel: Samsung Door Lock WiFi
-    vendorId: 0x10E1
-    productId: 0x3002
-    deviceProfileName: base-lock
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

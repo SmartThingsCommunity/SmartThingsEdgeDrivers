@@ -240,7 +240,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -278,7 +278,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -313,7 +313,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -348,7 +348,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -570,7 +570,7 @@ test.register_message_test(
         mock_zooz_zen_30_dimmer_relay.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
+            current_value = 50,
             target_value = 50,
             duration = 0
           })
