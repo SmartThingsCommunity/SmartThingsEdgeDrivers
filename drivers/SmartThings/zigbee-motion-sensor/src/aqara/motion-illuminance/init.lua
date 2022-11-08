@@ -48,6 +48,12 @@ local function added_handler(self, device)
   aqara_utils.read_custom_attribute(device, aqara_utils.FREQUENCY_ATTRIBUTE_ID)
 end
 
+local do_configure = function(self, device)
+  device:configure()
+
+  aqara_utils.read_custom_attribute(device, aqara_utils.FREQUENCY_ATTRIBUTE_ID)
+end
+
 local function write_attr_res_handler(driver, device, zb_rx)
   aqara_utils.detection_frequency_res_handler(device)
 end
@@ -66,7 +72,8 @@ local aqara_motion_illuminance_handler = {
   NAME = "Aqara Motion Illuminance Handler",
   lifecycle_handlers = {
     init = device_init,
-    added = added_handler
+    added = added_handler,
+    doConfigure = do_configure
   },
   zigbee_handlers = {
     global = {

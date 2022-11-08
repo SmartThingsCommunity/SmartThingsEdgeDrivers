@@ -18,7 +18,7 @@ local UNOCCUPIED_TIMER = "unoccupiedTimer"
 local PREF_CHANGED_KEY = "prefChangedKey"
 local PREF_CHANGED_VALUE = "prefChangedValue"
 local PREF_FREQUENCY_KEY = "prefFrequency"
-local PREF_FREQUENCY_VALUE_DEFAULT = 120
+local PREF_FREQUENCY_VALUE_DEFAULT = 60
 
 local function custom_attribute(device, cluster_id, attribute_id)
   local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute_id)
@@ -50,7 +50,6 @@ local function motion_detected(driver, device, value, zb_rx)
     device:set_field(UNOCCUPIED_TIMER, nil)
   end
   local detect_duration = device:get_field(PREF_FREQUENCY_KEY) or PREF_FREQUENCY_VALUE_DEFAULT
-  print(detect_duration)
   local inactive_state = function()
     device:emit_event(capabilities.motionSensor.motion.inactive())
   end

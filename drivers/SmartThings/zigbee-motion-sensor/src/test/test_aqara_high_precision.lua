@@ -28,7 +28,7 @@ local detectionFrequency = capabilities["stse.detectionFrequency"]
 
 local PowerConfiguration = clusters.PowerConfiguration
 local OccupancySensing = clusters.OccupancySensing
-local PREF_FREQUENCY_VALUE_DEFAULT = 120
+local PREF_FREQUENCY_VALUE_DEFAULT = 60
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local FREQUENCY_ATTRIBUTE_ID = 0x0102
@@ -84,6 +84,41 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { SENSITIVITY_ATTRIBUTE_ID }, MFG_CODE)
     })
+  end
+)
+
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      OccupancySensing.attributes.Occupancy:configure_reporting(mock_device, 30, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OccupancySensing.ID)
+    })
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { FREQUENCY_ATTRIBUTE_ID }, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { SENSITIVITY_ATTRIBUTE_ID }, MFG_CODE)
+    })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 

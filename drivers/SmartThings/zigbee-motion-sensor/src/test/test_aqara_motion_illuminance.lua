@@ -26,7 +26,7 @@ test.add_package_capability("detectionFrequency.yaml")
 local detectionFrequency = capabilities["stse.detectionFrequency"]
 
 local PowerConfiguration = clusters.PowerConfiguration
-local PREF_FREQUENCY_VALUE_DEFAULT = 120
+local PREF_FREQUENCY_VALUE_DEFAULT = 60
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
