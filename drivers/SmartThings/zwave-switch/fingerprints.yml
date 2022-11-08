@@ -916,6 +916,20 @@ zwaveGeneric:
       supported:
         - 0x60 # multi channel
     deviceProfileName: multichannel-switch-level
+  - id: "GenericMultiChannelDevice/2"
+    deviceLabel: Z-Wave Device Multichannel
+    commandClasses:
+      supported:
+        - 0x60 # multi channel
+        - 0x25
+    deviceProfileName: multichannel-switch-level
+  - id: "GenericMultiChannelDevice/3"
+    deviceLabel: Z-Wave Device Multichannel
+    commandClasses:
+      supported:
+        - 0x60 # multi channel
+        - 0x26
+    deviceProfileName: multichannel-switch-level
 zwaveThing :
   - id: SmartThings/Z-WaveThing
     deviceLabel: Z-Wave Device

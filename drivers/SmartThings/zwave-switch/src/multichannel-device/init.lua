@@ -71,8 +71,8 @@ local function device_added(driver, device)
 end
 
 local function capability_get_report_handler(driver, device, cmd)
-  if find_child(device, cmd.end_point) == nil then
-    driver:try_create_device(prepare_metadata(device, cmd.end_point, cmd.generic_device_class))
+  if find_child(device, cmd.args.end_point) == nil then
+      driver:try_create_device(prepare_metadata(device, cmd.args.end_point, cmd.args.generic_device_class))
   end
 end
 
