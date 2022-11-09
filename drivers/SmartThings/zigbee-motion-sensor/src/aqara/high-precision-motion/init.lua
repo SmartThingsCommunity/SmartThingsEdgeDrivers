@@ -76,13 +76,6 @@ local function added_handler(self, device)
   aqara_utils.read_custom_attribute(device, SENSITIVITY_ATTRIBUTE_ID)
 end
 
-local do_configure = function(self, device)
-  device:configure()
-
-  aqara_utils.read_custom_attribute(device, aqara_utils.FREQUENCY_ATTRIBUTE_ID)
-  aqara_utils.read_custom_attribute(device, SENSITIVITY_ATTRIBUTE_ID)
-end
-
 local function send_sensitivity_adjustment_value(device, value)
   aqara_utils.set_pref_changed_field(device, PREF_SENSITIVITY_KEY, value)
   aqara_utils.write_custom_attribute(device, SENSITIVITY_ATTRIBUTE_ID, value)
@@ -135,8 +128,7 @@ local aqara_high_precision_motion_handler = {
   NAME = "Aqara High Precision Motion Handler",
   lifecycle_handlers = {
     init = device_init,
-    added = added_handler,
-    doConfigure = do_configure
+    added = added_handler
   },
   capability_handlers = {
     [sensitivityAdjustmentId] = {

@@ -88,41 +88,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Configure should configure all necessary attributes",
-  function()
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      OccupancySensing.attributes.Occupancy:configure_reporting(mock_device, 30, 3600, 1)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OccupancySensing.ID)
-    })
-
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { FREQUENCY_ATTRIBUTE_ID }, MFG_CODE)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { SENSITIVITY_ATTRIBUTE_ID }, MFG_CODE)
-    })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
-)
-
-test.register_coroutine_test(
   "Reported motion detected",
   function()
     local detect_duration = mock_device:get_field(0x0102) or 120
