@@ -267,7 +267,7 @@ zwaveManufacturer:
     productId: 0x1000
     deviceProfileName: fibaro-walli-dimmer
   - id: "ZoozPowerStrip"
-    deviceLabel: Zooz Power Strip
+    deviceLabel: Zooz Power Strip 1
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA004

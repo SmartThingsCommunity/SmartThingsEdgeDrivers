@@ -48,15 +48,14 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
-local function create_child_device(driver, device, children_amount)
-  if children_amount == 0 then return end
+local function create_child_device(driver, device, children_amount, profile)
   for i = 2, children_amount+1, 1 do
-    local device_name_without_number = string.sub(driver.label, 0,-2)
+    local device_name_without_number = string.sub(device.label, 0,-2)
     local name = string.format("%s%d", device_name_without_number, i)
     local metadata = {
       type = "EDGE_CHILD",
       label = name,
-      profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device),
+      profile = profile,
       parent_device_id = device.id,
       parent_assigned_child_key = string.format("%02X", i),
       vendor_provided_label = name,
@@ -68,11 +67,15 @@ end
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
+    local profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device)
     if children_amount == nil then
-      local endpoints = device.zwave_endpoints
-      children_amount = (#endpoints)-1
+      local endpoints = 0
+      for _, _ in pairs(device.zwave_endpoints) do
+        endpoints = endpoints + 1
+      end
+      children_amount = endpoints-1
     end
-    create_child_device(driver, device, children_amount)
+    create_child_device(driver, device, children_amount, profile)
   end
   device:refresh()
 end
