@@ -67,7 +67,7 @@ end
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
-    local profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device)
+    local device_profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device)
     if children_amount == nil then
       local endpoints = 0
       for _, _ in pairs(device.zwave_endpoints) do
@@ -75,7 +75,7 @@ local function device_added(driver, device, event)
       end
       children_amount = endpoints-1
     end
-    create_child_device(driver, device, children_amount, profile)
+    create_child_device(driver, device, children_amount, device_profile)
   end
   device:refresh()
 end
