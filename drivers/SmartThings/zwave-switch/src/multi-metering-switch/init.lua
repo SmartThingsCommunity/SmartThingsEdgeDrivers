@@ -48,14 +48,14 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
-local function create_child_device(driver, device, children_amount, profile)
+local function create_child_device(driver, device, children_amount, device_profile)
   for i = 2, children_amount+1, 1 do
     local device_name_without_number = string.sub(device.label, 0,-2)
     local name = string.format("%s%d", device_name_without_number, i)
     local metadata = {
       type = "EDGE_CHILD",
       label = name,
-      profile = profile,
+      profile = device_profile,
       parent_device_id = device.id,
       parent_assigned_child_key = string.format("%02X", i),
       vendor_provided_label = name,
