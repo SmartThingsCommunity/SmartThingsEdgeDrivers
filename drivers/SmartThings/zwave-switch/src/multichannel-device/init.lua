@@ -40,7 +40,7 @@ end
 
 local function device_init(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-      device:set_find_child(find_child)
+    device:set_find_child(find_child)
   end
 end
 
@@ -62,7 +62,7 @@ local function prepare_metadata(device, endpoint, generic_device_class)
 end
 
 local function device_added(driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD  then
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     for index, endpoint in pairs(device.zwave_endpoints) do
       device:send(MultiChannel:CapabilityGet({ end_point = index }))
     end
@@ -72,7 +72,7 @@ end
 
 local function capability_get_report_handler(driver, device, cmd)
   if find_child(device, cmd.args.end_point) == nil then
-      driver:try_create_device(prepare_metadata(device, cmd.args.end_point, cmd.args.generic_device_class))
+    driver:try_create_device(prepare_metadata(device, cmd.args.end_point, cmd.args.generic_device_class))
   end
 end
 

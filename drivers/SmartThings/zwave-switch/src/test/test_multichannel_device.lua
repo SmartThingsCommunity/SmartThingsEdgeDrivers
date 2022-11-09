@@ -86,6 +86,12 @@ local switch_endpoints = {
   }
 }
 
+local base_parent = test.mock_device.build_test_zwave_device({
+  label = "Z-Wave Switch Multichannel",
+  profile = t_utils.get_profile_definition("multichannel-switch-level.yml"),
+  zwave_endpoints = switch_endpoints
+})
+
 local mock_parent = test.mock_device.build_test_zwave_device({
   label = "Z-Wave Switch Multichannel",
   profile = t_utils.get_profile_definition("multichannel-switch-level.yml"),
@@ -123,6 +129,7 @@ local mock_child_5 = test.mock_device.build_test_child_device({
 })
 
 local function test_init()
+  test.mock_device.add_test_device(base_parent)
   test.mock_device.add_test_device(mock_parent)
   test.mock_device.add_test_device(mock_child)
   test.mock_device.add_test_device(mock_child_2)
@@ -2258,6 +2265,44 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should not create device if it has child with ep 1",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 1,
+                generic_device_class = 0x10
+              })
+          )
+        }
+      },
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should create device if it doesn't have child with ep 1",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          base_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 1,
+                generic_device_class = 0x10
+              })
+          )
+        }
+      },
     }
 )
 
