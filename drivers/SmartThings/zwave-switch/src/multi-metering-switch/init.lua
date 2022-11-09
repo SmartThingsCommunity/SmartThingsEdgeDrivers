@@ -22,6 +22,7 @@ local Meter = (require "st.zwave.CommandClass.Meter")({version = 3})
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version = 2, strict = true })
+local MULTI_METERING_SWITCH_CONFIGURATION_MAP = require "multi-metering-switch/multi_metering_switch_configurations"
 
 local PARENT_ENDPOINT = 1
 
@@ -47,28 +48,15 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
-local function get_profile(device)
-  if device:get_manufacturer() == 0x015F then -- only WYFY's have switch-binary
-    return "switch-binary"
-  else
-    return "metering-switch"
-  end
-end
-
-local function is_zooz_power_strip(device)
-  if device:get_manufacturer() == 0x027A and device:get_model() == 0xA004 then
-    return true
-  end
-end
-
 local function create_child_device(driver, device, children_amount)
+  if children_amount == 0 then return end
   for i = 2, children_amount+1, 1 do
     local device_name_without_number = string.sub(driver.label, 0,-2)
     local name = string.format("%s%d", device_name_without_number, i)
     local metadata = {
       type = "EDGE_CHILD",
       label = name,
-      profile = get_profile(device),
+      profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device),
       parent_device_id = device.id,
       parent_assigned_child_key = string.format("%02X", i),
       vendor_provided_label = name,
@@ -79,10 +67,8 @@ end
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
-    local children_amount
-    if is_zooz_power_strip(device) then
-      children_amount = 4;
-    else
+    local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
+    if children_amount == nil then
       local endpoints = device.zwave_endpoints
       children_amount = (#endpoints)-1
     end
