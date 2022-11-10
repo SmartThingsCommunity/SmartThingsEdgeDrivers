@@ -20,10 +20,10 @@ local map_device_class_to_profile = {
   [0x10] = "metering-switch",
   [0x31] = "metering-switch",
   [0x11] = "metering-dimmer",
-  [0x08] = "metering-sensor",
-  [0x21] = "metering-sensor",
-  [0x20] = "metering-sensor",
-  [0xA1] = "metering-sensor"
+  [0x08] = "generic-multi-sensor",
+  [0x21] = "generic-multi-sensor",
+  [0x20] = "generic-sensor",
+  [0xA1] = "generic-sensor"
 }
 
 local function can_handle_multichannel_device(opts, driver, device, ...)
@@ -44,17 +44,12 @@ local function device_init(driver, device)
   end
 end
 
-local function get_profile(generic_device_class)
-  local device_class = generic_device_class or 0x10
-  return map_device_class_to_profile[device_class]
-end
-
-local function prepare_metadata(device, endpoint, generic_device_class)
+local function prepare_metadata(device, endpoint, profile)
   local name = string.format("%s %d", device.label, endpoint)
   return {
     type = "EDGE_CHILD",
     label = name,
-    profile = get_profile(generic_device_class),
+    profile = profile,
     parent_device_id = device.id,
     parent_assigned_child_key = string.format("%02X", endpoint),
     vendor_provided_label = name
@@ -71,8 +66,9 @@ local function device_added(driver, device)
 end
 
 local function capability_get_report_handler(driver, device, cmd)
-  if find_child(device, cmd.args.end_point) == nil then
-    driver:try_create_device(prepare_metadata(device, cmd.args.end_point, cmd.args.generic_device_class))
+  local profile = map_device_class_to_profile[cmd.args.generic_device_class]
+  if find_child(device, cmd.args.end_point) == nil and profile ~= nil then
+    driver:try_create_device(prepare_metadata(device, cmd.args.end_point, profile))
   end
 end
 

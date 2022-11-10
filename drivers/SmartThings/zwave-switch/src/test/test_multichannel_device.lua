@@ -26,8 +26,6 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
-local KILO_PASCAL_PER_INCH_OF_MERCURY = 3.386389
-
 -- supported command classes
 local switch_endpoints = {
   {
@@ -79,8 +77,6 @@ local switch_endpoints = {
     command_classes = {
       { value = zw.BASIC },
       { value = zw.SENSOR_MULTILEVEL },
-      { value = zw.BATTERY },
-      { value = zw.METER },
       { value = zw.MULTI_CHANNEL }
     }
   }
@@ -117,13 +113,13 @@ local mock_child_3 = test.mock_device.build_test_child_device({
 })
 
 local mock_child_4 = test.mock_device.build_test_child_device({
-  profile = t_utils.get_profile_definition("metering-sensor.yml"),
+  profile = t_utils.get_profile_definition("generic-sensor.yml"),
   parent_device_id = mock_parent.id,
   parent_assigned_child_key = string.format("%02X", 4)
 })
 
 local mock_child_5 = test.mock_device.build_test_child_device({
-  profile = t_utils.get_profile_definition("metering-sensor.yml"),
+  profile = t_utils.get_profile_definition("generic-multi-sensor.yml"),
   parent_device_id = mock_parent.id,
   parent_assigned_child_key = string.format("%02X", 5)
 })
@@ -897,132 +893,6 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Power meter report (child 5) should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              Meter:Report({
-                meter_value = 50,
-                scale = Meter.scale.electric_meter.WATTS
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Power meter report (SENSOR_MULTILEVEL) (child 5) voltage should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              SensorMultilevel:Report({
-                sensor_type = SensorMultilevel.sensor_type.POWER,
-                sensor_value = 50,
-                scale = SensorMultilevel.scale.power.WATTS
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Energy meter report (child 5) should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              Meter:Report({
-                meter_value = 50,
-                scale = Meter.scale.electric_meter.KILOWATT_HOURS
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.energyMeter.energy({ value = 50, unit = "kWh" }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Energy meter report (child 5) should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              Meter:Report({
-                meter_value = 50,
-                scale = Meter.scale.electric_meter.KILOVOLT_AMPERE_HOURS
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.energyMeter.energy({ value = 50, unit = "kVAh" }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Energy meter (child 5) capability resetEnergyMeter command should be handled",
-    {
-      {
-        channel = "capability",
-        direction = "receive",
-        message = { mock_child_5.id, { capability = "energyMeter", command = "resetEnergyMeter", args = {} } }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(mock_parent, Meter:Reset({}, { dst_channels = { 5 } }))
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(mock_parent, Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }, { dst_channels = { 5 } }))
-      }
-    }
-)
-
-test.register_message_test(
     "Basic report (child 4) 0x00 should be handled",
     {
       {
@@ -1061,44 +931,6 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Basic report (child 5) 0x00 should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              Basic:Report({
-                value = 0x00
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.contactSensor.contact.closed())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.waterSensor.water.dry())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
-)
-
-test.register_message_test(
     "Basic report (child 4) 0xFF should be handled",
     {
       {
@@ -1129,44 +961,6 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.active())
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
-)
-
-test.register_message_test(
-    "Basic report (child 5) 0xFF should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              Basic:Report({
-                value = 0xFF
-              }, {
-                src_channel = 5
-              })
-          )
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.contactSensor.contact.open())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.waterSensor.water.wet())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_child_5:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
     },
     {
@@ -1969,6 +1763,86 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "SensorMultilevel TEMPERATURE report (child 5) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              SensorMultilevel:Report({
+                sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+                sensor_value = 20,
+                scale = SensorMultilevel.scale.temperature.CELSIUS
+              }, {
+                src_channel = 5
+              })
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_child_5:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 20, unit = "C" }))
+      }
+    }
+)
+
+test.register_message_test(
+    "SensorMultilevel TEMPERATURE report (child 5) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              SensorMultilevel:Report({
+                sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
+                sensor_value = 70
+              }, {
+                src_channel = 5
+              })
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_child_5:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70 }))
+      }
+    }
+)
+
+test.register_message_test(
+    "SensorMultilevel TEMPERATURE report (child 5) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              SensorMultilevel:Report({
+                sensor_type = SensorMultilevel.sensor_type.LUMINANCE,
+                sensor_value = 400,
+                scale = SensorMultilevel.scale.luminance.LUX
+              }, {
+                src_channel = 5
+              })
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_child_5:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 400, unit = "lux" }))
+      }
+    }
+)
+
+test.register_message_test(
     "Refresh capability command should refresh device",
     {
       {
@@ -2010,22 +1884,6 @@ test.register_message_test(
             mock_parent,
             SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.DOOR_WINDOW }, { dst_channels = { 4 } })
         )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            Meter:Get({ scale = 2 }, { dst_channels = { 4 } })
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            Meter:Get({ scale = 0 }, { dst_channels = { 4 } })
-        )
       }
     },
     {
@@ -2049,7 +1907,12 @@ test.register_message_test(
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
             mock_parent,
-            SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.SMOKE }, { dst_channels = { 5 } })
+            SensorMultilevel:Get({
+              sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+              scale = SensorMultilevel.scale.temperature.CELSIUS
+            }, {
+              dst_channels = { 5 }
+            })
         )
       },
       {
@@ -2057,7 +1920,11 @@ test.register_message_test(
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
             mock_parent,
-            SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.MOTION }, { dst_channels = { 5 } })
+            SensorMultilevel:Get({
+              sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY
+            }, {
+              dst_channels = { 5 }
+            })
         )
       },
       {
@@ -2065,31 +1932,12 @@ test.register_message_test(
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
             mock_parent,
-            SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.WATER }, { dst_channels = { 5 } })
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.DOOR_WINDOW }, { dst_channels = { 5 } })
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            Meter:Get({ scale = 2 }, { dst_channels = { 5 } })
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-            mock_parent,
-            Meter:Get({ scale = 0 }, { dst_channels = { 5 } })
+            SensorMultilevel:Get({
+              sensor_type = SensorMultilevel.sensor_type.LUMINANCE,
+              scale = SensorMultilevel.scale.luminance.LUX
+            }, {
+              dst_channels = { 5 }
+            })
         )
       }
     },
@@ -2370,7 +2218,7 @@ test.register_message_test(
           zw_test_utils.zwave_test_build_receive_command(
               MultiChannel:CapabilityReport({
                 end_point = 4,
-                generic_device_class = 0x08
+                generic_device_class = 0x20
               })
           )
         }
@@ -2389,6 +2237,49 @@ test.register_message_test(
           zw_test_utils.zwave_test_build_receive_command(
               MultiChannel:CapabilityReport({
                 end_point = 4,
+                generic_device_class = 0x20
+              })
+          )
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = --expect_create_device_fn ; generic-sensor child
+      }
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should not create device if it has child with ep 4",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 4,
+                generic_device_class = 0x08
+              })
+          )
+        }
+      }
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should create device if it doesn't have child with ep 4",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          base_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 5,
                 generic_device_class = 0x08
               })
           )
@@ -2397,7 +2288,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "send",
-        message = --expect_create_device_fn ; metering-sensor child
+        message = --expect_create_device_fn ; generic-multi-sensor child
       }
     }
 )

@@ -1,4 +1,4 @@
-name: metering-sensor
+name: generic-sensor
 components:
 - id: main
   capabilities:
@@ -9,10 +9,6 @@ components:
   - id: smokeDetector
     version: 1
   - id: waterSensor
-    version: 1
-  - id: energyMeter
-    version: 1
-  - id: powerMeter
     version: 1
   - id: refresh
     version: 1

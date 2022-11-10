@@ -108,6 +108,7 @@ local driver_template = {
     capabilities.button,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
+    capabilities.illuminanceMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
     capabilities.smokeDetector,
