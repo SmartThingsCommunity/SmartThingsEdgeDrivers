@@ -17,3 +17,6 @@ components:
 preferences:
   - preferenceId: presetPosition
     explicit: true
+metadata:
+  mnmn: SmartThingsEdge
+  vid: matter-window-covering
