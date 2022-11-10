@@ -1966,6 +1966,22 @@ zigbeeManufacturer:
     manufacturer: GE
     model: Daylight
     deviceProfileName: ge-link-bulb
+  #ROBB (Sunricher)
+  - id: "ROBB smarrt/ROB_200-004-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-004-0
+    deviceLabel: ROBB Smarrt Dimmer
+    deviceProfileName: on-off-level
+  - id: "ROBB smarrt/ROB_200-014-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-014-0
+    deviceLabel: ROBB Knob Smarrt Dimmer
+    deviceProfileName: light-level-power
+  - id: "ROBB smarrt/ROB_200-011-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-011-0
+    deviceLabel: ROBB Smarrt 2-Wire Dimmer
+    deviceProfileName: light-level-power
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
