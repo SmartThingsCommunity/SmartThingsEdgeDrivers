@@ -96,6 +96,7 @@ local zigbee_switch_driver_template = {
     require("zigbee-switch-power"),
     require("ge-link-bulb"),
     require("bad_on_off_data_type")
+    require("robb")
   },
   lifecycle_handlers = {
     init = device_init,
