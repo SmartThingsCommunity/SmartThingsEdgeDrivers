@@ -80,7 +80,8 @@ for driver in drivers:
   if package_key == "bose" and BOSE_APPKEY:
     # write the app key into a app_key.lua (overwrite if exists already)
     subprocess.run(["touch -a ./src/app_key.lua && echo \'return \"" + BOSE_APPKEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
-  subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
+  subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True)
+  time.sleep(.5)
   with open("edge.zip", 'rb') as driver_package:
     data = driver_package.read()
     # TODO: This does not yet work, hash returned by server does not match
