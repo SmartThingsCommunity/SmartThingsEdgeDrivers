@@ -46,7 +46,7 @@ end
 
 local function get_profile(generic_device_class)
   local device_class = generic_device_class or 0x10
-  return map_device_class_to_profile[device_class] or "metering_switch"
+  return map_device_class_to_profile[device_class]
 end
 
 local function prepare_metadata(device, endpoint, generic_device_class)
