@@ -4,15 +4,11 @@ components:
   capabilities:
   - id: thermostatHeatingSetpoint
     version: 1
-  - id: preparestream40760.heatMode
+  - id: thermostatMode
     version: 1
   - id: temperatureMeasurement
     version: 1
   - id: battery
-    version: 1
-  - id: preparestream40760.windowOpenDetection
-    version: 1
-  - id: thermostatMode
     version: 1
   - id: powerSource
     version: 1
@@ -35,4 +31,4 @@ preferences:
     explicit: true
 metadata:
   mnmn: SmartThingsCommunity
-  vid: a20ec19d-7558-3373-90b9-3dd45494f1be
+  vid: 7b5fc659-58a4-3644-b22b-a3cf05e56b43
