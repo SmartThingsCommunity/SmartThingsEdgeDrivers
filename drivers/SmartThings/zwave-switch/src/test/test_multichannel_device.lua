@@ -2268,6 +2268,11 @@ test.register_message_test(
     }
 )
 
+--[[
+TODO: Uncomment following unit tests and set correct message for checking if device_create
+      message was sent when the integration test framework start mock out the 'create_device(json)' devices api
+      It might be ready with 0.46.x release
+
 test.register_message_test(
     "MultiChannel capability report should not create device if it has child with ep 1",
     {
@@ -2283,7 +2288,7 @@ test.register_message_test(
               })
           )
         }
-      },
+      }
     }
 )
 
@@ -2303,7 +2308,99 @@ test.register_message_test(
           )
         }
       },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = --expect_create_device_fn ; metering-switch child
+      }
     }
 )
+
+test.register_message_test(
+    "MultiChannel capability report should not create device if it has child with ep 3",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 3,
+                generic_device_class = 0x11
+              })
+          )
+        }
+      }
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should create device if it doesn't have child with ep 3",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          base_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 3,
+                generic_device_class = 0x11
+              })
+          )
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = --expect_create_device_fn ; metering-dimmer child
+      }
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should not create device if it has child with ep 4",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 4,
+                generic_device_class = 0x08
+              })
+          )
+        }
+      }
+    }
+)
+
+test.register_message_test(
+    "MultiChannel capability report should create device if it doesn't have child with ep 4",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          base_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              MultiChannel:CapabilityReport({
+                end_point = 4,
+                generic_device_class = 0x08
+              })
+          )
+        }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = --expect_create_device_fn ; metering-sensor child
+      }
+    }
+)
+]]
 
 test.run_registered_tests()
