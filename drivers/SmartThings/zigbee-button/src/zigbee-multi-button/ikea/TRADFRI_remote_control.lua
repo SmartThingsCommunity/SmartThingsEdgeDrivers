@@ -43,7 +43,7 @@ local function build_button_payload_handler(pressed_type)
     end
   end
 end
---[[
+
 local function added_handler(self, device)
   for comp_name, comp in pairs(device.profile.components) do
     if comp_name == "button5" then
@@ -58,10 +58,9 @@ local function added_handler(self, device)
     end
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
---]]
+
 local remote_control = {
   NAME = "Remote Control",
   zigbee_handlers = {
@@ -81,10 +80,10 @@ local remote_control = {
         [0x08] = build_button_payload_handler(capabilities.button.button.held)
       }
     }
-  }, --[[
+  }, 
   lifecycle_handlers = {
     added = added_handler
-  }, --]]
+  }, 
   can_handle = function(opts, driver, device, ...)
     return device:get_model() == "TRADFRI remote control"
   end
