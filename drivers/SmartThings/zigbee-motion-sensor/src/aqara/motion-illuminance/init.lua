@@ -18,14 +18,6 @@ local CONFIGURATIONS = {
     maximum_interval = 3600,
     data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
     reportable_change = 1
-  },
-  {
-    cluster = aqara_utils.PRIVATE_CLUSTER_ID,
-    attribute = aqara_utils.FREQUENCY_ATTRIBUTE_ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = data_types.Uint8.ID,
-    reportable_change = 1
   }
 }
 

@@ -1,6 +1,5 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
 local aqara_utils = require "aqara/aqara_utils"
@@ -36,22 +35,6 @@ local CONFIGURATIONS = {
     minimum_interval = 30,
     maximum_interval = 3600,
     data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
-    reportable_change = 1
-  },
-  {
-    cluster = aqara_utils.PRIVATE_CLUSTER_ID,
-    attribute = aqara_utils.FREQUENCY_ATTRIBUTE_ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = data_types.Uint8.ID,
-    reportable_change = 1
-  },
-  {
-    cluster = aqara_utils.PRIVATE_CLUSTER_ID,
-    attribute = SENSITIVITY_ATTRIBUTE_ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = data_types.Uint8.ID,
     reportable_change = 1
   }
 }

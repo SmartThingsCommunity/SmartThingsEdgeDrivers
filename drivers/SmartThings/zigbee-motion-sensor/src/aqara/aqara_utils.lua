@@ -50,12 +50,7 @@ local function motion_detected(driver, device, value, zb_rx)
     device:set_field(UNOCCUPIED_TIMER, nil)
   end
 
-  print(device:get_field(PREF_FREQUENCY_KEY))
-
   local detect_duration = device:get_field(PREF_FREQUENCY_KEY) or PREF_FREQUENCY_VALUE_DEFAULT
-
-  print(detect_duration)
-
   local inactive_state = function()
     device:emit_event(capabilities.motionSensor.motion.inactive())
   end
