@@ -1,6 +1,6 @@
 name: Delete PR channel
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
     paths:

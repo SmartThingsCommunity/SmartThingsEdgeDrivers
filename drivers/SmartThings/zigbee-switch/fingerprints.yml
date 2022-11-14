@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.plug.maeu01"
+    deviceLabel: Aqara Smart Plug
+    manufacturer: LUMI
+    model: lumi.plug.maeu01
+    deviceProfileName: switch-power-energy-consumption-report-aqara
   - id: "LUMI/lumi.switch.b1laus01"
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
