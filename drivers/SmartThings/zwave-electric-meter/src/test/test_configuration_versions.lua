@@ -48,6 +48,21 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+    "V3 Set with 0 size fails",
+    function ()
+      local Configuration = (require "st.zwave.CommandClass.Configuration")({version=3})
+      local status, msg = pcall(Configuration.Set, Configuration, {
+        parameter_number = 13,
+        size = 0,
+        configuration_value = "",
+        format = nil
+      })
+      assert(type(msg) == "string")
+      assert(not status)
+    end
+)
+
 --[[
 test.register_coroutine_test(
     "V1 requires signed integer",
