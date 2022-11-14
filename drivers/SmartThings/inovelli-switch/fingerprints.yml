@@ -1,0 +1,12 @@
+zwaveManufacturer:
+  - id: "015D/2500/2500"
+    deviceLabel: Inovelli Outlet
+    manufacturerId: 0x015D
+    productType: 0x2500
+    productId: 0x2500
+    deviceProfileName: switch-binary
+zwaveThing :
+  - id: SmartThings/Z-WaveThing
+    deviceLabel: Z-Wave Device
+    deviceProfileName: switch-level
+    isJoinable: true
