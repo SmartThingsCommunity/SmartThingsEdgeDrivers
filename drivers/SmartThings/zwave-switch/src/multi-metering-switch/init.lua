@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local st_device = require "st.device"
+local utils = require "st.utils"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
@@ -69,11 +70,7 @@ local function device_added(driver, device, event)
     local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
     local device_profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device)
     if children_amount == nil then
-      local endpoints = 0
-      for _, _ in pairs(device.zwave_endpoints) do
-        endpoints = endpoints + 1
-      end
-      children_amount = endpoints-1
+      children_amount = utils.table_size(device.zwave_endpoints)-1
     end
     create_child_device(driver, device, children_amount, device_profile)
   end
@@ -99,7 +96,7 @@ local function device_init(driver, device, event)
   end
 end
 
-local function do_refresh(driver, device, command)
+local function do_refresh(driver, device, command) -- should be deleted when v46 is released
   local component = command and command.component and command.component or "main"
   if device:is_cc_supported(cc.SWITCH_BINARY) then
     device:send_to_component(SwitchBinary:Get({}), component)
