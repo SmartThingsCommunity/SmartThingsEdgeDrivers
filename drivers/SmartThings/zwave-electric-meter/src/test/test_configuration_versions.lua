@@ -17,6 +17,39 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 
 test.register_coroutine_test(
+    "V3 properties report handles empty properties",
+    function ()
+      local Configuration = (require "st.zwave.CommandClass.Configuration")({version=3})
+      local properties_report_payload = "\x00\x05\x00\x00\x06"
+      local status, msg = pcall(Configuration.PropertiesReport, Configuration, properties_report_payload)
+      local expected_msg = Configuration:PropertiesReport({next_parameter_number = 6, parameter_number = 5, size = 0})
+      assert(msg == expected_msg)
+      assert(status)
+    end
+)
+
+test.register_coroutine_test(
+    "V4 properties report handles empty properties",
+    function ()
+      local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
+      local properties_report_payload = "\x00\x05\x00\x00\x06\x02"
+      local status, msg = pcall(Configuration.PropertiesReport, Configuration, properties_report_payload)
+      local expected_msg = Configuration:PropertiesReport({
+        advanced=false,
+        altering_capabilities=false,
+        next_parameter_number=6,
+        no_bulk_support=true,
+        parameter_number=5,
+        readonly=false,
+        size=0
+      })
+      assert(expected_msg == msg)
+      assert(status)
+    end
+)
+
+--[[
+test.register_coroutine_test(
     "V1 requires signed integer",
     function ()
       local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
@@ -115,5 +148,6 @@ test.register_coroutine_test(
       assert(status)
     end
 )
+--]]
 
 test.run_registered_tests()
