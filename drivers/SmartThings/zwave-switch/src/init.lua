@@ -131,6 +131,7 @@ local driver_template = {
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
+    require("multi-metering-switch"),
     require("zooz-zen-30-dimmer-relay"),
     require("multichannel-device")
   },
