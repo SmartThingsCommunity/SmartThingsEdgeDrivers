@@ -67,11 +67,6 @@ local function device_added(driver, device)
   device:refresh()
 end
 
-local function do_configure(driver, device)
-  device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
-end
-
-
 
 -------------------------------------------------------------------------------------------
 -- Register message handlers and run driver
@@ -86,7 +81,6 @@ local driver_template = {
   capability_handlers = {
   },
   lifecycle_handlers = {
-    doConfigure = do_configure,
     init = device_init,
     added = device_added,
   },
