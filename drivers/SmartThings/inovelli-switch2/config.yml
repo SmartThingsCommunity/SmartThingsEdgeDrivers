@@ -1,0 +1,4 @@
+name: 'Inovelli Switch2'
+packageKey: 'inovelli-switch2'
+permissions:
+  zwave: {}

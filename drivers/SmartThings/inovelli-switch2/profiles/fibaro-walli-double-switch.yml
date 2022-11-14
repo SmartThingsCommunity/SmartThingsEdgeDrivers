@@ -1,0 +1,83 @@
+name: fibaro-walli-double-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+- name: "ledFrameColourWhenOn"
+  title: "LED frame colour when ON"
+  description: "When set to 8 or 9, LED frame colour will change depending on the measured power."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "LED disabled"
+      1: "White"
+      2: "Red"
+      3: "Green"
+      4: "Blue"
+      5: "Yellow"
+      6: "Cyan"
+      7: "Magenta"
+      8: "changes smoothly depending on power"
+      9: "changes in steps depending on power"
+    default: 1
+- name: "ledFrameColourWhenOff"
+  title: "LED frame colour when OFF"
+  description: "LED colour when the device is OFF"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "LED disabled"
+      1: "White"
+      2: "Red"
+      3: "Green"
+      4: "Blue"
+      5: "Yellow"
+      6: "Cyan"
+      7: "Magenta"
+    default: 0
+- name: "ledFrameBrightness"
+  title: "LED frame brightness"
+  description: "Adjust the LED frame brightness, 101 directly proportional to set level, 102 inversely proportional to set level."
+  required: false
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 102
+    default: 100
+- name: "buttonsOperation"
+  title: "Buttons operation"
+  description: "How device buttons should control the channels"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      1: "1st and 2nd button toggle the load"
+      2: "1st - load ON, 2nd - load OFF"
+      3: "2-way/3-way switch configuration"
+    default: 1
+- name: "buttonsOrientation"
+  title: "Buttons orientation"
+  description: "Reverse the operation of the buttons"
+  required: false
+  preferenceType: boolean
+  definition:
+    default: false
+- name: "outputsOrientation"
+  title: "Outputs orientation"
+  description: "Reverse the operation of Q1 and Q2 without changing the wiring. Changing orientation turns both outputs off."
+  required: false
+  preferenceType: boolean
+  definition:
+    default: false

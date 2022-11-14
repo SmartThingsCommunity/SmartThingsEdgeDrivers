@@ -1,0 +1,5 @@
+zwaveThing :
+  - id: SmartThings/Z-WaveThing
+    deviceLabel: Z-Wave Device
+    deviceProfileName: switch-level
+    isJoinable: true
