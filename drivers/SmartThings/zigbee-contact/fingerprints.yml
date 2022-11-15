@@ -24,6 +24,11 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E1D-G73
     deviceProfileName: contact-battery-profile
+  - id: "sengled/E2D-G73"
+    deviceLabel: Sengled Open/Closed Sensor
+    manufacturer: sengled
+    model: E2D-G73
+    deviceProfileName: contact-battery-profile
   - id: "Visonic/MCT-340 SMA"
     deviceLabel: Tyco Open/Closed Sensor
     manufacturer: Visonic
