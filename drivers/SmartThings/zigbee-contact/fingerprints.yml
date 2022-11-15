@@ -4,26 +4,26 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.magnet.agl02
     deviceProfileName: contact-battery-profile
-#   - id: "NYCE/3010"
-#     deviceLabel: NYCE Open/Closed Sensor
-#     manufacturer: NYCE
-#     model: 3010
-#     deviceProfileName: contact-battery-profile
-#   - id: "NYCE/3011"
-#     deviceLabel: NYCE Open/Closed Sensor
-#     manufacturer: NYCE
-#     model: 3011
-#     deviceProfileName: contact-battery-profile
-#   - id: "NYCE/3014"
-#     deviceLabel: NYCE Open/Closed Sensor
-#     manufacturer: NYCE
-#     model: 3014
-#     deviceProfileName: contact-battery-profile
-#   - id: "sengled/E1D-G73"
-#     deviceLabel: Sengled Open/Closed Sensor
-#     manufacturer: sengled
-#     model: E1D-G73
-#     deviceProfileName: contact-battery-profile
+  - id: "NYCE/3010"
+    deviceLabel: NYCE Open/Closed Sensor
+    manufacturer: NYCE
+    model: 3010
+    deviceProfileName: contact-battery-profile
+  - id: "NYCE/3011"
+    deviceLabel: NYCE Open/Closed Sensor
+    manufacturer: NYCE
+    model: 3011
+    deviceProfileName: contact-battery-profile
+  - id: "NYCE/3014"
+    deviceLabel: NYCE Open/Closed Sensor
+    manufacturer: NYCE
+    model: 3014
+    deviceProfileName: contact-battery-profile
+  - id: "sengled/E1D-G73"
+    deviceLabel: Sengled Open/Closed Sensor
+    manufacturer: sengled
+    model: E1D-G73
+    deviceProfileName: contact-battery-profile
   - id: "Visonic/MCT-340 SMA"
     deviceLabel: Tyco Open/Closed Sensor
     manufacturer: Visonic
