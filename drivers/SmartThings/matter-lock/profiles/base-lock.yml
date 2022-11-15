@@ -4,6 +4,13 @@ components:
   capabilities:
   - id: lock
     version: 1
+    config:
+      values:
+      - key: "lock.value"
+        enabledValues:
+        - locked
+        - unlocked
+        - unknown
   - id: lockCodes
     version: 1
   - id: tamperAlert
