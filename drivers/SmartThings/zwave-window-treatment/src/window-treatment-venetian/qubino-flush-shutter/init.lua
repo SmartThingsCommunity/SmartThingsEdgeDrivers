@@ -38,6 +38,9 @@ local SLATS_TURN_TIME = "slatsTurnTime"
 local BLINDS_LAST_COMMAND = "blinds_last_command"
 local SHADE_TARGET = "shade_target"
 
+local ENERGY_UNIT_KWH = "kWh"
+local POWER_UNIT_WATT = "W"
+
 local QUBINO_FLUSH_SHUTTER_FINGERPRINTS = {
   {mfr = 0x0159, prod = 0x0003, model = 0x0052}, -- Qubino Flush Shutter AC
   {mfr = 0x0159, prod = 0x0003, model = 0x0053}, -- Qubino Flush Shutter DC

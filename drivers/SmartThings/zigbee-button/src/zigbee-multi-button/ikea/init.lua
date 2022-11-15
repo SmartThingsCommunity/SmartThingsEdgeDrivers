@@ -25,6 +25,7 @@ local supported_values = require "zigbee-multi-button.supported_values"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
+local Groups = clusters.Groups
 
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
@@ -74,6 +75,7 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
     end
   end
   driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
+  device:send(Groups.commands.AddGroup(device, 0x0000))
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)

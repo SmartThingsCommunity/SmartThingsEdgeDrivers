@@ -53,7 +53,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         last_line = ""
         in_progress_test_name = ""
         test_cases = []
-        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).rindex('/')+1:])
+        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).rindex('/')+1:-4].replace('_',' '))
         test_case = None
         test_logs = ""
         test_title = ""
@@ -73,17 +73,20 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
                 in_progress_test_name = m.group(1)
                 test_case = junit_xml.TestCase(in_progress_test_name)
                 test_count += 1
-            if re.search("PASSED", line) is not None:
+            elif re.search("PASSED", line) is not None:
                 test_done = True
                 test_status = line
                 passes += 1
                 test_cases.append(test_case)
                 test_case = None
-            if re.search("FAILED", line) is not None:
+            elif re.search("FAILED", line) is not None:
                 test_done = True
                 test_status = line
                 failure_files[test_file].append(in_progress_test_name)
-                test_case.add_failure_info(line, test_case.stdout)
+                if "traceback" in test_case.stdout:
+                    test_case.add_error_info(line, test_case.stdout)
+                else:
+                    test_case.add_failure_info(line, test_case.stdout)
                 test_cases.append(test_case)
                 test_case = None
             if test_done:
@@ -109,7 +112,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         if m is None:
             failure_files[test_file].append("\n    ".join(a.stderr.decode().split("\n")))
             test_case = junit_xml.TestCase(test_suite.name)
-            test_case.add_failure_info("FAILED", a.stderr.decode())
+            test_case.add_error_info("FAILED", a.stderr.decode())
             test_cases.append(test_case)
             test_case = None
         else:

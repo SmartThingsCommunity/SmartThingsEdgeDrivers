@@ -18,34 +18,9 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
---TODO remove once device:refresh() exists for subscribed attributes
-local cluster_subscribe_list = {
-  clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-  clusters.TemperatureMeasurement.attributes.MeasuredValue,
-  clusters.IlluminanceMeasurement.attributes.MeasuredValue,
-  clusters.BooleanState.attributes.StateValue,
-  clusters.OccupancySensing.attributes.Occupancy,
-  clusters.PowerSource.attributes.BatPercentRemaining,
-}
-
 local function device_init(driver, device)
   log.info("device init")
   device:subscribe()
-end
-
-local function do_refresh(driver, device, cmd)
-  local refresh_request = nil
-  for _, cluster in ipairs(cluster_subscribe_list) do
-    if device:supports_server_cluster(cluster._cluster.ID) then
-      local req = cluster:read(device)
-      if refresh_request == nil then
-        refresh_request = req
-      else
-        refresh_request:merge(req)
-      end
-    end
-  end
-  device:send(refresh_request)
 end
 
 local function illuminance_attr_handler(driver, device, ib, response)
@@ -132,9 +107,6 @@ local matter_driver_template = {
     }
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
-    },
   }
 }
 
