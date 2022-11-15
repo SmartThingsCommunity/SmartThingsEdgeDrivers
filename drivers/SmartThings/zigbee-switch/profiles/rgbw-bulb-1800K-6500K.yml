@@ -1,4 +1,4 @@
-name: color-temp-bulb
+name: rgbw-bulb-1800K-6500K
 components:
 - id: main
   capabilities:
@@ -11,7 +11,9 @@ components:
     config:
       values:
         - key: "colorTemperature.value"
-          range: [ 2700, 6500 ]
+          range: [ 1800, 6500 ]
+  - id: colorControl
+    version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
