@@ -1,8 +1,8 @@
-name: water-battery-powersource
+name: valve-battery-powerSource
 components:
 - id: main
   capabilities:
-  - id: waterSensor
+  - id: valve
     version: 1
   - id: battery
     version: 1
@@ -14,7 +14,9 @@ components:
           enabledValues:
             - battery
             - mains
+  - id: firmwareUpdate
+    version: 1
   - id: refresh
     version: 1
-  categories:
-  - name: LeakSensor
+  categories :
+  - name: WaterValve
