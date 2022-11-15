@@ -355,7 +355,7 @@ function WebSocket:receive_loop()
 
       if frame:is_control() and frame.header.opcode.sub == "close" then
         self._close_frame_sent = true
-        if self.close_cb then self.close_cb(reason) end
+        if self.close_cb then self.close_cb("Close frame sent to server") end
         if self._close_frame_received then
           self.socket:close()
           log.trace("completed server close handshake")
