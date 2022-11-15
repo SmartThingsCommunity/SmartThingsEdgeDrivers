@@ -1,4 +1,4 @@
-name: color-temp-bulb
+name: color-temp-bulb-2500K-6000K
 components:
 - id: main
   capabilities:
@@ -11,7 +11,7 @@ components:
     config:
       values:
         - key: "colorTemperature.value"
-          range: [ 2700, 6500 ]
+          range: [ 2500, 6000 ]
   - id: firmwareUpdate
     version: 1
   - id: refresh
