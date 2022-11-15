@@ -206,6 +206,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({value={0,0,0}})))
     test.socket.zigbee:__expect_send({
       mock_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_device)

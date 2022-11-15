@@ -65,6 +65,7 @@ end
 
 local function added_handler(self, device)
   device:emit_event(capabilities.accelerationSensor.acceleration.inactive())
+  device:emit_event(capabilities.threeAxis.threeAxis({value={0,0,0}}))
   device:refresh()
 end
 
