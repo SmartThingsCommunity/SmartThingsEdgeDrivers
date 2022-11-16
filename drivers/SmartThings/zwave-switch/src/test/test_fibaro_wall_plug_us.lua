@@ -64,7 +64,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         )
       }
     },
@@ -98,7 +98,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.OFF_DISABLE})
         )
       }
     },

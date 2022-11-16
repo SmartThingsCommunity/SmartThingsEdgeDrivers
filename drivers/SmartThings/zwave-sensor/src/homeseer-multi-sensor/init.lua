@@ -22,7 +22,6 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local HOMESEER_MULTI_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x001E, productType = 0x0002, productId = 0x0001 }, -- Homeseer multi sensor HSM100
-  { manufacturerId = 0x000C, productType = 0x0004, productId = 0x0001 } -- Homeseer multi sensor HSM200
 }
 
 --- Determine whether the passed device is homeseer multi sensor

@@ -18,6 +18,7 @@ local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local DoorLock = clusters.DoorLock
 local Lock = capabilities.lock
+local lock_utils = require "lock_utils"
 
 local SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND = 0x1F
 local SAMSUNG_SDS_MFR_CODE = 0x0003
@@ -45,12 +46,20 @@ local function unlock_cmd_handler(driver, device, command)
           DoorLock.ID,
           SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND,
           SAMSUNG_SDS_MFR_CODE,
-          "1235"))
+          "\x10\x04\x31\x32\x33\x35"))
 end
 
 local device_added = function(self, device)
+  lock_utils.populate_state_from_data(device)
   device:emit_event(capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.battery.battery(100))
+end
+
+local battery_init = battery_defaults.build_linear_voltage_init(4.0, 6.0)
+
+local device_init = function(driver, device, event)
+  battery_init(driver, device, event)
+  lock_utils.populate_state_from_data(device)
 end
 
 local samsung_sds_driver = {
@@ -74,7 +83,7 @@ local samsung_sds_driver = {
   },
   lifecycle_handlers = {
     added = device_added,
-    init = battery_defaults.build_linear_voltage_init(4.0, 6.0)
+    init = device_init
   },
   can_handle = function(opts, driver, device, ...)
     return device:get_manufacturer() == "SAMSUNG SDS"

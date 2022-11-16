@@ -92,7 +92,7 @@ local function configuration_report(driver, device, cmd)
       table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
       device:try_update_metadata({profile = "qubino-flush-thermostat"})
     end
-    device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+    device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes, { visibility = { displayed = false } }))
   end
 
 end

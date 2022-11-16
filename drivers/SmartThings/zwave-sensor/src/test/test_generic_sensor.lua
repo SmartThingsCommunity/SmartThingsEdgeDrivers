@@ -20,7 +20,6 @@ local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
-local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })

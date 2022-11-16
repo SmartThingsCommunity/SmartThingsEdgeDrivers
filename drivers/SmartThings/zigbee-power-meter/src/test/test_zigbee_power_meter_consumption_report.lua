@@ -28,7 +28,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         [1] = {
           id = 1,
           model = "E240-KR080Z0-HA",
-          server_clusters = {}
+          server_clusters = {SimpleMetering.ID, ElectricalMeasurement.ID}
         }
       }
     }
@@ -125,7 +125,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 1)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -139,11 +139,10 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 1)
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
                                        })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
-
 
 test.run_registered_tests()

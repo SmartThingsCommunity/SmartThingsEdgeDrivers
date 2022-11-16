@@ -1,0 +1,10 @@
+name: humidity
+components:
+- id: main
+  capabilities:
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: HumiditySensor

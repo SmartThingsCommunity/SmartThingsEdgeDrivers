@@ -83,7 +83,7 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ target_value=SwitchBinary.value.OFF_DISABLE })) }
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value=SwitchBinary.value.OFF_DISABLE })) }
     },
     {
       channel = "capability",
@@ -105,8 +105,8 @@ do
           mock_device.id,
           zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-              current_value = 0,
-              target_value = level,
+              target_value = 0,
+              current_value = level,
               duration = 0
             })
           )

@@ -19,14 +19,9 @@ local cc = require "st.zwave.CommandClass"
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
---- @type st.zwave.CommandClass.Association
-local Association = (require "st.zwave.CommandClass.Association")({ version=2 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 })
---- @type st.zwave.CommandClass.WakeUp
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
+--- @type st.zwave.CommandClass.Basic
+local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
+
 local preferences = require "preferences"
 local configurations = require "configurations"
 
@@ -44,6 +39,24 @@ end
 
 local function device_init(self, device)
   device:set_update_preferences_fn(preferences.update_preferences)
+end
+
+--- These are non-standard uses of the basic set command, but some devices (mainly aeotec)
+--- do use them, so we're including these here but not in the defaults.
+local function basic_set_handler(driver, device, cmd)
+  if device:supports_capability_by_id(capabilities.contactSensor.ID) then
+    if cmd.args.value > 0 then
+      device:emit_event_for_endpoint(cmd.src_channel, capabilities.contactSensor.contact.open())
+    else
+      device:emit_event_for_endpoint(cmd.src_channel, capabilities.contactSensor.contact.closed())
+    end
+  elseif device:supports_capability_by_id(capabilities.motionSensor.ID) then
+    if cmd.args.value > 0 then
+      device:emit_event_for_endpoint(cmd.src_channel, capabilities.motionSensor.motion.active())
+    else
+      device:emit_event_for_endpoint(cmd.src_channel, capabilities.motionSensor.motion.inactive())
+    end
+  end
 end
 
 local function do_configure(driver, device)
@@ -109,13 +122,19 @@ local driver_template = {
     require("aeotec-multisensor"),
     require("zwave-water-leak-sensor"),
     require("everspring-motion-light-sensor"),
-    require("ezmultipli-multipurpose-sensor")
+    require("ezmultipli-multipurpose-sensor"),
+    require("fibaro-motion-sensor")
   },
   lifecycle_handlers = {
     added = added_handler,
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure
+  },
+  zwave_handlers = {
+    [cc.BASIC] = {
+      [Basic.SET] = basic_set_handler
+    }
   },
 }
 

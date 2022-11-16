@@ -124,8 +124,8 @@ end
 local device_added = function(self, device)
   generate_switch_onoff_event(device, "on")
   generate_switch_level_event(device, 100)
-  device:emit_event(capabilities.button.numberOfButtons({value = 1}))
-  device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}))
+  device:emit_event(capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.button.pushed({state_change = true}))
 end
 

@@ -34,8 +34,8 @@ local sensor_endpoints = {
 local mock_sensor = test.mock_device.build_test_zwave_device({
   profile = t_utils.get_profile_definition("motion-battery-illuminance-temperature-interval.yml"),
   zwave_endpoints = sensor_endpoints,
-  zwave_manufacturer_id = 0x000C,
-  zwave_product_type = 0x0004,
+  zwave_manufacturer_id = 0x001E,
+  zwave_product_type = 0x0002,
   zwave_product_id = 0x0001,
 })
 

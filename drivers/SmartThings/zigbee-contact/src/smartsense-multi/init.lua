@@ -14,6 +14,8 @@
 
 local capabilities = require "st.capabilities"
 local multi_utils = require "multi-sensor/multi_utils"
+local zcl_clusters = require "st.zigbee.zcl.clusters"
+local contactSensor_defaults = require "st.zigbee.defaults.contactSensor_defaults"
 
 local ACCELERATION_MASK = 0x01
 local CONTACT_MASK = 0x02
@@ -41,12 +43,26 @@ local function battery_handler(device, value, zb_rx)
   end
 end
 
+local function zone_status_change_handler(driver, device, zb_rx)
+  if not device.preferences["certifiedpreferences.garageSensor"] then
+    contactSensor_defaults.ias_zone_status_change_handler(driver, device, zb_rx)
+  end
+end
+
+local function zone_status_handler(driver, device, zone_status, zb_rx)
+  if not device.preferences["certifiedpreferences.garageSensor"] then
+    contactSensor_defaults.ias_zone_status_attr_handler(driver, device, zone_status, zb_rx)
+  end
+end
+
 local function contact_handler(device, value)
   local event
-  if value == 0x01 then
-    event = capabilities.contactSensor.contact.open()
-  else
-    event = capabilities.contactSensor.contact.closed()
+  if not device.preferences["certifiedpreferences.garageSensor"] then
+    if value == 0x01 then
+      event = capabilities.contactSensor.contact.open()
+    else
+      event = capabilities.contactSensor.contact.closed()
+    end
   end
   if event ~= nil then
     device:emit_event(event)
@@ -119,6 +135,14 @@ local smartsense_multi = {
         [SMARTSENSE_MULTI_XYZ_CMD] = xyz_handler,
         [SMARTSENSE_MULTI_STATUS_CMD] = status_handler,
         [SMARTSENSE_MULTI_STATUS_REPORT_CMD] = status_report_handler
+      },
+      [zcl_clusters.IASZone.ID] = {
+        [zcl_clusters.IASZone.client.commands.ZoneStatusChangeNotification.ID] = zone_status_change_handler
+      }
+    },
+    attr = {
+      [zcl_clusters.IASZone.ID] = {
+        [zcl_clusters.IASZone.attributes.ZoneStatus.ID] = zone_status_handler
       }
     }
   },

@@ -14,7 +14,6 @@
 
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local utils = require "st.utils"
 
 local SINOPE_SWITCH_CLUSTER = 0xFF01
 local SINOPE_MAX_INTENSITY_ON_ATTRIBUTE = 0x0052

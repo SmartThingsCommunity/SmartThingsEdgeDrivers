@@ -4,8 +4,16 @@ components:
   capabilities:
   - id: illuminanceMeasurement
     version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 32000]
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-20, 100]
   - id: battery
     version: 1
   - id: refresh

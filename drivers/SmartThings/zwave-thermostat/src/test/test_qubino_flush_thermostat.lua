@@ -46,8 +46,20 @@ local mock_device = test.mock_device.build_test_zwave_device(
     zwave_product_id = 0x0054,
   }
 )
+
+local mock_device_cooling = test.mock_device.build_test_zwave_device(
+  {
+    profile = t_utils.get_profile_definition("qubino-flush-thermostat-cooling.yml"),
+    zwave_endpoints = thermostat_endpoints,
+    zwave_manufacturer_id = 0x0159,
+    zwave_product_type = 0x0005,
+    zwave_product_id = 0x0054,
+  }
+)
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_device_cooling)
 end
 test.set_test_init_function(test_init)
 
@@ -218,7 +230,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_device.id,
+        message = { mock_device_cooling.id,
                     zw_test_utilities.zwave_test_build_receive_command(ThermostatSetpoint:Report({
                                                                                                    setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
                                                                                                    scale = 0,
@@ -227,7 +239,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 21.5, unit = 'C' }))
+        message = mock_device_cooling:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 21.5, unit = 'C' }))
       }
     }
 )
@@ -239,7 +251,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.heat.NAME
-                                                          })))
+                                                          }, { visibility = { displayed = false } })))
     mock_device:expect_metadata_update({profile = "qubino-flush-thermostat"})
   end
 )
@@ -251,7 +263,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
                                                             capabilities.thermostatMode.thermostatMode.off.NAME,
                                                             capabilities.thermostatMode.thermostatMode.cool.NAME
-                                                          })))
+                                                          }, { visibility = { displayed = false } })))
     mock_device:expect_metadata_update({profile = "qubino-flush-thermostat-cooling"})
   end
 )

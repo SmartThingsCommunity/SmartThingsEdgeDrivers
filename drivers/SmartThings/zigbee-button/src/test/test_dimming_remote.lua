@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local t_utils = require "integration_test.utils"
@@ -28,7 +27,7 @@ local button_attr = capabilities.button.button
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("two-buttons-battery.yml"),
+    profile = t_utils.get_profile_definition("two-buttons-battery-holdTime.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -53,19 +52,19 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x04) })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
   end
 )
@@ -78,10 +77,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(0.1)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("button2", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
     test.wait_for_events()
 
@@ -90,10 +89,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(0.1)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("button1", button_attr.pushed({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
   end
 )
@@ -106,10 +105,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(8)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("button2", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
     test.wait_for_events()
 
@@ -118,10 +117,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(8)
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.Stop.ID, 0x0000, "\x00\x00") })
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("button1", button_attr.held({ state_change = true }))
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+      mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
     )
   end
 )
@@ -166,14 +165,14 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Refresh should read the battery voltage",
-    function()
-      test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-      })
-    end
+  "Refresh should read the battery voltage",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+    })
+  end
 )
 
 test.register_coroutine_test(
@@ -181,51 +180,42 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__set_channel_ordering("relaxed")
-
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 2 }
-      }
-    })
-
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "button1",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "button1",
-        attribute_id = "numberOfButtons", state = { value = 1 }
-      }
-    })
-
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "button2",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "button2",
-        attribute_id = "numberOfButtons", state = { value = 1 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 2 }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "button1",
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "button1",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "button2",
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "button2",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
     test.socket.capability:__expect_send({
       mock_device.id,
       {
@@ -238,7 +228,7 @@ test.register_coroutine_test(
       mock_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
     })
-    end
+  end
 )
 
 test.run_registered_tests()

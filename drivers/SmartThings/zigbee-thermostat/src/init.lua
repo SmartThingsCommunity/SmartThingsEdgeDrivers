@@ -17,7 +17,6 @@ local ZigbeeDriver      = require "st.zigbee"
 local device_management = require "st.zigbee.device_management"
 local defaults          = require "st.zigbee.defaults"
 local utils             = require "st.utils"
-local log               = require "log"
 
 -- Zigbee Spec Utils
 local clusters                      = require "st.zigbee.zcl.clusters"
@@ -111,7 +110,7 @@ local power_source_handler = function(driver, device, battery_alarm_mask)
 end
 
 local supported_thermostat_modes_handler = function(driver, device, supported_modes)
-  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[supported_modes.value]))
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_THERMOSTAT_MODES[supported_modes.value], { visibility = { displayed = false } }))
 end
 
 local thermostat_mode_handler = function(driver, device, thermostat_mode)
@@ -133,7 +132,7 @@ local thermostat_operating_state_handler = function(driver, device, operating_st
 end
 
 local supported_fan_modes_handler = function(driver, device, fan_mode)
-  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value]))
+  device:emit_event(ThermostatFanMode.supportedThermostatFanModes(SUPPORTED_FAN_MODES[fan_mode.value], { visibility = { displayed = false }}))
 end
 
 local thermostat_fan_mode_handler = function(driver, device, attr_fan_mode)
@@ -151,7 +150,7 @@ local set_thermostat_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(THERMOSTAT_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
       device:send_to_component(command.component, Thermostat.attributes.SystemMode:write(device, zigbee_attr_val))
-      device.thread:call_with_delay(2, function(d)
+      device.thread:call_with_delay(1, function(d)
         device:send_to_component(command.component, Thermostat.attributes.SystemMode:read(device))
       end)
       break
@@ -169,7 +168,7 @@ local set_thermostat_fan_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(FAN_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
       device:send_to_component(command.component, FanControl.attributes.FanMode:write(device, zigbee_attr_val))
-      device.thread:call_with_delay(2, function(d)
+      device.thread:call_with_delay(1, function(d)
         device:send_to_component(command.component, FanControl.attributes.FanMode:read(device))
       end)
       break

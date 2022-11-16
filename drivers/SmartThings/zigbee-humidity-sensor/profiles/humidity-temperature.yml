@@ -2,9 +2,9 @@ name: humidity-temperature
 components:
 - id: main
   capabilities:
-  - id: relativeHumidityMeasurement
-    version: 1
   - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
     version: 1
   - id: firmwareUpdate
     version: 1

@@ -64,7 +64,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             }
           )
         )
@@ -94,7 +94,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -124,7 +124,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             }
           )
         )
@@ -154,7 +154,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -174,8 +174,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -201,8 +201,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -247,8 +247,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -293,8 +293,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -339,8 +339,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -385,8 +385,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           CentralScene:Notification(
             {
@@ -430,8 +430,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           Meter:Report(
             {
@@ -442,7 +442,7 @@ test.register_message_test(
               encap = zw.ENCAP.AUTO,
               src_channel = 2,
               dst_channels={0}
-            }              
+            }
           )
         )
       }
@@ -475,8 +475,8 @@ test.register_message_test(
     {
       channel = "zwave",
       direction = "receive",
-      message = { 
-        mock_device.id, 
+      message = {
+        mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           Meter:Report(
             {
@@ -487,7 +487,7 @@ test.register_message_test(
               encap = zw.ENCAP.AUTO,
               src_channel = 2,
               dst_channels={0}
-            }              
+            }
           )
         )
       }
