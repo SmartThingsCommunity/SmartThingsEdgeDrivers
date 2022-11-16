@@ -230,9 +230,10 @@ test.register_coroutine_test(
     end
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
-    test.socket.capability:__expect_send({
+
+   test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "button", component_id = "main",
