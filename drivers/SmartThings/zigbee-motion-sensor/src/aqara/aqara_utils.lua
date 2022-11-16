@@ -18,7 +18,7 @@ local UNOCCUPIED_TIMER = "unoccupiedTimer"
 local PREF_CHANGED_KEY = "prefChangedKey"
 local PREF_CHANGED_VALUE = "prefChangedValue"
 local PREF_FREQUENCY_KEY = "prefFrequency"
-local PREF_FREQUENCY_VALUE_DEFAULT = 120
+local PREF_FREQUENCY_VALUE_DEFAULT = 60
 
 local function custom_attribute(device, cluster_id, attribute_id)
   local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute_id)
@@ -49,8 +49,8 @@ local function motion_detected(driver, device, value, zb_rx)
     device.thread:cancel_timer(unoccupied_timer)
     device:set_field(UNOCCUPIED_TIMER, nil)
   end
+
   local detect_duration = device:get_field(PREF_FREQUENCY_KEY) or PREF_FREQUENCY_VALUE_DEFAULT
-  print(detect_duration)
   local inactive_state = function()
     device:emit_event(capabilities.motionSensor.motion.inactive())
   end
@@ -69,15 +69,18 @@ local function set_pref_changed_field(device, key, value)
   device:set_field(PREF_CHANGED_VALUE, value)
 end
 
+local function set_detection_frequency(device, value)
+  -- for unoccupied timer
+  device:set_field(PREF_FREQUENCY_KEY, value, { persist = true })
+  -- update ui
+  device:emit_event(detectionFrequency.detectionFrequency(value))
+end
+
 local function detection_frequency_res_handler(device)
   -- detection frequency
   local key, value = get_pref_changed_field(device)
   if key == PREF_FREQUENCY_KEY then
-    -- for unoccupied timer
-    device:set_field(PREF_FREQUENCY_KEY, value)
-
-    -- update ui
-    device:emit_event(detectionFrequency.detectionFrequency(value))
+    set_detection_frequency(device, value)
   end
 end
 
@@ -98,6 +101,7 @@ aqara_utils.enable_custom_cluster_attribute = enable_custom_cluster_attribute
 aqara_utils.motion_detected = motion_detected
 aqara_utils.get_pref_changed_field = get_pref_changed_field
 aqara_utils.set_pref_changed_field = set_pref_changed_field
+aqara_utils.set_detection_frequency = set_detection_frequency
 aqara_utils.detection_frequency_res_handler = detection_frequency_res_handler
 
 return aqara_utils

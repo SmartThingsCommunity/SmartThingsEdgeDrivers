@@ -28,7 +28,7 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x0015
     productType: 0x0002
-    deviceProfileName: base-radiator-thermostat
+    deviceProfileName: base-thermostat-8to20C
   - id: "popp"
     deviceLabel: POPP Thermostat
     manufacturerId: 0x0002

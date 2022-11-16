@@ -1,0 +1,32 @@
+name: base-thermostat-8to20C
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [8, 20]
+  - id: thermostatCoolingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "coolingSetpoint.value"
+          range: [8, 20]
+  - id: thermostatMode
+    version: 1
+  - id: thermostatFanMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: battery
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
