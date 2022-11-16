@@ -1,0 +1,4 @@
+name: 'Matter Switch'
+packageKey: 'matter-switch'
+permissions:
+  matter: {}

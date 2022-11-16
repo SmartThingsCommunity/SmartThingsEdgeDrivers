@@ -16,12 +16,14 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local t_utils = require "integration_test.utils"
 
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local inovelli_dimmer_endpoints = {
   {
@@ -58,6 +60,48 @@ local function test_init()
   test.mock_device.add_test_device(mock_inovelli_dimmer)
 end
 test.set_test_init_function(test_init)
+
+local supported_button_values = {
+  ["button1"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button2"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button3"] = {"pushed"}
+}
+
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "added" })
+
+    for button_name, _ in pairs(mock_inovelli_dimmer.profile.components) do
+      if button_name ~= "main" and button_name ~= LED_BAR_COMPONENT_NAME then
+        test.socket.capability:__expect_send(
+          mock_inovelli_dimmer:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues(
+              supported_button_values[button_name],
+              { visibility = { displayed = false } }
+            )
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_inovelli_dimmer:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        Basic:Get({})
+      )
+    )
+  end
+)
+
 
 test.register_message_test(
   "Central Scene notification Button 1 pushed should be handled",
@@ -105,6 +149,30 @@ test.register_message_test(
       message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
     }
   }
+)
+
+test.register_message_test(
+    "Central Scene notification Button 3 pushed should be handled",
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_inovelli_dimmer.id, "init" }
+      },
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_inovelli_dimmer.id,
+                    zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = 3},
+                      { encap = zw.ENCAP.AUTO, src_channel = 3, dst_channels = {0} }))
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_inovelli_dimmer:generate_test_message("button3", capabilities.button.button.pushed({state_change = true}))
+      }
+    }
 )
 
 test.run_registered_tests()

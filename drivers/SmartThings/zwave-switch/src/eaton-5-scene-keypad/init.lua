@@ -35,7 +35,8 @@ local EATON_5_SCENE_KEYPAD_FINGERPRINT = {
 
 local function upsert_after_bit_update_at_index(device, bit_position, new_bit)
     local old_value = device:get_field(INDICATOR_SWITCH_STATES) or 0
-    local new_value = bit32.replace(old_value, new_bit and 1 or 0, bit_position-1)
+    local mask = ~(0x1 << (bit_position - 1))
+    local new_value = (old_value & mask) | ((new_bit and 1 or 0) << (bit_position - 1))
     device:set_field(INDICATOR_SWITCH_STATES, new_value, { persist = true})
     return new_value
 end
@@ -88,7 +89,8 @@ local function zwave_handlers_indicator_report(self, device, cmd)
     local reported_value = cmd.args.value
     device:set_field(INDICATOR_SWITCH_STATES, reported_value, { persist = true })
     for i = 1,5 do
-        local bit_enabled = bit32.extract(reported_value, i-1) == 1
+        local mask = (0x1 << (i-1))
+        local bit_enabled = (mask & reported_value) ~= 0
         device:emit_event_for_endpoint(i,
                 bit_enabled and capabilities.switch.switch.on() or
                         capabilities.switch.switch.off())

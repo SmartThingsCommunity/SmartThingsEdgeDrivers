@@ -8,6 +8,12 @@ components:
     version: 1
   - id: powerSource
     version: 1
+    config:
+      values:
+        - key: "powerSource.value"
+          enabledValues:
+            - battery
+            - mains
   - id: firmwareUpdate
     version: 1
   - id: refresh

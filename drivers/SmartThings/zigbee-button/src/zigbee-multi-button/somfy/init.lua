@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local clusters = require "st.zigbee.zcl.clusters"
+local Groups = clusters.Groups
 local mgmt_bind_resp = require "st.zigbee.zdo.mgmt_bind_response"
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
@@ -19,8 +21,11 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
     if binding_table.dest_addr_mode.value == binding_table.DEST_ADDR_MODE_SHORT then
       -- send add hub to zigbee group command
       driver:add_hub_to_zigbee_group(binding_table.dest_addr.value)
+      return
     end
   end
+  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
+  device:send(Groups.commands.AddGroup(device, 0x0000))
 end
 
 local somfy = {

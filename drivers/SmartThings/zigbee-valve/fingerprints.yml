@@ -24,6 +24,11 @@ zigbeeManufacturer :
     manufacturer: WAXMAN
     model: House Water Valve - MDL-TBD
     deviceProfileName: valve-battery-powerSource
+  - id: WAXMAN/HouseWaterValve/MDL-8810300L
+    deviceLabel: Waxman Valve
+    manufacturer: WAXMAN
+    model: House Water Valve - MDL-8810300L
+    deviceProfileName: valve-battery-powerSource
   - id: GasValve/E253-KR0B0ZX-HA
     deviceLabel: Valve
     manufacturer: ""

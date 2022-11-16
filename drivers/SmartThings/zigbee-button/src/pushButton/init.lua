@@ -26,8 +26,8 @@
 local capabilities = require "st.capabilities"
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.button.supportedButtonValues({"pushed"}))
-  device:emit_event(capabilities.button.numberOfButtons({value = 1}))
+  device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
+  device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
