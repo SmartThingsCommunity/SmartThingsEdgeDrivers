@@ -4,7 +4,7 @@ components:
   capabilities:
   - id: illuminanceMeasurement
     version: 1
-    configuration:
+    config:
       values:
         - key: "illuminance.value"
           range: [0, 32000]

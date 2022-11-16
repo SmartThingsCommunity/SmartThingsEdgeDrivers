@@ -10,7 +10,7 @@ components:
     version: 1
   - id: illuminanceMeasurement
     version: 1
-    configuration:
+    config:
       values:
         - key: "illuminance.value"
           range: [0, 32000]
