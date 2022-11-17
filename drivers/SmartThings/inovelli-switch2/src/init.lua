@@ -59,11 +59,11 @@ local function device_added(driver, device)
     for index, endpoint in pairs(device.zwave_endpoints) do
       log.info("##### iterating endoints for newly added zw devices", index)
       --TODO test with/without this check...
-      if find_child(device, index) == nil then
-        driver:try_create_device(prepare_metadata(device, index, "switch-binary"))
-      else
-        log.info("##### not creating child for ep because it exists")
-      end
+      -- if find_child(device, index) == nil then
+      driver:try_create_device(prepare_metadata(device, index, "switch-binary"))
+      -- else
+      --   log.info("##### not creating child for ep because it exists")
+      -- end
     end
   end
   device:refresh()
