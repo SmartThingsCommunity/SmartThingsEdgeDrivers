@@ -28,6 +28,13 @@ local configure_handler = function(self, device)
     capabilities.mediaPlayback.commands.play.NAME,
     capabilities.mediaPlayback.commands.pause.NAME,
     capabilities.mediaPlayback.commands.stop.NAME,
+    capabilities.mediaPlayback.commands.rewind.NAME,
+    capabilities.mediaPlayback.commands.fastForward.NAME,
+  }))
+
+  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+    capabilities.mediaTrackControl.commands.previousTrack.NAME,
+    capabilities.mediaTrackControl.commands.nextTrack.NAME,
   }))
 
   device:emit_event(capabilities.keypadInput.supportedKeyCodes({
