@@ -27,7 +27,7 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 --- @type st.zwave.CommandClass.ThermostatMode
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 --- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 1 })
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 2 })
 --- @type st.zwave.CommandClass.ThermostatOperatingState
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({version=1})
 
