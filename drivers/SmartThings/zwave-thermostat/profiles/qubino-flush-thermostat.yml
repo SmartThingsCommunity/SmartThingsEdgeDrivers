@@ -9,7 +9,7 @@ components:
     config:
       values:
         - key: "heatingSetpoint.value"
-          range: [ -10, 40 ]
+          range: [ -10, 80 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
@@ -22,9 +22,6 @@ components:
     version: 1
   categories:
   - name: Thermostat
-metadata:
-  mnmn: SmartThingsEdge
-  vid: SmartThings-smartthings-Qubino_Flush_Thermostat
 preferences:
   - name: "thermostatMode"
     title: "Thermostat Mode"
