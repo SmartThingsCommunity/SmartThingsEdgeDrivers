@@ -4,6 +4,10 @@ components:
   capabilities:
   - id: thermostatMode
     version: 1
+    config:
+      - key: "thermostatMode.value"
+        enabledValues:
+        - heat
   - id: thermostatHeatingSetpoint
     version: 1
     config:
@@ -16,12 +20,13 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [0, 40]
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: Thermostat
-metadata:
-  mnmn: SmartThingsEdge
-  vid: SmartThings-smartthings-Danfoss_Ally_Radiator_Thermostat
