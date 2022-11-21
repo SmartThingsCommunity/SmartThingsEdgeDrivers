@@ -88,6 +88,12 @@ zwaveManufacturer:
     productType: 0xB221
     productId: 0x251C
     deviceProfileName: smartplug-switch-2
+  - id: "0312/0221/611C"
+    deviceLabel: Inovelli Outlet
+    manufacturerId: 0x0312
+    productType: 0x0221
+    productId: 0x611C
+    deviceProfileName: smartplug-switch-2
   - id: "015D/0221/611C"
     deviceLabel: Inovelli Outlet
     manufacturerId: 0x015D
