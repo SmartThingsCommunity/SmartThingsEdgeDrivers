@@ -1,0 +1,5 @@
+name: 'SamsungAudio'
+packageKey: 'com.smartthings.SamsungAudio'
+permissions:
+  lan: {}
+  discovery: {}
