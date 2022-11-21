@@ -79,8 +79,18 @@ local function do_refresh(driver, device, command)
   device:send_to_component(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }), component)
 end
 
+local function find_child(parent, ep_id)
+  if ep_id == ENDPOINTS.parent then
+    return parent
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  end
+end
+
 local function device_added(driver, device, event)
-  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE and
+    find_child(device, ENDPOINTS.child) == nil then
+
     local name = string.format("%s %s", device.label, "(CH2)")
     local metadata = {
       type = "EDGE_CHILD",
@@ -93,14 +103,6 @@ local function device_added(driver, device, event)
     driver:try_create_device(metadata)
   end
   do_refresh(driver, device)
-end
-
-local function find_child(parent, ep_id)
-  if ep_id == ENDPOINTS.parent then
-    return parent
-  else
-    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-  end
 end
 
 local function component_to_endpoint(device, component)
