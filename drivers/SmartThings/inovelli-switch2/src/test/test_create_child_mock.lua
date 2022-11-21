@@ -50,24 +50,33 @@ local function prepare_metadata(device, endpoint, profile)
   }
 end
 
-test.register_coroutine_test(
-  "added lifecycle event",
-  function()
-    local metadata_1 = prepare_metadata(mock_device, 1, "switch-binary")
-    local metadata_2 = prepare_metadata(mock_device, 2, "switch-binary")
-    mock_device:expect_device_create(metadata_1)
-    mock_device:expect_device_create(metadata_2)
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-          mock_device,
-          SwitchBinary:Get({},
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 0,
-            dst_channels = { }
-          })
-        ))
+-- test.register_coroutine_test(
+--   "added lifecycle event",
+--   function()
+--     local metadata_1 = prepare_metadata(mock_device, 1, "switch-binary")
+--     local metadata_2 = prepare_metadata(mock_device, 2, "switch-binary")
+--     mock_device:expect_device_create(metadata_1)
+--     mock_device:expect_device_create(metadata_2)
+--     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+--           mock_device,
+--           SwitchBinary:Get({},
+--           {
+--             encap = zw.ENCAP.AUTO,
+--             src_channel = 0,
+--             dst_channels = { }
+--           })
+--         ))
 
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+--     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+--     end
+-- )
+
+test.register_coroutine_test(
+  "driverSwitch lifecycle event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
     end
 )
 
