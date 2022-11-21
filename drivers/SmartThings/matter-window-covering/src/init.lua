@@ -42,8 +42,9 @@ local function handle_preset(driver, device, cmd)
   local lift_value = 100 - device.preferences.presetPosition
   local hundredths_lift_percent = lift_value * 100
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
-                device, endpoint_id, lift_value, hundredths_lift_percent
+                device, endpoint_id, hundredths_lift_percent
               )
+              
   device:send(req)
 end
 
@@ -75,9 +76,8 @@ local function handle_shade_level(driver, device, cmd)
   local lift_percentage_value = 100 - cmd.args.shadeLevel
   local hundredths_lift_percentage = lift_percentage_value * 100
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
-                device, endpoint_id, lift_percentage_value, hundredths_lift_percentage
+                device, endpoint_id, hundredths_lift_percentage
               )
-
   device:send(req)
 end
 
@@ -85,7 +85,6 @@ end
 local function current_pos_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local position = 100 - math.floor((ib.data.value / 100))
-    
     device:emit_event_for_endpoint(
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
