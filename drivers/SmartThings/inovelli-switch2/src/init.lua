@@ -76,6 +76,7 @@ end
 local driver_template = {
   supported_capabilities = {
     capabilities.switch,
+    capabilities.refresh
   },
   NAME = "Inovelli 2 channel smart plug",
   zwave_handlers = {
