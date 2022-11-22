@@ -93,8 +93,11 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    driver:try_create_device(get_child_metadata(device, CHILD_SWITCH_EP))
-    if device:is_cc_supported(cc.SENSOR_MULTILEVEL) then
+    if find_child(device, CHILD_SWITCH_EP) == nil then
+      driver:try_create_device(get_child_metadata(device, CHILD_SWITCH_EP))
+    end
+    if device:is_cc_supported(cc.SENSOR_MULTILEVEL) and
+       find_child(device, CHILD_TEMP_SENSOR_EP) == nil then
       driver:try_create_device(get_child_metadata(device, CHILD_TEMP_SENSOR_EP))
     end
   end
