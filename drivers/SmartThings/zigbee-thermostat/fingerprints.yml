@@ -19,11 +19,11 @@ zigbeeManufacturer:
 #     manufacturer: D5X84YU
 #     model: eT093WRO
 #     deviceProfileName: thermostat-popp-danfoss
-#   - id: "Zen Within/Zen-01"
-#     deviceLabel: Zen Thermostat
-#     manufacturer: Zen Within
-#     model: Zen-01
-#     deviceProfileName: thermostat-battery
+  - id: "Zen Within/Zen-01"
+    deviceLabel: Zen Thermostat
+    manufacturer: Zen Within
+    model: Zen-01
+    deviceProfileName: thermostat-battery
 #   - id: "Fidure/A1732R3"
 #     deviceLabel: Fidure Thermostat
 #     manufacturer: Fidure

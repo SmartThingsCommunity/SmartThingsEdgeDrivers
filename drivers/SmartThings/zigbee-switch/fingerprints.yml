@@ -1946,11 +1946,11 @@ zigbeeManufacturer:
 #     manufacturer: Compacta International, Ltd
 #     model: ZBMPlug15
 #     deviceProfileName: basic-switch
-#   - id: "sengled/E13-N11"
-#     deviceLabel: Sengled Light
-#     manufacturer: sengled
-#     model: E13-N11
-#     deviceProfileName: on-off-level-motion-sensor
+  - id: "sengled/E13-N11"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E13-N11
+    deviceProfileName: on-off-level-motion-sensor
   - id: "GE_Appliances/ZLL Light"
     deviceLabel: GE Light
     manufacturer: GE_Appliances
