@@ -9,7 +9,7 @@ components:
     config:
       values:
         - key: "coolingSetpoint.value"
-          range: [ -10, 80 ]
+          range: [ -25, 80 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
