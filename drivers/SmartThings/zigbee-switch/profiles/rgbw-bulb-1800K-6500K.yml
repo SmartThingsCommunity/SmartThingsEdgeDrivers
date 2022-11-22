@@ -6,6 +6,10 @@ components:
     version: 1
   - id: switchLevel
     version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
   - id: colorTemperature
     version: 1
     config:
