@@ -16,8 +16,8 @@ components:
       values:
         - key: "thermostatOperatingState.value"
           enabledValues:
-            - Heating
-            - Idle
+            - heating
+            - idle
   - id: temperatureAlarm
     version: 1
     config:

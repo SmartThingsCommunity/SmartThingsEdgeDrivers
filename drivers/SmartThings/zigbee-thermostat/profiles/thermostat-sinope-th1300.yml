@@ -18,8 +18,8 @@ components:
       values:
         - key: "thermostatOperatingState.value"
           enabledValues:
-            - Heating
-            - Idle
+            - heating
+            - idle
   - id: firmwareUpdate
     version: 1
   - id: refresh

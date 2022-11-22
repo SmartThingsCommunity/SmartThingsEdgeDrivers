@@ -22,10 +22,10 @@ components:
       values:
         - key: "thermostatOperatingState.value"
           enabledValues:
-            - Heating
-            - Cooling
-            - Fan only
-            - Idle
+            - heating
+            - cooling
+            - fan only
+            - idle
   - id: refresh
     version: 1
   categories:

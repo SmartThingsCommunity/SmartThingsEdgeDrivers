@@ -14,8 +14,8 @@ components:
       values:
         - key: "thermostatOperatingState.value"
           enabledValues:
-            - Cooling
-            - Idle
+            - cooling
+            - idle
   - id: powerMeter
     version: 1
   - id: energyMeter

@@ -16,8 +16,8 @@ components:
       values:
         - key: "thermostatOperatingState.value"
           enabledValues:
-            - Heating
-            - Idle
+            - heating
+            - idle
   - id: battery
     version: 1
   - id: temperatureMeasurement
