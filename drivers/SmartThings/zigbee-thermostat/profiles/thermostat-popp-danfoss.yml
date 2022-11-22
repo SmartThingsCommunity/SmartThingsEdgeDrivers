@@ -5,9 +5,10 @@ components:
   - id: thermostatMode
     version: 1
     config:
-      - key: "thermostatMode.value"
-        enabledValues:
-        - heat
+      values:
+        - key: "thermostatMode.value"
+          enabledValues:
+          - heat
   - id: thermostatHeatingSetpoint
     version: 1
     config:
