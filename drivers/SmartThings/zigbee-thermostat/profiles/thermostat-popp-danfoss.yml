@@ -12,6 +12,12 @@ components:
           range: [ 4, 28 ]
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
   - id: battery
     version: 1
   - id: temperatureMeasurement
