@@ -19,7 +19,6 @@ local FanControl = clusters.FanControl
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local json = require "dkjson"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("base-thermostat.yml"),
@@ -102,23 +101,8 @@ test.register_coroutine_test(
   -- This thermostat uses a non-standard supported mode mapping
   "ControlSequenceOfOperation reporting should create the appropriate events",
   function ()
-    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x00)})
-  end
-)
-
-test.register_coroutine_test(
-  -- This thermostat uses a non-standard supported mode mapping
-  "ControlSequenceOfOperation reporting should create the appropriate events",
-  function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x02)})
-  end
-)
-
-test.register_coroutine_test(
-  -- This thermostat uses a non-standard supported mode mapping
-  "ControlSequenceOfOperation reporting should create the appropriate events",
-  function ()
-    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x04)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
   end
 )
 
@@ -134,6 +118,9 @@ test.register_coroutine_test(
   "Thermostat cooling setpoint reporting should create the appropriate events if the mode is supported",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x00)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
+    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.COOL)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2100) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = 21.0, unit = "C"})))
   end
@@ -143,23 +130,32 @@ test.register_coroutine_test(
   "Thermostat heating setpoint reporting should create the appropriate events if the mode is supported",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x02)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
+    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.EMERGENCY_HEATING)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device, 2100) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})))
   end
 )
 
 test.register_coroutine_test(
-  "Thermostat heating setpoint reporting should not create setpoint events if the mode is not supported",
+  "Thermostat heating setpoint reporting should not create setpoint events if the mode is not currently active",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x00)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
+    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.COOL)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device, 2100) })
   end
 )
 
 test.register_coroutine_test(
-  "Thermostat cooling setpoint reporting should not create setpoint events if the mode is not supported",
+  "Thermostat cooling setpoint reporting should not create setpoint events if the mode is not currently active",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x02)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
+    test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.EMERGENCY_HEATING)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2100) })
   end
 )

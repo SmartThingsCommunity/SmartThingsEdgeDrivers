@@ -16,3 +16,6 @@ components:
     version: 1
   categories:
   - name: ContactSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
