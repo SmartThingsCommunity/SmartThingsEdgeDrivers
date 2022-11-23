@@ -111,7 +111,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
           mock_fibaro_door_window_sensor1,
-          Configuration:Set({parameter_number=1, configuration_value=0, size=1})
+          Configuration:Set({parameter_number=1, configuration_value=0, size=2})
         )
       )
       test.socket.zwave:__expect_send(
