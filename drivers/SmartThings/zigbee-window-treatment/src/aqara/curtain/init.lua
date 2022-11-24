@@ -1,12 +1,14 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local aqara_utils = require "aqara/aqara_utils"
-local log = require "log"
 
 local Basic = clusters.Basic
-local AnalogOutput = clusters.AnalogOutput
-local Groups = clusters.Groups
 
+local deviceInitialization = capabilities["stse.deviceInitialization"]
+local deviceInitializationId = "stse.deviceInitialization"
+local setInitializedStateCommandName = "setInitializedState"
+
+local reverseCurtainDirectionPreferenceId = "stse.reverseCurtainDirection"
 local softTouchPreferenceId = "stse.softTouch"
 
 local INIT_STATE = "initState"
@@ -15,8 +17,13 @@ local INIT_STATE_CLOSE = "close"
 local INIT_STATE_REVERSE = "reverse"
 local INIT_STATE_DONE = "done"
 
+local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
+
+local function write_initialize(device)
+  aqara_utils.write_pref_attribute(device, PREF_INITIALIZE)
+end
 
 local function setInitializationField(device, value)
   device:set_field(INIT_STATE, value)
@@ -27,13 +34,11 @@ local function getInitializationField(device)
 end
 
 local function set_initialized_state_handler(driver, device, command)
-  log.debug("-----------> set_initialized_state_handler " .. command.component)
-
   -- initialize
-  aqara_utils.write_initialize(device)
+  write_initialize(device)
 
   -- update ui
-  device:emit_event(aqara_utils.deviceInitialization.initializedState.initializing())
+  device:emit_event(deviceInitialization.initializedState.initializing())
 
   -- open/close command
   device.thread:call_with_delay(2, function(d)
@@ -41,10 +46,10 @@ local function set_initialized_state_handler(driver, device, command)
       capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
       setInitializationField(device, INIT_STATE_CLOSE)
-      aqara_utils.send_close_cmd(device, command.component)
+      aqara_utils.send_close_cmd(device, command)
     else
       setInitializationField(device, INIT_STATE_OPEN)
-      aqara_utils.send_open_cmd(device, command.component)
+      aqara_utils.send_open_cmd(device, command)
     end
   end)
 end
@@ -58,10 +63,10 @@ local function shade_state_attr_handler(driver, device, value, zb_rx)
     local flag = getInitializationField(device)
     if flag == INIT_STATE_CLOSE then
       setInitializationField(device, INIT_STATE_REVERSE)
-      aqara_utils.send_open_cmd(device, "main")
+      aqara_utils.send_open_cmd(device, { component = "main" })
     elseif flag == INIT_STATE_OPEN then
       setInitializationField(device, INIT_STATE_REVERSE)
-      aqara_utils.send_close_cmd(device, "main")
+      aqara_utils.send_close_cmd(device, { component = "main" })
     elseif flag == INIT_STATE_REVERSE then
       setInitializationField(device, INIT_STATE_DONE)
       aqara_utils.read_pref_attribute(device)
@@ -69,63 +74,72 @@ local function shade_state_attr_handler(driver, device, value, zb_rx)
   end
 end
 
-local function current_position_attr_handler(driver, device, value, zb_rx)
-  aqara_utils.shade_position_changed(device, value)
-end
-
 local function pref_attr_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
   local flag = getInitializationField(device)
   if flag == INIT_STATE_DONE then
-    device:emit_event(initialized == 1 and aqara_utils.deviceInitialization.initializedState.initialized() or
-      aqara_utils.deviceInitialization.initializedState.notInitialized())
+    device:emit_event(initialized == 1 and deviceInitialization.initializedState.initialized() or
+      deviceInitialization.initializedState.notInitialized())
+
+    -- store
+    aqara_utils.setInitializedStateField(device, initialized)
   end
 end
 
 local function write_soft_touch_preference(device, args)
-  if device.preferences[softTouchPreferenceId] ~= args.old_st_store.preferences[softTouchPreferenceId] then
-    if device.preferences[softTouchPreferenceId] == true then
-      aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
-    else
-      aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_OFF)
+  if device.preferences ~= nil then
+    if device.preferences[softTouchPreferenceId] ~= args.old_st_store.preferences[softTouchPreferenceId] then
+      if device.preferences[softTouchPreferenceId] == true then
+        aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
+      else
+        aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_OFF)
+      end
+    end
+  end
+end
+
+local function write_reverse_preferences(device, args)
+  if device.preferences ~= nil then
+    if device.preferences[reverseCurtainDirectionPreferenceId] ~=
+        args.old_st_store.preferences[reverseCurtainDirectionPreferenceId] then
+      if device.preferences[reverseCurtainDirectionPreferenceId] == true then
+        aqara_utils.write_reverse_pref_on(device)
+      else
+        aqara_utils.write_reverse_pref_off(device)
+      end
+
+      -- read updated value
+      device.thread:call_with_delay(2, function(d)
+        aqara_utils.read_pref_attribute(device)
+      end)
     end
   end
 end
 
 local function do_refresh(self, device)
-  device:send(AnalogOutput.attributes.PresentValue:read(device))
-
+  aqara_utils.read_present_value_attribute(device)
   aqara_utils.read_pref_attribute(device)
 end
 
 local function device_info_changed(driver, device, event, args)
-  if device.preferences ~= nil then
-    -- reverse direction
-    aqara_utils.write_reverse_preferences(device, args)
-    -- soft touch
-    write_soft_touch_preference(device, args)
-  end
+  -- reverse direction
+  write_reverse_preferences(device, args)
+  -- soft touch
+  write_soft_touch_preference(device, args)
 end
 
 local function do_configure(self, device)
   device:configure()
 
-  device:send(Groups.server.commands.RemoveAllGroups(device))
-
   do_refresh(self, device)
 end
 
 local function device_added(driver, device)
-  local main_comp = device.profile.components["main"]
-  device:emit_component_event(main_comp,
-    capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
-  device:emit_component_event(main_comp, aqara_utils.deviceInitialization.supportedInitializedState(
-    { "notInitialized", "initializing", "initialized" }))
-
-  device:send(Groups.server.commands.RemoveAllGroups(device))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+  device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }))
 
   -- Set default value to the device.
-  aqara_utils.write_pref_attribute(device, aqara_utils.PREF_REVERSE_DEFAULT)
+  aqara_utils.write_reverse_pref_default(device)
   aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
 end
 
@@ -140,18 +154,15 @@ local aqara_curtain_handler = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     },
-    [aqara_utils.deviceInitializationId] = {
-      [aqara_utils.setInitializedStateCommandName] = set_initialized_state_handler
+    [deviceInitializationId] = {
+      [setInitializedStateCommandName] = set_initialized_state_handler
     }
   },
   zigbee_handlers = {
     attr = {
       [Basic.ID] = {
-        [aqara_utils.SHADE_STATE_ATTR_ID] = shade_state_attr_handler,
+        [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_attr_handler,
         [aqara_utils.PREF_ATTRIBUTE_ID] = pref_attr_handler
-      },
-      [AnalogOutput.ID] = {
-        [AnalogOutput.attributes.PresentValue.ID] = current_position_attr_handler
       }
     }
   },

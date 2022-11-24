@@ -1,4 +1,4 @@
-name: window-treatment-aqara-curtain
+name: aqara-roller-shade-rotate
 components:
   - id: main
     capabilities:
@@ -6,7 +6,9 @@ components:
         version: 1
       - id: windowShadeLevel
         version: 1
-      - id: stse.deviceInitialization
+      - id: stse.initializedStateWithGuide
+        version: 1
+      - id: stse.shadeRotateState
         version: 1
       - id: firmwareUpdate
         version: 1
@@ -15,7 +17,5 @@ components:
     categories:
       - name: Blind
 preferences:
-  - preferenceId: stse.reverseCurtainDirection
-    explicit: true
-  - preferenceId: stse.softTouch
+  - preferenceId: stse.reverseRollerShadeDir
     explicit: true

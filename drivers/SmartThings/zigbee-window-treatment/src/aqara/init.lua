@@ -4,6 +4,7 @@ local utils = require "st.utils"
 local aqara_utils = require "aqara/aqara_utils"
 
 local WindowCovering = clusters.WindowCovering
+local AnalogOutput = clusters.AnalogOutput
 
 local function is_aqara_products(opts, driver, device)
   for _, fingerprint in ipairs(aqara_utils.FINGERPRINTS) do
@@ -15,6 +16,10 @@ local function is_aqara_products(opts, driver, device)
 end
 
 local function window_shade_level_cmd(driver, device, command)
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+
   local level = command.args.shadeLevel
   if level > 100 then
     level = 100
@@ -27,15 +32,27 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
-  aqara_utils.send_open_cmd(device, command.component)
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+
+  aqara_utils.send_open_cmd(device, command)
 end
 
 local function window_shade_close_cmd(driver, device, command)
-  aqara_utils.send_close_cmd(device, command.component)
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+
+  aqara_utils.send_close_cmd(device, command)
 end
 
 local function window_shade_pause_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
+end
+
+local function current_position_attr_handler(driver, device, value, zb_rx)
+  aqara_utils.shade_position_changed(device, value)
 end
 
 local aqara_window_treatment_handler = {
@@ -48,6 +65,13 @@ local aqara_window_treatment_handler = {
       [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
       [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
       [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd
+    }
+  },
+  zigbee_handlers = {
+    attr = {
+      [AnalogOutput.ID] = {
+        [AnalogOutput.attributes.PresentValue.ID] = current_position_attr_handler
+      }
     }
   },
   sub_drivers = {
