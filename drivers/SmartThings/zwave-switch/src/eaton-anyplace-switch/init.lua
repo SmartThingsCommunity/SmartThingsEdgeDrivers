@@ -47,7 +47,7 @@ local function basic_get_handler(self, device, cmd)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switch.switch.off())
+  -- device:emit_event(capabilities.switch.switch.off())
 end
 
 local function switch_on_handler(driver, device)

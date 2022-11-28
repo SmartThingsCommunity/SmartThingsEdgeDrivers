@@ -54,7 +54,7 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local function do_configure(self, device)

@@ -81,7 +81,7 @@ test.register_coroutine_test(
   "Device added lifecycle event should be handled",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",capabilities.switchLevel.level(100)))
+    -- test.socket.capability:__expect_send(mock_device:generate_test_message("main",capabilities.switchLevel.level(100)))
   end
 )
 

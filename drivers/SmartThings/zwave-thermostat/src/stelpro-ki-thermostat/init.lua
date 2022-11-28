@@ -157,7 +157,7 @@ local function set_thermostat_mode(driver, device, command)
 end
 
 local function device_added(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
 local stelpro_ki_thermostat = {
