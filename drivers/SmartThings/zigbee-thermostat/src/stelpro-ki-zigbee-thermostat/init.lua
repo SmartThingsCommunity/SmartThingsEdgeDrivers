@@ -311,7 +311,7 @@ end
 
 local function device_added(self, device)
   device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES, { visibility = { displayed = false } }))
-  device:emit_event(TemperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(TemperatureAlarm.temperatureAlarm.cleared())
 end
 
 local stelpro_ki_zigbee_thermostat = {

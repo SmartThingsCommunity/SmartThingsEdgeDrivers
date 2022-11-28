@@ -64,9 +64,9 @@ local function notification_report_handler(self, device, cmd)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.battery.battery(100))
-  device:emit_event(capabilities.waterSensor.water.dry())
-  device:emit_event(capabilities.powerSource.powerSource.mains())
+  -- device:emit_event(capabilities.battery.battery(100))
+  -- device:emit_event(capabilities.waterSensor.water.dry())
+  -- device:emit_event(capabilities.powerSource.powerSource.mains())
 end
 
 local glentronics_water_leak_sensor = {

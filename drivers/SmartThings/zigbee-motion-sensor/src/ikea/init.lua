@@ -72,7 +72,7 @@ local function device_added(self, device)
   device:refresh()
   -- Ikea Motion Sensor doesn't report current status during pairing process
   -- so fake event is needed for default status
-  device:emit_event(capabilities.motionSensor.motion.inactive())
+  -- device:emit_event(capabilities.motionSensor.motion.inactive())
 end
 
 local do_configure = function(self, device)
