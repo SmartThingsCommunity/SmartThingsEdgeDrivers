@@ -1,8 +1,12 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local aqara_utils = require "aqara/aqara_utils"
+local zcl_commands = require "st.zigbee.zcl.global_commands"
+local utils = require "st.utils"
 
 local Basic = clusters.Basic
+local WindowCovering = clusters.WindowCovering
+local AnalogOutput = clusters.AnalogOutput
 
 local deviceInitialization = capabilities["stse.deviceInitialization"]
 local deviceInitializationId = "stse.deviceInitialization"
@@ -12,6 +16,7 @@ local reverseCurtainDirectionPreferenceId = "stse.reverseCurtainDirection"
 local softTouchPreferenceId = "stse.softTouch"
 
 local INIT_STATE = "initState"
+local INIT_STATE_INIT = "init"
 local INIT_STATE_OPEN = "open"
 local INIT_STATE_CLOSE = "close"
 local INIT_STATE_REVERSE = "reverse"
@@ -20,6 +25,7 @@ local INIT_STATE_DONE = "done"
 local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
+local PREF_SOFT_TOUCH_DEFAULT = "\x00\x08\x00\x00\x00\x00\x00"
 
 local function write_initialize(device)
   aqara_utils.write_pref_attribute(device, PREF_INITIALIZE)
@@ -34,41 +40,100 @@ local function getInitializationField(device)
 end
 
 local function set_initialized_state_handler(driver, device, command)
-  -- initialize
-  write_initialize(device)
-
   -- update ui
   device:emit_event(deviceInitialization.initializedState.initializing())
 
-  -- open/close command
-  device.thread:call_with_delay(2, function(d)
+  -- initialize
+  device:set_field(INIT_STATE, INIT_STATE_INIT)
+  write_initialize(device)
+
+
+
+  -- -- open/close command
+  -- device.thread:call_with_delay(2, function(d)
+  --   local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
+  --     capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+  --   if lastLevel > 0 then
+  --     setInitializationField(device, INIT_STATE_CLOSE)
+  --     aqara_utils.send_close_cmd(device, command)
+  --   else
+  --     setInitializationField(device, INIT_STATE_OPEN)
+  --     aqara_utils.send_open_cmd(device, command)
+  --   end
+  -- end)
+end
+
+local function write_attr_res_handler(driver, device, zb_rx)
+  print("-------------- write_attr_res_handler ")
+
+  local init_state_value = device:get_field(INIT_STATE) or ""
+  if init_state_value == INIT_STATE_INIT then
     local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
       capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
-      setInitializationField(device, INIT_STATE_CLOSE)
-      aqara_utils.send_close_cmd(device, command)
+      device:set_field(INIT_STATE, INIT_STATE_CLOSE)
+      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 0)
     else
-      setInitializationField(device, INIT_STATE_OPEN)
-      aqara_utils.send_open_cmd(device, command)
+      device:set_field(INIT_STATE, INIT_STATE_OPEN)
+      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 100)
     end
-  end)
+  end
+end
+
+local function current_position_attr_handler(driver, device, value, zb_rx)
+  print("-------------- current_position_attr_handler ")
+  aqara_utils.shade_position_changed(device, value)
+
+  -- local level = value.value
+  -- if level > 100 then
+  --   level = 100
+  -- end
+  -- level = utils.round(level)
+
+  -- local init_state_value = device:get_field(INIT_STATE) or ""
+  -- if level == 100 then
+  --   if init_state_value == INIT_STATE_OPEN then
+  --     device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+  --     aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 0)
+  --   elseif init_state_value == INIT_STATE_CLOSE then
+  --     device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+  --     aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 100)
+  --   elseif init_state_value == INIT_STATE_REVERSE then
+  --     device:set_field(INIT_STATE, "")
+  --     aqara_utils.read_shade_position_attribute(device)
+  --     aqara_utils.read_pref_attribute(device)
+  --   end
+  -- elseif level == 0 then
+  --   if init_state_value == INIT_STATE_OPEN then
+  --     device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+  --     aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 0)
+  --   elseif init_state_value == INIT_STATE_CLOSE then
+  --     device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+  --     aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 100)
+  --   elseif init_state_value == INIT_STATE_REVERSE then
+  --     device:set_field(INIT_STATE, "")
+  --     aqara_utils.read_shade_position_attribute(device)
+  --     aqara_utils.read_pref_attribute(device)
+  --   end
+  -- end
 end
 
 local function shade_state_attr_handler(driver, device, value, zb_rx)
+  print("-------------- shade_state_attr_handler ")
   aqara_utils.shade_state_changed(device, value)
 
-  -- update initialization ui
   local state = value.value
   if state == aqara_utils.SHADE_STATE_STOP then
-    local flag = getInitializationField(device)
-    if flag == INIT_STATE_CLOSE then
-      setInitializationField(device, INIT_STATE_REVERSE)
-      aqara_utils.send_open_cmd(device, { component = "main" })
-    elseif flag == INIT_STATE_OPEN then
-      setInitializationField(device, INIT_STATE_REVERSE)
-      aqara_utils.send_close_cmd(device, { component = "main" })
-    elseif flag == INIT_STATE_REVERSE then
-      setInitializationField(device, INIT_STATE_DONE)
+    local init_state_value = device:get_field(INIT_STATE) or ""
+    if init_state_value == INIT_STATE_OPEN then
+      device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 0)
+    elseif init_state_value == INIT_STATE_CLOSE then
+      device:set_field(INIT_STATE, INIT_STATE_REVERSE)
+      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 100)
+    elseif init_state_value == INIT_STATE_REVERSE then
+      device:set_field(INIT_STATE, "")
+      aqara_utils.read_shade_position_attribute(device)
       aqara_utils.read_pref_attribute(device)
     end
   end
@@ -76,14 +141,25 @@ end
 
 local function pref_attr_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
-  local flag = getInitializationField(device)
-  if flag == INIT_STATE_DONE then
+  local motor_state = string.byte(value.value, 5) & 0xFF
+  local init_state_value = device:get_field(INIT_STATE) or ""
+  if init_state_value == "" then
     device:emit_event(initialized == 1 and deviceInitialization.initializedState.initialized() or
       deviceInitialization.initializedState.notInitialized())
-
-    -- store
-    aqara_utils.setInitializedStateField(device, initialized)
   end
+
+  print(initialized)
+  print(motor_state)
+  -- print("-------------- pref_attr_handler " + tostring(motor_state))
+
+  -- local flag = getInitializationField(device)
+  -- if flag == INIT_STATE_DONE then
+  --   device:emit_event(initialized == 1 and deviceInitialization.initializedState.initialized() or
+  --     deviceInitialization.initializedState.notInitialized())
+
+  --   -- store
+  --   aqara_utils.setInitializedStateField(device, initialized)
+  -- end
 end
 
 local function write_soft_touch_preference(device, args)
@@ -116,8 +192,14 @@ local function write_reverse_preferences(device, args)
   end
 end
 
+local function write_soft_touch_pref_default(device)
+  aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_DEFAULT)
+end
+
 local function do_refresh(self, device)
-  aqara_utils.read_present_value_attribute(device)
+  device:set_field(INIT_STATE, "")
+
+  aqara_utils.read_shade_position_attribute(device)
   aqara_utils.read_pref_attribute(device)
 end
 
@@ -137,10 +219,14 @@ end
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
   device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }))
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
+  device:emit_event(deviceInitialization.initializedState.notInitialized())
+
+  aqara_utils.enable_private_cluster_attribute(device)
 
   -- Set default value to the device.
   aqara_utils.write_reverse_pref_default(device)
-  aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
+  write_soft_touch_pref_default(device)
 end
 
 local aqara_curtain_handler = {
@@ -159,10 +245,21 @@ local aqara_curtain_handler = {
     }
   },
   zigbee_handlers = {
-    attr = {
+    global = {
       [Basic.ID] = {
-        [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_attr_handler,
-        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_attr_handler
+        [zcl_commands.WriteAttributeResponse.ID] = write_attr_res_handler
+      }
+    },
+    attr = {
+      [WindowCovering.ID] = {
+        [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = current_position_attr_handler
+      },
+      [AnalogOutput.ID] = {
+        [AnalogOutput.attributes.PresentValue.ID] = current_position_attr_handler
+      },
+      [Basic.ID] = {
+        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_attr_handler,
+        [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_attr_handler
       }
     }
   },

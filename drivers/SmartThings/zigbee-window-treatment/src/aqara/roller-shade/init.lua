@@ -73,7 +73,7 @@ local function write_reverse_preferences(device, args)
 end
 
 local function do_refresh(self, device)
-  aqara_utils.read_present_value_attribute(device)
+  aqara_utils.read_shade_position_attribute(device)
   aqara_utils.read_pref_attribute(device)
 end
 

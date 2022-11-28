@@ -33,28 +33,28 @@ local FINGERPRINTS = {
 
 local aqara_utils = {}
 
-local function read_custom_attribute(device, cluster_id, attribute_id, dt)
+local function read_private_attribute(device, cluster_id, attribute_id, dt)
   local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute_id)
   message.body.zcl_header.frame_ctrl:set_mfg_specific()
   message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, dt, "mfg_code")
   device:send(message)
 end
 
-local function write_custom_attribute(device, cluster_id, attribute_id, dt, value)
+local function write_private_attribute(device, cluster_id, attribute_id, dt, value)
   device:send(cluster_base.write_manufacturer_specific_attribute(device, cluster_id, attribute_id, MFG_CODE,
     dt, value))
 end
 
-local function enable_custom_cluster_attribute(device)
-  write_custom_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, data_types.Uint8, 1)
+local function enable_private_cluster_attribute(device)
+  write_private_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, data_types.Uint8, 1)
 end
 
 local function read_pref_attribute(device)
-  read_custom_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, data_types.Uint16)
+  read_private_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, data_types.Uint16)
 end
 
 local function write_pref_attribute(device, str)
-  write_custom_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, data_types.CharString, str)
+  write_private_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, data_types.CharString, str)
 end
 
 local function write_reverse_pref_default(device, str)
@@ -69,12 +69,16 @@ local function write_reverse_pref_on(device, str)
   write_pref_attribute(device, PREF_REVERSE_ON)
 end
 
+local function send_lift_percentage_cmd(device, command, level)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
+end
+
 local function send_open_cmd(device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
+  send_lift_percentage_cmd(device, command, 100)
 end
 
 local function send_close_cmd(device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
+  send_lift_percentage_cmd(device, command, 0)
 end
 
 local function emit_shade_state_event(device, shadeLevel)
@@ -89,6 +93,10 @@ end
 
 local function emit_shade_level_event(device, level)
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
+end
+
+local function read_shade_position_attribute(device)
+  device:send(AnalogOutput.attributes.PresentValue:read(device))
 end
 
 local function setShadeStateField(device, value)
@@ -118,12 +126,14 @@ end
 
 local function shade_state_changed(device, value)
   local state = value.value
-  setShadeStateField(device, state) -- store value
+  -- setShadeStateField(device, state) -- store value
 
   -- update state ui
   if state == SHADE_STATE_STOP then
-    local shadeLevel = getShadeLevelField(device)
-    emit_shade_state_event(device, shadeLevel)
+    -- local shadeLevel = getShadeLevelField(device)
+    -- emit_shade_state_event(device, shadeLevel)
+
+    -- read_shade_position_attribute(device)
   elseif state == SHADE_STATE_OPEN then
     device:emit_event(capabilities.windowShade.windowShade.opening())
   elseif state == SHADE_STATE_CLOSE then
@@ -137,20 +147,16 @@ local function shade_position_changed(device, value)
     level = 100
   end
   level = utils.round(level)
-  setShadeLevelField(device, level) -- store value
+  -- setShadeLevelField(device, level) -- store value
 
   -- update level ui
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
+  emit_shade_level_event(device, level)
 
   -- update state ui
-  local shadeState = getShadeStateField(device)
-  if shadeState == SHADE_STATE_STOP then
-    emit_shade_state_event(device, level)
-  end
-end
-
-local function read_present_value_attribute(device)
-  device:send(AnalogOutput.attributes.PresentValue:read(device))
+  -- local shadeState = getShadeStateField(device)
+  -- if shadeState == SHADE_STATE_STOP then
+  emit_shade_state_event(device, level)
+  -- end
 end
 
 local function is_matched_profile(device, profile)
@@ -173,10 +179,11 @@ aqara_utils.PREF_REVERSE_ON = PREF_REVERSE_ON
 
 aqara_utils.read_pref_attribute = read_pref_attribute
 aqara_utils.write_pref_attribute = write_pref_attribute
-aqara_utils.enable_custom_cluster_attribute = enable_custom_cluster_attribute
+aqara_utils.enable_private_cluster_attribute = enable_private_cluster_attribute
 aqara_utils.write_reverse_pref_default = write_reverse_pref_default
 aqara_utils.write_reverse_pref_off = write_reverse_pref_off
 aqara_utils.write_reverse_pref_on = write_reverse_pref_on
+aqara_utils.send_lift_percentage_cmd = send_lift_percentage_cmd
 aqara_utils.send_open_cmd = send_open_cmd
 aqara_utils.send_close_cmd = send_close_cmd
 aqara_utils.setInitializedStateField = setInitializedStateField
@@ -185,7 +192,7 @@ aqara_utils.emit_shade_state_event = emit_shade_state_event
 aqara_utils.emit_shade_level_event = emit_shade_level_event
 aqara_utils.shade_state_changed = shade_state_changed
 aqara_utils.shade_position_changed = shade_position_changed
-aqara_utils.read_present_value_attribute = read_present_value_attribute
+aqara_utils.read_shade_position_attribute = read_shade_position_attribute
 aqara_utils.is_matched_profile = is_matched_profile
 
 return aqara_utils
