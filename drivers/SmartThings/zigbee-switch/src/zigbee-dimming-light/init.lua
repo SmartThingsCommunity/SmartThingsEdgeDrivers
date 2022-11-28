@@ -87,7 +87,7 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switchLevel.level(100))
+  -- device:emit_event(capabilities.switchLevel.level(100))
 end
 
 local zigbee_dimming_light = {

@@ -63,21 +63,21 @@ test.register_message_test(
       direction = "receive",
       message = {mock_device.id, "added"}
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
+    -- }
   }
 )
 

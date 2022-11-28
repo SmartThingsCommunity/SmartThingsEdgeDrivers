@@ -88,17 +88,17 @@ test.register_message_test(
       message = { mock_device.id, "added" }
     },
     {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
-    {
       channel = "zwave",
       direction = "receive",
       message = { mock_device.id, zw_test_utilities.zwave_test_build_receive_command(SensorMultilevel:Report({
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.CELSIUS,
         sensor_value = 33 })) }
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -117,17 +117,17 @@ test.register_message_test(
       message = { mock_device.id, "added" }
     },
     {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
-    {
       channel = "zwave",
       direction = "receive",
       message = { mock_device.id, zw_test_utilities.zwave_test_build_receive_command(SensorMultilevel:Report({
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.FAHRENHEIT,
         sensor_value = 55 })) }
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -145,11 +145,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "zwave",
       direction = "receive",
@@ -179,11 +179,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "zwave",
       direction = "receive",
@@ -213,11 +213,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "zwave",
       direction = "receive",
@@ -242,11 +242,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "zwave",
       direction = "receive",
