@@ -1,3 +1,21 @@
+matterManufacturer:
+  #Eve
+  - id: "Eve/Energy/US"
+    deviceLabel: Eve Energy US
+    vendorId: 0x130a
+    productId: 0x53
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/US-54"
+    deviceLabel: Eve Energy US
+    vendorId: 0x130A
+    productId: 0x54
+    deviceProfileName: plug-binary
+  - id: "Eve/Weather"
+    deviceLabel: EveWeather
+    vendorId: 0x130a
+    productId: 0x56
+    deviceProfileName: switch-binary
+    
 matterGeneric:
   - id: "matter/on-off/light"
     deviceLabel: Matter OnOff Light
