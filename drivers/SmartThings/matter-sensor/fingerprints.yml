@@ -1,4 +1,5 @@
 matterManufacturer:
+  #Eve
   - id: "Eve/Weather"
     deviceLabel: Eve Weather
     vendorId: 0x130a
@@ -9,6 +10,7 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x4d
     deviceProfileName: contact-battery
+    
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
