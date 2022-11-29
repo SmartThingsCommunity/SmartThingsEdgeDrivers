@@ -73,7 +73,8 @@ function Listener:now_playing_update(info)
         utils.table_size(self.device.state_cache.main.mediaTrackControl.supportedTrackControlCommands.value) > 0 then
         -- Switching to radio source which disables track controls
         self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-      elseif utils.table_size(self.device.state_cache.main.mediaTrackControl.supportedTrackControlCommands.value) == 0 then
+      elseif utils.table_size(self.device.state_cache.main.mediaTrackControl.supportedTrackControlCommands.value) == 0 and
+        info.source ~= "TUNEIN" then
         self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
           capabilities.mediaTrackControl.commands.nextTrack.NAME,
           capabilities.mediaTrackControl.commands.previousTrack.NAME,
