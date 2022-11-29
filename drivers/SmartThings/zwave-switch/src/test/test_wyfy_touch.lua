@@ -339,20 +339,20 @@ test.register_coroutine_test(
     end
 )
 
---test.register_coroutine_test(
---    "added lifecycle event for child should refresh device only",
---    function()
---      test.socket.zwave:__set_channel_ordering("relaxed")
---      test.socket.device_lifecycle:__queue_receive({ mock_child_device.id, "added" })
---      test.socket.zwave:__expect_send(
---          zw_test_utils.zwave_test_build_send_command(
---              mock_parent_device,
---              SwitchBinary:Get({},
---                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
---              )
---          )
---      )
---    end
---)
+test.register_coroutine_test(
+    "added lifecycle event for child should refresh device only",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_child_device.id, "added" })
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_parent_device,
+              SwitchBinary:Get({},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
+              )
+          )
+      )
+    end
+)
 
 test.run_registered_tests()
