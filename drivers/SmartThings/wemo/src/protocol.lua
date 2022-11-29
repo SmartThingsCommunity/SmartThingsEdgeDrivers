@@ -4,7 +4,7 @@ local log = require "log"
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http"
-local ltn12 = require "socket.ltn12"
+local ltn12 = require "ltn12"
 
 local utils = require "st.utils"
 

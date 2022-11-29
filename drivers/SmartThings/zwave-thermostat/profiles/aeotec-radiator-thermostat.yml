@@ -1,21 +1,25 @@
-name: base-thermostat-8to20C
+name: aeotec-radiator-thermostat
 components:
 - id: main
   capabilities:
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [0, 40]
   - id: thermostatHeatingSetpoint
     version: 1
     config:
       values:
         - key: "heatingSetpoint.value"
-          range: [8, 20]
+          range: [8, 28]
   - id: thermostatCoolingSetpoint
     version: 1
     config:
       values:
         - key: "coolingSetpoint.value"
-          range: [8, 20]
+          range: [8, 28]
   - id: thermostatMode
     version: 1
   - id: thermostatFanMode

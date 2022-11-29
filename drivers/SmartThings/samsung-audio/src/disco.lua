@@ -22,7 +22,7 @@ local xml_handler = require "xmlhandler.tree"
 local utils = require "st.utils"
 local command = require "command"
 
-local ltn12 = require "socket.ltn12"
+local ltn12 = require "ltn12"
 
 --- @module samsung-audio.Disco
 local Disco = {}
