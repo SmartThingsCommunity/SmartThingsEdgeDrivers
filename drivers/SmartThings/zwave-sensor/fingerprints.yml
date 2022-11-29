@@ -124,12 +124,12 @@ zwaveManufacturer:
 #     productType: 0x0006
 #     productId: 0x0001
 #     deviceProfileName: humidity-temperature-battery
-#   - id: "0060/0007/0001"
-#     deviceLabel: Everspring Illuminance Sensor
-#     manufacturerId: 0x0060
-#     productType: 0x0007
-#     productId: 0x0001
-#     deviceProfileName: illuminance-battery
+  - id: "0060/0007/0001"
+    deviceLabel: Everspring Illuminance Sensor
+    manufacturerId: 0x0060
+    productType: 0x0007
+    productId: 0x0001
+    deviceProfileName: illuminance-battery
   - id: "0084/0093/0114"
     deviceLabel: Glentronics Water Leak Sensor
     manufacturerId: 0x0084
@@ -158,42 +158,42 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0702
     deviceProfileName: fibaro-door-window-sensor-2
-#   - id: 0086/0102/0061
-#     deviceLabel: Aeotec Door/Window Sensor
-#     manufacturerId: 0x0086
-#     productType: 0x0102
-#     productId: 0x0061
-#     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: 010F/0501/1002
-#     deviceLabel: Fibaro Door/Window Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0501
-#     productId: 0x1002
-#     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: 010F/0701/1001
-#     deviceLabel: Fibaro Door/Window Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0701
-#     productId: 0x1001
-#     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: 0086/0002/0004
-#     deviceLabel: Door/Window Sensor
-#     manufacturerId: 0x0086
-#     productType: 0x0002
-#     productId: 0x0004
-#     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: 0109/200A/0A02
-#     deviceLabel: Vision Door/Window Sensor
-#     manufacturerId: 0x0109
-#     productType: 0x200A
-#     productId: 0x0A02
-#     deviceProfileName: contact-battery-tamperalert-temperature
-#   - id: 017F/0100/0001
-#     deviceLabel: Wink Door/Window Sensor
-#     manufacturerId: 0x017F
-#     productType: 0x0100
-#     productId: 0x0001
-#     deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 0086/0102/0061
+    deviceLabel: Aeotec Door/Window Sensor
+    manufacturerId: 0x0086
+    productType: 0x0102
+    productId: 0x0061
+    deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 010F/0501/1002
+    deviceLabel: Fibaro Door/Window Sensor
+    manufacturerId: 0x010F
+    productType: 0x0501
+    productId: 0x1002
+    deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 010F/0701/1001
+    deviceLabel: Fibaro Door/Window Sensor
+    manufacturerId: 0x010F
+    productType: 0x0701
+    productId: 0x1001
+    deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 0086/0002/0004
+    deviceLabel: Door/Window Sensor
+    manufacturerId: 0x0086
+    productType: 0x0002
+    productId: 0x0004
+    deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 0109/200A/0A02
+    deviceLabel: Vision Door/Window Sensor
+    manufacturerId: 0x0109
+    productType: 0x200A
+    productId: 0x0A02
+    deviceProfileName: contact-battery-tamperalert-temperature
+  - id: 017F/0100/0001
+    deviceLabel: Wink Door/Window Sensor
+    manufacturerId: 0x017F
+    productType: 0x0100
+    productId: 0x0001
+    deviceProfileName: contact-battery-tamperalert-temperature
   - id: Aotec/aerQ # all regions
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
@@ -205,29 +205,29 @@ zwaveManufacturer:
     productType: 0x0004
     productId: 0x0014
     deviceProfileName: temp-humidity-dew-mold
-#   - id: 015D/2003
-#     deviceLabel: Inovelli Open/Closed Sensor
-#     manufacturerId: 0x015D
-#     productType: 0x2003
-#     deviceProfileName: contact-battery-temperature
-#   - id: 0312/2003/C11C
-#     deviceLabel: Inovelli Open/Closed Sensor
-#     manufacturerId: 0x0312
-#     productType: 0x2003
-#     productId: 0xC11C
-#     deviceProfileName: contact-battery-temperature
-#   - id: 015D/C100/C100
-#     deviceLabel: Inovelli Open/Closed Sensor
-#     manufacturerId: 0x015D
-#     productType: 0xC100
-#     productId: 0xC100
-#     deviceProfileName: contact-battery-temperature
-#   - id: 0312/C100/C100
-#     deviceLabel: Inovelli Open/Closed Sensor
-#     manufacturerId: 0x0312
-#     productType: 0xC100
-#     productId: 0xC100
-#     deviceProfileName: contact-battery-temperature
+  - id: 015D/2003
+    deviceLabel: Inovelli Open/Closed Sensor
+    manufacturerId: 0x015D
+    productType: 0x2003
+    deviceProfileName: contact-battery-temperature
+  - id: 0312/2003/C11C
+    deviceLabel: Inovelli Open/Closed Sensor
+    manufacturerId: 0x0312
+    productType: 0x2003
+    productId: 0xC11C
+    deviceProfileName: contact-battery-temperature
+  - id: 015D/C100/C100
+    deviceLabel: Inovelli Open/Closed Sensor
+    manufacturerId: 0x015D
+    productType: 0xC100
+    productId: 0xC100
+    deviceProfileName: contact-battery-temperature
+  - id: 0312/C100/C100
+    deviceLabel: Inovelli Open/Closed Sensor
+    manufacturerId: 0x0312
+    productType: 0xC100
+    productId: 0xC100
+    deviceProfileName: contact-battery-temperature
   - id: 019A/0003/000A
     deviceLabel: Sensative Water Leak Sensor
     manufacturerId: 0x019A

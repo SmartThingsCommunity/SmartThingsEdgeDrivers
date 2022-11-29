@@ -165,12 +165,12 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x1401
 #     deviceProfileName: smartplug-1
-#   - id: 0157/0100/0100
-#     deviceLabel: EcoNet Vent
-#     manufacturerId: 0x0157
-#     productType: 0x0100
-#     productId: 0x0100
-#     deviceProfileName: switch-vent
+  - id: 0157/0100/0100
+    deviceLabel: EcoNet Vent
+    manufacturerId: 0x0157
+    productType: 0x0100
+    productId: 0x0100
+    deviceProfileName: switch-vent
 #   - id: 018C/0061/0001
 #     deviceLabel: Dawon Wall Smart Switch
 #     manufacturerId: 0x018C
@@ -260,12 +260,12 @@ zwaveManufacturer:
 #     productType: 0x3141
 #     productId: 0x5102
 #     deviceProfileName: switch-multicomponent-4
-#   - id: 010F/1C01/1000
-#     deviceLabel: Fibaro Walli Dimmer Switch
-#     manufacturerId: 0x010F
-#     productType: 0x1C01
-#     productId: 0x1000
-#     deviceProfileName: fibaro-walli-dimmer
+  - id: 010F/1C01/1000
+    deviceLabel: Fibaro Walli Dimmer Switch
+    manufacturerId: 0x010F
+    productType: 0x1C01
+    productId: 0x1000
+    deviceProfileName: fibaro-walli-dimmer
 #   - id: "ZoozPowerStrip"
 #     deviceLabel: Zooz Power Strip
 #     manufacturerId: 0x027A
@@ -860,11 +860,11 @@ zwaveManufacturer:
     productType: 0x8000
     productId: 0x0002
     deviceProfileName: switch-binary
-#   - id: 0086/004B # Aeotec/Aeon Smart Switch Gen5
-#     deviceLabel: Aeotec Outlet
-#     manufacturerId: 0x0086
-#     productId: 0x004B
-#     deviceProfileName: metering-switch
+  - id: 0086/004B # Aeotec/Aeon Smart Switch Gen5
+    deviceLabel: Aeotec Outlet
+    manufacturerId: 0x0086
+    productId: 0x004B
+    deviceProfileName: metering-switch
 #   - id: 0086/0019
 #     deviceLabel: Aeotec Dimmer Switch
 #     manufacturerId: 0x0086

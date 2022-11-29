@@ -172,7 +172,7 @@ test.register_coroutine_test(
     -- Command send after delay
     test.mock_time.advance_time(2)
     test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, (100-33), (100*(100-33)))}
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, (100*(100-33)))}
     )
     test.wait_for_events()
   end

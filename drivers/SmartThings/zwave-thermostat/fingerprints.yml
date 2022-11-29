@@ -17,24 +17,24 @@ zwaveManufacturer:
     productId: 0x5431
     productType: 0x5442
     deviceProfileName: thermostat-no-humidity
-#   - id: "everspring"
-#     deviceLabel: Everspring Thermostat
-#     manufacturerId: 0x0060
-#     productId: 0x0001
-#     productType: 0x0015
-#     deviceProfileName: base-radiator-thermostat
-#   - id: "aeotec/thermostat/1"
-#     deviceLabel: Aeotec Thermostat
-#     manufacturerId: 0x0371
-#     productId: 0x0015
-#     productType: 0x0002
-#     deviceProfileName: base-radiator-thermostat
-#   - id: "popp"
-#     deviceLabel: POPP Thermostat
-#     manufacturerId: 0x0002
-#     productId: 0xA010
-#     productType: 0x0115
-#     deviceProfileName: popp-radiator-thermostat
+  # - id: "everspring"
+  #   deviceLabel: Everspring Thermostat
+  #   manufacturerId: 0x0060
+  #   productId: 0x0001
+  #   productType: 0x0015
+  #   deviceProfileName: base-radiator-thermostat
+  # - id: "aeotec/thermostat/1"
+  #   deviceLabel: Aeotec Thermostat
+  #   manufacturerId: 0x0371
+  #   productId: 0x0015
+  #   productType: 0x0002
+  #   deviceProfileName: base-thermostat-8to20C
+  # - id: "popp"
+  #   deviceLabel: POPP Thermostat
+  #   manufacturerId: 0x0002
+  #   productId: 0xA010
+  #   productType: 0x0115
+  #   deviceProfileName: popp-radiator-thermostat
   - id: "0098/6401/0107"
     deviceLabel: 2Gig CT100 Programmable Thermostat
     manufacturerId: 0x0098
@@ -81,11 +81,11 @@ zwaveManufacturer:
     manufacturerId: 0x008B
     productType: 0x5452
     deviceProfileName: base-thermostat-without-battery
-#   - id: "Danfoss/thermostat/0005"
-#     deviceLabel: Danfoss LC13 Thermostat
-#     manufacturerId: 0x0002
-#     productType: 0x0005
-#     deviceProfileName: thermostat-heating-battery
+  - id: "Danfoss/thermostat/0005"
+    deviceLabel: Danfoss LC13 Thermostat
+    manufacturerId: 0x0002
+    productType: 0x0005
+    deviceProfileName: thermostat-heating-battery
 zwaveGeneric:
   - id: "GenericBatteryThermostat"
     deviceLabel: Z-Wave Battery Thermostat

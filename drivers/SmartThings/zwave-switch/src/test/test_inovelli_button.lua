@@ -25,6 +25,10 @@ local INOVELLI_LZW31_SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
 local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
+local BUTTON_UP_SCENE_2 = 2
+local BUTTON_DOWN_SCENE_1 = 1
+local BUTTON_CONFIGURE_SCENE_3 = 3
+
 local inovelli_dimmer_endpoints = {
   {
     command_classes = {
@@ -109,7 +113,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "receive",
       message = { mock_inovelli_dimmer.id,
-                  zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = 1},
+                  zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = BUTTON_UP_SCENE_2},
                   { encap = zw.ENCAP.AUTO, src_channel = 1, dst_channels = {0} }))
       }
     },
@@ -133,7 +137,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "receive",
       message = { mock_inovelli_dimmer.id,
-                  zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_4_TIMES, scene_number = 2},
+                  zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_4_TIMES, scene_number = BUTTON_DOWN_SCENE_1},
                     { encap = zw.ENCAP.AUTO, src_channel = 2, dst_channels = {0} }))
       }
     },
@@ -143,6 +147,30 @@ test.register_message_test(
       message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
     }
   }
+)
+
+test.register_message_test(
+    "Central Scene notification Button 3 pushed should be handled",
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_inovelli_dimmer.id, "init" }
+      },
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_inovelli_dimmer.id,
+                    zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({ key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = BUTTON_CONFIGURE_SCENE_3},
+                      { encap = zw.ENCAP.AUTO, src_channel = 3, dst_channels = {0} }))
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_inovelli_dimmer:generate_test_message("button3", capabilities.button.button.pushed({state_change = true}))
+      }
+    }
 )
 
 test.run_registered_tests()
