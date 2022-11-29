@@ -1,9 +1,9 @@
 zigbeeManufacturer:
-  # - id: "HEIMAN/SOS-EM"
-  #   deviceLabel: HEIMAN Button
-  #   manufacturer: HEIMAN
-  #   model: SOS-EM
-  #   deviceProfileName: button-profile
+  - id: "HEIMAN/SOS-EM"
+    deviceLabel: HEIMAN Button
+    manufacturer: HEIMAN
+    model: SOS-EM
+    deviceProfileName: button-profile
   # - id: "frient A/S/MBTZB-110"
   #   deviceLabel: frient Button
   #   manufacturer: frient A/S
