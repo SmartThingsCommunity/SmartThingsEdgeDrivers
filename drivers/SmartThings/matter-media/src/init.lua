@@ -24,10 +24,28 @@ local function device_init(driver, device)
 end
 
 local configure_handler = function(self, device)
-  device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
-    capabilities.mediaPlayback.commands.play.NAME,
-    capabilities.mediaPlayback.commands.pause.NAME,
-    capabilities.mediaPlayback.commands.stop.NAME,
+  local variable_speed_eps = device:get_endpoints(clusters.MediaPlayback.ID, {feature_bitmap = clusters.MediaPlayback.types.MediaPlaybackFeature.VARIABLE_SPEED})
+
+  if #variable_speed_eps > 0 then
+    device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
+      capabilities.mediaPlayback.commands.play.NAME,
+      capabilities.mediaPlayback.commands.pause.NAME,
+      capabilities.mediaPlayback.commands.stop.NAME,
+      capabilities.mediaPlayback.commands.rewind.NAME,
+      capabilities.mediaPlayback.commands.fastForward.NAME
+    }))
+  else
+    device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
+      capabilities.mediaPlayback.commands.play.NAME,
+      capabilities.mediaPlayback.commands.pause.NAME,
+      capabilities.mediaPlayback.commands.stop.NAME
+    }))
+  end
+
+
+  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+    capabilities.mediaTrackControl.commands.previousTrack.NAME,
+    capabilities.mediaTrackControl.commands.nextTrack.NAME,
   }))
 
   device:emit_event(capabilities.keypadInput.supportedKeyCodes({
