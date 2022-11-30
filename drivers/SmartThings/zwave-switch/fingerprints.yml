@@ -550,7 +550,7 @@ zwaveManufacturer:
     deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productType: 0xFF00
-    productId: 0xFF07
+    productId: 0xFF06
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF01
     deviceLabel: Minoston Outlet
@@ -885,6 +885,12 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: 0312/AC01/0097
+    deviceLabel: New One Outlet 1
+    manufacturerId: 0x0312
+    productType: 0xAC01
+    productId: 0x0097
+    deviceProfileName: dual-switch
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
