@@ -8,6 +8,13 @@ components:
     version: 1
   - id: temperatureAlarm
     version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+            - heat
   - id: tamperAlert
     version: 1
   - id: refresh

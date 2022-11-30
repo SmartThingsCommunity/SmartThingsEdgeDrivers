@@ -22,7 +22,7 @@ zwaveManufacturer:
     manufacturerId: 0x014A
     productType: 0x0005
     productId: 0x000A
-    deviceProfileName: alarm-switch-3
+    deviceProfileName: ecolink-wireless-siren
   - id: 013C/0004/000A
     deviceLabel: Philio Siren
     manufacturerId: 0x013C

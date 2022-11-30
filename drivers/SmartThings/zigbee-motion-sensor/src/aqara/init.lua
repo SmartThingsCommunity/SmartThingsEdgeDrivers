@@ -4,6 +4,7 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.motion.agl02" },
   { mfr = "LUMI", model = "lumi.motion.agl04" }
 }
+
 local is_aqara_products = function(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -20,9 +21,7 @@ local function detection_frequency_capability_handler(driver, device, command)
 end
 
 local function detection_frequency_attr_handler(driver, device, value, zb_rx)
-  local frequency = value.value
-  device:set_field(aqara_utils.PREF_FREQUENCY_KEY, frequency)
-  device:emit_event(aqara_utils.detectionFrequency.detectionFrequency(frequency))
+  aqara_utils.set_detection_frequency(device, value.value)
 end
 
 local aqara_motion_handler = {
