@@ -49,19 +49,29 @@ local function can_handle_multi_metering_switch(opts, driver, device, ...)
   return false
 end
 
+local function find_child(parent, ep_id)
+  if ep_id == PARENT_ENDPOINT then
+    return parent
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  end
+end
+
 local function create_child_device(driver, device, children_amount, device_profile)
   for i = 2, children_amount+1, 1 do
-    local device_name_without_number = string.sub(device.label, 0,-2)
-    local name = string.format("%s%d", device_name_without_number, i)
-    local metadata = {
-      type = "EDGE_CHILD",
-      label = name,
-      profile = device_profile,
-      parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", i),
-      vendor_provided_label = name,
-    }
-    driver:try_create_device(metadata)
+    if find_child(device, i) == nil then
+      local device_name_without_number = string.sub(device.label, 0,-2)
+      local name = string.format("%s%d", device_name_without_number, i)
+      local metadata = {
+        type = "EDGE_CHILD",
+        label = name,
+        profile = device_profile,
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%02X", i),
+        vendor_provided_label = name,
+      }
+      driver:try_create_device(metadata)
+    end
   end
 end
 
@@ -77,14 +87,6 @@ local function device_added(driver, device, event)
   device:refresh()
 end
   
-local function find_child(parent, ep_id)
-  if ep_id == PARENT_ENDPOINT then
-    return parent
-  else
-    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-  end
-end
-
 local function component_to_endpoint(device, component)
   return { PARENT_ENDPOINT }
 end
