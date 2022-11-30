@@ -14,6 +14,8 @@
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
+local log = require "log"
+local utils = require "st.utils"
 
 local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3450-L" },
@@ -34,7 +36,9 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "BSM-300Z" },
   { mfr = "ShinaSystem", model = "SBM300ZB1" },
   { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" }
+  { mfr = "ShinaSystem", model = "SBM300ZB3" },
+  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+  { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -49,15 +53,23 @@ end
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do
+    log.debug("### component: " .. utils.stringify_table(component, "component table", true))
     local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
+    log.debug("### number_of_buttons: " .. number_of_buttons)
+    log.debug("### config: " .. utils.stringify_table(config, "config table", true))
     if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, {visibility = { displayed = false }}))
+      log.debug("### config.SUPPORTED_BUTTON_VALUES: " ..
+        utils.stringify_table(config.SUPPORTED_BUTTON_VALUES, "supp_button", true))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, { visibility = { displayed = false } }))
     else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } }))
     end
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
+    device:emit_component_event(component,
+      capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  --device:emit_event(capabilities.button.button.pushed({ state_change = false }))
 end
 
 local zigbee_multi_button = {
@@ -73,7 +85,8 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.centralite"),
     require("zigbee-multi-button.adurosmart"),
     require("zigbee-multi-button.heiman"),
-    require("zigbee-multi-button.shinasystems")
+    require("zigbee-multi-button.shinasystems"),
+    require("zigbee-multi-button.robb")
   }
 }
 
