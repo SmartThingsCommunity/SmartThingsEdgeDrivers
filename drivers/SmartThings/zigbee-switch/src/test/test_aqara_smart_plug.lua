@@ -208,7 +208,7 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 0.06 }))
+        capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 60 }))
     )
   end
 )
