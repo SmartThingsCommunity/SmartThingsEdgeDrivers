@@ -68,6 +68,11 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: TH01
     deviceProfileName: humidity-temp-battery
+  - id: eWeLink/66666
+    deviceLabel: eWeLink Multipurpose Sensor
+    manufacturer: eWeLink
+    model: 66666
+    deviceProfileName: humidity-temp-battery
   - id: eWeLink/SNZB-02P
     deviceLabel: eWeLink Multipurpose Sensor
     manufacturer: eWeLink

@@ -134,6 +134,11 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: WB01
     deviceProfileName: one-button-battery
+  - id: eWeLink/WB-01
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: WB-01
+    deviceProfileName: one-button-battery
   - id: eWeLink/SNZB-01P
     deviceLabel: eWeLink Button
     manufacturer: eWeLink
