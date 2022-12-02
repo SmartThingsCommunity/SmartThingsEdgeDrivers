@@ -79,9 +79,6 @@ local do_configure = function(self, device)
     }))
   end
 
-  -- TODO: when to emit supported commands for MediaTrackControl?
-
-  --Note NV, LK, and NK features are not checked to determine if only a subset of these should be supported
   device:emit_event(capabilities.keypadInput.supportedKeyCodes({
     "UP",
     "DOWN",
@@ -148,7 +145,6 @@ end
 local function accepted_command_list_attr_handler(driver, device, ib, response)
   for _, accepted_command_id in ipairs (ib.data.elements or {}) do
     local new_profile = "media-video-player"
-    -- TODO: do you think it is safe to just check for the "Next" command? Or both/either?
     if accepted_command_id.value == clusters.MediaPlayback.commands.Next.ID then
       if device:supports_capability(capabilities.audioMute, device:endpoint_to_component(ib.endpoint_id)) then
         new_profile = new_profile .. "-speaker"
@@ -157,12 +153,6 @@ local function accepted_command_list_attr_handler(driver, device, ib, response)
 
       device.log.info(string.format("Updating device profile to %s.", new_profile))
       device:try_update_metadata({profile = new_profile})
-
-      -- TODO: Should this be moved here or no? Should this event be emitted somewhere else now?
-      -- device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-      -- capabilities.mediaTrackControl.commands.previousTrack.NAME,
-      -- capabilities.mediaTrackControl.commands.nextTrack.NAME,
-      -- }))
       return
     end
   end
@@ -250,10 +240,21 @@ local function handle_send_key(driver, device, cmd)
   device:send(req)
 end
 
+local function info_changed(self, device, event, args)
+  -- if device was updated to a profile with mediaTrackControl, emit a supportedTrackControlCommands event
+  if device:supports_capability(capabilities.mediaTrackControl) then
+    device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+      capabilities.mediaTrackControl.commands.previousTrack.NAME,
+      capabilities.mediaTrackControl.commands.nextTrack.NAME,
+      }))
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = configure_handler
+    doConfigure = do_configure,
+    infoChanged = info_changed
   },
   matter_handlers = {
     attr = {
