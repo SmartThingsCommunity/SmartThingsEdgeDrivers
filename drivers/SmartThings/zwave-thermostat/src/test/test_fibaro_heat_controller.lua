@@ -24,7 +24,7 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({v
 local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
 
--- supported comand classes
+-- supported command classes
 local thermostat_endpoints = {
   {
     command_classes = {

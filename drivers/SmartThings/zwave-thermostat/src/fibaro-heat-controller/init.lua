@@ -64,10 +64,9 @@ end
 
 local function configuration_report_handler(self, device, cmd)
   if (cmd.args.parameter_number == 3) then
-    local sensor_status = device:get_field(EXTRA_TEMP_SENSOR_STATUS)
     if cmd.args.configuration_value == 1 then
       if utils.table_size(device.st_store.profile.components) == 1 then
-        --- change profile to one with additionall component
+        --- change profile to one with additional component
         device:try_update_metadata({profile = "fibaro-heat-extra-sensor"})
       end
       device:send_to_component(SensorMultilevel:Get({}), "extraTemperatureSensor")
@@ -159,7 +158,7 @@ local function device_added(self, device)
     capabilities.thermostatMode.thermostatMode.heat.NAME,
     capabilities.thermostatMode.thermostatMode.emergency_heat.NAME
   }
-  device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+  device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes, { visibility = { displayed = false } }))
 
   do_refresh(self, device)
 end

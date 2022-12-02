@@ -6,10 +6,20 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ -10, 40 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
   - id: powerMeter
     version: 1
   - id: energyMeter

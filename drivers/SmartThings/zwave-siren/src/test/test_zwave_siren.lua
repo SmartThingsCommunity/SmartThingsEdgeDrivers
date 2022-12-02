@@ -19,7 +19,7 @@ local constants = require "st.zwave.constants"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=1})
 local t_utils = require "integration_test.utils"
 
 local BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT = 33
@@ -163,7 +163,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value=SwitchBinary.value.OFF_DISABLE})) }
       },
       {
         channel = "capability",
@@ -186,7 +186,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value = BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value = BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT})) }
       },
       {
         channel = "capability",
@@ -209,7 +209,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value = BASIC_AND_SWITCH_BINARY_REPORT_SIREN_LIMIT})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value = BASIC_AND_SWITCH_BINARY_REPORT_SIREN_LIMIT})) }
       },
       {
         channel = "capability",
@@ -232,7 +232,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value=SwitchBinary.value.ON_ENABLE})) }
       },
       {
         channel = "capability",
