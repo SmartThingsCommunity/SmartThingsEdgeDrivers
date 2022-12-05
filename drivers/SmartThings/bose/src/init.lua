@@ -87,7 +87,6 @@ local function discovery_handler(driver, _, should_continue)
   log.info("Ending discovery")
 end
 
-local toggle = true
 local function do_refresh(driver, device, cmd)
   -- get speaker playback state
   local info, err = command.now_playing(device:get_field("ip"))
