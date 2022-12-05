@@ -46,7 +46,6 @@ local APPLICATION_VERSION = "application_version"
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("switch-power-energy-consumption-report-aqara.yml"),
-    -- fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -64,7 +63,6 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 local mock_private_cluster_device = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("switch-power-energy-consumption-report-aqara.yml"),
-    -- fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
         id = 1,
