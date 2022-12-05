@@ -476,54 +476,54 @@ test.register_message_test(
     }
 )
 
-do
-  test.register_coroutine_test(
-    "Setup Mode should be changed after changing updating preferences",
-    function()
-      local _preferences = {}
-      _preferences.thermostatMode = 1
-      test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
 
-      test.socket.zwave:__expect_send(
-        zw_test_utilities.zwave_test_build_send_command(
-          mock_device,
-          Configuration:Set({
-            parameter_number = 59,
-            configuration_value = 1,
-            size = 1
-          })
-        )
+test.register_coroutine_test(
+  "Setup Mode should be changed after changing updating preferences",
+  function()
+    local _preferences = {}
+    _preferences.thermostatMode = 1
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
+
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Set({
+          parameter_number = 59,
+          configuration_value = 1,
+          size = 1
+        })
       )
+    )
 
-      test.socket.zwave:__expect_send(
-        zw_test_utilities.zwave_test_build_send_command(
-          mock_device,
-          Configuration:Get({ parameter_number = 59 })
-        )
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Get({ parameter_number = 59 })
       )
+    )
 
-      _preferences.thermostatMode = 0
-      test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
+    test.wait_for_events()
+    _preferences.thermostatMode = 0
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = _preferences }))
 
-      test.socket.zwave:__expect_send(
-        zw_test_utilities.zwave_test_build_send_command(
-          mock_device,
-          Configuration:Set({
-            parameter_number = 59,
-            configuration_value = 0,
-            size = 1
-          })
-        )
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Set({
+          parameter_number = 59,
+          configuration_value = 0,
+          size = 1
+        })
       )
+    )
 
-      test.socket.zwave:__expect_send(
-        zw_test_utilities.zwave_test_build_send_command(
-          mock_device,
-          Configuration:Get({ parameter_number = 59 })
-        )
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        Configuration:Get({ parameter_number = 59 })
       )
-    end
-  )
-end
+    )
+  end
+)
 
 test.run_registered_tests()
