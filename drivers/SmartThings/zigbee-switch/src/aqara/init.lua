@@ -143,7 +143,7 @@ local function is_private_cluster_device(device)
 end
 
 local function round(num)
-  local mult = 10 ^ 2
+  local mult = 10
   return math.floor(num * mult + 0.5) / mult
 end
 
