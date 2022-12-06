@@ -101,17 +101,17 @@ local function write_restore_power_state_attribute(device, args)
 end
 
 local function emit_power_meter_event(device, value)
-  local raw_value = value.value
+  local raw_value = value.value -- 'W'
   device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
 end
 
 local function emit_energy_meter_event(device, value)
-  local raw_value = value.value
+  local raw_value = value.value -- 'Wh'
   device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
 end
 
 local function emit_power_consumption_report_event(device, value)
-  local raw_value = value.value
+  local raw_value = value.value -- 'Wh'
 
   -- check the minimum interval
   local current_time = os.time()
@@ -153,7 +153,7 @@ local function power_meter_handler(driver, device, value, zb_rx)
   end
 
   local raw_value = value.value -- '10W'
-  emit_power_meter_event(device, { value = round(raw_value / 10) })
+  emit_power_meter_event(device, { value = raw_value / 10 })
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
@@ -177,12 +177,12 @@ local function present_value_handler(driver, device, value, zb_rx)
   if src_endpoint == ENDPOINT_POWER_METER then
     -- powerMeter
     local raw_value = value.value -- 'W'
-    emit_power_meter_event(device, { value = raw_value })
+    emit_power_meter_event(device, { value = round(raw_value) })
   elseif src_endpoint == ENDPOINT_ENERGY_METER then
     -- energyMeter, powerConsumptionReport
     local raw_value = value.value -- 'kWh'
-    emit_energy_meter_event(device, { value = raw_value * 1000 })
-    emit_power_consumption_report_event(device, { value = raw_value * 1000 })
+    emit_energy_meter_event(device, { value = round(raw_value * 1000) })
+    emit_power_consumption_report_event(device, { value = round(raw_value * 1000) })
   end
 end
 
