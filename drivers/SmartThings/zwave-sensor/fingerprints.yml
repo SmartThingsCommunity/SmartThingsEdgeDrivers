@@ -86,12 +86,12 @@ zwaveManufacturer:
     productType: 0x0202
     productId: 0x0005
     deviceProfileName: motion-battery-illuminance-temperature
-#   - id: "0x001E/0x0004/0x0001"
-#     deviceLabel: EZmultiPli multipurpose sensor
-#     manufacturerId: 0x001E
-#     productType: 0x0004
-#     productId: 0x0001
-#     deviceProfileName: motion-switch-color-illuminance-temperature
+  - id: "0x001E/0x0004/0x0001"
+    deviceLabel: EZmultiPli multipurpose sensor
+    manufacturerId: 0x001E
+    productType: 0x0004
+    productId: 0x0001
+    deviceProfileName: motion-switch-color-illuminance-temperature
   - id: "vision/motion"
     deviceLabel: Vision Motion Detector ZP3102
     manufacturerId: 0x0109
@@ -118,12 +118,12 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x0013
     deviceProfileName: water-temperature-humidity-tamper-battery
-#   - id: "everspring/multi/ST814"
-#     deviceLabel: Everspring ST814
-#     manufacturerId: 0x0060
-#     productType: 0x0006
-#     productId: 0x0001
-#     deviceProfileName: humidity-temperature-battery
+  - id: "everspring/multi/ST814"
+    deviceLabel: Everspring ST814
+    manufacturerId: 0x0060
+    productType: 0x0006
+    productId: 0x0001
+    deviceProfileName: humidity-temperature-battery
   - id: "0060/0007/0001"
     deviceLabel: Everspring Illuminance Sensor
     manufacturerId: 0x0060
@@ -142,11 +142,11 @@ zwaveManufacturer:
 #     productType: 0x0002
 #     productId: 0x0001
 #     deviceProfileName: motion-battery-illuminance-temperature
-#   - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
-#     deviceLabel: Fibaro Open/Closed Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0700
-#     deviceProfileName: contact-battery-tamperalert
+  - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
+    deviceLabel: Fibaro Open/Closed Sensor
+    manufacturerId: 0x010F
+    productType: 0x0700
+    deviceProfileName: contact-battery-tamperalert
 #   - id: 010F/0701/2001 # Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
 #     deviceLabel: Fibaro Open/Closed Sensor with temperature
 #     manufacturerId: 0x010F
