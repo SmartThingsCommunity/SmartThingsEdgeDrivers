@@ -14,8 +14,6 @@ local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
 local SHADE_STATE_ATTRIBUTE_ID = 0x0404
 
-local SHADE_LEVEL = "shadeLevel"
-local SHADE_STATE = "shadeState"
 local SHADE_STATE_STOP = 0
 local SHADE_STATE_OPEN = 1
 local SHADE_STATE_CLOSE = 2
@@ -33,10 +31,10 @@ local FINGERPRINTS = {
 
 local aqara_utils = {}
 
-local function read_private_attribute(device, cluster_id, attribute_id, dt)
+local function read_private_attribute(device, cluster_id, attribute_id)
   local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute_id)
   message.body.zcl_header.frame_ctrl:set_mfg_specific()
-  message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, dt, "mfg_code")
+  message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, data_types.Uint16, "mfg_code")
   device:send(message)
 end
 
@@ -50,7 +48,7 @@ local function enable_private_cluster_attribute(device)
 end
 
 local function read_pref_attribute(device)
-  read_private_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID, data_types.Uint16)
+  read_private_attribute(device, Basic.ID, PREF_ATTRIBUTE_ID)
 end
 
 local function write_pref_attribute(device, str)
@@ -99,41 +97,52 @@ local function read_shade_position_attribute(device)
   device:send(AnalogOutput.attributes.PresentValue:read(device))
 end
 
-local function setShadeStateField(device, value)
-  device:set_field(SHADE_STATE, value)
+local function shade_level_cmd(driver, device, command)
+  local level = command.args.shadeLevel
+  if level > 100 then
+    level = 100
+  end
+  level = utils.round(level)
+
+  -- update ui to the new level
+  emit_shade_level_event(device, level)
+
+  -- send
+  send_lift_percentage_cmd(device, command, level)
 end
 
-local function getShadeStateField(device)
-  return device:get_field(SHADE_STATE) or SHADE_STATE_STOP
+local function shade_open_cmd(driver, device, command)
+  send_lift_percentage_cmd(device, command, 100)
 end
 
-local function setShadeLevelField(device, value)
-  device:set_field(SHADE_LEVEL, value)
+local function shade_close_cmd(driver, device, command)
+  send_lift_percentage_cmd(device, command, 0)
 end
 
-local function getShadeLevelField(device)
-  return device:get_field(SHADE_LEVEL) or 0
+local function shade_pause_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
 end
 
 local function setInitializedStateField(device, value)
-  device:set_field(INITIALIZED_STATE, value)
+  device:set_field(INITIALIZED_STATE, value, { persist = true })
 end
 
 local function isInitializedStateField(device)
   local initialized = device:get_field(INITIALIZED_STATE) or 0
-  return initialized == 1 and true or false
+  return initialized == 1
 end
 
 local function shade_state_changed(device, value)
   local state = value.value
-  -- setShadeStateField(device, state) -- store value
 
   -- update state ui
   if state == SHADE_STATE_STOP then
-    -- local shadeLevel = getShadeLevelField(device)
-    -- emit_shade_state_event(device, shadeLevel)
+    -- local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
+    --   capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+    -- emit_shade_state_event(device, lastLevel)
 
-    -- read_shade_position_attribute(device)
+    -- read shade position to update the UI
+    read_shade_position_attribute(device)
   elseif state == SHADE_STATE_OPEN then
     device:emit_event(capabilities.windowShade.windowShade.opening())
   elseif state == SHADE_STATE_CLOSE then
@@ -147,15 +156,16 @@ local function shade_position_changed(device, value)
     level = 100
   end
   level = utils.round(level)
-  -- setShadeLevelField(device, level) -- store value
 
   -- update level ui
   emit_shade_level_event(device, level)
 
-  -- update state ui
-  -- local shadeState = getShadeStateField(device)
-  -- if shadeState == SHADE_STATE_STOP then
-  emit_shade_state_event(device, level)
+  -- local lastState = device:get_latest_state("main", capabilities.windowShade.ID,
+  --   capabilities.windowShade.windowShade.NAME) or 0
+  -- if lastState == "opening" then
+  -- elseif lastState == "closing" then
+  -- else
+  --   emit_shade_state_event(device, level)
   -- end
 end
 
@@ -193,6 +203,10 @@ aqara_utils.emit_shade_level_event = emit_shade_level_event
 aqara_utils.shade_state_changed = shade_state_changed
 aqara_utils.shade_position_changed = shade_position_changed
 aqara_utils.read_shade_position_attribute = read_shade_position_attribute
+aqara_utils.shade_level_cmd = shade_level_cmd
+aqara_utils.shade_open_cmd = shade_open_cmd
+aqara_utils.shade_close_cmd = shade_close_cmd
+aqara_utils.shade_pause_cmd = shade_pause_cmd
 aqara_utils.is_matched_profile = is_matched_profile
 
 return aqara_utils

@@ -4,8 +4,11 @@ local cluster_base = require "st.zigbee.cluster_base"
 local aqara_utils = require "aqara/aqara_utils"
 local data_types = require "st.zigbee.data_types"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
+local zcl_commands = require "st.zigbee.zcl.global_commands"
 
 local Basic = clusters.Basic
+local WindowCovering = clusters.WindowCovering
+local AnalogOutput = clusters.AnalogOutput
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local reverseRollerShadeDirId = "stse.reverseRollerShadeDir"
@@ -18,6 +21,42 @@ local MULTISTATE_CLUSTER_ID = 0x0013
 local MULTISTATE_ATTRIBUTE_ID = 0x0055
 local TILT_UP_VALUE = 0x0004
 local TILT_DOWN_VALUE = 0x0005
+
+local function window_shade_level_cmd(driver, device, command)
+  print("-------------- window_shade_level_cmd ")
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+  print("in")
+
+  aqara_utils.shade_level_cmd(driver, device, command)
+end
+
+local function window_shade_open_cmd(driver, device, command)
+  print("-------------- window_shade_open_cmd ")
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+  print("in")
+
+  aqara_utils.shade_open_cmd(driver, device, command)
+end
+
+local function window_shade_close_cmd(driver, device, command)
+  print("-------------- window_shade_close_cmd ")
+  if aqara_utils.isInitializedStateField(device) ~= true then
+    return
+  end
+  print("in")
+
+  aqara_utils.shade_close_cmd(driver, device, command)
+end
+
+local function window_shade_pause_cmd(driver, device, command)
+  print("-------------- window_shade_pause_cmd ")
+
+  aqara_utils.shade_pause_cmd(driver, device, command)
+end
 
 local function write_tilt_attribute(device, payload)
   local value = data_types.validate_or_build_type(payload, data_types.Uint16, "payload")
@@ -32,6 +71,8 @@ local function write_tilt_attribute(device, payload)
 end
 
 local function set_rotate_command_handler(driver, device, command)
+  device:emit_event(shadeRotateState.rotateState.idle()) -- update UI
+
   if aqara_utils.isInitializedStateField(device) ~= true then
     return
   end
@@ -42,16 +83,51 @@ local function set_rotate_command_handler(driver, device, command)
   elseif state == "rotateDown" then
     write_tilt_attribute(device, TILT_DOWN_VALUE)
   end
-
-  device:emit_event(shadeRotateState.rotateState.idle())
 end
 
-local function shade_state_attr_handler(driver, device, value, zb_rx)
+local function shade_level_read_handler(driver, device, zb_rx)
+  print("-------------- shade_level_read_handler ")
+
+  for i, v in ipairs(zb_rx.body.zcl_body.attr_records) do
+    print(v.attr_id.value)
+    if (v.attr_id.value == AnalogOutput.attributes.PresentValue.ID) then
+      print("in")
+
+      local level = v.data.value
+      aqara_utils.emit_shade_state_event(device, level)
+      break
+    end
+  end
+end
+
+local function shade_level_report_handler_legacy(driver, device, value, zb_rx)
+  print("-------------- shade_level_report_handler_legacy ")
+
+  -- Not implemented for legacy devices
+end
+
+local function shade_level_report_handler(driver, device, value, zb_rx)
+  print("-------------- shade_level_report_handler ")
+  print(value.value)
+
+  aqara_utils.shade_position_changed(device, value)
+end
+
+local function shade_state_report_handler(driver, device, value, zb_rx)
+  print("-------------- shade_state_report_handler ")
+  print(value.value)
+
   aqara_utils.shade_state_changed(device, value)
 end
 
-local function pref_attr_handler(driver, device, value, zb_rx)
+local function pref_report_handler(driver, device, value, zb_rx)
+  -- initializedState
   local initialized = string.byte(value.value, 3) & 0xFF
+  print(initialized)
+
+  local reverse = string.byte(value.value, 4) & 0xFF
+  print(reverse)
+
   device:emit_event(initialized == 1 and initializedStateWithGuide.initializedStateWithGuide.initialized() or
     initializedStateWithGuide.initializedStateWithGuide.notInitialized())
 
@@ -83,15 +159,17 @@ end
 
 local function do_configure(self, device)
   device:configure()
-
   do_refresh(self, device)
 end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
+  device:emit_event(capabilities.windowShade.windowShade.closed())
+  device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(shadeRotateState.rotateState.idle())
 
-  aqara_utils.write_reverse_pref_default(device)
+  aqara_utils.enable_private_cluster_attribute(device)
 end
 
 local aqara_roller_shade_handler = {
@@ -102,18 +180,37 @@ local aqara_roller_shade_handler = {
     infoChanged = device_info_changed
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    [capabilities.windowShadeLevel.ID] = {
+      [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd
+    },
+    [capabilities.windowShade.ID] = {
+      [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
+      [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
+      [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd
     },
     [shadeRotateStateId] = {
       [setRotateStateCommandName] = set_rotate_command_handler
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   zigbee_handlers = {
+    global = {
+      [AnalogOutput.ID] = {
+        [zcl_commands.ReadAttributeResponse.ID] = shade_level_read_handler
+      }
+    },
     attr = {
+      [WindowCovering.ID] = {
+        [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = shade_level_report_handler_legacy
+      },
+      [AnalogOutput.ID] = {
+        [AnalogOutput.attributes.PresentValue.ID] = shade_level_report_handler
+      },
       [Basic.ID] = {
-        [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_attr_handler,
-        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_attr_handler
+        [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_report_handler,
+        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_report_handler
       }
     }
   },
