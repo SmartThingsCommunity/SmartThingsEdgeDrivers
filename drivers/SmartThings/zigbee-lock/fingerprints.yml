@@ -108,12 +108,12 @@ zigbeeManufacturer:
 #     manufacturer: ASSA ABLOY iRevo
 #     model: 06ffff2027
 #     deviceProfileName: base-lock
-#   # SAMSUNG SDS
-#   - id: "SAMSUNG SDS/None"
-#     deviceLabel: "Samsung Door Lock"
-#     manufacturer: SAMSUNG SDS
-#     model: ""
-#     deviceProfileName: lock-battery
+  # SAMSUNG SDS
+  - id: "SAMSUNG SDS/None"
+    deviceLabel: "Samsung Door Lock"
+    manufacturer: SAMSUNG SDS
+    model: ""
+    deviceProfileName: lock-battery
   - id: Danalock/V3-BTZB
     deviceLabel: Danalock Door Lock
     manufacturer: Danalock

@@ -30,10 +30,10 @@ zigbeeManufacturer:
 #     deviceLabel: eZEX Switch
 #     model: "E220-KR6N0Z0-HA"
 #     deviceProfileName: multi-switch-no-master-5
-#   - id: "eZEX/E240-KR116Z-HA"
-#     deviceLabel: eZEX Switch
-#     model: "E240-KR116Z-HA"
-#     deviceProfileName: switch-power-energy
+  - id: "eZEX/E240-KR116Z-HA"
+    deviceLabel: eZEX Switch
+    model: "E240-KR116Z-HA"
+    deviceProfileName: switch-power-energy
 #   #ORVIBO
 #   - id: "Orvibo/074b3"
 #     deviceLabel: Orvibo Switch

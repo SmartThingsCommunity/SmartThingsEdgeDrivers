@@ -1,16 +1,16 @@
 zwaveManufacturer:
-  # - id: "springs/window"
-  #   deviceLabel: Springs Window Shade
-  #   manufacturerId: 0x026E
-  #   productType: 0x4353
-  #   productId: 0x5A31
-  #   deviceProfileName: base-window-treatment
-  # - id: "springs/roller"
-  #   deviceLabel: Springs Roller Shade
-  #   manufacturerId: 0x026E
-  #   productType: 0x5253
-  #   productId: 0x5A31
-  #   deviceProfileName: base-window-treatment
+  - id: "springs/window"
+    deviceLabel: Springs Window Shade
+    manufacturerId: 0x026E
+    productType: 0x4353
+    productId: 0x5A31
+    deviceProfileName: base-window-treatment
+  - id: "springs/roller"
+    deviceLabel: Springs Roller Shade
+    manufacturerId: 0x026E
+    productType: 0x5253
+    productId: 0x5A31
+    deviceProfileName: base-window-treatment
   # - id: "iblinds/blind"
   #   deviceLabel: iBlinds Window Treatment
   #   manufacturerId: 0x0287

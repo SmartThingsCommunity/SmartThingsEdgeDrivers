@@ -68,11 +68,11 @@ zigbeeManufacturer:
     manufacturer: yooksmart
     model: D10110
     deviceProfileName: window-treatment-battery
-  # - id: "Rooms Beautiful/C001"
-  #   deviceLabel: Rooms Beautiful Window Treatment
-  #   manufacturer: Rooms Beautiful
-  #   model: C001
-  #   deviceProfileName: window-treatment-no-preset
+  - id: "Rooms Beautiful/C001"
+    deviceLabel: Rooms Beautiful Window Treatment
+    manufacturer: Rooms Beautiful
+    model: C001
+    deviceProfileName: window-treatment-no-preset
   - id: "AXIS/Gear"
     deviceLabel: AXIS Window Treatment
     manufacturer: AXIS

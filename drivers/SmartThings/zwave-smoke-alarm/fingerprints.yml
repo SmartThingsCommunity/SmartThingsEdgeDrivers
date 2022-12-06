@@ -5,12 +5,12 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0002
     deviceProfileName: smoke-co-battery
-#   - id: 026F/0001/0002
-#     deviceLabel: FireAngel Smoke Detector
-#     manufacturerId: 0x026F
-#     productType: 0x0001
-#     productId: 0x0002
-#     deviceProfileName: temperaturealarm-battery
+  - id: 026F/0001/0002
+    deviceLabel: FireAngel Smoke Detector
+    manufacturerId: 0x026F
+    productType: 0x0001
+    productId: 0x0002
+    deviceProfileName: temperaturealarm-battery
   - id: 010F/1201
     deviceLabel: Fibaro Carbon Monoxide Sensor
     manufacturerId: 0x010F
