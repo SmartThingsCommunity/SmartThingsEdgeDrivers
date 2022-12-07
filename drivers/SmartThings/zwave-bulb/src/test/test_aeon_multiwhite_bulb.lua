@@ -388,7 +388,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchMultilevel:Set({ duration = 1, value = 0xFF })
+      SwitchMultilevel:Set({ duration = "default", value = 0xFF })
       )
     )
     test.wait_for_events()
@@ -411,7 +411,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchMultilevel:Set({ duration = 1, value = 0x00 })
+        SwitchMultilevel:Set({ duration = "default", value = 0x00 })
       )
     )
     test.wait_for_events()
