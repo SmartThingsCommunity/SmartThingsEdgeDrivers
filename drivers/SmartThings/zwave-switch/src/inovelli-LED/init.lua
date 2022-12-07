@@ -75,7 +75,7 @@ local function set_color(driver, device, cmd)
     device:send(Configuration:Get({ parameter_number=LED_COLOR_CONTROL_PARAMETER_NUMBER }))
   end
 
-  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_configuration)
+  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_configuration)
 end
 
 local function can_handle_inovelli_led(opts, driver, device, ...)
