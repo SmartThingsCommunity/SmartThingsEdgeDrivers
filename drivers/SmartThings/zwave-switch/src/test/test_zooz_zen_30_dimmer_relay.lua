@@ -225,28 +225,19 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch Binary report ON_ENABLE should be handled by main component",
-  {
+    "Switch Multilevel report ON_ENABLE should be handled by parent device",
     {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_zooz_zen_30_dimmer_relay.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report(
-            {
-              current_value=SwitchBinary.value.ON_ENABLE
-            },
-            {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 0,
-              dst_channels = {}
-            }
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              SwitchMultilevel:Report({
+                current_value = SwitchBinary.value.ON_ENABLE,
+                target_value = SwitchBinary.value.ON_ENABLE,
+                duration = 0xFF
+              }, { src_channel = 0 })
           )
         )
       }
@@ -263,28 +254,19 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch Binary report OFF_DISABLE should be handled by main component",
-  {
+    "Switch Multilevel report OFF_DISABLE should be handled by parent device",
     {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_zooz_zen_30_dimmer_relay.id, "init" }
-    },
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_zooz_zen_30_dimmer_relay.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report(
-            {
-              current_value=SwitchBinary.value.OFF_DISABLE
-            },
-            {
-              encap = zw.ENCAP.AUTO,
-              src_channel = 0,
-              dst_channels = {}
-            }
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = {
+          mock_parent.id,
+          zw_test_utils.zwave_test_build_receive_command(
+              SwitchMultilevel:Report({
+                target_value = SwitchBinary.value.OFF_DISABLE,
+                current_value = SwitchBinary.value.OFF_DISABLE,
+                duration = 0xFF
+              })
           )
         )
       }
