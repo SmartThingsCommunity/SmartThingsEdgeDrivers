@@ -53,14 +53,11 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         model = "lumi.plug.maeu01",
         server_clusters = { OnOff.ID, SimpleMetering.ID, ElectricalMeasurement.ID }
       }
-    },
-    data = {
-      applicationVersion = 41
     }
   }
 )
 
-local mock_private_cluster_device = test.mock_device.build_test_zigbee_device(
+local mock_device_version = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("switch-power-energy-consumption-report-aqara.yml"),
     zigbee_endpoints = {
@@ -70,9 +67,6 @@ local mock_private_cluster_device = test.mock_device.build_test_zigbee_device(
         model = "lumi.plug.maeu01",
         server_clusters = { OnOff.ID, AnalogInput.ID }
       }
-    },
-    data = {
-      applicationVersion = 32
     }
   }
 )
@@ -80,7 +74,7 @@ local mock_private_cluster_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  test.mock_device.add_test_device(mock_private_cluster_device)
+  test.mock_device.add_test_device(mock_device_version)
   zigbee_test_utils.init_noop_health_check_timer()
 end
 
@@ -200,21 +194,49 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
+  "On attribute handled",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        OnOff.attributes.OnOff:build_test_attr_report(mock_device, true)
+      }
+    )
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Off attribute handled",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        OnOff.attributes.OnOff:build_test_attr_report(mock_device, false)
+      }
+    )
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    )
+  end
+)
+
+test.register_coroutine_test(
   "Handle power meter",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id,
-        SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_device, 10) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 10000.0, unit = "W" }))
-    }
-  }
+  function()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_device, 10)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 10000.0, unit = "W" }))
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -293,129 +315,118 @@ test.register_coroutine_test(
   end
 )
 
--- mock_private_cluster_device
+-- mock_device_version
 
 test.register_coroutine_test(
-  "Private cluster device: Handle added lifecycle",
+  "On attribute handled with application version handler",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_private_cluster_device.id, "added" })
-    test.socket.capability:__expect_send(
-      mock_private_cluster_device:generate_test_message("main", capabilities.switch.switch.off())
-    )
-    test.socket.capability:__expect_send(
-      mock_private_cluster_device:generate_test_message("main",
-        capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-    )
-    test.socket.capability:__expect_send(
-      mock_private_cluster_device:generate_test_message("main",
-        capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
-    )
-    test.socket.zigbee:__expect_send(
+    test.socket.zigbee:__queue_receive(
       {
-        mock_private_cluster_device.id,
-        cluster_base.write_manufacturer_specific_attribute(mock_private_cluster_device, PRIVATE_CLUSTER_ID,
-          PRIVATE_ATTRIBUTE_ID,
-          MFG_CODE, data_types.Uint8, 1)
+        mock_device_version.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device_version, 32)
       }
     )
+    mock_device_version:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device_version.id,
+        OnOff.attributes.OnOff:build_test_attr_report(mock_device_version, true)
+      }
+    )
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device_version:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device_version.id,
+      AnalogInput.attributes.PresentValue:read(mock_device_version):to_endpoint(ENDPOINT_POWER_METER)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_version.id,
+      AnalogInput.attributes.PresentValue:read(mock_device_version):to_endpoint(ENDPOINT_ENERGY_METER)
+    })
   end
 )
 
 test.register_coroutine_test(
-  "Private cluster device: Handle doConfigure lifecycle",
+  "Off attribute handled with application version handler",
   function()
-    mock_private_cluster_device:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device_version.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device_version, 32)
+      }
+    )
+    mock_device_version:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
 
-    test.socket.device_lifecycle:__queue_receive({ mock_private_cluster_device.id, "doConfigure" })
-    test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      zigbee_test_utils.build_bind_request(mock_private_cluster_device,
-        zigbee_test_utils.mock_hub_eui,
-        OnOff.ID)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      OnOff.attributes.OnOff:configure_reporting(mock_private_cluster_device, 0, 300)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      Basic.attributes.ApplicationVersion:read(mock_private_cluster_device)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      OnOff.attributes.OnOff:read(mock_private_cluster_device)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      AnalogInput.attributes.PresentValue:read(mock_private_cluster_device):to_endpoint(ENDPOINT_POWER_METER)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_private_cluster_device.id,
-      AnalogInput.attributes.PresentValue:read(mock_private_cluster_device):to_endpoint(ENDPOINT_ENERGY_METER)
-    })
-    mock_private_cluster_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device_version.id,
+        OnOff.attributes.OnOff:build_test_attr_report(mock_device_version, false)
+      }
+    )
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device_version:generate_test_message("main", capabilities.switch.switch.off())
+    )
   end
 )
 
-test.register_message_test(
-  "Private cluster device: Capability command On should be handled",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_private_cluster_device.id,
-        { capability = "switch", component = "main", command = "on", args = {} } }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = { mock_private_cluster_device.id, OnOff.server.commands.On(mock_private_cluster_device) }
-    }
-  }
-)
-
-test.register_message_test(
-  "Private cluster device: Capability command Off should be handled",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = { mock_private_cluster_device.id,
-        { capability = "switch", component = "main", command = "off", args = {} } }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = { mock_private_cluster_device.id, OnOff.server.commands.Off(mock_private_cluster_device) }
-    }
-  }
-)
-
-test.register_message_test(
-  "Private cluster device: Handle power meter",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_private_cluster_device.id,
-        AnalogInput.attributes.PresentValue:build_test_attr_report(mock_private_cluster_device,
-          SinglePrecisionFloat(0, 9, 0.953125)):from_endpoint(ENDPOINT_POWER_METER) }
-    }
-  }
-)
-
 test.register_coroutine_test(
-  "Private cluster device: Handle energy meter",
+  "Power meter handled with application version handler",
   function()
-    local current_time = os.time() - 60 * 20
-    mock_private_cluster_device:set_field(LAST_REPORT_TIME, current_time)
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device_version.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device_version, 32)
+      }
+    )
+    mock_device_version:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({
-      mock_private_cluster_device.id,
-      AnalogInput.attributes.PresentValue:build_test_attr_report(mock_private_cluster_device,
+      mock_device_version.id,
+      AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device_version,
+        SinglePrecisionFloat(0, 9, 0.953125)):from_endpoint(ENDPOINT_POWER_METER)
+    })
+    test.socket.capability:__expect_send(
+      mock_device_version:generate_test_message("main",
+        capabilities.powerMeter.power({ value = 1000.0, unit = "W" }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Energy meter handled with application version handler",
+  function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device_version.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device_version, 32)
+      }
+    )
+    mock_device_version:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
+
+    local current_time = os.time() - 60 * 20
+    mock_device_version:set_field(LAST_REPORT_TIME, current_time)
+
+    test.socket.zigbee:__queue_receive({
+      mock_device_version.id,
+      AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device_version,
         SinglePrecisionFloat(0, 9, 0.953125)):from_endpoint(ENDPOINT_ENERGY_METER)
     })
+    test.socket.capability:__expect_send(
+      mock_device_version:generate_test_message("main",
+        capabilities.energyMeter.energy({ value = 1000000.0, unit = "Wh" }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_version:generate_test_message("main",
+        capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 1000000.0 }))
+    )
   end
 )
 
