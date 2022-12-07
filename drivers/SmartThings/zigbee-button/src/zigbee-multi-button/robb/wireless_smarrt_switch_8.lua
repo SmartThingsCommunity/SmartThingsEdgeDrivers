@@ -17,6 +17,8 @@ local zdo_messages = require "st.zigbee.zdo"
 
 local button_utils = require "button_utils"
 
+local supported_values = require "zigbee-multi-button.supported_values"
+
 local SWITCH8_GROUP_CONFIGURE = "is_group_configured"
 local SWITCH8_NUM_ENDPOINT = 0x04
 
@@ -210,12 +212,92 @@ end
 
 end ]]
 
+local function added_handler(self, device)
+  log.debug("### device info start: ")
+  local dev = self.device_api.get_device_info(device.id)
+  log.debug(utils.stringify_table(dev, "dev table", true))
+  log.debug("### device info end ")
+
+  local config = supported_values.get_device_parameters(device)
+  for _, component in pairs(device.profile.components) do
+    local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
+    if config ~= nil then
+      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES),
+        { visibility = { displayed = false } })
+    else
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } }))
+    end
+    device:emit_component_event(component, capabilities.button.numberOfButtons({ value = number_of_buttons }))
+  end
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+end
+
+local function component_to_endpoint(device, component_id)
+  local ep_ini = device.fingerprinted_endpoint_id
+
+  if component_id == "main" then
+    return ep_ini
+  else
+    local ep_num = component_id:match("endpoint(%d)")
+    if ep_num == "2" then
+      return ep_ini + 1
+    elseif ep_num == "3" then
+      return ep_ini + 2
+    elseif ep_num == "4" then
+      return ep_ini + 3
+    end
+  end
+
+  --[[ local ep_num = component_id:match("button(%d)")
+  return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id ]]
+end
+
+local function endpoint_to_component(device, ep)
+  local ep_ini = device.fingerprinted_endpoint_id
+
+  if ep == ep_ini then
+    return "main"
+  else
+    if ep == ep_ini + 1 then
+      return "endpoint2"
+    elseif ep == ep_ini + 2 then
+      return "endpoint3"
+    elseif ep == ep_ini + 3 then
+      return "endpoint4"
+    end
+  end
+  --[[ local button_comp = string.format("button%d", ep)
+  if device.profile.components[button_comp] ~= nil then
+    return button_comp
+  else
+    return "main"
+  end ]]
+end
+
+local function device_init(driver, device)
+  battery_defaults.build_linear_voltage_init(2.1, 3.0)
+
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+
+  for ep = 1, device:component_count() do
+    --
+    --  calling get_component_id_for_endpoint
+    --  to verify relationship ep / component
+    --
+    log.debug('### endpoint: ', ep)
+    log.debug('### matches with:', device:get_component_id_for_endpoint(ep))
+  end
+end
+
 local robb_wireless_8_control = {
   NAME = "ROBB Wireless 8 Remote Control",
   lifecycle_handlers = {
-    --init = device_init,
-    init = battery_defaults.build_linear_voltage_init(2.1, 3.0),
-    --added = added_handler,
+    init = device_init,
+    --init = battery_defaults.build_linear_voltage_init(2.1, 3.0),
+    added = added_handler,
     doConfigure = do_configuration
   },
   zigbee_handlers = {

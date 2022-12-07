@@ -12,43 +12,27 @@ components:
         version: 1
     categories:
       - name: RemoteController
-  - id: button2
+  - id: endpoint2
     capabilities:
       - id: button
+        version: 1
+      - id: battery
         version: 1
     categories:
       - name: RemoteController
-  - id: button3
+  - id: endpoint3
     capabilities:
       - id: button
+        version: 1
+      - id: battery
         version: 1
     categories:
       - name: RemoteController
-  - id: button4
+  - id: endpoint4
     capabilities:
       - id: button
         version: 1
-    categories:
-      - name: RemoteController
-  - id: button5
-    capabilities:
-      - id: button
-        version: 1
-  - id: button6
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-      - name: RemoteController
-  - id: button7
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-      - name: RemoteController
-  - id: button8
-    capabilities:
-      - id: button
+      - id: battery
         version: 1
     categories:
       - name: RemoteController
