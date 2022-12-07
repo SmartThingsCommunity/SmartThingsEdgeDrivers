@@ -28,12 +28,15 @@ local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 
-local SHADE_LEVEL = "shadeLevel"
-
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
+
+local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
+local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
+local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
+local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -88,6 +91,14 @@ test.register_coroutine_test(
         ,
         data_types.Uint8,
         1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_REVERSE_OFF) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_SOFT_TOUCH_ON) })
   end
 )
 
@@ -229,7 +240,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
-          data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")
+          data_types.CharString, PREF_REVERSE_ON)
       }
     )
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
@@ -272,7 +283,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
-        "\x00\x08\x00\x00\x00\x00\x00") })
+        PREF_SOFT_TOUCH_ON) })
     test.wait_for_events()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     updates.preferences["stse.softTouch"] = false
@@ -281,7 +292,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
-        "\x00\x08\x00\x00\x00\x01\x00") })
+        PREF_SOFT_TOUCH_OFF) })
   end
 )
 

@@ -25,26 +25,18 @@ local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
 local function window_shade_level_cmd(driver, device, command)
-  print("-------------- window_shade_level_cmd ")
-
   aqara_utils.shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
-  print("-------------- window_shade_open_cmd ")
-
   aqara_utils.shade_open_cmd(driver, device, command)
 end
 
 local function window_shade_close_cmd(driver, device, command)
-  print("-------------- window_shade_close_cmd ")
-
   aqara_utils.shade_close_cmd(driver, device, command)
 end
 
 local function window_shade_pause_cmd(driver, device, command)
-  print("-------------- window_shade_pause_cmd ")
-
   aqara_utils.shade_pause_cmd(driver, device, command)
 end
 
@@ -84,13 +76,8 @@ local function set_initialized_state_handler(driver, device, command)
 end
 
 local function shade_level_read_handler(driver, device, zb_rx)
-  print("-------------- shade_level_read_handler ")
-
   for i, v in ipairs(zb_rx.body.zcl_body.attr_records) do
-    print(v.attr_id.value)
     if (v.attr_id.value == AnalogOutput.attributes.PresentValue.ID) then
-      print("in")
-
       local level = v.data.value
       aqara_utils.emit_shade_state_event(device, level)
       break
@@ -99,22 +86,14 @@ local function shade_level_read_handler(driver, device, zb_rx)
 end
 
 local function shade_level_report_handler_legacy(driver, device, value, zb_rx)
-  print("-------------- shade_level_report_handler_legacy ")
-
   -- Not implemented for legacy devices
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
-  print("-------------- shade_level_report_handler ")
-  print(value.value)
-
   aqara_utils.shade_position_changed(device, value)
 end
 
 local function shade_state_report_handler(driver, device, value, zb_rx)
-  print("-------------- shade_state_report_handler ")
-  print(value.value)
-
   aqara_utils.shade_state_changed(device, value)
 
   -- initializedState
@@ -137,12 +116,6 @@ end
 local function pref_report_handler(driver, device, value, zb_rx)
   -- initializedState
   local initialized = string.byte(value.value, 3) & 0xFF
-  print(initialized)
-
-  local reverse = string.byte(value.value, 4) & 0xFF
-  print(reverse)
-  local soft = string.byte(value.value, 6) & 0xFF
-  print(soft)
 
   -- Do not update if in progress.
   local init_state_value = getInitializationField(device)
@@ -205,6 +178,10 @@ local function device_added(driver, device)
   device:emit_event(deviceInitialization.initializedState.notInitialized())
 
   aqara_utils.enable_private_cluster_attribute(device)
+
+  -- Initial default settings
+  aqara_utils.write_reverse_pref_off(device)
+  aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
 end
 
 local aqara_curtain_handler = {

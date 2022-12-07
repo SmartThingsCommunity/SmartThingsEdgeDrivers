@@ -33,12 +33,14 @@ local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 
 local SHADE_LEVEL = "shadeLevel"
-local INITIALIZED_STATE = "initializedState"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
+
+local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
+local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -89,6 +91,10 @@ test.register_coroutine_test(
         ,
         data_types.Uint8,
         1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_REVERSE_OFF) })
   end
 )
 
@@ -255,7 +261,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
-          data_types.CharString, "\x00\x02\x00\x01\x00\x00\x00")
+          data_types.CharString, PREF_REVERSE_ON)
       }
     )
     local attr_report_data = {
