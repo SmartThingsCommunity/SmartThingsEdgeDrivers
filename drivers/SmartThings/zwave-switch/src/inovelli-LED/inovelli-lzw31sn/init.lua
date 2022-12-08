@@ -54,11 +54,12 @@ local function device_added(driver, device)
   device:refresh()
 end
 
-local function button_to_component(buttonId)
-  if buttonId > 0 then
-    return string.format("button%d", buttonId)
-  end
-end
+local map_scene_number_to_component = {
+  [1] = "button2",
+  [2] = "button1",
+  [3] = "button3"
+}
+
 
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
@@ -70,7 +71,6 @@ local map_key_attribute_to_capability = {
 
 local function central_scene_notification_handler(self, device, cmd)
   if ( cmd.args.scene_number ~= nil and cmd.args.scene_number ~= 0 ) then
-    local button_number = cmd.args.scene_number
     local capability_attribute = map_key_attribute_to_capability[cmd.args.key_attributes]
     local additional_fields = {
       state_change = true
@@ -83,7 +83,7 @@ local function central_scene_notification_handler(self, device, cmd)
 
     if event ~= nil then
       -- device reports scene notifications from endpoint 0 (main) but central scene events have to be emitted for button components: 1,2,3
-      local comp = device.profile.components[button_to_component(button_number)]
+      local comp = device.profile.components[map_scene_number_to_component[cmd.args.scene_number]]
       if comp ~= nil then
         device:emit_component_event(comp, event)
       end

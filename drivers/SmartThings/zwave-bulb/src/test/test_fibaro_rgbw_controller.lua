@@ -202,7 +202,7 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION)
+    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_rgbw_controller,
@@ -231,7 +231,7 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION)
+    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_rgbw_controller,

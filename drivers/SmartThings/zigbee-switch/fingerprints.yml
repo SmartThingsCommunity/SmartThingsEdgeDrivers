@@ -1285,7 +1285,7 @@ zigbeeManufacturer:
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 WS clear 806lm
-    deviceProfileName: ccolor-temp-bulb-2200K-4000K
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E27 WS clear 806lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden

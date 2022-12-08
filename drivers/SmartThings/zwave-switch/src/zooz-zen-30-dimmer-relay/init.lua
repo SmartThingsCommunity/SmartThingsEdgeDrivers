@@ -115,16 +115,17 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    local child_metadata = {
-      type = "EDGE_CHILD",
-      label = string.format("%s Relay", device.label),
-      profile = "child-switch",
-      parent_device_id = device.id,
-      parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
-      vendor_provided_label = string.format("%s Relay", device.label)
-    }
-
-    driver:try_create_device(child_metadata)
+    if find_child(device, ENDPOINTS.relay) == nil then
+      local child_metadata = {
+        type = "EDGE_CHILD",
+        label = string.format("%s Relay", device.label),
+        profile = "child-switch",
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
+        vendor_provided_label = string.format("%s Relay", device.label)
+      }
+      driver:try_create_device(child_metadata)
+    end
 
     device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))
     device:emit_event(capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false } }))
