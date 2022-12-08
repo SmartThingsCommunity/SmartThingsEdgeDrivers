@@ -26,7 +26,8 @@ local Battery = capabilities.battery
 local common = require("popp/common")
 
 local POPP_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "D5X84YU", model = "eT093WRO" }
+  { mfr = "D5X84YU", model = "eT093WRO" },
+  { mfr = "D5X84YU", model = "eT093WRG" }
 }
 
 --[[ local THERMOSTAT_MODE_MAP = {
