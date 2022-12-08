@@ -10,11 +10,11 @@ components:
       values:
         - key: "alarm.value"
           enabledValues:
-            - off
+            - 'off'
             - siren
         - key: "{{enumCommands}}"
           enabledValues:
-            - off
+            - 'off'
             - siren
   - id: firmwareUpdate
     version: 1
