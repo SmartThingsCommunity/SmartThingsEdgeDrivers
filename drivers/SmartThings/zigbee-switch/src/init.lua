@@ -94,7 +94,8 @@ local zigbee_switch_driver_template = {
     require("rgbw-bulb"),
     require("zll-dimmer-bulb"),
     require("zigbee-switch-power"),
-    require("ge-link-bulb")
+    require("ge-link-bulb"),
+    require("robb")
   },
   lifecycle_handlers = {
     init = device_init,
