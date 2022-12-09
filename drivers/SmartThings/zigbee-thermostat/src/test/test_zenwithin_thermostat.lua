@@ -319,7 +319,9 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool(
+          {data={supportedThermostatModes={ "off", "auto", "heat", "cool" }},
+          {visibility = { displayed = false }}}))
       )
       test.wait_for_events()
       test.mock_time.advance_time(10)
@@ -402,7 +404,9 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat({data={supportedThermostatModes={ "off", "auto", "heat", "cool" }, visibility = { displayed = false }}}))
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat(
+          {data={supportedThermostatModes={ "off", "auto", "heat", "cool" }}},
+          {visibility = { displayed = false }}))
       )
       test.wait_for_events()
       test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
