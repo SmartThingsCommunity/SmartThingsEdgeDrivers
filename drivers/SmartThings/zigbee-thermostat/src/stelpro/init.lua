@@ -109,7 +109,7 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.preferences ~= nil and device.preferences.lock ~= args.old_st_store.preferences.lock then
-    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, device.preferences.lock))
+    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, tonumber(device.preferences.lock)))
   end
 end
 
