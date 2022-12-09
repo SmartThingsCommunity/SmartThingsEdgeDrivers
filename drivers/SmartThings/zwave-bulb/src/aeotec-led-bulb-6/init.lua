@@ -86,7 +86,7 @@ function capability_handlers.set_color_temperature(driver, device, cmd)
   local query_temp = function()
     device:send(Configuration:Get({ parameter_number=parameter_number }))
   end
-  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + duration, query_temp)
+  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_temp)
 end
 
 --- Issue appropriate Get commands to bootstrap initial state.

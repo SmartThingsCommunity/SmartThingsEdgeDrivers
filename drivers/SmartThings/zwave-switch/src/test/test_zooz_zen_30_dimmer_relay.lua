@@ -207,7 +207,7 @@ test.register_message_test(
               SwitchMultilevel:Report({
                 current_value = SwitchBinary.value.ON_ENABLE,
                 target_value = SwitchBinary.value.ON_ENABLE,
-                duration = constants.DEFAULT_DIMMING_DURATION
+                duration = 0xFF
               }, { src_channel = 0 })
           )
         }
@@ -241,7 +241,7 @@ test.register_message_test(
               SwitchMultilevel:Report({
                 target_value = SwitchBinary.value.OFF_DISABLE,
                 current_value = SwitchBinary.value.OFF_DISABLE,
-                duration = constants.DEFAULT_DIMMING_DURATION
+                duration = 0xFF
               })
           )
         }

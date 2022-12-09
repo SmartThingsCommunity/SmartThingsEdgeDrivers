@@ -87,7 +87,6 @@ local function discovery_handler(driver, _, should_continue)
   log.info("Ending discovery")
 end
 
-local toggle = true
 local function do_refresh(driver, device, cmd)
   -- get speaker playback state
   local info, err = command.now_playing(device:get_field("ip"))
@@ -114,6 +113,16 @@ local function do_refresh(driver, device, cmd)
     trackdata.album = info.album
     trackdata.albumArtUrl = info.art_url
     trackdata.mediaSource = info.source
+    if info.source == "TUNEIN" then
+      -- Switching to radio source which disables track controls
+      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
+    else
+      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+        capabilities.mediaTrackControl.commands.nextTrack.NAME,
+        capabilities.mediaTrackControl.commands.previousTrack.NAME,
+      }))
+    end
+
     if info.track then
       trackdata.title = info.track
     elseif info.station then
@@ -189,10 +198,6 @@ local function device_init(driver, device)
     capabilities.mediaPlayback.commands.play.NAME,
     capabilities.mediaPlayback.commands.pause.NAME,
     capabilities.mediaPlayback.commands.stop.NAME,
-  }))
-  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-    capabilities.mediaTrackControl.commands.nextTrack.NAME,
-    capabilities.mediaTrackControl.commands.previousTrack.NAME,
   }))
   do_refresh(driver, device)
 

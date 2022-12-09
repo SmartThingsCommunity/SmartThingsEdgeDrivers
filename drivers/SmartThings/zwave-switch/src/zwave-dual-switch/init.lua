@@ -66,7 +66,7 @@ local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     local dual_switch_configuration = dualSwitchConfigurationsMap.get_child_device_configuration(device)
 
-    if dual_switch_configuration ~= nil then
+    if dual_switch_configuration ~= nil and find_child(device, 2) == nil then
       local name = generate_child_name(device.label)
       local childDeviceProfile = dual_switch_configuration.child_switch_device_profile
       local metadata = {
