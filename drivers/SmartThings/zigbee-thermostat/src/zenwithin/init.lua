@@ -168,7 +168,7 @@ local thermostat_mode_handler = function(driver, device, thermostat_mode)
   if THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value] then
     local current_supported_modes = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.supportedThermostatModes.NAME)
     if current_supported_modes then
-      device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]({data = {supportedThermostatModes = current_supported_modes, visibility = { displayed = false } }}))
+      device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]({data = {supportedThermostatModes = current_supported_modes}}, {visibility = { displayed = false }} ))
     else
       device:emit_event(THERMOSTAT_SYSTEM_MODE_MAP[thermostat_mode.value]())
     end
