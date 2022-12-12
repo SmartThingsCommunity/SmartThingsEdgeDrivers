@@ -13,6 +13,7 @@ local detectionFrequencyId = "stse.detectionFrequency"
 local detectionFrequencyCommand = "setDetectionFrequency"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
+local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local FREQUENCY_ATTRIBUTE_ID = 0x0102
 local FREQUENCY_DEFAULT_VALUE = 5
@@ -23,14 +24,14 @@ local FINGERPRINTS = {
 }
 
 local configuration = {
-  {
-    cluster = IlluminanceMeasurement.ID,
-    attribute = IlluminanceMeasurement.attributes.MeasuredValue.ID,
-    minimum_interval = 5,
-    maximum_interval = 3600,
-    data_type = IlluminanceMeasurement.attributes.MeasuredValue.base_type,
-    reportable_change = 10
-  },
+  -- {
+  --   cluster = IlluminanceMeasurement.ID,
+  --   attribute = IlluminanceMeasurement.attributes.MeasuredValue.ID,
+  --   minimum_interval = 5,
+  --   maximum_interval = 3600,
+  --   data_type = IlluminanceMeasurement.attributes.MeasuredValue.base_type,
+  --   reportable_change = 10
+  -- },
   {
     cluster = PowerConfiguration.ID,
     attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
@@ -39,14 +40,14 @@ local configuration = {
     data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
     reportable_change = 1
   },
-  {
-    cluster = PRIVATE_CLUSTER_ID,
-    attribute = FREQUENCY_ATTRIBUTE_ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = data_types.Uint8.ID,
-    reportable_change = 1
-  }
+  -- {
+  --   cluster = PRIVATE_CLUSTER_ID,
+  --   attribute = FREQUENCY_ATTRIBUTE_ID,
+  --   minimum_interval = 30,
+  --   maximum_interval = 3600,
+  --   data_type = data_types.Uint8.ID,
+  --   reportable_change = 1
+  -- }
 
 }
 
@@ -59,29 +60,32 @@ local is_aqara_products = function(opts, driver, device)
   return false
 end
 
-local read_custom_attribute = function(device, cluster_id, attribute)
-  local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute)
-  message.body.zcl_header.frame_ctrl:set_mfg_specific()
-  message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, data_types.Uint16, "mfg_code")
-  return message
-end
+-- local read_custom_attribute = function(device, cluster_id, attribute)
+--   local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute)
+--   message.body.zcl_header.frame_ctrl:set_mfg_specific()
+--   message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, data_types.Uint16, "mfg_code")
+--   return message
+-- end
 
-local write_motion_pref_attribute = function(device, cluster, attr, value)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, cluster, attr, MFG_CODE,
-    data_types.Uint8, value))
-end
+-- local write_motion_pref_attribute = function(device, cluster, attr, value)
+--   device:send(cluster_base.write_manufacturer_specific_attribute(device, cluster, attr, MFG_CODE,
+--     data_types.Uint8, value))
+-- end
 
 local function detection_frequency_handler(driver, device, command)
   local frequency = command.args.frequency
   device:set_field(FREQUENCY_PREF, frequency)
-  write_motion_pref_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID, frequency)
+  -- write_motion_pref_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID, frequency)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID,
+    MFG_CODE,
+    data_types.Uint8, frequency))
 end
 
-local function frequency_attr_handler(driver, device, value, zb_rx)
-  local frequency = value.value
-  device:set_field(FREQUENCY_PREF, frequency)
-  device:emit_event(detectionFrequency.detectionFrequency(frequency))
-end
+-- local function frequency_attr_handler(driver, device, value, zb_rx)
+--   local frequency = value.value
+--   device:set_field(FREQUENCY_PREF, frequency)
+--   device:emit_event(detectionFrequency.detectionFrequency(frequency))
+-- end
 
 local function write_attr_res_handler(driver, device, zb_rx)
   local value = device:get_field(FREQUENCY_PREF) or 0
@@ -104,7 +108,11 @@ local function added_handler(self, device)
   device:emit_event(detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE))
   device:emit_event(capabilities.battery.battery(100))
 
-  device:send(read_custom_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID))
+  -- device:send(read_custom_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID))
+
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+    MFG_CODE,
+    data_types.Uint8, 1))
 end
 
 local aqara_illuminance_handler = {
@@ -124,12 +132,12 @@ local aqara_illuminance_handler = {
         [zcl_commands.WriteAttributeResponse.ID] = write_attr_res_handler
       }
     },
-    attr = {
-      [PRIVATE_CLUSTER_ID] = {
-        -- Prefs
-        [FREQUENCY_ATTRIBUTE_ID] = frequency_attr_handler
-      }
-    }
+    -- attr = {
+    --   [PRIVATE_CLUSTER_ID] = {
+    --     -- Prefs
+    --     [FREQUENCY_ATTRIBUTE_ID] = frequency_attr_handler
+    --   }
+    -- }
   },
   can_handle = is_aqara_products
 }
