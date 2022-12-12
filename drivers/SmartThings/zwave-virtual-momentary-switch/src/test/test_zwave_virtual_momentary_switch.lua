@@ -135,7 +135,8 @@ test.register_message_test(
 test.register_coroutine_test(
   "Switch on should generate correct zwave messages",
   function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_momentary_switch.id,
@@ -157,6 +158,8 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -176,56 +179,11 @@ test.register_coroutine_test(
   end
 )
 
-test.register_message_test(
-  "Switch on should generate correct zwave messages (ver.2)",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-              mock_momentary_switch.id,
-              { capability = "switch", command = "on", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              Basic:Set({value = SwitchBinary.value.ON_ENABLE})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              SwitchBinary:Get({})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              Basic:Set({value = SwitchBinary.value.OFF_DISABLE})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              SwitchBinary:Get({})
-      )
-    }
-  }
-)
 
 test.register_coroutine_test(
   "Momentary push should generate correct zwave messages",
   function()
-    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
     test.socket.capability:__queue_receive(
       {
         mock_momentary_switch.id,
@@ -247,6 +205,8 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -264,52 +224,6 @@ test.register_coroutine_test(
       )
     )
   end
-)
-
-test.register_message_test(
-  "Momentary push should generate correct zwave messages (ver.2)",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-              mock_momentary_switch.id,
-              { capability = "momentary", command = "push", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              Basic:Set({value = SwitchBinary.value.ON_ENABLE})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              SwitchBinary:Get({})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              Basic:Set({value = SwitchBinary.value.OFF_DISABLE})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-              mock_momentary_switch,
-              SwitchBinary:Get({})
-      )
-    }
-  }
 )
 
 test.register_coroutine_test(

@@ -22,7 +22,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 local preferencesMap = require "preferences"
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
 end
 
 --- Handle preference changes

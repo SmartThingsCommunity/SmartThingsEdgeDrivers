@@ -217,13 +217,13 @@ zwaveManufacturer:
     deviceLabel: Aeotec Switch 1
     manufacturerId: 0x0086
     productId: 0x0084
-    deviceProfileName: dual-metering-switch
+    deviceProfileName: metering-switch
   - id: 027A/A000/A003
     deviceLabel: Zooz Switch
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA003
-    deviceProfileName: dual-metering-switch
+    deviceProfileName: metering-switch
   - id: 015F/3102/0201
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
@@ -235,13 +235,13 @@ zwaveManufacturer:
     manufacturerId: 0x015F
     productType: 0x3102
     productId: 0x0202
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 015F/3102/0204
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3102
     productId: 0x0204
-    deviceProfileName: switch-multicomponent-4
+    deviceProfileName: switch-binary
   - id: 015F/3111/5102
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
@@ -253,13 +253,13 @@ zwaveManufacturer:
     manufacturerId: 0x015F
     productType: 0x3121
     productId: 0x5102
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 015F/3141/5102
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3141
     productId: 0x5102
-    deviceProfileName: switch-multicomponent-4
+    deviceProfileName: switch-binary
   - id: 010F/1C01/1000
     deviceLabel: Fibaro Walli Dimmer Switch
     manufacturerId: 0x010F
@@ -267,11 +267,11 @@ zwaveManufacturer:
     productId: 0x1000
     deviceProfileName: fibaro-walli-dimmer
   - id: "ZoozPowerStrip"
-    deviceLabel: Zooz Power Strip
+    deviceLabel: Zooz Power Strip 1
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA004
-    deviceProfileName: switch-multicomponent-generic-5
+    deviceProfileName: metering-switch
   - id: 0159/0001/0051
     deviceLabel: Qubino Dimmer
     manufacturerId: 0x0159
@@ -303,7 +303,7 @@ zwaveManufacturer:
     productId: 0xF51C
     deviceProfileName: switch-5
   - id: 027A/A000/A008
-    deviceLabel: Zooz ZEN 30 Double Switch
+    deviceLabel: Zooz Switch
     manufacturerId: 0x027A
     productType: 0xA000
     productId: 0xA008
@@ -315,7 +315,7 @@ zwaveManufacturer:
     productId: 0x000B
     deviceProfileName: metering-switch-5
   - id: 0159/0002/0051
-    deviceLabel: Qubino Switch
+    deviceLabel: Qubino Switch 1
     manufacturerId: 0x0159
     productType: 0x0002
     productId: 0x0051
@@ -336,7 +336,7 @@ zwaveManufacturer:
     deviceLabel: Fibaro Double Switch
     manufacturerId: 0x010F
     productType: 0x0203
-    deviceProfileName: switch-1-button-6-power-energy
+    deviceProfileName: fibaro-double-switch
   - id: "Eaton/5740/0000"
     deviceLabel: Eaton 5-Scene Keypad
     manufacturerId: 0x001A
@@ -910,6 +910,26 @@ zwaveGeneric:
     deviceLabel: Dimmer Switch
     genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
     deviceProfileName: switch-level
+  - id: "GenericMultiChannelDevice/1"
+    deviceLabel: Z-Wave Device Multichannel
+    commandClasses:
+      supported:
+        - 0x60 # multi channel
+    deviceProfileName: multichannel-switch-level
+  - id: "GenericMultiChannelDevice/2"
+    deviceLabel: Z-Wave Device Multichannel
+    commandClasses:
+      supported:
+        - 0x60 # multi channel
+        - 0x25
+    deviceProfileName: multichannel-switch-level
+  - id: "GenericMultiChannelDevice/3"
+    deviceLabel: Z-Wave Device Multichannel
+    commandClasses:
+      supported:
+        - 0x60 # multi channel
+        - 0x26
+    deviceProfileName: multichannel-switch-level
 zwaveThing :
   - id: SmartThings/Z-WaveThing
     deviceLabel: Z-Wave Device

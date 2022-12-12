@@ -6,6 +6,10 @@ components:
       version: 1
     - id: switchLevel
       version: 1
+      config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
     - id: refresh
       version: 1
   categories:
@@ -21,4 +25,4 @@ preferences:
         0: "When Off"
         1: "When On"
         2: "Never"
-      defaultValue: 0
+      default: 0

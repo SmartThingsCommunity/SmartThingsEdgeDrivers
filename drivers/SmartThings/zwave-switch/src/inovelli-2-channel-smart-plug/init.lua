@@ -74,7 +74,7 @@ local function basic_set_handler(driver, device, cmd)
 end
 
 local function basic_and_switch_binary_report_handler(driver, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  local value = cmd.args.value and cmd.args.value or cmd.args.target_value
   local event = value == SwitchBinary.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on()
 
 

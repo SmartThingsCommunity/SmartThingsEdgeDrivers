@@ -38,7 +38,6 @@ end
 local qubino_flush_1_relay = {
   NAME = "qubino flush 1 relay",
   lifecycle_handlers = {
-    init = map_components,
     doConfigure = do_configure
   },
   can_handle = can_handle_qubino_flush_1_relay

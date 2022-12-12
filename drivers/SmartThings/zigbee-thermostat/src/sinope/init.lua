@@ -16,6 +16,7 @@ local device_management                    = require "st.zigbee.device_managemen
 local clusters                             = require "st.zigbee.zcl.clusters"
 local cluster_base                         = require "st.zigbee.cluster_base"
 local data_types                           = require "st.zigbee.data_types"
+local log                                  = require "log"
 local Thermostat                           = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 

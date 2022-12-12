@@ -16,6 +16,7 @@
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
 
 local clusters = require "st.zigbee.zcl.clusters"
 local PowerConfiguration = clusters.PowerConfiguration
@@ -30,10 +31,10 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     {
       profile = t_utils.get_profile_definition("base-lock.yml"),
       data = {
-        lockCodes = {
+        lockCodes = json.encode({
           ["1"] = "Zach",
           ["2"] = "Steven"
-        }
+        })
       }
     }
 )
@@ -155,7 +156,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_device_no_data:generate_info_changed(
           {
             data = {
-              lockCodes = { ["1"] = "Zach", ["2"] = "Steven" }
+              lockCodes = json.encode({ ["1"] = "Zach", ["2"] = "Steven" })
             }
           }
       ))
@@ -178,5 +179,69 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", true)
     end
 )
+
+test.register_coroutine_test(
+    "Device added data lock codes population, device response produces no events",
+    function()
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
+      test.wait_for_events()
+      -- Validate lockCodes field
+      mock_datastore.__assert_device_store_contains(mock_device.id, "lockCodes", { ["1"] = "Zach", ["2"] = "Steven" })
+      -- Validate state cache
+      mock_datastore.__assert_device_store_contains(mock_device.id, "__state_cache",
+          {
+            main = {
+              lockCodes = {
+                lockCodes = {value = json.encode({ ["1"] = "Zach", ["2"] = "Steven" }) }
+              }
+            }
+          }
+      )
+      -- Validate migration complete flag
+      mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
+      test.wait_for_events()
+
+      -- run do_configure step after added and verify no refresh all codes
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.wait_for_events()
+
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+      test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
+          zigbee_test_utils.mock_hub_eui,
+          PowerConfiguration.ID) })
+      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device,
+          600,
+          21600,
+          1) })
+      test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
+          zigbee_test_utils.mock_hub_eui,
+          DoorLock.ID) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:configure_reporting(mock_device,
+          0,
+          3600,
+          0) })
+      test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
+          zigbee_test_utils.mock_hub_eui,
+          Alarm.ID) })
+      test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:configure_reporting(mock_device,
+          0,
+          21600,
+          0) })
+
+      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+      -- Validate migration reload skipped datastore
+      test.wait_for_events()
+      mock_datastore.__assert_device_store_contains(mock_device.id, "migrationReloadSkipped", true)
+      -- Verify the timer doesn't fire as it wasn't created
+      test.mock_time.advance_time(4)
+      test.wait_for_events()
+    end
+)
+
 
 test.run_registered_tests()

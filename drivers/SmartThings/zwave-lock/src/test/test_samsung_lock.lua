@@ -56,7 +56,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     )
     test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"})))
+        mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"}), { visibility = { displayed = false } }))
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -97,10 +97,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
+      capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
     ))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
+      capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
     )
   end
 )
@@ -115,7 +115,7 @@ test.register_coroutine_test(
         event = Notification.event.access_control.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE
       })
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed", { state_change = true })))
   end
 )
 
@@ -129,7 +129,7 @@ test.register_coroutine_test(
         event = Notification.event.access_control.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE
       })
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged(2 .. " failed")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged(2 .. " failed", { state_change = true })))
   end
 )
 
@@ -151,26 +151,26 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"} })
+        capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"}, state_change = true })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"} })
+        capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"}, state_change = true })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"} })
+        capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"}, state_change = true })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"} })
+        capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"}, state_change = true })
       )
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} ))
+      capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} ), { visibility = { displayed = false } })
     ))
   end
 )

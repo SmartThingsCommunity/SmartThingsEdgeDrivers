@@ -649,7 +649,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -780,7 +780,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -911,7 +911,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -999,7 +999,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -1087,7 +1087,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -1175,7 +1175,7 @@ test.register_coroutine_test(
       mock_metering_switch.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,

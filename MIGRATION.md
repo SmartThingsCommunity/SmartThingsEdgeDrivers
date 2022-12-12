@@ -7,7 +7,9 @@ List of Groovy DTHs backing devices that have been migrated to Edge drivers.
 | Source DTH                            | Destination Edge Driver                                                                                                                              |
 |:--------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Aeon Home Energy Meter`              | [`Z-Wave Electric Meter`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-electric-meter)         |
+| `Aeon LED Bulb 6 Multi-White`         | [`Z-Wave Bulb`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-bulb)                             |
 | `Aeon Siren`                          | [`Z-Wave Siren`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-siren)                           |
+| `Arrival Sensor HA`                   | [`Zigbee Presence Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-presence-sensor)      |
 | `Cree Bulb`                           | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
 | `Dawon Z-Wave Smart Plug`             | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `DM2500ZB Sinope Dimmer`              | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
@@ -16,13 +18,19 @@ List of Groovy DTHs backing devices that have been migrated to Edge drivers.
 | `eZEX Temp & Humidity Sensor`         | [`Zigbee Humidity Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-humidity-sensor)      |
 | `Fibaro CO Sensor ZW5`                | [`Z-Wave Smoke Alarm`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-smoke-alarm)               |
 | `Fibaro Flood Sensor`                 | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
+| `Fibaro RGBW Controller`              | [`Z-Wave Bulb`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-bulb)                             |
 | `Fortrezz Water Valve`                | [`Z-Wave Valve`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-valve)                           |
 | `GE Link Bulb`                        | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
+| `Ikea Motion Sensor`                  | [`Zigbee Motion Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-motion-sensor)          |
 | `Keen Home Smart Vent`                | [`Zigbee Vent`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-valve)                           |
 | `Leaksmart Water Sensor`              | [`Zigbee Water Leak Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-water-leak-sensor)  |
 | `Motion Detector`                     | [`Zigbee Motion Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-motion-sensor)          |
+| `Nortek Water Leak Sensor`            | [`Zigbee Water Leak Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-water-leak-sensor)  |
 | `NYCE Motion Sensor`                  | [`Zigbee Motion Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-motion-sensor)          |
+| `Orvibo Contact Sensor`               | [`Zigbee Contact`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-contact)                      |
 | `Orvibo Gas Detector`                 | [`Zigbee Smoke Detector`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-smoke-detector)        |
+| `Orvibo Moisture Sensor`              | [`Zigbee Water Leak Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-water-leak-sensor)  |
+| `Qubino Dimmer`                       | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `RGBW Light`                          | [`Z-Wave Bulb`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-bulb)                             |
 | `RM3250ZB Sinope Load Controller`     | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
 | `SmartAlert Siren`                    | [`Z-Wave Siren`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-siren)                           |
@@ -41,8 +49,10 @@ List of Groovy DTHs backing devices that have been migrated to Edge drivers.
 | `Z-Wave Basic Window Shade`           | [`Z-Wave Window Treatment`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-window-treatment)     |
 | `Z-Wave Battery Thermostat`           | [`Z-Wave Thermostat`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-thermostat)                 |
 | `Z-Wave Button`                       | [`Z-Wave Button`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-button)                         |
+| `Z-Wave Dimmer Switch Generic`        | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `Z-Wave Door/Window Sensor`           | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
 | `Z-Wave Garage Door Opener`           | [`Z-Wave Garage Door Opener`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-garage-door-opener) |
+| `Z-Wave Lock Without Codes`           | [`Z-Wave Lock`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-lock)                             |
 | `Z-Wave Metering Dimmer`              | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `Z-Wave Metering Switch`              | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `Z-Wave Mold Detector`                | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
@@ -59,12 +69,15 @@ List of Groovy DTHs backing devices that have been migrated to Edge drivers.
 | `Z-Wave Switch Generic`               | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `Z-Wave Switch Secure`                | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
 | `Z-Wave Switch`                       | [`Z-Wave Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-switch)                         |
+| `Z-Wave Temp/Light Sensor`            | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
+| `Z-Wave Water Sensor`                 | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
 | `Z-Wave Water Valve`                  | [`Z-Wave Valve`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-valve)                           |
 | `Z-Wave Water/Temp/Humidity Sensor`   | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
 | `Z-Wave Water/Temp/Light Sensor`      | [`Z-Wave Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zwave-sensor)                         |
 | `ZigBee Battery Accessory Dimmer`     | [`Zigbee Dimmer Remote`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-dimmer-remote)          |
 | `ZigBee Dimmer Power`                 | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
 | `ZigBee Dimmer`                       | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
+| `ZigBee Lock Without Codes`           | [`Zigbee Lock`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-lock)                            |
 | `Zigbee Metering Plug`                | [`Zigbee Switch`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-switch)                        |
 | `Zigbee Plugin Motion Sensor`         | [`Zigbee Motion Sensor`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-motion-sensor)          |
 | `Zigbee Range Extender`               | [`Zigbee Range Extender`](https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/tree/main/drivers/SmartThings/zigbee-range-extender)        |

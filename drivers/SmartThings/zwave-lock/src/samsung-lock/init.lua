@@ -63,7 +63,7 @@ local function notification_report_handler(self, device, cmd)
     elseif event_code == access_control_event.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE then
       local code_id = get_ongoing_code_set(device)
       if code_id ~= nil then
-        event = capabilities.lockCodes.codeChanged(code_id .. " failed")
+        event = capabilities.lockCodes.codeChanged(code_id .. " failed", { state_change = true })
         clear_code_state(device, code_id)
       end
     elseif event_code == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
@@ -76,7 +76,7 @@ local function notification_report_handler(self, device, cmd)
           code_deleted(device, code_id)
         end
       end
-      event = capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device)))
+      event = capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device)), { visibility = { displayed = false } })
     end
   end
 
@@ -93,7 +93,7 @@ local function do_configure(self, device)
   -- taken directly from DTH
   -- Samsung locks won't allow you to enter the pairing menu when locked, so it must be unlocked
   device:emit_event(capabilities.lock.lock.unlocked())
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} )))
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} ), { visibility = { displayed = false } }))
 end
 
 local samsung_lock = {

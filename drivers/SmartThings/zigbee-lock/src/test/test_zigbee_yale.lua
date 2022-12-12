@@ -49,7 +49,7 @@ local expect_reload_all_codes_messages = function()
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.MinPINCodeLength:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false }})))
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
 end
 
@@ -140,105 +140,13 @@ test.register_coroutine_test(
           }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-          capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
+          capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true }))
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-        capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))))
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false }})))
     end
 )
 
-test.register_message_test(
-    "Setting all user codes should result in a code set event for each",
-    {
-      {
-        channel = "capability",
-        direction = "receive",
-        message = {
-          mock_device.id,
-          {
-            capability = capabilities.lockCodes.ID,
-            command = "updateCodes",
-            args = {
-              {
-                code1 = "1234",
-                code2 = "2345",
-                code3 = "3456"
-              }
-            }
-          }
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.SetPINCode(mock_device,
-                                                 1,
-                                                 DoorLockUserStatus.OCCUPIED_ENABLED,
-                                                 DoorLockUserType.UNRESTRICTED,
-                                                 "1234"
-          )
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.GetPINCode(mock_device,
-                                                 1)
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.SetPINCode(mock_device,
-                                                 2,
-                                                 DoorLockUserStatus.OCCUPIED_ENABLED,
-                                                 DoorLockUserType.UNRESTRICTED,
-                                                 "2345"
-          )
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.GetPINCode(mock_device,
-                                                 2)
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.SetPINCode(mock_device,
-                                                 3,
-                                                 DoorLockUserStatus.OCCUPIED_ENABLED,
-                                                 DoorLockUserType.UNRESTRICTED,
-                                                 "3456"
-          )
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          DoorLock.server.commands.GetPINCode(mock_device,
-                                                 3)
-        }
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
-)
 
 test.register_message_test(
     "Pin response reporting should be handled when the Lock User status is disabled",
@@ -260,7 +168,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("0 unset",
-                                                                                       { data = { codeName = "Code 0" } }))
+                                                                                       { data = { codeName = "Code 0" }, state_change = true }))
       }
     }
 )
@@ -301,7 +209,7 @@ local function init_code_slot(slot_number, name, device)
       }
   )
   test.socket.capability:__expect_send(device:generate_test_message("main",
-      capabilities.lockCodes.codeChanged(slot_number .. " set", { data = { codeName = name } }))
+      capabilities.lockCodes.codeChanged(slot_number .. " set", { data = { codeName = name }, state_change = true  }))
   )
 end
 
@@ -310,13 +218,13 @@ test.register_coroutine_test(
     function()
       init_code_slot(1, "initialName", mock_device)
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-        capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}))))
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
       test.wait_for_events()
 
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-        capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}))))
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
     end
 )
 
@@ -358,7 +266,7 @@ test.register_coroutine_test(
         }
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.codeChanged("1 failed", { })))
+      capabilities.lockCodes.codeChanged("1 failed", { state_change = true  })))
   end
 )
 
@@ -367,13 +275,13 @@ test.register_coroutine_test(
   function()
     init_code_slot(1, "initialName", mock_device)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}))))
+      capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
     test.wait_for_events()
 
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "", "foo"} } })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}))))
+      capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
   end
 )
 

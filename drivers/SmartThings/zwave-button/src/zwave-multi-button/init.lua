@@ -58,8 +58,20 @@ local map_key_attribute_to_capability = {
 
 local function central_scene_notification_handler(self, device, cmd)
   local event = map_key_attribute_to_capability[cmd.args.key_attributes]({state_change = true})
-  device:emit_event_for_endpoint(cmd.args.scene_number, event)
-  device:emit_event(event)
+  if event ~= nil then
+    local supportedEvents = device:get_latest_state(
+      device:endpoint_to_component(cmd.args.scene_number),
+      capabilities.button.ID,
+      capabilities.button.supportedButtonValues.NAME,
+      {capabilities.button.button.pushed.NAME, capabilities.button.button.held.NAME} -- default value
+    )
+    for _, event_name in pairs(supportedEvents) do
+      if event.value.value == event_name then
+        device:emit_event_for_endpoint(cmd.args.scene_number, event)
+        device:emit_event(event)
+      end
+    end
+  end
 end
 
 local function scene_activation_handler(self, device, cmd)
