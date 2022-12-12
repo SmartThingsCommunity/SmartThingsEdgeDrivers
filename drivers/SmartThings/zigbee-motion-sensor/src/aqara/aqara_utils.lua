@@ -20,28 +20,23 @@ local PREF_CHANGED_VALUE = "prefChangedValue"
 local PREF_FREQUENCY_KEY = "prefFrequency"
 local PREF_FREQUENCY_VALUE_DEFAULT = 60
 
-local function custom_attribute(device, cluster_id, attribute_id)
-  local message = cluster_base.read_attribute(device, data_types.ClusterId(cluster_id), attribute_id)
+local function read_custom_attribute(device, attribute_id)
+  local message = cluster_base.read_attribute(device, data_types.ClusterId(PRIVATE_CLUSTER_ID), attribute_id)
   message.body.zcl_header.frame_ctrl:set_mfg_specific()
   message.body.zcl_header.mfg_code = data_types.validate_or_build_type(MFG_CODE, data_types.Uint16, "mfg_code")
-  return message
+  device:send(message)
 end
 
-local function read_custom_attribute(device, attribute_id)
-  device:send(custom_attribute(device, PRIVATE_CLUSTER_ID, attribute_id))
-end
-
-local function write_custom_attribute(device, attribute_id, value)
+local function write_custom_attribute(device, attribute_id, dt, value)
   device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, attribute_id, MFG_CODE,
-    data_types.Uint8, value))
+    dt, value))
 end
 
 local function enable_custom_cluster_attribute(device)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
+  write_custom_attribute(device, PRIVATE_ATTRIBUTE_ID, data_types.Uint8, 1)
 end
 
-local function motion_detected(driver, device, value, zb_rx)
+local function motion_detected(device)
   device:emit_event(capabilities.motionSensor.motion.active())
 
   local unoccupied_timer = device:get_field(UNOCCUPIED_TIMER)
@@ -80,16 +75,25 @@ local function detection_frequency_res_handler(device)
   -- detection frequency
   local key, value = get_pref_changed_field(device)
   if key == PREF_FREQUENCY_KEY then
+    set_pref_changed_field(device, '', 0)
     set_detection_frequency(device, value)
   end
+end
+
+local function detection_frequency_capability_handler(driver, device, command)
+  local frequency = command.args.frequency
+  aqara_utils.set_pref_changed_field(device, aqara_utils.PREF_FREQUENCY_KEY, frequency)
+  aqara_utils.write_custom_attribute(device, aqara_utils.FREQUENCY_ATTRIBUTE_ID, data_types.Uint8, frequency)
+end
+
+local function emit_default_detection_frequency_event(device)
+  device:emit_event(detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT))
 end
 
 aqara_utils.detectionFrequency = detectionFrequency
 aqara_utils.detectionFrequencyId = detectionFrequencyId
 aqara_utils.detectionFrequencyCommand = detectionFrequencyCommand
 aqara_utils.PRIVATE_CLUSTER_ID = PRIVATE_CLUSTER_ID
-aqara_utils.PRIVATE_ATTRIBUTE_ID = PRIVATE_ATTRIBUTE_ID
-aqara_utils.MFG_CODE = MFG_CODE
 aqara_utils.FREQUENCY_ATTRIBUTE_ID = FREQUENCY_ATTRIBUTE_ID
 aqara_utils.PREF_CHANGED_KEY = PREF_CHANGED_KEY
 aqara_utils.PREF_CHANGED_VALUE = PREF_CHANGED_VALUE
@@ -103,5 +107,7 @@ aqara_utils.get_pref_changed_field = get_pref_changed_field
 aqara_utils.set_pref_changed_field = set_pref_changed_field
 aqara_utils.set_detection_frequency = set_detection_frequency
 aqara_utils.detection_frequency_res_handler = detection_frequency_res_handler
+aqara_utils.detection_frequency_capability_handler = detection_frequency_capability_handler
+aqara_utils.emit_default_detection_frequency_event = emit_default_detection_frequency_event
 
 return aqara_utils
