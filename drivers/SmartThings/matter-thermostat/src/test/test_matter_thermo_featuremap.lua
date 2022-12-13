@@ -148,7 +148,10 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    --TODO why does provisionng state get added in the do configure event handle, but not the refres?
+  local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
+  read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
+  test.socket.matter:__expect_send({mock_device.id, read_limits})
+    --TODO why does provisiong state get added in the do configure event handle, but not the refres?
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -158,6 +161,9 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
+    local read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
+    read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
+    test.socket.matter:__expect_send({mock_device_simple.id, read_limits})
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end

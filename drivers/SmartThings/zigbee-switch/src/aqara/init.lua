@@ -114,14 +114,7 @@ local function device_info_changed(driver, device, event, args)
   end
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
-  -- energyMeter
-  local raw_value = value.value
-  raw_value = raw_value / 1000
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "kWh" }))
-
-  -- powerConsumptionReport
-
+local function power_consumption_report(device, raw_value)
   -- check the minimum interval
   local current_time = os.time()
   local last_time = device:get_field(LAST_REPORT_TIME) or 0
@@ -139,6 +132,15 @@ local function energy_meter_handler(driver, device, value, zb_rx)
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
+end
+
+local function energy_meter_handler(driver, device, value, zb_rx)
+  -- energyMeter
+  local raw_value = value.value
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value / 1000, unit = "kWh" }))
+
+  -- powerConsumptionReport
+  power_consumption_report(device, raw_value)
 end
 
 local aqara_smart_plug_handler = {
