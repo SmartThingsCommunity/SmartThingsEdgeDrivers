@@ -34,17 +34,14 @@ local function is_aqara_products(opts, driver, device)
   return false
 end
 
-local function write_private_attribute(device, cluster_id, attribute_id, data_type, value)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, cluster_id, attribute_id, MFG_CODE, data_type,
-    value))
-end
-
 local function device_added(driver, device)
   device:emit_event(capabilities.waterSensor.water.dry())
   device:emit_event(capabilities.battery.battery(100))
 
-  -- Set private attribute
-  write_private_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, data_types.Uint8, 1)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+    MFG_CODE,
+    data_types.Uint8,
+    1))
 end
 
 local function device_init(driver, device)
