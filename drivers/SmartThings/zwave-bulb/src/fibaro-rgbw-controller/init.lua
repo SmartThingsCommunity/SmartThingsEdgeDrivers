@@ -71,7 +71,7 @@ local function set_color(driver, device, command)
       device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED }))
     end
   end
-  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
+  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_color)
 end
 
 local function switch_color_report(self, device, command)
@@ -127,7 +127,7 @@ local function set_switch(driver, device, command, value)
     local query_white = function()
       device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.WARM_WHITE }))
     end
-    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_white)
+    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_white)
   elseif command.component == "rgb" then
     device:set_field(LAST_COLOR_SWITCH_CMD_FIELD, value)
     if value == 255 then
@@ -150,7 +150,7 @@ local function set_switch(driver, device, command, value)
       local query_color = function()
         device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED }))
       end
-      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
+      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_color)
     end
   end
 end
