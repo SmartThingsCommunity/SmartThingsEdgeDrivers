@@ -21,7 +21,9 @@ preferences:
     required: true
     preferenceType: integer
     definition:
-      default: 22
+      minimum: 16
+      default: 24
+      maximum: 32
   - preferenceId: reverse
     explicit: true
   - name: "defaultOnValue"
@@ -33,6 +35,13 @@ preferences:
       minimum: 1
       maximum: 100
       default: 50
+  - name: "forceReport"
+    title: "Force Report"
+    description: "Device will send an unsolicited report after moving to target destination"
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
   - name: "disableResetButton"
     title: "Disable Reset Button"
     description: "Used for situations where the top motor buttons are being pushed accidentally via a tight installation space, etc."
@@ -49,3 +58,37 @@ preferences:
       minimum: 0
       maximum: 100
       default: 0
+  - name: "remoteCalibration"
+    title: "Remote Calibration"
+    description: "Recalibrate upon next recieved command"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: "minTilt"
+    title: "Minimum Tilt Level"
+    description: "The absolute lowest level iblinds will tilt the slats"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 25
+      default: 0
+  - name: "maxTilt"
+    title: "Maximum Tilt Level"
+    description: "The absolute highest level iblinds will tilt the slats"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 75
+      maximum: 100
+      default: 100
+  - name: "remap"
+    title: "Remap ON value"
+    description: "Use if ON sends tilt all the way up instead of desired level or default ON value"
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+
+

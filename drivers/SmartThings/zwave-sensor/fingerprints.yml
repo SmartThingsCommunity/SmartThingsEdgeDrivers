@@ -142,12 +142,6 @@ zwaveManufacturer:
     productType: 0x0002
     productId: 0x0001
     deviceProfileName: motion-battery-illuminance-temperature
-  - id: "homeseer/multi/hsm200"
-    deviceLabel: Homeseer Multi Sensor HSM200
-    manufacturerId: 0x000C
-    productType: 0x0004
-    productId: 0x0001
-    deviceProfileName: motion-battery-illuminance-temperature
   - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
     deviceLabel: Fibaro Open/Closed Sensor
     manufacturerId: 0x010F

@@ -23,6 +23,7 @@ local lock_utils =  {
   CHECKING_CODE   = "checkingCode",
   CODE_STATE      = "codeState",
   MIGRATION_COMPLETE = "migrationComplete",
+  MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped"
 }
 
 lock_utils.get_lock_codes = function(device)
@@ -32,7 +33,7 @@ end
 
 lock_utils.lock_codes_event = function(device, lock_codes)
   device:set_field(lock_utils.LOCK_CODES, lock_codes, { persist = true } )
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes))))
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(utils.deep_copy(lock_codes)), { visibility = { displayed = false } }))
 end
 
 
@@ -66,7 +67,7 @@ end
 
 function lock_utils.code_deleted(device, code_slot)
   local lock_codes = lock_utils.get_lock_codes(device)
-  local event = LockCodes.codeChanged(code_slot.." deleted")
+  local event = LockCodes.codeChanged(code_slot.." deleted", { state_change = true })
   event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
   lock_codes[code_slot] = nil
   device:emit_event(event)
@@ -78,7 +79,8 @@ function lock_utils.populate_state_from_data(device)
   if device.data.lockCodes ~= nil and device:get_field(lock_utils.MIGRATION_COMPLETE) ~= true then
     -- build the lockCodes table
     local lockCodes = {}
-    for k, v in pairs(device.data.lockCodes) do
+    local lc_data = json.decode(device.data.lockCodes)
+    for k, v in pairs(lc_data) do
       lockCodes[k] = v
     end
     -- Populate the devices `lockCodes` field

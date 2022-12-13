@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"
@@ -192,53 +191,49 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 5 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held"  }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 5 }, { visibility = { displayed = false } })
+      )
+    )
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
         if button_name ~= "button5" then
-          test.socket.capability:__expect_send({
-            mock_device.id,
-            {
-              capability_id = "button", component_id = button_name,
-              attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-            }
-          })
+          test.socket.capability:__expect_send(
+            mock_device:generate_test_message(
+              button_name,
+              capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+            )
+          )
         else
-          test.socket.capability:__expect_send({
-            mock_device.id,
-            {
-              capability_id = "button", component_id = button_name,
-              attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-            }
-          })
+          test.socket.capability:__expect_send(
+            mock_device:generate_test_message(
+              button_name,
+              capabilities.button.supportedButtonValues({ "pushed"}, { visibility = { displayed = false } })
+            )
+          )
         end
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        })
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
       end
     end
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
-    test.socket.capability:__expect_send({
+
+   test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "button", component_id = "main",

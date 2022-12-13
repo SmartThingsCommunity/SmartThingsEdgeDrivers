@@ -17,7 +17,6 @@ local capabilities = require "st.capabilities"
 local constants = require "st.zwave.constants"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local Association = (require "st.zwave.CommandClass.Association")({version=2})
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
@@ -77,8 +76,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -107,8 +106,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           })
         )
@@ -137,8 +136,8 @@ test.register_message_test(
         mock_qubino_flush_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 99,
+            target_value = 0,
+            current_value = 99,
             duration = 0
           })
         )
@@ -307,8 +306,8 @@ test.register_message_test(
         mock_qubino_flush_shutter_venetian.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           },{encap = zw.ENCAP.AUTO, src_channel = 2, dst_channels = {0}})
         )
@@ -490,55 +489,44 @@ do
   )
 end
 
-test.register_message_test(
+test.register_coroutine_test(
   "Device should be configured when added",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_qubino_flush_shutter.id, "added" }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_qubino_flush_shutter.id, "added" })
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_qubino_flush_shutter,
         Association:Set({grouping_identifier = 7, node_ids = {}})
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_qubino_flush_shutter,
         Configuration:Set({parameter_number = 40, size = 1, configuration_value = 1})
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_qubino_flush_shutter,
         Configuration:Set({parameter_number = 71, size = 1, configuration_value = 0})
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_qubino_flush_shutter,
         SwitchMultilevel:Get({})
       )
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
-    }
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_qubino_flush_shutter:generate_test_message(
+        "main",
+        capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false }})
+      )
+    )
+  end
 )
 
 do
@@ -621,7 +609,7 @@ do
         mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(targetValue))
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(10))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
       )
     end
   )
@@ -652,7 +640,7 @@ do
         )
       )
       test.socket.capability:__expect_send(
-        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power(0))
+        mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
       )
     end
   )
@@ -677,7 +665,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy(50))
+      message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy({value = 50, unit = "kWh"}))
     }
   }
 )

@@ -50,30 +50,44 @@ test.set_test_init_function(test_init)
 
 do
   local new_param_value = 1
+  local default_one = {
+    [5] = true,
+    [6] = true,
+    [7] = true,
+    [13] = true,
+    [14] = true,
+    [19] = true,
+    [20] = true,
+  }
   test.register_coroutine_test(
     "Parameter should be updated in the device configuration after change",
     function()
       local parameters = preferencesMap.get_device_parameters(zooz_zen_dimmer_relay)
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      local newPreferences = {}
       for id, value in pairs(parameters) do
-        test.socket.zwave:__set_channel_ordering("relaxed")
-        test.socket.device_lifecycle:__queue_receive(
-          zooz_zen_dimmer_relay:generate_info_changed({
-            preferences = {
-              [id] = new_param_value
-            }
-          })
-        )
+        if default_one[value.parameter_number] then
+          newPreferences[id] = 0
+        else
+          newPreferences[id] = new_param_value
+        end
         test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
             zooz_zen_dimmer_relay,
             Configuration:Set({
-              parameter_number = parameters[id].parameter_number,
-              configuration_value = new_param_value,
-              size = parameters[id].size
+              parameter_number = value.parameter_number,
+              configuration_value = newPreferences[id],
+              size = value.size
             })
           )
         )
       end
+      test.socket.device_lifecycle:__queue_receive(
+        zooz_zen_dimmer_relay:generate_info_changed({
+          preferences = newPreferences
+        })
+      )
+      test.wait_for_events()
     end
   )
 end

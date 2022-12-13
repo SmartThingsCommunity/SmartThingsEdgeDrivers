@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local constants = require "st.zwave.constants"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
@@ -81,7 +80,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         )
       }
     },
@@ -113,7 +112,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value = SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value = SwitchBinary.value.OFF_DISABLE})
         )
       }
     },
@@ -230,7 +229,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -295,7 +294,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,

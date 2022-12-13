@@ -4,6 +4,16 @@ components:
   capabilities:
   - id: alarm
     version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - both
   - id: chime
     version: 1
   - id: switch

@@ -39,7 +39,7 @@ local reload_all_codes = function(driver, device, command)
     device:send(LockCluster.attributes.NumberOfPINUsersSupported:read(device))
   end
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then device:set_field(lock_utils.CHECKING_CODE, 1) end
-  device:emit_event(LockCodes.scanCodes("Scanning"))
+  device:emit_event(LockCodes.scanCodes("Scanning", { visibility = { displayed = false } }))
   device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
 end
 
@@ -71,32 +71,8 @@ local set_code = function(driver, device, command)
   end
 end
 
-local update_codes = function(driver, device, command)
-  -- args.codes is json
-  for name, code in pairs(command.args.codes) do
-    -- these seem to come in the format "code[slot#]: code"
-    local code_slot = tonumber(string.gsub(name, "code", ""), 10)
-    if (code_slot ~= nil) then
-      if (code ~= nil and code ~= "0") then
-        device:send(LockCluster.server.commands.SetPINCode(device,
-                code_slot,
-                UserStatusEnum.OCCUPIED_ENABLED,
-                UserTypeEnum.UNRESTRICTED,
-                code)
-        )
-        device:send(LockCluster.server.commands.GetPINCode(device, code_slot))
-      else
-        device:send(LockCluster.client.commands.ClearPINCode(device, code_slot))
-        device.thread:call_with_delay(2, function(d)
-          device:send(LockCluster.server.commands.GetPINCode(device, code_slot))
-        end)
-      end
-    end
-  end
-end
-
 local get_pin_response_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("")
+  local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
   local localCode = device:get_field(lock_utils.CODE_STATE)
   if localCode ~= nil then localCode = localCode["setCode"..code_slot] end
@@ -149,7 +125,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
     -- the code we're checking has arrived
     local defaultMaxCodes = 8
     if (code_slot >= defaultMaxCodes) then
-      device:emit_event(LockCodes.scanCodes("Complete"))
+      device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
       local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
@@ -170,7 +146,6 @@ local yale_door_lock_driver = {
   },
   capability_handlers = {
     [LockCodes.ID] = {
-      [LockCodes.commands.updateCodes.NAME] = update_codes,
       [LockCodes.commands.reloadAllCodes.NAME] = reload_all_codes,
       [LockCodes.commands.setCode.NAME] = set_code
     }

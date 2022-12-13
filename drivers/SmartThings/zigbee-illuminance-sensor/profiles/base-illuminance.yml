@@ -4,5 +4,9 @@ components:
   capabilities:
   - id: illuminanceMeasurement
     version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 32000]
   categories:
   - name: LightSensor

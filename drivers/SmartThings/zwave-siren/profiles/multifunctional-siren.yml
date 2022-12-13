@@ -4,6 +4,16 @@ components:
   capabilities:
   - id: alarm
     version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - both
   - id: battery
     version: 1
   - id: refresh
@@ -12,10 +22,11 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-20, 100]
   - id: relativeHumidityMeasurement
     version: 1
   categories:
   - name: Siren
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-siren-11   # Filtering non-supported alarm values

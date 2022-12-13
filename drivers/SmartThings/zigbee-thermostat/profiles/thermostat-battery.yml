@@ -6,6 +6,10 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 4, 28 ]
   - id: thermostatCoolingSetpoint
     version: 1
   - id: thermostatMode
@@ -14,6 +18,14 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - cooling
+            - fan only
+            - idle
   - id: battery
     version: 1
   - id: firmwareUpdate
@@ -36,3 +48,6 @@ preferences:
         4: "off, auto, heat, cool"
         5: "off, emergency heat, heat, cool"
       default: "3"
+metadata:
+  vid: SmartThings-smartthings-c2c-nest-thermostat
+  mnmn: SmartThings
