@@ -2,9 +2,9 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local aqara_utils = require "aqara/aqara_utils"
-local data_types = require "st.zigbee.data_types"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
+local data_types = require "st.zigbee.data_types"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -22,9 +22,12 @@ local MULTISTATE_ATTRIBUTE_ID = 0x0055
 local TILT_UP_VALUE = 0x0004
 local TILT_DOWN_VALUE = 0x0005
 
+local INITIALIZED_STATE = "initializedState"
+
 local function window_shade_level_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  if aqara_utils.isInitializedStateField(device) ~= true then
+  local initialized = device:get_field(INITIALIZED_STATE) or 0
+  if initialized ~= 1 then
     return
   end
 
@@ -33,24 +36,26 @@ end
 
 local function window_shade_open_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  if aqara_utils.isInitializedStateField(device) ~= true then
+  local initialized = device:get_field(INITIALIZED_STATE) or 0
+  if initialized ~= 1 then
     return
   end
 
-  aqara_utils.shade_open_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
 end
 
 local function window_shade_close_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  if aqara_utils.isInitializedStateField(device) ~= true then
+  local initialized = device:get_field(INITIALIZED_STATE) or 0
+  if initialized ~= 1 then
     return
   end
 
-  aqara_utils.shade_close_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
 end
 
 local function window_shade_pause_cmd(driver, device, command)
-  aqara_utils.shade_pause_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
 end
 
 local function write_tilt_attribute(device, payload)
@@ -68,7 +73,8 @@ end
 local function set_rotate_command_handler(driver, device, command)
   device:emit_event(shadeRotateState.rotateState.idle()) -- update UI
 
-  if aqara_utils.isInitializedStateField(device) ~= true then
+  local initialized = device:get_field(INITIALIZED_STATE) or 0
+  if initialized ~= 1 then
     return
   end
 
@@ -109,25 +115,25 @@ local function pref_report_handler(driver, device, value, zb_rx)
     initializedStateWithGuide.initializedStateWithGuide.notInitialized())
 
   -- store
-  aqara_utils.setInitializedStateField(device, initialized)
+  device:set_field(INITIALIZED_STATE, initialized, { persist = true })
 end
 
 local function write_reverse_preferences(device, args)
   if device.preferences ~= nil then
-    if device.preferences[reverseRollerShadeDirId] ~=
-        args.old_st_store.preferences[reverseRollerShadeDirId] then
-      if device.preferences[reverseRollerShadeDirId] == true then
-        aqara_utils.write_reverse_pref_on(device)
-      else
-        aqara_utils.write_reverse_pref_off(device)
-      end
+    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDirId]
+    if reverseRollerShadeDirPrefValue ~= nil and
+        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDirId] then
+      local raw_value = reverseRollerShadeDirPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+        aqara_utils.MFG_CODE, data_types.CharString, raw_value))
     end
   end
 end
 
 local function do_refresh(self, device)
-  aqara_utils.read_shade_position_attribute(device)
-  aqara_utils.read_pref_attribute(device)
+  device:send(AnalogOutput.attributes.PresentValue:read(device))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE))
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -146,10 +152,12 @@ local function device_added(driver, device)
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(shadeRotateState.rotateState.idle())
 
-  aqara_utils.enable_private_cluster_attribute(device)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
 
   -- Initial default settings
-  aqara_utils.write_reverse_pref_off(device)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.CharString, aqara_utils.PREF_REVERSE_OFF))
 end
 
 local aqara_roller_shade_handler = {
@@ -194,8 +202,8 @@ local aqara_roller_shade_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device)
-    return aqara_utils.is_matched_profile(device, "roller-shade")
+  can_handle = function(opts, driver, device, ...)
+    return device:get_model() == "lumi.curtain.aq2"
   end
 }
 

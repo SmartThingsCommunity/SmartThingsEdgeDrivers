@@ -2,6 +2,8 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local aqara_utils = require "aqara/aqara_utils"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -29,19 +31,20 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
-  aqara_utils.shade_open_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
 end
 
 local function window_shade_close_cmd(driver, device, command)
-  aqara_utils.shade_close_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
 end
 
 local function window_shade_pause_cmd(driver, device, command)
-  aqara_utils.shade_pause_cmd(driver, device, command)
+  device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
 end
 
 local function write_initialize(device)
-  aqara_utils.write_pref_attribute(device, PREF_INITIALIZE)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.CharString, PREF_INITIALIZE))
 end
 
 local function setInitializationField(device, value)
@@ -66,11 +69,11 @@ local function set_initialized_state_handler(driver, device, command)
       capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
       setInitializationField(device, INIT_STATE_CLOSE)
-      aqara_utils.send_close_cmd(device, command)
+      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
     else
       device:emit_event(deviceInitialization.initializedState.initializing())
       setInitializationField(device, INIT_STATE_OPEN)
-      aqara_utils.send_open_cmd(device, command)
+      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
     end
   end)
 end
@@ -102,13 +105,14 @@ local function shade_state_report_handler(driver, device, value, zb_rx)
     local init_state_value = getInitializationField(device)
     if init_state_value == INIT_STATE_OPEN then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
-      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 0)
+      device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 0))
     elseif init_state_value == INIT_STATE_CLOSE then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
-      aqara_utils.send_lift_percentage_cmd(device, { component = "main" }, 100)
+      device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 100))
     elseif init_state_value == INIT_STATE_REVERSE then
       device:set_field(INIT_STATE, "")
-      aqara_utils.read_pref_attribute(device)
+      device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+        aqara_utils.MFG_CODE))
     end
   end
 end
@@ -127,37 +131,38 @@ end
 
 local function write_soft_touch_preference(device, args)
   if device.preferences ~= nil then
-    if device.preferences[softTouchPreferenceId] ~= args.old_st_store.preferences[softTouchPreferenceId] then
-      if device.preferences[softTouchPreferenceId] == true then
-        aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
-      else
-        aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_OFF)
-      end
+    local softTouchPrefValue = device.preferences[softTouchPreferenceId]
+    if softTouchPrefValue ~= nil and
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouchPreferenceId] then
+      local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+        aqara_utils.MFG_CODE, data_types.CharString, raw_value))
     end
   end
 end
 
 local function write_reverse_preferences(device, args)
   if device.preferences ~= nil then
-    if device.preferences[reverseCurtainDirectionPreferenceId] ~=
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirectionPreferenceId]
+    if reverseCurtainDirectionPrefValue ~= nil and reverseCurtainDirectionPrefValue ~=
         args.old_st_store.preferences[reverseCurtainDirectionPreferenceId] then
-      if device.preferences[reverseCurtainDirectionPreferenceId] == true then
-        aqara_utils.write_reverse_pref_on(device)
-      else
-        aqara_utils.write_reverse_pref_off(device)
-      end
+      local raw_value = reverseCurtainDirectionPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+        aqara_utils.MFG_CODE, data_types.CharString, raw_value))
 
       -- read updated value
       device.thread:call_with_delay(2, function(d)
-        aqara_utils.read_pref_attribute(device)
+        device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+          aqara_utils.MFG_CODE))
       end)
     end
   end
 end
 
 local function do_refresh(self, device)
-  aqara_utils.read_shade_position_attribute(device)
-  aqara_utils.read_pref_attribute(device)
+  device:send(AnalogOutput.attributes.PresentValue:read(device))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE))
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -177,11 +182,14 @@ local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(deviceInitialization.initializedState.notInitialized())
 
-  aqara_utils.enable_private_cluster_attribute(device)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
 
   -- Initial default settings
-  aqara_utils.write_reverse_pref_off(device)
-  aqara_utils.write_pref_attribute(device, PREF_SOFT_TOUCH_ON)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.CharString, aqara_utils.PREF_REVERSE_OFF))
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.CharString, PREF_SOFT_TOUCH_ON))
 end
 
 local aqara_curtain_handler = {
@@ -226,8 +234,8 @@ local aqara_curtain_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device)
-    return aqara_utils.is_matched_profile(device, "curtain")
+  can_handle = function(opts, driver, device, ...)
+    return device:get_model() == "lumi.curtain" or device:get_model() == "lumi.curtain.v1"
   end
 }
 

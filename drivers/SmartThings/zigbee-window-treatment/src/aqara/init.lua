@@ -1,7 +1,13 @@
-local aqara_utils = require "aqara/aqara_utils"
+local capabilities = require "st.capabilities"
+
+local FINGERPRINTS = {
+  { mfr = "LUMI", model = "lumi.curtain" },
+  { mfr = "LUMI", model = "lumi.curtain.v1" },
+  { mfr = "LUMI", model = "lumi.curtain.aq2" }
+}
 
 local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(aqara_utils.FINGERPRINTS) do
+  for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       return true
     end
