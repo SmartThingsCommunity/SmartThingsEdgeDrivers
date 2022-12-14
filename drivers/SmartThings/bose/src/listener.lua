@@ -20,6 +20,7 @@ local ws = require"lustre".WebSocket
 local CloseCode = require"lustre.frame.close".CloseCode
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
+local bose_utils = require "utils"
 local MAX_RECONNECT_ATTEMPTS = 10
 local RECONNECT_PERIOD = 120 -- 2 min
 
@@ -37,12 +38,12 @@ end
 
 function Listener:presets_update(presets)
   log.info(
-    string.format("(%s)[%s] presets_update", self.device.device_network_id, self.device.label))
+    string.format("(%s)[%s] presets_update", bose_utils.get_serial_number(self.device), self.device.label))
   self.device:emit_event(capabilities.mediaPresets.presets(presets))
 end
 
 function Listener:now_playing_update(info)
-  log.info(string.format("(%s)[%s] now playing update %s", self.device.device_network_id,
+  log.info(string.format("(%s)[%s] now playing update %s", bose_utils.get_serial_number(self.device),
                          self.device.label, utils.stringify_table(info)))
   if info.play_state == "INVALID_PLAY_STATUS" then return end
   if info.source == "STANDBY" then
@@ -98,12 +99,12 @@ end
 
 --- new preset has been selected
 function Listener:preset_select_update(preset_id)
-  log.info(string.format("[%s](%s) preset_select_update: %s", self.device.device_network_id,
+  log.info(string.format("[%s](%s) preset_select_update: %s", bose_utils.get_serial_number(self.device),
                          self.device.label, preset_id))
 end
 
 function Listener:volume_update(new_volume, mute_enable)
-  log.info(string.format("[%s](%s): volume update %s", self.device.device_network_id,
+  log.info(string.format("[%s](%s): volume update %s", bose_utils.get_serial_number(self.device),
                          self.device.label, new_volume))
   self.device:emit_event(capabilities.audioVolume.volume(new_volume))
   if mute_enable then
@@ -115,12 +116,12 @@ end
 
 -- TODO events not parsed yet
 function Listener:zone_update(xml)
-  log.info(string.format("[%s](%s) zone_update: %s", self.device.device_network_id,
+  log.info(string.format("[%s](%s) zone_update: %s", bose_utils.get_serial_number(self.device),
                          self.device.label, xml))
 end
 
 function Listener:name_update(new_name)
-  log.info(string.format("[%s](%s) name_update: %s", self.device.device_network_id,
+  log.info(string.format("[%s](%s) name_update: %s", bose_utils.get_serial_number(self.device),
                          self.device.label, new_name))
   local res = self.device:try_update_metadata({vendor_provided_label = new_name})
 end
@@ -183,7 +184,7 @@ function Listener:handle_xml_event(xml)
       end
       self:presets_update(result)
     else
-      log.debug(string.format("[%s](%s) update ignored: %s", self.device.device_network_id,
+      log.debug(string.format("[%s](%s) update ignored: %s", bose_utils.get_serial_number(self.device),
                               self.device.label, utils.stringify_table(updates)))
     end
   end
@@ -195,11 +196,11 @@ function Listener:try_reconnect()
   local ip = self.device:get_field("ip")
   if not ip then
     log.warn(string.format("[%s](%s) Cannot reconnect because no device ip",
-                           self.device.device_network_id, self.device.label))
+                           bose_utils.get_serial_number(self.device), self.device.label))
     return
   end
   log.info(string.format("[%s](%s) Attempting to reconnect websocket for speaker at %s",
-                         self.device.device_network_id, self.device.label, ip))
+                         bose_utils.get_serial_number(self.device), self.device.label, ip))
   while retries < MAX_RECONNECT_ATTEMPTS do
     if self:start() then
       self.driver:inject_capability_command(self.device,
@@ -214,7 +215,7 @@ function Listener:try_reconnect()
     socket.sleep(RECONNECT_PERIOD)
   end
   log.warn(string.format("[%s](%s) failed to reconnect websocket for device events",
-                         self.device.device_network_id, self.device.label))
+                         bose_utils.get_serial_number(self.device), self.device.label))
 end
 
 --- @return success boolean
@@ -222,12 +223,13 @@ function Listener:start()
   local url = "/"
   local sock, err = socket.tcp()
   local ip = self.device:get_field("ip")
+  local serial_number = bose_utils.get_serial_number(self.device)
   if not ip then
     log.error("failed to get ip address for device")
     return false
   end
   log.info(string.format("[%s](%s) Starting websocket listening client on %s:%s",
-                         self.device.device_network_id, self.device.label, ip, url))
+                         bose_utils.get_serial_number(self.device), self.device.label, ip, url))
   if err then
     log.error(string.format("failed to get tcp socket: %s", err))
     return false
@@ -240,7 +242,7 @@ function Listener:start()
     -- log.debug(string.format("(%s:%s) Websocket message: %s", device.device_network_id, ip, utils.stringify_table(event, nil, true)))
   end):register_error_cb(function(err)
     -- TODO some muxing on the error conditions
-    log.error(string.format("[%s](%s) Websocket error: %s", self.device.device_network_id,
+    log.error(string.format("[%s](%s) Websocket error: %s", serial_number,
                             self.device.label, err))
     if err and (err:match("closed") or err:match("no response to keep alive ping commands")) then
       self.device:offline()
@@ -248,12 +250,12 @@ function Listener:start()
     end
   end)
   websocket:register_close_cb(function(reason)
-    log.info(string.format("[%s](%s) Websocket closed: %s", self.device.device_network_id,
+    log.info(string.format("[%s](%s) Websocket closed: %s", serial_number,
                            self.device.label, reason))
     self.websocket = nil -- TODO make sure it is set to nil correctly
     if not self._stopped then self:try_reconnect() end
   end)
-  log.info(string.format("[%s](%s) Connecting websocket to %s", self.device.device_network_id,
+  log.info(string.format("[%s](%s) Connecting websocket to %s", serial_number,
                          self.device.label, ip))
   local success, err = websocket:connect(ip, Listener.WS_PORT)
   if err then
@@ -273,13 +275,13 @@ end
 function Listener:stop()
   self._stopped = true
   if not self.websocket then
-    log.warn(string.format("[%s](%s) no websocket exists to close", self.device.device_network_id,
+    log.warn(string.format("[%s](%s) no websocket exists to close", bose_utils.get_serial_number(self.device),
                            self.device.label))
     return
   end
   local suc, err = self.websocket:close(CloseCode.normal())
   if not suc then
-    log.error(string.format("[%s](%s) failed to close websocket: %s", self.device.device_network_id,
+    log.error(string.format("[%s](%s) failed to close websocket: %s", bose_utils.get_serial_number(self.device),
                             self.device.label, err))
   end
 end
