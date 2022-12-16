@@ -16,7 +16,7 @@ jobs:
       # Creates file "$/files.csv", among others
       - id: file_changes
         name: Gather file changes
-        uses: trilom/file-changes-action@1.2.3
+        uses: trilom/file-changes-action@1.2.4
         with:
           output: ','
           fileOutput: ','
