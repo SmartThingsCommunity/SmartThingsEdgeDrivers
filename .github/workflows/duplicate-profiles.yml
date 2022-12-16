@@ -26,7 +26,7 @@ jobs:
         run: |
           cat $HOME/files.csv
 
-      - name: Test python script
+      - name: Run python script
         run: |
           python ./.github/scripts/check_duplicates.py
 

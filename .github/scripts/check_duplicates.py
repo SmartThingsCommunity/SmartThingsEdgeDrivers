@@ -72,7 +72,7 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
                 # compare to YAML files that are not the same file
                 # Compare only .yml files and only files that have not already been found to be a duplicate
                 if current_profile != new_profile and Path(current_profile).suffix == ".yml" and (current_profile, new_profile) not in duplicate_pairs:
-                    is_duplicate = False
+                    is_duplicate = True
                     print("Comparing %s vs %s" % (new_profile, current_profile))
                     with open(new_profile) as new_data, open(current_profile) as current_data:
                         new_profile_map = yaml.safe_load(new_data)
@@ -90,20 +90,26 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
 
                                 # compare categores
                                 if new_component["categories"] != current_component["categories"]:
+                                    is_duplicate = False
                                     break
 
+                                # check that there are the same number of capabilities and that the top capability matches
                                 if  ((len(new_component["capabilities"]) == len(current_component["capabilities"])) and
                                     (new_component["capabilities"][0]["id"] == current_component["capabilities"][0]["id"])):
-                                        # check if capabilities are a direct match with ordering
-                                        if new_component["capabilities"] == current_component["capabilities"]:
-                                            print("Duplicate found: capabilities are the exact same with same ordering")
-                                            is_duplicate = True
-                                        # check if capabilities are the same with same top capability but different subsequent ordering
+                                        # check if capabilities are the exact same, or
+                                        # similar with same top capability but different subsequent ordering
+                                        if (new_component["capabilities"] == current_component["capabilities"] or
+                                            compare_component_capabilities_no_order(new_component, current_component)):
+                                            print("Duplicate capabilties found.")
                                         else:
-                                            # check for different ordering after top capability and different embedded configs
-                                            if compare_component_capabilities_no_order(new_component, current_component):
-                                                is_duplicate = True
-                                                print("Duplicate found: capabilites are the same with different ordering.")
+                                            print("Capabilities do not match.")
+                                            is_duplicate = False
+                                            break
+                                else:
+                                    is_duplicate = False
+                                    break
+                        else:
+                            is_duplicate = False
 
                         if is_duplicate:
                             print("%s and %s are duplicates!\n" % (new_profile, current_profile))
