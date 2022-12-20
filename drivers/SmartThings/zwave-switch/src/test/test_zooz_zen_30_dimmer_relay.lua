@@ -225,20 +225,19 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Switch Multilevel report ON_ENABLE should be handled by parent device",
+  "Switch Multilevel report ON_ENABLE should be handled by parent device",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              SwitchMultilevel:Report({
-                current_value = SwitchBinary.value.ON_ENABLE,
-                target_value = SwitchBinary.value.ON_ENABLE,
-                duration = 0xFF
-              }, { src_channel = 0 })
-          )
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+            SwitchMultilevel:Report({
+              current_value = SwitchBinary.value.ON_ENABLE,
+              target_value = SwitchBinary.value.ON_ENABLE,
+              duration = 0xFF
+            }, { src_channel = 0 })
         )
       }
     },
@@ -246,28 +245,29 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_zooz_zen_30_dimmer_relay:generate_test_message("main", capabilities.switchLevel.level(100))
     }
-  },
-  {
-    inner_block_ordering = "relaxed"
   }
 )
 
 test.register_message_test(
-    "Switch Multilevel report OFF_DISABLE should be handled by parent device",
+  "Switch Multilevel report OFF_DISABLE should be handled by parent device",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              SwitchMultilevel:Report({
-                target_value = SwitchBinary.value.OFF_DISABLE,
-                current_value = SwitchBinary.value.OFF_DISABLE,
-                duration = 0xFF
-              })
-          )
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_zooz_zen_30_dimmer_relay.id,
+        zw_test_utils.zwave_test_build_receive_command(
+            SwitchMultilevel:Report({
+              target_value = SwitchBinary.value.OFF_DISABLE,
+              current_value = SwitchBinary.value.OFF_DISABLE,
+              duration = 0xFF
+            })
         )
       }
     },
