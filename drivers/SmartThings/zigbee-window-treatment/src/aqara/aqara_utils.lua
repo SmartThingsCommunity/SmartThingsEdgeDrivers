@@ -22,7 +22,7 @@ local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
 local aqara_utils = {}
 
 local function emit_shade_state_event(device, shadeLevel)
-  if shadeLevel == 100 then
+  if shadeLevel >= 100 then
     device:emit_event(capabilities.windowShade.windowShade.open())
   elseif shadeLevel == 0 then
     device:emit_event(capabilities.windowShade.windowShade.closed())

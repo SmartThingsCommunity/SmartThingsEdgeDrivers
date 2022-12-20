@@ -110,7 +110,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(mock_device, 0, 600, 1)
     })
-
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Basic.attributes.ApplicationVersion:read(mock_device)
+    })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)

@@ -26,6 +26,8 @@ local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
+local APPLICATION_VERSION = "application_version"
+
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.curtain" },
   { mfr = "LUMI", model = "lumi.curtain.v1" },
@@ -57,37 +59,25 @@ local function window_shade_pause_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
 end
 
-local function write_initialize(device)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
-    aqara_utils.MFG_CODE, data_types.CharString, PREF_INITIALIZE))
-end
-
-local function setInitializationField(device, value)
-  device:set_field(INIT_STATE, value)
-end
-
-local function getInitializationField(device)
-  return device:get_field(INIT_STATE) or ""
-end
-
 local function set_initialized_state_handler(driver, device, command)
   -- update ui
   device:emit_event(deviceInitialization.initializedState.initializing())
 
   -- initialize
-  setInitializationField(device, INIT_STATE_INIT)
-  write_initialize(device)
+  device:set_field(INIT_STATE, INIT_STATE_INIT)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.CharString, PREF_INITIALIZE))
 
   -- open/close command
   device.thread:call_with_delay(3, function(d)
     local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
       capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
-      setInitializationField(device, INIT_STATE_CLOSE)
+      device:set_field(INIT_STATE, INIT_STATE_CLOSE)
       device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
     else
       device:emit_event(deviceInitialization.initializedState.initializing())
-      setInitializationField(device, INIT_STATE_OPEN)
+      device:set_field(INIT_STATE, INIT_STATE_OPEN)
       device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
     end
   end)
@@ -117,17 +107,23 @@ local function shade_state_report_handler(driver, device, value, zb_rx)
   -- initializedState
   local state = value.value
   if state == aqara_utils.SHADE_STATE_STOP then
-    local init_state_value = getInitializationField(device)
+    local init_state_value = device:get_field(INIT_STATE) or ""
     if init_state_value == INIT_STATE_OPEN then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
-      device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 0))
+      device.thread:call_with_delay(2, function(d)
+        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 0))
+      end)
     elseif init_state_value == INIT_STATE_CLOSE then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
-      device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 100))
+      device.thread:call_with_delay(2, function(d)
+        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 100))
+      end)
     elseif init_state_value == INIT_STATE_REVERSE then
       device:set_field(INIT_STATE, "")
-      device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
-        aqara_utils.MFG_CODE))
+      device.thread:call_with_delay(2, function(d)
+        device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+          aqara_utils.MFG_CODE))
+      end)
     end
   end
 end
@@ -137,11 +133,16 @@ local function pref_report_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
 
   -- Do not update if in progress.
-  local init_state_value = getInitializationField(device)
+  local init_state_value = device:get_field(INIT_STATE) or ""
   if init_state_value == "" then
     device:emit_event(initialized == 1 and deviceInitialization.initializedState.initialized() or
       deviceInitialization.initializedState.notInitialized())
   end
+end
+
+local function application_version_handler(driver, device, value, zb_rx)
+  local version = tonumber(value.value)
+  device:set_field(APPLICATION_VERSION, version, { persist = true })
 end
 
 local function write_soft_touch_preference(device, args)
@@ -187,6 +188,7 @@ end
 
 local function do_configure(self, device)
   device:configure()
+  device:send(Basic.attributes.ApplicationVersion:read(device))
   do_refresh(self, device)
 end
 
@@ -245,12 +247,14 @@ local aqara_window_treatment_handler = {
       },
       [Basic.ID] = {
         [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_report_handler,
-        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_report_handler
+        [aqara_utils.PREF_ATTRIBUTE_ID] = pref_report_handler,
+        [Basic.attributes.ApplicationVersion.ID] = application_version_handler
       }
     }
   },
   sub_drivers = {
-    require("aqara.roller-shade")
+    require("aqara.roller-shade"),
+    require("aqara.version")
   },
   can_handle = is_aqara_products
 }
