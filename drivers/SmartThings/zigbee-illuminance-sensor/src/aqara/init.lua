@@ -15,7 +15,7 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
-local FREQUENCY_ATTRIBUTE_ID = 0x0102
+local FREQUENCY_ATTRIBUTE_ID = 0x0000
 local FREQUENCY_DEFAULT_VALUE = 5
 local FREQUENCY_PREF = "frequencyPref"
 
@@ -48,7 +48,7 @@ local function detection_frequency_capability_handler(driver, device, command)
   device:set_field(FREQUENCY_PREF, frequency, { persist = true })
   device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID,
     MFG_CODE,
-    data_types.Uint8, frequency))
+    data_types.Uint16, frequency))
 end
 
 local function write_attr_res_handler(driver, device, zb_rx)
