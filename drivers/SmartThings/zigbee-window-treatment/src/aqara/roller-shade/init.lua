@@ -1,14 +1,12 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
-local aqara_utils = require "aqara/aqara_utils"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
-local zcl_commands = require "st.zigbee.zcl.global_commands"
 local data_types = require "st.zigbee.data_types"
+local aqara_utils = require "aqara/aqara_utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
-local AnalogOutput = clusters.AnalogOutput
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local reverseRollerShadeDirId = "stse.reverseRollerShadeDir"
@@ -54,10 +52,6 @@ local function window_shade_close_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
 end
 
-local function window_shade_pause_cmd(driver, device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
-end
-
 local function write_tilt_attribute(device, payload)
   local value = data_types.validate_or_build_type(payload, data_types.Uint16, "payload")
   local message = cluster_base.write_attribute(device, data_types.ClusterId(MULTISTATE_CLUSTER_ID),
@@ -86,24 +80,6 @@ local function set_rotate_command_handler(driver, device, command)
   end
 end
 
-local function shade_level_read_handler(driver, device, zb_rx)
-  for i, v in ipairs(zb_rx.body.zcl_body.attr_records) do
-    if (v.attr_id.value == AnalogOutput.attributes.PresentValue.ID) then
-      local level = v.data.value
-      aqara_utils.emit_shade_state_event(device, level)
-      break
-    end
-  end
-end
-
-local function shade_level_report_handler_legacy(driver, device, value, zb_rx)
-  -- Not implemented for legacy devices
-end
-
-local function shade_level_report_handler(driver, device, value, zb_rx)
-  aqara_utils.shade_position_changed(device, value)
-end
-
 local function shade_state_report_handler(driver, device, value, zb_rx)
   aqara_utils.shade_state_changed(device, value)
 end
@@ -130,19 +106,8 @@ local function write_reverse_preferences(device, args)
   end
 end
 
-local function do_refresh(self, device)
-  device:send(AnalogOutput.attributes.PresentValue:read(device))
-  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
-    aqara_utils.MFG_CODE))
-end
-
 local function device_info_changed(driver, device, event, args)
   write_reverse_preferences(device, args)
-end
-
-local function do_configure(self, device)
-  device:configure()
-  do_refresh(self, device)
 end
 
 local function device_added(driver, device)
@@ -164,7 +129,6 @@ local aqara_roller_shade_handler = {
   NAME = "Aqara Roller Shade Handler",
   lifecycle_handlers = {
     added = device_added,
-    doConfigure = do_configure,
     infoChanged = device_info_changed
   },
   capability_handlers = {
@@ -174,28 +138,13 @@ local aqara_roller_shade_handler = {
     [capabilities.windowShade.ID] = {
       [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
       [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
-      [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd
     },
     [shadeRotateStateId] = {
       [setRotateStateCommandName] = set_rotate_command_handler
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   zigbee_handlers = {
-    global = {
-      [AnalogOutput.ID] = {
-        [zcl_commands.ReadAttributeResponse.ID] = shade_level_read_handler
-      }
-    },
     attr = {
-      [WindowCovering.ID] = {
-        [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = shade_level_report_handler_legacy
-      },
-      [AnalogOutput.ID] = {
-        [AnalogOutput.attributes.PresentValue.ID] = shade_level_report_handler
-      },
       [Basic.ID] = {
         [aqara_utils.SHADE_STATE_ATTRIBUTE_ID] = shade_state_report_handler,
         [aqara_utils.PREF_ATTRIBUTE_ID] = pref_report_handler
