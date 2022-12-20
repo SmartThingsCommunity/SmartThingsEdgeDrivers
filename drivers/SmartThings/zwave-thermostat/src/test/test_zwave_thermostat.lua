@@ -188,7 +188,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool", "auto" }))
+        message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool", "auto" }, {visibility={displayed=false}}))
       }
     }
 )
@@ -209,7 +209,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto", "circulate" }))
+        message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto", "circulate" }, {visibility={displayed=false}}))
       }
     }
 )
