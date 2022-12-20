@@ -28,6 +28,7 @@ local Driver = require "st.driver"
 local log = require "log"
 local json = require "dkjson"
 local utils = require "st.utils"
+local bose_utils = require "utils"
 local command = require "command"
 local socket = require "cosock.socket"
 
@@ -42,7 +43,7 @@ local function discovery_handler(driver, _, should_continue)
 
   local device_list = driver:get_devices()
   for _, device in ipairs(device_list) do
-    local id = device.device_network_id
+    local id = bose_utils.get_serial_number(device)
     known_devices[id] = true
   end
 
@@ -180,9 +181,10 @@ end
 
 local function device_init(driver, device)
   local backoff = backoff_builder(60, 1, 0.1)
+  local serial_number = bose_utils.get_serial_number(device)
   local dev_info
   while true do -- todo should we limit this? I think this will just spin forever if the device goes down
-    discovery.find(device.device_network_id, function(found) dev_info = found end)
+    discovery.find(serial_number, function(found) dev_info = found end)
     if dev_info then break end
     socket.sleep(backoff())
   end

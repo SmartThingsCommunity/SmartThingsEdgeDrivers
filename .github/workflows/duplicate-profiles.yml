@@ -1,0 +1,48 @@
+name: Check for duplicate profiles
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**/profiles/*.yml'
+env:
+  LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+jobs:
+  find-duplicate-profiles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Creates file "$/files.csv", among others
+      - id: file_changes
+        name: Gather file changes
+        uses: trilom/file-changes-action@1.2.4
+        with:
+          output: ','
+          fileOutput: ','
+
+      # For verification
+      - name: Show files changed
+        run: |
+          cat $HOME/files.csv
+
+      - name: Run python script
+        run: |
+          python ./.github/scripts/check_duplicates.py
+
+      - name: Find comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          body-includes: Duplicate profile(s) detected
+          comment-author: 'github-actions[bot]'
+          issue-number: ${{ github.event.number }}
+
+      - name: Post comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body-file: 'profile-comment-body.md'
+          edit-mode: replace
+          issue-number: ${{ github.event.number }}
+
