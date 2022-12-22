@@ -10,11 +10,9 @@ local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 
 local deviceInitialization = capabilities["stse.deviceInitialization"]
-local deviceInitializationId = "stse.deviceInitialization"
+local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
+local softTouch = capabilities["stse.softTouch"]
 local setInitializedStateCommandName = "setInitializedState"
-
-local reverseCurtainDirectionPreferenceId = "stse.reverseCurtainDirection"
-local softTouchPreferenceId = "stse.softTouch"
 
 local INIT_STATE = "initState"
 local INIT_STATE_INIT = "init"
@@ -147,9 +145,9 @@ end
 
 local function write_soft_touch_preference(device, args)
   if device.preferences ~= nil then
-    local softTouchPrefValue = device.preferences[softTouchPreferenceId]
+    local softTouchPrefValue = device.preferences[softTouch.ID]
     if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouchPreferenceId] then
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
       local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -159,9 +157,9 @@ end
 
 local function write_reverse_preferences(device, args)
   if device.preferences ~= nil then
-    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirectionPreferenceId]
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
     if reverseCurtainDirectionPrefValue ~= nil and reverseCurtainDirectionPrefValue ~=
-        args.old_st_store.preferences[reverseCurtainDirectionPreferenceId] then
+        args.old_st_store.preferences[reverseCurtainDirection.ID] then
       local raw_value = reverseCurtainDirectionPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -225,7 +223,7 @@ local aqara_window_treatment_handler = {
       [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
       [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd
     },
-    [deviceInitializationId] = {
+    [deviceInitialization.ID] = {
       [setInitializedStateCommandName] = set_initialized_state_handler
     },
     [capabilities.refresh.ID] = {

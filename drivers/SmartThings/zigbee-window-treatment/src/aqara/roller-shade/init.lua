@@ -9,47 +9,41 @@ local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local reverseRollerShadeDirId = "stse.reverseRollerShadeDir"
-
+local reverseRollerShadeDir = capabilities["stse.reverseRollerShadeDir"]
 local shadeRotateState = capabilities["stse.shadeRotateState"]
-local shadeRotateStateId = "stse.shadeRotateState"
 local setRotateStateCommandName = "setRotateState"
 
 local MULTISTATE_CLUSTER_ID = 0x0013
 local MULTISTATE_ATTRIBUTE_ID = 0x0055
-local TILT_UP_VALUE = 0x0004
-local TILT_DOWN_VALUE = 0x0005
+local ROTATE_UP_VALUE = 0x0004
+local ROTATE_DOWN_VALUE = 0x0005
 
-local INITIALIZED_STATE = "initializedState"
 
 local function window_shade_level_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  local initialized = device:get_field(INITIALIZED_STATE) or 0
-  if initialized ~= 1 then
-    return
+  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
+    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
+  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    aqara_utils.shade_level_cmd(driver, device, command)
   end
-
-  aqara_utils.shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_open_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  local initialized = device:get_field(INITIALIZED_STATE) or 0
-  if initialized ~= 1 then
-    return
+  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
+    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
+  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
   end
-
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
 end
 
 local function window_shade_close_cmd(driver, device, command)
   -- Cannot be controlled if not initialized
-  local initialized = device:get_field(INITIALIZED_STATE) or 0
-  if initialized ~= 1 then
-    return
+  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
+    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
+  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
   end
-
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
 end
 
 local function write_tilt_attribute(device, payload)
@@ -67,16 +61,16 @@ end
 local function set_rotate_command_handler(driver, device, command)
   device:emit_event(shadeRotateState.rotateState.idle()) -- update UI
 
-  local initialized = device:get_field(INITIALIZED_STATE) or 0
-  if initialized ~= 1 then
-    return
-  end
-
-  local state = command.args.state
-  if state == "rotateUp" then
-    write_tilt_attribute(device, TILT_UP_VALUE)
-  elseif state == "rotateDown" then
-    write_tilt_attribute(device, TILT_DOWN_VALUE)
+  -- Cannot be controlled if not initialized
+  local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
+    initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
+  if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    local state = command.args.state
+    if state == "rotateUp" then
+      write_tilt_attribute(device, ROTATE_UP_VALUE)
+    elseif state == "rotateDown" then
+      write_tilt_attribute(device, ROTATE_DOWN_VALUE)
+    end
   end
 end
 
@@ -89,16 +83,13 @@ local function pref_report_handler(driver, device, value, zb_rx)
   local initialized = string.byte(value.value, 3) & 0xFF
   device:emit_event(initialized == 1 and initializedStateWithGuide.initializedStateWithGuide.initialized() or
     initializedStateWithGuide.initializedStateWithGuide.notInitialized())
-
-  -- store
-  device:set_field(INITIALIZED_STATE, initialized, { persist = true })
 end
 
 local function write_reverse_preferences(device, args)
   if device.preferences ~= nil then
-    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDirId]
+    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
     if reverseRollerShadeDirPrefValue ~= nil and
-        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDirId] then
+        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir.ID] then
       local raw_value = reverseRollerShadeDirPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -139,7 +130,7 @@ local aqara_roller_shade_handler = {
       [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
       [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
     },
-    [shadeRotateStateId] = {
+    [shadeRotateState.ID] = {
       [setRotateStateCommandName] = set_rotate_command_handler
     }
   },
