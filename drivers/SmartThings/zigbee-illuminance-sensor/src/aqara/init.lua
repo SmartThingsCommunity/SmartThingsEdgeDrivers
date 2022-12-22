@@ -8,8 +8,7 @@ local data_types = require "st.zigbee.data_types"
 local PowerConfiguration = clusters.PowerConfiguration
 
 local detectionFrequency = capabilities["stse.detectionFrequency"]
-local detectionFrequencyId = "stse.detectionFrequency"
-local detectionFrequencyCommand = "setDetectionFrequency"
+local setDetectionFrequencyCommandName = "setDetectionFrequency"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -47,8 +46,7 @@ local function detection_frequency_capability_handler(driver, device, command)
   local frequency = command.args.frequency
   device:set_field(FREQUENCY_PREF, frequency, { persist = true })
   device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID,
-    MFG_CODE,
-    data_types.Uint16, frequency))
+    MFG_CODE, data_types.Uint16, frequency))
 end
 
 local function write_attr_res_handler(driver, device, zb_rx)
@@ -73,8 +71,7 @@ local function added_handler(self, device)
   device:emit_event(capabilities.battery.battery(100))
 
   device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
-    MFG_CODE,
-    data_types.Uint8, 1))
+    MFG_CODE, data_types.Uint8, 1))
 end
 
 local aqara_illuminance_handler = {
@@ -84,8 +81,8 @@ local aqara_illuminance_handler = {
     added = added_handler
   },
   capability_handlers = {
-    [detectionFrequencyId] = {
-      [detectionFrequencyCommand] = detection_frequency_capability_handler,
+    [detectionFrequency.ID] = {
+      [setDetectionFrequencyCommandName] = detection_frequency_capability_handler,
     }
   },
   zigbee_handlers = {
