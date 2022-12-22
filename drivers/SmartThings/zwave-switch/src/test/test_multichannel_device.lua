@@ -82,6 +82,17 @@ local switch_endpoints = {
   }
 }
 
+local function prepare_metadata(device, endpoint, profile)
+  local name = string.format("%s %d", device.label, endpoint)
+  return {
+    type = "EDGE_CHILD",
+    label = name,
+    profile = profile,
+    parent_device_id = device.id,
+    parent_assigned_child_key = string.format("%02X", endpoint)
+  }
+end
+
 local base_parent = test.mock_device.build_test_zwave_device({
   label = "Z-Wave Switch Multichannel",
   profile = t_utils.get_profile_definition("multichannel-switch-level.yml"),
@@ -2116,11 +2127,6 @@ test.register_message_test(
     }
 )
 
---[[
-TODO: Uncomment following unit tests and set correct message for checking if device_create
-      message was sent when the integration test framework start mock out the 'create_device(json)' devices api
-      It might be ready with 0.46.x release
-
 test.register_message_test(
     "MultiChannel capability report should not create device if it has child with ep 1",
     {
@@ -2140,28 +2146,20 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MultiChannel capability report should create device if it doesn't have child with ep 1",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          base_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              MultiChannel:CapabilityReport({
-                end_point = 1,
-                generic_device_class = 0x10
-              })
-          )
-        }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = --expect_create_device_fn ; metering-switch child
-      }
-    }
+    function()
+      test.socket.zwave:__queue_receive({
+        base_parent.id,
+        MultiChannel:CapabilityReport({
+          end_point = 1,
+          generic_device_class = 0x10
+        })
+      })
+      base_parent:expect_device_create(
+          prepare_metadata(base_parent, 1, "metering-switch")
+      )
+    end
 )
 
 test.register_message_test(
@@ -2183,28 +2181,20 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MultiChannel capability report should create device if it doesn't have child with ep 3",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          base_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              MultiChannel:CapabilityReport({
-                end_point = 3,
-                generic_device_class = 0x11
-              })
-          )
-        }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = --expect_create_device_fn ; metering-dimmer child
-      }
-    }
+    function()
+      test.socket.zwave:__queue_receive({
+        base_parent.id,
+        MultiChannel:CapabilityReport({
+          end_point = 3,
+          generic_device_class = 0x11
+        })
+      })
+      base_parent:expect_device_create(
+          prepare_metadata(base_parent, 3, "metering-dimmer")
+      )
+    end
 )
 
 test.register_message_test(
@@ -2226,57 +2216,30 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MultiChannel capability report should create device if it doesn't have child with ep 4",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          base_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              MultiChannel:CapabilityReport({
-                end_point = 4,
-                generic_device_class = 0x20
-              })
-          )
-        }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = --expect_create_device_fn ; generic-sensor child
-      }
-    }
+    function()
+      test.socket.zwave:__queue_receive({
+        base_parent.id,
+        MultiChannel:CapabilityReport({
+          end_point = 4,
+          generic_device_class = 0x20
+        })
+      })
+      base_parent:expect_device_create(
+          prepare_metadata(base_parent, 4, "generic-sensor")
+      )
+    end
 )
 
 test.register_message_test(
-    "MultiChannel capability report should not create device if it has child with ep 4",
+    "MultiChannel capability report should not create device if it has child with ep 5",
     {
       {
         channel = "zwave",
         direction = "receive",
         message = {
           mock_parent.id,
-          zw_test_utils.zwave_test_build_receive_command(
-              MultiChannel:CapabilityReport({
-                end_point = 4,
-                generic_device_class = 0x08
-              })
-          )
-        }
-      }
-    }
-)
-
-test.register_message_test(
-    "MultiChannel capability report should create device if it doesn't have child with ep 4",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          base_parent.id,
           zw_test_utils.zwave_test_build_receive_command(
               MultiChannel:CapabilityReport({
                 end_point = 5,
@@ -2284,14 +2247,24 @@ test.register_message_test(
               })
           )
         }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = --expect_create_device_fn ; generic-multi-sensor child
       }
     }
 )
-]]
+
+test.register_coroutine_test(
+    "MultiChannel capability report should create device if it doesn't have child with ep 5",
+    function()
+      test.socket.zwave:__queue_receive({
+        base_parent.id,
+        MultiChannel:CapabilityReport({
+          end_point = 5,
+          generic_device_class = 0x08
+        })
+      })
+      base_parent:expect_device_create(
+          prepare_metadata(base_parent, 5, "generic-multi-sensor")
+      )
+    end
+)
 
 test.run_registered_tests()
