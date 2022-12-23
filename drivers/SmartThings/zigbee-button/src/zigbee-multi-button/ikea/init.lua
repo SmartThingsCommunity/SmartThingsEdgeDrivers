@@ -27,6 +27,18 @@ local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local Groups = clusters.Groups
 
+local GROUPING_SUCCESS = "groupingSuccess"
+local RETRY_BIND_AND_GROUPING = "retryBindAndGrouping"
+
+local set_grouping = function(self, device)
+  local grouping_success = device:get_field(GROUPING_SUCCESS)
+  if grouping_success ~= true then
+    self:add_hub_to_zigbee_group(0x0000)
+    device:send(Groups.commands.AddGroup(device, 0x0000))
+    device:set_field(GROUPING_SUCCESS, true, {persist = true})
+  end
+end
+
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
@@ -49,6 +61,11 @@ local do_configure = function(self, device)
                                                      body = message_body
                                                    })
   device:send(binding_table_cmd)
+
+  device.thread:call_with_delay(3, function()
+    device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
+    set_grouping(self, device)
+  end)
 end
 
 local function added_handler(self, device)
@@ -64,6 +81,7 @@ local function added_handler(self, device)
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:set_field(GROUPING_SUCCESS, false, {persist = true})
 end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
@@ -74,8 +92,7 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
       return
     end
   end
-  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
-  device:send(Groups.commands.AddGroup(device, 0x0000))
+  set_grouping(driver, device)
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)
