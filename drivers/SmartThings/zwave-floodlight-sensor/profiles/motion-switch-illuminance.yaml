@@ -15,11 +15,7 @@ components:
   - id: refresh
     version: 1
   categories:
-    - name: MotionSensor
-metadata:
-  deviceType: MotionSensor
-  ocfDeviceType: x.com.st.d.sensor.motion
-  deviceTypeId: MotionSensor
+    - name: Switch
 preferences:
   - name: "onTime"
     title: "PIR Trigger Off Period"
