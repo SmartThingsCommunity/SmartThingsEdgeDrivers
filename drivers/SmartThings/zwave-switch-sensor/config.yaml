@@ -1,4 +1,0 @@
-name: 'Z-Wave Floodlight Sensor'
-packageKey: 'zwave-floodlight-sensor'
-permissions:
-  zwave: {}
