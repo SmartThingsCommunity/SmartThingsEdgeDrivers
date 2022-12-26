@@ -1,0 +1,46 @@
+name: motion-switch-illuminance
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: switch
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 100000]
+  - id: refresh
+    version: 1
+  categories:
+  - name: FloodlightSensor
+preferences:
+  - name: "onTime"
+    title: "PIR Trigger Off Period"
+    description: "Period to send trigger off command after PIR is triggered. [8-720 seconds]"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 8
+      maximum: 720
+      default: 15
+  - name: "luxThreshold"
+    title: "Lux Sensor Threshold"
+    description: "Lux level to activate the PIR. [30-200]"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 30
+      maximum: 200
+      default: 50
+  - name: "luxReportInterval"
+    title: "Auto Report Luminance Interval"
+    description: "Sets the interval of periodic lux level report to the controller. [0-1440 minutes]"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 1440
+      default: 10
