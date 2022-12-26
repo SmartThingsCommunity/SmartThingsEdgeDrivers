@@ -1,0 +1,6 @@
+zwaveManufacturer:
+  - id: "aeotec/contact/5"
+    deviceLabel: Aeotec Open/Closed Sensor
+    manufacturerId: 0x000C
+    productId: 0x000B
+    deviceProfileName: base-contact
