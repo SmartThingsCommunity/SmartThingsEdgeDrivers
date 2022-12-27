@@ -32,30 +32,30 @@ zwaveManufacturer:
     manufacturerId: 0x0063
     productType: 0x5044
     deviceProfileName: switch-level-indicator
-#   - id: "Fibaro/0F06"
-#     deviceLabel: Fibaro Outlet
-#     manufacturerId: 0x0072
-#     productType: 0x0501
-#     productId: 0x0F06
-#     deviceProfileName: metering-switch
+  - id: "Fibaro/0F06"
+    deviceLabel: Fibaro Outlet
+    manufacturerId: 0x0072
+    productType: 0x0501
+    productId: 0x0F06
+    deviceProfileName: metering-switch
   - id: "Eaton/0000"
     deviceLabel: Eaton Dimmer Switch
     manufacturerId: 0x001A
     productType: 0x4441
     productId: 0x0000
     deviceProfileName: switch-level
-#   - id: "Inovelli/Dimmer/Power/Energy"
-#     deviceLabel: Inovelli Dimmer Switch
-#     manufacturerId: 0x031E
-#     productType: 0x0001
-#     productId: 0x0001
-#     deviceProfileName: inovelli-dimmer-power-energy
-#   - id: "Inovelli/Dimmer"
-#     deviceLabel: Inovelli Dimmer Switch
-#     manufacturerId: 0x031E
-#     productType: 0x0003
-#     productId: 0x0001
-#     deviceProfileName: inovelli-dimmer
+  - id: "Inovelli/Dimmer/Power/Energy"
+    deviceLabel: Inovelli Dimmer Switch
+    manufacturerId: 0x031E
+    productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: inovelli-dimmer-power-energy
+  - id: "Inovelli/Dimmer"
+    deviceLabel: Inovelli Dimmer Switch
+    manufacturerId: 0x031E
+    productType: 0x0003
+    productId: 0x0001
+    deviceProfileName: inovelli-dimmer
   - id: "010F/0403"
     deviceLabel: Fibaro Single Switch
     manufacturerId: 0x010F
@@ -865,21 +865,21 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x004B
     deviceProfileName: metering-switch
-#   - id: 0086/0019
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x0019
-#     deviceProfileName: metering-dimmer
-#   - id: 0086/0013
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x0013
-#     deviceProfileName: metering-dimmer
-#   - id: 0086/0008
-#     deviceLabel: Aeotec Dimmer Switch
-#     manufacturerId: 0x0086
-#     productId: 0x0008
-#     deviceProfileName: metering-dimmer
+  - id: 0086/0019
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x0019
+    deviceProfileName: metering-dimmer
+  - id: 0086/0013
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x0013
+    deviceProfileName: metering-dimmer
+  - id: 0086/0008
+    deviceLabel: Aeotec Dimmer Switch
+    manufacturerId: 0x0086
+    productId: 0x0008
+    deviceProfileName: metering-dimmer
 #   - id: 010F/0102
 #     deviceLabel: Fibaro Dimmer Switch
 #     manufacturerId: 0x010F

@@ -1,19 +1,19 @@
 zigbeeManufacturer :
-  # - id : Sinope/VA4200WZ
-  #   deviceLabel : Sinope Valve
-  #   manufacturer: Sinope Technologies
-  #   model: VA4200WZ
-  #   deviceProfileName: valve-battery-powerSource
-  # - id : Sinope/VA4200ZB
-  #   deviceLabel : Sinope Valve
-  #   manufacturer: Sinope Technologies
-  #   model: VA4200ZB
-  #   deviceProfileName: valve-battery-powerSource
-  # - id : Sinope/VA4220ZB
-  #   deviceLabel : Sinope Valve
-  #   manufacturer: Sinope Technologies
-  #   model: VA4220ZB
-  #   deviceProfileName: valve-battery-powerSource
+  - id : Sinope/VA4200WZ
+    deviceLabel : Sinope Valve
+    manufacturer: Sinope Technologies
+    model: VA4200WZ
+    deviceProfileName: valve-battery-powerSource
+  - id : Sinope/VA4200ZB
+    deviceLabel : Sinope Valve
+    manufacturer: Sinope Technologies
+    model: VA4200ZB
+    deviceProfileName: valve-battery-powerSource
+  - id : Sinope/VA4220ZB
+    deviceLabel : Sinope Valve
+    manufacturer: Sinope Technologies
+    model: VA4220ZB
+    deviceProfileName: valve-battery-powerSource
   - id: WAXMAN/leakSMARTValve/v2.10
     deviceLabel: leakSMART Valve
     manufacturer: WAXMAN

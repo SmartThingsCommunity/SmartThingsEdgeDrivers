@@ -1171,276 +1171,276 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: Outdoor Accent RGB
     deviceProfileName: color-bulb
-  # - id: "Samsung Electronics/ABL-LIGHT-Z-001"
-  #   deviceLabel: Juno Connect
-  #   manufacturer: Samsung Electronics
-  #   model: ABL-LIGHT-Z-001
-  #   deviceProfileName: color-temp-bulb
-  # - id: Juno/ABL-LIGHT-Z-001
-  #   deviceLabel: Juno Connect
-  #   manufacturer: Juno
-  #   model: ABL-LIGHT-Z-001
-  #   deviceProfileName: color-temp-bulb
-  # - id: Samsung/SAMSUNG-ITM-Z-001
-  #   deviceLabel: Samsung Light
-  #   manufacturer: Samsung Electronics
-  #   model: SAMSUNG-ITM-Z-001
-  #   deviceProfileName: color-temp-bulb
-  # - id: "Samsung Electronics/HAN-LIGHT-Z-001"
-  #   deviceLabel: SamsungB2B Light
-  #   manufacturer: Samsung Electronics
-  #   model: HAN-LIGHT-Z-001
-  #   deviceProfileName: color-temp-bulb
-  # - id: AduroSmart/AD-ColorTemperature3001
-  #   deviceLabel: Eria Light
-  #   manufacturer: AduroSmart Eria
-  #   model: AD-ColorTemperature3001
-  #   deviceProfileName: color-temp-bulb
-  # - id: Aurora/TWBulb51AU
-  #   deviceLabel: Aurora Light
-  #   manufacturer: Aurora
-  #   model: TWBulb51AU
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: Aurora/TWMPROZXBulb50AU
-  #   deviceLabel: Aurora Light
-  #   manufacturer: Aurora
-  #   model: TWMPROZXBulb50AU
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: Aurora/TWStrip50AU
-  #   deviceLabel: Aurora Light
-  #   manufacturer: Aurora
-  #   model: TWStrip50AU
-  #   deviceProfileName: color-temp-bulb-2500K-6000K
-  # - id: Aurora/TWGU10Bulb50AU
-  #   deviceLabel: Aurora Light
-  #   manufacturer: Aurora
-  #   model: TWGU10Bulb50AU
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: Aurora/TWCLBulb50AU
-  #   deviceLabel: AOne Light
-  #   manufacturer: Aurora
-  #   model: TWCLBulb50AU
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: CWD/ZB.A806Ecct-A001
-  #   deviceLabel: CWD Light
-  #   manufacturer: CWD
-  #   model: ZB.A806Ecct-A001
-  #   deviceProfileName: color-temp-bulb
-  # - id: CWD/ZB.A806Bcct-A001
-  #   deviceLabel: CWD Light
-  #   manufacturer: CWD
-  #   model: ZB.A806Bcct-A001
-  #   deviceProfileName: color-temp-bulb
-  # - id: CWD/ZB.M350cct-A001
-  #   deviceLabel: CWD Light
-  #   manufacturer: CWD
-  #   model: ZB.M350cct-A001
-  #   deviceProfileName: color-temp-bulb
-  # - id: "ETI/Zigbee CCT Downlight"
-  #   deviceLabel: Commercial Light
-  #   manufacturer: ETI
-  #   model: Zigbee CCT Downlight
-  #   deviceProfileName: color-temp-bulb-2700K-5000K
-  # - id: HomeDepot/Ecosmart-ZBT-BR30-CCT-Bulb
-  #   deviceLabel: Ecosmart Light
-  #   manufacturer: The Home Depot
-  #   model: Ecosmart-ZBT-BR30-CCT-Bulb
-  #   deviceProfileName: color-temp-bulb
-  # - id: HomeDepot/Ecosmart-ZBT-A19-CCT-Bulb
-  #   deviceLabel: Ecosmart Light
-  #   manufacturer: The Home Depot
-  #   model: Ecosmart-ZBT-A19-CCT-Bulb
-  #   deviceProfileName: color-temp-bulb
-  # - id: "IKEA/GUNNARP panel round"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: GUNNARP panel round
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/LEPTITER Recessed spot light"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: LEPTITER Recessed spot light
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E12 WS opal 600lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E12 WS opal 600lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E14 WS 470lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E14 WS 470lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E14 WS opal 600lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E14 WS opal 600lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E26 WS clear 806lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E26 WS clear 806lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E27 WS clear 806lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E27 WS clear 806lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E26 WS opal 1000lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E26 WS opal 1000lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: "IKEA/TRADFRI bulb E27 WS opal 1000lm"
-  #   deviceLabel: IKEA Light
-  #   manufacturer: IKEA of Sweden
-  #   model: TRADFRI bulb E27 WS opal 1000lm
-  #   deviceProfileName: color-temp-bulb-2200K-4000K
-  # - id: Megaman/Z3-ColorTemperature
-  #   deviceLabel: INGENIUM Light
-  #   manufacturer: Megaman
-  #   model: Z3-ColorTemperature
-  #   deviceProfileName: color-temp-bulb
-  # - id: "innr/RB 248 T"
-  #   deviceLabel: Innr Light
-  #   manufacturer: innr
-  #   model: RB 248 T
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: "innr/RB 278 T"
-  #   deviceLabel: Innr Light
-  #   manufacturer: innr
-  #   model: RB 278 T
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: "innr/RS 228 T"
-  #   deviceLabel: Innr Light
-  #   manufacturer: innr
-  #   model: RS 228 T
-  #   deviceProfileName: color-temp-bulb-2200K-5000K
-  # - id: "OSRAM/LIGHTIFY BR Tunable White"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY BR Tunable White
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY RT Tunable White"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY RT Tunable White
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/Classic A60 TW"
-  #   deviceLabel: OSRAM Light
-  #   manufacturer: OSRAM
-  #   model: Classic A60 TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY A19 Tunable White"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY A19 Tunable White
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/Classic B40 TW - LIGHTIFY"
-  #   deviceLabel: OSRAM Light
-  #   manufacturer: OSRAM
-  #   model: Classic B40 TW - LIGHTIFY
-  #   deviceProfileName: color-temp-bulb
-  # - id: "LEDVANCE/A19 TW 10 year"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: LEDVANCE
-  #   model: A19 TW 10 year
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY Conv Under Cabinet TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Conv Under Cabinet TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: OSRAM/ColorstripRGBW
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: ColorstripRGBW
-  #   deviceProfileName: color-temp-bulb
-  # - id: OSRAM/LIGHTIFYEdgelitFlushmountTW
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Edge-lit Flushmount TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "LEDVANCE/MR16 TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: LEDVANCE
-  #   model: MR16 TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY Surface TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Surface TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY Under Cabinet TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Under Cabinet TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "LEDVANCE/BR30 TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: LEDVANCE
-  #   model: BR30 TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "LEDVANCE/RT TW"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: LEDVANCE
-  #   model: RT TW
-  #   deviceProfileName: color-temp-bulb
-  # - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
-  #   deviceLabel: SYLVANIA Light
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Edge-lit flushmount
-  #   deviceProfileName: color-temp-bulb-2700K-6500K
-  # - id: Smarthome/S111-202A
-  #   deviceLabel: Leedarson Light
-  #   manufacturer: Smarthome
-  #   model: S111-202A
-  #   deviceProfileName: color-temp-bulb
-  # - id: lk/ZBT-CCTLight-GLS0108
-  #   deviceLabel: Linkind Light
-  #   manufacturer: lk
-  #   model: ZBT-CCTLight-GLS0108
-  #   deviceProfileName: color-temp-bulb
-  # - id: MLI/ZBT-ColorTemperature
-  #   deviceLabel: Tint Light
-  #   manufacturer: MLI
-  #   model: ZBT-ColorTemperature
-  #   deviceProfileName: color-temp-bulb
-  # - id: sengled/Z01-A19NAE26
-  #   deviceLabel: Sengled Light
-  #   manufacturer: sengled
-  #   model: Z01-A19NAE26
-  #   deviceProfileName: color-temp-bulb
-  # - id: sengled/Z01-A191AE26W
-  #   deviceLabel: Sengled Light
-  #   manufacturer: sengled
-  #   model: Z01-A191AE26W
-  #   deviceProfileName: color-temp-bulb
-  # - id: sengled/Z01-A60EAB22
-  #   deviceLabel: Sengled Light
-  #   manufacturer: sengled
-  #   model: Z01-A60EAB22
-  #   deviceProfileName: color-temp-bulb
-  # - id: sengled/Z01-A60EAE27
-  #   deviceLabel: Sengled Light
-  #   manufacturer: sengled
-  #   model: Z01-A60EAE27
-  #   deviceProfileName: color-temp-bulb
-  # - id: "Third Reality/3RSL011Z"
-  #   deviceLabel: RealityLight Light
-  #   manufacturer: Third Reality, Inc
-  #   model: 3RSL011Z
-  #   deviceProfileName: color-temp-bulb
-  # - id: "Third Reality/3RSL012Z"
-  #   deviceLabel: RealityLight Light
-  #   manufacturer: Third Reality, Inc
-  #   model: 3RSL012Z
-  #   deviceProfileName: color-temp-bulb
-  # - id: "Ajax Online/CCT"
-  #   deviceLabel: Ajax Light
-  #   manufacturer: Ajax Online
-  #   model: CCT
-  #   deviceProfileName: color-temp-bulb-2200K-6500K
+  - id: "Samsung Electronics/ABL-LIGHT-Z-001"
+    deviceLabel: Juno Connect
+    manufacturer: Samsung Electronics
+    model: ABL-LIGHT-Z-001
+    deviceProfileName: color-temp-bulb
+  - id: Juno/ABL-LIGHT-Z-001
+    deviceLabel: Juno Connect
+    manufacturer: Juno
+    model: ABL-LIGHT-Z-001
+    deviceProfileName: color-temp-bulb
+  - id: Samsung/SAMSUNG-ITM-Z-001
+    deviceLabel: Samsung Light
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-001
+    deviceProfileName: color-temp-bulb
+  - id: "Samsung Electronics/HAN-LIGHT-Z-001"
+    deviceLabel: SamsungB2B Light
+    manufacturer: Samsung Electronics
+    model: HAN-LIGHT-Z-001
+    deviceProfileName: color-temp-bulb
+  - id: AduroSmart/AD-ColorTemperature3001
+    deviceLabel: Eria Light
+    manufacturer: AduroSmart Eria
+    model: AD-ColorTemperature3001
+    deviceProfileName: color-temp-bulb
+  - id: Aurora/TWBulb51AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: TWBulb51AU
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: Aurora/TWMPROZXBulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: TWMPROZXBulb50AU
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: Aurora/TWStrip50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: TWStrip50AU
+    deviceProfileName: color-temp-bulb-2500K-6000K
+  - id: Aurora/TWGU10Bulb50AU
+    deviceLabel: Aurora Light
+    manufacturer: Aurora
+    model: TWGU10Bulb50AU
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: Aurora/TWCLBulb50AU
+    deviceLabel: AOne Light
+    manufacturer: Aurora
+    model: TWCLBulb50AU
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: CWD/ZB.A806Ecct-A001
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: ZB.A806Ecct-A001
+    deviceProfileName: color-temp-bulb
+  - id: CWD/ZB.A806Bcct-A001
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: ZB.A806Bcct-A001
+    deviceProfileName: color-temp-bulb
+  - id: CWD/ZB.M350cct-A001
+    deviceLabel: CWD Light
+    manufacturer: CWD
+    model: ZB.M350cct-A001
+    deviceProfileName: color-temp-bulb
+  - id: "ETI/Zigbee CCT Downlight"
+    deviceLabel: Commercial Light
+    manufacturer: ETI
+    model: Zigbee CCT Downlight
+    deviceProfileName: color-temp-bulb-2700K-5000K
+  - id: HomeDepot/Ecosmart-ZBT-BR30-CCT-Bulb
+    deviceLabel: Ecosmart Light
+    manufacturer: The Home Depot
+    model: Ecosmart-ZBT-BR30-CCT-Bulb
+    deviceProfileName: color-temp-bulb
+  - id: HomeDepot/Ecosmart-ZBT-A19-CCT-Bulb
+    deviceLabel: Ecosmart Light
+    manufacturer: The Home Depot
+    model: Ecosmart-ZBT-A19-CCT-Bulb
+    deviceProfileName: color-temp-bulb
+  - id: "IKEA/GUNNARP panel round"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: GUNNARP panel round
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/LEPTITER Recessed spot light"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: LEPTITER Recessed spot light
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E12 WS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E12 WS opal 600lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E14 WS 470lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E14 WS 470lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E14 WS opal 600lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E14 WS opal 600lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E26 WS clear 806lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 WS clear 806lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E27 WS clear 806lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E27 WS clear 806lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E26 WS opal 1000lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E26 WS opal 1000lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: "IKEA/TRADFRI bulb E27 WS opal 1000lm"
+    deviceLabel: IKEA Light
+    manufacturer: IKEA of Sweden
+    model: TRADFRI bulb E27 WS opal 1000lm
+    deviceProfileName: color-temp-bulb-2200K-4000K
+  - id: Megaman/Z3-ColorTemperature
+    deviceLabel: INGENIUM Light
+    manufacturer: Megaman
+    model: Z3-ColorTemperature
+    deviceProfileName: color-temp-bulb
+  - id: "innr/RB 248 T"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 248 T
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: "innr/RB 278 T"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RB 278 T
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: "innr/RS 228 T"
+    deviceLabel: Innr Light
+    manufacturer: innr
+    model: RS 228 T
+    deviceProfileName: color-temp-bulb-2200K-5000K
+  - id: "OSRAM/LIGHTIFY BR Tunable White"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY BR Tunable White
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY RT Tunable White"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY RT Tunable White
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/Classic A60 TW"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Classic A60 TW
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY A19 Tunable White"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY A19 Tunable White
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/Classic B40 TW - LIGHTIFY"
+    deviceLabel: OSRAM Light
+    manufacturer: OSRAM
+    model: Classic B40 TW - LIGHTIFY
+    deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/A19 TW 10 year"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: A19 TW 10 year
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY Conv Under Cabinet TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Conv Under Cabinet TW
+    deviceProfileName: color-temp-bulb
+  - id: OSRAM/ColorstripRGBW
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: ColorstripRGBW
+    deviceProfileName: color-temp-bulb
+  - id: OSRAM/LIGHTIFYEdgelitFlushmountTW
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Edge-lit Flushmount TW
+    deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/MR16 TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: MR16 TW
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY Surface TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Surface TW
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY Under Cabinet TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Under Cabinet TW
+    deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/BR30 TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: BR30 TW
+    deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/RT TW"
+    deviceLabel: SYLVANIA Light
+    manufacturer: LEDVANCE
+    model: RT TW
+    deviceProfileName: color-temp-bulb
+  - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
+    deviceLabel: SYLVANIA Light
+    manufacturer: OSRAM
+    model: LIGHTIFY Edge-lit flushmount
+    deviceProfileName: color-temp-bulb-2700K-6500K
+  - id: Smarthome/S111-202A
+    deviceLabel: Leedarson Light
+    manufacturer: Smarthome
+    model: S111-202A
+    deviceProfileName: color-temp-bulb
+  - id: lk/ZBT-CCTLight-GLS0108
+    deviceLabel: Linkind Light
+    manufacturer: lk
+    model: ZBT-CCTLight-GLS0108
+    deviceProfileName: color-temp-bulb
+  - id: MLI/ZBT-ColorTemperature
+    deviceLabel: Tint Light
+    manufacturer: MLI
+    model: ZBT-ColorTemperature
+    deviceProfileName: color-temp-bulb
+  - id: sengled/Z01-A19NAE26
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: Z01-A19NAE26
+    deviceProfileName: color-temp-bulb
+  - id: sengled/Z01-A191AE26W
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: Z01-A191AE26W
+    deviceProfileName: color-temp-bulb
+  - id: sengled/Z01-A60EAB22
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: Z01-A60EAB22
+    deviceProfileName: color-temp-bulb
+  - id: sengled/Z01-A60EAE27
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: Z01-A60EAE27
+    deviceProfileName: color-temp-bulb
+  - id: "Third Reality/3RSL011Z"
+    deviceLabel: RealityLight Light
+    manufacturer: Third Reality, Inc
+    model: 3RSL011Z
+    deviceProfileName: color-temp-bulb
+  - id: "Third Reality/3RSL012Z"
+    deviceLabel: RealityLight Light
+    manufacturer: Third Reality, Inc
+    model: 3RSL012Z
+    deviceProfileName: color-temp-bulb
+  - id: "Ajax Online/CCT"
+    deviceLabel: Ajax Light
+    manufacturer: Ajax Online
+    model: CCT
+    deviceProfileName: color-temp-bulb-2200K-6500K
   - id: CentraLite/3200
     deviceLabel: SmartThings Outlet
     manufacturer: CentraLite
@@ -1941,11 +1941,11 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 CWS opal 600lm
     deviceProfileName: color-bulb
-#   - id: Smartenit/ZBMPlug15
-#     deviceLabel: Smartenit Outlet
-#     manufacturer: Compacta International, Ltd
-#     model: ZBMPlug15
-#     deviceProfileName: basic-switch
+  - id: Smartenit/ZBMPlug15
+    deviceLabel: Smartenit Outlet
+    manufacturer: Compacta International, Ltd
+    model: ZBMPlug15
+    deviceProfileName: basic-switch
   - id: "sengled/E13-N11"
     deviceLabel: Sengled Light
     manufacturer: sengled
