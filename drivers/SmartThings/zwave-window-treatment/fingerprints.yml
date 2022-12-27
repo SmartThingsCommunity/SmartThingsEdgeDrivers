@@ -11,18 +11,18 @@ zwaveManufacturer:
     productType: 0x5253
     productId: 0x5A31
     deviceProfileName: base-window-treatment
-  # - id: "iblinds/blind"
-  #   deviceLabel: iBlinds Window Treatment
-  #   manufacturerId: 0x0287
-  #   productType: 0x0003
-  #   productId: 0x000D
-  #   deviceProfileName: window-treatment-preset-reverse
-  # - id: "iblinds/blind/v3"
-  #   deviceLabel: iBlinds Window Treatment v3
-  #   manufacturerId: 0x0287
-  #   productType: 0x0004
-  #   productId: 0x0071
-  #   deviceProfileName: iblinds-window-treatment-v3
+  - id: "iblinds/blind"
+    deviceLabel: iBlinds Window Treatment
+    manufacturerId: 0x0287
+    productType: 0x0003
+    productId: 0x000D
+    deviceProfileName: window-treatment-preset-reverse
+  - id: "iblinds/blind/v3"
+    deviceLabel: iBlinds Window Treatment v3
+    manufacturerId: 0x0287
+    productType: 0x0004
+    productId: 0x0071
+    deviceProfileName: iblinds-window-treatment-v3
   # - id: "iblinds/blind/v3/2"
   #   deviceLabel: iBlinds Window Treatment v3
   #   manufacturerId: 0x0287

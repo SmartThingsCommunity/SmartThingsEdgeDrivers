@@ -64,21 +64,21 @@ zigbeeManufacturer:
 #     manufacturer: Stelpro
 #     model: ST218
 #     deviceProfileName: thermostat-temperature-temperaturealarm
-#   - id: "Stelpro/MaestroStat"
-#     deviceLabel: Stelpro Thermostat
-#     manufacturer: Stelpro
-#     model: MaestroStat
-#     deviceProfileName: thermostat-stelpro-profile
-#   - id: "Stelpro/SORB"
-#     deviceLabel: Stelpro Thermostat
-#     manufacturer: Stelpro
-#     model: SORB
-#     deviceProfileName: thermostat-stelpro-profile
-#   - id: "Stelpro/SonomaStyle"
-#     deviceLabel: Stelpro Thermostat
-#     manufacturer: Stelpro
-#     model: SonomaStyle
-#     deviceProfileName: thermostat-stelpro-profile
+  - id: "Stelpro/MaestroStat"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: MaestroStat
+    deviceProfileName: thermostat-stelpro-profile
+  - id: "Stelpro/SORB"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: SORB
+    deviceProfileName: thermostat-stelpro-profile
+  - id: "Stelpro/SonomaStyle"
+    deviceLabel: Stelpro Thermostat
+    manufacturer: Stelpro
+    model: SonomaStyle
+    deviceProfileName: thermostat-stelpro-profile
 #   - id: "Leviton RC"
 #     deviceLabel: Leviton RC Series Thermostat
 #     manufacturer: HAI
