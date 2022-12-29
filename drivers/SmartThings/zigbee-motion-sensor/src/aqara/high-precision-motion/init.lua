@@ -1,17 +1,17 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
-local aqara_utils = require "aqara/aqara_utils"
 local data_types = require "st.zigbee.data_types"
+local aqara_utils = require "aqara/aqara_utils"
 
 local OccupancySensing = clusters.OccupancySensing
 
+local detectionFrequency = capabilities["stse.detectionFrequency"]
 local sensitivityAdjustment = capabilities["stse.sensitivityAdjustment"]
-local sensitivityAdjustmentId = "stse.sensitivityAdjustment"
-local sensitivityAdjustmentCommand = "setSensitivityAdjustment"
+local sensitivityAdjustmentCommandName = "setSensitivityAdjustment"
 
-local MOTION_DETECTED_NUMBER = 1
-
+local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
 local SENSITIVITY_ATTRIBUTE_ID = 0x010C
 
 local PREF_SENSITIVITY_KEY = "prefSensitivity"
@@ -19,32 +19,52 @@ local PREF_SENSITIVITY_VALUE_HIGH = 3
 local PREF_SENSITIVITY_VALUE_MEDIUM = 2
 local PREF_SENSITIVITY_VALUE_LOW = 1
 
-local function added_handler(self, device)
-  device:emit_event(capabilities.motionSensor.motion.inactive())
-  aqara_utils.emit_default_detection_frequency_event(device)
-  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
-  device:emit_event(capabilities.battery.battery(100))
-
-  aqara_utils.enable_custom_cluster_attribute(device)
-end
-
 local function send_sensitivity_adjustment_value(device, value)
+  -- store key
   aqara_utils.set_pref_changed_field(device, PREF_SENSITIVITY_KEY, value)
-  aqara_utils.write_custom_attribute(device, SENSITIVITY_ATTRIBUTE_ID, data_types.Uint8, value)
+  -- write
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    SENSITIVITY_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.Uint8, value))
 end
 
-local function emit_sensitivity_adjustment_event(device, sensitivity)
-  if sensitivity == PREF_SENSITIVITY_VALUE_HIGH then
-    device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
-  elseif sensitivity == PREF_SENSITIVITY_VALUE_MEDIUM then
-    device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
-  elseif sensitivity == PREF_SENSITIVITY_VALUE_LOW then
-    device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Low())
+local function motion_illuminance_attr_handler(driver, device, value, zb_rx)
+  -- not implemented
+end
+
+local function write_attr_res_handler(driver, device, zb_rx)
+  local key, value = aqara_utils.get_pref_changed_field(device)
+  if key == aqara_utils.PREF_FREQUENCY_KEY then
+    -- detection frequency
+
+    -- reset key
+    aqara_utils.set_pref_changed_field(device, '', 0)
+
+    -- for unoccupied timer
+    device:set_field(aqara_utils.PREF_FREQUENCY_KEY, value, { persist = true })
+    -- update ui
+    device:emit_event(detectionFrequency.detectionFrequency(value))
+  elseif key == PREF_SENSITIVITY_KEY then
+    -- sensitivity adjustment
+
+    -- reset key
+    aqara_utils.set_pref_changed_field(device, '', 0)
+
+    -- update ui
+    if value == PREF_SENSITIVITY_VALUE_HIGH then
+      device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
+    elseif value == PREF_SENSITIVITY_VALUE_MEDIUM then
+      device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
+    elseif value == PREF_SENSITIVITY_VALUE_LOW then
+      device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Low())
+    end
   end
 end
 
-local function detection_frequency_capability_handler(driver, device, command)
-  aqara_utils.detection_frequency_capability_handler(driver, device, command)
+local function occupancy_attr_handler(driver, device, value, zb_rx)
+  if value.value == 1 then
+    aqara_utils.motion_detected(device)
+  end
 end
 
 local function sensitivity_adjustment_capability_handler(driver, device, command)
@@ -58,24 +78,15 @@ local function sensitivity_adjustment_capability_handler(driver, device, command
   end
 end
 
-local function sensitivity_adjustment_res_handler(device)
-  local key, value = aqara_utils.get_pref_changed_field(device)
-  if key == PREF_SENSITIVITY_KEY then
-    emit_sensitivity_adjustment_event(device, value)
-  end
-end
+local function added_handler(self, device)
+  device:emit_event(capabilities.motionSensor.motion.inactive())
+  device:emit_event(detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT))
+  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
+  device:emit_event(capabilities.battery.battery(100))
 
-local function write_attr_res_handler(driver, device, zb_rx)
-  -- detection frequency
-  aqara_utils.detection_frequency_res_handler(device)
-  -- sensitivity adjustment
-  sensitivity_adjustment_res_handler(device)
-end
-
-local function occupancy_attr_handler(driver, device, value, zb_rx)
-  if value.value == MOTION_DETECTED_NUMBER then
-    aqara_utils.motion_detected(device)
-  end
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    aqara_utils.PRIVATE_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE, data_types.Uint8, 1))
 end
 
 local aqara_high_precision_motion_handler = {
@@ -84,11 +95,8 @@ local aqara_high_precision_motion_handler = {
     added = added_handler
   },
   capability_handlers = {
-    [aqara_utils.detectionFrequencyId] = {
-      [aqara_utils.detectionFrequencyCommand] = detection_frequency_capability_handler,
-    },
-    [sensitivityAdjustmentId] = {
-      [sensitivityAdjustmentCommand] = sensitivity_adjustment_capability_handler,
+    [sensitivityAdjustment.ID] = {
+      [sensitivityAdjustmentCommandName] = sensitivity_adjustment_capability_handler,
     }
   },
   zigbee_handlers = {
@@ -98,9 +106,12 @@ local aqara_high_precision_motion_handler = {
       }
     },
     attr = {
+      [aqara_utils.PRIVATE_CLUSTER_ID] = {
+        [MOTION_ILLUMINANCE_ATTRIBUTE_ID] = motion_illuminance_attr_handler
+      },
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
-      },
+      }
     }
   },
   can_handle = function(opts, driver, device, ...)
