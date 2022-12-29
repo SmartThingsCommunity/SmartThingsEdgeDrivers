@@ -73,11 +73,14 @@ function Disco.find(deviceid, callback)
                    deviceid, rip, ip))
         log.debug(rip, "!=", ip)
       elseif ip and id then
-        callback({id = id, ip = ip, raw = val})
-
         if deviceid then
           -- check if the speaker we just found was the one we were looking for
-          if deviceid == id then break end
+          if deviceid == id then
+            callback({id = id, ip = ip, raw = val})
+            break
+          end
+        else
+          callback({id = id, ip = ip, raw = val})
         end
       end
     elseif rip == "timeout" then

@@ -28,7 +28,21 @@ local AEOTEC_PRODUCT_TYPE = 0x0003
 local AEOTEC_PRODUCT_ID = 0x0084
 
 local switch_multicomponent_endpoints = {
-  {
+  { -- ep 0 (not used)
+    command_classes = {
+      { value = zw.BASIC },
+      { value = zw.SWITCH_BINARY },
+      { value = zw.METER }
+    }
+  },
+  { -- ep 1 (parent)
+    command_classes = {
+      { value = zw.BASIC },
+      { value = zw.SWITCH_BINARY },
+      { value = zw.METER }
+    }
+  },
+  { -- ep 2 (child)
     command_classes = {
       { value = zw.BASIC },
       { value = zw.SWITCH_BINARY },
