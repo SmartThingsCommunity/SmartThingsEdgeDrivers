@@ -17,24 +17,23 @@ local Thermostat = clusters.Thermostat
 local FanControl = clusters.FanControl
 local capabilities = require "st.capabilities"
 
-local ENABLED_MODE = "enabled_mode"
 local ENDPOINT = 10
 
 local function do_configure(driver, device)
-  device:send(Thermostat.attributes.SystemMode:configure_reporting(device, 5, 1800, nil):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.OccupiedCoolingSetpoint:configure_reporting(device, 5, 1800, 100):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 5, 1800, 100):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 5, 1800, 100):to_endpoint(ENDPOINT))
-  device:send(FanControl.attributes.FanMode:configure_reporting(device, 5, 1800, nil):to_endpoint(ENDPOINT))
+  device:send_to_component("main", Thermostat.attributes.SystemMode:configure_reporting(device, 5, 1800, nil))
+  device:send_to_component("main", Thermostat.attributes.OccupiedCoolingSetpoint:configure_reporting(device, 5, 1800, 100))
+  device:send_to_component("main", Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 5, 1800, 100))
+  device:send_to_component("main", Thermostat.attributes.LocalTemperature:configure_reporting(device, 5, 1800, 100))
+  device:send_to_component("main", FanControl.attributes.FanMode:configure_reporting(device, 5, 1800, nil))
 end
 
 local function do_refresh(driver, device, command)
-  device:send(FanControl.attributes.FanMode:read(device):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.SystemMode:read(device):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.ControlSequenceOfOperation:read(device):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.OccupiedCoolingSetpoint:read(device):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device):to_endpoint(ENDPOINT))
-  device:send(Thermostat.attributes.LocalTemperature:read(device):to_endpoint(ENDPOINT))
+  device:send_to_component("main", FanControl.attributes.FanMode:read(device))
+  device:send_to_component("main", Thermostat.attributes.SystemMode:read(device))
+  device:send_to_component("main", Thermostat.attributes.ControlSequenceOfOperation:read(device))
+  device:send_to_component("main", Thermostat.attributes.OccupiedCoolingSetpoint:read(device))
+  device:send_to_component("main", Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
+  device:send_to_component("main", Thermostat.attributes.LocalTemperature:read(device))
 end
 
 local function endpoint_to_component(device, ep)
@@ -42,7 +41,7 @@ local function endpoint_to_component(device, ep)
 end
 
 local function component_to_endpoint(device, component_id)
-  return 10
+  return ENDPOINT
 end
 
 local function initialize(driver, device)
@@ -50,35 +49,39 @@ local function initialize(driver, device)
   device:set_endpoint_to_component_fn(endpoint_to_component)
 end
 
-local function added(driver, device)
+local function supported_thermostat_modes_handler(driver, device, value)
   device:emit_event(capabilities.thermostatMode.supportedThermostatModes({
-    capabilities.thermostatMode.thermostatMode.off.NAME,
-    capabilities.thermostatMode.thermostatMode.heat.NAME,
+    capabilities.thermostatMode.thermostatMode.auto.NAME,
     capabilities.thermostatMode.thermostatMode.cool.NAME,
-    capabilities.thermostatMode.thermostatMode.auto.NAME
-  }, { visibility = { displayed = false } } ))
-  do_refresh(driver, device, nil)
+    capabilities.thermostatMode.thermostatMode.heat.NAME,
+    capabilities.thermostatMode.thermostatMode.emergency_heat.NAME
+  }, { visibility = { displayed = false } }))
 end
 
-local function supported_thermostat_modes_handler(driver, device, supported_modes)
-  local SUPPORTED_MODES_MAP = {
-    [Thermostat.attributes.ControlSequenceOfOperation.COOLING_ONLY] = capabilities.thermostatMode.thermostatMode.cool.NAME,
-    [Thermostat.attributes.ControlSequenceOfOperation.HEATING_ONLY] = capabilities.thermostatMode.thermostatMode.heat.NAME,
-    [Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING4PIPES] = capabilities.thermostatMode.thermostatMode.auto.NAME
-  }
-  device:set_field(ENABLED_MODE, SUPPORTED_MODES_MAP[supported_modes.value])
+local function supported_fan_modes_handler(driver, device, value)
+  device:emit_event(capabilities.thermostatFanMode.supportedThermostatFanModes({
+    capabilities.thermostatFanMode.thermostatFanMode.auto.NAME,
+    capabilities.thermostatFanMode.thermostatFanMode.on.NAME,
+    capabilities.thermostatFanMode.thermostatFanMode.circulate.NAME
+  }, { visibility = { displayed = false } }))
+end
+
+local function added(driver, device)
+  supported_thermostat_modes_handler(driver, device, nil)
+  supported_fan_modes_handler(driver, device, nil)
+  do_refresh(driver, device, nil)
 end
 
 -- The DTH only sends setpoint updates when the supported mode is appropriate for the setpoint.
 local function heating_setpoint_handler(driver, device, value)
-  local current_supported_mode = device:get_field(ENABLED_MODE)
-  if (current_supported_mode == capabilities.thermostatMode.thermostatMode.heat.NAME or current_supported_mode == capabilities.thermostatMode.thermostatMode.auto.NAME) then
+  local current_supported_mode = device:get_latest_state("main", capabilities.thermostatMode.ID, capabilities.thermostatMode.thermostatMode.NAME)
+  if (current_supported_mode ~= capabilities.thermostatMode.thermostatMode.cool.NAME ) then
     device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = value.value/100.0, unit = "C"}))
   end
 end
 
 local function cooling_setpoint_handler(driver, device, value)
-  local current_supported_mode = device:get_field(ENABLED_MODE)
+  local current_supported_mode = device:get_latest_state("main", capabilities.thermostatMode.ID, capabilities.thermostatMode.thermostatMode.NAME)
   if (current_supported_mode == capabilities.thermostatMode.thermostatMode.cool.NAME or current_supported_mode == capabilities.thermostatMode.thermostatMode.auto.NAME) then
     device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = value.value/100.0, unit = "C"}))
   end
@@ -115,9 +118,12 @@ local leviton_thermostat = {
   zigbee_handlers = {
     attr = {
       [Thermostat.ID] = {
-        [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = heating_setpoint_handler,
-        [Thermostat.attributes.OccupiedCoolingSetpoint.ID] = cooling_setpoint_handler
+        [Thermostat.attributes.OccupiedCoolingSetpoint.ID] = cooling_setpoint_handler,
+        [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler,
+      },
+      [FanControl.ID] = {
+        [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
       }
     }
   },
