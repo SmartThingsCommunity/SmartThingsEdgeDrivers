@@ -27,7 +27,17 @@ local WYFY_PRODUCT_ID = 0x5102
 local profile = t_utils.get_profile_definition("switch-binary.yml")
 
 local WYFY_multicomponent_endpoints = {
-  {
+  { -- ep 0
+    command_classes = {
+      { value = zw.SWITCH_BINARY }
+    }
+  },
+  { -- ep 1
+    command_classes = {
+      { value = zw.SWITCH_BINARY }
+    }
+  },
+  { -- ep 2
     command_classes = {
       { value = zw.SWITCH_BINARY }
     }
@@ -35,6 +45,15 @@ local WYFY_multicomponent_endpoints = {
 }
 
 local mock_parent_device = test.mock_device.build_test_zwave_device({
+  profile = profile,
+  zwave_endpoints = WYFY_multicomponent_endpoints,
+  zwave_manufacturer_id = WYFY_MANUFACTURER_ID,
+  zwave_product_type = WYFY_PRODUCT_TYPE,
+  zwave_product_id = WYFY_PRODUCT_ID
+})
+
+local mock_base_device = test.mock_device.build_test_zwave_device({
+  label = "WYFY Switch 1",
   profile = profile,
   zwave_endpoints = WYFY_multicomponent_endpoints,
   zwave_manufacturer_id = WYFY_MANUFACTURER_ID,
@@ -51,6 +70,7 @@ local mock_child_device = test.mock_device.build_test_child_device({
 local function test_init()
   test.mock_device.add_test_device(mock_parent_device)
   test.mock_device.add_test_device(mock_child_device)
+  test.mock_device.add_test_device(mock_base_device)
 end
 
 test.set_test_init_function(test_init)
@@ -286,6 +306,53 @@ test.register_coroutine_test(
       )
     )
   end
+)
+
+local function prepare_metadata(device, endpoint, profile)
+  local device_name_without_number = string.sub(device.label, 0,-2)
+  local name = string.format("%s%d", device_name_without_number, endpoint)
+  return {
+    type = "EDGE_CHILD",
+    label = name,
+    profile = profile,
+    parent_device_id = device.id,
+    parent_assigned_child_key = string.format("%02X", endpoint)
+  }
+end
+
+test.register_coroutine_test(
+    "added lifecycle event should create children in parent device",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
+      mock_base_device:expect_device_create(
+          prepare_metadata(mock_base_device, 2, "switch-binary")
+      )
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_base_device,
+              SwitchBinary:Get({},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 1 } }
+              )
+          )
+      )
+    end
+)
+
+test.register_coroutine_test(
+    "added lifecycle event for child should refresh device only",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_child_device.id, "added" })
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_parent_device,
+              SwitchBinary:Get({},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 2 } }
+              )
+          )
+      )
+    end
 )
 
 test.run_registered_tests()
