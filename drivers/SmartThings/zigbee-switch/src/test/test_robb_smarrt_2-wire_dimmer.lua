@@ -45,7 +45,6 @@ end
 
 test.set_test_init_function(test_init)
 
-
 test.register_message_test(
   "Capability command On should be handled",
   {
@@ -85,29 +84,12 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_device, 0x2626) }
+        ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device, 90) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.766, unit = "W" }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Handle Power meter",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id,
-        ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device, 0x2626) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.766, unit = "W" }))
+      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.0, unit = "W" }))
     }
   }
 )
@@ -119,13 +101,13 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 0x2626) }
+        SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 0x000000E4E1C0) }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.energyMeter.energy({ value = 0.009766, unit = "kWh" }))
+        capabilities.energyMeter.energy({ value = 15.0, unit = "kWh" }))
     }
   }
 )
