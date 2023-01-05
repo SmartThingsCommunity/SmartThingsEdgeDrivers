@@ -80,7 +80,7 @@ local function find(deviceid, callback)
       'HOST: 239.255.255.250:1900',
       'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
       'MX: 2',
-      'ST: ' .. (deviceid or 'urn:Belkin:device:*'),
+      'ST: urn:Belkin:device:*',
       '\r\n'
     },
     "\r\n"
