@@ -24,7 +24,7 @@ local OnOff = zcl_clusters.OnOff
 local WindowCovering = zcl_clusters.WindowCovering
 
 local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
-    { mfr = "Rooms Beautiful", model = "C001" }
+  { mfr = "Rooms Beautiful", model = "C001" }
 }
 
 local INVERT_CLUSTER = 0xFC00
@@ -33,9 +33,9 @@ local PREV_TIME = "shadeLevelCmdTime"
 
 local is_zigbee_window_shade = function(opts, driver, device)
   for _, fingerprint in ipairs(ZIGBEE_WINDOW_SHADE_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
