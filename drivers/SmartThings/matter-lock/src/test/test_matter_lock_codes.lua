@@ -75,7 +75,6 @@ local mock_cota_device = test.mock_device.build_test_matter_device(mock_cota_dev
 local function test_init_cota()
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_cota_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_cota_device))
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_cota_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_cota_device))
   test.socket["matter"]:__expect_send({mock_cota_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_cota_device)
@@ -83,7 +82,6 @@ end
 
 local function test_init()
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
@@ -97,8 +95,6 @@ local expect_reload_all_codes_messages = function(dev)
   local req = DoorLock.attributes.MaxPINCodeLength:read(dev, 1)
   req:merge(DoorLock.attributes.MinPINCodeLength:read(dev, 1))
   req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(dev, 1))
-  req:merge(DoorLock.attributes.NumberOfTotalUsersSupported:read(dev, 1))
-  req:merge(DoorLock.attributes.NumberOfCredentialsSupportedPerUser:read(dev, 1))
   test.socket.matter:__expect_send({dev.id, req})
   test.socket.capability:__expect_send(
     dev:generate_test_message(
@@ -108,22 +104,12 @@ local expect_reload_all_codes_messages = function(dev)
   test.socket.matter:__expect_send(
     {dev.id, DoorLock.server.commands.GetCredentialStatus(dev, 1, credential)}
   )
-  test.socket.matter:__queue_receive(
-    {
-      dev.id,
-      DoorLock.attributes.NumberOfTotalUsersSupported:build_test_report_data(dev, 1, 10),
-    }
-  )
   test.wait_for_events()
 
-  test.socket.capability:__expect_send(dev:generate_test_message("main", capabilities.lockCodes.maxCodes(32, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(dev:generate_test_message("main", capabilities.lockCodes.maxCodes(16, {visibility = {displayed = false}})))
   test.socket.matter:__queue_receive({
     dev.id,
     DoorLock.attributes.NumberOfPINUsersSupported:build_test_report_data(dev, 1, 16),
-  })
-  test.socket.matter:__queue_receive({
-    dev.id,
-    DoorLock.attributes.NumberOfCredentialsSupportedPerUser:build_test_report_data(dev, 1, 2),
   })
   test.wait_for_events()
 
@@ -288,7 +274,7 @@ test.register_coroutine_test(
       DoorLock.server.commands.ClearCredential(
         mock_cota_device,
         1,
-        {credential_type = types.DlCredentialType.PIN, credential_index = 32} --max codes
+        {credential_type = types.DlCredentialType.PIN, credential_index = 16} --max codes
       )
     })
     test.wait_for_events()
@@ -302,7 +288,7 @@ test.register_coroutine_test(
           mock_cota_device, 1, -- endpoint
           DoorLock.types.DlDataOperationType.ADD, -- operation_type
           DoorLock.types.DlCredential(
-            {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = 32}
+            {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = 16}
           ), -- credential
           "12345678", -- credential_data
           nil, -- user_index
@@ -384,21 +370,11 @@ test.register_message_test(
       },
     },
     {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.attributes.NumberOfCredentialsSupportedPerUser:build_test_report_data(
-          mock_device, 1, 2
-        ),
-      },
-    },
-    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message(
         "main",
-        capabilities.lockCodes.maxCodes(32, {visibility = {displayed = false}})
+        capabilities.lockCodes.maxCodes(16, {visibility = {displayed = false}})
       ),
     },
   }

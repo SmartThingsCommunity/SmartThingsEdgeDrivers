@@ -54,7 +54,8 @@ local function set_cota_credential(device)
   cred_data = string.format("%0" .. tostring(len) .. "d", cred_data)
   device:set_field(lock_utils.COTA_CRED, cred_data, {persist = true})
   --try to use last code slot in hopes that it wont overwrite existing codes on the device
-  local credential_index = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) or 1
+  local credential_index = device:get_field(lock_utils.TOTAL_PIN_USERS) or
+    device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) or 1
   local credential = {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = credential_index}
 
   -- Clear the credential to make sure that we have an open slot for the cota credential
@@ -113,22 +114,7 @@ end
 
 local function num_pin_users_handler(driver, device, ib, response)
   device:set_field(lock_utils.TOTAL_PIN_USERS, ib.data.value)
-  local creds_per_user = device:get_field(lock_utils.CREDENTIALS_PER_USER)
-  if creds_per_user and creds_per_user > 0 then
-    device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value * creds_per_user, {visibility = {displayed = false}}))
-  end
-end
-
-local function num_creds_per_user_handler(driver, device, ib, response)
-  device:set_field(lock_utils.CREDENTIALS_PER_USER, ib.data.value)
-  local num_pin_users = device:get_field(lock_utils.TOTAL_PIN_USERS)
-  if num_pin_users and num_pin_users > 0 then
-    device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value * num_pin_users, {visibility = {displayed = false}}))
-  end
-end
-
-local function num_total_users_handler(driver, device, ib, response)
-  device:set_field(lock_utils.TOTAL_USERS, ib.data.value)
+  device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
 local function clear_credential_response_handler(driver, device, ib, response)
@@ -388,14 +374,6 @@ local function handle_reload_all_codes(driver, device, command)
     "main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME
   ) == nil) then
     req:merge(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device, endpoint_id))
-    req:merge(clusters.DoorLock.attributes.NumberOfTotalUsersSupported:read(device, endpoint_id))
-  end
-  if (device.num_creds_per_user == nil) then
-    req:merge(
-      clusters.DoorLock.attributes.NumberOfCredentialsSupportedPerUser:read(
-        device, endpoint_id
-      )
-    )
   end
   device:send(req)
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then
@@ -502,9 +480,6 @@ local matter_lock_driver = {
         [DoorLock.attributes.MaxPINCodeLength.ID] = max_pin_code_len_handler,
         [DoorLock.attributes.MinPINCodeLength.ID] = min_pin_code_len_handler,
         [DoorLock.attributes.NumberOfPINUsersSupported.ID] = num_pin_users_handler,
-        [DoorLock.attributes.NumberOfTotalUsersSupported.ID] = num_total_users_handler,
-        [DoorLock.attributes.NumberOfCredentialsSupportedPerUser.ID] = num_creds_per_user_handler,
-
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
