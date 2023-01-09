@@ -548,6 +548,11 @@ local matter_lock_driver = {
     },
   },
   lifecycle_handlers = {init = device_init, added = device_added, doConfigure = do_configure},
+  supported_capabilities = {
+    capabilities.lock,
+    capabilities.lockCodes,
+    capabilities.tamperAlert,
+  },
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
