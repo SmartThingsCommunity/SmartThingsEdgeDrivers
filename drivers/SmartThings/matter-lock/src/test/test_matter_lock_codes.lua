@@ -237,10 +237,12 @@ local function init_code_slot(slot_number, name, device)
 end
 
 test.register_coroutine_test(
-  "Configure should configure all necessary attributes and begin reading codes", function()
+  "Added should configure all necessary attributes and begin reading codes", function()
     test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
     local req = DoorLock.attributes.MaxPINCodeLength:read(mock_device, 1)
     req:merge(DoorLock.attributes.MinPINCodeLength:read(mock_device, 1))
     req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device, 1))
@@ -252,8 +254,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Configure should set cota cred for device that supports the feature", function()
     test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_cota_device.id, "doConfigure" })
-    mock_cota_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_cota_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_cota_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
     local req = DoorLock.attributes.MaxPINCodeLength:read(mock_cota_device, 1)
     req:merge(DoorLock.attributes.MinPINCodeLength:read(mock_cota_device, 1))
     req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(mock_cota_device, 1))

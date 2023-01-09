@@ -29,6 +29,9 @@ local lock_utils = require "lock_utils"
 
 local YALE_LOCK_FINGERPRINT = {{vendorId = 0x101D, productId = 0x1}}
 
+--- If a device needs a cota credential this function attempts to clear the credential
+--- at the max credential index and then set the device's COTA credential 2 seconds later.
+--- It will delay doing so until we are no longer scanning credentials.
 local function set_cota_credential(device)
   local eps = device:get_endpoints(DoorLock.ID)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
@@ -37,13 +40,10 @@ local function set_cota_credential(device)
     device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, #eps > 0 and eps[1] or 1))
     device.thread:call_with_delay(2, function(t) set_cota_credential(device) end)
   elseif not cota_cred then
-    -- Defensive, but shouldn't happen
-    device.log.debug("Device should not require PIN for remote operation. Not setting COTA credential")
+    device.log.debug("Device does not require PIN for remote operation. Not setting COTA credential")
     return
   end
 
-  -- If we are scanning codes, we should wait to set the cota credential until scanning completes
-  -- to help avoid replacing an existing code, and ensure we have queried the max codes on the device.
   if device:get_latest_state(
     "main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME
   ) == "Scanning" then
@@ -455,9 +455,6 @@ local function device_init(driver, device) device:subscribe() end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.tamperAlert.tamper.clear())
-end
-
-local function do_configure(driver, device)
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
     device.log.debug("Device does not support lockCodes")
@@ -536,12 +533,12 @@ local matter_lock_driver = {
       [capabilities.lockCodes.commands.nameSlot.NAME] = handle_name_slot,
     },
   },
-  lifecycle_handlers = {init = device_init, added = device_added, doConfigure = do_configure},
   supported_capabilities = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
   },
+  lifecycle_handlers = {init = device_init, added = device_added},
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
