@@ -147,12 +147,12 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0700
     deviceProfileName: contact-battery-tamperalert
-#   - id: 010F/0701/2001 # Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
-#     deviceLabel: Fibaro Open/Closed Sensor with temperature
-#     manufacturerId: 0x010F
-#     productType: 0x0701
-#     productId: 0x2001
-#     deviceProfileName: fibaro-door-window-sensor-temperature
+  - id: 010F/0701/2001 # Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
+    deviceLabel: Fibaro Open/Closed Sensor with temperature
+    manufacturerId: 0x010F
+    productType: 0x0701
+    productId: 0x2001
+    deviceProfileName: fibaro-door-window-sensor-temperature
   - id: 010F/0702
     deviceLabel: Fibaro Open/Closed Sensor 2
     manufacturerId: 0x010F
