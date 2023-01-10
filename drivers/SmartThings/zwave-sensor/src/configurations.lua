@@ -324,7 +324,7 @@ local devices = {
       {grouping_identifier = 3}
     },
     CONFIGURATION = {
-      {parameter_number = 1, configuration_value = 0, size = 1},
+      {parameter_number = 1, configuration_value = 0, size = 2},
       {parameter_number = 2, configuration_value = 1, size = 1},
       {parameter_number = 3, configuration_value = 0, size = 1},
       {parameter_number = 5, configuration_value = 255, size = 2},
