@@ -1,3 +1,11 @@
+matterManufacturer:
+  #Eve
+  - id: "Eve Motion"
+    deviceLabel: Eve Motion
+    vendorId: 0x130a
+    productId: 0x0059
+    deviceProfileName: matter-motion-battery-illuminance
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
