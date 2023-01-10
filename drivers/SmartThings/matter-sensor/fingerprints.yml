@@ -1,3 +1,11 @@
+matterManufacturer:
+  #Eve
+  - id: "Eve/DoorAndWindow"
+    deviceLabel: Eve Door and Window
+    vendorId: 0x130a
+    productId: 0x004D
+    deviceProfileName: contact-battery
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
