@@ -1,16 +1,18 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+
+--- Copyright 2022 SmartThings
+---
+--- Licensed under the Apache License, Version 2.0 (the "License");
+--- you may not use this file except in compliance with the License.
+--- You may obtain a copy of the License at
+---
+---     http://www.apache.org/licenses/LICENSE-2.0
+---
+--- Unless required by applicable law or agreed to in writing, software
+--- distributed under the License is distributed on an "AS IS" BASIS,
+--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--- See the License for the specific language governing permissions and
+--- limitations under the License.
+
 
 local cosock = require "cosock"
 local socket = require "cosock.socket"
@@ -75,7 +77,8 @@ local function fetch_device_metadata(url)
 
   return {
     name = tablefind(parsed_xml, "root.device.friendlyName"),
-    model = tablefind(parsed_xml, "root.device.modelName")
+    model = tablefind(parsed_xml, "root.device.modelName"),
+    mac = tablefind(parsed_xml, "root.device.serialNumber")
   }
 end
 
@@ -120,20 +123,24 @@ function Disco.find(deviceid, callback)
       local headers = process_response(val)
       local ip, port = headers["location"]:match(
                              "http://([^,/]+):([^/]+)") -- TODO : We need to check the xml filename for samsung audio device for ex: http://192.168.0.1:59666/rootDesc.xml
-      local id = headers["usn"]
-
+      -- local id = headers["usn"]
+ 
       -- TODO how do I know the device that responded is actually a samsung-audio device
       -- potentially will need to make a request to the endpoint
       local meta = fetch_device_metadata(headers["location"])
       local speaker_name = "samsung-audio speaker"
       local speaker_model = "unknown samsung-audio"
+      local speaker_mac = "000000000000"
       if not meta then
           meta = {}
           log.trace("fetch_device_metadata INFO is NULL")
       else
           speaker_name = meta.name
           speaker_model = meta.model
+          speaker_mac = meta.mac
       end
+      local id = speaker_mac
+      log.info(string.format("SPEAKER_MAC VALUE --> %s", speaker_mac)) 
 
       if rip ~= ip then
         log.warn(string.format(
