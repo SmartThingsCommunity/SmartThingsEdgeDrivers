@@ -124,6 +124,10 @@ local function set_color_temperature_handler(driver, device, cmd)
   end)
 end
 
+local function device_added(driver, device)
+  device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
+end
+
 local rgbw_bulb = {
   NAME = "RGBW Bulb",
   capability_handlers = {
@@ -135,7 +139,8 @@ local rgbw_bulb = {
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    added = device_added,
   },
   can_handle = can_handle_rgbw_bulb
 }

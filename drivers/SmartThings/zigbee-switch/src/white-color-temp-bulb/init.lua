@@ -122,12 +122,19 @@ local function set_color_temperature_handler(driver, device, cmd)
   end)
 end
 
+local function device_added(driver, device)
+  device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
+end
+
 local white_color_temp_bulb = {
   NAME = "White Color Temp Bulb",
   capability_handlers = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature_handler
     }
+  },
+  lifecycle_handlers = {
+    added = device_added
   },
   can_handle = can_handle_white_color_temp_bulb
 }

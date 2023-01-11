@@ -153,4 +153,15 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device)})
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
