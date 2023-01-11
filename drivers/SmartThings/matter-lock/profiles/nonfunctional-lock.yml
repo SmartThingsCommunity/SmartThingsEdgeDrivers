@@ -1,0 +1,14 @@
+name: nonfunctional-lock
+components:
+- id: main
+  capabilities:
+  - id: lockCodes
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartLock
