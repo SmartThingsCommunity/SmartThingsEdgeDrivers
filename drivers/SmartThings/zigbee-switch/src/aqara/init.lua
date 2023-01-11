@@ -3,12 +3,12 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
-local aqara_utils = require "aqara/aqara_utils"
 
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 local Basic = clusters.Basic
+local AnalogInput = clusters.AnalogInput
 
 local MAX_POWER_ID = "stse.maxPower" -- maximum allowable power
 local RESTORE_STATE_ID = "stse.restorePowerState" -- remember previous state
@@ -21,7 +21,11 @@ local PREF_CLUSTER_ID = 0xFCC0
 local PREF_MAX_POWER_ATTR_ID = 0x020B
 local PREF_RESTORE_STATE_ATTR_ID = 0x0201
 
+local ENDPOINT_POWER_METER = 0x15
+local ENDPOINT_ENERGY_METER = 0x1F
+
 local APPLICATION_VERSION = "application_version"
+local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" }
@@ -66,9 +70,26 @@ local function is_aqara_products(opts, driver, device)
   return false
 end
 
-local function write_private_attribute(device, cluster_id, attribute_id, data_type, value)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, cluster_id, attribute_id, MFG_CODE, data_type,
-    value))
+local function emit_power_consumption_report_event(device, value)
+  local raw_value = value.value -- 'Wh'
+
+  -- check the minimum interval
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_REPORT_TIME) or 0
+  local next_time = last_time + 60 * 15 -- minimum interval of 15 mins
+  if current_time < next_time then
+    return
+  end
+  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+  -- report
+  local delta_energy = 0.0
+  local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
+  if current_power_consumption ~= nil then
+    delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
+  end
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 end
 
 local function write_max_power_preference(device, args)
@@ -77,8 +98,8 @@ local function write_max_power_preference(device, args)
     if maxPowerPreferenceValue ~= nil then
       if maxPowerPreferenceValue ~= args.old_st_store.preferences[MAX_POWER_ID] then
         local value = tonumber(maxPowerPreferenceValue)
-        write_private_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID, data_types.SinglePrecisionFloat,
-          max_power_data_type_table[value])
+        device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
+          MFG_CODE, data_types.SinglePrecisionFloat, max_power_data_type_table[value]))
       end
     end
   end
@@ -89,8 +110,8 @@ local function write_restore_power_state_preference(device, args)
     local restorePowerStatePreferenceValue = device.preferences[RESTORE_STATE_ID]
     if restorePowerStatePreferenceValue ~= nil then
       if restorePowerStatePreferenceValue ~= args.old_st_store.preferences[RESTORE_STATE_ID] then
-        write_private_attribute(device, PREF_CLUSTER_ID, PREF_RESTORE_STATE_ATTR_ID, data_types.Boolean,
-          restorePowerStatePreferenceValue)
+        device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID,
+          PREF_RESTORE_STATE_ATTR_ID, MFG_CODE, data_types.Boolean, restorePowerStatePreferenceValue))
       end
     end
   end
@@ -103,15 +124,34 @@ end
 
 local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value -- '10W'
-  aqara_utils.emit_power_meter_event(device, { value = raw_value / 10 })
+  device:emit_event(capabilities.powerMeter.power({ value = raw_value / 10, unit = "W" }))
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value -- 'Wh'
   -- energyMeter
-  aqara_utils.emit_energy_meter_event(device, { value = raw_value })
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
   -- powerConsumptionReport
-  aqara_utils.emit_power_consumption_report_event(device, { value = raw_value })
+  emit_power_consumption_report_event(device, { value = raw_value })
+end
+
+local function round(num)
+  local mult = 10
+  return math.floor(num * mult + 0.5) / mult
+end
+
+local function present_value_handler(driver, device, value, zb_rx)
+  local src_endpoint = zb_rx.address_header.src_endpoint.value
+  if src_endpoint == ENDPOINT_POWER_METER then
+    -- powerMeter
+    local raw_value = value.value -- 'W'
+    device:emit_event(capabilities.powerMeter.power({ value = round(raw_value), unit = "W" }))
+  elseif src_endpoint == ENDPOINT_ENERGY_METER then
+    -- energyMeter, powerConsumptionReport
+    local raw_value = value.value -- 'kWh'
+    device:emit_event(capabilities.energyMeter.energy({ value = round(raw_value * 1000), unit = "Wh" }))
+    emit_power_consumption_report_event(device, { value = round(raw_value * 1000) })
+  end
 end
 
 local function do_refresh(self, device)
@@ -137,7 +177,8 @@ local function device_added(driver, device)
   device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
 
   -- Set private attribute
-  write_private_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, data_types.Uint8, 1)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+    MFG_CODE, data_types.Uint8, 1))
 end
 
 local aqara_smart_plug_handler = {
@@ -162,6 +203,9 @@ local aqara_smart_plug_handler = {
       },
       [SimpleMetering.ID] = {
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+      },
+      [AnalogInput.ID] = {
+        [AnalogInput.attributes.PresentValue.ID] = present_value_handler
       }
     }
   },
