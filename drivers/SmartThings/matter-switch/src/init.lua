@@ -283,6 +283,12 @@ local matter_driver_template = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature,
     },
   },
+  supported_capabilities = {
+    capabilities.switch,
+    capabilities.switchLevel,
+    capabilities.colorControl,
+    capabilities.colorTemperature,
+  },
 }
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
