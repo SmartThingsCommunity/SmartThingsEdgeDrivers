@@ -20,7 +20,6 @@ local lock_utils = {
   CODE_STATE = "codeState",
   DELETING_CODE = "deletingCode",
   CREDENTIALS_PER_USER = "credsPerUser",
-  TOTAL_USERS = "totalUsers",
   TOTAL_PIN_USERS = "totalPinUsers",
   SET_CREDENTIAL = "setCredential",
   COTA_CRED = "cotaCred",
