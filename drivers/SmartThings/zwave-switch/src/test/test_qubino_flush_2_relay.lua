@@ -52,6 +52,14 @@ local parent_profile = t_utils.get_profile_definition("qubino-flush2-relay.yml")
 local child_relay_profile = t_utils.get_profile_definition("metering-switch.yml")
 local child_temperature_profile = t_utils.get_profile_definition("child-temperature.yml")
 
+local mock_base_device = test.mock_device.build_test_zwave_device({
+  profile = parent_profile,
+  zwave_endpoints = qubino_flush_2_relay_endpoints,
+  zwave_manufacturer_id = 0x0159,
+  zwave_product_type = 0x0002,
+  zwave_product_id = 0x0051
+})
+
 local mock_parent_device = test.mock_device.build_test_zwave_device({
   profile = parent_profile,
   zwave_endpoints = qubino_flush_2_relay_endpoints,
@@ -73,6 +81,7 @@ local mock_child_3_device = test.mock_device.build_test_child_device({
 })
 
 local function test_init()
+  test.mock_device.add_test_device(mock_base_device)
   test.mock_device.add_test_device(mock_parent_device)
   test.mock_device.add_test_device(mock_child_2_device)
   test.mock_device.add_test_device(mock_child_3_device)
@@ -533,6 +542,56 @@ test.register_coroutine_test(
           mock_parent_device,
           Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }, { dst_channels = { 2 } })
       ))
+    end
+)
+
+test.register_coroutine_test(
+    "Added lifecycle event should create children for parent device",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
+      mock_base_device:expect_device_create(
+          {
+            type = "EDGE_CHILD",
+            label = "Qubino Switch 2",
+            profile = "metering-switch",
+            parent_device_id = mock_base_device.id,
+            parent_assigned_child_key = "02"
+          }
+      )
+      mock_base_device:expect_device_create(
+          {
+            type = "EDGE_CHILD",
+            label = "Qubino Temperature Sensor",
+            profile = "child-temperature",
+            parent_device_id = mock_base_device.id,
+            parent_assigned_child_key = "03"
+          }
+      )
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_base_device,
+              SwitchBinary:Get({},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 1 } }
+              )
+          )
+      )
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_base_device,
+              Meter:Get({scale = Meter.scale.electric_meter.WATTS},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 1 } }
+              )
+          )
+      )
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              mock_base_device,
+              Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS},
+                  { encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = { 1 } }
+              )
+          )
+      )
     end
 )
 

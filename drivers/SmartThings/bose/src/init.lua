@@ -28,6 +28,7 @@ local Driver = require "st.driver"
 local log = require "log"
 local json = require "dkjson"
 local utils = require "st.utils"
+local bose_utils = require "utils"
 local command = require "command"
 local socket = require "cosock.socket"
 
@@ -42,7 +43,7 @@ local function discovery_handler(driver, _, should_continue)
 
   local device_list = driver:get_devices()
   for _, device in ipairs(device_list) do
-    local id = device.device_network_id
+    local id = bose_utils.get_serial_number(device)
     known_devices[id] = true
   end
 
@@ -87,7 +88,6 @@ local function discovery_handler(driver, _, should_continue)
   log.info("Ending discovery")
 end
 
-local toggle = true
 local function do_refresh(driver, device, cmd)
   -- get speaker playback state
   local info, err = command.now_playing(device:get_field("ip"))
@@ -114,6 +114,16 @@ local function do_refresh(driver, device, cmd)
     trackdata.album = info.album
     trackdata.albumArtUrl = info.art_url
     trackdata.mediaSource = info.source
+    if info.source == "TUNEIN" then
+      -- Switching to radio source which disables track controls
+      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
+    else
+      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+        capabilities.mediaTrackControl.commands.nextTrack.NAME,
+        capabilities.mediaTrackControl.commands.previousTrack.NAME,
+      }))
+    end
+
     if info.track then
       trackdata.title = info.track
     elseif info.station then
@@ -171,9 +181,10 @@ end
 
 local function device_init(driver, device)
   local backoff = backoff_builder(60, 1, 0.1)
+  local serial_number = bose_utils.get_serial_number(device)
   local dev_info
   while true do -- todo should we limit this? I think this will just spin forever if the device goes down
-    discovery.find(device.device_network_id, function(found) dev_info = found end)
+    discovery.find(serial_number, function(found) dev_info = found end)
     if dev_info then break end
     socket.sleep(backoff())
   end
@@ -189,10 +200,6 @@ local function device_init(driver, device)
     capabilities.mediaPlayback.commands.play.NAME,
     capabilities.mediaPlayback.commands.pause.NAME,
     capabilities.mediaPlayback.commands.stop.NAME,
-  }))
-  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-    capabilities.mediaTrackControl.commands.nextTrack.NAME,
-    capabilities.mediaTrackControl.commands.previousTrack.NAME,
   }))
   do_refresh(driver, device)
 

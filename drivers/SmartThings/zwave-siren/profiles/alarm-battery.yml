@@ -8,11 +8,11 @@ components:
       values:
         - key: "alarm.value"
           enabledValues:
-            - off
+            - 'off'
             - both
         - key: "{{enumCommands}}"
           enabledValues:
-            - off
+            - 'off'
             - both
   - id: battery
     version: 1

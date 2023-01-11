@@ -8,11 +8,11 @@ components:
         values:
           - key: "alarm.value"
             enabledValues:
-              - off
+              - 'off'
               - both
           - key: "{{enumCommands}}"
             enabledValues:
-              - off
+              - 'off'
               - both
     - id: refresh
       version: 1
@@ -26,11 +26,11 @@ components:
         values:
           - key: "alarm.value"
             enabledValues:
-              - off
+              - 'off'
               - both
           - key: "{{enumCommands}}"
             enabledValues:
-              - off
+              - 'off'
               - both
     categories:
       - name: Siren
@@ -42,11 +42,11 @@ components:
         values:
           - key: "alarm.value"
             enabledValues:
-              - off
+              - 'off'
               - both
           - key: "{{enumCommands}}"
             enabledValues:
-              - off
+              - 'off'
               - both
     categories:
       - name: Siren
@@ -58,11 +58,11 @@ components:
         values:
           - key: "alarm.value"
             enabledValues:
-              - off
+              - 'off'
               - both
           - key: "{{enumCommands}}"
             enabledValues:
-              - off
+              - 'off'
               - both
     categories:
       - name: Siren

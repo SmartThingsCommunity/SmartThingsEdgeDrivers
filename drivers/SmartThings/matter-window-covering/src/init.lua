@@ -183,6 +183,12 @@ local matter_driver_template = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = handle_shade_level,
     },
   },
+  supported_capabilities = {
+    capabilities.windowShadeLevel,
+    capabilities.windowShade,
+    capabilities.windowshadePreset,
+    capabilities.battery,
+  },
 }
 
 local matter_driver = MatterDriver("matter-window-covering", matter_driver_template)

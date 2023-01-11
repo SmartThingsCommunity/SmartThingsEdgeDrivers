@@ -1,7 +1,7 @@
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http"
-local ltn12 = require "socket.ltn12"
+local ltn12 = require "ltn12"
 local log = require "log"
 local tablefind = require "util".tablefind
 local xml2lua = require "xml2lua"
@@ -59,7 +59,8 @@ local function fetch_device_metadata(url)
 
   return {
     name = tablefind(parsed_xml, "root.device.friendlyName"),
-    model = tablefind(parsed_xml, "root.device.modelName")
+    model = tablefind(parsed_xml, "root.device.modelName"),
+    mac = tablefind(parsed_xml, "root.device.macAddress")
   }
 end
 
@@ -79,7 +80,7 @@ local function find(deviceid, callback)
       'HOST: 239.255.255.250:1900',
       'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
       'MX: 2',
-      'ST: ' .. (deviceid or 'urn:Belkin:device:*'),
+      'ST: urn:Belkin:device:*',
       '\r\n'
     },
     "\r\n"
@@ -103,7 +104,12 @@ local function find(deviceid, callback)
     if val then
       local headers = process_response(val)
       local ip, port = headers["location"]:match("http://([^,/]+):([^/]+)")
-      local id = headers["usn"]
+      -- local id = headers["usn"]  --instead of usn, we need to use mac as id (to handle migration scenario)
+      local meta = fetch_device_metadata(headers["location"])
+      if not meta then
+        meta = {}
+      end
+      local id = meta.mac
 
       log.trace("discovery response from:", rip, headers["usn"])
 
@@ -114,11 +120,11 @@ local function find(deviceid, callback)
         ids_found[id] = true
         number_found = number_found + 1
 
-        local meta = fetch_device_metadata(headers["location"])
+        -- local meta = fetch_device_metadata(headers["location"])
 
-        if not meta then
-          meta = {}
-        end
+        -- if not meta then
+        --  meta = {}
+        -- end
 
 	-- the ID in the response is a substring of the search ID, check if they match (if search ID set)
 	local is_correct_responder = deviceid and string.find(deviceid, id, nil, "plaintext")
