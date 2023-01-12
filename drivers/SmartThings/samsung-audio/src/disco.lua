@@ -138,7 +138,7 @@ function Disco.find(deviceid, callback)
           speaker_mac = meta.mac
       end
       local id = speaker_mac
-      log.info(string.format("SPEAKER_MAC VALUE --> %s", speaker_mac)) 
+      log.debug(string.format("SPEAKER_MAC VALUE --> %s", speaker_mac)) 
 
       if rip ~= ip then
         log.warn(string.format(
