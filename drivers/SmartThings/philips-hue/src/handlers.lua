@@ -60,6 +60,22 @@ local function do_switch_level_action(driver, device, args)
     return
   end
 
+  local is_off = device:get_latest_state(
+    "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
+
+  if is_off then
+    local resp, err = hue_api:set_light_on_state(light_id, true)
+    if not resp or (resp.errors and #resp.errors == 0) then
+      if err ~= nil then
+        log.error("Error performing on/off action: " .. err)
+      elseif resp and #resp.errors > 0 then
+        for _, error in ipairs(resp.errors) do
+          log.error("Error returned in Hue response: " .. error.description)
+        end
+      end
+    end
+  end
+
   local min_dim = (device:get_field(Fields.MIN_DIMMING) or 2.0)
   local resp, err = hue_api:set_light_level(light_id, level, min_dim)
 
