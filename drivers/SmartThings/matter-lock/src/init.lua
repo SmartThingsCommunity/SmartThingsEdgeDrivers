@@ -29,17 +29,21 @@ local lock_utils = require "lock_utils"
 
 local YALE_LOCK_FINGERPRINT = {{vendorId = 0x101D, productId = 0x1}}
 
+--- If a device needs a cota credential this function attempts to clear the credential
+--- at the max credential index and then set the device's COTA credential 2 seconds later.
+--- It will delay doing so until we are no longer scanning credentials.
 local function set_cota_credential(device)
-  -- Device requires pin for remote operation if it supports COTA and PIN features.
-  local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-  if #eps == 0 then
-    device.log.debug("Device should not require PIN for remote operation, so not setting COTA credential")
+  local eps = device:get_endpoints(DoorLock.ID)
+  local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  if cota_cred == nil then
+    -- Shouldn't happen but defensive to try to figure out if we need the cota cred and set it.
+    device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, #eps > 0 and eps[1] or 1))
+    device.thread:call_with_delay(2, function(t) set_cota_credential(device) end)
+  elseif not cota_cred then
+    device.log.debug("Device does not require PIN for remote operation. Not setting COTA credential")
     return
   end
-  local endpoint = eps[1]
 
-  -- If we are scanning codes, we should wait to set the cota credential until scanning completes
-  -- to help avoid replacing an existing code, and ensure we have queried the max codes on the device.
   if device:get_latest_state(
     "main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME
   ) == "Scanning" then
@@ -49,12 +53,9 @@ local function set_cota_credential(device)
     return
   end
 
-  local len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME) or 4
-  local cred_data = math.floor(math.random() * (10 ^ len))
-  cred_data = string.format("%0" .. tostring(len) .. "d", cred_data)
-  device:set_field(lock_utils.COTA_CRED, cred_data, {persist = true})
   --try to use last code slot in hopes that it wont overwrite existing codes on the device
-  local credential_index = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) or 1
+  local credential_index = device:get_field(lock_utils.TOTAL_PIN_USERS) or
+    device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) or 1
   local credential = {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = credential_index}
 
   -- Clear the credential to make sure that we have an open slot for the cota credential
@@ -62,7 +63,7 @@ local function set_cota_credential(device)
     --Note we dont set lock_utils.DELETEING_CODE field to avoid re-setting cota credential this time
     device:send(DoorLock.server.commands.ClearCredential(
       device,
-      endpoint,
+      #eps > 0 and eps[1] or 1,
       credential
     ))
   end)
@@ -71,7 +72,9 @@ local function set_cota_credential(device)
   device.thread:call_with_delay(2, function(t)
     device:set_field(lock_utils.SET_CREDENTIAL, credential_index)
     device:send(DoorLock.server.commands.SetCredential(
-      device, endpoint, DoorLock.types.DlDataOperationType.ADD,
+      device,
+      #eps > 0 and eps[1] or 1,
+      DoorLock.types.DlDataOperationType.ADD,
       credential,
       device:get_field(lock_utils.COTA_CRED),
       nil, -- nil user_index creates a new user
@@ -113,22 +116,24 @@ end
 
 local function num_pin_users_handler(driver, device, ib, response)
   device:set_field(lock_utils.TOTAL_PIN_USERS, ib.data.value)
-  local creds_per_user = device:get_field(lock_utils.CREDENTIALS_PER_USER)
-  if creds_per_user and creds_per_user > 0 then
-    device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value * creds_per_user, {visibility = {displayed = false}}))
-  end
+  device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
-local function num_creds_per_user_handler(driver, device, ib, response)
-  device:set_field(lock_utils.CREDENTIALS_PER_USER, ib.data.value)
-  local num_pin_users = device:get_field(lock_utils.TOTAL_PIN_USERS)
-  if num_pin_users and num_pin_users > 0 then
-    device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value * num_pin_users, {visibility = {displayed = false}}))
+local function require_remote_pin_handler(driver, device, ib, response)
+  if ib.data.value then
+    --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
+    device.thread:call_with_delay(0, function(t)
+      local len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME) or 4
+      local cred_data = math.floor(math.random() * (10 ^ len))
+      cred_data = string.format("%0" .. tostring(len) .. "d", cred_data)
+      device:set_field(lock_utils.COTA_CRED, cred_data, {persist = true})
+      device.thread:call_with_delay(0, function(t)
+        set_cota_credential(device)
+      end)
+    end)
+  else
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
-end
-
-local function num_total_users_handler(driver, device, ib, response)
-  device:set_field(lock_utils.TOTAL_USERS, ib.data.value)
 end
 
 local function clear_credential_response_handler(driver, device, ib, response)
@@ -319,7 +324,7 @@ local function lock_user_change_event_handler(driver, device, ib, response)
         lock_utils.code_deleted(device, cs)
       end
       lock_utils.lock_codes_event(device, {})
-      set_cota_credential(device)
+      if device:get_field(lock_utils.COTA_CRED) ~= nil then set_cota_credential(device) end
     else
       device.log.info("Not handling LockUserChange event")
     end
@@ -375,29 +380,6 @@ local function handle_delete_code(driver, device, command)
 end
 
 local function handle_reload_all_codes(driver, device, command)
-  local endpoint_id = device:component_to_endpoint(command.component)
-  -- starts at first user code index then iterates through all lock codes as they come in
-  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if (device:get_latest_state(
-    "main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME
-  ) == nil) then req:merge(clusters.DoorLock.attributes.MaxPINCodeLength:read(device, endpoint_id)) end
-  if (device:get_latest_state(
-    "main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME
-  ) == nil) then req:merge(clusters.DoorLock.attributes.MinPINCodeLength:read(device, endpoint_id)) end
-  if (device:get_latest_state(
-    "main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME
-  ) == nil) then
-    req:merge(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(device, endpoint_id))
-    req:merge(clusters.DoorLock.attributes.NumberOfTotalUsersSupported:read(device, endpoint_id))
-  end
-  if (device.num_creds_per_user == nil) then
-    req:merge(
-      clusters.DoorLock.attributes.NumberOfCredentialsSupportedPerUser:read(
-        device, endpoint_id
-      )
-    )
-  end
-  device:send(req)
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then
     device:set_field(lock_utils.CHECKING_CODE, 1)
   end
@@ -405,7 +387,7 @@ local function handle_reload_all_codes(driver, device, command)
   device:set_field(lock_utils.CHECKING_CREDENTIAL, device:get_field(lock_utils.CHECKING_CODE))
   device:send(
     clusters.DoorLock.server.commands.GetCredentialStatus(
-      device, endpoint_id,
+      device, device:component_to_endpoint(command.component),
       {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = device:get_field(lock_utils.CHECKING_CODE)}
     )
   )
@@ -473,24 +455,30 @@ local function device_init(driver, device) device:subscribe() end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.tamperAlert.tamper.clear())
-end
-
-local function do_configure(driver, device)
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
     device.log.debug("Device does not support lockCodes")
     device:try_update_metadata({profile = "lock-without-codes"})
   else
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
+    req:merge(DoorLock.attributes.MinPINCodeLength:read(device, eps[1]))
+    req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, eps[1]))
     driver:inject_capability_command(device, {
       capability = capabilities.lockCodes.ID,
       command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
       args = {}
     })
 
-    -- TODO delay setting device to provisioned until a COTA cred has been set on the device if we need to set it.
-    device.thread:call_with_delay(0, function(t)
-      set_cota_credential(device)
-    end)
+    --Device may require pin for remote operation if it supports COTA and PIN features.
+    eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+    if #eps == 0 then
+      device.log.debug("Device will not require PIN for remote operation")
+      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+    else
+      req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+    end
+    device:send(req)
   end
 end
 
@@ -502,9 +490,7 @@ local matter_lock_driver = {
         [DoorLock.attributes.MaxPINCodeLength.ID] = max_pin_code_len_handler,
         [DoorLock.attributes.MinPINCodeLength.ID] = min_pin_code_len_handler,
         [DoorLock.attributes.NumberOfPINUsersSupported.ID] = num_pin_users_handler,
-        [DoorLock.attributes.NumberOfTotalUsersSupported.ID] = num_total_users_handler,
-        [DoorLock.attributes.NumberOfCredentialsSupportedPerUser.ID] = num_creds_per_user_handler,
-
+        [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler,
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
@@ -547,12 +533,12 @@ local matter_lock_driver = {
       [capabilities.lockCodes.commands.nameSlot.NAME] = handle_name_slot,
     },
   },
-  lifecycle_handlers = {init = device_init, added = device_added, doConfigure = do_configure},
   supported_capabilities = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
   },
+  lifecycle_handlers = {init = device_init, added = device_added},
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
