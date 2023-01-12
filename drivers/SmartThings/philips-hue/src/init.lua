@@ -96,9 +96,13 @@ end
 ---@param device HueDevice
 local function migrate_bridge(driver, device)
   local api_key = device.data.username
+  local ipv4 = device.data.ip
   local device_dni = device.device_network_id
 
-  Discovery.search_for_bridges(driver, function(driver, bridge_ip, bridge_id)
+  local known_macs = {}
+  known_macs[ipv4] = device_dni
+
+  Discovery.search_for_bridges(driver, known_macs, function(hue_driver, bridge_ip, bridge_id)
     if bridge_id ~= device_dni then return end
 
     local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip)
@@ -109,13 +113,13 @@ local function migrate_bridge(driver, device)
 
     if tonumber(bridge_info.swversion or "0", 10) < HueApi.MIN_CLIP_V2_SWVERSION then
       log.warn("Found bridge that does not support CLIP v2 API, ignoring")
-      driver.ignored_bridges[bridge_id] = true
+      hue_driver.ignored_bridges[bridge_id] = true
       return
     end
 
     bridge_info.ip = bridge_ip
 
-    driver.joined_bridges[bridge_id] = bridge_info
+    hue_driver.joined_bridges[bridge_id] = bridge_info
     Discovery.api_keys[bridge_id] = api_key
 
     local new_metadata = {
@@ -127,7 +131,7 @@ local function migrate_bridge(driver, device)
 
     device:try_update_metadata(new_metadata)
     log.trace("Bridge Migrated, re-adding")
-    bridge_added(driver, device)
+    bridge_added(hue_driver, device)
   end)
 
   if not driver.joined_bridges[device_dni] then
@@ -191,7 +195,8 @@ bridge_added = function(driver, device)
   local device_bridge_id = device.device_network_id
 
   if not driver.joined_bridges[device_bridge_id] then
-    Discovery.search_for_bridges(driver, function(driver, bridge_ip, bridge_id)
+    local known_macs = {}
+    Discovery.search_for_bridges(driver, known_macs, function(driver, bridge_ip, bridge_id)
       if bridge_id ~= device_bridge_id then return end
 
       local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip)
