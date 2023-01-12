@@ -183,10 +183,9 @@ function PhilipsHueApi:set_light_on_state(id, on)
   return do_put(self, url, payload)
 end
 
-function PhilipsHueApi:set_light_level(id, level, min_dim)
+function PhilipsHueApi:set_light_level(id, level)
   if type(level) == "number" then
     local url = string.format("/clip/v2/resource/light/%s", id)
-    level = math.floor(st_utils.clamp_value(level, min_dim, 100))
     local payload_table = { dimming = { brightness = level } }
 
     return do_put(self, url, json.encode(payload_table))
