@@ -2,6 +2,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 
 local OnOff = clusters.OnOff
+local Basic = clusters.Basic
 local AnalogInput = clusters.AnalogInput
 
 local ENDPOINT_POWER_METER = 0x15
@@ -30,8 +31,17 @@ local function do_refresh(self, device)
   device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENDPOINT_ENERGY_METER))
 end
 
+local function do_configure(self, device)
+  device:configure()
+  device:send(Basic.attributes.ApplicationVersion:read(device))
+  do_refresh(self, device)
+end
+
 local aqara_smart_plug_version_handler = {
   NAME = "Aqara Smart Plug Version Handler",
+  lifecycle_handlers = {
+    doConfigure = do_configure,
+  },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,

@@ -73,16 +73,6 @@ end
 local function emit_power_consumption_report_event(device, value)
   local raw_value = value.value -- 'Wh'
 
-  -- check the minimum interval
-  local current_time = os.time()
-  local last_time = device:get_field(LAST_REPORT_TIME) or 0
-  local next_time = last_time + 60 * 15 -- minimum interval of 15 mins
-  if current_time < next_time then
-    return
-  end
-  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
-
-  -- report
   local delta_energy = 0.0
   local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
@@ -92,31 +82,6 @@ local function emit_power_consumption_report_event(device, value)
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 end
 
-local function write_max_power_preference(device, args)
-  if device.preferences ~= nil then
-    local maxPowerPreferenceValue = device.preferences[MAX_POWER_ID]
-    if maxPowerPreferenceValue ~= nil then
-      if maxPowerPreferenceValue ~= args.old_st_store.preferences[MAX_POWER_ID] then
-        local value = tonumber(maxPowerPreferenceValue)
-        device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
-          MFG_CODE, data_types.SinglePrecisionFloat, max_power_data_type_table[value]))
-      end
-    end
-  end
-end
-
-local function write_restore_power_state_preference(device, args)
-  if device.preferences ~= nil then
-    local restorePowerStatePreferenceValue = device.preferences[RESTORE_STATE_ID]
-    if restorePowerStatePreferenceValue ~= nil then
-      if restorePowerStatePreferenceValue ~= args.old_st_store.preferences[RESTORE_STATE_ID] then
-        device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID,
-          PREF_RESTORE_STATE_ATTR_ID, MFG_CODE, data_types.Boolean, restorePowerStatePreferenceValue))
-      end
-    end
-  end
-end
-
 local function application_version_handler(driver, device, value, zb_rx)
   local version = tonumber(value.value)
   device:set_field(APPLICATION_VERSION, version, { persist = true })
@@ -124,7 +89,8 @@ end
 
 local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value -- '10W'
-  device:emit_event(capabilities.powerMeter.power({ value = raw_value / 10, unit = "W" }))
+  raw_value = raw_value / 10
+  device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
@@ -145,12 +111,26 @@ local function present_value_handler(driver, device, value, zb_rx)
   if src_endpoint == ENDPOINT_POWER_METER then
     -- powerMeter
     local raw_value = value.value -- 'W'
-    device:emit_event(capabilities.powerMeter.power({ value = round(raw_value), unit = "W" }))
+    raw_value = round(raw_value)
+    device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
   elseif src_endpoint == ENDPOINT_ENERGY_METER then
     -- energyMeter, powerConsumptionReport
     local raw_value = value.value -- 'kWh'
-    device:emit_event(capabilities.energyMeter.energy({ value = round(raw_value * 1000), unit = "Wh" }))
-    emit_power_consumption_report_event(device, { value = round(raw_value * 1000) })
+    raw_value = round(raw_value * 1000)
+
+    -- check the minimum interval
+    local current_time = os.time()
+    local last_time = device:get_field(LAST_REPORT_TIME) or 0
+    local next_time = last_time + 60 * 15 -- minimum interval of 15 mins
+    if current_time < next_time then
+      return
+    end
+    device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+    -- energyMeter
+    device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+    -- powerConsumptionReport
+    emit_power_consumption_report_event(device, { value = raw_value })
   end
 end
 
@@ -161,13 +141,26 @@ local function do_refresh(self, device)
 end
 
 local function device_info_changed(driver, device, event, args)
-  write_max_power_preference(device, args)
-  write_restore_power_state_preference(device, args)
+  if device.preferences ~= nil then
+    if device.preferences[MAX_POWER_ID] ~= nil and
+        device.preferences[MAX_POWER_ID] ~= args.old_st_store.preferences[MAX_POWER_ID] then
+      local value = tonumber(device.preferences[MAX_POWER_ID])
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID, PREF_MAX_POWER_ATTR_ID,
+        MFG_CODE, data_types.SinglePrecisionFloat, max_power_data_type_table[value]))
+    end
+
+    if device.preferences[RESTORE_STATE_ID] ~= nil and
+        device.preferences[RESTORE_STATE_ID] ~= args.old_st_store.preferences[RESTORE_STATE_ID] then
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, PREF_CLUSTER_ID,
+        PREF_RESTORE_STATE_ATTR_ID, MFG_CODE, data_types.Boolean, device.preferences[RESTORE_STATE_ID]))
+    end
+  end
 end
 
 local function do_configure(self, device)
   device:configure()
   device:send(Basic.attributes.ApplicationVersion:read(device))
+  device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1))
   do_refresh(self, device)
 end
 
