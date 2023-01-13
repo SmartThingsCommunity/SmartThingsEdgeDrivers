@@ -189,3 +189,8 @@ zigbeeManufacturer:
     manufacturer: THIRDREALITY
     model: 3RMS16BZ
     deviceProfileName: motion-battery
+  - id: "sengled/E1M-G7H"
+    deviceLabel: Sengled Motion Sensor
+    manufacturer: sengled
+    model: E1M-G7H
+    deviceProfileName: motion-battery
