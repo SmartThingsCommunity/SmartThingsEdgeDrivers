@@ -26,7 +26,7 @@ local function fetch_device_metadata(url)
 
   local response = table.concat(responsechunks)
 
-  log.trace("metadata response status", body, status, headers)
+  -- log.trace("metadata response status", body, status, headers)
 
   -- vvvvvvvvvvvvvvvv TODO: errors are coming back as literal string "[string "socket"]:1239: closed"
   -- instead of just "closed", so do a `find` for the error
@@ -41,6 +41,8 @@ local function fetch_device_metadata(url)
     return nil, "request failed: "..tostring(status)
   end
 
+  log.trace("Ignored the closed status if exist")
+
   local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(response)
@@ -54,6 +56,7 @@ local function fetch_device_metadata(url)
 
   -- check if we parsed a <root> element
   if not parsed_xml.root then
+    log.error("root elements not found")
     return nil
   end
 
@@ -112,6 +115,7 @@ local function find(deviceid, callback)
       local id = meta.mac
 
       log.trace("discovery response from:", rip, headers["usn"])
+      log.trace("device metadata response:", meta.name, meta.model, meta.mac, id, deviceid)
 
       if rip ~= ip then
         log.warn("recieved discovery response with reported & source IP mismatch, ignoring")
@@ -137,6 +141,8 @@ local function find(deviceid, callback)
                     name = meta.name,
                     model = meta.model
                     })
+
+	  log.trace("correct responder verified")
 
           if deviceid then
             -- just looking for a single device
