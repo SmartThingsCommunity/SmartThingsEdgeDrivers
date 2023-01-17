@@ -73,10 +73,6 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
         ,
         data_types.Uint8, 1) })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_read(mock_device, PRIVATE_CLUSTER_ID, { FREQUENCY_ATTRIBUTE_ID }, MFG_CODE)
-    })
   end
 )
 

@@ -337,12 +337,12 @@ zwaveManufacturer:
 #     manufacturerId: 0x010F
 #     productType: 0x0203
 #     deviceProfileName: switch-1-button-6-power-energy
-#   - id: "Eaton/5740/0000"
-#     deviceLabel: Eaton 5-Scene Keypad
-#     manufacturerId: 0x001A
-#     productType: 0x574D
-#     productId: 0x0000
-#     deviceProfileName: switch-5-keypad
+  - id: "Eaton/574D/0000"
+    deviceLabel: Eaton 5-Scene Keypad
+    manufacturerId: 0x001A
+    productType: 0x574D
+    productId: 0x0000
+    deviceProfileName: switch-5-keypad
   - id: 014A/0006
     deviceLabel: Ecolink Switch
     manufacturerId: 0x014A
