@@ -67,7 +67,7 @@ local function do_switch_level_action(driver, device, args)
     local resp, err = hue_api:set_light_on_state(light_id, true)
     if not resp or (resp.errors and #resp.errors == 0) then
       if err ~= nil then
-        log.error("Error performing switch level action: " .. err)
+        log.error("Error performing on/off action: " .. err)
       elseif resp and #resp.errors > 0 then
         for _, error in ipairs(resp.errors) do
           log.error("Error returned in Hue response: " .. error.description)
