@@ -4,7 +4,7 @@ local HueApi = require "hue.api"
 local log = require "log"
 
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
+local st_utils = require "st.utils"
 
 local handlers = {}
 
@@ -44,7 +44,7 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 local function do_switch_level_action(driver, device, args)
-  local level = args.args.level
+  local level = st_utils.clamp_value(args.args.level, 1, 100)
   local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
 
   if not bridge_device then
@@ -76,9 +76,7 @@ local function do_switch_level_action(driver, device, args)
     end
   end
 
-  local min_dim = (device:get_field(Fields.MIN_DIMMING) or 2.0)
-  local resp, err = hue_api:set_light_level(light_id, level, min_dim)
-
+  local resp, err = hue_api:set_light_level(light_id, level)
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
       log.error("Error performing switch level action: " .. err)
@@ -109,7 +107,7 @@ local function do_color_action(driver, device, args)
     return
   end
 
-  local x, y, _ = utils.safe_hsv_to_xy(hue, sat)
+  local x, y, _ = st_utils.safe_hsv_to_xy(hue, sat)
 
   x = x / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
   y = y / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
@@ -150,7 +148,7 @@ local function do_color_temp_action(driver, device, args)
     return
   end
 
-  local clamped_kelvin = utils.clamp_value(
+  local clamped_kelvin = st_utils.clamp_value(
     kelvin, HueApi.MIN_TEMP_KELVIN, HueApi.MAX_TEMP_KELVIN
   )
   local mirek = math.floor(handlers.kelvin_to_mirek(clamped_kelvin))
