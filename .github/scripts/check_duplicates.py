@@ -119,8 +119,8 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
 
 with open("profile-comment-body.md", "w") as f:
     if duplicate_pairs:
-        f.write("Duplicate profile(s) detected:\n")
+        f.write("Duplicate profile check: Warning - duplicate profiles detected.\n")
         for duplicate in duplicate_pairs:
             f.write("%s == %s\n" % (duplicate[0], duplicate [1]))
     else:
-        f.write("No duplicate profiles detected.")
+        f.write("Duplicate profile check: Passed - no duplicate profiles detected.")
