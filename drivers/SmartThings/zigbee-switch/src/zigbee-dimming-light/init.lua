@@ -19,6 +19,7 @@ local OnOff = clusters.OnOff
 local Level = clusters.Level
 
 local DIMMING_LIGHT_FINGERPRINTS = {
+  {mfr = "Vimar", model = "DimmerSwitch_v1.0"},               -- Vimar Smart Dimmer Switch
   {mfr = "OSRAM", model = "LIGHTIFY A19 ON/OFF/DIM"},         -- SYLVANIA Smart A19 Soft White
   {mfr = "OSRAM", model = "LIGHTIFY A19 ON/OFF/DIM 10 Year"}, -- SYLVANIA Smart 10-Year A19
   {mfr = "OSRAM SYLVANIA", model = "iQBR30"},                 -- SYLVANIA Ultra iQ
