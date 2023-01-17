@@ -69,7 +69,8 @@ local function emit_light_status_events(light_device, light)
     end
 
     if light.dimming then
-      light_device:emit_event(capabilities.switchLevel.level(math.floor(light.dimming.brightness)))
+      local adjusted_level = st_utils.clamp_value(light.dimming.brightness, 1, 100)
+      light_device:emit_event(capabilities.switchLevel.level(st_utils.round(adjusted_level)))
     end
 
     if light.color_temperature then
