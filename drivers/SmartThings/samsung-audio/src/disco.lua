@@ -73,10 +73,15 @@ local function fetch_device_metadata(url)
     return nil
   end
 
+  udn_value = tablefind(parsed_xml, "root.device.UDN")
+  mac_raw = string.sub(udn_value,-12)
+  mac_val = string.upper(mac_raw)
+  log.debug(string.format("SPEAKER_MAC_VAL --> %s", mac_val))
+
   return {
     name = tablefind(parsed_xml, "root.device.friendlyName"),
     model = tablefind(parsed_xml, "root.device.modelName"),
-    mac = tablefind(parsed_xml, "root.device.serialNumber")
+    mac = mac_val
   }
 end
 
@@ -138,7 +143,7 @@ function Disco.find(deviceid, callback)
           speaker_mac = meta.mac
       end
       local id = speaker_mac
-      log.debug(string.format("SPEAKER_MAC VALUE --> %s", speaker_mac)) 
+      log.debug(string.format("Device Network ID --> %s", id)) 
 
       if rip ~= ip then
         log.warn(string.format(
@@ -150,6 +155,7 @@ function Disco.find(deviceid, callback)
 
         if id == deviceid then
           -- check if the speaker we just found was the one we were looking for
+          log.debug(string.format("Found the Specific Device in Discovery --> %s", deviceid))
           break
         end
       end
