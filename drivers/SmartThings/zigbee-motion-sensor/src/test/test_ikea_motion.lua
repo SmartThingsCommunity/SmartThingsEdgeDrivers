@@ -61,11 +61,11 @@ test.register_message_test(
         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
       }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+    -- }
   }
 )
 

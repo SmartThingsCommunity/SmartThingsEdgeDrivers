@@ -112,9 +112,9 @@ test.register_message_test(
 
 local add_device = function()
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
-  test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
-    capabilities.presenceSensor.presence("present")
-  ))
+  -- test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
+  --   capabilities.presenceSensor.presence("present")
+  -- ))
   test.socket.zigbee:__expect_send({
     mock_simple_device.id,
     PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)

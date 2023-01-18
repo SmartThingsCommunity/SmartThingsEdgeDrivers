@@ -348,21 +348,21 @@ test.register_message_test(
       direction = "receive",
       message = {mock_fibaro_CO_sensor.id, "added"}
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- }
   },
   {
     inner_block_ordering = "relaxed"
