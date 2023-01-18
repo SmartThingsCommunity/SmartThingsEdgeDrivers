@@ -653,7 +653,7 @@ zigbeeManufacturer:
     deviceLabel: Centralite Outlet
     manufacturer: Centralite Systems
     model: 4200-C
-    deviceProfileName: basic-switch
+    deviceProfileName: switch-power-smartplug
   - id: "eWeLink/SA-003-Zigbee"
     deviceLabel: eWeLink Outlet
     manufacturer: eWeLink
