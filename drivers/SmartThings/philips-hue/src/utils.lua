@@ -11,14 +11,14 @@ end
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_bridge(device)
-  return #device.device_network_id == MAC_ADDRESS_STR_LEN and not (device.data and device.data.username)
+  return device.device_network_id and #device.device_network_id == MAC_ADDRESS_STR_LEN and not (device.data and device.data.username)
 end
 
 --- Only checked during `added` callback
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_light(device)
-  return #device.device_network_id > MAC_ADDRESS_STR_LEN and not (device.data and device.data.username and device.data.bulbId)
+  return device.parent_assigned_child_key and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and not (device.data and device.data.username and device.data.bulbId)
 end
 
 --- Only checked during `added` callback
