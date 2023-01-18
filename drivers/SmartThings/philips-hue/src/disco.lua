@@ -301,7 +301,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     local bridge_device = known_dni_to_device_map[bridge_id]
 
     local create_device_msg = {
-      type = "LAN",
+      type = "EDGE_CHILD",
       device_network_id = light.id,
       label = light.metadata.name,
       vendor_provided_label = device_info.product_data.product_name,
@@ -309,6 +309,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
       manufacturer = device_info.product_data.manufacturer_name,
       model = device_info.product_data.model_id,
       parent_device_id = bridge_device.id,
+      parent_assigned_child_key = light.id,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {
