@@ -148,9 +148,8 @@ local function do_color_temp_action(driver, device, args)
     return
   end
 
-  local clamped_kelvin = st_utils.clamp_value(
-    kelvin, HueApi.MIN_TEMP_KELVIN, HueApi.MAX_TEMP_KELVIN
-  )
+  local min = device:get_field(Fields.MIN_KELVIN) or HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+  local clamped_kelvin = st_utils.clamp_value(kelvin, min, HueApi.MAX_TEMP_KELVIN)
   local mirek = math.floor(handlers.kelvin_to_mirek(clamped_kelvin))
 
   local resp, err = hue_api:set_light_color_temp(light_id, mirek)
