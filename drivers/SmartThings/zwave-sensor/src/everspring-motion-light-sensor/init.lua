@@ -27,7 +27,7 @@ local function can_handle_everspring_motion_light(opts, driver, device, ...)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.motionSensor.motion.inactive())
+  -- device:emit_event(capabilities.motionSensor.motion.inactive())
   device:send(SwitchBinary:Get({}))
   device:send(SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.MOTION }))
 end

@@ -31,7 +31,7 @@ local handle_alerts_notification_payload = function(driver, device, zb_rx)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.waterSensor.water.dry())
+  -- device:emit_event(capabilities.waterSensor.water.dry())
 end
 
 local do_configure = function(self, device)

@@ -87,16 +87,16 @@ test.register_message_test(
         SensorAlarm:Get({})
       )
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
+    -- }
   },
   {
     inner_block_ordering = "relaxed"

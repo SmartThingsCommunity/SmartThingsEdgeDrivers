@@ -104,7 +104,7 @@ local function set_color_temperature(driver, device, cmd)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.colorTemperature.colorTemperature(DEFAULT_COLOR_TEMPERATURE))
+  -- device:emit_event(capabilities.colorTemperature.colorTemperature(DEFAULT_COLOR_TEMPERATURE))
 end
 
 local aeon_multiwhite_bulb = {
