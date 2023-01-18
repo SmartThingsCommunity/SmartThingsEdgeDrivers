@@ -511,7 +511,7 @@ local function init_light(driver, device)
       device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true})
     end
   end
-  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key
+  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or device.device_network_id
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
     driver.light_id_to_device[device_light_resource_id] = device
