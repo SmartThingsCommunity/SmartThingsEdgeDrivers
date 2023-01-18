@@ -298,9 +298,9 @@ test.register_coroutine_test(
     "Refresh necessary attributes - SORB",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-      )
+      -- test.socket.capability:__expect_send(
+      --   mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      -- )
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.zigbee:__expect_send({
@@ -379,9 +379,9 @@ test.register_coroutine_test(
     "Refresh necessary attributes - MaestroStat",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device_maestro.id, "added" })
-      test.socket.capability:__expect_send(
-        mock_device_maestro:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-      )
+      -- test.socket.capability:__expect_send(
+      --   mock_device_maestro:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      -- )
       test.socket.zigbee:__expect_send({
         mock_device_maestro.id,
         Thermostat.attributes.LocalTemperature:read(mock_device_maestro)

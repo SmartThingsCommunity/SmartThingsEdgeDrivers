@@ -236,8 +236,8 @@ end
 
 local function added_handler(self, device)
     -- initial capability value
-    device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
-    device:emit_event(capabilities.battery.battery(100))
+    -- device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
+    -- device:emit_event(capabilities.battery.battery(100))
 
     local interval_min = 5
     if device.preferences.reportingInterval ~= nil then

@@ -28,7 +28,7 @@ local zigbee_motion_driver = {
   },
   sub_drivers = {
     require("aqara"),
-    require("aurora"),
+    -- require("aurora"),
     require("ikea"),
     require("iris"),
     require("gatorsystem"),

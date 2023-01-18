@@ -16,15 +16,15 @@ local lock_utils = {
   -- Lock device field names
   LOCK_CODES = "lockCodes",
   CHECKING_CREDENTIAL = "checkingCredential",
-  CHECKING_CODE = "checkingUser",
   CODE_STATE = "codeState",
   DELETING_CODE = "deletingCode",
   CREDENTIALS_PER_USER = "credsPerUser",
-  TOTAL_USERS = "totalUsers",
   TOTAL_PIN_USERS = "totalPinUsers",
   SET_CREDENTIAL = "setCredential",
   COTA_CRED = "cotaCred",
-  COTA_CODE_NAME = "ST Remote Operation Code"
+  COTA_CODE_NAME = "ST Remote Operation Code",
+  COTA_CRED_INDEX = "cotaCredIndex",
+  NONFUNCTIONAL = "nonFunctional"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"

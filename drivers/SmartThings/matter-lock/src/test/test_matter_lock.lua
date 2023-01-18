@@ -255,32 +255,15 @@ test.register_message_test(
   }
 )
 
-
-test.register_message_test(
-  "Device added clears tamper alert.", {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        "added",
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()),
-    },
-  }
-)
-
 test.register_coroutine_test(
-  "Profile change on doConfigure lifecycle event due to cluster feature map",
+  "Added lifecycle event lock without codes",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
     mock_device:expect_metadata_update({ profile = "lock-without-codes" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
 end
 )
 
