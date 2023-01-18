@@ -78,9 +78,11 @@ local function emit_light_status_events(light_device, light)
       if light.color_temperature.mirek_valid then
         mirek = light.color_temperature.mirek
       end
-      light_device:emit_event(
-        capabilities.colorTemperature.colorTemperature(math.floor(handlers.mirek_to_kelvin(mirek)))
+      local min = light_device:get_field(Fields.MIN_KELVIN) or HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+      local kelvin = math.floor(
+        st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
       )
+      light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
     end
 
     if light.color then
@@ -501,6 +503,14 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 local function init_light(driver, device)
+  local caps = device.profile.components.main.capabilities
+  if caps.colorTemperature then
+    if caps.colorControl then
+      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
+    else
+      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true})
+    end
+  end
   local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.device_network_id
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
