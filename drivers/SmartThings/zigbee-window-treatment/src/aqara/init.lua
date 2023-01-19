@@ -1,6 +1,5 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local zcl_commands = require "st.zigbee.zcl.global_commands"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
@@ -74,21 +73,10 @@ local function set_initialized_state_handler(driver, device, command)
       device:set_field(INIT_STATE, INIT_STATE_CLOSE)
       device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
     else
-      device:emit_event(deviceInitialization.initializedState.initializing())
       device:set_field(INIT_STATE, INIT_STATE_OPEN)
       device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
     end
   end)
-end
-
-local function shade_level_read_handler(driver, device, zb_rx)
-  for i, v in ipairs(zb_rx.body.zcl_body.attr_records) do
-    if (v.attr_id.value == AnalogOutput.attributes.PresentValue.ID) then
-      local level = v.data.value
-      aqara_utils.emit_shade_state_event(device, level)
-      break
-    end
-  end
 end
 
 local function shade_level_report_legacy_handler(driver, device, value, zb_rx)
@@ -96,15 +84,16 @@ local function shade_level_report_legacy_handler(driver, device, value, zb_rx)
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
-  aqara_utils.shade_position_changed(device, value)
+  aqara_utils.emit_shade_level_event(device, value)
+  aqara_utils.emit_shade_event(device, value)
 end
 
 local function shade_state_report_handler(driver, device, value, zb_rx)
-  aqara_utils.shade_state_changed(device, value)
+  aqara_utils.emit_shade_event_by_state(device, value)
 
   -- initializedState
   local state = value.value
-  if state == aqara_utils.SHADE_STATE_STOP then
+  if state == aqara_utils.SHADE_STATE_STOP or state == 0x04 then
     local init_state_value = device:get_field(INIT_STATE) or ""
     if init_state_value == INIT_STATE_OPEN then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
@@ -231,11 +220,6 @@ local aqara_window_treatment_handler = {
     }
   },
   zigbee_handlers = {
-    global = {
-      [AnalogOutput.ID] = {
-        [zcl_commands.ReadAttributeResponse.ID] = shade_level_read_handler
-      }
-    },
     attr = {
       [WindowCovering.ID] = {
         [WindowCovering.attributes.CurrentPositionLiftPercentage.ID] = shade_level_report_legacy_handler

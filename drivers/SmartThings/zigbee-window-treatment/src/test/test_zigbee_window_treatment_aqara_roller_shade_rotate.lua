@@ -139,6 +139,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
   end
 )
 
@@ -155,6 +158,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+    )
   end
 )
 
@@ -170,6 +176,9 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
   end
 )

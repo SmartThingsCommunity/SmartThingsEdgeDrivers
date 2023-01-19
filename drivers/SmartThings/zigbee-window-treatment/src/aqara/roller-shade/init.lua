@@ -75,7 +75,7 @@ local function set_rotate_command_handler(driver, device, command)
 end
 
 local function shade_state_report_handler(driver, device, value, zb_rx)
-  aqara_utils.shade_state_changed(device, value)
+  aqara_utils.emit_shade_event_by_state(device, value)
 end
 
 local function pref_report_handler(driver, device, value, zb_rx)

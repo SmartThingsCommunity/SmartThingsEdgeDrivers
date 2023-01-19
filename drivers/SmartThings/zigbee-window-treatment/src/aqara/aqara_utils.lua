@@ -21,16 +21,6 @@ local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
 
 local aqara_utils = {}
 
-local function emit_shade_state_event(device, shadeLevel)
-  if shadeLevel >= 100 then
-    device:emit_event(capabilities.windowShade.windowShade.open())
-  elseif shadeLevel == 0 then
-    device:emit_event(capabilities.windowShade.windowShade.closed())
-  else
-    device:emit_event(capabilities.windowShade.windowShade.partially_open())
-  end
-end
-
 local function shade_level_cmd(driver, device, command)
   local level = command.args.shadeLevel
   if level > 100 then
@@ -45,11 +35,11 @@ local function shade_level_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
 end
 
-local function shade_state_changed(device, value)
+local function emit_shade_event_by_state(device, value)
   local state = value.value
 
   -- update state ui
-  if state == SHADE_STATE_STOP then
+  if state == SHADE_STATE_STOP or state == 0x04 then
     -- read shade position to update the UI
     device:send(AnalogOutput.attributes.PresentValue:read(device))
   elseif state == SHADE_STATE_OPEN then
@@ -59,7 +49,18 @@ local function shade_state_changed(device, value)
   end
 end
 
-local function shade_position_changed(device, value)
+local function emit_shade_event(device, value)
+  local level = value.value
+  if level >= 100 then
+    device:emit_event(capabilities.windowShade.windowShade.open())
+  elseif level == 0 then
+    device:emit_event(capabilities.windowShade.windowShade.closed())
+  else
+    device:emit_event(capabilities.windowShade.windowShade.partially_open())
+  end
+end
+
+local function emit_shade_level_event(device, value)
   local level = value.value
   if level > 100 then
     level = 100
@@ -80,9 +81,9 @@ aqara_utils.PREF_REVERSE_DEFAULT = PREF_REVERSE_DEFAULT
 aqara_utils.PREF_REVERSE_OFF = PREF_REVERSE_OFF
 aqara_utils.PREF_REVERSE_ON = PREF_REVERSE_ON
 
-aqara_utils.emit_shade_state_event = emit_shade_state_event
-aqara_utils.shade_state_changed = shade_state_changed
-aqara_utils.shade_position_changed = shade_position_changed
+aqara_utils.emit_shade_event = emit_shade_event
+aqara_utils.emit_shade_event_by_state = emit_shade_event_by_state
+aqara_utils.emit_shade_level_event = emit_shade_level_event
 aqara_utils.shade_level_cmd = shade_level_cmd
 
 return aqara_utils
