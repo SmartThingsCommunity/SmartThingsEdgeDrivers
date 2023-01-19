@@ -15,12 +15,13 @@ local command = require "command"
 local log = require "log"
 local utils = require "st.utils"
 local bose_utils = require "utils"
+local caps = require "st.capabilities"
 
 --- @module bose.CapabilityHandlers
 local CapabilityHandlers = {}
 
 function CapabilityHandlers.handle_on(driver, device, cmd)
-  if device.state_cache.main.switch.switch.value == "off" then
+  if device:get_latest_state("main", caps.switch.ID, caps.switch.switch.NAME, "off") == "off" then
     local ip = device:get_field("ip")
     log.info(string.format("[%s](%s) BoseCmd: toggle on {%s}", bose_utils.get_serial_number(device),
                            device.label, ip))
@@ -30,7 +31,7 @@ function CapabilityHandlers.handle_on(driver, device, cmd)
 end
 
 function CapabilityHandlers.handle_off(driver, device, cmd)
-  if device.state_cache.main.switch.switch.value == "on" then
+  if device:get_latest_state("main", caps.switch.ID, caps.switch.switch.NAME, "on") == "on" then
     local ip = device:get_field("ip")
     log.info(string.format("[%s](%s) BoseCmd: toggle off {%s}", bose_utils.get_serial_number(device),
                            device.label, ip))

@@ -50,7 +50,7 @@ function Listener:now_playing_update(info)
     self.device:emit_event(capabilities.switch.switch.off())
     self.device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
   else
-    if self.device.state_cache.main.switch.switch.value == "off" then
+    if self.device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME, "off") == "off" then
       self.device:emit_event(capabilities.switch.switch.on())
     end
 
