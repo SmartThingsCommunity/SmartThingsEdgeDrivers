@@ -48,13 +48,14 @@ function protocol.accept_handler(_, listen_sock)
     log.trace("accept connection from", client:getpeername())
 
     if accept_err ~= nil then
-        log.info("Hit accept error: " .. accept_err)
+        log.info_with({hub_logs=true}, "Hit accept error: " .. accept_err)
         listen_sock:close()
         return
     end
 
     client:settimeout(1)
-
+    --TODO collect, emit errors to hub logs, and close all in one error handling area
+    -- probably using GOTO
     local ip, _, _ = client:getpeername()
     if ip ~= nil then
         do -- Read first line and verify it matches the expect request-line with NOTIFY method type
@@ -101,12 +102,15 @@ function protocol.accept_handler(_, listen_sock)
                 line, err  = client:receive()
                 if err ~= nil then
                     log.warn("error while receiving headers: " .. err)
+                    --TODO close the client conn? I think so, unless we dont need the data
+                    -- Does err on receive mean the connection is closed?
                     return
                 end
             end
 
             if content_length == nil or content_length <= 0 then
-                log.warn("Failed to parse content-length from headers")
+                log.warn_with({hub_logs=true}, "Failed to parse content-length from headers")
+                --TODO close the client conn? I think so.
                 return
             end
         end
@@ -121,13 +125,14 @@ function protocol.accept_handler(_, listen_sock)
                     body = body .. recv
                 else
                     log.warn("error while receiving body: " .. err)
+                    --TODO could close client here to...
                     break
                 end
             end
 
             local device = subscriptions[subscriptionid]
             if not device then
-                log.error("received subscription event for unknown subscription", subscriptionid)
+                log.error_with({hub_logs=true}, "received subscription event for unknown subscription", subscriptionid)
                 client:close()
                 return
             end
@@ -145,16 +150,16 @@ function protocol.accept_handler(_, listen_sock)
             end
         end
 
+        --TODO handle err_string value with logging in one place.
         client:close()
     else
-        log.warn("Could not get IP from getpeername()")
+        log.warn_with({hub_logs=true}, "Could not get IP from getpeername()")
     end
 end
 
 function protocol.poll(_, device)
     local ip, port = get_ip_and_port(device)
-    log.debug("protocol.poll() ip is = ", ip)
-    log.debug("protocol.poll() port is = ", port)
+    log.debug(string.format("protocol.poll() ip = %s, port = %s", ip, port))
     if not (ip and port) then
         return
     end
@@ -181,7 +186,7 @@ function protocol.poll(_, device)
     -- TODO: some retries needed here to get device health if we timeout
 
     if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
+        log.warn("[" .. device.id .. "] Error sending http request: " .. code_or_err)
         
 	-- retry
 	resp, code_or_err, _, status_line = http.request {
@@ -198,7 +203,7 @@ function protocol.poll(_, device)
         }
 
         if resp == nil then
-           log.warn("Error sending http request: " .. code_or_err)
+           log.warn("[" .. device.id .. "] Error sending http request: " .. code_or_err)
 	   device:offline() -- Mark device as being unavailable/offline
            return
         end
@@ -223,7 +228,7 @@ function protocol.subscribe(server, device)
     local device_facing_local_ip = find_interface_ip_for_remote(ip)
 
     if server.listen_ip == nil or server.listen_port == nil then
-        log.info("failed to subscribe, no listen server")
+        log.info_with({hub_logs=true}, "[" .. device.id .. "] failed to subscribe, no listen server")
         return
     end
 
@@ -271,7 +276,7 @@ function protocol.unsubscribe(device)
         return
     end
 
-    log.info("Unsubscribing")
+    log.info_with({hub_logs=true}, "[".. device.id .. "] Unsubscribing")
 
     local sid = device:get_field("sid")
     if sid == nil then
@@ -299,7 +304,7 @@ function protocol.unsubscribe(device)
     end
 
     if code_or_err ~= 200 then
-        log.warn("Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
+        log.warn_with({hub_logs=true}, "[" .. device.id .. "] Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
     end
 end
 
@@ -332,13 +337,11 @@ function protocol.send_switch_cmd(device, power)
     }
     log.trace("got response", code_or_err, status_line)
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        return
-    end
-
-    if code_or_err ~= 200 then
-        log.warn("Switch command failed with error code " .. code_or_err .. " and status: " .. status_line)
+    if resp == nil or code_or_err ~= 200 then
+        log.warn_with({hub_logs=true}, string.format(
+            "Switch command failed with error code %s and status: %s",
+            code_or_err, status_line
+        ))
     end
 end
 
@@ -369,13 +372,11 @@ function protocol.send_switch_level_cmd(device, level)
         }
     }
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        return
-    end
-
-    if code_or_err ~= 200 then
-        log.warn("Switch level command failed with error code " .. code_or_err .. " and status: " .. status_line)
+    if resp == nil or code_or_err ~= 200 then
+        log.warn_with({hub_logs=true}, string.format(
+            "Switch command failed with error code %s and status: %s",
+            code_or_err, status_line
+        ))
     end
 end
 

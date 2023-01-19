@@ -19,7 +19,7 @@ end
 local function fetch_device_metadata(url)
   -- Wemo responds with chunked encoding, must use ltn12 sink
   local responsechunks = {}
-  local body,status,headers = http.request{
+  local body, status, headers = http.request {
     url = url,
     sink = ltn12.sink.table(responsechunks),
   }
@@ -31,14 +31,14 @@ local function fetch_device_metadata(url)
   -- vvvvvvvvvvvvvvvv TODO: errors are coming back as literal string "[string "socket"]:1239: closed"
   -- instead of just "closed", so do a `find` for the error
   if string.find(status, "closed") then
-  -- ^^^^^^^^^^^^^^^^
+    -- ^^^^^^^^^^^^^^^^
     log.debug("socket closed unexpectedly, this is usually due to bug in wemo's server, try parsing anyway")
     -- this workaround is required because wemo doesn't send the required zero-length chunk
     -- at the end of it `Text-Encoding: Chunked` HTTP message, it just closes the socket,
     -- so ignore closed errors
   elseif status ~= 200 then
-    log.error("metadata request failed ("..tostring(status)..")\n"..response)
-    return nil, "request failed: "..tostring(status)
+    log.error("metadata request failed (" .. tostring(status) .. ")\n" .. response)
+    return nil, "request failed: " .. tostring(status)
   end
 
   local handler = xml_handler:new()
@@ -86,7 +86,7 @@ local function find(deviceid, callback)
     "\r\n"
   )
 
-  log.trace("discovery request:\n"..multicast_msg)
+  log.trace("discovery request:\n" .. multicast_msg)
 
   -- bind local ip and port
   -- device will unicast back to this ip and port
@@ -98,7 +98,7 @@ local function find(deviceid, callback)
 
   assert(s:sendto(multicast_msg, multicast_ip, multicast_port))
   while true do
-    local time_remaining = math.max(0, timeouttime-socket.gettime())
+    local time_remaining = math.max(0, timeouttime - socket.gettime())
     s:settimeout(time_remaining)
     local val, rip, _ = s:receivefrom()
     if val then
@@ -106,12 +106,13 @@ local function find(deviceid, callback)
       local ip, port = headers["location"]:match("http://([^,/]+):([^/]+)")
       -- local id = headers["usn"]  --instead of usn, we need to use mac as id (to handle migration scenario)
       local meta = fetch_device_metadata(headers["location"])
-      if not meta then
+      --TODO need to verify ip and id are found
+      if not meta then --TODO this seems like an error
         meta = {}
       end
       local id = meta.mac
 
-      log.trace("discovery response from:", rip, headers["usn"])
+      log.trace("discovery response from:", rip, headers["usn"], id)
 
       if rip ~= ip then
         log.warn("recieved discovery response with reported & source IP mismatch, ignoring")
@@ -121,22 +122,22 @@ local function find(deviceid, callback)
         number_found = number_found + 1
 
         -- local meta = fetch_device_metadata(headers["location"])
-
+        -- TODO: what?
         -- if not meta then
         --  meta = {}
         -- end
 
-	-- the ID in the response is a substring of the search ID, check if they match (if search ID set)
-	local is_correct_responder = deviceid and string.find(deviceid, id, nil, "plaintext")
+        -- the ID in the response is a substring of the search ID, check if they match (if search ID set)
+        local is_correct_responder = deviceid and string.find(deviceid, id, nil, "plaintext")
 
-	if (not deviceid) or is_correct_responder then
-          callback({id = id,
-                    ip = ip,
-                    port = port,
-                    raw = headers,
-                    name = meta.name,
-                    model = meta.model
-                    })
+        if (not deviceid) or is_correct_responder then
+          callback({ id = id,
+            ip = ip,
+            port = port,
+            raw = headers,
+            name = meta.name,
+            model = meta.model
+          })
 
           if deviceid then
             -- just looking for a single device
@@ -151,7 +152,7 @@ local function find(deviceid, callback)
     end
   end
   s:close()
-  log.info(string.format("discovery response window ended, %s found", number_found))
+  log.info_with({hub_logs=true}, string.format("discovery response window ended, %s found", number_found))
 end
 
 return {
