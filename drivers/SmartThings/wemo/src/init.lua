@@ -27,6 +27,7 @@ local Driver = require "st.driver"
 local socket = require "cosock.socket"
 local json = require "dkjson"
 local log = require "log"
+local utils = require "st.utils"
 
 -- internal API, TODO: use public API when merged
 local devices = _envlibrequire "devices"
@@ -43,7 +44,6 @@ local profiles = {
 local server = {}
 
 local function start_server(driver)
-  log.info("starting server")
   server.listen_sock = socket.tcp()
 
   -- create server on IP_ANY and os-assigned port
@@ -52,24 +52,26 @@ local function start_server(driver)
   local ip, port, _ = server.listen_sock:getsockname()
 
   if ip ~= nil and port ~= nil then
-    log.info("listening on: " .. ip .. ":" .. port)
+    log.info_with({hub_logs=true}, string.format("Started listening server on %s:%s", ip, port))
     server.listen_port = port
     server.listen_ip = ip;
     driver:register_channel_handler(server.listen_sock, protocol.accept_handler)
   else
-    log.error("could not get IP/port from TCP getsockname(), not listening for device status")
+    log.error_with({hub_logs=true}, "could not get IP/port from TCP getsockname(), not listening for device status")
     server.listen_sock:close()
     server.listen_sock = nil
+    --TODO schedule a retry if this happens?
   end
 end
 
 local function stop_server()
-  log.info(string.format("shutting down server @ %s:%s", server.listen_ip, server.listen_port))
+  log.info_with({hub_logs=true}, string.format("Shutting down listening server @ %s:%s", server.listen_ip, server.listen_port))
 
   if server.listen_sock ~= nil then
     server.listen_sock:close()
   end
-
+  --TODO unregister channel handler? Seems possible to get in a state
+  -- where sockets are never gc'd because they are held by the driver.
   server = {}
 end
 
@@ -102,7 +104,8 @@ local function backoff_builder(max, inc, rand)
 end
 
 local function device_init(driver, device)
-  log.info("[" .. device.id .. "] initializing Wemo device")
+  --TODO is device.id the right thing, not device_network_id?
+  log.info_with({hub_logs=true}, "[" .. device.id .. "] initializing Wemo device")
 
   local backoff = backoff_builder(60, 1, 0.25)
   local info
@@ -112,20 +115,19 @@ local function device_init(driver, device)
     socket.sleep(backoff())
   end
 
-  if not info then
-    log.warn("[" .. device.id .. "] device not found on network")
+  if not info or not info.ip then
+    log.warn_with({hub_logs=true}, "[" .. device.id .. "] device not found on network")
     device:offline() -- Mark device as being unavailable/offline
     return
   end
-
-  log.info("[" .. device.id .. "] device found at:",
-  info.ip, info.port, info.id, info.raw.Location)
 
   device:online() -- Mark device as being online
  
   device:set_field("ip", info.ip)
   device:set_field("port", info.port)
 
+  --TODO maybe we should call_on_schedule with the device thread, and the polling.
+  -- instead of doing the resubscribe for all devices at once.
   protocol.subscribe(server, device)
 end
 
@@ -134,21 +136,27 @@ local function device_removed(_, device)
   protocol.unsubscribe(device)
 end
 
+--TODO handle polling devices individually rather than
+-- spamming all at once
 local function poll(driver)
-  
   local device_list = driver:get_devices()
+  -- print("!!!!!poll device_list = ", utils.stringify_table(device_list, nil, true))
   for _, device in ipairs(device_list) do
+      log.info_with({hub_logs=true}, "[" .. device.id .. "] polling device")
       protocol.poll(driver, device)
   end
-
 end
 
+--TODO resubscribe for each device individually rather than all at once
 local function resubscribe_all(driver)
   local device_list = driver.device_cache
+  print("!!!!!resub_all device_list = ", utils.stringify_table(device_list, nil, true))
+  --TODO I think this is not the right way to get the devices for the driver...
+  -- maybe this is why we dont ever subscribe?
   for _, device_uuid in ipairs(device_list) do
     local device = driver:get_device_info(device_uuid, true)
 
-    log.info("[" .. device_uuid .. "] resubscribing Wemo device")
+    log.info("[" .. device.id .. "] resubscribing Wemo device")
     protocol.unsubscribe(device)
     protocol.subscribe(server, device)
   end
@@ -187,7 +195,7 @@ local function discovery_handler(driver, _, should_continue)
 
         if not known_devices[id] and not found_devices[id] then
           found_devices[id] = true
-          local name = (device.name or "Unnamed Wemo")
+          local name = device.name or "Unnamed Wemo"
           local profile_name = device.model
           if string.find(name, "Motion") then
             profile_name = "Motion"
@@ -196,7 +204,7 @@ local function discovery_handler(driver, _, should_continue)
 
           if profile then
             -- add device
-            log.info(string.format("adding %s at %s", name or id, ip))
+            log.info_with({hub_logs=true}, string.format("creating %s device [%s] at %s", name, id, ip))
             local create_device_msg = json.encode({
                 type = "LAN",
                 deviceNetworkId = id,
