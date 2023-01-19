@@ -51,7 +51,7 @@ local function discovery_handler(driver, _, should_continue)
     discovery.find(nil, function(device) -- This is called after finding a device
       local id = device.id
       local ip = device.ip
-      log.info(string.format("Found a device. ip: %s, id: %s", device.ip, device.id))
+      log.info_with({hub_logs=true}, string.format("Found a device. ip: %s, id: %s", device.ip, device.id))
       if not known_devices[id] and not found_devices[id] then
         local dev_info, err = command.info(ip)
         if not dev_info then
@@ -189,8 +189,8 @@ local function device_init(driver, device)
     socket.sleep(backoff())
   end
 
-  if not dev_info then
-    log.warn("device not found on network")
+  if not dev_info or not dev_info.ip then
+    log.warn_with({hub_logs=true}, "device not found on network")
     return
   end
 
@@ -204,8 +204,10 @@ local function device_init(driver, device)
   do_refresh(driver, device)
 
   local listener = Listener.create_device_event_listener(driver, device)
-  device:set_field("listener", listener)
-  listener:start()
+  if listener then
+    device:set_field("listener", listener)
+    listener:start()
+  end
 end
 
 local function device_removed(driver, device)
