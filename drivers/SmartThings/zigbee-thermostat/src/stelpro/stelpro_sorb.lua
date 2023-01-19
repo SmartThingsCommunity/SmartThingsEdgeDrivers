@@ -49,7 +49,7 @@ local do_refresh = function(self, device)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
   do_refresh(self, device)
 end
 

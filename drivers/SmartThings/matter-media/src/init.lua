@@ -255,6 +255,14 @@ local matter_driver_template = {
       [capabilities.keypadInput.commands.sendKey.NAME] = handle_send_key
     }
   },
+  supported_capabilities = {
+    capabilities.audioMute,
+    capabilities.audioVolume,
+    capabilities.switch,
+    capabilities.mediaPlayback,
+    capabilities.mediaTrackControl,
+    capabilities.keypadInput,
+  },
 }
 
 local matter_driver = MatterDriver("matter-media", matter_driver_template)

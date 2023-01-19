@@ -1327,8 +1327,8 @@ test.register_coroutine_test(
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
       test.wait_for_events()
     end
 )

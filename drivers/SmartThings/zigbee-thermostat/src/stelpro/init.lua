@@ -114,7 +114,7 @@ local function info_changed(driver, device, event, args)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
 local stelpro_thermostat = {

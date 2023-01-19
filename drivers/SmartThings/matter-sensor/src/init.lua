@@ -107,7 +107,15 @@ local matter_driver_template = {
     }
   },
   capability_handlers = {
-  }
+  },
+  supported_capabilities = {
+    capabilities.temperatureMeasurement,
+    capabilities.contactSensor,
+    capabilities.motionSensor,
+    capabilities.battery,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.illuminanceMeasurement,
+  },
 }
 
 local matter_driver = MatterDriver("matter-sensor", matter_driver_template)

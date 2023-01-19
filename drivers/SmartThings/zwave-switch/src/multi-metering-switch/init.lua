@@ -80,7 +80,7 @@ local function device_added(driver, device, event)
     local children_amount = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_amount(device)
     local device_profile = MULTI_METERING_SWITCH_CONFIGURATION_MAP.get_child_switch_device_profile(device)
     if children_amount == nil then
-      children_amount = utils.table_size(device.zwave_endpoints)-1
+      children_amount = utils.table_size(device.zwave_endpoints)-2
     end
     create_child_device(driver, device, children_amount, device_profile)
   end

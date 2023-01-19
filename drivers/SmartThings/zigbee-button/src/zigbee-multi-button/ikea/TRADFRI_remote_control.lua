@@ -58,7 +58,7 @@ local function added_handler(self, device)
     end
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local remote_control = {
@@ -80,10 +80,10 @@ local remote_control = {
         [0x08] = build_button_payload_handler(capabilities.button.button.held)
       }
     }
-  }, 
+  },
   lifecycle_handlers = {
     added = added_handler
-  }, 
+  },
   can_handle = function(opts, driver, device, ...)
     return device:get_model() == "TRADFRI remote control"
   end
