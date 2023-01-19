@@ -74,7 +74,7 @@ local function fetch_device_metadata(url)
   end
 
   udn_value = tablefind(parsed_xml, "root.device.UDN")
-  mac_raw = string.sub(udn_value,-12)
+  mac_raw = string.sub(udn_value, -12)
   mac_val = string.upper(mac_raw)
   log.debug(string.format("SPEAKER_MAC_VAL --> %s", mac_val))
 
@@ -126,26 +126,26 @@ function Disco.find(deviceid, callback)
       local headers = process_response(val)
       local ip, port = headers["location"]:match(
                              "http://([^,/]+):([^/]+)") -- TODO : We need to check the xml filename for samsung audio device for ex: http://192.168.0.1:59666/rootDesc.xml
-      -- local id = headers["usn"]
  
       -- TODO how do I know the device that responded is actually a samsung-audio device
       -- potentially will need to make a request to the endpoint
       local meta = fetch_device_metadata(headers["location"])
       local speaker_name = "samsung-audio speaker"
       local speaker_model = "unknown samsung-audio"
-      local speaker_mac = "000000000000"
+      local id = nil
       if not meta then
           meta = {}
           log.trace("fetch_device_metadata INFO is NULL")
       else
           speaker_name = meta.name
           speaker_model = meta.model
-          speaker_mac = meta.mac
+          id = meta.mac
       end
-      local id = speaker_mac
       log.debug(string.format("Device Network ID --> %s", id)) 
 
-      if rip ~= ip then
+      if id == nil then
+	log.warn("Device Network ID of discovered device is NIL, ignoring this device")
+      elseif rip ~= ip then
         log.warn(string.format(
                    "recieved discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
                    rip, ip))
@@ -153,7 +153,7 @@ function Disco.find(deviceid, callback)
       elseif ip and id then
         callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})
 
-        if id == deviceid then
+        if deviceid and id == deviceid then
           -- check if the speaker we just found was the one we were looking for
           log.debug(string.format("Found the Specific Device in Discovery --> %s", deviceid))
           break
