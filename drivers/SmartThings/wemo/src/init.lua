@@ -34,7 +34,7 @@ local devices = _envlibrequire "devices"
 
 -- maps model name to profile name
 local profiles = {
-  ["Insight"] = "wemo.insight-smart-plug.v1",
+  ["Insight"] = "wemo.mini-smart-plug.v1",
   ["Socket"] = "wemo.mini-smart-plug.v1",
   ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
