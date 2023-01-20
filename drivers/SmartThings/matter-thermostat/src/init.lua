@@ -412,6 +412,14 @@ local matter_driver_template = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
     }
   },
+  supported_capabilities = {
+    capabilities.thermostatMode,
+    capabilities.thermostatHeatingSetpoint,
+    capabilities.thermostatCoolingSetpoint,
+    capabilities.thermostatFanMode,
+    capabilities.thermostatOperatingState,
+    capabilities.battery,
+  },
 }
 
 local matter_driver = MatterDriver("matter-thermostat", matter_driver_template)

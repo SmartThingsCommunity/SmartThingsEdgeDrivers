@@ -63,7 +63,7 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)

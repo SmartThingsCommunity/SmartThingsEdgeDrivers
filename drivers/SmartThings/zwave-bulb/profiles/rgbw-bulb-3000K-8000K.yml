@@ -12,12 +12,13 @@ components:
           range: [1, 100]
   - id: colorTemperature
     version: 1
+    config:
+      values:
+        - key: "colorTemperature.value"
+          range: [ 3000, 8000 ]
   - id: colorControl
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: Light
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-rgbw-color-bulb-3000K-8000K

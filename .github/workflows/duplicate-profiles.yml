@@ -34,7 +34,7 @@ jobs:
         uses: peter-evans/find-comment@v2
         id: fc
         with:
-          body-includes: Duplicate profile(s) detected
+          body-includes: Duplicate profile check
           comment-author: 'github-actions[bot]'
           issue-number: ${{ github.event.number }}
 

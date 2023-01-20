@@ -67,7 +67,7 @@ local do_configure = function(self, device)
 end
 
 local added_handler = function(self, device)
-  device:emit_event(capabilities.soundSensor.sound.not_detected())
+  -- device:emit_event(capabilities.soundSensor.sound.not_detected())
 end
 
 local zigbee_sound_sensor_driver_template = {

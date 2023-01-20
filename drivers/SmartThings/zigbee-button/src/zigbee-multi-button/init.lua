@@ -69,6 +69,7 @@ local function added_handler(self, device)
     device:emit_component_event(component,
       capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
+
   --device:emit_event(capabilities.button.button.pushed({ state_change = false }))
 end
 
