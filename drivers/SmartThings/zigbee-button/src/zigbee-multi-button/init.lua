@@ -36,9 +36,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "BSM-300Z" },
   { mfr = "ShinaSystem", model = "SBM300ZB1" },
   { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" },
-  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
-  { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
+  { mfr = "ShinaSystem", model = "SBM300ZB3" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -53,13 +51,8 @@ end
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do
-    log.debug("### component: " .. utils.stringify_table(component, "component table", true))
     local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
-    log.debug("### number_of_buttons: " .. number_of_buttons)
-    log.debug("### config: " .. utils.stringify_table(config, "config table", true))
     if config ~= nil then
-      log.debug("### config.SUPPORTED_BUTTON_VALUES: " ..
-        utils.stringify_table(config.SUPPORTED_BUTTON_VALUES, "supp_button", true))
       device:emit_component_event(component,
         capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, { visibility = { displayed = false } }))
     else
@@ -70,7 +63,7 @@ local function added_handler(self, device)
       capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
 
-  --device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
 end
 
 local zigbee_multi_button = {
@@ -86,8 +79,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.centralite"),
     require("zigbee-multi-button.adurosmart"),
     require("zigbee-multi-button.heiman"),
-    require("zigbee-multi-button.shinasystems"),
-    require("zigbee-multi-button.robb")
+    require("zigbee-multi-button.shinasystems")
   }
 }
 
