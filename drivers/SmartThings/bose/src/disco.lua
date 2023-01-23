@@ -84,6 +84,9 @@ function Disco.find(deviceid, callback)
         end
       end
     elseif rip == "timeout" then
+      if deviceid then
+        log.warn_with({hub_logs=true}, string.format("Timed out searching for device %s", deviceid))
+      end
       break
     else
       error(string.format("[%s]error receving discovery replies: %s", deviceid, rip))
