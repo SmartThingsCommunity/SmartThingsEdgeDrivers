@@ -13,13 +13,18 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+
+local constants = require "st.zigbee.constants"
+local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
+local messages = require "st.zigbee.messages"
+local zdo_messages = require "st.zigbee.zdo"
+local Groups = clusters.Groups
 
 local Level = clusters.Level
 local OnOff = clusters.OnOff
@@ -144,6 +149,65 @@ test.register_coroutine_test(
       )
       test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
     end
+)
+
+test.register_coroutine_test(
+  "Request all binding table entries and fall back to group 0x0000",
+  function()
+    local binding_table_long = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
+    local response = mgmt_bind_response.MgmtBindResponse({
+      status = 0x00,
+      total_binding_table_entry_count = 0x02,
+      start_index = 0x00,
+      binding_table_list_count = 0x01,
+      binding_table_entries = { binding_table_long }
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
+      }
+    )
+    local addr_header = messages.AddressHeader(
+      constants.HUB.ADDR,
+      constants.HUB.ENDPOINT,
+      mock_device:get_short_address(),
+      mock_device.fingerprinted_endpoint_id,
+      constants.ZDO_PROFILE_ID,
+      mgmt_bind_req.BINDING_TABLE_REQUEST_CLUSTER_ID
+    )
+    local request = mgmt_bind_req.MgmtBindRequest(1) -- Single argument of the start index to query the table
+    local message_body = zdo_messages.ZdoMessageBody({
+      zdo_body = request
+    })
+    local bind_mgmt_request =  messages.ZigbeeMessageTx({
+      address_header = addr_header,
+      body = message_body
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        bind_mgmt_request
+      }
+    )
+    response = mgmt_bind_response.MgmtBindResponse({
+      status = 0x00,
+      total_binding_table_entry_count = 0x02,
+      start_index = 0x01,
+      binding_table_list_count = 0x01,
+      binding_table_entries = { binding_table_long }
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
+      }
+    )
+    test.socket.zigbee:__expect_add_hub_to_group(0x0000)
+    test.socket.zigbee:__expect_send({mock_device.id,
+      Groups.commands.AddGroup(mock_device, 0x0000)
+    })
+  end
 )
 
 test.register_coroutine_test(
