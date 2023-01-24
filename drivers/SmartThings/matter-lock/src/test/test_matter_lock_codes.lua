@@ -53,37 +53,8 @@ local mock_device_record = {
 }
 local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
 
-local mock_cota_device_record = {
-  profile = t_utils.get_profile_definition("base-lock.yml"),
-  manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
-  endpoints = {
-    {
-      endpoint_id = 1,
-      clusters = {
-        {
-          cluster_id = DoorLock.ID,
-          cluster_type = "SERVER",
-          feature_map = 0x0181, -- PIN & USR & COTA
-        },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
-      },
-    },
-  },
-}
-local mock_cota_device = test.mock_device.build_test_matter_device(mock_cota_device_record)
-
-local function test_init_cota()
-  local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_cota_device)
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_cota_device))
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_cota_device))
-  subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_cota_device))
-  test.socket["matter"]:__expect_send({mock_cota_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_cota_device)
-end
-
 local function test_init()
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
@@ -94,12 +65,6 @@ test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function(dev)
   local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
-  local req = DoorLock.attributes.MaxPINCodeLength:read(dev, 1)
-  req:merge(DoorLock.attributes.MinPINCodeLength:read(dev, 1))
-  req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(dev, 1))
-  req:merge(DoorLock.attributes.NumberOfTotalUsersSupported:read(dev, 1))
-  req:merge(DoorLock.attributes.NumberOfCredentialsSupportedPerUser:read(dev, 1))
-  test.socket.matter:__expect_send({dev.id, req})
   test.socket.capability:__expect_send(
     dev:generate_test_message(
       "main", capabilities.lockCodes.scanCodes("Scanning")
@@ -108,23 +73,6 @@ local expect_reload_all_codes_messages = function(dev)
   test.socket.matter:__expect_send(
     {dev.id, DoorLock.server.commands.GetCredentialStatus(dev, 1, credential)}
   )
-  test.socket.matter:__queue_receive(
-    {
-      dev.id,
-      DoorLock.attributes.NumberOfTotalUsersSupported:build_test_report_data(dev, 1, 10),
-    }
-  )
-  test.wait_for_events()
-
-  test.socket.capability:__expect_send(dev:generate_test_message("main", capabilities.lockCodes.maxCodes(32, {visibility = {displayed = false}})))
-  test.socket.matter:__queue_receive({
-    dev.id,
-    DoorLock.attributes.NumberOfPINUsersSupported:build_test_report_data(dev, 1, 16),
-  })
-  test.socket.matter:__queue_receive({
-    dev.id,
-    DoorLock.attributes.NumberOfCredentialsSupportedPerUser:build_test_report_data(dev, 1, 2),
-  })
   test.wait_for_events()
 
   local next_credential_index = 2
@@ -262,57 +210,18 @@ local function init_code_slot(slot_number, name, device)
 end
 
 test.register_coroutine_test(
-  "Configure should configure all necessary attributes and begin reading codes", function()
+  "Added should configure all necessary attributes and begin reading codes", function()
     test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+    local req = DoorLock.attributes.MaxPINCodeLength:read(mock_device, 1)
+    req:merge(DoorLock.attributes.MinPINCodeLength:read(mock_device, 1))
+    req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device, 1))
+    test.socket.matter:__expect_send({mock_device.id, req})
     expect_reload_all_codes_messages(mock_device)
   end
-)
-
-test.register_coroutine_test(
-  "Configure should set cota cred for device that supports the feature", function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
-
-    test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_cota_device.id, "doConfigure" })
-    mock_cota_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    expect_reload_all_codes_messages(mock_cota_device)
-    test.wait_for_events()
-
-    test.mock_time.advance_time(1)
-    test.socket.matter:__expect_send({
-      mock_cota_device.id,
-      DoorLock.server.commands.ClearCredential(
-        mock_cota_device,
-        1,
-        {credential_type = types.DlCredentialType.PIN, credential_index = 32} --max codes
-      )
-    })
-    test.wait_for_events()
-    test.mock_time.advance_time(2)
-
-    mock_cota_device:set_field("cotaCred", "12345678") --overwrite random cred for test expectation
-    test.socket.matter:__expect_send(
-      {
-        mock_cota_device.id,
-        DoorLock.server.commands.SetCredential(
-          mock_cota_device, 1, -- endpoint
-          DoorLock.types.DlDataOperationType.ADD, -- operation_type
-          DoorLock.types.DlCredential(
-            {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = 32}
-          ), -- credential
-          "12345678", -- credential_data
-          nil, -- user_index
-          DoorLock.types.DlUserStatus.OCCUPIED_ENABLED, -- user_status
-          DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
-        ),
-      }
-    )
-  end,
-  {test_init = test_init_cota}
 )
 
 local credential = DoorLock.types.DlCredential(
@@ -384,21 +293,11 @@ test.register_message_test(
       },
     },
     {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.attributes.NumberOfCredentialsSupportedPerUser:build_test_report_data(
-          mock_device, 1, 2
-        ),
-      },
-    },
-    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message(
         "main",
-        capabilities.lockCodes.maxCodes(32, {visibility = {displayed = false}})
+        capabilities.lockCodes.maxCodes(16, {visibility = {displayed = false}})
       ),
     },
   }
