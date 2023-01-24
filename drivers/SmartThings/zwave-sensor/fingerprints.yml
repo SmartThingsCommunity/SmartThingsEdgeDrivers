@@ -292,11 +292,11 @@ zwaveManufacturer:
     productType: 0x0301
     productId: 0x0012
     deviceProfileName: motion-battery
-#   - id: "aeotec/multisensor/5"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0086
-#     productId: 0x004A
-#     deviceProfileName: motion-battery-temperature-illuminance-humidity
+  - id: "aeotec/multisensor/5"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0086
+    productId: 0x004A
+    deviceProfileName: motion-battery-temperature-illuminance-humidity
 #   - id: "aeotec/multisensor/6"
 #     deviceLabel: Aeotec Multipurpose Sensor
 #     manufacturerId: 0x0086

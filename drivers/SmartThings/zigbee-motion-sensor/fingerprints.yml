@@ -14,6 +14,11 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: MS01
     deviceProfileName: motion-battery
+  - id: "eWeLink/MSO1"
+    deviceLabel: eWeLink Motion Sensor
+    manufacturer: eWeLink
+    model: MSO1
+    deviceProfileName: motion-battery
   - id: "ORVIBO/895a2d80097f4ae2b2d40500d5e0"
     deviceLabel: Orvibo Motion Sensor
     manufacturer: ORVIBO

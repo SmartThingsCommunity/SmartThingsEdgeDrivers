@@ -1,19 +1,19 @@
 zigbeeManufacturer:
-#   - id: "LUX/KONOZ"
-#     deviceLabel: LUX Thermostat
-#     manufacturer: LUX
-#     model: KONOZ
-#     deviceProfileName: thermostat-battery-powerSource
-#   - id: "Umbrela/Thermostat"
-#     deviceLabel: Umbrela Thermostat
-#     manufacturer: Umbrela
-#     model: Thermostat
-#     deviceProfileName: thermostat-battery-powerSource
-#   - id: "Danfoss/eTRV0100"
-#     deviceLabel: Danfoss Thermostat
-#     manufacturer: Danfoss
-#     model: eTRV0100
-#     deviceProfileName: thermostat-popp-danfoss
+  - id: "LUX/KONOZ"
+    deviceLabel: LUX Thermostat
+    manufacturer: LUX
+    model: KONOZ
+    deviceProfileName: thermostat-battery-powerSource
+  - id: "Umbrela/Thermostat"
+    deviceLabel: Umbrela Thermostat
+    manufacturer: Umbrela
+    model: Thermostat
+    deviceProfileName: thermostat-battery-powerSource
+  - id: "Danfoss/eTRV0100"
+    deviceLabel: Danfoss Thermostat
+    manufacturer: Danfoss
+    model: eTRV0100
+    deviceProfileName: thermostat-popp-danfoss
 #   - id: "D5X84YU/eT093WRO"
 #     deviceLabel: POPP Thermostat
 #     manufacturer: D5X84YU
