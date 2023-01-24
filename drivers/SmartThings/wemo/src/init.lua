@@ -104,19 +104,20 @@ local function backoff_builder(max, inc, rand)
 end
 
 local function device_init(driver, device)
-  --TODO is device.id the right thing, not device_network_id?
-  log.info_with({hub_logs=true}, "[" .. device.id .. "] initializing Wemo device")
+  log.info_with({hub_logs=true}, "[" .. device.device_network_id .. "] initializing Wemo device")
 
-  local backoff = backoff_builder(60, 1, 0.25)
+  local backoff = backoff_builder(300, 1, 0.25)
   local info
   while true do
     discovery.find(device.device_network_id, function(found) info = found end)
     if info then break end
-    socket.sleep(backoff())
+    local tm = backoff()
+    log.debug("Failed to initialize device, retrying after delay", tm)
+    socket.sleep(tm)
   end
 
   if not info or not info.ip then
-    log.warn_with({hub_logs=true}, "[" .. device.id .. "] device not found on network")
+    log.warn_with({hub_logs=true}, "[" .. device.device_network_id .. "] device not found on network")
     device:offline() -- Mark device as being unavailable/offline
     return
   end
@@ -132,7 +133,7 @@ local function device_init(driver, device)
 end
 
 local function device_removed(_, device)
-  log.info("[" .. device.id .. "] device removed")
+  log.info("[" .. device.device_network_id .. "] device removed")
   protocol.unsubscribe(device)
 end
 
@@ -142,7 +143,7 @@ local function poll(driver)
   local device_list = driver:get_devices()
   -- print("!!!!!poll device_list = ", utils.stringify_table(device_list, nil, true))
   for _, device in ipairs(device_list) do
-      log.info_with({hub_logs=true}, "[" .. device.id .. "] polling device")
+      log.info_with({hub_logs=true}, "[" .. device.device_network_id .. "] polling device")
       protocol.poll(driver, device)
   end
 end
@@ -156,7 +157,7 @@ local function resubscribe_all(driver)
   for _, device_uuid in ipairs(device_list) do
     local device = driver:get_device_info(device_uuid, true)
 
-    log.info("[" .. device.id .. "] resubscribing Wemo device")
+    log.info("[" .. device.device_network_id .. "] resubscribing Wemo device")
     protocol.unsubscribe(device)
     protocol.subscribe(server, device)
   end
@@ -224,7 +225,7 @@ local function discovery_handler(driver, _, should_continue)
             log.warn("discovered device is an unknown model:", tostring(device.model))
           end
         else
-          log.debug("already known")
+          log.debug("device already known by driver")
         end
       end
     )
