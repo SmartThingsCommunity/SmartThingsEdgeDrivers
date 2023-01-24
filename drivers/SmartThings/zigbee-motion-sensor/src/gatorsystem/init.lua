@@ -56,10 +56,10 @@ local function ias_zone_status_change_handler(driver, device, zb_rx)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.motionSensor.motion.inactive())
-  device:emit_event(capabilities.contactSensor.contact.closed())
-  device:emit_event(capabilities.presenceSensor.presence.not_present())
-  device:emit_event(capabilities.battery.battery(100))
+  -- device:emit_event(capabilities.motionSensor.motion.inactive())
+  -- device:emit_event(capabilities.contactSensor.contact.closed())
+  -- device:emit_event(capabilities.presenceSensor.presence.not_present())
+  -- device:emit_event(capabilities.battery.battery(100))
 end
 
 local do_configure = function(self, device)

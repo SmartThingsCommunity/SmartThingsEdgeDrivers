@@ -880,11 +880,11 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x0008
     deviceProfileName: metering-dimmer
-#   - id: 010F/0102
-#     deviceLabel: Fibaro Dimmer Switch
-#     manufacturerId: 0x010F
-#     productType: 0x0102
-#     deviceProfileName: fibaro-dimmer-2
+  - id: 010F/0102
+    deviceLabel: Fibaro Dimmer Switch
+    manufacturerId: 0x010F
+    productType: 0x0102
+    deviceProfileName: fibaro-dimmer-2
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

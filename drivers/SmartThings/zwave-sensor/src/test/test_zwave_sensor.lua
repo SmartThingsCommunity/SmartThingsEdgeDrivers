@@ -150,31 +150,31 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+    -- },
     {
       channel = "capability",
       direction = "receive",

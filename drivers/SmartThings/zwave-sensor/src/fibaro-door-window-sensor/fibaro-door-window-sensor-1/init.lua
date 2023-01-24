@@ -68,8 +68,8 @@ end
 
 local function device_added(driver, device)
   do_refresh(driver, device)
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.contactSensor.contact.open())
+  -- device:emit_event(capabilities.tamperAlert.tamper.clear())
+  -- device:emit_event(capabilities.contactSensor.contact.open())
 end
 
 

@@ -40,9 +40,9 @@ local function can_handle_v2_alarm(opts, driver, device, cmd, ...)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
+  -- device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.tamperAlert.tamper.clear())
 end
 
 --- Default handler for alarm command class reports

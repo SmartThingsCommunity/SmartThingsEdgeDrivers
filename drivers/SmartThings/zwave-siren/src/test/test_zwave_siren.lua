@@ -1,3 +1,4 @@
+---@diagnostic disable: param-type-mismatch, undefined-field
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -384,6 +385,44 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
+    end
+)
+
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    -- test.socket.capability:__expect_send({
+    --   mock_siren_basic.id,
+    --   {
+    --     capability_id = "alarm", component_id = "main",
+    --     attribute_id = "alarm", state = { value = "off" }
+    --   }
+    -- })
+    -- test.socket.capability:__expect_send({
+    --   mock_siren_basic.id,
+    --   {
+    --     capability_id = "battery", component_id = "main"t
+    --     attribute_id = "battery", state = { value = 100 }
+    --   }
+    -- })
+    -- test.socket.capability:__expect_send({
+    --   mock_siren_basic.id,
+    --   {
+    --     capability_id = "switch", component_id = "main",
+    --     attribute_id = "switch", state = { value = "off" }
+    --   }
+    -- })
+    -- test.socket.capability:__expect_send({
+    --   mock_siren_basic.id,
+    --   {
+    --     capability_id = "tamperAlert", component_id = "main",
+    --     attribute_id = "tamper", state = { value = "clear" }
+    --   }
+    -- })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_siren_basic.id, "added" })
+    test.wait_for_events()
     end
 )
 
