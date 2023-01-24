@@ -32,7 +32,7 @@ local function send_disco_request()
       'M-SEARCH * HTTP/1.1',
       'HOST: 239.255.255.250:1900',
       'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
-      'MX: 2',
+      'MX: 4',
       'ST: urn:Belkin:device:*',
       '\r\n'
     },
@@ -40,7 +40,7 @@ local function send_disco_request()
   )
   local sock = assert(socket.udp(), "create discovery socket")
   assert(sock:setsockname(listen_ip, listen_port), "disco| socket setsockname")
-  local timeouttime = socket.gettime() + 3 -- 3 second timeout, `MX` + 1 for network delay
+  local timeouttime = socket.gettime() + 5 -- 5 second timeout, `MX` + 1 for network delay
   assert(sock:sendto(multicast_msg, multicast_ip, multicast_port))
   return sock, timeouttime
 end
