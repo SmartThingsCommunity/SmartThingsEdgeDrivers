@@ -119,10 +119,13 @@ local function device_init(driver, device)
     return
   end
 
-  device:online() -- Mark device as being online
+  device:online()
  
-  device:set_field("ip", info.ip)
-  device:set_field("port", info.port)
+  --ip and port are persisted since sometimes wemo just stop responding to ssdp even though
+  --they are connected to the network. In this case we want them to continue to function
+  --across driver restarts.
+  device:set_field("ip", info.ip, {persist = true})
+  device:set_field("port", info.port, {persist = true})
   device:set_field("serial_num", info.serial_num, {persist = true})
 
   --TODO maybe we should call_on_schedule with the device thread, and the polling.
