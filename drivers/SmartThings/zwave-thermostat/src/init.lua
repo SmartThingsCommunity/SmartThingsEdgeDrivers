@@ -48,6 +48,11 @@ local function convert_to_device_temp(command_temp, device_scale)
   elseif (command_temp >= 40 and (device_scale == ThermostatSetpoint.scale.CELSIUS or device_scale == nil)) then
     command_temp = utils.f_to_c(command_temp)
   end
+
+  -- Lots of devices don't like being sent fractional F values, so let's just round them
+  if command_temp >= 40 and (device_scale == ThermostatSetpoint.scale.FAHRENHEIT) then
+    command_temp = utils.round(command_temp)
+  end
   return command_temp
 end
 

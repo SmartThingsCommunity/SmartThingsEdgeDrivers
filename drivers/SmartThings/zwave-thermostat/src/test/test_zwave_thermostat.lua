@@ -23,6 +23,7 @@ local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOpera
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 3 })
 local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
+local constants = require "st.zwave.constants"
 
 -- supported comand classes
 local thermostat_endpoints = {
@@ -515,6 +516,36 @@ test.register_coroutine_test(
         ThermostatSetpoint:Set({
                                 setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
                                 value = 21.5
+                              })
+      )
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpoint:Get({
+                                setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1
+                              })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Setting the heating setpoint to a fractional F value should generate the appropriate commands",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    mock_device:set_field(constants.TEMPERATURE_SCALE, ThermostatSetpoint.scale.FAHRENHEIT)
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 68.2 } } })
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpoint:Set({
+                                setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+                                value = 68,
+                                scale = ThermostatSetpoint.scale.FAHRENHEIT
                               })
       )
     )
