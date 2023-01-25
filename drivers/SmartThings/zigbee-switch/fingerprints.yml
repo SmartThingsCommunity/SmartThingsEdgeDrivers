@@ -22,6 +22,10 @@ zigbeeManufacturer:
     deviceLabel: Vimar Smart Dimmer Switch
     model: "DimmerSwitch_v1.0"
     deviceProfileName: on-off-level-no-firmware-update 
+  - id: "Vimar/xx593-smart-actuator-power"
+    deviceLabel: Vimar Smart Actuator with Power Metering
+    model: "Mains_Power_Outlet_v1.0"
+    deviceProfileName: switch-power-smartplug-no-firmware-update
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch 1

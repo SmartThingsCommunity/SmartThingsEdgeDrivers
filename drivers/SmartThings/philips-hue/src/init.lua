@@ -45,7 +45,7 @@ local DEFAULT_MIREK = 153
 -- "forward declare" some functions
 local bridge_added, light_added, _initialize
 
----@param light_device HueDevice
+---@param light_device HueChildDevice
 ---@param light table
 local function emit_light_status_events(light_device, light)
   if light_device ~= nil then
@@ -96,7 +96,7 @@ local function emit_light_status_events(light_device, light)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function migrate_bridge(driver, device)
   local api_key = device.data.username
   local ipv4 = device.data.ip
@@ -146,7 +146,7 @@ local function migrate_bridge(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function spawn_bridge_add_api_key_task(driver, device)
   local device_dni = device.device_network_id
   local device_bridge_id = device_dni:get_field(Fields.BRIDGE_ID)
@@ -193,7 +193,7 @@ local function spawn_bridge_add_api_key_task(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 bridge_added = function(driver, device)
   local device_bridge_id = device.device_network_id
 
@@ -255,7 +255,7 @@ bridge_added = function(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 ---@param parent_device_id nil|string
 local function migrate_light(driver, device, parent_device_id)
   local api_key = device.data.username
@@ -265,7 +265,7 @@ local function migrate_light(driver, device, parent_device_id)
 
   local known_dni_to_device_map = {}
   for _, device in ipairs(driver:get_devices()) do
-    local dni = device.device_network_id
+    local dni = device.device_network_id or device.parent_assigned_child_key
     known_dni_to_device_map[dni] = device
   end
 
@@ -349,12 +349,12 @@ local function migrate_light(driver, device, parent_device_id)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 ---@param parent_device_id nil|string
 ---@param resource_id nil|string
 light_added = function(driver, device, parent_device_id, resource_id)
-  local device_dni = device.device_network_id
-  local device_light_resource_id = resource_id or device_dni
+  local child_key = device.parent_assigned_child_key
+  local device_light_resource_id = resource_id or child_key
 
   if not Discovery.light_state_disco_cache[device_light_resource_id] then
     local parent_bridge = driver:get_device_info(parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
@@ -427,7 +427,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function init_bridge(driver, device)
   local device_dni = device.device_network_id
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
@@ -501,7 +501,7 @@ local function init_bridge(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 local function init_light(driver, device)
   local caps = device.profile.components.main.capabilities
   if caps.colorTemperature then
@@ -511,7 +511,7 @@ local function init_light(driver, device)
       device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true})
     end
   end
-  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.device_network_id
+  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or device.device_network_id
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
     driver.light_id_to_device[device_light_resource_id] = device
