@@ -116,7 +116,7 @@ local function device_init(driver, device)
     socket.sleep(tm)
   end
 
-  if not info or not info.ip then
+  if not info or not info.ip or not info.serial_num then
     log.warn_with({hub_logs=true}, "[" .. device.device_network_id .. "] device not found on network")
     device:offline() -- Mark device as being unavailable/offline
     return
@@ -126,6 +126,7 @@ local function device_init(driver, device)
  
   device:set_field("ip", info.ip)
   device:set_field("port", info.port)
+  device:set_field("serial_num", info.serial_num, {persist = true})
 
   --TODO maybe we should call_on_schedule with the device thread, and the polling.
   -- instead of doing the resubscribe for all devices at once.
@@ -182,8 +183,9 @@ local function discovery_handler(driver, _, should_continue)
   local device_list = driver.device_cache
   for _, device_uuid in ipairs(device_list) do
     local device = driver:get_device_info(device_uuid)
-    local id = device.device_network_id
-    known_devices[id] = true
+    local serial_num = device:get_field("serial_num")
+    --Note MAC is not used due to MAC mismatch for migrated devices
+    if serial_num ~= nil then known_devices[serial_num] = true end
   end
 
   while should_continue() do
@@ -193,9 +195,10 @@ local function discovery_handler(driver, _, should_continue)
       function(device)
         local id = device.id
         local ip = device.ip
+        local serial_num = device.serial_num
 
-        if not known_devices[id] and not found_devices[id] then
-          found_devices[id] = true
+        if not known_devices[serial_num] and not found_devices[serial_num] then
+          found_devices[serial_num] = true
           local name = device.name or "Unnamed Wemo"
           local profile_name = device.model
           if string.find(name, "Motion") then
