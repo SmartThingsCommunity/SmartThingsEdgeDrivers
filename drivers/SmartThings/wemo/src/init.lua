@@ -29,9 +29,6 @@ local json = require "dkjson"
 local log = require "log"
 local utils = require "st.utils"
 
--- internal API, TODO: use public API when merged
-local devices = _envlibrequire "devices"
-
 -- maps model name to profile name
 local profiles = {
   ["Insight"] = "wemo.mini-smart-plug.v1",
@@ -134,7 +131,6 @@ local function device_init(driver, device)
 end
 
 local function device_removed(_, device)
-  log.info("[" .. device.device_network_id .. "] device removed")
   protocol.unsubscribe(device)
 end
 
@@ -142,7 +138,6 @@ end
 -- spamming all at once
 local function poll(driver)
   local device_list = driver:get_devices()
-  -- print("!!!!!poll device_list = ", utils.stringify_table(device_list, nil, true))
   for _, device in ipairs(device_list) do
       log.info_with({hub_logs=true}, "[" .. device.device_network_id .. "] polling device")
       protocol.poll(driver, device)
@@ -151,14 +146,9 @@ end
 
 --TODO resubscribe for each device individually rather than all at once
 local function resubscribe_all(driver)
-  local device_list = driver.device_cache
-  print("!!!!!resub_all device_list = ", utils.stringify_table(device_list, nil, true))
-  --TODO I think this is not the right way to get the devices for the driver...
-  -- maybe this is why we dont ever subscribe?
-  for _, device_uuid in ipairs(device_list) do
-    local device = driver:get_device_info(device_uuid, true)
-
-    log.info("[" .. device.device_network_id .. "] resubscribing Wemo device")
+  local device_list = driver:get_devices()
+  for _, device in ipairs(device_list) do
+    device.log.info("resubscribing Wemo device")
     protocol.unsubscribe(device)
     protocol.subscribe(server, device)
   end
@@ -180,9 +170,8 @@ local function discovery_handler(driver, _, should_continue)
   local known_devices = {}
   local found_devices = {}
 
-  local device_list = driver.device_cache
-  for _, device_uuid in ipairs(device_list) do
-    local device = driver:get_device_info(device_uuid)
+  local device_list = driver:get_devices()
+  for _, device in ipairs(device_list) do
     local serial_num = device:get_field("serial_num")
     --Note MAC is not used due to MAC mismatch for migrated devices
     if serial_num ~= nil then known_devices[serial_num] = true end
@@ -209,19 +198,18 @@ local function discovery_handler(driver, _, should_continue)
           if profile then
             -- add device
             log.info_with({hub_logs=true}, string.format("creating %s device [%s] at %s", name, id, ip))
-            local create_device_msg = json.encode({
+            local create_device_msg = {
                 type = "LAN",
-                deviceNetworkId = id,
+                device_network_id = id,
                 label = name,
-                parentDeviceId = nil,
-                profileReference = profile,
+                profile = profile,
                 manufacturer = "Belkin",
                 model = device.model,
-                vendorProvidedName = device.name,
-              })
-            log.trace("create device with:", create_device_msg)
+                vendor_provided_label = device.name,
+              }
+            log.trace("create device with:", utils.stringify_table(create_device_msg))
             assert(
-              devices.create_device(create_device_msg),
+              driver:try_create_device(create_device_msg),
               "failed to create device record"
             )
           else
