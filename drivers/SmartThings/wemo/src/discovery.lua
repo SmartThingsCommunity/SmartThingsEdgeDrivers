@@ -4,6 +4,7 @@ local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 local log = require "log"
 local tablefind = require "util".tablefind
+local mac_equal = require "util".mac_equal
 local utils = require "st.utils"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
@@ -95,7 +96,8 @@ local function fetch_device_metadata(url)
   return {
     name = tablefind(parsed_xml, "root.device.friendlyName"),
     model = tablefind(parsed_xml, "root.device.modelName"),
-    mac = tablefind(parsed_xml, "root.device.macAddress")
+    mac = tablefind(parsed_xml, "root.device.macAddress"),
+    serial_num = tablefind(parsed_xml, "root.device.serialNumber"),
   }
 end
 
@@ -137,7 +139,7 @@ function Discovery.run_discovery_task()
             log.trace("disco| inserting search id:", msg.device_id)
             table.insert(search_ids, {id = msg.device_id, reply_tx = msg.reply_tx})
             for id, info in pairs(infos_found) do
-              if id == msg.device_id then
+              if mac_equal(id, msg.device_id) then
                 log.trace("disco| searching for previously discovered device:", msg.device_id)
                 msg.reply_tx:send(info)
               end
@@ -177,11 +179,12 @@ function Discovery.run_discovery_task()
               raw = headers,
               name = meta.name,
               model = meta.model,
+              serial_num = meta.serial_num,
             }
             number_found = number_found + 1
             log.trace("disco| found device:", ip, port, id)
             for _, search_id in ipairs(search_ids) do
-              if search_id.id == "scan" or search_id.id == id then
+              if search_id.id == "scan" or mac_equal(search_id.id, id) then
                 search_id.reply_tx:send(infos_found[id])
               end
             end
