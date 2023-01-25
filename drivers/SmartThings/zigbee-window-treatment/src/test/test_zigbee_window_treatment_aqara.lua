@@ -216,7 +216,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+      WindowCovering.server.commands.UpOrOpen(mock_device, 'open')
     })
   end
 )
@@ -232,7 +232,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      WindowCovering.server.commands.DownOrClose(mock_device, 'close')
     })
   end
 )

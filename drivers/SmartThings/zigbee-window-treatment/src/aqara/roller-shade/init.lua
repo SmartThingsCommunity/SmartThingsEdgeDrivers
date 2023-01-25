@@ -46,18 +46,6 @@ local function window_shade_close_cmd(driver, device, command)
   end
 end
 
-local function write_tilt_attribute(device, payload)
-  local value = data_types.validate_or_build_type(payload, data_types.Uint16, "payload")
-  local message = cluster_base.write_attribute(device, data_types.ClusterId(MULTISTATE_CLUSTER_ID),
-    data_types.AttributeId(MULTISTATE_ATTRIBUTE_ID), value)
-  local frm_ctrl = FrameCtrl(0x10)
-  message.body.zcl_header.frame_ctrl:set_mfg_specific()
-  message.body.zcl_header.mfg_code = data_types.validate_or_build_type(aqara_utils.MFG_CODE, data_types.Uint16,
-    "mfg_code")
-  message.body.zcl_header.frame_ctrl = frm_ctrl
-  device:send(message)
-end
-
 local function set_rotate_command_handler(driver, device, command)
   device:emit_event(shadeRotateState.rotateState.idle()) -- update UI
 
@@ -67,9 +55,15 @@ local function set_rotate_command_handler(driver, device, command)
   if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
     local state = command.args.state
     if state == "rotateUp" then
-      write_tilt_attribute(device, ROTATE_UP_VALUE)
+      local message = cluster_base.write_manufacturer_specific_attribute(device, MULTISTATE_CLUSTER_ID,
+        MULTISTATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint16, ROTATE_UP_VALUE)
+      message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
+      device:send(message)
     elseif state == "rotateDown" then
-      write_tilt_attribute(device, ROTATE_DOWN_VALUE)
+      local message = cluster_base.write_manufacturer_specific_attribute(device, MULTISTATE_CLUSTER_ID,
+        MULTISTATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint16, ROTATE_DOWN_VALUE)
+      message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
+      device:send(message)
     end
   end
 end
@@ -85,7 +79,7 @@ local function pref_report_handler(driver, device, value, zb_rx)
     initializedStateWithGuide.initializedStateWithGuide.notInitialized())
 end
 
-local function write_reverse_preferences(device, args)
+local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
     local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
     if reverseRollerShadeDirPrefValue ~= nil and
@@ -95,10 +89,6 @@ local function write_reverse_preferences(device, args)
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
     end
   end
-end
-
-local function device_info_changed(driver, device, event, args)
-  write_reverse_preferences(device, args)
 end
 
 local function device_added(driver, device)

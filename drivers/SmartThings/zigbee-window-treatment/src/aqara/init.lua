@@ -44,18 +44,6 @@ local function window_shade_level_cmd(driver, device, command)
   aqara_utils.shade_level_cmd(driver, device, command)
 end
 
-local function window_shade_open_cmd(driver, device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
-end
-
-local function window_shade_close_cmd(driver, device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
-end
-
-local function window_shade_pause_cmd(driver, device, command)
-  device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
-end
-
 local function set_initialized_state_handler(driver, device, command)
   -- update ui
   device:emit_event(deviceInitialization.initializedState.initializing())
@@ -80,7 +68,9 @@ local function set_initialized_state_handler(driver, device, command)
 end
 
 local function shade_level_report_legacy_handler(driver, device, value, zb_rx)
-  -- Not implemented for legacy devices
+  -- for version 34
+  aqara_utils.emit_shade_level_event(device, value)
+  aqara_utils.emit_shade_event(device, value)
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
@@ -132,23 +122,20 @@ local function application_version_handler(driver, device, value, zb_rx)
   device:set_field(APPLICATION_VERSION, version, { persist = true })
 end
 
-local function write_soft_touch_preference(device, args)
-  if device.preferences ~= nil then
-    local softTouchPrefValue = device.preferences[softTouch.ID]
-    if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
-      local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
-      device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
-        aqara_utils.MFG_CODE, data_types.CharString, raw_value))
-    end
-  end
+local function do_refresh(self, device)
+  device:send(AnalogOutput.attributes.PresentValue:read(device))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+    aqara_utils.MFG_CODE))
 end
 
-local function write_reverse_preferences(device, args)
+local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
     local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
-    if reverseCurtainDirectionPrefValue ~= nil and reverseCurtainDirectionPrefValue ~=
-        args.old_st_store.preferences[reverseCurtainDirection.ID] then
+    local softTouchPrefValue = device.preferences[softTouch.ID]
+
+    -- reverse direction
+    if reverseCurtainDirectionPrefValue ~= nil and
+        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
       local raw_value = reverseCurtainDirectionPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -159,18 +146,15 @@ local function write_reverse_preferences(device, args)
           aqara_utils.MFG_CODE))
       end)
     end
+
+    -- soft touch
+    if softTouchPrefValue ~= nil and
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
+      local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
+      device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
+        aqara_utils.MFG_CODE, data_types.CharString, raw_value))
+    end
   end
-end
-
-local function do_refresh(self, device)
-  device:send(AnalogOutput.attributes.PresentValue:read(device))
-  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
-    aqara_utils.MFG_CODE))
-end
-
-local function device_info_changed(driver, device, event, args)
-  write_reverse_preferences(device, args) -- reverse direction
-  write_soft_touch_preference(device, args) -- soft touch
 end
 
 local function do_configure(self, device)
@@ -206,11 +190,6 @@ local aqara_window_treatment_handler = {
   capability_handlers = {
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd
-    },
-    [capabilities.windowShade.ID] = {
-      [capabilities.windowShade.commands.open.NAME] = window_shade_open_cmd,
-      [capabilities.windowShade.commands.close.NAME] = window_shade_close_cmd,
-      [capabilities.windowShade.commands.pause.NAME] = window_shade_pause_cmd
     },
     [deviceInitialization.ID] = {
       [setInitializedStateCommandName] = set_initialized_state_handler
