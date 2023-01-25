@@ -124,7 +124,7 @@ zwaveManufacturer:
     productType: 0x0313
     productId: 0x010B
     deviceProfileName: alarm-switch
-# zwaveGeneric:
+zwaveGeneric:
   - id: "SmartAlert/Siren"
     deviceLabel: Siren
     genericType: 0x1100 # GENERIC_SUB_SYSTEM_CONTROLLER
