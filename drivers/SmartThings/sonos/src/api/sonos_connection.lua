@@ -1,3 +1,4 @@
+local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
 
@@ -109,6 +110,17 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
       sonos_conn._coord_listener_uuid = listener_id
     end
   end
+end
+
+---@param sonos_conn SonosConnection
+local function _spawn_reconnect_task(sonos_conn)
+  cosock.spawn(function()
+    while not sonos_conn:is_running() do
+      local start_success = sonos_conn:start()
+      if start_success then return end
+      cosock.socket.sleep(0.3)
+    end
+  end, string.format("%s Reconnect Task", sonos_conn.device.label))
 end
 
 --- Create a new Sonos connection to manage the given device
@@ -227,6 +239,7 @@ function SonosConnection.new(driver, device)
 
   self.on_close = function(uuid)
     if self._initialized then self.device:offline() end
+    if self._keepalive then _spawn_reconnect_task(self) end
   end
 
   return self
@@ -311,6 +324,7 @@ function SonosConnection:start()
   if Router.is_connected(player_id) and Router.is_connected(coordinator_id) then
     self.device:online()
     self._initialized = true
+    self._keepalive = true
     return true
   end
 
@@ -320,6 +334,7 @@ end
 --- Stop the websocket processing loop and close the connection
 function SonosConnection:stop()
   self._initialized = false
+  self._keepalive = false
   log.info("Stopping Sonos connection for " .. self.device.label)
   local _, player_id = self.driver.sonos:get_player_for_device(self.device)
   local household_id, group_id = self.driver.sonos:get_group_for_device(self.device)
