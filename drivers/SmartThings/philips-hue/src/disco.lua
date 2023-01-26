@@ -35,11 +35,11 @@ function HueDiscovery.discover(driver, _, should_continue)
     local known_dni_to_device_map = {}
     local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
-      local dni = device.device_network_id
+      local dni = device.device_network_id or device.parent_assigned_child_key
       known_dni_to_device_map[dni] = device
       local ipv4 = device:get_field(Fields.IPV4);
       if ipv4 then
-        computed_mac_addresses[ipv4] = device.device_network_id
+        computed_mac_addresses[ipv4] = dni
       end
     end
 
@@ -101,8 +101,11 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
 
       -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
       -- we strip thoes out and make the string uppercase
-      local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
-      computed_mac_addresses[ip_addr] = bridge_id
+      log.trace("Bridge MAC: ", bridge_info.mac)
+      if bridge_info.mac then
+        local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
+        computed_mac_addresses[ip_addr] = bridge_id
+      end
     end
 
     if type(callback) == "function" then
@@ -121,7 +124,7 @@ end
 ---@param driver HueDriver
 ---@param bridge_ip string
 ---@param bridge_id string
----@param known_dni_to_device_map table<string,boolean>
+---@param known_dni_to_device_map table<string,HueDevice>
 discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to_device_map)
   if driver.ignored_bridges[bridge_id] then return end
 
@@ -301,14 +304,14 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     local bridge_device = known_dni_to_device_map[bridge_id]
 
     local create_device_msg = {
-      type = "LAN",
-      device_network_id = light.id,
+      type = "EDGE_CHILD",
       label = light.metadata.name,
       vendor_provided_label = device_info.product_data.product_name,
       profile = profile_ref,
       manufacturer = device_info.product_data.manufacturer_name,
       model = device_info.product_data.model_id,
       parent_device_id = bridge_device.id,
+      parent_assigned_child_key = light.id,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {
