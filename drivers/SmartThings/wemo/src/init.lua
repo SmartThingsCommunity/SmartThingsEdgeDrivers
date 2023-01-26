@@ -49,12 +49,12 @@ local function start_server(driver)
   local ip, port, _ = server.listen_sock:getsockname()
 
   if ip ~= nil and port ~= nil then
-    log.info_with({hub_logs=true}, string.format("Started listening server on %s:%s", ip, port))
+    log.info_with({ hub_logs = true }, string.format("Started listening server on %s:%s", ip, port))
     server.listen_port = port
     server.listen_ip = ip;
     driver:register_channel_handler(server.listen_sock, protocol.accept_handler)
   else
-    log.error_with({hub_logs=true}, "could not get IP/port from TCP getsockname(), not listening for device status")
+    log.error_with({ hub_logs = true }, "could not get IP/port from TCP getsockname(), not listening for device status")
     server.listen_sock:close()
     server.listen_sock = nil
     --TODO schedule a retry if this happens?
@@ -62,7 +62,8 @@ local function start_server(driver)
 end
 
 local function stop_server()
-  log.info_with({hub_logs=true}, string.format("Shutting down listening server @ %s:%s", server.listen_ip, server.listen_port))
+  log.info_with({ hub_logs = true },
+    string.format("Shutting down listening server @ %s:%s", server.listen_ip, server.listen_port))
 
   if server.listen_sock ~= nil then
     server.listen_sock:close()
@@ -87,7 +88,7 @@ local function backoff_builder(max, inc, rand)
       randval = math.random() * rand * 2 - rand
     end
 
-    local base = inc * (2^count - 1)
+    local base = inc * (2 ^ count - 1)
     count = count + 1
 
     -- ensure base backoff (not including random factor) is less than max
@@ -101,7 +102,7 @@ local function backoff_builder(max, inc, rand)
 end
 
 local function device_init(driver, device)
-  log.info_with({hub_logs=true}, "[" .. device.device_network_id .. "] initializing Wemo device")
+  log.info_with({ hub_logs = true }, "[" .. device.device_network_id .. "] initializing Wemo device")
 
   local backoff = backoff_builder(300, 1, 0.25)
   local info
@@ -114,19 +115,19 @@ local function device_init(driver, device)
   end
 
   if not info or not info.ip or not info.serial_num then
-    log.warn_with({hub_logs=true}, "[" .. device.device_network_id .. "] device not found on network")
+    log.warn_with({ hub_logs = true }, "[" .. device.device_network_id .. "] device not found on network")
     device:offline() -- Mark device as being unavailable/offline
     return
   end
 
   device:online()
- 
+
   --ip and port are persisted since sometimes wemo just stop responding to ssdp even though
   --they are connected to the network. In this case we want them to continue to function
   --across driver restarts.
-  device:set_field("ip", info.ip, {persist = true})
-  device:set_field("port", info.port, {persist = true})
-  device:set_field("serial_num", info.serial_num, {persist = true})
+  device:set_field("ip", info.ip, { persist = true })
+  device:set_field("port", info.port, { persist = true })
+  device:set_field("serial_num", info.serial_num, { persist = true })
 
   --TODO maybe we should call_on_schedule with the device thread, and the polling.
   -- instead of doing the resubscribe for all devices at once.
@@ -142,8 +143,8 @@ end
 local function poll(driver)
   local device_list = driver:get_devices()
   for _, device in ipairs(device_list) do
-      log.info_with({hub_logs=true}, "[" .. device.device_network_id .. "] polling device")
-      protocol.poll(driver, device)
+    log.info_with({ hub_logs = true }, "[" .. device.device_network_id .. "] polling device")
+    protocol.poll(driver, device)
   end
 end
 
@@ -200,16 +201,16 @@ local function discovery_handler(driver, _, should_continue)
 
           if profile then
             -- add device
-            log.info_with({hub_logs=true}, string.format("creating %s device [%s] at %s", name, id, ip))
+            log.info_with({ hub_logs = true }, string.format("creating %s device [%s] at %s", name, id, ip))
             local create_device_msg = {
-                type = "LAN",
-                device_network_id = id,
-                label = name,
-                profile = profile,
-                manufacturer = "Belkin",
-                model = device.model,
-                vendor_provided_label = device.name,
-              }
+              type = "LAN",
+              device_network_id = id,
+              label = name,
+              profile = profile,
+              manufacturer = "Belkin",
+              model = device.model,
+              vendor_provided_label = device.name,
+            }
             log.trace("create device with:", utils.stringify_table(create_device_msg))
             assert(
               driver:try_create_device(create_device_msg),

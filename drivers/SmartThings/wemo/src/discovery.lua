@@ -106,14 +106,14 @@ function Discovery.run_discovery_task()
   Discovery._ctrl_tx = ctrl_tx
 
   local sock
-  local search_ids = { }
+  local search_ids = {}
   local infos_found = {} -- used to filter duplicates
   local number_found = 0
   local timeout = 1 --give controllers 1 second initially to send multiple requests
   local timeout_epoch
   cosock.spawn(function()
     while true do
-      local recv, _, err = socket.select({ctrl_rx, sock}, nil, timeout)
+      local recv, _, err = socket.select({ ctrl_rx, sock }, nil, timeout)
       if err == "timeout" and sock == nil then
         log.trace("disco| done waiting for search ids, sending ssdp discovery message")
         if sock == nil and #search_ids > 0 then
@@ -133,11 +133,11 @@ function Discovery.run_discovery_task()
         if msg and msg.type and msg.reply_tx then
           if msg.type == ControlMessageTypes.Scan then
             log.trace("disco| inserting search id:", "scan")
-            table.insert(search_ids, {id = "scan", reply_tx = msg.reply_tx})
+            table.insert(search_ids, { id = "scan", reply_tx = msg.reply_tx })
           end
           if msg.type == ControlMessageTypes.FindDevice then
             log.trace("disco| inserting search id:", msg.device_id)
-            table.insert(search_ids, {id = msg.device_id, reply_tx = msg.reply_tx})
+            table.insert(search_ids, { id = msg.device_id, reply_tx = msg.reply_tx })
             for id, info in pairs(infos_found) do
               if mac_equal(id, msg.device_id) then
                 log.trace("disco| searching for previously discovered device:", msg.device_id)
@@ -204,7 +204,7 @@ function Discovery.run_discovery_task()
     if ctrl_rx then ctrl_rx:close() end
     Discovery._ctrl_tx:close()
     Discovery._ctrl_tx = nil
-    log.info_with({hub_logs=true}, string.format("disco| response window ended, %s found", number_found))
+    log.info_with({ hub_logs = true }, string.format("disco| response window ended, %s found", number_found))
 
     --prepare return values for requested scan ids
 
