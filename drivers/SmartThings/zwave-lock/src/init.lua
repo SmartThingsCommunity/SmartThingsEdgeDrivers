@@ -25,6 +25,8 @@ local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+--- @type st.zwave.CommandClass.Time
+local Time = (require "st.zwave.CommandClass.Time")({ version = 1 })
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 local json = require "st.json"
@@ -94,9 +96,9 @@ local function added_handler(self, device)
   end
   device:send(DoorLock:OperationGet({}))
   device:send(Battery:Get({}))
-  if (device:supports_capability(capabilities.tamperAlert)) then
-    device:emit_event(capabilities.tamperAlert.tamper.clear())
-  end
+  -- if (device:supports_capability(capabilities.tamperAlert)) then
+  --   device:emit_event(capabilities.tamperAlert.tamper.clear())
+  -- end
 end
 
 local init_handler = function(driver, device, event)
@@ -137,6 +139,18 @@ local function update_codes(driver, device, cmd)
   end
 end
 
+local function time_get_handler(driver, device, cmd)
+  local time = os.date("*t")
+  device:send_to_component(
+    Time:Report({
+      hour_local_time = time.hour,
+      minute_local_time = time.min,
+      second_local_time = time.sec
+    }),
+    device:endpoint_to_component(cmd.src_channel)
+  )
+end
+
 local driver_template = {
   supported_capabilities = {
     capabilities.lock,
@@ -151,6 +165,11 @@ local driver_template = {
   capability_handlers = {
     [capabilities.lockCodes.ID] = {
       [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes
+    }
+  },
+  zwave_handlers = {
+    [cc.TIME] = {
+      [Time.GET] = time_get_handler -- used by DanaLock
     }
   },
   sub_drivers = {

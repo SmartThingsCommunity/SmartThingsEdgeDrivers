@@ -9,6 +9,23 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  # VIMAR
+  - id: "Vimar/xx592-2-way-smart-switch"
+    deviceLabel: Vimar 2-way Smart Switch
+    model: "On_Off_Switch_v1.0"
+    deviceProfileName: on-off-bulb-no-firmware-update
+  - id: "Vimar/03981-smart-actuator-module"
+    deviceLabel: Vimar Smart Actuator Module
+    model: "On_Off_Switch_Module_v1.0"
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Vimar/xx595-smart-dimmer-switch"
+    deviceLabel: Vimar Smart Dimmer Switch
+    model: "DimmerSwitch_v1.0"
+    deviceProfileName: on-off-level-no-firmware-update 
+  - id: "Vimar/xx593-smart-actuator-power"
+    deviceLabel: Vimar Smart Actuator with Power Metering
+    model: "Mains_Power_Outlet_v1.0"
+    deviceProfileName: switch-power-smartplug-no-firmware-update
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch 1

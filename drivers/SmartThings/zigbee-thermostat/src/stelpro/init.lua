@@ -109,12 +109,12 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.preferences ~= nil and device.preferences.lock ~= args.old_st_store.preferences.lock then
-    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, device.preferences.lock))
+    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, tonumber(device.preferences.lock)))
   end
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
 local stelpro_thermostat = {

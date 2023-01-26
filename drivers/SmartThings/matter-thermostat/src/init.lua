@@ -54,10 +54,6 @@ local function do_configure(driver, device)
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local running_state_eps = device:get_endpoints(
-    clusters.Thermostat.ID,
-    {attribute_id = clusters.Thermostat.attributes.ThermostatRunningState.ID}
-  )
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if #thermo_eps == 1 then
@@ -78,9 +74,9 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-cooling-only"
     end
 
-    if #running_state_eps == 0 then
-      profile_name = profile_name .. "-nostate"
-    end
+    -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
+    -- to determine support for ThermostatRunningState
+    profile_name = profile_name .. "-nostate"
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
@@ -415,6 +411,14 @@ local matter_driver_template = {
     [capabilities.thermostatHeatingSetpoint.ID] = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
     }
+  },
+  supported_capabilities = {
+    capabilities.thermostatMode,
+    capabilities.thermostatHeatingSetpoint,
+    capabilities.thermostatCoolingSetpoint,
+    capabilities.thermostatFanMode,
+    capabilities.thermostatOperatingState,
+    capabilities.battery,
   },
 }
 

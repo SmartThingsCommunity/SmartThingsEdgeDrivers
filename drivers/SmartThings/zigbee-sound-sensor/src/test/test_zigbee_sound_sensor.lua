@@ -135,11 +135,11 @@ test.register_message_test(
       direction = "receive",
       message = {mock_device.id, "added"}
     },
-    {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
-    },
+    -- {
+    --     channel = "capability",
+    --     direction = "send",
+    --     message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
+    -- },
     {
       channel = "capability",
       direction = "receive",

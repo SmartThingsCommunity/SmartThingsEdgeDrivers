@@ -77,11 +77,11 @@ local initial_events_map = {
 }
 
 local function added_handler(self, device)
-  for id, event in pairs(initial_events_map) do
-    if device:supports_capability_by_id(id) then
-      device:emit_event(event)
-    end
-  end
+  -- for id, event in pairs(initial_events_map) do
+  --   if device:supports_capability_by_id(id) then
+  --     device:emit_event(event)
+  --   end
+  -- end
 end
 
 local driver_template = {

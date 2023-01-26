@@ -41,43 +41,43 @@ local alarm_command = {
 }
 
 local send_siren_command = function(device, warning_mode, warning_sirenLevel, strobe_active, strobe_level)
-    local max_duration = device:get_field(ALARM_MAX_DURATION)
-    local warning_duration = max_duration and max_duration or ALARM_DEFAULT_MAX_DURATION
+  local max_duration = device:get_field(ALARM_MAX_DURATION)
+  local warning_duration = max_duration and max_duration or ALARM_DEFAULT_MAX_DURATION
 
-    device:set_field(ALARM_LAST_DURATION, warning_duration, {persist = true})
+  device:set_field(ALARM_LAST_DURATION, warning_duration, {persist = true})
 
-    local siren_configuration = SirenConfiguration(0x00)
+  local siren_configuration = SirenConfiguration(0x00)
 
-    siren_configuration:set_warning_mode(warning_mode)
-    siren_configuration:set_strobe(strobe_active)
-    siren_configuration:set_siren_level(warning_sirenLevel)
+  siren_configuration:set_warning_mode(warning_mode)
+  siren_configuration:set_strobe(strobe_active)
+  siren_configuration:set_siren_level(warning_sirenLevel)
 
-    device:send(
-        IASWD.server.commands.StartWarning(
-            device,
-            siren_configuration,
-            data_types.Uint16(warning_duration),
-            data_types.Uint8(ALARM_STROBE_DUTY_CYCLE),
-            data_types.Enum8(strobe_level)
-        )
+  device:send(
+    IASWD.server.commands.StartWarning(
+      device,
+      siren_configuration,
+      data_types.Uint16(warning_duration),
+      data_types.Uint8(ALARM_STROBE_DUTY_CYCLE),
+      data_types.Enum8(strobe_level)
     )
+  )
 end
 
 local siren_switch_on_handler = function(driver, device, command)
-    device:set_field(ALARM_COMMAND, alarm_command.SIREN, {persist = true})
-    send_siren_command(device, WarningMode.BURGLAR, IaswdLevel.VERY_HIGH_LEVEL, Strobe.NO_STROBE, IaswdLevel.LOW_LEVEL)
+  device:set_field(ALARM_COMMAND, alarm_command.SIREN, {persist = true})
+  send_siren_command(device, WarningMode.BURGLAR, IaswdLevel.VERY_HIGH_LEVEL, Strobe.NO_STROBE, IaswdLevel.LOW_LEVEL)
 end
 
 local ozom_siren_driver = {
-    NAME = "Ozom",
-    capability_handlers = {
-        [switch.ID] = {
-            [switch.commands.on.NAME] = siren_switch_on_handler
-        }
-    },
-    can_handle = function(opts, driver, device, ...)
-        return device:get_manufacturer() == "ClimaxTechnology"
-    end
+  NAME = "Ozom",
+  capability_handlers = {
+    [switch.ID] = {
+      [switch.commands.on.NAME] = siren_switch_on_handler
+    }
+  },
+  can_handle = function(opts, driver, device, ...)
+    return device:get_manufacturer() == "ClimaxTechnology"
+  end
 }
 
 return ozom_siren_driver

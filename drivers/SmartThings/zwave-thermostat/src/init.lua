@@ -17,31 +17,27 @@ local capabilities = require "st.capabilities"
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version=2})
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.ThermostatFanMode
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({version=3})
 --- @type st.zwave.CommandClass.ThermostatMode
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({version=2})
---- @type st.zwave.CommandClass.ThermostatOperatingState
-local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({version=1})
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
-local do_refresh = function(self, device)
-  device:send(ThermostatFanMode:SupportedGet({}))
-  device:send(ThermostatFanMode:Get({}))
-  device:send(ThermostatMode:SupportedGet({}))
-  device:send(ThermostatMode:Get({}))
-  device:send(ThermostatOperatingState:Get({}))
-  device:send(SensorMultilevel:Get({}))
-  device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
-  device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
-  device:send(Battery:Get({}))
+local function device_added(driver, device)
+  if device:supports_capability_by_id(capabilities.thermostatMode.ID) and
+    device:is_cc_supported(cc.THERMOSTAT_MODE) then
+    device:send(ThermostatMode:SupportedGet({}))
+  end
+  if device:supports_capability_by_id(capabilities.thermostatFanMode.ID) and
+    device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
+    device:send(ThermostatFanMode:SupportedGet({}))
+  end
+  device:refresh()
 end
 
 --TODO: Update this once we've decided how to handle setpoint commands
@@ -90,15 +86,15 @@ local driver_template = {
     capabilities.energyMeter
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    },
     [capabilities.thermostatCoolingSetpoint.ID] = {
       [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.COOLING_1)
     },
     [capabilities.thermostatHeatingSetpoint.ID] = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.HEATING_1)
     }
+  },
+  lifecycle_handlers = {
+    added = device_added
   },
   sub_drivers = {
     require("aeotec-radiator-thermostat"),

@@ -1,14 +1,17 @@
 name: Run driver tests
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, labeled, unlabeled]
     paths:
       - 'drivers/**'
-env:
-  LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+
 jobs:
-  run-driver-tests:
+  # Two separate jobs for finding the right artifact to run tests with
+  get-latest-release-artifact:
     runs-on: ubuntu-latest
+    if: ${{ !contains(join(github.event.pull_request.labels.*.name), 'release') }}
+    outputs:
+      cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     steps:
       - name: Find the lua lib release version
         id: lib-version
@@ -32,6 +35,74 @@ jobs:
         if: steps.cached-libs.outputs.cache-hit != 'true'
         working-directory: '/home/runner/work/lua_libs'
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
+      - name: Set output
+        id: cache_key
+        run: echo "CACHE_KEY=${{ steps.lib-version.outputs.url }}-v1" >> $GITHUB_OUTPUT
+
+  get-dev-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
+    if: ${{ contains(join(github.event.pull_request.labels.*.name), 'release-') && github.event.pull_request.head.repo.fork != 'true' }}
+    steps:
+      - name: Get the version from the label
+        id: label-version
+        run: |
+          echo "${{ join(github.event.pull_request.labels.*.name) }}" | grep -oP "release-\d+.\d+" | xargs > out
+          echo "LIBRARY_VERSION=$(cat out)" >> $GITHUB_OUTPUT
+          mkdir /home/runner/work/lua_libs
+      - name: Find latest artifact
+        id: latest
+        env:
+          ARTIFACTORY_URL: ${{ format('https://smartthings.jfrog.io/artifactory/edge-driver-libs/{0}/', steps.label-version.outputs.LIBRARY_VERSION) }}
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: |
+          wget --user=$ARTIFACTORY_USERNAME --password=$ARTIFACTORY_PASSWORD $ARTIFACTORY_URL -q -O - | grep '.zip' | awk -F' ' '{print $3"-"$4"\t"$2}' | sort -t - -k3n -k2M -k1n -k4n | tail -1 | grep -o 'lua_libs_[a-z0-9_]*.zip' | head -1 > out
+          echo "ZIP_FILE=$(cat out)" >> $GITHUB_OUTPUT
+      - name: Try to retrieve cache
+        id: cached-libs
+        uses: actions/cache@v3
+        with:
+          path: '/home/runner/work/lua_libs'
+          key: ${{ steps.latest.outputs.ZIP_FILE }}-v1
+      - name: Download and unpack specified version
+        if: steps.cached-libs.outputs.cache-hit != 'true'
+        env:
+          ARTIFACTORY_URL: ${{ format('https://smartthings.jfrog.io/artifactory/edge-driver-libs/{0}/{1}', steps.label-version.outputs.LIBRARY_VERSION, steps.latest.outputs.ZIP_FILE) }}
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        working-directory: '/home/runner/work/lua_libs'
+        run: |
+          wget --user=$ARTIFACTORY_USERNAME --password=$ARTIFACTORY_PASSWORD $ARTIFACTORY_URL -O lua_libs.zip
+          unzip lua_libs.zip
+      - name: Set output
+        id: cache_key
+        run: echo "CACHE_KEY=${{ steps.latest.outputs.ZIP_FILE }}-v1" >> $GITHUB_OUTPUT
+
+  run-driver-tests:
+    runs-on: ubuntu-latest
+    env:
+      LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+    needs:
+      [ get-latest-release-artifact, get-dev-artifact ]
+    if: ${{ always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure') }}
+    steps:
+      - name: Set cache key
+        id: cache_key
+        run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
+      - name: Try to retrieve cache
+        id: cached_libs
+        uses: actions/cache@v3
+        with:
+          path: '/home/runner/work/lua_libs'
+          key: ${{ steps.cache_key.outputs.CACHE_KEY }}
+      - name: Fail if cache missed
+        if: steps.cached_libs.outputs.cache-hit != 'true'
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('Library cache missed. ${{steps.cached_libs.outputs.cache-hit}} ')
       - name: Install lua
         run: |
           sudo apt-get update
@@ -42,20 +113,10 @@ jobs:
       - name: Prepare test output directory
         run: mkdir test-output
       - name: Run the tests
+        id: run-tests
         run: python tools/run_driver_tests.py -j test-output/tests.xml
-      - name: Upload test artifact
-        uses: actions/upload-artifact@v3
+      - name: Publish Test Results
         if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          name: tests
-          path: |
-            test-output/tests.xml
-
-  event-file:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Upload
-        uses: actions/upload-artifact@v2
-        with:
-          name: event-file
-          path: ${{ github.event_path }}
+          junit_files: "test-output/tests.xml"

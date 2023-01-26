@@ -95,15 +95,15 @@ test.register_coroutine_test(
     "Health check should check all relevant attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
-      test.socket.capability:__expect_send(
-        {
-          mock_device.id,
-          {
-            capability_id = "waterSensor", component_id = "main",
-            attribute_id = "water", state={value="dry"}
-          }
-        }
-      )
+      -- test.socket.capability:__expect_send(
+      --   {
+      --     mock_device.id,
+      --     {
+      --       capability_id = "waterSensor", component_id = "main",
+      --       attribute_id = "water", state={value="dry"}
+      --     }
+      --   }
+      -- )
     end,
     {
       test_init = function()
