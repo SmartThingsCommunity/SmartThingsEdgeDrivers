@@ -119,9 +119,8 @@ Types.SonosCapabilities = {
 --- @field public get_player_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,PlayerId,string
 --- @field public get_coordinator_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,PlayerId,string
 --- @field public get_group_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,GroupId,string
---- @field public get_dni_for_player_id fun(self: SonosState, player_id: PlayerId): DNI,nil|string
---- @field public mark_player_as_joined fun(self: SonosState, dni: DNI, player_id: PlayerId)
---- @field public mark_player_as_removed fun(self: SonosState, dni: DNI, player_id: PlayerId)
+--- @field public mark_player_as_joined fun(self: SonosState, player_id: PlayerId)
+--- @field public mark_player_as_removed fun(self: SonosState, player_id: PlayerId)
 --- @field public is_player_joined fun(self: SonosState, household_id_or_dni: HouseholdId|string, player_id?: PlayerId): boolean
 local SonosState = {}
 SonosState.__index = SonosState
@@ -131,25 +130,15 @@ function SonosState.new()
 
   local private = {
     households = {},
-    joined_players = {},
-    player_id_to_dni = {},
+    joined_players = {}
   }
 
-  ret.mark_player_as_joined = function(self, dni, player_id)
-    private.joined_players[dni] = true
-    private.player_id_to_dni[player_id] = dni
+  ret.mark_player_as_joined = function(self, player_id)
+    private.joined_players[player_id] = true
   end
 
-  ret.mark_player_as_removed = function(self, dni, player_id)
-    if dni == private.player_id_to_dni[player_id] then private.player_id_to_dni[player_id] = nil end
-    private.joined_players[dni] = false
-  end
-
-  ret.get_dni_for_player_id = function(self, player_id)
-    local ret = private.player_id_to_dni[player_id]
-    local err = nil
-    if not ret then err = string.format("No mapping from %s to DNI", player_id) end
-    return ret, err
+  ret.mark_player_as_removed = function(self, player_id)
+    private.joined_players[player_id] = false
   end
 
   ret.is_player_joined = function(self, dni)
@@ -301,7 +290,7 @@ Types.SonosState = SonosState
 --- Sonos Edge Driver extensions
 --- @class SonosDriver : Driver
 --- @field public sonos SonosState Local state related to the sonos systems
---- @field private _dni_to_device table<string,SonosDevice>
+--- @field private _player_id_to_device table<string,SonosDevice>
 --- @field public update_group_state fun(self: SonosDriver, header: SonosResponseHeader, body: SonosGroupsResponseBody)
 --- @field public handle_ssdp_discovery fun(self: SonosDriver, ssdp_group_info: SonosSSDPInfo, callback?: DiscoCallback)
 --- @field public is_same_mac_address fun(dni: string, other: string): boolean

@@ -19,31 +19,31 @@ local SonosWebSocketRouter = {}
 local control_tx, control_rx = channel.new()
 control_rx:settimeout(0.5)
 
----@alias DNI string
+---@alias PlayerId string
 ---@alias WsId string|number
 ---@alias chan_tx table
 ---@alias chan_rx table
 ---@alias ListenerUuid string
 ---@alias Listener table
 
---- @type table<DNI,WebSocket>
+--- @type table<PlayerId,WebSocket>
 local websockets = {}
 --- @type table<WsId,ListenerUuid[]>
 local listener_ids_for_socket = {}
 --- @type table<ListenerUuid,Listener>
 local listeners = {}
---- @type DNI[]
+--- @type PlayerId[]
 local pending_close = {}
 
 cosock.spawn(function()
   while true do
-    for _, dni in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
-      local wss = websockets[dni]
+    for _, player_id in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
+      local wss = websockets[player_id]
       if wss ~= nil then
         local _, _err = wss:close(CloseCode.normal(),
           "Shutdown requested by client")
       end
-      websockets[dni] = nil
+      websockets[player_id] = nil
     end
     pending_close = {}
 
@@ -92,8 +92,8 @@ cosock.spawn(function()
         else
           if msg.header and msg.body then -- control message
             if msg.header.type and msg.header.type == "WebSocket" then
-              local dni = msg.header.target
-              local wss = websockets[dni]
+              local target = msg.header.target
+              local wss = websockets[target]
 
               wss:send(Message.new(Message.TEXT, msg.body))
             end
@@ -115,11 +115,11 @@ cosock.spawn(function()
   end
 end)
 
---- @param dni DNI
+--- @param player_id PlayerId
 --- @param url_table table
 --- @return WebSocket|nil
 --- @return nil|string error
-local function _make_websocket(dni, url_table)
+local function _make_websocket(url_table)
   local sock, err = socket.tcp()
 
   if sock then
@@ -164,13 +164,13 @@ local function _make_websocket(dni, url_table)
   return wss
 end
 
-function SonosWebSocketRouter.is_connected(dni)
-  return websockets[dni] ~= nil
+function SonosWebSocketRouter.is_connected(player_id)
+  return websockets[player_id] ~= nil
 end
 
 function SonosWebSocketRouter.register_listener_for_socket(listener,
-                                                           dni_for_socket)
-  local ws = websockets[dni_for_socket]
+                                                           player_id_for_socket)
+  local ws = websockets[player_id_for_socket]
 
   if ws ~= nil then
     local uuid = st_utils.generate_uuid_v4()
@@ -183,38 +183,38 @@ function SonosWebSocketRouter.register_listener_for_socket(listener,
 
     return uuid
   else
-    return nil, "Cannot register listener; no websocket opened for " .. dni_for_socket
+    return nil, "Cannot register listener; no websocket opened for " .. player_id_for_socket
   end
 
 end
 
 --- Open a websocket connection with the given look-up information
---- @param dni DNI
+--- @param player_id PlayerId
 --- @param wss_url string|table
 --- @return boolean|nil success true on success, nil otherwise
 --- @return nil|string error the error message in the failure case
-function SonosWebSocketRouter.open_socket_for_player(dni, wss_url)
-  if not websockets[dni] then
+function SonosWebSocketRouter.open_socket_for_player(player_id, wss_url)
+  if not websockets[player_id] then
     local url_table = lb_utils.force_url_table(wss_url)
-    local wss, err = _make_websocket(dni, url_table)
+    local wss, err = _make_websocket(url_table)
 
     if err or not wss then
       return nil, string.format(
-        "Could not create websocket connection for %s: %s", dni,
+        "Could not create websocket connection for %s: %s", player_id,
         err)
     else
-      websockets[dni] = wss
+      websockets[player_id] = wss
       return true
     end
   else
-    log.debug("Websocket already open for " .. dni)
+    log.debug("Websocket already open for " .. player_id)
     return true
   end
 end
 
-function SonosWebSocketRouter.send_message_to_player(dni, json_payload)
+function SonosWebSocketRouter.send_message_to_player(target, json_payload)
   local websocket_message = {
-    header = { type = "WebSocket", target = dni },
+    header = { type = "WebSocket", target = target },
     body = json_payload
   }
 
@@ -222,16 +222,16 @@ function SonosWebSocketRouter.send_message_to_player(dni, json_payload)
 end
 
 --- Close a websocket connection with the given look-up information
---- @param dni DNI
+--- @param target PlayerId
 --- @return boolean|nil success true on success, nil otherwise
 --- @return nil|string error the error message in the failure case
-function SonosWebSocketRouter.close_socket_for_player(dni)
-  log.trace("Closing socket for player " .. dni)
-  local ws = websockets[dni]
+function SonosWebSocketRouter.close_socket_for_player(target)
+  log.trace("Closing socket for player " .. target)
+  local ws = websockets[target]
 
   if ws ~= nil then
     local ws_id = ws.id
-    table.insert(pending_close, dni)
+    table.insert(pending_close, target)
     for _, uuid in ipairs(listener_ids_for_socket[ws_id]) do
       local listener = listeners[uuid]
 
@@ -243,7 +243,7 @@ function SonosWebSocketRouter.close_socket_for_player(dni)
     listener_ids_for_socket[ws_id] = nil
     return true
   else
-    return nil, string.format("No currently open connection for %s", dni)
+    return nil, string.format("No currently open connection for %s", target)
   end
 end
 
@@ -251,26 +251,25 @@ end
 function SonosWebSocketRouter.cleanup_unused_sockets(driver)
   log.trace("Begin cleanup of unused websockets")
   local should_keep = {}
-  for dni, _ in pairs(websockets) do
-    local is_joined = driver.sonos:is_player_joined(dni)
-    log.debug(string.format("Is DNI %s joined? %s", dni, is_joined))
-    should_keep[dni] = is_joined
+  for player_id, _ in pairs(websockets) do
+    local is_joined = driver.sonos:is_player_joined(player_id)
+    log.debug(string.format("Is PlayerID %s joined? %s", player_id, is_joined))
+    should_keep[player_id] = is_joined
   end
 
   local known_devices = driver:get_devices()
 
   for _, device in ipairs(known_devices) do
     local _, coordinator_id = driver.sonos:get_coordinator_for_device(device)
-    local dni = driver.sonos:get_dni_for_player_id(coordinator_id)
-    if should_keep[dni] == false then -- looking for false specifically, not nil
-      log.trace("Preserving coordinator socket " .. dni)
-      should_keep[dni] = true
+    if should_keep[coordinator_id] == false then -- looking for false specifically, not nil
+      log.trace("Preserving coordinator socket " .. coordinator_id)
+      should_keep[coordinator_id] = true
     end
   end
 
-  for dni, keep in pairs(should_keep) do
+  for id, keep in pairs(should_keep) do
     if not keep then
-      SonosWebSocketRouter.close_socket_for_player(dni)
+      SonosWebSocketRouter.close_socket_for_player(id)
     end
   end
 end
