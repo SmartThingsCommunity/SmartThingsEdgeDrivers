@@ -220,7 +220,7 @@ function protocol.poll(_, device)
   end
 end
 
-function protocol.subscribe(server, device)
+function protocol.subscribe(device, listen_ip, listen_port)
   local ip, port = get_ip_and_port(device)
   if not (ip and port) then
     return
@@ -228,12 +228,7 @@ function protocol.subscribe(server, device)
 
   local device_facing_local_ip = find_interface_ip_for_remote(ip)
 
-  if server.listen_ip == nil or server.listen_port == nil then
-    log.info_with({ hub_logs = true }, "[" .. device.id .. "] failed to subscribe, no listen server")
-    return
-  end
-
-  log.debug("subscribing", "<http://" .. device_facing_local_ip .. ":" .. server.listen_port .. "/>")
+  log.debug("subscribing", "<http://" .. device_facing_local_ip .. ":" .. listen_port .. "/>")
 
   local response_body = {}
 
@@ -243,7 +238,7 @@ function protocol.subscribe(server, device)
     sink = ltn12.sink.table(response_body),
     headers = {
       ["HOST"] = ip .. ":" .. port,
-      ["CALLBACK"] = "<http://" .. device_facing_local_ip .. ":" .. server.listen_port .. "/>",
+      ["CALLBACK"] = "<http://" .. device_facing_local_ip .. ":" .. listen_port .. "/>",
       ["NT"] = "upnp:event",
       ["TIMEOUT"] = "Second-5400",
     }
@@ -259,32 +254,16 @@ function protocol.subscribe(server, device)
     return
   end
 
-  local sid = headers["sid"]
-  if sid ~= nil then
-    if device:get_field("sid") ~= sid then
-      device:set_field("sid", sid)
-      subscriptions[sid] = device
-      log.info("[" .. device.id .. "] setup subscription: " .. tostring(sid))
-    end
-  else
-    log.warn("no SID header in subscription response")
-  end
+  return headers["sid"]
 end
 
-function protocol.unsubscribe(device)
+function protocol.unsubscribe(device, sid)
   local ip, port = get_ip_and_port(device)
   if not (ip and port) then
     return
   end
 
   log.info_with({ hub_logs = true }, "[" .. device.id .. "] Unsubscribing")
-
-  local sid = device:get_field("sid")
-  if sid == nil then
-    return
-  else
-    subscriptions[sid] = nil
-  end
 
   local response_body = {}
 
@@ -300,12 +279,13 @@ function protocol.unsubscribe(device)
 
   if resp == nil then
     log.warn("Error sending http request: " .. code_or_err)
-    return
+    return code_or_err
   end
 
   if code_or_err ~= 200 then
     log.warn_with({ hub_logs = true },
       "[" .. device.id .. "] Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
+    return "Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line
   end
 end
 
