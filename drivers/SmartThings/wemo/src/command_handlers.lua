@@ -17,6 +17,9 @@ end
 
 function command_handlers.handle_refresh(driver, device)
   protocol.poll(device)
+  if driver.server then
+    driver.server:subscribe(device)
+  end
 end
 
 return command_handlers

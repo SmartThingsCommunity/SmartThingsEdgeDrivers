@@ -40,8 +40,6 @@ local profiles = {
   ["Lightswitch"] = "wemo.light-switch.v1",
 }
 
-local server
-
 local function device_init(driver, device)
   device.log.info_with({ hub_logs = true }, "initializing device")
   local ip = device:get_field("ip")
@@ -54,16 +52,25 @@ local function device_init(driver, device)
     port = tonumber(device.data.port, 16)
     device:set_field("ip", ip, { persist = true })
     device:set_field("port", port, { persist = true })
+    --try to get the metadata for this device so scan nearby doesn't create a device
+    --for a migrated device that has yet to be rediscovered on the lan
+    local meta = discovery.fetch_device_metadata(string.format("http://%s:%s/setup.xml", ip, port))
+    if meta then
+      device:set_field("serial_num", meta.serial_num, { persist = true })
+    else
+      device.log.warn_with({ hub_logs = true },
+        "Unable to fetch migrated device serial number, driver discovery may recreate the device.")
+    end
   end
 
   -- Setup the polling and subscription
   local jitter = 2 * math.random()
-  if server and ip and port then
-    device.thread:call_with_delay(jitter, function() server:subscribe(device) end)
+  if driver.server and ip and port then
+    device.thread:call_with_delay(jitter, function() driver.server:subscribe(device) end)
   end
   device.thread:call_on_schedule(
     3600 + jitter,
-    function() server:subscribe(device) end,
+    function() driver.server:subscribe(device) end,
     device.id .. "subcribe"
   )
   device.thread:call_on_schedule(
@@ -90,7 +97,7 @@ local function device_init(driver, device)
       device:offline()
       return
     end
-
+    device.log.info_with({ hub_logs = true },"Device init re-discovered device on the lan")
     device:online()
 
     --Sometimes wemos just stop responding to ssdp even though they are connected to the network.
@@ -98,9 +105,9 @@ local function device_init(driver, device)
     device:set_field("ip", info.ip, { persist = true })
     device:set_field("port", info.port, { persist = true })
     device:set_field("serial_num", info.serial_num, { persist = true })
-    if server and (ip ~= info.ip or port ~= info.port) then
-      print("not working how expected!!!!!!!!!!1")
-      server:subscribe(device)
+    if driver.server and (ip ~= info.ip or port ~= info.port) then
+      device.log.debug("Resubscribe because ip/port has changed since last discovery")
+      driver.server:subscribe(device)
     end
   end, device.id.." discovery")
 end
@@ -108,17 +115,17 @@ end
 local function resubscribe_all(driver)
   local device_list = driver:get_devices()
   for _, device in ipairs(device_list) do
-    server:unsubscribe(device)
-    server:subscribe(device)
+    driver.server:unsubscribe(device)
+    driver.server:subscribe(device)
   end
 end
 
 local function lan_info_changed_handler(driver, hub_ipv4)
-  if server.listen_ip == nil or hub_ipv4 ~= server.listen_ip then
+  if driver.server.listen_ip == nil or hub_ipv4 ~= driver.server.listen_ip then
     log.info_with({ hub_logs = true },
       "hub IPv4 address has changed, restarting listen server and resubscribing")
-    server:shutdown()
-    server = SubscriptionServer:new_server()
+    driver.server:shutdown()
+    driver.server = SubscriptionServer:new_server()
     resubscribe_all(driver)
   end
 end
@@ -205,9 +212,7 @@ local wemo = Driver("wemo", {
   }
 })
 
-log.info("script start")
-
+log.info("Spinning up subscription server and running driver")
 -- TODO handle case where the subscription server is not started
-server = SubscriptionServer.new_server()
-
+wemo.server = SubscriptionServer.new_server()
 wemo:run()
