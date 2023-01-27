@@ -45,6 +45,12 @@ local function device_removed(driver, device)
 end
 
 local function device_init(driver, device)
+  -- at the time of authoring, there is a bug with LAN Edge Drivers where `init`
+  -- may not be called on every device that gets added to the driver
+  if device:get_field("init_started") then
+    return
+  end
+  device:set_field("init_started", true)
   device.log.info_with({ hub_logs = true }, "initializing device")
   local ip = device:get_field("ip")
   local port = device:get_field("port")
@@ -114,6 +120,10 @@ local function device_init(driver, device)
       driver.server:subscribe(device)
     end
   end, device.id.." discovery")
+end
+
+local function device_added(driver, device)
+  device_init(driver, device)
 end
 
 local function resubscribe_all(driver)
@@ -201,6 +211,7 @@ local wemo = Driver("wemo", {
   lifecycle_handlers = {
     init = device_init,
     removed = device_removed,
+    added = device_added,
   },
   lan_info_changed_handler = lan_info_changed_handler,
   capability_handlers = {
