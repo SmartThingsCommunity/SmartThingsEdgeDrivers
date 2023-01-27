@@ -26,7 +26,6 @@
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local log = require "log"
-local json = require "dkjson"
 local utils = require "st.utils"
 local bose_utils = require "utils"
 local command = require "command"
@@ -155,7 +154,6 @@ local function do_refresh(driver, device, cmd)
 
   -- restart listener if needed
   local listener = device:get_field("listener")
-  local success = false
   if listener and (listener:is_stopped() or listener.websocket == nil)then
     device.log.info("Restarting listening websocket client for device updates")
     listener:stop()

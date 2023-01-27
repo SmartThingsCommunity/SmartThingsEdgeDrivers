@@ -1,5 +1,5 @@
 -- Copyright 2022 SmartThings
--- 
+--
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
 -- You may obtain a copy of the License at
@@ -46,13 +46,7 @@ end
 local function current_position_attr_handler(driver, device, value, zb_rx)
   -- Shade level is inverted
   local level = 100 - value.value
-  -- Get the new shades level
-  local current_shades_level = device:get_latest_state(
-    device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
-    capabilities.windowShadeLevel.ID, 
-    capabilities.windowShadeLevel.shadeLevel.NAME)
-  current_shades_level = current_shades_level or 0
-  
+
   -- Clear states
   device:set_field(VIMAR_SHADES_CLOSING, false)
   device:set_field(VIMAR_SHADES_OPENING, false)
@@ -63,13 +57,15 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   -- Current level is 0 or 100
   if level == 0 or level == 100 then
     event = level == 0 and windowShade.closed() or windowShade.open()
-  else 
+  else
   -- Ignore current_shades_level = level / current_shades_level != level
-    local timer = device.thread:call_with_delay(2, function(d)
+    device.thread:call_with_delay(2, function(d)
       local current_shades_level = device:get_latest_state(
         device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
-        capabilities.windowShadeLevel.ID, 
-        capabilities.windowShadeLevel.shadeLevel.NAME)
+        capabilities.windowShadeLevel.ID,
+        capabilities.windowShadeLevel.shadeLevel.NAME,
+        0
+      )
       -- Set as partially open
       if current_shades_level > 0 and current_shades_level < 100 then
         device:emit_event(windowShade.partially_open())

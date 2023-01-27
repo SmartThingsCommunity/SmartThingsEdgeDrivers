@@ -29,11 +29,9 @@ local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
 local Groups = clusters.Groups
 local SHADE_LEVEL = "shadeLevel"
-local SHADE_STATE = "shadeState"
 
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
-local SHADE_STATE_ATTR_ID = 0x0404
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {

@@ -116,12 +116,12 @@ local function dispatch_event(source)
         if type(source.onmessage) == "function" then
             source.onmessage(event)
         end
-    
+
         for _, listener in ipairs(source._listeners[EventSource.EventTypes.ON_MESSAGE]) do
             if type(listener) == "function" then
                 listener(event)
             end
-        end 
+        end
     end
 
     source._parse_buffers["event"] = ""
@@ -182,7 +182,7 @@ local function connecting_action(source)
 
                 if not err then
                     source._sock:setoption("keepalive", true)
-        
+
                     if source.url.scheme == "https" then
                         source._sock = ssl.wrap(source._sock, {
                             mode = "client",
@@ -190,7 +190,7 @@ local function connecting_action(source)
                             verify = "none",
                             options = "all"
                         })
-            
+
                         source._sock:dohandshake()
                     end
                 else
@@ -215,7 +215,7 @@ local function connecting_action(source)
     if err ~= nil then
         return nil, err
     end
-    
+
     local recv, partial = nil, nil
     recv, err, partial = Response.source(function() return source._sock:receive() end)
 
@@ -275,16 +275,16 @@ local function closed_action(source)
         if type(source.onerror) == "function" then
             source.onerror()
         end
-    
+
         for _, listener in ipairs(source._listeners[EventSource.EventTypes.ON_ERROR]) do
             if type(listener) == "function" then
                 listener()
             end
         end
-    
+
         local sleep_time_secs = source._reconnect_time_millis / 1000.0
         socket.sleep(sleep_time_secs)
-    
+
         source.ready_state = EventSource.ReadyStates.CONNECTING
     end
 end

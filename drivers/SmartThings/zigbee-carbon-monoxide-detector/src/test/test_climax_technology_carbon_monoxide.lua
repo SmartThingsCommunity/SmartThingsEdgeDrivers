@@ -14,7 +14,7 @@
 
 -- Mock out globals
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
+-- local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 

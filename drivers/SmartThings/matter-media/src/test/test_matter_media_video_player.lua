@@ -92,7 +92,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_variable_speed)
+  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_variable_speed)
   for i, cluster in ipairs(cluster_subscribe_list) do
     print(i)
     if i > 1 then

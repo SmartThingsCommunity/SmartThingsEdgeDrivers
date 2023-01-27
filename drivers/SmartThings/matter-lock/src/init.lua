@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local MatterDriver = require "st.matter.driver"
-local interaction_model = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 
 local DoorLock = clusters.DoorLock
@@ -228,7 +227,6 @@ local function get_credential_status_response_handler(driver, device, ib, respon
     return
   end
   local elements = ib.info_block.data.elements
-  local user_index = elements.user_index.value
   local credential_exists = elements.credential_exists.value
   local next_credential_index = elements.next_credential_index and elements.next_credential_index.value or nil
 

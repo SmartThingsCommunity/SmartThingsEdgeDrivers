@@ -114,7 +114,7 @@ end
 function Listener:name_update(new_name)
   log.info(string.format("[%s](%s) name_update: %s", bose_utils.get_serial_number(self.device),
                          self.device.label, new_name))
-  local res = self.device:try_update_metadata({vendor_provided_label = new_name})
+  self.device:try_update_metadata({vendor_provided_label = new_name})
 end
 
 function Listener:handle_xml_event(xml)
@@ -223,7 +223,7 @@ function Listener:start()
   local config = Config.default():protocol("gabbo"):keep_alive(30)
   local websocket = ws.client(sock, "/", config)
   websocket:register_message_cb(function(msg)
-    local event = self:handle_xml_event(msg.data)
+    self:handle_xml_event(msg.data)
     -- log.debug(string.format("(%s:%s) Websocket message: %s", device.device_network_id, ip, utils.stringify_table(event, nil, true)))
   end):register_error_cb(function(err)
     -- TODO some muxing on the error conditions
@@ -240,7 +240,8 @@ function Listener:start()
     self.websocket = nil -- TODO make sure it is set to nil correctly
     if not self._stopped then self:try_reconnect() end
   end)
-  local success, err = websocket:connect(ip, Listener.WS_PORT)
+  local _
+  _, err = websocket:connect(ip, Listener.WS_PORT)
   if err then
     log.error_with({hub_logs=true}, string.format("[%s](%s) failed to connect websocket: %s", serial_number, self.device.label, err))
     return false

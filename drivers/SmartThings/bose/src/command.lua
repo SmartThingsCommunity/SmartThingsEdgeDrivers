@@ -50,7 +50,7 @@ function Command.key_press(ip, key)
   local press = string.format("<key state=\"press\" sender=\"Gabbo\">%s</key>\n\r", key)
   local url = format_url(ip, "/key")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {
@@ -72,7 +72,7 @@ function Command.key_release(ip, key)
 
   local url = format_url(ip, "/key")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {
@@ -93,7 +93,7 @@ function Command.info(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/info")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -129,7 +129,7 @@ function Command.volume(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/volume")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -158,7 +158,7 @@ function Command.set_volume(ip, level)
 
   local url = format_url(ip, "/volume")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #volume},
@@ -176,7 +176,7 @@ function Command.sources(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/sources")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -203,7 +203,7 @@ function Command.set_source(ip, source)
   local url = format_url(ip, "/select")
   local select = "<ContentItem source=\"AUX\" sourceAccount=\"AUX\"></ContentItem>"
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #select},
@@ -221,7 +221,7 @@ function Command.set_name(ip, name)
   local url = format_url(ip, "/name")
   local set_name = string.format("<name>%s</name>", name)
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #set_name},
@@ -287,7 +287,7 @@ function Command.now_playing(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/now_playing")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -317,7 +317,7 @@ function Command.presets(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/presets")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -359,7 +359,7 @@ function Command.zone_info(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/getZone")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -403,7 +403,7 @@ function Command.play_streaming_uri(ip, uri, vol)
                 <volume>%d</volume> \
                 </play_info>", app_key, uri, vol)
 
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {

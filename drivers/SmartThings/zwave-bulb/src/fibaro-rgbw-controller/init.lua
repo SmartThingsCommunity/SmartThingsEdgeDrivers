@@ -19,8 +19,6 @@ local Association = (require "st.zwave.CommandClass.Association")({ version = 2 
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 1 })
---- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
