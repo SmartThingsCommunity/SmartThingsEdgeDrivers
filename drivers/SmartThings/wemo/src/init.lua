@@ -103,6 +103,17 @@ end
 
 local function device_init(driver, device)
   log.info_with({ hub_logs = true }, "[" .. device.device_network_id .. "] initializing Wemo device")
+  local ip = device:get_field("ip")
+  local port = device:get_field("port")
+  -- Carry over DTH discovered ip/port during migration, since wemo devices often
+  -- stop responding to SSDP requests after being on the network for a long time.
+  if not (ip and port) and device.data and device.data.ip and device.data.port then
+    local nu = require "st.net_utils"
+    ip = nu.convert_ipv4_hex_to_dotted_decimal(device.data.ip)
+    port = tonumber(device.data.port, 16)
+    device:set_field("ip", ip, { persist = true })
+    device:set_field("port", port, { persist = true })
+  end
 
   local backoff = backoff_builder(300, 1, 0.25)
   local info
