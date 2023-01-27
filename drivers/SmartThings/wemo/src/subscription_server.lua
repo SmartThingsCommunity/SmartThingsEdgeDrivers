@@ -11,11 +11,13 @@ local ControlMessageType = {
   Shutdown = "shutdown",
   Subscribe = "subscribe",
   Unsubscribe = "unsubscribe",
+  Prune = "prune"
 }
 local ControlMessage = {
   Shutdown = function() return { type = ControlMessageType.Shutdown } end,
   Subscribe = function(dev) return { type = ControlMessageType.Subscribe, device = dev } end,
   Unsubscribe = function(id) return { type = ControlMessageType.Unsubscribe, id = id } end,
+  Prune = function() return { type = ControlMessageType.Prune } end,
 }
 
 local SubscriptionServer = {}
@@ -38,6 +40,10 @@ end
 
 function SubscriptionServer:shutdown()
   self.ctrl_tx:send(ControlMessage.Shutdown())
+end
+
+function SubscriptionServer:prune()
+  self.ctrl_tx:send(ControlMessage.Prune())
 end
 
 function SubscriptionServer.new_server()
@@ -104,11 +110,10 @@ function SubscriptionServer.new_server()
       elseif msg.type == ControlMessageType.Subscribe then
         log.trace("serve| subscribing to device " .. msg.device.label)
         if msg.device:get_field("subscription_id") then
-          if protocol.unsubscribe(msg.device, msg.device:get_field("subscription_id")) then
-            log.trace("serve| successfully unsubscribed from device " .. msg.device.label)
-            self.subscriptions[msg.device:get_field("subscription_id")] = nil
-            msg.device:set_field("subscription_id", nil)
-          end
+          local res = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
+          log.trace(string.format("serve| unsubscribed from %s successfully? %s", msg.device.label, res))
+          self.subscriptions[msg.device:get_field("subscription_id")] = nil
+          msg.device:set_field("subscription_id", nil)
         end
         local sub_id = protocol.subscribe(msg.device, srv_addr, srv_port)
         if sub_id == nil then
@@ -125,10 +130,16 @@ function SubscriptionServer.new_server()
         if msg.device:get_field("subscription_id") then
           log.warn("serve| no existing subscription for device" .. msg.device.label)
         else
-          if protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id]) then
-            log.trace("serve| successfully unsubscribed from device " .. msg.device.label)
-            self.subscriptions[msg.device:get_field("subscription_id")] = nil
-            msg.device:set_field("subscription_id", nil)
+          local res = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
+          log.trace(string.format("serve| unsubscribed from %s successfully? %s", msg.device.label, res))
+          self.subscriptions[msg.device:get_field("subscription_id")] = nil
+          msg.device:set_field("subscription_id", nil)
+        end
+      elseif msg.type == ControlMessageType.Prune then
+        for sub_id, device in pairs(self.subscriptions) do
+          if device.label == nil then
+            log.trace("serve| removing subscription due to device removal", sub_id)
+            self.subscriptions[sub_id] = nil
           end
         end
       end
@@ -148,14 +159,22 @@ function SubscriptionServer.new_server()
       end
       if self.subscriptions[notification.id] then
         local parser = require "parser"
-        log.trace("serve| received notify event from " .. self.subscriptions[notification.id].label)
-        --Parser emits events for device
-        parser.parse_subscription_resp_xml(self.subscriptions[notification.id], notification.data)
+        local device = self.subscriptions[notification.id]
+        local label = device.label
+        if label == nil then
+          log.trace("serve| received notify event from deleted device")
+          self.subscriptions[notification.id] = nil
+        else
+          log.trace("serve| received notify event from " .. self.subscriptions[notification.id].label)
+          --Parser emits events for device
+          parser.parse_subscription_resp_xml(self.subscriptions[notification.id], notification.data)
+        end
       else
         log.warn("serve| received notify event from unknown subscription")
       end
     end
   end, "DeviceNotificationHandler")
+
   return self
 end
 

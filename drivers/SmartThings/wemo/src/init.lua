@@ -40,6 +40,10 @@ local profiles = {
   ["Lightswitch"] = "wemo.light-switch.v1",
 }
 
+local function device_removed(driver, device)
+  driver.server:prune()
+end
+
 local function device_init(driver, device)
   device.log.info_with({ hub_logs = true }, "initializing device")
   local ip = device:get_field("ip")
@@ -196,6 +200,7 @@ local wemo = Driver("wemo", {
   discovery = discovery_handler,
   lifecycle_handlers = {
     init = device_init,
+    removed = device_removed,
   },
   lan_info_changed_handler = lan_info_changed_handler,
   capability_handlers = {
