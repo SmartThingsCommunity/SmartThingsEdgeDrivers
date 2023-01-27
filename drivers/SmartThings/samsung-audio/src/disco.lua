@@ -93,6 +93,18 @@ local function process_response(val)
   return info
 end
 
+local function check_samsung_model(val)
+  log.debug(string.format("Doing the Device Model check --> %s", val))
+   if string.find(val, 'WAM7500') or string.find(val, 'WAM6500') or string.find(val, 'WAM5500') or string.find(val, 'WAM3500') or string.find(val, 'WAM3501') or 
+      string.find(val, 'WAM1500') or string.find(val, 'WAM1501') or string.find(val, 'WAM1400') or string.find(val, 'WAM750') or string.find(val, 'WAM550') or
+      string.find(val, 'WAM350') or string.find(val, 'J8500') or string.find(val, 'J7500') or string.find(val, 'J6500') or string.find(val, 'J650') or string.find(val, 'H750') or
+      string.find(val, 'K650') or string.find(val, 'K850') or string.find(val, 'K950') or string.find(val, 'J6500R') or string.find(val, 'J7500R') or string.find(val, 'J8500R') then
+    log.debug(string.format("Found the Samsung Audio Device Model --> %s", val))
+    return true
+  end
+  return false
+end
+
 function Disco.find(deviceid, callback)
   log.info("handling discovery find...")
 
@@ -127,8 +139,6 @@ function Disco.find(deviceid, callback)
       local ip, port = headers["location"]:match(
                              "http://([^,/]+):([^/]+)") -- TODO : We need to check the xml filename for samsung audio device for ex: http://192.168.0.1:59666/rootDesc.xml
  
-      -- TODO how do I know the device that responded is actually a samsung-audio device
-      -- potentially will need to make a request to the endpoint
       local meta = fetch_device_metadata(headers["location"])
       local speaker_name = "samsung-audio speaker"
       local speaker_model = "unknown samsung-audio"
@@ -150,14 +160,21 @@ function Disco.find(deviceid, callback)
                    "recieved discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
                    rip, ip))
         log.debug(rip, "!=", ip)
+      elseif not check_samsung_model(speaker_model) then  -- to know the device that responded is actually a samsung-audio device
+	log.warn("Found non-samsung speaker device, ignoring this device")
       elseif ip and id then
-        callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})
-
-        if deviceid and id == deviceid then
-          -- check if the speaker we just found was the one we were looking for
-          log.debug(string.format("Found the Specific Device in Discovery --> %s", deviceid))
-          break
-        end
+	if deviceid then  -- this is device init flow 
+	  if id == deviceid then -- check if the speaker we just found was the one we were looking for
+            callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})  
+            log.debug(string.format("Found the Target Device in Device Init Discovery --> %s", id))
+            break
+	  else
+	    log.debug(string.format("Found the Different Device during Device Init Discovery --> %s", id))
+	  end
+	else  -- this is device onboarding/search flow
+	  callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})  
+          log.debug(string.format("Found the Devices during Device Onboarding Discovery --> %s", id))
+	end
       end
     elseif rip == "timeout" then
       break
