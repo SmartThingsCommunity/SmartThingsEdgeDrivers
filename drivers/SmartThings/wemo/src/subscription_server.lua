@@ -3,6 +3,9 @@ local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 local protocol = require "protocol"
+local Request = require 'luncheon.request'
+local Response = require 'luncheon.response'
+local log = require "log"
 
 local ControlMessageType = {
   Shutdown = "shutdown",
@@ -18,7 +21,7 @@ local ControlMessage = {
 local SubscriptionServer = {}
 SubscriptionServer.mt = {
   __gc = function(self)
-    if self.sock then
+    if self.sock ~= nil then
       self.ctrl_tx:send(ControlMessage.Shutdown())
     end
   end,
@@ -40,106 +43,119 @@ end
 function SubscriptionServer.new_server()
   local ctrl_tx, ctrl_rx = cosock.channel.new()
   local notify_tx, notify_rx = cosock.channel.new()
+  local sock = assert(socket.tcp());
+  sock:bind('*', 0)
+  sock:listen(1)
+  local srv_addr, srv_port = sock:getsockname()
+  -- Note: There is a bug in the hub firmware where the timeout causes an error, and using
+  -- pcall to catch it breaks cosock. Without a timeout to check if we should kill the server
+  -- we will leak sockets/tasks should a server ever be restarted (i.e. hub ip address changes)
+  -- sock:settimeout(30)
   local self = {
-    subscriptions = {},
+    subscriptions = {}, --maps subscription ids to device objects
     ctrl_tx = ctrl_tx,
     notify_rx = notify_rx,
+    sock = sock,
+    listen_ip = srv_addr,
   }
   setmetatable(self, SubscriptionServer.mt)
+  log.info_with({hub_logs = true}, string.format('serve| Started listening on %s:%s', srv_addr, srv_port))
 
+  -- spawn task to handle incoming client connections
   cosock.spawn(function()
-    local sock = assert(socket.tcp());
-    sock:bind('*', 0)
-    sock:listen(1)
-    print('server| listening on:', sock:getsockname())
-    local srv_addr, srv_port = sock:getsockname()
-
     while true do
-      local recvr, _, _ = socket.select({sock, ctrl_rx})
-      if recvr and (recvr[1] == ctrl_rx or recvr[2] == ctrl_rx) then
-        local msg, err = ctrl_rx:receive()
-        if err then
-          print("server| failed to receive on control channel") --TODO
-        end
-        if msg.type == ControlMessageType.Shutdown then
-          print("server| shutting down")
-          break
-        elseif msg.type == ControlMessageType.Subscribe then
-          print("server| (re)subscribing to device")
-          if self.subscriptions[msg.device.id] then
-            local error = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
-            if error then
-              print("server| failed to unsubscribe from device")
-            else
-              self.subscriptions[msg.device.id] = nil
-            end
-          end
-          local sub_id = protocol.subscribe(msg.device, srv_addr, srv_port)
-          if sub_id == nil then
-            print("server| failed to subscribe to device " .. msg.device.label)
+      local client, err = sock:accept()
+      if client then
+        -- spawn handler for new client
+        cosock.spawn(function()
+          local req, recv_err = Request.tcp_source(client)
+          if req and not recv_err then
+            local sid = req:get_headers():get_one("sid")
+            local body = req:get_body()
+            notify_tx:send({id = sid, data = body})
+            Response.new(200, client):send()
           else
-            self.subscriptions[msg.device.id] = sub_id
+            Response.new(400, client):send()
           end
-        elseif msg.type == ControlMessageType.Unsubscribe then
-          print("server| unsubscribing from device" .. msg.device.label)
-          if self.subscriptions[msg.device.id] == nil then
-            print("server| no existing subscription for device" .. msg.device.label)
-            goto continue
-          end
-          local error = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
-          if error then
-            print("server| failed to unsubscribe from device: " .. error)
-          else
-            self.subscriptions[msg.device.id] = nil
-          end
-        end
+          client:close()
+        end)
+      else
+        log.error_with({hub_logs = true},
+          "serve| shutting down tcp server due to unexpected accept error: " .. err)
+        break
       end
-
-      if recvr and (recvr[1] == sock or recvr[2] == sock) then
-        print("!!!!! accepting client")
-        local client, err = sock:accept()
-        print("!!!!! accepted client", client, err)
-        if err then
-          print("server| error accepting client" .. err)
-        else
-          -- spawn handler for new client
-          cosock.spawn(function()
-            print("!!!!! running spawned client task")
-            client:settimeout(5)
-            local res = ""
-            while true do
-              local data, err = client:receive()
-              if err then
-                print("server| client receive failure" .. err, client:getpeername())
-                break
-              end
-              res = res .. data
-            end
-            -- clean up socket
-            client:close()
-            print("!!!!! received data on socket:", res)
-            notify_tx:send(res)
-          end)
-        end
-      end
-      ::continue::
     end
     sock:close()
     notify_tx:close()
-    print("server| finished shutting down")
-  end, "SubscriptionServer")
+  end, "tcp server")
+
+  --spawn control task
+  cosock.spawn(function()
+    local shutdown_msg
+    while true do
+      local msg, err = ctrl_rx:receive()
+      if err then
+        shutdown_msg = "failed to receive on ctrl channel: " .. err
+        break
+      end
+      if msg.type == ControlMessageType.Shutdown then
+        shutdown_msg = "shutdown requested"
+        break
+      elseif msg.type == ControlMessageType.Subscribe then
+        log.trace("serve| subscribing to device " .. msg.device.label)
+        if msg.device:get_field("subscription_id") then
+          if protocol.unsubscribe(msg.device, msg.device:get_field("subscription_id")) then
+            log.trace("serve| successfully unsubscribed from device " .. msg.device.label)
+            self.subscriptions[msg.device:get_field("subscription_id")] = nil
+            msg.device:set_field("subscription_id", nil)
+          end
+        end
+        local sub_id = protocol.subscribe(msg.device, srv_addr, srv_port)
+        if sub_id == nil then
+          log.warn_with({hub_logs = true},
+            "serve| failed to subscribe to device " .. msg.device.label)
+        else
+          log.info_with({hub_logs=true},
+            "serve| successfully subscribed to device " .. msg.device.label)
+          self.subscriptions[sub_id] = msg.device
+          msg.device:set_field("subscription_id", sub_id)
+        end
+      elseif msg.type == ControlMessageType.Unsubscribe then
+        log.trace("serve| unsubscribing from device " .. msg.device.label)
+        if msg.device:get_field("subscription_id") then
+          log.warn("serve| no existing subscription for device" .. msg.device.label)
+        else
+          if protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id]) then
+            log.trace("serve| successfully unsubscribed from device " .. msg.device.label)
+            self.subscriptions[msg.device:get_field("subscription_id")] = nil
+            msg.device:set_field("subscription_id", nil)
+          end
+        end
+      end
+    end
+    self.sock:close() --TODO server task should manage its own socket once hub FW bugs are fixed
+    self.sock = nil
+    ctrl_rx:close()
+    log.error_with({hub_logs=true}, "serve| control task shut down! ", shutdown_msg)
+  end, "ServerControlTask")
 
   cosock.spawn(function()
     while true do
-      local raw, err = notify_rx:receive()
+      local notification, err = notify_rx:receive()
       if err == "closed" then --this should only happen when the server is shutdown.
-        print("server| notification channel closed")
+        log.warn("serve| notification channel closed")
         break
       end
-      print("server| received notification from client", raw, err)
+      if self.subscriptions[notification.id] then
+        local parser = require "parser"
+        log.trace("serve| received notify event from " .. self.subscriptions[notification.id].label)
+        --Parser emits events for device
+        parser.parse_subscription_resp_xml(self.subscriptions[notification.id], notification.data)
+      else
+        log.warn("serve| received notify event from unknown subscription")
+      end
     end
   end, "DeviceNotificationHandler")
-
   return self
 end
 

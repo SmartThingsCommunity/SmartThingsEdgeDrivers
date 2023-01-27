@@ -23,14 +23,15 @@ local request_wrapper = [[<?xml version="1.0" encoding="utf-8"?>
 
 local function get_ip_and_port(device)
   local ip = device:get_field("ip")
-  if not ip then log.warn("device ip is not yet known") end
+  if not ip then log.warn("proto| device ip is not yet known") end
 
   local port = device:get_field("port")
-  if not port then log.warn("device port is not known") end
+  if not port then log.warn("proto| device port is not known") end
 
   return ip, port
 end
 
+--TODO this info should be present in driver.environment_info.hub_ipv4
 local function find_interface_ip_for_remote(ip)
   local s = socket:udp()
   s:setpeername(ip, 9) -- port unimportant, use "discard" protocol port for lack of anything better
@@ -40,127 +41,9 @@ local function find_interface_ip_for_remote(ip)
   return localip
 end
 
--- listen socket channel handler
--- first parameter is driver, which we don't need
-function protocol.accept_handler(_, listen_sock)
-  local client, accept_err = listen_sock:accept()
-
-  log.trace("accept connection from", client:getpeername())
-
-  if accept_err ~= nil then
-    log.info_with({ hub_logs = true }, "Hit accept error: " .. accept_err)
-    listen_sock:close()
-    return
-  end
-
-  client:settimeout(1)
-  --TODO collect, emit errors to hub logs, and close all in one error handling area
-  -- probably using GOTO
-  local ip, _, _ = client:getpeername()
-  if ip ~= nil then
-    do -- Read first line and verify it matches the expect request-line with NOTIFY method type
-      local line, err = client:receive()
-      if err == nil then
-        if line ~= "NOTIFY / HTTP/1.1" then
-          log.warn("Received unexpected " .. line)
-          client:close()
-          return
-        end
-      else
-        log.warn("Hit error on client receive: " .. err)
-        client:close()
-        return
-      end
-    end
-
-    local content_length = 0
-    local subscriptionid = 0
-    do -- Receive all headers until blank line is found, saving off content-length
-      local line, err = client:receive()
-      if err then
-        log.warn("Hit error on client receive: " .. err)
-        client:close()
-        return
-      end
-
-      while line ~= "" do
-        local name, value = socket.skip(2, line:find("^(.-):%s*(.*)"))
-        if not (name and value) then
-          log.warn("Received malformed response headers")
-          client:close()
-          return
-        end
-
-        if string.lower(name) == "content-length" then
-          content_length = tonumber(value)
-        end
-
-        if string.lower(name) == "sid" then
-          subscriptionid = value
-        end
-
-        line, err = client:receive()
-        if err ~= nil then
-          log.warn("error while receiving headers: " .. err)
-          --TODO close the client conn? I think so, unless we dont need the data
-          -- Does err on receive mean the connection is closed?
-          return
-        end
-      end
-
-      if content_length == nil or content_length <= 0 then
-        log.warn_with({ hub_logs = true }, "Failed to parse content-length from headers")
-        --TODO close the client conn? I think so.
-        return
-      end
-    end
-
-
-    do -- receive `content_length` bytes as body
-      local body = ""
-      while #body < content_length do
-        local bytes_remaining = content_length - #body
-        local recv, err = client:receive(bytes_remaining)
-        if err == nil then
-          body = body .. recv
-        else
-          log.warn("error while receiving body: " .. err)
-          --TODO could close client here to...
-          break
-        end
-      end
-
-      local device = subscriptions[subscriptionid]
-      if not device then
-        log.error_with({ hub_logs = true }, "received subscription event for unknown subscription",
-          subscriptionid)
-        client:close()
-        return
-      end
-
-
-      if body ~= nil then
-        parser.parse_subscription_resp_xml(device, body)
-
-        -- For now always return 200 OK if we received a request, regardless of potential parsing failures.
-        -- Consider returning error code if parsing fails.
-        local resp = "HTTP/1.1 200 OK\r\n\r\n";
-        client:send(resp);
-      else
-        log.warn("Received no HTTP body on accepted socket")
-      end
-    end
-
-    --TODO handle err_string value with logging in one place.
-    client:close()
-  else
-    log.warn_with({ hub_logs = true }, "Could not get IP from getpeername()")
-  end
-end
-
-function protocol.poll(_, device)
+function protocol.poll(device)
   local ip, port = get_ip_and_port(device)
-  log.debug(string.format("protocol.poll() ip = %s, port = %s", ip, port))
+  log.debug(string.format("proto| polling %s at %s:%s", device.label, ip, port))
   if not (ip and port) then
     return
   end
@@ -171,6 +54,7 @@ function protocol.poll(_, device)
 
   local response_chunks = {}
 
+  --TODO use luncheon
   local resp, code_or_err, _, status_line = http.request {
     url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
     method = "POST",
@@ -187,7 +71,8 @@ function protocol.poll(_, device)
   -- TODO: some retries needed here to get device health if we timeout
 
   if resp == nil then
-    log.warn("[" .. device.id .. "] Error sending http request: " .. code_or_err)
+    log.warn_with({hub_logs=true},
+      string.format("proto| retry sending poll request for %s: %s", device.label, code_or_err))
 
     -- retry
     resp, code_or_err, _, status_line = http.request {
@@ -204,16 +89,17 @@ function protocol.poll(_, device)
     }
 
     if resp == nil then
-      log.warn("[" .. device.id .. "] Error sending http request: " .. code_or_err)
-      device:offline() -- Mark device as being unavailable/offline
+      log.warn_with({hub_logs=true},
+        string.format("proto| Failed to send poll request to %s: %s", device.label, code_or_err))
+      device:offline()
       return
     end
   end
 
-  device:online() -- Mark device as being online
+  device:online()
 
   if code_or_err ~= 200 then
-    log.warn("received " .. code_or_err .. " http status response :" .. status_line)
+    log.warn(string.format("proto| poll to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
   else
     local resp_body = table.concat(response_chunks)
     parser.parse_get_state_resp_xml(device, resp_body)
@@ -228,10 +114,7 @@ function protocol.subscribe(device, listen_ip, listen_port)
 
   local device_facing_local_ip = find_interface_ip_for_remote(ip)
 
-  log.debug("subscribing", "<http://" .. device_facing_local_ip .. ":" .. listen_port .. "/>")
-
   local response_body = {}
-
   local resp, code_or_err, headers, status_line = http.request {
     url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
     method = "SUBSCRIBE",
@@ -245,12 +128,13 @@ function protocol.subscribe(device, listen_ip, listen_port)
   }
 
   if resp == nil then
-    log.warn("error sending http request: " .. code_or_err)
+    log.warn_with({hub_logs=true}, string.format("proto| error sending subscribe request to %s: %s", device.label, code_or_err))
     return
   end
 
   if code_or_err ~= 200 then
-    log.warn("subcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
+    log.warn_with({hub_logs=true},
+      string.format("proto| subscribe request to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
     return
   end
 
@@ -263,10 +147,7 @@ function protocol.unsubscribe(device, sid)
     return
   end
 
-  log.info_with({ hub_logs = true }, "[" .. device.id .. "] Unsubscribing")
-
   local response_body = {}
-
   local resp, code_or_err, _, status_line = http.request {
     url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
     method = "UNSUBSCRIBE",
@@ -278,15 +159,16 @@ function protocol.unsubscribe(device, sid)
   }
 
   if resp == nil then
-    log.warn("Error sending http request: " .. code_or_err)
-    return code_or_err
+    log.warn_with({hub_logs=true}, string.format("proto| error sending unsubscribe request to %s: %s", device.label, code_or_err))
+    return false
   end
 
   if code_or_err ~= 200 then
-    log.warn_with({ hub_logs = true },
-      "[" .. device.id .. "] Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
-    return "Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line
+    log.warn_with({hub_logs=true},
+      string.format("proto| subscribe request to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
+    return false
   end
+  return true
 end
 
 function protocol.send_switch_cmd(device, power)
@@ -303,7 +185,7 @@ function protocol.send_switch_cmd(device, power)
 
   local response_body = {}
 
-  log.trace("make request")
+  log.trace(string.format("proto| %s set_switch_state %s", device.label, (power and 1 or 0)))
   local resp, code_or_err, _, status_line = http.request {
     url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
     method = "POST",
@@ -316,12 +198,11 @@ function protocol.send_switch_cmd(device, power)
       ["Content-Length"] = #body
     }
   }
-  log.trace("got response", code_or_err, status_line)
 
   if resp == nil or code_or_err ~= 200 then
     log.warn_with({ hub_logs = true }, string.format(
-      "Switch command failed with error code %s and status: %s",
-      code_or_err, status_line
+      "proto| %s set_switch_state failed with error code %s and status: %s",
+      device.label, code_or_err, status_line
     ))
   end
 end
@@ -339,7 +220,7 @@ function protocol.send_switch_level_cmd(device, level)
   )
 
   local response_body = {}
-
+  log.trace(string.format("proto| %s set_switch_level %s", device.label, level))
   local resp, code_or_err, _, status_line = http.request {
     url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
     method = "POST",
@@ -355,8 +236,8 @@ function protocol.send_switch_level_cmd(device, level)
 
   if resp == nil or code_or_err ~= 200 then
     log.warn_with({ hub_logs = true }, string.format(
-      "Switch command failed with error code %s and status: %s",
-      code_or_err, status_line
+      "proto| %s set_switch_level failed with error code %s and status: %s",
+      device.label, code_or_err, status_line
     ))
   end
 end
