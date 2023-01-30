@@ -6,41 +6,46 @@ local cluster_base = require "st.zigbee.cluster_base"
 -- Zigbee specific utils
 local clusters = require "st.zigbee.zcl.clusters"
 local ThermostatUIConfig = clusters.ThermostatUserInterfaceConfiguration
+local Thermostat = clusters.Thermostat
 
 local last_setpointTemp = nil
 
 local ThermostatMode = capabilities.thermostatMode
---local WindowOpenDetectionCap = capabilities["preparestream40760.windowOpenDetection"]
---local HeatingMode = capabilities["preparestream40760.heatMode"]
+local WindowOpenDetectionCap = capabilities["preparestream40760.windowOpenDetection"]
+local HeatingMode = capabilities["preparestream40760.heatMode"]
 
 local log = require "log"
 local common = {}
 
+common.MIN_SETPOINT = 5
+common.MAX_SETPOINT = 30
+common.STORED_SYSTEM_MODE = "stored_system_mode"
+
 common.THERMOSTAT_CLUSTER_ID = 0x0201
 common.MFG_CODE = 0x1246
---[[ common.WINDOW_OPEN_FEATURE = nil ]]
+common.WINDOW_OPEN_FEATURE = nil
 
 common.THERMOSTAT_SETPOINT_CMD_ID = 0x40
---[[ common.WINDOW_OPEN_DETECTION_ID = 0x4000
+common.WINDOW_OPEN_DETECTION_ID = 0x4000
 common.WINDOW_OPEN_DETECTION_MAP = {
   [0x00] = "quarantine", -- // default
   [0x01] = "closed", -- // window is closed
   [0x02] = "hold", -- // window might be opened
   [0x03] = "opened", -- // window is opened
   [0x04] = "opened_alarm", -- // a closed window was opened externally (=alert)
-} ]]
+}
 
 -- Preference variables
 common.KEYPAD_LOCK = "keypadLock"
 common.VIEWING_DIRECTION = "viewingDirection"
 common.ETRV_ORIENTATION = "eTRVOrientation"
 common.REGUALTION_SETPOINT_OFFSET = "regulationSetPointOffset"
---[[ common.WINDOW_OPEN_FEATURE = "windowOpenFeature" ]]
+common.WINDOW_OPEN_FEATURE = "windowOpenFeature"
 common.VIEWING_DIRECTION_ATTR = 0x4000
 common.ETRV_ORIENTATION_ATTR = 0x4014
 common.REGULATION_SETPOINT_OFFSET_ATTR = 0x404B
---[[ common.WINDOW_OPEN_FEATURE_ATTR = 0x4051 ]]
---[[ common.ETRV_WINDOW_OPEN_DETECTION_ATTR = 0x4000 ]]
+common.WINDOW_OPEN_FEATURE_ATTR = 0x4051
+common.ETRV_WINDOW_OPEN_DETECTION_ATTR = 0x4000
 
 -- preference table
 common.PREFERENCE_TABLES = {
@@ -63,12 +68,12 @@ common.PREFERENCE_TABLES = {
     clusterId = common.THERMOSTAT_CLUSTER_ID,
     attributeId = common.REGULATION_SETPOINT_OFFSET_ATTR,
     dataType = data_types.Int8
-  } --[[ ,
+  } ,
   windowOpenFeature = {
     clusterId = common.THERMOSTAT_CLUSTER_ID,
     attributeId = common.WINDOW_OPEN_FEATURE_ATTR,
     dataType = data_types.Boolean
-  } ]]
+  }
 }
 
 --- Default handler for lock state attribute on the door lock cluster
@@ -79,9 +84,9 @@ common.PREFERENCE_TABLES = {
 --- @param device st.zigbee.Device The device this message was received from containing identifying information
 --- @param value LockState the value of the door lock cluster lock state attribute
 --- @param zb_rx st.zigbee.ZigbeeMessageRx the full message this report came in
---[[ common.window_open_detection_handler = function(driver, device, value, zb_rx)
+common.window_open_detection_handler = function(driver, device, value, zb_rx)
   device:emit_event(WindowOpenDetectionCap.windowOpenDetection(common.WINDOW_OPEN_DETECTION_MAP[value.value]))
-end ]]
+end
 
 --- Default handler for lock state attribute on the door lock cluster
 ---
@@ -93,55 +98,66 @@ end ]]
 common.heat_cmd_handler = function(driver, device, mode)
 
   log.debug("### mode: " .. mode)
-
   local payload = nil
 
-  -- fetch last_setpointTemp
-  last_setpointTemp = device:get_field("last_setpointTemp")
+  -- If we receive an off here then we are off
+  -- Else we will determine the real mode in the mfg specific packet so store this
+  if mode == "off" then
+    --device:set_field(common.last_setpointTemp, mode)
+    -- write min setpoint to turn it "off"
+    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, common.MIN_SETPOINT * 100))
+    device:emit_event(ThermostatMode.thermostatMode.off())
+  else  
 
-  if last_setpointTemp == nil then
-    last_setpointTemp = device:get_latest_state("main", capabilities.thermostatHeatingSetpoint.ID,
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME)
+    -- fetch last_setpointTemp
+    last_setpointTemp = device:get_field("last_setpointTemp")
+
+    if last_setpointTemp == nil then
+      last_setpointTemp = device:get_latest_state("main", capabilities.thermostatHeatingSetpoint.ID,
+        capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME)
+    end
+
+    if last_setpointTemp == nil then
+      last_setpointTemp = 21
+    end
+
+    last_setpointTemp = math.floor(last_setpointTemp * 100) -- prepare for correct 4 char dec format
+
+    -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
+    local s = string.format("%04X", tostring(last_setpointTemp))
+    local p2 = tonumber(string.sub(s, 3, 4), 16)
+    local p3 = tonumber(string.sub(s, 1, 2), 16)
+
+    if mode == "heat" then
+
+      local t1 = 0x01 -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
+      -- build the payload as byte array e.g. for 25.5 -> "\x01\xF6\x09"
+      payload = string.char(t1, p2, p3)
+      -- send the specific command as ZigbeeMessageTx to the device
+      device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID,
+        common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
+      -- emit new capability state "fast"
+      --device:emit_event(HeatingMode.setpointMode.fast())
+      device:emit_event(ThermostatMode.thermostatMode[mode].Name)
+
+    elseif mode == "eco" then
+
+      local t2 = 0x00 -- Setpoint type "0": the behavior will be the same as setting the attribute "Occupied Heating Setpoint" to the same value
+      -- build the payload as byte array
+      payload = string.char(t2, p2, p3)
+      -- send the specific command as ZigbeeMessageTx to the device
+      device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID,
+        common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
+      -- emit new capability state "eco"
+      --device:emit_event(HeatingMode.setpointMode.eco())
+      device:emit_event(ThermostatMode.thermostatMode[mode].Name)
+    else
+      device:emit_event(ThermostatMode.thermostatMode[mode].Name)
+    end
   end
-
-  if last_setpointTemp == nil then
-    last_setpointTemp = 21
-  end
-
-  last_setpointTemp = math.floor(last_setpointTemp * 100) -- prepare for correct 4 char dec format
-
-  -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
-  local s = string.format("%04X", tostring(last_setpointTemp))
-  local p2 = tonumber(string.sub(s, 3, 4), 16)
-  local p3 = tonumber(string.sub(s, 1, 2), 16)
-
-  if mode == "heat" then
-
-    local t1 = 0x01 -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
-    -- build the payload as byte array e.g. for 25.5 -> "\x01\xF6\x09"
-    payload = string.char(t1, p2, p3)
-    -- send the specific command as ZigbeeMessageTx to the device
-    device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID,
-      common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
-    -- emit new capability state "fast"
-    --device:emit_event(HeatingMode.setpointMode.fast())
-
-  elseif mode == "eco" then
-
-    local t2 = 0x00 -- Setpoint type "0": the behavior will be the same as setting the attribute "Occupied Heating Setpoint" to the same value
-    -- build the payload as byte array
-    payload = string.char(t2, p2, p3)
-    -- send the specific command as ZigbeeMessageTx to the device
-    device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID,
-      common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
-    -- emit new capability state "eco"
-    -- device:emit_event(HeatingMode.setpointMode.eco())
-  end
-  device:emit_event(ThermostatMode.thermostatMode[mode].Name)
-
 end
 
---[[ function common.get_cluster_configurations()
+function common.get_cluster_configurations()
   return {
     [WindowOpenDetectionCap.ID] = {
       {
@@ -155,6 +171,6 @@ end
       }
     }
   }
-end ]]
+end
 
 return common
