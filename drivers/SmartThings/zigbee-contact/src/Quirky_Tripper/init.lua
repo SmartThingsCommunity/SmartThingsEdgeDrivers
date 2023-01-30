@@ -45,7 +45,7 @@ local function device_init(driver, device)
   end
 end
 
-local aqara_contact_handler = {
+local tripper_contact_handler = {
   NAME = "Tripper Contact Handler",
   lifecycle_handlers = {
     init = device_init
