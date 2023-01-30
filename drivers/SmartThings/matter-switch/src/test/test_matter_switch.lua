@@ -234,7 +234,7 @@ test.register_message_test(
         clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
       }
     },
-    { 
+    {
       channel = "capability",
       direction = "send",
       message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.hue(50))
@@ -352,7 +352,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1799))
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
   }
 )
