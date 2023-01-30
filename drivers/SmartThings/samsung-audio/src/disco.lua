@@ -27,6 +27,11 @@ local ltn12 = require "ltn12"
 --- @module samsung-audio.Disco
 local Disco = {}
 
+local SAMSUNG_AUDIO_MODEL_NAMES = {
+  'WAM7500', 'WAM6500', 'WAM5500', 'WAM3500', 'WAM3501', 'WAM1500', 'WAM1501',
+  'WAM1400', 'WAM750', 'WAM550', 'WAM350', 'J8500', 'J7500', 'J6500', 'J650',
+  'H750', 'K650', 'K850', 'K950', 'J6500R', 'J7500R', 'J8500R'
+}
 
 local function tablefind(t, path)
   local pathelements = string.gmatch(path, "([^.]+)%.?")
@@ -95,12 +100,11 @@ end
 
 local function check_samsung_model(val)
   log.debug(string.format("Doing the Device Model check --> %s", val))
-   if string.find(val, 'WAM7500') or string.find(val, 'WAM6500') or string.find(val, 'WAM5500') or string.find(val, 'WAM3500') or string.find(val, 'WAM3501') or 
-      string.find(val, 'WAM1500') or string.find(val, 'WAM1501') or string.find(val, 'WAM1400') or string.find(val, 'WAM750') or string.find(val, 'WAM550') or
-      string.find(val, 'WAM350') or string.find(val, 'J8500') or string.find(val, 'J7500') or string.find(val, 'J6500') or string.find(val, 'J650') or string.find(val, 'H750') or
-      string.find(val, 'K650') or string.find(val, 'K850') or string.find(val, 'K950') or string.find(val, 'J6500R') or string.find(val, 'J7500R') or string.find(val, 'J8500R') then
-    log.debug(string.format("Found the Samsung Audio Device Model --> %s", val))
-    return true
+  for _, model in ipairs(SAMSUNG_AUDIO_MODEL_NAMES) do
+    if string.find(val, model) then
+      log.debug(string.format("Found the Samsung Audio Device Model --> %s", val))
+      return true
+    end
   end
   return false
 end
