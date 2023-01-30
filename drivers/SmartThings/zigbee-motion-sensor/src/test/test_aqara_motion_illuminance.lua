@@ -105,4 +105,29 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Illuminance range [0, 1000]",
+  function()
+    local detect_duration = mock_device:get_field(0x0102) or 120
+    test.timer.__create_and_queue_test_time_advance_timer(detect_duration, "oneshot")
+    local attr_report_data = {
+      { MOTION_ILLUMINANCE_ATTRIBUTE_ID, data_types.Int32.ID, 0x00010384 } -- 66436
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    )
+    -- 65646-65536=900
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance(900))
+    )
+    test.mock_time.advance_time(detect_duration)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.motionSensor.motion.inactive()))
+  end
+)
+
 test.run_registered_tests()

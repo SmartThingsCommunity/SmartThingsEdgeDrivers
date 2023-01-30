@@ -14,3 +14,6 @@ components:
         version: 1
     categories:
       - name: MotionSensor
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: f0689748-e1c7-3303-97fa-b6ec78d873ea
