@@ -177,8 +177,8 @@ local function temp_attr_handler(driver, device, ib, response)
     local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
-      most_recent_temp >= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value + 1)) then
+      most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
+      most_recent_temp >= utils.round(CONVERSION_CONSTANT/(ib.data.value + 1)) then
         temp = most_recent_temp
     end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
