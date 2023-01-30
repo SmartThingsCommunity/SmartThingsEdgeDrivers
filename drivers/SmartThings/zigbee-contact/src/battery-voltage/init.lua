@@ -4,7 +4,7 @@ local battery = capabilities.battery
 --local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local utils = require "st.utils"
 --module emit signal metrics
-local signal = require "signal-metrics"
+--local signal = require "signal-metrics"
 
 local can_handle = function(opts, driver, device)
   if device:get_manufacturer() == "Ecolink" then
@@ -29,7 +29,7 @@ end
 local battery_handler = function(driver, device, value, zb_rx)
 
   -- emit signal metrics
-  signal.metrics(device, zb_rx)
+ -- signal.metrics(device, zb_rx)
 
   local minVolts = 2.3
   local maxVolts = 3.0
@@ -38,10 +38,10 @@ local battery_handler = function(driver, device, value, zb_rx)
     device:get_manufacturer() == "SmartThings" or
     device:get_manufacturer() == "CentraLite" then
 
-    local batteryMap = {[28] = 100, [27] = 100, [26] = 100, [25] = 90, [24] = 90, [23] = 70,
+    local batteryMap = {[34] = 100, [32] = 100, [30] = 100, [28] = 100, [27] = 100, [26] = 100, [25] = 90, [24] = 90, [23] = 70,
                       [22] = 70, [21] = 50, [20] = 50, [19] = 30, [18] = 30, [17] = 15, [16] = 1, [15] = 0}
     minVolts = 15
-    maxVolts = 28
+    maxVolts = 34
 
     value = utils.clamp_value(value.value, minVolts, maxVolts)
 
