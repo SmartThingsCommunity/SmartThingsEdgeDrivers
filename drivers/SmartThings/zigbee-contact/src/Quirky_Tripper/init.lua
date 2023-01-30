@@ -3,6 +3,7 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
+local bind_request_resp = require "st.zigbee.zdo.bind_request_response"
 
 local FINGERPRINTS = {
   { mfr = "Sercomm Corp.", model = "Tripper" }
