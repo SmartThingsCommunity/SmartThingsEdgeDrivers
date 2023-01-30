@@ -184,7 +184,7 @@ zigbeeManufacturer:
     manufacturer: SmartThings
     model: PGC313EU
     deviceProfileName: smartsense-multi
-id: "Sercomm Corp./Tripper"
+  - id: "Sercomm Corp./Tripper"
     deviceLabel: Quirky Tripper
     manufacturer: Sercomm Corp.
     model: Tripper
