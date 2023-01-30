@@ -70,7 +70,7 @@ zwaveManufacturer:
     deviceLabel: Dawon Smart Plug
     manufacturerId: 0x018C
     productType: 0x0042
-    deviceProfileName: metering-switch
+    deviceProfileName: smartplug-switch-power-energy
   - id: "015D/0221/251C"
     deviceLabel: Show Home Outlet
     manufacturerId: 0x015D
