@@ -17,28 +17,20 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version = 2})
 
 local preferences = require "preferences" 
 
 local MULTISENSOR_6_PRODUCT_ID = 0x0064
 local PREFERENCE_NUM = 9
 
-local function preference_update(driver, device, args)
-  preferences.update_preferences(driver, device, args)
-  device:send(Configuration:Get({parameter_number = PREFERENCE_NUM}))
-end
-
-local function device_added(self, device)
-  device:send(Configuration:Get({parameter_number = PREFERENCE_NUM})) 
-  device:refresh()
-end
-
-local function device_init(self, device)
-  device:set_update_preferences_fn(preference_update)
-end
-
 local function can_handle_multisensor_6(opts, self, device, ...)
   return device.zwave_product_id == MULTISENSOR_6_PRODUCT_ID
+end
+
+local function wakeup_notification(driver, device, cmd)
+  device:send(Configuration:Get({parameter_number = PREFERENCE_NUM})) 
+  device:refresh()
 end
 
 local function configuration_report_handler(self, device, cmd)
@@ -60,11 +52,10 @@ local multisensor_6 = {
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
-  },
-  lifecycle_handlers = {
-    added = device_added,
-    init = device_init
   },
   NAME = "aeotec multisensor 6",
   can_handle = can_handle_multisensor_6

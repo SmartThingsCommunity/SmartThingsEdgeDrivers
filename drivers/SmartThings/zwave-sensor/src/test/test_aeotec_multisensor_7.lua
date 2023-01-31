@@ -122,10 +122,15 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "added lifecycle event should generate the correct commands",
+    "Wakeup notification should generate the correct commands",
     function ()
       test.socket.zwave:__set_channel_ordering("relaxed")
-      test.socket.device_lifecycle:__queue_receive({ mock_sensor.id, "added" })
+      test.socket.zwave:__queue_receive(
+        {
+          mock_sensor.id,
+          WakeUp:Notification({})
+        }
+      )
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Configuration:Get({parameter_number = 10})
