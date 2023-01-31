@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.flood.agl02"
+    deviceLabel: Aqara Water Leak Sensor
+    manufacturer: LUMI
+    model: lumi.flood.agl02
+    deviceProfileName: water-battery
 #   - id: "Heiman/Water/1"
 #     deviceLabel: Orvibo Water Leak Sensor
 #     manufacturer: Heiman
