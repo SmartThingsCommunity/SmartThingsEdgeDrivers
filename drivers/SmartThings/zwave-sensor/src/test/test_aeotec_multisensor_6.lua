@@ -119,8 +119,51 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(                                                    
+    "Receiving Wakeup command should generate the correct commands",                
+    function ()                                                                  
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.zwave:__queue_receive(
+        {
+          mock_sensor.id,
+          WakeUp:Notification({})
+        }
+      )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,                                                           
+          Configuration:Get({parameter_number = 9})                             
+      ))
+
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorBinary:Get({sensor_type = SensorBinary.sensor_type.MOTION})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Battery:Get({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE, scale = SensorMultilevel.scale.luminance.LUX})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
+      ))
+                                                                       
+                                                                                 
+      end                                                                        
+) 
 test.register_coroutine_test(
-    "Configuration value sholud be updated and device refreshed, when wakeup notification received",
+    "Configuration value should be updated and device refreshed, when wakeup notification received",
     function()
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle():__queue_receive({mock_sensor.id, "init"})
@@ -176,6 +219,13 @@ test.register_coroutine_test(
           mock_sensor,
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
       ))
+      
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,                                                           
+          Configuration:Get({parameter_number = 9})                             
+      ))
+      
+
     end
 )
 
@@ -261,5 +311,4 @@ test.register_message_test(
       }
     }
 )
-
 test.run_registered_tests()

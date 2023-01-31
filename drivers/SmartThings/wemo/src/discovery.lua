@@ -55,7 +55,7 @@ local function process_response(val)
   return info
 end
 
-local function fetch_device_metadata(url)
+function Discovery.fetch_device_metadata(url)
   -- Wemo responds with chunked encoding, must use ltn12 sink
   local responsechunks = {}
   local body, status, headers = http.request {
@@ -164,7 +164,7 @@ function Discovery.run_discovery_task()
             log.debug(rip, "!=", ip)
             goto continue
           end
-          local meta = fetch_device_metadata(headers["location"])
+          local meta = Discovery.fetch_device_metadata(headers["location"])
           if not meta or not meta.mac or not ip then
             log.warn("disco| failed to get ip or mac for discovered device, not adding")
             goto continue
