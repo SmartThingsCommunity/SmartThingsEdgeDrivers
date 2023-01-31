@@ -23,6 +23,7 @@ local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "hue.fields"
 local handlers = require "handlers"
 local HueApi = require "hue.api"
+local HueColorUtils = require "hue.cie_utils"
 local log = require "log"
 local utils = require "utils"
 
@@ -86,11 +87,12 @@ local function emit_light_status_events(light_device, light)
     end
 
     if light.color then
-      local x, y = light.color.xy.x * 65536, light.color.xy.y * 65536
-      local hue, sat = st_utils.safe_xy_to_hsv(x, y, 1)
+      light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
+      local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
+      local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
 
-      light_device:emit_event(capabilities.colorControl.hue(hue))
-      light_device:emit_event(capabilities.colorControl.saturation(sat))
+      light_device:emit_event(capabilities.colorControl.hue(st_utils.round(hue * 100)))
+      light_device:emit_event(capabilities.colorControl.saturation(st_utils.round(sat * 100)))
     end
   end
 end
@@ -417,12 +419,14 @@ light_added = function(driver, device, parent_device_id, resource_id)
   if light_info.dimming and light_info.dimming.min_dim_level then minimum_dimming = light_info.dimming.min_dim_level end
 
   -- persistent fields
-  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
+  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
+  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
+
   driver.light_id_to_device[device_light_resource_id] = device
 end
 
@@ -506,10 +510,11 @@ local function init_light(driver, device)
     if caps.colorControl then
       device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
     else
-      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true})
+      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
     end
   end
-  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or device.device_network_id
+  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or
+      device.device_network_id
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
     driver.light_id_to_device[device_light_resource_id] = device
