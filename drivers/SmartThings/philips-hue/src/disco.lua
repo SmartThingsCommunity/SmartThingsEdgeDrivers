@@ -35,7 +35,8 @@ function HueDiscovery.discover(driver, _, should_continue)
     local known_dni_to_device_map = {}
     local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
-      local dni = device.device_network_id or device.parent_assigned_child_key
+      -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
+      local dni = device.parent_assigned_child_key or device.device_network_id
       known_dni_to_device_map[dni] = device
       local ipv4 = device:get_field(Fields.IPV4);
       if ipv4 then
