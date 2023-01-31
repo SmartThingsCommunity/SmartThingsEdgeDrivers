@@ -285,7 +285,11 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     local profile_ref = nil
 
     if light.color then
-      profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)
+      if light.color_temperature then
+        profile_ref = "white-and-color-ambiance"
+      else
+        profile_ref = "legacy-color"
+      end
     elseif light.color_temperature then
       profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
     elseif light.dimming then
