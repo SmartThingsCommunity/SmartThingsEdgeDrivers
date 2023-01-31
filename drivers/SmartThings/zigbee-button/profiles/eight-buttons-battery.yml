@@ -2,35 +2,61 @@ name: eight-buttons-battery
 components:
   - id: main
     capabilities:
-      - id: switch
+      - id: button
+        version: 1
+      - id: battery
         version: 1
       - id: firmwareUpdate
         version: 1
       - id: refresh
         version: 1
     categories:
-      - name: Switch
-  - id: switch1
+      - name: RemoteController
+  - id: button1
     capabilities:
-      - id: switch
+      - id: button
         version: 1
     categories:
-      - name: Switch
-  - id: switch2
+      - name: RemoteController
+  - id: button2
     capabilities:
-      - id: switch
+      - id: button
         version: 1
     categories:
-      - name: Switch
-  - id: switch3
+      - name: RemoteController
+  - id: button3
     capabilities:
-      - id: switch
+      - id: button
         version: 1
     categories:
-      - name: Switch
-  - id: switch4
+      - name: RemoteController
+  - id: button4
     capabilities:
-      - id: switch
+      - id: button
         version: 1
     categories:
-      - name: Switch
+      - name: RemoteController
+  - id: button5
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button6
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button7
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button8
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
