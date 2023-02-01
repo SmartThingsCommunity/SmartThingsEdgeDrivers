@@ -237,7 +237,9 @@ bridge_added = function(driver, device)
   end
 
   local bridge_ip = bridge_info.ip
-
+  if device:get_field(Fields._REFRESH_AFTER_INIT) == nil then
+    device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
+  end
   device:set_field(Fields.DEVICE_TYPE, "bridge", { persist = true })
   device:set_field(Fields.IPV4, bridge_ip, { persist = true })
   device:set_field(Fields.MODEL_ID, bridge_info.modelid, { persist = true })
@@ -270,7 +272,6 @@ local function migrate_light(driver, device, parent_device_id)
   end
 
   local bridge_device = known_dni_to_device_map[bridge_id or ""]
-      or known_dni_to_device_map[bridge_id]
 
   if not (bridge_device and driver.joined_bridges[bridge_id] and (Discovery.api_keys[bridge_id] or api_key)) then
     log.warn("Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
@@ -422,14 +423,12 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
-  device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = false })
   driver.light_id_to_device[device_light_resource_id] = device
 end
 
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
 local function init_bridge(driver, device)
-  local device_dni = device.device_network_id
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
   local bridge_manager = device:get_field(Fields.BRIDGE_API) or Discovery.disco_api_instances[device_bridge_id]
 
@@ -444,7 +443,7 @@ local function init_bridge(driver, device)
   device:set_field(Fields.BRIDGE_API, bridge_manager, { persist = false })
 
   if not device:get_field(Fields.EVENT_SOURCE) then
-    log.trace("Creating SSE EventSource for bridge " .. device.device_network_id)
+    log.trace("Creating SSE EventSource for bridge " .. device.label)
     local eventsource = EventSource.new(
       bridge_url .. "/eventstream/clip/v2",
       { [HueApi.APPLICATION_KEY_HEADER] = api_key },
@@ -454,7 +453,6 @@ local function init_bridge(driver, device)
     eventsource.onopen = function(msg)
       log.debug("Event Source Connection re-established, marking online")
       device:online()
-      handlers.refresh_handler(driver, device)
     end
 
     eventsource.onerror = function(msg)
@@ -522,7 +520,7 @@ local function init_light(driver, device)
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     handlers.refresh_handler(driver, device)
-    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = false })
+    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
 end
 
@@ -546,7 +544,7 @@ local function device_added(driver, device, _, _, parent_device_id)
   elseif utils.is_dth_light(device) then
     migrate_light(driver, device, parent_device_id)
     -- Don't do a refresh if it's a migration
-    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = false })
+    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   elseif utils.is_edge_bridge(device) then
     bridge_added(driver, device)
   elseif utils.is_edge_light(device) then
