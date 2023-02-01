@@ -34,6 +34,11 @@ zigbeeManufacturer :
     manufacturer: ""
     model: E253-KR0B0ZX-HA
     deviceProfileName: valve-battery-powerSource
+  - id: "GasValve/SG-V100-ZB"
+    deviceLabel: Dawon Valve
+    manufacturer: DAWON_DNS
+    model: SG-V100-ZB
+    deviceProfileName: valve-battery-powerSource
   - id: Compacta/ZBVC1(1023A)
     deviceLabel: Smartenit Valve
     manufacturer: Compacta
