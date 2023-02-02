@@ -5,6 +5,7 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 
+local IlluminanceMeasurement = clusters.IlluminanceMeasurement
 local PowerConfiguration = clusters.PowerConfiguration
 
 local detectionFrequency = capabilities["stse.detectionFrequency"]
@@ -23,6 +24,14 @@ local FINGERPRINTS = {
 }
 
 local configuration = {
+  {
+    cluster = IlluminanceMeasurement.ID,
+    attribute = IlluminanceMeasurement.attributes.MeasuredValue.ID,
+    minimum_interval = 3600,
+    maximum_interval = 7200,
+    data_type = IlluminanceMeasurement.attributes.MeasuredValue.base_type,
+    reportable_change = 1
+  },
   {
     cluster = PowerConfiguration.ID,
     attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
