@@ -30,7 +30,7 @@ local is_climax_technology_carbon_monoxide = function(opts, driver, device)
 end
 
 local device_added = function(self, device)
-    device:emit_event(capabilities.battery.battery(100))
+    -- device:emit_event(capabilities.battery.battery(100))
 end
 
 local climax_technology_carbon_monoxide = {

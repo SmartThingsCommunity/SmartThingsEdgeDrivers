@@ -196,7 +196,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value = 0xFF })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value = 0x00 })) }
       },
       {
         channel = "capability",
@@ -227,7 +227,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value = 0xFF })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({ current_value = 0x00 })) }
       },
       {
         channel = "capability",

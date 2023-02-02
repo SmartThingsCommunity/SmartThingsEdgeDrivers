@@ -140,7 +140,7 @@ local function beep_handler(self, device, command)
 end
 
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  -- device:emit_event(PresenceSensor.presence("present"))
   device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, false, {persist = true})
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end

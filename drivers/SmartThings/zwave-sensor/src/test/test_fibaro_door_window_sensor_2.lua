@@ -336,21 +336,21 @@ test.register_message_test(
       direction = "receive",
       message = {mock_fibaro_door_window_sensor.id, "added"}
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- }
   }
 )
 

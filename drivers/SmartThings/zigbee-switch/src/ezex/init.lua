@@ -19,17 +19,17 @@ local SimpleMetering = zcl_clusters.SimpleMetering
 local ElectricalMeasurement = zcl_clusters.ElectricalMeasurement
 
 local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
-    { model = "E240-KR116Z-HA" }
+  { model = "E240-KR116Z-HA" }
 }
 
 local is_zigbee_ezex_switch = function(opts, driver, device)
-    for _, fingerprint in ipairs(ZIGBEE_METERING_SWITCH_FINGERPRINTS) do
-        if device:get_model() == fingerprint.model then
-            return true
-        end
+  for _, fingerprint in ipairs(ZIGBEE_METERING_SWITCH_FINGERPRINTS) do
+    if device:get_model() == fingerprint.model then
+      return true
     end
+  end
 
-    return false
+  return false
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)

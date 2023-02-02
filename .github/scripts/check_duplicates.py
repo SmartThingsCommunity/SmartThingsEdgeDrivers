@@ -6,23 +6,22 @@ from pathlib import Path
 cwd = os.getcwd()
 duplicate_pairs = []
 
-def compare_component_capabilities_no_order(comp1, comp2):
+def compare_component_capabilities_unordered(comp1, comp2):
     for cap1 in comp1["capabilities"]:
+        cap_match_found = False
         for cap2 in comp2["capabilities"]:
             if cap1["id"] == cap2["id"]:
                 if cap1 == cap2:
-                    # capabilities are an exact match (including embedded configs if present), continue to next comparison
-                    break
+                    cap_match_found = True
                 # not a direct match, compare embedded configurations if they exist to see if they are ordered differently
-                elif "config" in cap1 and "config" in cap2:
-                    if compare_embedded_configs(cap1, cap2):
-                        # embedded configs match but have a different order
-                        break
-                    else:
-                        # embedded configs do not match
-                        return False
-                else:
-                    return False
+                elif "config" in cap1 and "config" in cap2 and compare_embedded_configs(cap1, cap2):
+                        cap_match_found = True
+
+                # comparison is done, so break out of inner loop
+                break
+
+        if cap_match_found == False:
+            return False
 
     # no mismatches found
     return True
@@ -34,22 +33,23 @@ def compare_embedded_configs(cap1, cap2):
     configs2 = cap2["config"]["values"]
     print("Comparing embedded configs...")
     for config1 in configs1:
+        config_match_found = False
         for config2 in configs2:
             if config1["key"] == config2["key"]:
                 if config1 == config2:
-                    break
+                    config_match_found = True
                 # check for "enabledValues" to see if it is just a difference in ordering of the same values
                 elif "enabledValues" in config1 and "enabledValues" in config2:
                     set1 = set( value for value in config1["enabledValues"])
                     set2 = set( value for value in config2["enabledValues"])
                     if set1 == set2:
-                        # match found, continue to next config comparison
-                        break
-                    else:
-                        return False
-                # configs are not equivalent
-                else:
-                    return False
+                        config_match_found = True
+
+                # comparison is done, so break out of inner loop
+                break
+
+        if config_match_found == False:
+            return False
 
     # no mismatches found
     return True
@@ -99,10 +99,9 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
                                         # check if capabilities are the exact same, or
                                         # similar with same top capability but different subsequent ordering
                                         if (new_component["capabilities"] == current_component["capabilities"] or
-                                            compare_component_capabilities_no_order(new_component, current_component)):
+                                            compare_component_capabilities_unordered(new_component, current_component)):
                                             print("Duplicate capabilties found.")
                                         else:
-                                            print("Capabilities do not match.")
                                             is_duplicate = False
                                             break
                                 else:
@@ -120,8 +119,8 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
 
 with open("profile-comment-body.md", "w") as f:
     if duplicate_pairs:
-        f.write("Duplicate profile(s) detected:\n")
+        f.write("Duplicate profile check: Warning - duplicate profiles detected.\n")
         for duplicate in duplicate_pairs:
             f.write("%s == %s\n" % (duplicate[0], duplicate [1]))
     else:
-        f.write("No duplicate profiles detected.")
+        f.write("Duplicate profile check: Passed - no duplicate profiles detected.")

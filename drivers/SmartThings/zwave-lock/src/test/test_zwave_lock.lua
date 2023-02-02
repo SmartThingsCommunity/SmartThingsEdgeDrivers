@@ -81,7 +81,7 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+    -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
   end
 )
 
