@@ -20,6 +20,7 @@ local Fields = {
   BRIDGE_SW_VERSION = "swversion",
   DEVICE_TYPE = "devicetype",
   EVENT_SOURCE = "eventsource",
+  GAMUT = "gamut",
   HUE_DEVICE_ID = "hue_device_id",
   IPV4 = "ipv4",
   MIN_DIMMING = "mindim",
