@@ -6,6 +6,10 @@ components:
         version: 1
       - id: illuminanceMeasurement
         version: 1
+        config:
+          values:
+          - key: "illuminance.value"
+            range: [0, 1000]
       - id: stse.detectionFrequency
         version: 1
       - id: battery
@@ -14,6 +18,3 @@ components:
         version: 1
     categories:
       - name: MotionSensor
-metadata:
-  mnmn: SmartThingsCommunity
-  vid: f0689748-e1c7-3303-97fa-b6ec78d873ea
