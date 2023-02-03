@@ -47,11 +47,11 @@ test.register_message_test(
         direction = "receive",
         message = { mock_device.id, "added"}
       },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
-      }
+      -- {
+      --   channel = "capability",
+      --   direction = "send",
+      --   message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
+      -- }
     },
     {
       inner_block_ordering = "relaxed"

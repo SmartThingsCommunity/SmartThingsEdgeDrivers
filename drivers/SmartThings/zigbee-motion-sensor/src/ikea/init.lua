@@ -31,6 +31,7 @@ local IKEA_MOTION_SENSOR_FINGERPRINTS = {
 }
 
 local MOTION_RESET_TIMER = "motionResetTimer"
+local ENTRIES_READ = "ENTRIES_READ"
 
 local function on_with_timed_off_command_handler(driver, device, zb_rx)
   local motion_reset_timer = device:get_field(MOTION_RESET_TIMER)
@@ -48,12 +49,12 @@ local function on_with_timed_off_command_handler(driver, device, zb_rx)
 end
 
 local is_ikea_motion = function(opts, driver, device)
-    for _, fingerprint in ipairs(IKEA_MOTION_SENSOR_FINGERPRINTS) do
-        if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-            return true
-        end
+  for _, fingerprint in ipairs(IKEA_MOTION_SENSOR_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
     end
-    return false
+  end
+  return false
 end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
@@ -64,15 +65,39 @@ local function zdo_binding_table_handler(driver, device, zb_rx)
       return
     end
   end
-  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
-  device:send(Groups.commands.AddGroup(device, 0x0000))
+
+  local entries_read = device:get_field(ENTRIES_READ) or 0
+  entries_read = entries_read + zb_rx.body.zdo_body.binding_table_list_count.value
+
+  -- if the device still has binding table entries we haven't read, we need
+  -- to go ask for them until we've read them all
+  if entries_read < zb_rx.body.zdo_body.total_binding_table_entry_count.value then
+    device:set_field(ENTRIES_READ, entries_read)
+
+    -- Read binding table
+    local addr_header = messages.AddressHeader(
+      constants.HUB.ADDR,
+      constants.HUB.ENDPOINT,
+      device:get_short_address(),
+      device.fingerprinted_endpoint_id,
+      constants.ZDO_PROFILE_ID,
+      mgmt_bind_req.BINDING_TABLE_REQUEST_CLUSTER_ID
+    )
+    local binding_table_req = mgmt_bind_req.MgmtBindRequest(entries_read) -- Single argument of the start index to query the table
+    local message_body = zdo_messages.ZdoMessageBody({ zdo_body = binding_table_req })
+    local binding_table_cmd = messages.ZigbeeMessageTx({ address_header = addr_header, body = message_body })
+    device:send(binding_table_cmd)
+  else
+    driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
+    device:send(Groups.commands.AddGroup(device, 0x0000))
+  end
 end
 
 local function device_added(self, device)
   device:refresh()
   -- Ikea Motion Sensor doesn't report current status during pairing process
   -- so fake event is needed for default status
-  device:emit_event(capabilities.motionSensor.motion.inactive())
+  -- device:emit_event(capabilities.motionSensor.motion.inactive())
 end
 
 local do_configure = function(self, device)

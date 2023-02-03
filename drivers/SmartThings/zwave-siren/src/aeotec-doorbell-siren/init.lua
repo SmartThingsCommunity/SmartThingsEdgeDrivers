@@ -207,8 +207,8 @@ local function clearAlarmAndChimeStateOfSoundComponents(device)
 end
 
 local function device_added(self, device)
-  deactivateTamper(device)
-  clearAlarmAndChimeStateOfSoundComponents(device)
+  -- deactivateTamper(device)
+  -- clearAlarmAndChimeStateOfSoundComponents(device)
 end
 
 local function device_init(self, device)

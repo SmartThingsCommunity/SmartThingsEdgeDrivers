@@ -64,7 +64,7 @@ local function alarm_report_handler(driver, device, cmd)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.soundSensor.sound.not_detected())
+  -- device:emit_event(capabilities.soundSensor.sound.not_detected())
 end
 
 local zwave_sound_sensor = {

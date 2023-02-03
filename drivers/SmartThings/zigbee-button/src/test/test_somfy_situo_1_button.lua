@@ -20,6 +20,12 @@ local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
+local constants = require "st.zigbee.constants"
+local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
+local messages = require "st.zigbee.messages"
+local zdo_messages = require "st.zigbee.zdo"
+local Groups = clusters.Groups
+
 local PowerConfiguration = clusters.PowerConfiguration
 local WindowCovering = clusters.WindowCovering
 
@@ -74,72 +80,131 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Configure should configure all necessary attributes",
-    function()
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send(
-          {
-            mock_device.id,
-            PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device,
-                                                                                         30,
-                                                                                         21600,
-                                                                                         1):to_endpoint(0xE8)
-          }
-      )
-      test.socket.zigbee:__expect_send(
-          {
-            mock_device.id,
-            zigbee_test_utils.build_bind_request(mock_device,
-                                                 zigbee_test_utils.mock_hub_eui,
-                                                 PowerConfiguration.ID)
-          }
-      )
-      test.socket.zigbee:__expect_send(
-        {
-          mock_device.id,
-          zigbee_test_utils.build_bind_request(mock_device,
-                                               zigbee_test_utils.mock_hub_eui,
-                                               WindowCovering.ID)
-        }
-      )
-      test.socket.zigbee:__expect_send(
-        {
-          mock_device.id,
-          PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device):to_endpoint(0xE8)
-        }
-      )
-      test.socket.zigbee:__expect_send(
-        {
-          mock_device.id,
-          zigbee_test_utils.build_mgmt_bind_request(mock_device,
-                                                    zigbee_test_utils.mock_hub_eui)
-        }
-      )
-      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+  "Configure should configure all necessary attributes",
+  function()
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device,
+                                                                                      30,
+                                                                                      21600,
+                                                                                      1):to_endpoint(0xE8)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device,
+                                              zigbee_test_utils.mock_hub_eui,
+                                              PowerConfiguration.ID)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device,
+                                              zigbee_test_utils.mock_hub_eui,
+                                              WindowCovering.ID)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device):to_endpoint(0xE8)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_mgmt_bind_request(mock_device,
+                                                  zigbee_test_utils.mock_hub_eui)
+      }
+    )
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.register_coroutine_test(
-    "ZDO Message handler and adding hub to group",
-    function()
-      local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
-      local response = mgmt_bind_response.MgmtBindResponse({
-        status = 0x00,
-        total_binding_table_entry_count = 0x01,
-        start_index = 0x00,
-        binding_table_list_count = 0x01,
-        binding_table_entries = { binding_table }
-      })
-      test.socket.zigbee:__queue_receive(
-        {
-          mock_device.id,
-          zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
-        }
-      )
-      test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
-    end
+  "ZDO Message handler and adding hub to group",
+  function()
+    local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
+    local response = mgmt_bind_response.MgmtBindResponse({
+      status = 0x00,
+      total_binding_table_entry_count = 0x01,
+      start_index = 0x00,
+      binding_table_list_count = 0x01,
+      binding_table_entries = { binding_table }
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
+      }
+    )
+    test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
+  end
+)
+
+test.register_coroutine_test(
+  "Request all binding table entries and fall back to group 0x0000",
+  function()
+    local binding_table_long = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
+    local response = mgmt_bind_response.MgmtBindResponse({
+      status = 0x00,
+      total_binding_table_entry_count = 0x02,
+      start_index = 0x00,
+      binding_table_list_count = 0x01,
+      binding_table_entries = { binding_table_long }
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
+      }
+    )
+    local addr_header = messages.AddressHeader(
+      constants.HUB.ADDR,
+      constants.HUB.ENDPOINT,
+      mock_device:get_short_address(),
+      mock_device.fingerprinted_endpoint_id,
+      constants.ZDO_PROFILE_ID,
+      mgmt_bind_req.BINDING_TABLE_REQUEST_CLUSTER_ID
+    )
+    local request = mgmt_bind_req.MgmtBindRequest(1) -- Single argument of the start index to query the table
+    local message_body = zdo_messages.ZdoMessageBody({
+      zdo_body = request
+    })
+    local bind_mgmt_request =  messages.ZigbeeMessageTx({
+      address_header = addr_header,
+      body = message_body
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        bind_mgmt_request
+      }
+    )
+    response = mgmt_bind_response.MgmtBindResponse({
+      status = 0x00,
+      total_binding_table_entry_count = 0x02,
+      start_index = 0x01,
+      binding_table_list_count = 0x01,
+      binding_table_entries = { binding_table_long }
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        zigbee_test_utils.build_zdo_mgmt_bind_response(mock_device, response)
+      }
+    )
+    test.socket.zigbee:__expect_add_hub_to_group(0x0000)
+    test.socket.zigbee:__expect_send({mock_device.id,
+      Groups.commands.AddGroup(mock_device, 0x0000)
+    })
+  end
 )
 
 test.register_coroutine_test(
@@ -174,13 +239,13 @@ test.register_coroutine_test(
         )
       end
     end
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
+    -- test.socket.capability:__expect_send({
+    --   mock_device.id,
+    --   {
+    --     capability_id = "button", component_id = "main",
+    --     attribute_id = "button", state = { value = "pushed" }
+    --   }
+    -- })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()

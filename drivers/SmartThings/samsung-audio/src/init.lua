@@ -140,8 +140,9 @@ local function device_init(driver, device)
   local backoff = backoff_builder(60, 1, 0.1)
   local dev_info
   while true do -- todo should we limit this? I think this will just spin forever if the device goes down
-    log.info("Doing DISCOVERY to find a specific device")
-    discovery.find(device.device_network_id, function(found) dev_info = found end)
+    local id_search = string.upper(device.device_network_id)
+    log.debug(string.format("Trigger DISCOVERY to find a specific device having network ID --> %s", id_search))
+    discovery.find(id_search, function(found) dev_info = found end)
     if dev_info then break end
     socket.sleep(backoff())
   end

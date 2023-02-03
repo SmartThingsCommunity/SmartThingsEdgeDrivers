@@ -33,12 +33,18 @@ function HueDiscovery.discover(driver, _, should_continue)
 
   while should_continue() do
     local known_dni_to_device_map = {}
+    local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
-      local dni = device.device_network_id
+      -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
+      local dni = device.parent_assigned_child_key or device.device_network_id
       known_dni_to_device_map[dni] = device
+      local ipv4 = device:get_field(Fields.IPV4);
+      if ipv4 then
+        computed_mac_addresses[ipv4] = dni
+      end
     end
 
-    HueDiscovery.search_for_bridges(driver, function(hue_driver, bridge_ip, bridge_id)
+    HueDiscovery.search_for_bridges(driver, computed_mac_addresses, function(hue_driver, bridge_ip, bridge_id)
       discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_dni_to_device_map)
     end)
 
@@ -51,8 +57,9 @@ end
 
 ---comment
 ---@param driver HueDriver
+---@param computed_mac_addresses table<string,string>
 ---@param callback fun(driver: HueDriver, ip: string, id: string)
-function HueDiscovery.search_for_bridges(driver, callback)
+function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callback)
   local mdns_responses, err = mdns.discover(SERVICE_TYPE, DOMAIN)
 
   if err ~= nil then
@@ -79,12 +86,31 @@ function HueDiscovery.search_for_bridges(driver, callback)
       goto continue
     end
 
-    -- the Hue Bridge hostname is the Bridge ID, which is stable.
-    local bridge_id = string.upper(info.host_info.name:sub(1, -(#("." .. DOMAIN) + 1)));
     local ip_addr = info.host_info.address;
 
+    if not computed_mac_addresses[ip_addr] then
+      -- Hue *typically* formats the BridgeID as the uppercase MAC address, minus separators.
+      -- However, it can be user overriden, set by a user, and may not be unique, so we want
+      -- to stick to that format but make sure it's actually the mac address. Instead of pulling
+      -- the bridge id out of the bridge info, we'll extract the MAC address and apply the above mentioned
+      -- formatting rules. We also prefer the MAC because it makes for a good Device Network ID.
+      local bridge_info, rest_err, _ = HueApi.get_bridge_info(ip_addr)
+      if rest_err ~= nil or not bridge_info then
+        log.error("Error querying bridge info: ", rest_err)
+        goto continue
+      end
+
+      -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
+      -- we strip thoes out and make the string uppercase
+      log.trace("Bridge MAC: ", bridge_info.mac)
+      if bridge_info.mac then
+        local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
+        computed_mac_addresses[ip_addr] = bridge_id
+      end
+    end
+
     if type(callback) == "function" then
-      callback(driver, ip_addr, bridge_id)
+      callback(driver, ip_addr, computed_mac_addresses[ip_addr])
     else
       log.warn(
         "Argument passed in `callback` position for "
@@ -99,7 +125,7 @@ end
 ---@param driver HueDriver
 ---@param bridge_ip string
 ---@param bridge_id string
----@param known_dni_to_device_map table<string,boolean>
+---@param known_dni_to_device_map table<string,HueDevice>
 discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to_device_map)
   if driver.ignored_bridges[bridge_id] then return end
 
@@ -260,7 +286,11 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     local profile_ref = nil
 
     if light.color then
-      profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)
+      if light.color_temperature then
+        profile_ref = "white-and-color-ambiance"
+      else
+        profile_ref = "legacy-color"
+      end
     elseif light.color_temperature then
       profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
     elseif light.dimming then
@@ -279,14 +309,14 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     local bridge_device = known_dni_to_device_map[bridge_id]
 
     local create_device_msg = {
-      type = "LAN",
-      device_network_id = light.id,
+      type = "EDGE_CHILD",
       label = light.metadata.name,
       vendor_provided_label = device_info.product_data.product_name,
       profile = profile_ref,
       manufacturer = device_info.product_data.manufacturer_name,
       model = device_info.product_data.model_id,
       parent_device_id = bridge_device.id,
+      parent_assigned_child_key = light.id,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {

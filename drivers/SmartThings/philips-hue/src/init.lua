@@ -23,6 +23,7 @@ local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "hue.fields"
 local handlers = require "handlers"
 local HueApi = require "hue.api"
+local HueColorUtils = require "hue.cie_utils"
 local log = require "log"
 local utils = require "utils"
 
@@ -45,7 +46,7 @@ local DEFAULT_MIREK = 153
 -- "forward declare" some functions
 local bridge_added, light_added, _initialize
 
----@param light_device HueDevice
+---@param light_device HueChildDevice
 ---@param light table
 local function emit_light_status_events(light_device, light)
   if light_device ~= nil then
@@ -69,7 +70,8 @@ local function emit_light_status_events(light_device, light)
     end
 
     if light.dimming then
-      light_device:emit_event(capabilities.switchLevel.level(math.floor(light.dimming.brightness)))
+      local adjusted_level = st_utils.clamp_value(light.dimming.brightness, 1, 100)
+      light_device:emit_event(capabilities.switchLevel.level(st_utils.round(adjusted_level)))
     end
 
     if light.color_temperature then
@@ -77,28 +79,35 @@ local function emit_light_status_events(light_device, light)
       if light.color_temperature.mirek_valid then
         mirek = light.color_temperature.mirek
       end
-      light_device:emit_event(
-        capabilities.colorTemperature.colorTemperature(math.floor(handlers.mirek_to_kelvin(mirek)))
+      local min = light_device:get_field(Fields.MIN_KELVIN) or HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+      local kelvin = math.floor(
+        st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
       )
+      light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
     end
 
     if light.color then
-      local x, y = light.color.xy.x * 65536, light.color.xy.y * 65536
-      local hue, sat = st_utils.safe_xy_to_hsv(x, y, 1)
+      light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
+      local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
+      local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
 
-      light_device:emit_event(capabilities.colorControl.hue(hue))
-      light_device:emit_event(capabilities.colorControl.saturation(sat))
+      light_device:emit_event(capabilities.colorControl.hue(st_utils.round(hue * 100)))
+      light_device:emit_event(capabilities.colorControl.saturation(st_utils.round(sat * 100)))
     end
   end
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function migrate_bridge(driver, device)
   local api_key = device.data.username
+  local ipv4 = device.data.ip
   local device_dni = device.device_network_id
 
-  Discovery.search_for_bridges(driver, function(driver, bridge_ip, bridge_id)
+  local known_macs = {}
+  known_macs[ipv4] = device_dni
+
+  Discovery.search_for_bridges(driver, known_macs, function(hue_driver, bridge_ip, bridge_id)
     if bridge_id ~= device_dni then return end
 
     local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip)
@@ -109,13 +118,13 @@ local function migrate_bridge(driver, device)
 
     if tonumber(bridge_info.swversion or "0", 10) < HueApi.MIN_CLIP_V2_SWVERSION then
       log.warn("Found bridge that does not support CLIP v2 API, ignoring")
-      driver.ignored_bridges[bridge_id] = true
+      hue_driver.ignored_bridges[bridge_id] = true
       return
     end
 
     bridge_info.ip = bridge_ip
 
-    driver.joined_bridges[bridge_id] = bridge_info
+    hue_driver.joined_bridges[bridge_id] = bridge_info
     Discovery.api_keys[bridge_id] = api_key
 
     local new_metadata = {
@@ -127,7 +136,7 @@ local function migrate_bridge(driver, device)
 
     device:try_update_metadata(new_metadata)
     log.trace("Bridge Migrated, re-adding")
-    bridge_added(driver, device)
+    bridge_added(hue_driver, device)
   end)
 
   if not driver.joined_bridges[device_dni] then
@@ -139,7 +148,7 @@ local function migrate_bridge(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function spawn_bridge_add_api_key_task(driver, device)
   local device_dni = device.device_network_id
   local device_bridge_id = device_dni:get_field(Fields.BRIDGE_ID)
@@ -186,12 +195,13 @@ local function spawn_bridge_add_api_key_task(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 bridge_added = function(driver, device)
   local device_bridge_id = device.device_network_id
 
   if not driver.joined_bridges[device_bridge_id] then
-    Discovery.search_for_bridges(driver, function(driver, bridge_ip, bridge_id)
+    local known_macs = {}
+    Discovery.search_for_bridges(driver, known_macs, function(driver, bridge_ip, bridge_id)
       if bridge_id ~= device_bridge_id then return end
 
       local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip)
@@ -229,7 +239,9 @@ bridge_added = function(driver, device)
   end
 
   local bridge_ip = bridge_info.ip
-
+  if device:get_field(Fields._REFRESH_AFTER_INIT) == nil then
+    device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
+  end
   device:set_field(Fields.DEVICE_TYPE, "bridge", { persist = true })
   device:set_field(Fields.IPV4, bridge_ip, { persist = true })
   device:set_field(Fields.MODEL_ID, bridge_info.modelid, { persist = true })
@@ -247,7 +259,7 @@ bridge_added = function(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 ---@param parent_device_id nil|string
 local function migrate_light(driver, device, parent_device_id)
   local api_key = device.data.username
@@ -257,12 +269,11 @@ local function migrate_light(driver, device, parent_device_id)
 
   local known_dni_to_device_map = {}
   for _, device in ipairs(driver:get_devices()) do
-    local dni = device.device_network_id
+    local dni = device.device_network_id or device.parent_assigned_child_key
     known_dni_to_device_map[dni] = device
   end
 
   local bridge_device = known_dni_to_device_map[bridge_id or ""]
-      or known_dni_to_device_map[bridge_id]
 
   if not (bridge_device and driver.joined_bridges[bridge_id] and (Discovery.api_keys[bridge_id] or api_key)) then
     log.warn("Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
@@ -341,12 +352,12 @@ local function migrate_light(driver, device, parent_device_id)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 ---@param parent_device_id nil|string
 ---@param resource_id nil|string
 light_added = function(driver, device, parent_device_id, resource_id)
-  local device_dni = device.device_network_id
-  local device_light_resource_id = resource_id or device_dni
+  local child_key = device.parent_assigned_child_key
+  local device_light_resource_id = resource_id or child_key
 
   if not Discovery.light_state_disco_cache[device_light_resource_id] then
     local parent_bridge = driver:get_device_info(parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
@@ -408,20 +419,20 @@ light_added = function(driver, device, parent_device_id, resource_id)
   if light_info.dimming and light_info.dimming.min_dim_level then minimum_dimming = light_info.dimming.min_dim_level end
 
   -- persistent fields
-  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
+  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
+  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
-  device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = false })
+
   driver.light_id_to_device[device_light_resource_id] = device
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueBridgeDevice
 local function init_bridge(driver, device)
-  local device_dni = device.device_network_id
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
   local bridge_manager = device:get_field(Fields.BRIDGE_API) or Discovery.disco_api_instances[device_bridge_id]
 
@@ -436,7 +447,7 @@ local function init_bridge(driver, device)
   device:set_field(Fields.BRIDGE_API, bridge_manager, { persist = false })
 
   if not device:get_field(Fields.EVENT_SOURCE) then
-    log.trace("Creating SSE EventSource for bridge " .. device.device_network_id)
+    log.trace("Creating SSE EventSource for bridge " .. device.label)
     local eventsource = EventSource.new(
       bridge_url .. "/eventstream/clip/v2",
       { [HueApi.APPLICATION_KEY_HEADER] = api_key },
@@ -446,7 +457,6 @@ local function init_bridge(driver, device)
     eventsource.onopen = function(msg)
       log.debug("Event Source Connection re-established, marking online")
       device:online()
-      handlers.refresh_handler(driver, device)
     end
 
     eventsource.onerror = function(msg)
@@ -493,9 +503,18 @@ local function init_bridge(driver, device)
 end
 
 ---@param driver HueDriver
----@param device HueDevice
+---@param device HueChildDevice
 local function init_light(driver, device)
-  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.device_network_id
+  local caps = device.profile.components.main.capabilities
+  if caps.colorTemperature then
+    if caps.colorControl then
+      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
+    else
+      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
+    end
+  end
+  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or
+      device.device_network_id
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
     driver.light_id_to_device[device_light_resource_id] = device
@@ -506,7 +525,7 @@ local function init_light(driver, device)
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     handlers.refresh_handler(driver, device)
-    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = false })
+    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
 end
 
@@ -530,7 +549,7 @@ local function device_added(driver, device, _, _, parent_device_id)
   elseif utils.is_dth_light(device) then
     migrate_light(driver, device, parent_device_id)
     -- Don't do a refresh if it's a migration
-    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = false })
+    device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   elseif utils.is_edge_bridge(device) then
     bridge_added(driver, device)
   elseif utils.is_edge_light(device) then

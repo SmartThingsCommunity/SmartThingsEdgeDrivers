@@ -69,17 +69,6 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "Setting heating setpoint should not be handled",
-  function()
-    mock_device:set_field(constants.TEMPERATURE_SCALE, 1, {persist = true})
-
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 333.0 } } })
-  end
-)
-
-
 test.register_message_test(
   "Sensor multilevel report (33 CELCIUS) should be handled",
   {
@@ -91,7 +80,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -100,6 +91,11 @@ test.register_message_test(
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.CELSIUS,
         sensor_value = 33 })) }
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -120,7 +116,9 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -129,6 +127,11 @@ test.register_message_test(
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.FAHRENHEIT,
         sensor_value = 55 })) }
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -146,10 +149,17 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -180,10 +190,17 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -214,10 +231,17 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -243,10 +267,17 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
+        "heat", "eco"
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "zwave",
@@ -265,7 +296,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Supported thermostat modes report should generate an event with heat and eco, regardless of content",
+  "Supported thermostat modes report should generate nothing",
   {
     {
       channel = "zwave",
@@ -275,13 +306,6 @@ test.register_message_test(
         cool = true,
         energy_save_heat = true
       })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
-        "heat", "eco"
-      }, {visibility={displayed=false}}))
     }
   }
 )

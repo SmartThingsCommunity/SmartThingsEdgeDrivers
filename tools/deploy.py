@@ -21,6 +21,7 @@ VERSION = "version"
 PACKAGEKEY = "packageKey"
 
 BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
+SONOS_API_KEY = os.environ.get("SONOS_API_KEY")
 
 print(ENVIRONMENT_URL)
 
@@ -81,6 +82,8 @@ for driver in drivers:
     if package_key == "bose" and BOSE_APPKEY:
       # write the app key into a app_key.lua (overwrite if exists already)
       subprocess.run(["touch -a ./src/app_key.lua && echo \'return \"" + BOSE_APPKEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
+    if package_key == "sonos" and SONOS_API_KEY:
+      subprocess.run(["echo \'return \"" + SONOS_API_KEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
     retries = 0
     while not os.path.exists("edge.zip") or retries >= 5:
       try:
