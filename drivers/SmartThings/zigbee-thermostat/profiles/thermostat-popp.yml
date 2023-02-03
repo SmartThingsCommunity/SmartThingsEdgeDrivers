@@ -4,13 +4,38 @@ components:
   capabilities:
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 35 ]
+          step: 0.5
   - id: thermostatMode
     version: 1
+    config:
+      values:
+        - key: "thermostatMode.value"
+          enabledValues:
+          - heat
+          - eco
+          - off
+        - key: "setThermostatMode"
+          enabledValues:
+          - heat
+          - eco
+          - off
   - id: temperatureMeasurement
     version: 1
-  - id: battery
+  - id: switch
     version: 1
-  - id: powerSource
+  - id: temperatureAlarm
+    version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -66,4 +91,4 @@ preferences:
       default: true
 metadata:
   mnmn: SmartThingsCommunity
-  vid: 7b5fc659-58a4-3644-b22b-a3cf05e56b43
+  vid: bc79e47d-eda7-31e5-b1d1-b1f7499668d2

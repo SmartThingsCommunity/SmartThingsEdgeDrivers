@@ -11,7 +11,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local ThermostatUIConfig = clusters.ThermostatUserInterfaceConfiguration
 local PowerConfiguration = clusters.PowerConfiguration
 local Thermostat = clusters.Thermostat
-local ThermostatSystemMode = Thermostat.attributes.SystemMode
 
 -- ST Capabilities
 local capabilities = require "st.capabilities"
@@ -20,8 +19,8 @@ local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState = capabilities.thermostatOperatingState
 local Battery = capabilities.battery
-local WindowOpenDetectionCap = capabilities["preparestream40760.windowOpenDetection"]
-local HeatingMode = capabilities["preparestream40760.heatMode"]
+local TemperatureAlarm = capabilities.temperatureAlarm
+local Switch = capabilities.switch
 
 -- Subdriver for custom capabilities
 local common = require("popp/common")
@@ -31,50 +30,25 @@ local POPP_THERMOSTAT_FINGERPRINTS = {
   { mfr = "D5X84YU", model = "eT093WRG" }
 }
 
-local THERMOSTAT_MODE_MAP = {
-  [Thermostat.attributes.SystemMode.HEAT] = ThermostatMode.thermostatMode.heat
+local WindowOpenDetectionCapConfig = {
+        cluster = common.THERMOSTAT_CLUSTER_ID,
+        attribute = common.WINDOW_OPEN_DETECTION_ID,
+        minimum_interval = 60,
+        maximum_interval = 43200,
+        reportable_change = 0x00,
+        data_type = data_types.Enum8,
+        mfg_code = common.MFG_CODE
 }
 
--- Thermostat Mode Handler
-local thermostat_mode_handler = function(driver, device, thermostat_mode)
-  device:emit_event(ThermostatMode.thermostatMode.heat)
-end
-
---[[ local SUPPORTED_MODES = {
-  ThermostatMode.thermostatMode.heat.NAME,
-  ThermostatMode.thermostatMode.eco.NAME
-} ]]
-
-local SUPPORTED_MODES = {
-  ThermostatMode.thermostatMode.off.NAME,
-  ThermostatMode.thermostatMode.heat.NAME,
-  ThermostatMode.thermostatMode.eco.NAME
+local ExternalOpenWindowDetectionCapConfig = {
+        cluster = common.THERMOSTAT_CLUSTER_ID,
+        attribute = common.WINDOW_OPEN_DETECTION_ID,
+        minimum_interval = 0,
+        maximum_interval = 1,
+        reportable_change = 0x00,
+        data_type = data_types.Enum8,
+        mfg_code = common.MFG_CODE
 }
-
---[[ local THERMOSTAT_MODE_MAP = {
-  [ThermostatSystemMode.OFF]               = ThermostatMode.thermostatMode.off,
-  [ThermostatSystemMode.HEAT]              = ThermostatMode.thermostatMode.heat,
-  [ThermostatSystemMode.EMERGENCY_HEATING] = ThermostatMode.thermostatMode.eco
-} ]]
-
-local function thermostat_mode_setter(mode_name)
-  return function(driver, device, command) return common.heat_cmd_handler(driver, device, mode_name) end
-
-end
-
-local function handle_set_thermostat_mode_command(driver, device, command)
-  return common.heat_cmd_handler(driver, device, command.args.mode)
-
-end
-
--- Thermostat Operating State Handler
---[[ local thermostat_operating_state_handler = function(driver, device, operating_state)
-  if (operating_state:is_heat_second_stage_on_set() or operating_state:is_heat_on_set()) then
-    device:emit_event(ThermostatOperatingState.thermostatOperatingState.heating())
-  else
-    device:emit_event(ThermostatOperatingState.thermostatOperatingState.idle())
-  end
-end ]]
 
 -- Set Setpoint Factory
 local set_setpoint_factory = function(setpoint_attribute)
@@ -126,20 +100,6 @@ local thermostat_local_temp_attr_handler = function(driver, device, value, zb_rx
   device:emit_event(capabilities.temperatureMeasurement.temperature({ value = temperature, unit = "C" }))
 end
 
-local function thermostat_system_mode_handler(driver, device, value, zb_rx)
-  local mode = THERMOSTAT_MODE_MAP[value.value].NAME
-
-  -- If we receive an off here then we are off
-  -- Else we will determine the real mode in the mfg specific packet so store this
-  if mode == ThermostatMode.thermostatMode.off.NAME then
-    device:emit_event(ThermostatMode.thermostatMode.off())
-  else
-    device:set_field(STORED_SYSTEM_MODE, mode)
-    -- Sometimes we don't get the final decision, so ask for it just in case
-    device:send(Thermostat.attributes.SystemMode:read(device))
-  end
-end
-
 local is_popp_thermostat = function(opts, driver, device)
   for _, fingerprint in ipairs(POPP_THERMOSTAT_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -149,13 +109,21 @@ local is_popp_thermostat = function(opts, driver, device)
   return false
 end
 
-local supported_thermostat_modes_handler = function(driver, device)
-  device:emit_event(ThermostatMode.supportedThermostatModes({ "heat" }))
-end
-
 local function thermostat_heating_set_point_attr_handler(driver, device, value, zb_rx)
   local point_value = value.value
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = point_value / 100, unit = "C" }))
+end
+
+local function thermostat_mode_setter(mode_name)
+  --return function(driver, device, command) return set_thermostat_mode(driver, device, mode_name) end
+  return function(driver, device, command)
+    return common.heat_cmd_handler(driver, device, mode_name)
+  end
+end
+
+local function handle_set_thermostat_mode_command(driver, device, command)
+  --return set_thermostat_mode(driver, device, command.args.mode)
+  return common.heat_cmd_handler(driver, device, command.args.mode)
 end
 
 -- Attribute Refresh Function
@@ -164,13 +132,8 @@ local do_refresh = function(driver, device)
   local attributes = {
     Thermostat.attributes.OccupiedHeatingSetpoint,
     Thermostat.attributes.LocalTemperature,
-    Thermostat.attributes.ControlSequenceOfOperation,
-    Thermostat.attributes.ThermostatRunningState,
-    Thermostat.attributes.ThermostatRunningMode,
-    Thermostat.attributes.SystemMode,
     ThermostatUIConfig.attributes.KeypadLockout,
-    PowerConfiguration.attributes.BatteryVoltage,
-    PowerConfiguration.attributes.BatteryPercentageRemaining
+    PowerConfiguration.attributes.BatteryVoltage
   }
   for _, attribute in pairs(attributes) do
     device:send(attribute:read(device))
@@ -178,20 +141,31 @@ local do_refresh = function(driver, device)
   -- refresh window open state
   device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID, common.VIEWING_DIRECTION_ATTR,
     common.MFG_CODE))
+  -- refresh external windo open state
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID,
+    common.EXTERNAL_OPEN_WINDOW_DETECTION_ID, common.MFG_CODE))
 end
 
 -- Device Added Function
 local device_added = function(driver, device)
-  device:emit_event(ThermostatMode.supportedThermostatModes({ SUPPORTED_MODES }, { visibility = { displayed = false } }))
-  --Add the manufacturer-specific attributes to generate their configure reporting and bind requests
-  for capability_id, configs in pairs(common.get_cluster_configurations()) do
+  -- Set supported thermostat modes
+  device:emit_event(ThermostatMode.supportedThermostatModes({ 'off','heat','eco' }, { visibility = { displayed = false } }))
+  
+  -- Add the manufacturer-specific attributes to generate their configure reporting and bind requests
+  device:add_configured_attribute(WindowOpenDetectionCapConfig)
+  device:add_monitored_attribute(WindowOpenDetectionCapConfig)
+
+  device:add_configured_attribute(ExternalOpenWindowDetectionCapConfig)
+  device:add_monitored_attribute(ExternalOpenWindowDetectionCapConfig)
+  
+  --[[ for capability_id, configs in pairs(common.get_cluster_configurations()) do
     if device:supports_capability_by_id(capability_id) then
       for _, config in pairs(configs) do
         device:add_configured_attribute(config)
         device:add_monitored_attribute(config)
       end
     end
-  end
+  end ]]
 
   do_refresh(driver, device)
 end
@@ -211,13 +185,29 @@ local device_init = function(driver, device)
   -- set battery defaults
   battery_defaults.build_linear_voltage_init(2.4, 3.2)(driver, device)
 
-  -- initial set of heat mode
+  -- initial set of heating mode
   device.thread:call_with_delay(3, function()
-    device:emit_event(ThermostatMode.supportedThermostatModes({ "eco" }))
+    local stored_heat_mode = device:get_field(common.STORED_HEAT_MODE) or 'eco'
+    local stored_switch_state = device:get_latest_state("main", Switch.ID, Switch.switch.NAME) or 'on'
 
+    -- Use the stored mode
+    -- Otherwise, set to eco
+    if stored_heat_mode ~= nil then
+      device:emit_event(ThermostatMode.thermostatMode[stored_heat_mode]())
+    end
+
+    -- Use the last switch state
+    -- Otherwise, set to on
+    if stored_switch_state ~= nil then
+      device:emit_event(Switch.switch[stored_switch_state]())
+    end
+
+    -- refresh local temperature
+    device:send(Thermostat.attributes.LocalTemperature:read(device))
     -- refresh window open state
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID, common.VIEWING_DIRECTION_ATTR,
-      common.MFG_CODE))
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID, common.VIEWING_DIRECTION_ATTR, common.MFG_CODE))
+    -- refresh external windo open state
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID, common.EXTERNAL_OPEN_WINDOW_DETECTION_ID, common.MFG_CODE))
   end)
 end
 
@@ -272,8 +262,8 @@ local popp_thermostat = {
     ThermostatMode,
     ThermostatOperatingState,
     Battery,
-    WindowOpenDetectionCap
-    --HeatingMode
+    TemperatureAlarm,
+    Switch
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
@@ -283,15 +273,14 @@ local popp_thermostat = {
       [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint_factory(Thermostat.attributes.OccupiedHeatingSetpoint)
     },
     [ThermostatMode.ID] = {
-      --[[ [ThermostatMode.commands.setThermostatMode.NAME] = handle_set_thermostat_mode_command,
-      [ThermostatMode.commands.heat.NAME] = thermostat_mode_setter(ThermostatMode.thermostatMode.heat.NAME) ]]
       [ThermostatMode.commands.setThermostatMode.NAME] = handle_set_thermostat_mode_command,
       [ThermostatMode.commands.off.NAME] = thermostat_mode_setter(ThermostatMode.thermostatMode.off.NAME),
       [ThermostatMode.commands.heat.NAME] = thermostat_mode_setter(ThermostatMode.thermostatMode.heat.NAME)
-    }--[[ ,
-    [HeatingMode.ID] = {
-      [HeatingMode.commands.setSetpointMode.NAME] = common.heat_cmd_handler
-    } ]]
+    },
+    [Switch.ID] = {
+      [Switch.commands.on.NAME] = common.switch_handle_on,
+      [Switch.commands.off.NAME] = common.switch_handle_off
+    }
   },
   zigbee_handlers = {
     attr = {
@@ -299,13 +288,10 @@ local popp_thermostat = {
         [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_defaults.battery_volt_attr_handler
       },
       [Thermostat.ID] = {
-        --[Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler,
-        --[Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
-        --[Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
-        --[Thermostat.attributes.SystemMode.ID] = thermostat_system_mode_handler,
         [Thermostat.attributes.LocalTemperature.ID] = thermostat_local_temp_attr_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = thermostat_heating_set_point_attr_handler,
         [common.WINDOW_OPEN_DETECTION_ID] = common.window_open_detection_handler
+        --[common.EXTERNAL_OPEN_WINDOW_DETECTION_ID] = common.external_open_window_detection_handler
       }
     }
   },
