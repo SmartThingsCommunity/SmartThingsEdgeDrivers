@@ -32,7 +32,7 @@ local battery_handler = function(driver, device, value, zb_rx)
  -- signal.metrics(device, zb_rx)
 
   local minVolts = 2.3
-  local maxVolts = 3.0
+  local maxVolts = 3.4
   if device:get_manufacturer() == "Ecolink" or 
     device:get_manufacturer() == "Sercomm Corp." or
     device:get_manufacturer() == "SmartThings" or
