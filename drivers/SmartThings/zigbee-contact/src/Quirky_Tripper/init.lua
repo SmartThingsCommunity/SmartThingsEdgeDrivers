@@ -38,8 +38,15 @@ local is_tripper_products = function(opts, driver, device, ...)
   return false
 end
 
-local function device_init(driver, device)
-  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
+local function device_init(opts,driver, device)
+  ---battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
+  battery_defaults.battery_voltage(opts,driver,device)
+
+  for _, attribute in ipairs(AURORA_CONTACT_CONFIGURATION) do
+    device:add_configured_attribute(attribute)
+    device:add_monitored_attribute(attribute)
+  end
+end
 
   for _, attribute in ipairs(CONFIGURATIONS) do
     device:add_configured_attribute(attribute)
