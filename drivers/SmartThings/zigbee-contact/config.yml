@@ -1,4 +1,4 @@
 name: 'Zigbee Contact - ADM'
-packageKey: 'zigbee-contact'
+packageKey: 'zigbee-contact -ADM'
 permissions:
   zigbee: {}
