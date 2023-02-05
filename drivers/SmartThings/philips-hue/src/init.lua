@@ -46,10 +46,37 @@ local DEFAULT_MIREK = 153
 -- "forward declare" some functions
 local bridge_added, light_added, _initialize
 
+-- we use a relatively large epsilon based on
+-- the magnitude of the values we're working with
+local DEFAULT_EPSILON = 1e-4
+
+local function _epsilon_equals(a, b, epsilon)
+  local numerator = math.abs(a - b)
+  local float_error
+  if b == 0 then
+    float_error = numerator
+  else
+    float_error = numerator/b
+  end
+  return float_error < epsilon
+end
+
+local function _xy_nearly_equal(xy_1, xy_2, epsilon)
+  if type(epsilon) ~= "number" or epsilon >= 1 or epsilon < 0 then
+    epsilon = DEFAULT_EPSILON
+  end
+
+  local hue_similar = _epsilon_equals(xy_1.hue, xy_2.hue, epsilon)
+  local sat_similar = _epsilon_equals(xy_1.sat, xy_2.sat, epsilon)
+
+  return hue_similar and sat_similar
+end
+
 ---@param light_device HueChildDevice
 ---@param light table
 local function emit_light_status_events(light_device, light)
   if light_device ~= nil then
+    local last_emitted = light_device:get_field(Fields.EMIT_CACHE)
     if light.status then
       if light.status == "connected" then
         light_device:online()
@@ -63,15 +90,22 @@ local function emit_light_status_events(light_device, light)
       light_device:emit_event(hueSyncMode.mode(light.mode))
     end
 
-    if light.on and light.on.on then
-      light_device:emit_event(capabilities.switch.switch.on())
-    elseif light.on and not light.on.on then
-      light_device:emit_event(capabilities.switch.switch.off())
+    if light.on and last_emitted.on ~= light.on.on then
+      if light.on.on then
+        light_device:emit_event(capabilities.switch.switch.on())
+      else
+        light_device:emit_event(capabilities.switch.switch.off())
+      end
+      last_emitted.on = light.on.on
     end
 
     if light.dimming then
       local adjusted_level = st_utils.clamp_value(light.dimming.brightness, 1, 100)
-      light_device:emit_event(capabilities.switchLevel.level(st_utils.round(adjusted_level)))
+      local emit = st_utils.round(adjusted_level)
+      if last_emitted.dimming ~= emit then
+        light_device:emit_event(capabilities.switchLevel.level(emit))
+        last_emitted.dimming = emit
+      end
     end
 
     if light.color_temperature then
@@ -83,16 +117,24 @@ local function emit_light_status_events(light_device, light)
       local kelvin = math.floor(
         st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
       )
-      light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+      if last_emitted.color_temperature ~= kelvin then
+        light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+        last_emitted.color_temperature = kelvin
+      end
     end
 
     if light.color then
       light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
-      local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
-      local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
+      if not _xy_nearly_equal(light.color.xy, last_emitted.color.xy) then
+        local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
+        local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
 
-      light_device:emit_event(capabilities.colorControl.hue(st_utils.round(hue * 100)))
-      light_device:emit_event(capabilities.colorControl.saturation(st_utils.round(sat * 100)))
+        local hue_emit = st_utils.round(hue * 100)
+        local sat_emit = st_utils.round(sat * 100)
+        light_device:emit_event(capabilities.colorControl.hue(hue_emit))
+        light_device:emit_event(capabilities.colorControl.saturation(sat_emit))
+        last_emitted.color.xy = light.color.xy
+      end
     end
   end
 end
@@ -521,6 +563,22 @@ local function init_light(driver, device)
   end
   if not driver.device_rid_to_light_rid[hue_device_id] then
     driver.device_rid_to_light_rid[hue_device_id] = device_light_resource_id
+  end
+  if device:get_field(Fields.EMIT_CACHE) == nil then
+    device:set_field(Fields.EMIT_CACHE, {
+      on = false,
+      dimming = 0,
+      color_temperature = 0,
+      -- For the other caches we use the unit of the capability;
+      -- here we use the XY to avoid having to do the transform an
+      -- additional time when we compare to see if there's a new value.
+      color = {
+        xy = {
+          x = 0.5,
+          y = 0.5,
+        }
+      }
+    }, { persist = true })
   end
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then

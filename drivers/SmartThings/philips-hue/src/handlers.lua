@@ -8,6 +8,25 @@ local st_utils = require "st.utils"
 
 local handlers = {}
 
+local function check_response_then(resp, err, on_success)
+  if not resp or (resp.errors and #resp.errors == 0) then
+    if err ~= nil then
+      log.error("Error performing on/off action: " .. err)
+      return
+    elseif resp and #resp.errors > 0 then
+      for _, error in ipairs(resp.errors) do
+        log.error("Error returned in Hue response: " .. error.description)
+      end
+      return
+    end
+  end
+  if type(on_success) == "function" then
+    on_success(resp)
+  else
+    log.warn("received argument in `on_success` position that is not a function")
+  end
+end
+
 ---@param driver HueDriver
 ---@param device HueChildDevice
 local function do_switch_action(driver, device, args)
@@ -30,15 +49,9 @@ local function do_switch_action(driver, device, args)
 
   local resp, err = hue_api:set_light_on_state(light_id, on)
 
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error("Error performing on/off action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  check_response_then(resp, err, function(...)
+    driver.emit_light_status_events(device, { on = { on = on } })
+  end)
 end
 
 ---@param driver HueDriver
@@ -65,27 +78,15 @@ local function do_switch_level_action(driver, device, args)
 
   if is_off then
     local resp, err = hue_api:set_light_on_state(light_id, true)
-    if not resp or (resp.errors and #resp.errors == 0) then
-      if err ~= nil then
-        log.error("Error performing on/off action: " .. err)
-      elseif resp and #resp.errors > 0 then
-        for _, error in ipairs(resp.errors) do
-          log.error("Error returned in Hue response: " .. error.description)
-        end
-      end
-    end
+    check_response_then(resp, err, function(...)
+      driver.emit_light_status_events(device, { on = { on = true } })
+    end)
   end
 
   local resp, err = hue_api:set_light_level(light_id, level)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error("Error performing switch level action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  check_response_then(resp, err, function(...)
+    driver.emit_light_status_events(device, { dimming = { brightness = level } })
+  end)
 end
 
 ---@param driver HueDriver
@@ -108,18 +109,20 @@ local function do_color_action(driver, device, args)
   end
 
   local red, green, blue = st_utils.hsv_to_rgb(hue, sat)
-  local xy = HueColorUtils.safe_rgb_to_xy(red, green, blue, device:get_field(Fields.GAMUT))
+  local gamut = device:get_field(Fields.GAMUT)
+  local xy = HueColorUtils.safe_rgb_to_xy(red, green, blue, gamut)
 
   local resp, err = hue_api:set_light_color_xy(light_id, xy)
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error("Error performing color action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  check_response_then(resp, err, function(...)
+    driver.emit_light_status_events(device,
+      {
+        color = {
+          gamut = gamut,
+          xy = xy
+        }
+      }
+    )
+  end)
 end
 
 function handlers.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
@@ -151,15 +154,16 @@ local function do_color_temp_action(driver, device, args)
 
   local resp, err = hue_api:set_light_color_temp(light_id, mirek)
 
-  if not resp or (resp.errors and #resp.errors == 0) then
-    if err ~= nil then
-      log.error("Error performing color temp action: " .. err)
-    elseif resp and #resp.errors > 0 then
-      for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
-      end
-    end
-  end
+  check_response_then(resp, err, function(...)
+    driver.emit_light_status_events(device,
+      {
+        color_temperature = {
+          mirek_valid = true,
+          mirek = mirek
+        }
+      }
+    )
+  end)
 end
 
 ---@param driver HueDriver
@@ -252,9 +256,9 @@ end
 ---@param device HueDevice
 function handlers.refresh_handler(driver, device, cmd)
   if device:get_field(Fields.DEVICE_TYPE) == "bridge" then
-    do_refresh_all_for_bridge(driver, device --[[@as HueBridgeDevice]])
+    do_refresh_all_for_bridge(driver, device--[[@as HueBridgeDevice]] )
   elseif device:get_field(Fields.DEVICE_TYPE) == "light" then
-    do_refresh_light(driver, device --[[@as HueChildDevice]])
+    do_refresh_light(driver, device--[[@as HueChildDevice]] )
   end
 end
 
