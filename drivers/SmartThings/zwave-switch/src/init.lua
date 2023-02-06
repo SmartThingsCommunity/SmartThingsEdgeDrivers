@@ -18,7 +18,9 @@ local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
+--- @type st.zwave.CommandClass.SwitchMultilevel
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
@@ -88,6 +90,13 @@ local function device_added(driver, device)
   device:refresh()
 end
 
+-- This functionality was present in "Z-Wave Dimmer Switch Generic" and, while non-standard,
+-- appears to be important for some devices.
+local function switch_multilevel_stop_level_change_handler(driver, device, cmd)
+  device:emit_event_for_endpoint(cmd.src_channel, capabilities.switch.switch.on())
+  device:send(SwitchMultilevel:Get({}))
+end
+
 -------------------------------------------------------------------------------------------
 -- Register message handlers and run driver
 -------------------------------------------------------------------------------------------
@@ -102,6 +111,11 @@ local driver_template = {
     capabilities.button,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement
+  },
+  zwave_handlers = {
+    [cc.SWITCH_MULTILEVEL] = {
+      [SwitchMultilevel.STOP_LEVEL_CHANGE] = switch_multilevel_stop_level_change_handler
+    }
   },
   sub_drivers = {
     require("eaton-accessory-dimmer"),
