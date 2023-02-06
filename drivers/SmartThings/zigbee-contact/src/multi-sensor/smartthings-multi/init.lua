@@ -60,7 +60,8 @@ end
 local function do_configure(self, device)
   device:configure()
   device:send(multi_utils.custom_write_attribute(device, multi_utils.MOTION_THRESHOLD_MULTIPLIER_ATTR, data_types.Uint8, 0x01, SMARTTHINGS_MFG))
-  device:send(multi_utils.custom_write_attribute(device, multi_utils.MOTION_THRESHOLD_ATTR, data_types.Uint16, 0x0276, SMARTTHINGS_MFG))
+  -- This value should be "0x0276", but it is passed as little-endian as a bug-workaround (see DVCSMP-4739)
+  device:send(multi_utils.custom_write_attribute(device, multi_utils.MOTION_THRESHOLD_ATTR, data_types.Uint16, 0x7602, SMARTTHINGS_MFG))
   multi_utils.send_common_configuration(self, device, SMARTTHINGS_MFG)
 end
 
