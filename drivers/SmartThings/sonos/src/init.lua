@@ -27,7 +27,7 @@ local function find_player_for_device(driver, device, should_continue)
     local attempts = 0
     should_continue = function()
       attempts = attempts + 1
-      return attempts <= 20
+      return attempts <= 10
     end
   end
 
@@ -63,10 +63,12 @@ local function _initialize_device(driver, device)
       log.debug("Rescanning for player with DNI " .. device.device_network_id)
       local success = find_player_for_device(driver, device)
       if not success then
-        error(string.format(
-          "Received event for device DNI [%s] but could not find matching player on local network",
-          device.device_network_id
+        device:offline()
+        log.error(string.format(
+          "Could not initialize Sonos Player [%s], it does not appear to be on the network",
+          device.label
         ))
+        return
       end
     end
 
