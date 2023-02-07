@@ -216,6 +216,11 @@ local driver = Driver("Sonos", {
       [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
       [capabilities.audioMute.commands.setMute.NAME] = CmdHandlers.handle_set_mute,
     },
+    [capabilities.audioNotification.ID] = {
+      [capabilities.audioNotification.commands.playTrack.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndResume.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = CmdHandlers.handle_audio_notification,
+    },
     [capabilities.audioVolume.ID] = {
       [capabilities.audioVolume.commands.volumeUp.NAME] = CmdHandlers.handle_volume_up,
       [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,

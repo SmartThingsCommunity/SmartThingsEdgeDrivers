@@ -19,6 +19,8 @@ components:
     version: 1
   - id: audioMute
     version: 1
+  - id: audioNotification
+    version: 1
   - id: audioTrackData
     version: 1
   - id: audioVolume

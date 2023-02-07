@@ -157,4 +157,20 @@ function CapCommandHandlers.handle_play_preset(driver, device, cmd)
   _do_send_to_group(driver, device, payload)
 end
 
+function CapCommandHandlers.handle_audio_notification(driver, device, cmd)
+  local payload = {
+    { namespace = "audioClip", command = "loadAudioClip" },
+    {
+      appId = "edge.smartthings.com",
+      name = "SmartThings Audio Notification",
+      streamUrl = cmd.args.uri,
+    }
+  }
+
+  if type(cmd.args.level) == 'number' then
+    payload[2].volume = cmd.args.level
+  end
+  _do_send_to_self(driver, device, payload)
+end
+
 return CapCommandHandlers

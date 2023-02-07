@@ -28,7 +28,7 @@ local SonosRestApi = require "api.rest"
 local SonosConnection = {}
 SonosConnection.__index = SonosConnection
 
-local self_subscriptions = { "groups", "playerVolume" }
+local self_subscriptions = { "groups", "playerVolume", "audioClip" }
 local coordinator_subscriptions = { "groupVolume", "playback", "favorites", "playbackMetadata" }
 local favorites_version = ""
 
@@ -157,6 +157,11 @@ function SonosConnection.new(driver, device)
         local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
         if player_id == header.playerId and body.volume and (body.muted ~= nil) then
           EventHandlers.handle_player_volume(self.device, body.volume, body.muted)
+        end
+      elseif header.type == "audioClipStatus" then
+        local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
+        if player_id == header.playerId then
+          EventHandlers.handle_audio_clip_status(self.device, body.audioClips)
         end
       elseif header.type == "groupVolume" then
         if body.volume and (body.muted ~= nil) then

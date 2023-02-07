@@ -1,4 +1,7 @@
 local capabilities = require "st.capabilities"
+local log = require "log"
+
+local st_utils = require "st.utils"
 
 local CapEventHandlers = {}
 
@@ -33,6 +36,17 @@ function CapEventHandlers.handle_group_update(device, group_info)
   device:emit_event(capabilities.mediaGroup.groupPrimaryDeviceId(groupPrimaryDeviceId))
   device:emit_event(capabilities.mediaGroup.groupId(groupId))
 end
+
+function CapEventHandlers.handle_audio_clip_status(device, clips)
+  for _, clip in ipairs(clips) do
+    if clip.status == "ACTIVE" then
+      log.debug(st_utils.stringify_table(clip, "Playing Audio Clip: ", false))
+    elseif clip.status == "DONE" then
+      log.debug(st_utils.stringify_table(clip, "Completed Playing Audio Clip: ", false))
+    end
+  end
+end
+
 function CapEventHandlers.handle_playback_status(device, playback_state)
   if playback_state == CapEventHandlers.PlaybackStatus.Playing then
     device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
