@@ -29,7 +29,8 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2,s
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
 
 local EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x001E, productType = 0x0004, productId = 0x0001 }
+  { manufacturerId = 0x001E, productType = 0x0004, productId = 0x0001 },
+  { manufacturerId = 0x0004, productType = 0x0004, productId = 0x0001 } -- HomeSeer HSM200
 }
 
 local function can_handle_ezmultipli_multipurpose_sensor(opts, driver, device, ...)

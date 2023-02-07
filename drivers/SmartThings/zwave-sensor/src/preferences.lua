@@ -84,6 +84,20 @@ local devices = {
       tempAdj = {parameter_number = 5, size = 1}
     }
   },
+  HOMESEER_HSM200 = {
+    MATCHING_MATRIX = {
+        mfrs = 0x0004,
+        product_types = 0x0004,
+        product_ids = 0x0001
+    },
+    PARAMETERS = {
+      onTime = {parameter_number = 1, size = 1},
+      onLevel = {parameter_number = 2, size = 1},
+      liteMin = {parameter_number = 3, size = 1},
+      tempMin = {parameter_number = 4, size = 1},
+      tempAdj = {parameter_number = 5, size = 1}
+    }
+  },
   FIBARO_DOOR_WINDOW_SENSOR_2 = {
     MATCHING_MATRIX = {
       mfrs = 0x010F,
