@@ -58,18 +58,18 @@ zwaveManufacturer:
   #   manufacturerId: 0x010F
   #   productType: 0x1301
   #   deviceProfileName: base-radiator-thermostat-10to30C
-  # - id: "0239/0001/0001"
-  #   deviceLabel: Stelpro Ki Thermostat
-  #   manufacturerId: 0x0239
-  #   productType: 0x0001
-  #   productId: 0x0001
-  #   deviceProfileName: thermostat-temperature-temperaturealarm
-  # - id: qubino/thermostat
-  #   deviceLabel: Qubino Thermostat
-  #   manufacturerId: 0x0159
-  #   productType: 0x0005
-  #   productId: 0x0054
-  #   deviceProfileName: qubino-flush-thermostat
+  - id: "0239/0001/0001"
+    deviceLabel: Stelpro Ki Thermostat
+    manufacturerId: 0x0239
+    productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: thermostat-temperature-temperaturealarm
+  - id: qubino/thermostat
+    deviceLabel: Qubino Thermostat
+    manufacturerId: 0x0159
+    productType: 0x0005
+    productId: 0x0054
+    deviceProfileName: qubino-flush-thermostat
   - id: "0039/0011/0001"
     deviceLabel: Honeywell Thermostat
     manufacturerId: 0x0039
