@@ -1,6 +1,6 @@
-local cosock = require "cosock"
 local Fields = require "hue.fields"
 local HueApi = require "hue.api"
+local HueColorUtils = require "hue.cie_utils"
 local log = require "log"
 
 local capabilities = require "st.capabilities"
@@ -91,7 +91,7 @@ end
 ---@param driver HueDriver
 ---@param device HueChildDevice
 local function do_color_action(driver, device, args)
-  local hue, sat = args.args.color.hue, args.args.color.saturation
+  local hue, sat = (args.args.color.hue / 100), (args.args.color.saturation / 100)
   local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
 
   if not bridge_device then
@@ -107,13 +107,10 @@ local function do_color_action(driver, device, args)
     return
   end
 
-  local x, y, _ = st_utils.safe_hsv_to_xy(hue, sat)
+  local red, green, blue = st_utils.hsv_to_rgb(hue, sat)
+  local xy = HueColorUtils.safe_rgb_to_xy(red, green, blue, device:get_field(Fields.GAMUT))
 
-  x = x / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
-  y = y / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
-
-  local resp, err = hue_api:set_light_color_xy(light_id, { x = x, y = y })
-
+  local resp, err = hue_api:set_light_color_xy(light_id, xy)
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
       log.error("Error performing color action: " .. err)
@@ -229,6 +226,7 @@ local function do_refresh_light(driver, light_device)
       else
         for _, light_info in ipairs(light_resp.data) do
           if light_info.id == light_resource_id then
+            light_device:set_field(Fields.COLOR_GAMUT, light_info.color.gamut_type, { persist = true })
             driver.emit_light_status_events(light_device, light_info)
             success = true
           end
