@@ -204,7 +204,6 @@ local do_refresh = function(self, device)
     Thermostat.attributes.LocalTemperature,
     Thermostat.attributes.ControlSequenceOfOperation,
     Thermostat.attributes.ThermostatRunningState,
-    Thermostat.attributes.ThermostatRunningMode,
     Thermostat.attributes.SystemMode,
     FanControl.attributes.FanModeSequence,
     FanControl.attributes.FanMode,

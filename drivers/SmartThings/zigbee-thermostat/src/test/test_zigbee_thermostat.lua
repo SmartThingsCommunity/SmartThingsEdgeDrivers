@@ -550,14 +550,6 @@ test.register_message_test(
         direction = "send",
         message = {
           mock_device.id,
-          Thermostat.attributes.ThermostatRunningMode:read(mock_device)
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
           Thermostat.attributes.SystemMode:read(mock_device)
         }
       },
@@ -649,14 +641,6 @@ test.register_message_test(
         direction = "send",
         message = {
           mock_device.id,
-          Thermostat.attributes.ThermostatRunningMode:read(mock_device)
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
           Thermostat.attributes.SystemMode:read(mock_device)
         }
       },
@@ -692,6 +676,23 @@ test.register_message_test(
           PowerConfiguration.attributes.BatteryAlarmState:read(mock_device)
         }
       },
+    }
+)
+
+test.register_message_test(
+    "Thermostat running mode reports are handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.ThermostatRunningMode:build_test_attr_report(mock_device,
+                                                                                                        3), }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode("cool"))
+      }
     }
 )
 
