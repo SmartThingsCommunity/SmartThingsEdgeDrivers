@@ -333,6 +333,7 @@ local function migrate_light(driver, device, parent_device_id)
           manufacturer = device_data.product_data.manufacturer_name,
           model = device_data.product_data.model_id,
           vendor_provided_label = device_data.product_data.product_name,
+          parent_assigned_child_key = light.id
         }
         device:try_update_metadata(new_metadata)
 
