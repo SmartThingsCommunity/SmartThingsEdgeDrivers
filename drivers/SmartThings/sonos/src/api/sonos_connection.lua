@@ -141,7 +141,7 @@ function SonosConnection.new(driver, device)
       if header.type == "groups" then
         local household_id, current_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
-        self.driver.sonos:update_household_info(header.householdId, body)
+        self.driver.sonos:update_household_info(header.householdId, body, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
         Router.cleanup_unused_sockets(self.driver)
@@ -167,7 +167,7 @@ function SonosConnection.new(driver, device)
             --- is being deleted so we check for the presence of emit event as a proxy for
             --- whether or not this device is currently capable of emitting events.
             if device_for_player and device_for_player.emit_event then
-              EventHandlers.handle_player_volume(device_for_player, body.volume, body.muted)
+              EventHandlers.handle_group_volume(device_for_player, body.volume, body.muted)
             end
           end
         end

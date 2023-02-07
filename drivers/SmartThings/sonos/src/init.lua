@@ -211,15 +211,6 @@ local driver = Driver("Sonos", {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
-    [capabilities.mediaPlayback.ID] = {
-      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
-      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
-      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
-    },
-    [capabilities.mediaTrackControl.ID] = {
-      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
-      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
-    },
     [capabilities.audioMute.ID] = {
       [capabilities.audioMute.commands.mute.NAME] = CmdHandlers.handle_mute,
       [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
@@ -230,9 +221,26 @@ local driver = Driver("Sonos", {
       [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,
       [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
     },
+    [capabilities.mediaGroup.ID] = {
+      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_mute,
+      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_unmute,
+      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_set_mute,
+      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_volume_up,
+      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_volume_down,
+      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_set_volume,
+    },
+    [capabilities.mediaPlayback.ID] = {
+      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
+      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
+      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
+    },
     [capabilities.mediaPresets.ID] = {
       [capabilities.mediaPresets.commands.playPreset.NAME] = CmdHandlers.handle_play_preset,
     },
+    [capabilities.mediaTrackControl.ID] = {
+      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
+      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
+    }
   },
   sonos = SonosState.new(),
   update_group_state = update_group_state,

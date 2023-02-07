@@ -11,6 +11,8 @@ components:
             - 'playing'
             - 'paused'
             - 'stopped'
+  - id: mediaGroup
+    version: 1
   - id: mediaPresets
     version: 1
   - id: mediaTrackControl
