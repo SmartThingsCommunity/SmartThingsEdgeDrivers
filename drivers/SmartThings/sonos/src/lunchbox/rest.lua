@@ -63,6 +63,7 @@ local function send_request(client, request)
   local payload = request:serialize()
 
   local bytes, err, idx = nil, nil, 0
+  if client.socket == nil then return nil, "closed", nil end
 
   repeat bytes, err, idx = client.socket:send(payload, idx + 1, #payload) until (bytes == #payload)
       or (err ~= nil)
