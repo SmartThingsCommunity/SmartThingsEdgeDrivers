@@ -104,26 +104,26 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300ZB3
     deviceProfileName: three-buttons-battery
-  # - id: OSRAM/LIGHTIFY Dimming Switch
-  #   deviceLabel: OSRAM Button
-  #   manufacturer: OSRAM
-  #   model: LIGHTIFY Dimming Switch
-  #   deviceProfileName: two-buttons-battery-holdTime
-  # - id: CentraLite/3130
-  #   deviceLabel: Centralite Button
-  #   manufacturer: CentraLite
-  #   model: 3130
-  #   deviceProfileName: two-buttons-battery-holdTime
-  # - id: CentraLite/3455-L
-  #   deviceLabel: Iris Button
-  #   manufacturer: CentraLite
-  #   model: 3455-L
-  #   deviceProfileName: iris-one-button-battery
-  # - id: CentraLite/3460-L
-  #   deviceLabel: Iris Button
-  #   manufacturer: CentraLite
-  #   model: 3460-L
-  #   deviceProfileName: iris-one-button-battery
+  - id: OSRAM/LIGHTIFY Dimming Switch
+    deviceLabel: OSRAM Button
+    manufacturer: OSRAM
+    model: LIGHTIFY Dimming Switch
+    deviceProfileName: two-buttons-battery-holdTime
+  - id: CentraLite/3130
+    deviceLabel: Centralite Button
+    manufacturer: CentraLite
+    model: 3130
+    deviceProfileName: two-buttons-battery-holdTime
+  - id: CentraLite/3455-L
+    deviceLabel: Iris Button
+    manufacturer: CentraLite
+    model: 3455-L
+    deviceProfileName: iris-one-button-battery
+  - id: CentraLite/3460-L
+    deviceLabel: Iris Button
+    manufacturer: CentraLite
+    model: 3460-L
+    deviceProfileName: iris-one-button-battery
   - id: SmartSense/button
     deviceLabel: Button
     manufacturer: Samjin

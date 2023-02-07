@@ -126,12 +126,12 @@ zwaveManufacturer:
     productType: 0x0093
     productId: 0x0114
     deviceProfileName: water-battery-powersource
-#   - id: "homeseer/multi/hsm100"
-#     deviceLabel: Homeseer Multi Sensor HSM100
-#     manufacturerId: 0x001E
-#     productType: 0x0002
-#     productId: 0x0001
-#     deviceProfileName: motion-battery-illuminance-temperature
+  - id: "homeseer/multi/hsm100"
+    deviceLabel: Homeseer Multi Sensor HSM100
+    manufacturerId: 0x001E
+    productType: 0x0002
+    productId: 0x0001
+    deviceProfileName: motion-battery-illuminance-temperature
   - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
     deviceLabel: Fibaro Open/Closed Sensor
     manufacturerId: 0x010F
@@ -510,11 +510,11 @@ zwaveManufacturer:
     productType: 0x0053
     productId: 0x0216
     deviceProfileName: water-battery-temperature
-#   - id: fibaro/motion/zw5
-#     deviceLabel: Fibaro Motion Sensor
-#     manufacturerId: 0x010F
-#     productType: 0x0801
-#     deviceProfileName: fibaro-motion-sensor
+  - id: fibaro/motion/zw5
+    deviceLabel: Fibaro Motion Sensor
+    manufacturerId: 0x010F
+    productType: 0x0801
+    deviceProfileName: fibaro-motion-sensor
   - id: everspring/flood/ST812/1
     deviceLabel: Everspring Water Sensor
     manufacturerId: 0x0060
