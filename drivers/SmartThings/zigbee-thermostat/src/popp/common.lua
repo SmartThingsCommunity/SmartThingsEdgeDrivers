@@ -2,23 +2,12 @@ local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
 
-local utils = require "st.utils"
-local log   = require "log"
-
--- Zigbee specific utils
-local clusters = require "st.zigbee.zcl.clusters"
-local ThermostatUIConfig = clusters.ThermostatUserInterfaceConfiguration
--- local Thermostat = clusters.Thermostat
-
 local last_setpointTemp = nil
 
 local ThermostatMode = capabilities.thermostatMode
 local TemperatureAlarm = capabilities.temperatureAlarm
 local Switch = capabilities.switch
---local WindowOpenDetectionCap = capabilities["preparestream40760.windowOpenDetection"]
---local HeatingMode = capabilities["preparestream40760.heatMode"]
 
-local log = require "log"
 local common = {}
 
 common.MIN_SETPOINT = 5
@@ -40,18 +29,6 @@ common.WINDOW_OPEN_DETECTION_MAP = {
 }
 common.EXTERNAL_OPEN_WINDOW_DETECTION_ID = 0x4003
 
--- Preference variables
-common.KEYPAD_LOCK = "keypadLock"
-common.VIEWING_DIRECTION = "viewingDirection"
-common.ETRV_ORIENTATION = "eTRVOrientation"
-common.REGUALTION_SETPOINT_OFFSET = "regulationSetPointOffset"
-common.WINDOW_OPEN_FEATURE = "windowOpenFeature"
-common.VIEWING_DIRECTION_ATTR = 0x4000
-common.ETRV_ORIENTATION_ATTR = 0x4014
-common.REGULATION_SETPOINT_OFFSET_ATTR = 0x404B
-common.WINDOW_OPEN_FEATURE_ATTR = 0x4051
-common.ETRV_WINDOW_OPEN_DETECTION_ATTR = 0x4000
-
 local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.off.NAME,
   ThermostatMode.thermostatMode.heat.NAME,
@@ -70,35 +47,6 @@ local function has_member(haystack, needle)
   return false
 end
 
--- preference table
-common.PREFERENCE_TABLES = {
-  keypadLock = {
-    clusterId = ThermostatUIConfig.ID,
-    attributeId = ThermostatUIConfig.attributes.KeypadLockout.ID,
-    dataType = data_types.Enum8
-  },
-  viewingDirection = {
-    clusterId = ThermostatUIConfig.ID,
-    attributeId = common.VIEWING_DIRECTION_ATTR,
-    dataType = data_types.Enum8
-  },
-  eTRVOrientation = {
-    clusterId = common.THERMOSTAT_CLUSTER_ID,
-    attributeId = common.ETRV_ORIENTATION_ATTR,
-    dataType = data_types.Boolean
-  },
-  regulationSetPointOffset = {
-    clusterId = common.THERMOSTAT_CLUSTER_ID,
-    attributeId = common.REGULATION_SETPOINT_OFFSET_ATTR,
-    dataType = data_types.Int8
-  } ,
-  windowOpenFeature = {
-    clusterId = common.THERMOSTAT_CLUSTER_ID,
-    attributeId = common.WINDOW_OPEN_FEATURE_ATTR,
-    dataType = data_types.Boolean
-  }
-}
-
 --- Default handler for lock state attribute on the door lock cluster
 ---
 --- This converts the lock state value to the appropriate value
@@ -112,13 +60,9 @@ common.window_open_detection_handler = function(driver, device, value, zb_rx)
 end
 
 common.switch_handle_on = function(driver, device, cmd)
-  
-  log.debug("### on command: " .. utils.stringify_table(cmd, "command table", true))
-
   local get_cmd = cmd.command or cmd
   
   if get_cmd == "on" then
-    --device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID, common.EXTERNAL_OPEN_WINDOW_DETECTION_ID, common.MFG_CODE, '\x00'))
     device:send(cluster_base.write_manufacturer_specific_attribute(device, common.THERMOSTAT_CLUSTER_ID,
       common.EXTERNAL_OPEN_WINDOW_DETECTION_ID,
       common.MFG_CODE, data_types.Boolean, false))
@@ -126,9 +70,7 @@ common.switch_handle_on = function(driver, device, cmd)
   end
 end
 
-common.switch_handle_off = function(driver, device, cmd)
-  log.debug("### off command: " .. utils.stringify_table(cmd, "command table", true))
-  
+common.switch_handle_off = function(driver, device, cmd)  
   local get_cmd = cmd.command or cmd
 
   if get_cmd == "off" then
@@ -148,7 +90,6 @@ end
 --- @param device st.zigbee.Device The device this message was received from containing identifying information
 --- @param command LockState the value of the door lock cluster lock state attribute
 common.heat_cmd_handler = function(driver, device, mode)
-  log.debug("### mode: " .. mode)
   local payload = nil
 
   if has_member(SUPPORTED_MODES, mode) then
@@ -190,12 +131,6 @@ common.heat_cmd_handler = function(driver, device, mode)
       if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
         common.switch_handle_on(driver, device, 'on')
       end
-
-    else
-      -- turn switch on
-      if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "on" then
-        common.switch_handle_off(driver, device, 'off')
-      end
     end
 
     device:set_field(common.STORED_HEAT_MODE, mode)
@@ -207,21 +142,5 @@ common.heat_cmd_handler = function(driver, device, mode)
       ThermostatMode.thermostatMode.NAME)))
   end
 end
-
---[[ function common.get_cluster_configurations()
-  return {
-    [WindowOpenDetectionCap.ID] = {
-      {
-        cluster = common.THERMOSTAT_CLUSTER_ID,
-        attribute = common.WINDOW_OPEN_DETECTION_ID,
-        minimum_interval = 60,
-        maximum_interval = 43200,
-        reportable_change = 0x00,
-        data_type = data_types.Enum8,
-        mfg_code = common.MFG_CODE
-      }
-    }
-  }
-end ]]
 
 return common
