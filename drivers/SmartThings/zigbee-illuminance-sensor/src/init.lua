@@ -14,20 +14,12 @@
 
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
-local device_management = require "st.zigbee.device_management"
 local defaults = require "st.zigbee.defaults"
-local clusters = require "st.zigbee.zcl.clusters"
-local constants = require "st.zigbee.constants"
-local IlluminanceMeasurement = clusters.IlluminanceMeasurement
-
 
 local zigbee_illuminance_driver = {
   supported_capabilities = {
     capabilities.illuminanceMeasurement,
     capabilities.battery
-  },
-  sub_drivers = {
-    require("aqara")
   }
 }
 
