@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local st_device = require "st.device"
+local utils = require "st.utils"
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -66,19 +67,21 @@ end
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     local children_amount = get_children_amount(device)
-    for i = 2, children_amount+1, 1 do
-      local device_name_without_number = string.sub(device.label, 0,-2)
-      local name = string.format("%s%d", device_name_without_number, i)
-      if find_child(device, i) == nil then
-        local metadata = {
-          type = "EDGE_CHILD",
-          label = name,
-          profile = "basic-switch",
-          parent_device_id = device.id,
-          parent_assigned_child_key = string.format("%02X", i),
-          vendor_provided_label = name,
-        }
-        driver:try_create_device(metadata)
+    if not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
+      for i = 2, children_amount+1, 1 do
+        local device_name_without_number = string.sub(device.label, 0,-2)
+        local name = string.format("%s%d", device_name_without_number, i)
+        if find_child(device, i) == nil then
+          local metadata = {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = "basic-switch",
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%02X", i),
+            vendor_provided_label = name,
+          }
+          driver:try_create_device(metadata)
+        end
       end
     end
   end
