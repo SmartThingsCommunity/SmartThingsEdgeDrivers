@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "frient/SMSZB-120"
+    deviceLabel: Intelligent Smoke Alarm
+    manufacturer: frient A/S
+    model: SMSZB-120
+    deviceProfileName: smoke-siren-temperature-battery

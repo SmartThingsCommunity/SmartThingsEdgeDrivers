@@ -1,0 +1,42 @@
+name: smoke-siren-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: smokeDetector
+    version: 1
+  - id: alarm
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmokeDetector
+metadata:
+  vid: 45c81942-30bb-38b9-9e66-3343e2a8c330
+  mnmn: SmartThingsCommunity
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - title: "Temperature Sensitivity (°)"
+    name: temperatureSensitivity
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0
+  - title: "Alarm duration (s)"
+    name: warningDuration
+    description: "After how many seconds should the alarm turn off"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 240

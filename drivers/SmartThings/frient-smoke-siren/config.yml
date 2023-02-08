@@ -1,0 +1,5 @@
+name: 'frient Water leak_Heat_Smoke_Siren'
+description: 'frient EDGE driver for Intelligent smoke alarm, Intelligent heat alarm, Water leak detector and Smart Siren'
+packageKey: 'frient-smoke-siren'
+permissions:
+  zigbee: {}
