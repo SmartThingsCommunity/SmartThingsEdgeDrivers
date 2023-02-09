@@ -40,8 +40,8 @@ def compare_embedded_configs(cap1, cap2):
                     config_match_found = True
                 # check for "enabledValues" to see if it is just a difference in ordering of the same values
                 elif "enabledValues" in config1 and "enabledValues" in config2:
-                    set1 = set( value for value in config1["enabledValues"])
-                    set2 = set( value for value in config2["enabledValues"])
+                    set1 = set(value for value in config1["enabledValues"])
+                    set2 = set(value for value in config2["enabledValues"])
                     if set1 == set2:
                         config_match_found = True
 
@@ -88,8 +88,8 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
                             for y, new_component in enumerate(new_profile_map["components"]):
                                 current_component = current_profile_map["components"][y]
 
-                                # compare categores
-                                if new_component["categories"] != current_component["categories"]:
+                                # compare categores. Use get() in case the category does not exist like in "thing" profiles
+                                if new_component.get("categories") != current_component.get("categories"):
                                     is_duplicate = False
                                     break
 
