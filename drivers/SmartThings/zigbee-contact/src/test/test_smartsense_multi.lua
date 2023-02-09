@@ -33,6 +33,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     zigbee_endpoints = {
       [1] = {
         id = 1,
+        manufacturer = "SmartThings",
+        model = "PGC313",
         server_clusters = {SMARTSENSE_MULTI_CLUSTER}
       }
     }
