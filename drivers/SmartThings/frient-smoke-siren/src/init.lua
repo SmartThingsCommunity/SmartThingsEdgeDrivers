@@ -246,9 +246,16 @@ end
 
 --- @param driver ZigbeeDriver The current driver running containing necessary context for execution
 --- @param device st.zigbee.Device The device this message was received from containing identifying information
+local function device_added(driver, device)
+  log.trace "Added device"
+  BASE_FUNCTIONS.added(driver, device)
+end
+
+--- @param driver ZigbeeDriver The current driver running containing necessary context for execution
+--- @param device st.zigbee.Device The device this message was received from containing identifying information
 local function device_init(driver, device)
   log.trace "Initializing device"
-  BASE_FUNCTIONS.do_init(driver, device)
+  BASE_FUNCTIONS.init(driver, device)
 end
 
 local zigbee_smoke_siren_driver_template = {
@@ -270,6 +277,7 @@ local zigbee_smoke_siren_driver_template = {
    },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   lifecycle_handlers = {
+    added = device_added,
     init = device_init,
     doConfigure = do_configure,
     infoChanged = do_configure,

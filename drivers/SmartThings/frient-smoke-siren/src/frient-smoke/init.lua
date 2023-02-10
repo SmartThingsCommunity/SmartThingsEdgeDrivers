@@ -1,8 +1,6 @@
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local device_management = require "st.zigbee.device_management"
 local capabilities = require "st.capabilities"
-local util = require "st.utils"
 local log = require "log"
 
 local IASZone = zcl_clusters.IASZone
