@@ -3,6 +3,7 @@ local log = require "log"
 local json = require "st.json"
 
 local lb_utils = require "lunchbox.util"
+local st_utils = require "st.utils"
 
 local EventHandlers = require "api.event_handlers"
 local PlayerFields = require "fields".SonosPlayerFields
@@ -27,7 +28,7 @@ local SonosRestApi = require "api.rest"
 local SonosConnection = {}
 SonosConnection.__index = SonosConnection
 
-local self_subscriptions = { "groups", "playerVolume" }
+local self_subscriptions = { "groups", "playerVolume", "audioClip" }
 local coordinator_subscriptions = { "groupVolume", "playback", "favorites", "playbackMetadata" }
 local favorites_version = ""
 
@@ -114,11 +115,13 @@ end
 
 ---@param sonos_conn SonosConnection
 local function _spawn_reconnect_task(sonos_conn)
+  log.trace("Spawning reconnect task for ", sonos_conn.device.label)
   cosock.spawn(function()
+    local backoff = st_utils.backoff_builder(60, 1, 0.1)
     while not sonos_conn:is_running() do
       local start_success = sonos_conn:start()
       if start_success then return end
-      cosock.socket.sleep(0.3)
+      cosock.socket.sleep(backoff())
     end
   end, string.format("%s Reconnect Task", sonos_conn.device.label))
 end
@@ -138,7 +141,7 @@ function SonosConnection.new(driver, device)
       if header.type == "groups" then
         local household_id, current_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
-        self.driver.sonos:update_household_info(header.householdId, body)
+        self.driver.sonos:update_household_info(header.householdId, body, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
         Router.cleanup_unused_sockets(self.driver)
@@ -155,6 +158,11 @@ function SonosConnection.new(driver, device)
         if player_id == header.playerId and body.volume and (body.muted ~= nil) then
           EventHandlers.handle_player_volume(self.device, body.volume, body.muted)
         end
+      elseif header.type == "audioClipStatus" then
+        local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
+        if player_id == header.playerId then
+          EventHandlers.handle_audio_clip_status(self.device, body.audioClips)
+        end
       elseif header.type == "groupVolume" then
         if body.volume and (body.muted ~= nil) then
           local group = self.driver.sonos:get_household(header.householdId).groups[header.groupId] or { playerIds = {} }
@@ -164,7 +172,7 @@ function SonosConnection.new(driver, device)
             --- is being deleted so we check for the presence of emit event as a proxy for
             --- whether or not this device is currently capable of emitting events.
             if device_for_player and device_for_player.emit_event then
-              EventHandlers.handle_player_volume(device_for_player, body.volume, body.muted)
+              EventHandlers.handle_group_volume(device_for_player, body.volume, body.muted)
             end
           end
         end
@@ -248,7 +256,9 @@ end
 --- Whether or not the connection has all of the live websocket connections it needs to function
 --- @return boolean
 function SonosConnection:is_running()
-  return self:self_running() and self:coordinator_running()
+  local self_running = self:self_running()
+  local coord_running = self:coordinator_running()
+  return  self_running and coord_running
 end
 
 --- Whether or not the connection has a live websocket connection

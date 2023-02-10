@@ -26,6 +26,14 @@ local function _do_send_to_group(driver, device, payload)
   _do_send(device, payload)
 end
 
+local function _do_send_to_self(driver, device, payload)
+  local household_id, player_id = driver.sonos:get_player_for_device(device)
+  payload[1].householdId = household_id
+  payload[1].playerId = player_id
+
+  _do_send(device, payload)
+end
+
 function CapCommandHandlers.handle_play(driver, device, _cmd)
   local payload = {
     { namespace = "playback", command = "play" }, {}
@@ -65,13 +73,55 @@ end
 function CapCommandHandlers.handle_set_mute(driver, device, cmd)
   local set_mute = (cmd.args and cmd.args.state == "muted")
   local payload = {
+    { namespace = "playerVolume", command = "setMute" },
+    { muted = set_mute }
+  }
+  _do_send_to_self(driver, device, payload)
+end
+
+function CapCommandHandlers.handle_volume_up(driver, device, cmd)
+  local payload = {
+    { namespace = "playerVolume", command = "setRelativeVolume" },
+    { volumeDelta = 5 }
+  }
+  _do_send_to_self(driver, device, payload)
+end
+
+function CapCommandHandlers.handle_volume_down(driver, device, cmd)
+  local payload = {
+    { namespace = "playerVolume", command = "setRelativeVolume" },
+    { volumeDelta = -5 }
+  }
+  _do_send_to_self(driver, device, payload)
+end
+
+function CapCommandHandlers.handle_set_volume(driver, device, cmd)
+  local new_volume = st_utils.clamp_value(cmd.args.volume, 0, 100)
+  local payload = {
+    { namespace = "playerVolume", command = "setVolume" },
+    { volume = new_volume }
+  }
+  _do_send_to_self(driver, device, payload)
+end
+
+function CapCommandHandlers.handle_group_mute(driver, device, _cmd)
+  CapCommandHandlers.handle_group_set_mute(driver, device, { args = { state = "muted" } })
+end
+
+function CapCommandHandlers.handle_group_unmute(driver, device, _cmd)
+  CapCommandHandlers.handle_group_set_mute(driver, device, { args = { state = "unmuted" } })
+end
+
+function CapCommandHandlers.handle_group_set_mute(driver, device, cmd)
+  local set_mute = (cmd.args and cmd.args.state == "muted")
+  local payload = {
     { namespace = "groupVolume", command = "setMute" },
     { muted = set_mute }
   }
   _do_send_to_group(driver, device, payload)
 end
 
-function CapCommandHandlers.handle_volume_up(driver, device, cmd)
+function CapCommandHandlers.handle_group_volume_up(driver, device, cmd)
   local payload = {
     { namespace = "groupVolume", command = "setRelativeVolume" },
     { volumeDelta = 5 }
@@ -79,7 +129,7 @@ function CapCommandHandlers.handle_volume_up(driver, device, cmd)
   _do_send_to_group(driver, device, payload)
 end
 
-function CapCommandHandlers.handle_volume_down(driver, device, cmd)
+function CapCommandHandlers.handle_group_volume_down(driver, device, cmd)
   local payload = {
     { namespace = "groupVolume", command = "setRelativeVolume" },
     { volumeDelta = -5 }
@@ -87,7 +137,7 @@ function CapCommandHandlers.handle_volume_down(driver, device, cmd)
   _do_send_to_group(driver, device, payload)
 end
 
-function CapCommandHandlers.handle_set_volume(driver, device, cmd)
+function CapCommandHandlers.handle_group_set_volume(driver, device, cmd)
   local new_volume = st_utils.clamp_value(cmd.args.volume, 0, 100)
   local payload = {
     { namespace = "groupVolume", command = "setVolume" },
@@ -105,6 +155,22 @@ function CapCommandHandlers.handle_play_preset(driver, device, cmd)
     }
   }
   _do_send_to_group(driver, device, payload)
+end
+
+function CapCommandHandlers.handle_audio_notification(driver, device, cmd)
+  local payload = {
+    { namespace = "audioClip", command = "loadAudioClip" },
+    {
+      appId = "edge.smartthings.com",
+      name = "SmartThings Audio Notification",
+      streamUrl = cmd.args.uri,
+    }
+  }
+
+  if type(cmd.args.level) == 'number' then
+    payload[2].volume = cmd.args.level
+  end
+  _do_send_to_self(driver, device, payload)
 end
 
 return CapCommandHandlers
