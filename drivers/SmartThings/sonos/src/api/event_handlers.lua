@@ -1,4 +1,7 @@
 local capabilities = require "st.capabilities"
+local log = require "log"
+
+local st_utils = require "st.utils"
 
 local CapEventHandlers = {}
 
@@ -15,6 +18,32 @@ function CapEventHandlers.handle_player_volume(device, new_volume, is_muted)
     device:emit_event(capabilities.audioMute.mute.muted())
   else
     device:emit_event(capabilities.audioMute.mute.unmuted())
+  end
+end
+
+function CapEventHandlers.handle_group_volume(device, new_volume, is_muted)
+  device:emit_event(capabilities.mediaGroup.groupVolume(new_volume))
+  if is_muted then
+    device:emit_event(capabilities.mediaGroup.groupMute.muted())
+  else
+    device:emit_event(capabilities.mediaGroup.groupMute.unmuted())
+  end
+end
+
+function CapEventHandlers.handle_group_update(device, group_info)
+  local groupRole, groupPrimaryDeviceId, groupId = table.unpack(group_info)
+  device:emit_event(capabilities.mediaGroup.groupRole(groupRole))
+  device:emit_event(capabilities.mediaGroup.groupPrimaryDeviceId(groupPrimaryDeviceId))
+  device:emit_event(capabilities.mediaGroup.groupId(groupId))
+end
+
+function CapEventHandlers.handle_audio_clip_status(device, clips)
+  for _, clip in ipairs(clips) do
+    if clip.status == "ACTIVE" then
+      log.debug(st_utils.stringify_table(clip, "Playing Audio Clip: ", false))
+    elseif clip.status == "DONE" then
+      log.debug(st_utils.stringify_table(clip, "Completed Playing Audio Clip: ", false))
+    end
   end
 end
 

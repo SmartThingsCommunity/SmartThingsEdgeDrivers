@@ -26,6 +26,9 @@ local zigbee_illuminance_driver = {
     capabilities.illuminanceMeasurement,
     capabilities.battery
   },
+  sub_drivers = {
+    require("aqara")
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_illuminance_driver, zigbee_illuminance_driver.supported_capabilities)
