@@ -225,7 +225,6 @@ end
 --- @param driver ZigbeeDriver The current driver running containing necessary context for execution
 --- @param device st.zigbee.Device The device this message was received from containing identifying information
 local function do_refresh(driver, device)
-  log.trace("Refreshing device")--..util.stringify_table(device, nil, true))
   BASE_FUNCTIONS.do_refresh(driver, device)
 end
 
@@ -273,7 +272,8 @@ local zigbee_smoke_siren_driver_template = {
     capabilities.powerSource,
   },
   sub_drivers = {
-    require("frient-smoke")
+    require("frient-smoke"),
+    require("frient-siren")
    },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   lifecycle_handlers = {

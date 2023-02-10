@@ -1,0 +1,70 @@
+name: siren-battery-source-tamper
+components:
+- id: main
+  capabilities:
+  - id: alarm
+    version: 1
+  - id: tone
+    version: 1
+  - id: battery
+    version: 1
+  - id: powerSource
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Siren
+metadata:
+  vid: 656d48d0-0c37-3573-8ba5-03122a5b4c5c
+  mnmn: SmartThingsCommunity
+preferences:
+  - title: "Alarm sound"
+    name: warningSound
+    description: "Type to sound to play when alarm is triggered"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        BURGLAR: "Burglar"
+        FIRE: "Fire"
+        EMERGENCY: "Emergency"
+        POLICE_PANIC: "Panic"
+        FIRE_PANIC: "Panic Fire"
+        EMERGENCY_PANIC: "Panic Emergency"
+      default: "BURGLAR"
+  - title: "Alarm duration (s)"
+    name: warningDuration
+    description: "After how many seconds should the alarm turn off"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 240
+  - title: "Find sensor sound"
+    name: squawkSound
+    description: "Squawk sound to play when beep tone is triggered"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        SOUND_FOR_SYSTEM_IS_ARMED: "Armed"
+        SOUND_FOR_SYSTEM_IS_DISARMED: "Disarmed"
+      default: "SOUND_FOR_SYSTEM_IS_ARMED"
+  - title: "Volume"
+    name: warningLevel
+    description: "Alarm/Beep volume level"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        LOW_LEVEL: "Low"
+        MEDIUM_LEVEL: "Medium"
+        HIGH_LEVEL: "High"
+        VERY_HIGH_LEVEL: "Very High"
+      default: "VERY_HIGH_LEVEL"
+      

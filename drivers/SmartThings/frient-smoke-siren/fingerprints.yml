@@ -4,3 +4,8 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMSZB-120
     deviceProfileName: smoke-siren-temperature-battery
+  - id: "frient/SIRZB-110"
+    deviceLabel: Smart Siren
+    manufacturer: frient A/S
+    model: SIRZB-110
+    deviceProfileName: siren-battery-source-tamper

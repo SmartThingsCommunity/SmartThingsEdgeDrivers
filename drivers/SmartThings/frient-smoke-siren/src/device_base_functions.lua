@@ -70,27 +70,15 @@ end
 --- @param driver ZigbeeDriver The current driver running containing necessary context for execution
 --- @param device st.zigbee.Device The device this message was received from containing identifying information
 function BASE_FUNCTIONS.do_refresh(driver, device)
-  for _, fingerprint in ipairs(FRIENT_DEVICE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      if fingerprint.ENDPOINT_TAMPER then
-        device:send(IASZone.attributes.ZoneStatus:read(device):to_endpoint(fingerprint.ENDPOINT_TAMPER))
-      end
-      if fingerprint.ENDPOINT_TEMPERATURE then
-        device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(fingerprint.ENDPOINT_TEMPERATURE))
-      end
-      if device:supports_capability(capabilities.battery) then
-        device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-      end
+  device:refresh()
 
-      -- Check if we have the software version
-      local sw_version = device:get_field(BASE_FUNCTIONS.PRIMARY_SW_VERSION)
-      if ((sw_version == nil) or (sw_version == "")) then
-        log.warn("Refresh: Firmware version not detected, checking software version")
-        device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, BASE_FUNCTIONS.DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, BASE_FUNCTIONS.DEVELCO_MANUFACTURER_CODE))
-      else
-        log.trace("Refresh: Firmware version: 0x" .. sw_version)
-      end
-    end
+  -- Check if we have the software version
+  local sw_version = device:get_field(BASE_FUNCTIONS.PRIMARY_SW_VERSION)
+  if ((sw_version == nil) or (sw_version == "")) then
+    log.warn("Refresh: Firmware version not detected, checking software version")
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, BASE_FUNCTIONS.DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, BASE_FUNCTIONS.DEVELCO_MANUFACTURER_CODE))
+  else
+    log.trace("Refresh: Firmware version: 0x" .. sw_version)
   end
 end
 

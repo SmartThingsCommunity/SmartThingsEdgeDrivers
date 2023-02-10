@@ -39,12 +39,6 @@ local MFG_CODE                        = 0x1015
 local mock_device                     = test.mock_device.build_test_zigbee_device(
     { profile          = t_utils.get_profile_definition("smoke-siren-temperature-battery.yml"),
       zigbee_endpoints = {
-        --[[[1] = {
-          id              = 0x01,
-          manufacturer    = "frient A/S",
-          model           = "SMSZB-120",
-          server_clusters = { 0x0000, 0x0001, 0x0003, 0x0005, 0x0006, 0x000f, 0x0020, 0x0402, 0x0500, 0x0502 }
-        }]]
         [0x01] = {
           id              = 0x01,
           manufacturer    = "frient A/S",
@@ -205,111 +199,5 @@ test.register_coroutine_test(
       end
     }
 )
-
---[[test.register_coroutine_test(
-    "Configure should configure all necessary attributes",
-    function ()
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         IASZone.attributes.ZoneStatus:read(mock_device)
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(
-                                             mock_device,
-                                             30,
-                                             21600,
-                                             1
-                                         )
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(
-                                             mock_device,
-                                             zigbee_test_utils.mock_hub_eui,
-                                             PowerConfiguration.ID
-                                         )
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         IASZone.attributes.IASCIEAddress:write(
-                                             mock_device,
-                                             zigbee_test_utils.mock_hub_eui
-                                         )
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         IASZone.server.commands.ZoneEnrollResponse(
-                                             mock_device,
-                                             IasEnrollResponseCode.SUCCESS,
-                                             0x00
-                                         )
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         IASZone.attributes.ZoneStatus:configure_reporting(
-                                             mock_device,
-                                             0,
-                                             180,
-                                             0
-                                         )
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(
-                                             mock_device,
-                                             zigbee_test_utils.mock_hub_eui,
-                                             IASZone.ID
-                                         )
-                                       })
-
-      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
-)]]
-
---[[test.register_message_test(
-    "Refresh should read all necessary attributes",
-    {
-      {
-        channel = "device_lifecycle",
-        direction = "receive",
-        message = {mock_device.id, "added"}
-      },
-      {
-        channel = "capability",
-        direction = "receive",
-        message = {
-          mock_device.id,
-          { capability = "refresh", component = "main", command = "refresh", args = {} }
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-        }
-      },
-      {
-        channel = "zigbee",
-        direction = "send",
-        message = {
-          mock_device.id,
-          IASZone.attributes.ZoneStatus:read(mock_device)
-        }
-      },
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
-)]]
 
 test.run_registered_tests()
