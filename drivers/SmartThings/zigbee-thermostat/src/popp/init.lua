@@ -14,7 +14,7 @@ local Thermostat = clusters.Thermostat
 
 -- ST Capabilities
 local capabilities = require "st.capabilities"
-local TemperatureMeasurement = capabilities.TemperatureMeasurement
+local TemperatureMeasurement = capabilities.temperatureMeasurement
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState = capabilities.thermostatOperatingState
@@ -132,8 +132,8 @@ end
 local thermostat_local_temp_attr_handler = function(driver, device, value, zb_rx)
 
   local temperature = value.value
-  local last_temp = device:get_latest_state("main", capabilities.temperatureMeasurement.ID,
-    capabilities.temperatureMeasurement.temperature.NAME)
+  local last_temp = device:get_latest_state("main", TemperatureMeasurement.ID,
+          TemperatureMeasurement.temperature.NAME)
   local use_last = nil
 
   if (temperature == 0x8000 or temperature == -32768) then -- fetch invalid temperature
@@ -154,12 +154,21 @@ local thermostat_local_temp_attr_handler = function(driver, device, value, zb_rx
     temperature = temperature / 100
   end
 
-  device:emit_event(capabilities.temperatureMeasurement.temperature({ value = temperature, unit = "C" }))
+  device:emit_event(TemperatureMeasurement.temperature({ value = temperature, unit = "C" }))
 end
 
 local function thermostat_heating_set_point_attr_handler(driver, device, value, zb_rx)
   local point_value = value.value
-  device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = point_value / 100, unit = "C" }))
+  device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = point_value / 100, unit = "C" }))
+end
+
+
+local function external_open_window_detection_handler(driver, device, value, zb_rx)
+  if (value.value == false) then
+    device:emit_event(Switch.switch.on())
+  else
+    device:emit_event(Switch.switch.off())
+  end
 end
 
 local function thermostat_mode_setter(mode_name)
@@ -264,14 +273,6 @@ local function info_changed(driver, device, event, args)
   end
 end
 
--- do refresh with delay of 5 seconds after driver has changed
-local driver_switched = function(driver, device)
-  device.thread:call_with_delay(5, function()
-    do_refresh(driver, device)
-    do_configure(driver, device)
-  end)
-end
-
 local popp_thermostat = {
   NAME = "POPP Smart Thermostat (Zigbee)",
   supported_capabilities = {
@@ -307,7 +308,8 @@ local popp_thermostat = {
       [Thermostat.ID] = {
         [Thermostat.attributes.LocalTemperature.ID] = thermostat_local_temp_attr_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = thermostat_heating_set_point_attr_handler,
-        [common.WINDOW_OPEN_DETECTION_ID] = common.window_open_detection_handler
+        [common.WINDOW_OPEN_DETECTION_ID] = common.window_open_detection_handler,
+        [common.EXTERNAL_OPEN_WINDOW_DETECTION_ID] = external_open_window_detection_handler
       }
     }
   },
@@ -315,8 +317,7 @@ local popp_thermostat = {
     init = battery_defaults.build_linear_voltage_init(2.4, 3.2),
     added = device_added,
     doConfigure = do_configure,
-    infoChanged = info_changed--[[ ,
-    driverSwitched = driver_switched ]]
+    infoChanged = info_changed
   },
   can_handle = is_popp_thermostat
 }

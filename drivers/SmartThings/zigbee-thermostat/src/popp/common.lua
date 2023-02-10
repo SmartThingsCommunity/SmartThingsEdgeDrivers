@@ -8,6 +8,8 @@ local ThermostatMode = capabilities.thermostatMode
 local TemperatureAlarm = capabilities.temperatureAlarm
 local Switch = capabilities.switch
 
+local log = require 'log'
+
 local common = {}
 
 common.MIN_SETPOINT = 5
@@ -66,7 +68,7 @@ common.switch_handle_on = function(driver, device, cmd)
     device:send(cluster_base.write_manufacturer_specific_attribute(device, common.THERMOSTAT_CLUSTER_ID,
       common.EXTERNAL_OPEN_WINDOW_DETECTION_ID,
       common.MFG_CODE, data_types.Boolean, false))
-    device:emit_event(Switch.switch.on())
+    --device:emit_event(Switch.switch.on())
   end
 end
 
@@ -78,7 +80,7 @@ common.switch_handle_off = function(driver, device, cmd)
     device:send(cluster_base.write_manufacturer_specific_attribute(device, common.THERMOSTAT_CLUSTER_ID,
       common.EXTERNAL_OPEN_WINDOW_DETECTION_ID,
       common.MFG_CODE, data_types.Boolean, true))
-    device:emit_event(Switch.switch.off())
+    --device:emit_event(Switch.switch.off())
   end
 end
 
@@ -116,6 +118,7 @@ common.heat_cmd_handler = function(driver, device, mode)
       -- send the specific command as ZigbeeMessageTx to the device
       device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID, common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
       
+      log.debug("### switch state heat:" .. device:get_latest_state("main", Switch.ID, Switch.switch.NAME))
       -- turn switch on
       if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
         common.switch_handle_on(driver, device, 'on')
@@ -127,11 +130,18 @@ common.heat_cmd_handler = function(driver, device, mode)
       payload = string.char(t2, p2, p3)
       -- send the specific command as ZigbeeMessageTx to the device
       device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID, common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
+      
+      log.debug("### switch state eco:" .. device:get_latest_state("main", Switch.ID, Switch.switch.NAME))
       -- turn switch on 
       if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
         common.switch_handle_on(driver, device, 'on')
       end
     end
+
+    -- turn switch on
+    --[[ if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
+      common.switch_handle_on(driver, device, 'on')
+    end ]]
 
     device:set_field(common.STORED_HEAT_MODE, mode)
     device:emit_event(ThermostatMode.thermostatMode[mode]())

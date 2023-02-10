@@ -48,7 +48,6 @@ end
 
 test.set_test_init_function(test_init)
 
---[[ -- # SUCCESS
 test.register_coroutine_test(
   "Setting thermostat heating setpoint should generate correct zigbee messages",
   function()
@@ -75,9 +74,9 @@ test.register_coroutine_test(
       }
     )
   end
-) ]]
+)
 
---[[ -- # SUCCESS
+
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
@@ -99,9 +98,8 @@ test.register_coroutine_test(
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
-) ]]
+)
 
--- # SUCCESS
 test.register_message_test(
   "Driver should poll device at the inclusion",
   {
@@ -166,7 +164,6 @@ test.register_message_test(
   }
 )
 
---[[ -- # SUCCESS
 test.register_message_test(
   "Refresh should read all necessary attributes",
   {
@@ -224,9 +221,8 @@ test.register_message_test(
       }
     }
   }
-) ]]
+)
 
---[[ -- # SUCCESS
 test.register_coroutine_test(
   "Check all preferences via infoChanged",
   function()
@@ -259,9 +255,8 @@ test.register_coroutine_test(
       capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })))
     test.wait_for_events()
   end
-) ]]
+)
 
---[[ -- # SUCCESS
 test.register_coroutine_test(
   "Battery reports test cases",
   function()
@@ -285,6 +280,6 @@ test.register_coroutine_test(
       test.wait_for_events()
     end
   end
-) ]]
+)
 
 test.run_registered_tests()
