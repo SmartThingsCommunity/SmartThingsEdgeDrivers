@@ -89,8 +89,8 @@ local function do_configure(self, device)
   device:refresh()
 end
 
-local aqara_smart_plug_version_handler = {
-  NAME = "Aqara Smart Plug Version Handler",
+local aqara_smart_plug_handler = {
+  NAME = "Aqara Smart Plug Handler",
   lifecycle_handlers = {
     doConfigure = do_configure
   },
@@ -118,4 +118,4 @@ local aqara_smart_plug_version_handler = {
   end
 }
 
-return aqara_smart_plug_version_handler
+return aqara_smart_plug_handler
