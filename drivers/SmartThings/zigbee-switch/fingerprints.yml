@@ -9,6 +9,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  - id: "LUMI/lumi.light.acn004"
+    deviceLabel: Aqara Smart Dimmer Controller T1 Pro
+    manufacturer: LUMI
+    model: lumi.light.acn004
+    deviceProfileName: aqara-light
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
