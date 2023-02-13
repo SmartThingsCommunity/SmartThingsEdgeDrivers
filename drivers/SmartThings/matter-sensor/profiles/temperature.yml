@@ -10,3 +10,6 @@ components:
     version: 1
   categories:
   - name: GenericSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

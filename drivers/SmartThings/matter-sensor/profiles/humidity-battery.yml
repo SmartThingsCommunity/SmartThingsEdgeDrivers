@@ -12,3 +12,6 @@ components:
     version: 1
   categories:
   - name: HumiditySensor
+preferences:
+  - preferenceId: humidityOffset
+    explicit: true
