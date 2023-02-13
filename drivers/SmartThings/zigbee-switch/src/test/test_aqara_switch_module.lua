@@ -71,10 +71,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      Basic.attributes.ApplicationVersion:read(mock_device)
-    })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,

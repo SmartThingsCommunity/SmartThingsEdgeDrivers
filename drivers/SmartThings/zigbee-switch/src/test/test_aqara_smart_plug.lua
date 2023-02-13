@@ -89,10 +89,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      Basic.attributes.ApplicationVersion:read(mock_device)
-    })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -100,6 +96,30 @@ test.register_coroutine_test(
           , MFG_CODE, data_types.Uint8, 1)
       }
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Basic.attributes.ApplicationVersion:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      OnOff.attributes.OnOff:read(mock_device)
+    })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
@@ -120,6 +140,15 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Power meter handled",
   function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device, 32)
+      }
+    )
+    mock_device:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
+
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device,
@@ -137,6 +166,15 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Energy meter handled",
   function()
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device, 32)
+      }
+    )
+    mock_device:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
+    
     local current_time = os.time() - 60 * 20
     mock_device:set_field(LAST_REPORT_TIME, current_time)
 

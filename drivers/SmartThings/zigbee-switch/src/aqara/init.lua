@@ -10,7 +10,6 @@ local OnOff = clusters.OnOff
 local AnalogInput = clusters.AnalogInput
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
-local Basic = clusters.Basic
 
 local restorePowerState = capabilities["stse.restorePowerState"]
 local changeToWirelessSwitch = capabilities["stse.changeToWirelessSwitch"]
@@ -34,13 +33,11 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local APPLICATION_VERSION = "application_version"
 
 local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.plug.maeu01", children = 1, profile = "switch-power-energy-consumption-report-aqara" },
-  { mfr = "LUMI", model = "lumi.switch.b1laus01", children = 1, profile = "aqara-switch" },
-  { mfr = "LUMI", model = "lumi.switch.b2laus01", children = 2, profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n1acn1", children = 1, profile = "aqara-switch-power" },
-  { mfr = "LUMI", model = "lumi.switch.n2acn1", children = 2, profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n3acn1", children = 3, profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n0agl1", children = 1, profile = "aqara-switch-module" }
+  { mfr = "LUMI", model = "lumi.plug.maeu01", children = 1, child_profile = "" },
+  { mfr = "LUMI", model = "lumi.switch.n0agl1", children = 1, child_profile = "" },
+  { mfr = "LUMI", model = "lumi.switch.n1acn1", children = 1, child_profile = "" },
+  { mfr = "LUMI", model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
 }
 
 local wireless_switch_endpoint_map = {
@@ -124,17 +121,12 @@ local function get_children_amount(device)
   end
 end
 
-local function get_profile_name(device)
+local function get_child_profile_name(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
-      return fingerprint.profile
+      return fingerprint.child_profile
     end
   end
-end
-
-local function application_version_handler(driver, device, value, zb_rx)
-  local version = tonumber(value.value)
-  device:set_field(APPLICATION_VERSION, version, { persist = true })
 end
 
 local function round(num)
@@ -163,44 +155,20 @@ local function energy_meter_power_consumption_report(device, raw_value)
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({ energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
-
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
-  if device:get_model() == "lumi.plug.maeu01" then
-    local version = device:get_field(APPLICATION_VERSION) or 0
-    if version == 32 then
-      -- not allowed
-      return
-    end
-  end
   local raw_value = value.value -- 'Wh'
   energy_meter_power_consumption_report(device, raw_value)
 end
 
 local function power_meter_handler(driver, device, value, zb_rx)
-  if device:get_model() == "lumi.plug.maeu01" then
-    local version = device:get_field(APPLICATION_VERSION) or 0
-    if version == 32 then
-      -- not allowed
-      return
-    end
-  end
-
   local raw_value = value.value -- '10W'
   raw_value = raw_value / 10
   device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
 end
 
 local function present_value_handler(driver, device, value, zb_rx)
-  if device:get_model() == "lumi.plug.maeu01" then
-    local version = device:get_field(APPLICATION_VERSION) or 0
-    if version == 41 then
-      -- not allowed
-      return
-    end
-  end
-
   local src_endpoint = zb_rx.address_header.src_endpoint.value
   if src_endpoint == POWER_METER_ENDPOINT then
     -- power meter
@@ -274,11 +242,11 @@ local function device_added(driver, device)
     if children_amount >= 2 then
       for i = 2, children_amount, 1 do
         local name = string.format("%s%d", string.sub(device.label, 0, -2), i)
-        local profile = get_profile_name(device)
+        local child_profile = get_child_profile_name(device)
         local metadata = {
           type = "EDGE_CHILD",
           label = name,
-          profile = profile,
+          profile = child_profile,
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%02X", i),
           vendor_provided_label = name
@@ -301,7 +269,6 @@ local function device_added(driver, device)
       device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     end
 
-    device:send(Basic.attributes.ApplicationVersion:read(device))
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
       PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
   end
@@ -352,14 +319,12 @@ local aqara_switch_handler = {
       [SimpleMetering.ID] = {
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
       },
-      [Basic.ID] = {
-        [Basic.attributes.ApplicationVersion.ID] = application_version_handler
-      },
       [WIRELESS_SWITCH_CLUSTER_ID] = {
         [WIRELESS_SWITCH_ATTRIBUTE_ID] = wireless_switch_handler
       }
     }
   },
+  sub_drivers = { require("aqara.smart-plug") },
   can_handle = is_aqara_products
 }
 
