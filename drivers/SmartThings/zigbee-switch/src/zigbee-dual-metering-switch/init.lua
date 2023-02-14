@@ -16,6 +16,7 @@ local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+local utils = require "st.utils"
 
 local CHILD_ENDPOINT = 2
 
@@ -43,6 +44,7 @@ end
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) and
     find_child(device, CHILD_ENDPOINT) == nil then
 
     local name = "AURORA Outlet 2"

@@ -1,4 +1,4 @@
-name: window-covering-profile
+name: window-treatment-profile-no-firmware-update
 components:
 - id: main
   capabilities:
@@ -7,10 +7,6 @@ components:
   - id: windowShadePreset
     version: 1
   - id: windowShadeLevel
-    version: 1
-  - id: battery
-    version: 1
-  - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1

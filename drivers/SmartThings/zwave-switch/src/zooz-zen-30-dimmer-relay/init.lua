@@ -15,12 +15,12 @@ local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4, strict = true })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 2 })
 local constants = require "st.zwave.constants"
 local log = require "log"
+local utils = require "st.utils"
 
 local PROFILE_CHANGED = "profile_changed"
 local LAST_SEQ_NUMBER_KEY = -1
@@ -115,16 +115,18 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    if find_child(device, ENDPOINTS.relay) == nil then
-      local child_metadata = {
-        type = "EDGE_CHILD",
-        label = string.format("%s Relay", device.label),
-        profile = "child-switch",
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
-        vendor_provided_label = string.format("%s Relay", device.label)
-      }
-      driver:try_create_device(child_metadata)
+    if not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
+      if find_child(device, ENDPOINTS.relay) == nil then
+        local child_metadata = {
+          type = "EDGE_CHILD",
+          label = string.format("%s Relay", device.label),
+          profile = "child-switch",
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
+          vendor_provided_label = string.format("%s Relay", device.label)
+        }
+        driver:try_create_device(child_metadata)
+      end
     end
 
     device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))

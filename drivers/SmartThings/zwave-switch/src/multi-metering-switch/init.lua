@@ -58,19 +58,22 @@ local function find_child(parent, ep_id)
 end
 
 local function create_child_device(driver, device, children_amount, device_profile)
-  for i = 2, children_amount+1, 1 do
-    if find_child(device, i) == nil then
-      local device_name_without_number = string.sub(device.label, 0,-2)
-      local name = string.format("%s%d", device_name_without_number, i)
-      local metadata = {
-        type = "EDGE_CHILD",
-        label = name,
-        profile = device_profile,
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%02X", i),
-        vendor_provided_label = name,
-      }
-      driver:try_create_device(metadata)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
+    for i = 2, children_amount+1, 1 do
+      if find_child(device, i) == nil then
+        local device_name_without_number = string.sub(device.label, 0,-2)
+        local name = string.format("%s%d", device_name_without_number, i)
+        local metadata = {
+          type = "EDGE_CHILD",
+          label = name,
+          profile = device_profile,
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%02X", i),
+          vendor_provided_label = name,
+        }
+        driver:try_create_device(metadata)
+      end
     end
   end
 end
@@ -86,7 +89,7 @@ local function device_added(driver, device, event)
   end
   device:refresh()
 end
-  
+
 local function component_to_endpoint(device, component)
   return { PARENT_ENDPOINT }
 end
