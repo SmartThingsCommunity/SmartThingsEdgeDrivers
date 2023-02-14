@@ -24,6 +24,10 @@ local function motion_detected(device)
   end
 
   local detect_duration = device:get_field(PREF_FREQUENCY_KEY) or PREF_FREQUENCY_VALUE_DEFAULT
+  if type(detect_duration) == "string"  then
+    detect_duration = tonumber(detect_duration)
+  end
+
   local inactive_state = function()
     device:emit_event(capabilities.motionSensor.motion.inactive())
   end
