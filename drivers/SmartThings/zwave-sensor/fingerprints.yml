@@ -287,11 +287,11 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x004A
     deviceProfileName: motion-battery-temperature-illuminance-humidity
-#   - id: "aeotec/multisensor/6"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0086
-#     productId: 0x0064
-#     deviceProfileName: aeotec-multisensor-6
+  - id: "aeotec/multisensor/6"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0086
+    productId: 0x0064
+    deviceProfileName: aeotec-multisensor-6
   - id: 0086/0002/001D
     deviceLabel: Aeotec Open/Closed Sensor
     manufacturerId: 0x0086
@@ -436,11 +436,11 @@ zwaveManufacturer:
     productType: 0x7000
     productId: 0xE001
     deviceProfileName: contact-battery-tamperalert
-#   - id: "aeotec/multisensor/7"
-#     deviceLabel: Aeotec Multipurpose Sensor
-#     manufacturerId: 0x0371
-#     productId: 0x0018
-#     deviceProfileName: aeotec-multisensor-7
+  - id: "aeotec/multisensor/7"
+    deviceLabel: Aeotec Multipurpose Sensor
+    manufacturerId: 0x0371
+    productId: 0x0018
+    deviceProfileName: aeotec-multisensor-7
   - id: "aeon/multisensor"
     deviceLabel: Aeon Multipurpose Sensor
     manufacturerId: 0x0086
