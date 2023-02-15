@@ -27,7 +27,6 @@ local EMERGENCY = 1
 local POLICE = 2
 local FIRE = 3
 local AMBULANCE = 4
-local CHIME = 5
 
 local siren_endpoints = {
   {
@@ -279,7 +278,6 @@ test.register_coroutine_test(
     )
   end
 )
-
 
 test.register_coroutine_test(
   "Alarm capability / siren command should evoke the correct Z-Wave commands / SMOKE sound selected",
