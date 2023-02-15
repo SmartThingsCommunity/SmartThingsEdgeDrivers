@@ -37,7 +37,7 @@ local zwave_lock_endpoints = {
   {
     command_classes = {
       { value = zw.BATTERY },
-      { value = DoorLock },
+      { value = zw.DOOR_LOCK },
       { value = zw.USER_CODE },
       { value = zw.NOTIFICATION }
     }

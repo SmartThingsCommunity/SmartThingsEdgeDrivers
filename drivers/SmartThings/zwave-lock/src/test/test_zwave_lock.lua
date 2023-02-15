@@ -35,7 +35,7 @@ local zwave_lock_endpoints = {
   {
     command_classes = {
       {value = zw.BATTERY},
-      {value = DoorLock},
+      {value = zw.DOOR_LOCK},
       {value = zw.USER_CODE},
       {value = zw.NOTIFICATION}
     }
@@ -728,6 +728,26 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
             capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
     )
+  end
+)
+
+test.register_coroutine_test(
+  "When the device is added it should be set up and start reading codes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        DoorLock:OperationGet({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Battery:Get({})
+      )
+    )
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
