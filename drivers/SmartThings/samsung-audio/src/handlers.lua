@@ -39,7 +39,7 @@ end
 
 function CapabilityHandlers.handle_play(driver, device, cmd)
   local ip = device:get_field("ip")
-  CapabilityHandlers.handle_on(driver, device, nil) --turn on if device is off
+  -- CapabilityHandlers.handle_on(driver, device, nil) --on/off is not working for samsung-audio (same issue with cloud DTH)
   local ret = command.play(ip)
   if ret then
    device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
@@ -106,7 +106,10 @@ end
 
 function CapabilityHandlers.handle_set_volume(driver, device, cmd)
   local ip = device:get_field("ip")
-  command.set_volume(ip, cmd.args.volume)
+  local vol = command.set_volume(ip, cmd.args.volume)
+  if vol then
+    device:emit_event(capabilities.audioVolume.volume(tonumber(vol.volume)))
+  end
 end
 
 return CapabilityHandlers
