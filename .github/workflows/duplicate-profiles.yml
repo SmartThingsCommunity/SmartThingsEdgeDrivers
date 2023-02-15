@@ -36,3 +36,12 @@ jobs:
           name: duplicate_profile_comment
           path: |
             profile-comment-body.md
+
+      - run: echo ${{ github.event.number }} > pr_number.txt
+
+      - name: Upload PR info
+        uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: |
+            pr_number.txt
