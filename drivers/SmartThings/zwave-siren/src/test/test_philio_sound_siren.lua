@@ -27,6 +27,7 @@ local EMERGENCY = 1
 local POLICE = 2
 local FIRE = 3
 local AMBULANCE = 4
+local CHIME = 5
 
 local siren_endpoints = {
   {
@@ -253,6 +254,7 @@ test.register_message_test(
     inner_block_ordering = "relaxed"
   }
 )
+
 test.register_coroutine_test(
   "Chime capability / chime command should evoke the correct Z-Wave Notification commands",
   function()
@@ -261,7 +263,11 @@ test.register_coroutine_test(
       mock_siren.id,
       { capability = "chime", component = "main", command = "chime", args = {} }
     })
-
+    
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
+    )
+    
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_siren,
@@ -271,13 +277,9 @@ test.register_coroutine_test(
         })
       )
     )
-    test.wait_for_events()
-    test.mock_time.advance_time(1)
-    test.socket.capability:__expect_send(
-      mock_siren:generate_test_message("main", capabilities.chime.chime.off())
-    )
   end
 )
+
 
 test.register_coroutine_test(
   "Alarm capability / siren command should evoke the correct Z-Wave commands / SMOKE sound selected",
