@@ -23,7 +23,7 @@ jobs:
         with:
           body-includes: Duplicate profile check
           comment-author: 'github-actions[bot]'
-          issue-number: ${{ github.event.number }}
+          issue-number: ${{ env.pr_number }}
 
       - name: Post comment
         uses: peter-evans/create-or-update-comment@v2
