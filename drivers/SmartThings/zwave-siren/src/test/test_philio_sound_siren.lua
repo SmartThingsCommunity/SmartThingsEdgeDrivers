@@ -276,6 +276,12 @@ test.register_coroutine_test(
         })
       )
     )
+  
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.chime.chime.off())
+    )
   end
 )
 
