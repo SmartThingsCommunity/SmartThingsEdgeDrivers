@@ -313,7 +313,7 @@ local devices = {
   SWITCH_BINARY_INDICATOR = {
     MATCHING_MATRIX = {
       mfrs = {0x0063, 0113},
-      product_types = {0x4952, 0x5257, 0x5052, 5257}
+      product_types = {0x4952, 0x5257, 0x5052}
     },
     PARAMETERS = {
       ledIndicator = {parameter_number = 3, size = 1}

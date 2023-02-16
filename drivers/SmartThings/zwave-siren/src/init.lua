@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local cap_defaults = require "st.capabilities.defaults"
+-- local cap_defaults = require "st.capabilities.defaults"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver

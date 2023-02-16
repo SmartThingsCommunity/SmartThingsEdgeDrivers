@@ -25,6 +25,11 @@ local SMARTSENSE_MULTI_XYZ_CMD = 0x05
 local SMARTSENSE_MULTI_STATUS_CMD = 0x07
 local SMARTSENSE_MULTI_STATUS_REPORT_CMD = 0x09
 
+local SMARTSENSE_MULTI_FINGERPRINTS = {
+  { mfr = "SmartThings", model = "PGC313" },
+  { mfr = "SmartThings", model = "PGC313EU" }
+}
+
 local function acceleration_handler(driver, device, zb_rx)
   -- This is a custom cluster command for the kickstarter multi.
   -- This has no body but is sent everytime the accelerometer transitions from an unmoving state to a moving one.
@@ -147,8 +152,12 @@ local smartsense_multi = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    local sp = device:supports_server_cluster(SMARTSENSE_MULTI_CLUSTER, 1)
-    return sp
+    for _, fingerprint in ipairs(SMARTSENSE_MULTI_FINGERPRINTS) do
+      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+        return true
+      end
+    end
+    return false
   end
 }
 

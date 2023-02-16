@@ -25,6 +25,7 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
+local utils = require "st.utils"
 
 local CHILD_SWITCH_EP = 2
 local CHILD_TEMP_SENSOR_EP = 3
@@ -92,7 +93,8 @@ local function do_refresh(driver, device, cmd)
 end
 
 local function device_added(driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
     if find_child(device, CHILD_SWITCH_EP) == nil then
       driver:try_create_device(get_child_metadata(device, CHILD_SWITCH_EP))
     end
@@ -133,7 +135,9 @@ end
 
 local function sensor_multilevel_report(driver, device, cmd)
   if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
-    if cmd.src_channel == CHILD_TEMP_SENSOR_EP and find_child(device, cmd.src_channel) == nil then
+    if (device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+      not (device.child_ids and utils.table_size(device.child_ids) ~= 0)) and
+      cmd.src_channel == CHILD_TEMP_SENSOR_EP and find_child(device, cmd.src_channel) == nil then
       driver:try_create_device(get_child_metadata(device, cmd.src_channel))
     end
 

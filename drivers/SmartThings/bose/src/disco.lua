@@ -61,29 +61,37 @@ function Disco.find(deviceid, callback)
     local val, rip, _ = s:receivefrom()
     if val then
       local headers = process_response(val)
-      local ip, port, id = headers["location"]:match(
-                             "http://([^,/]+):([^/]+)/%a+/BO5EBO5E%-F00D%-F00D%-FEED%-([%g-]+).xml")
+      if headers["location"] ~= nil then
+        local ip, port, id = headers["location"]:match(
+                               "http://([^,/]+):([^/]+)/%a+/BO5EBO5E%-F00D%-F00D%-FEED%-([%g-]+).xml")
 
-      -- TODO how do I know the device that responded is actually a bose device
-      -- potentially will need to make a request to the endpoint
-      -- fetch_device_metadata()
-      if rip ~= ip then
-        log.warn(string.format(
-                   "[%s]recieved discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
-                   deviceid, rip, ip))
-        log.debug(rip, "!=", ip)
-      elseif ip and id then
-        if deviceid then
-          -- check if the speaker we just found was the one we were looking for
-          if deviceid == id then
+        -- TODO how do I know the device that responded is actually a bose device
+        -- potentially will need to make a request to the endpoint
+        -- fetch_device_metadata()
+        if rip ~= ip then
+          log.warn(string.format(
+                     "[%s]recieved discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
+                     deviceid, rip, ip))
+          log.debug(rip, "!=", ip)
+        elseif ip and id then
+          if deviceid then
+            -- check if the speaker we just found was the one we were looking for
+            if deviceid == id then
+              callback({id = id, ip = ip, raw = val})
+              break
+            end
+          else
             callback({id = id, ip = ip, raw = val})
-            break
           end
-        else
-          callback({id = id, ip = ip, raw = val})
         end
+      else
+        log.error_with({hub_logs = true},
+          string.format("disco response received from %s doesn't contain location header: %s", rip, val))
       end
     elseif rip == "timeout" then
+      if deviceid then
+        log.warn_with({hub_logs=true}, string.format("Timed out searching for device %s", deviceid))
+      end
       break
     else
       error(string.format("[%s]error receving discovery replies: %s", deviceid, rip))

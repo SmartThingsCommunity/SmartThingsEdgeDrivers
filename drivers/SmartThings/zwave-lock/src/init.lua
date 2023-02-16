@@ -105,6 +105,11 @@ local init_handler = function(driver, device, event)
   populate_state_from_data(device)
 end
 
+local do_refresh = function(self, device)
+  device:send(DoorLock:OperationGet({}))
+  device:send(Battery:Get({}))
+end
+
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param cmd table
@@ -165,6 +170,9 @@ local driver_template = {
   capability_handlers = {
     [capabilities.lockCodes.ID] = {
       [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   zwave_handlers = {

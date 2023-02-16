@@ -25,6 +25,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = tr
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
+local utils = require "st.utils"
 
 local ENDPOINTS = {
   parent = 1,
@@ -54,7 +55,7 @@ local function central_scene_notification_handler(self, device, cmd)
     [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = capabilities.button.button.double,
     [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = capabilities.button.button.pushed_3x
   }
-  
+
   local event = map_key_attribute_to_capability[cmd.args.key_attributes]
   local button_number = 0
   if cmd.args.key_attributes == 0 or cmd.args.key_attributes == 1 or cmd.args.key_attributes == 2 then
@@ -65,7 +66,7 @@ local function central_scene_notification_handler(self, device, cmd)
     button_number = cmd.args.scene_number + 4
   end
   local component = device.profile.components["button" .. button_number]
-  
+
   if component ~= nil then
     device:emit_component_event(component, event({state_change = true}))
   end
@@ -89,6 +90,7 @@ end
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) and
     find_child(device, ENDPOINTS.child) == nil then
 
     local name = string.format("%s %s", device.label, "(CH2)")
@@ -118,7 +120,7 @@ end
 
 local function switch_report(driver, device, cmd)
   switch_defaults.zwave_handlers[cc.SWITCH_BINARY][SwitchBinary.REPORT](driver, device, cmd)
-  
+
   if device:supports_capability_by_id(capabilities.powerMeter.ID) then
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }, { dst_channels = { cmd.src_channel } }))
   end
