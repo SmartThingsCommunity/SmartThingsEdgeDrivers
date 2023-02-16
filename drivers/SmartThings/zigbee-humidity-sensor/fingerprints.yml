@@ -73,6 +73,11 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-02P
     deviceProfileName: humidity-temp-battery
+  - id: SONOFF/SNZB-02D
+    deviceLabel: SONOFF Multipurpose Sensor
+    manufacturer: SONOFF
+    model: SNZB-02D
+    deviceProfileName: humidity-temp-battery
 zigbeeGeneric:
   - id: "HumidityTempGeneric"
     deviceLabel: Multipurpose Sensor
