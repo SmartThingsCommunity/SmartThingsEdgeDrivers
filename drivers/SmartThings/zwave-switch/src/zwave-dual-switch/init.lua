@@ -24,6 +24,7 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local dualSwitchConfigurationsMap = require "zwave-dual-switch/dual_switch_configurations"
+local utils = require "st.utils"
 
 local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
   { mfr = 0x0086, prod = 0x0103, model = 0x008C }, -- Aeotec Switch 1
@@ -66,7 +67,8 @@ local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     local dual_switch_configuration = dualSwitchConfigurationsMap.get_child_device_configuration(device)
 
-    if dual_switch_configuration ~= nil and find_child(device, 2) == nil then
+    if not (device.child_ids and utils.table_size(device.child_ids) ~= 0) and --migration case will have non-zero
+      (dual_switch_configuration ~= nil and find_child(device, 2) == nil) then
       local name = generate_child_name(device.label)
       local childDeviceProfile = dual_switch_configuration.child_switch_device_profile
       local metadata = {
