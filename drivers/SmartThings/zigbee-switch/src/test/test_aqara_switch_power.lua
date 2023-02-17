@@ -37,9 +37,11 @@ local BUTTON_1_ENDPOINT = 0x29
 local BUTTON_2_ENDPOINT = 0x2A
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
+local PRIVATE_MODE = "PRIVATE_MODE"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-  { profile = t_utils.get_profile_definition("aqara-switch-power.yml"),
+  {
+    profile = t_utils.get_profile_definition("aqara-switch-power.yml"),
     fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
@@ -71,6 +73,8 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Refresh on device should read all necessary attributes",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
@@ -85,6 +89,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Reported on status should be handled : parent device",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
@@ -96,6 +102,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Reported on status should be handled : child device",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
@@ -107,6 +115,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Reported off status should be handled by parent device",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
@@ -118,6 +128,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Reported off status should be handled by child device",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
@@ -197,6 +209,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Power meter handled",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       AnalogInput.attributes.PresentValue:build_test_attr_report(mock_device,
@@ -214,6 +228,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Energy meter handled",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     local current_time = os.time() - 60 * 20
     mock_device:set_field(LAST_REPORT_TIME, current_time)
 

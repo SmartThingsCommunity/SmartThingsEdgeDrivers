@@ -38,6 +38,7 @@ local ENERGY_METER_ENDPOINT = 0x1F
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local APPLICATION_VERSION = "application_version"
+local PRIVATE_MODE = "PRIVATE_MODE"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -81,9 +82,6 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.switch.switch.off())
-    )
-    test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     )
     test.socket.capability:__expect_send(
@@ -111,13 +109,28 @@ test.register_coroutine_test(
       mock_device.id,
       OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300, 1)
     })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        cluster_base.read_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID
+          , MFG_CODE)
+      }
+    )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      Basic.attributes.ApplicationVersion:read(mock_device)
+      SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 900, 3600, 1)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       OnOff.attributes.OnOff:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ActivePower:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -126,6 +139,17 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Refresh on device should read all necessary attributes",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_device, 32)
+      }
+    )
+    mock_device:set_field(APPLICATION_VERSION, 32, { persist = true })
+    test.wait_for_events()
+
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
@@ -140,6 +164,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Power meter handled",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -166,6 +192,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Energy meter handled",
   function()
+    mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
+
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -174,7 +202,7 @@ test.register_coroutine_test(
     )
     mock_device:set_field(APPLICATION_VERSION, 32, { persist = true })
     test.wait_for_events()
-    
+
     local current_time = os.time() - 60 * 20
     mock_device:set_field(LAST_REPORT_TIME, current_time)
 
@@ -221,8 +249,35 @@ test.register_coroutine_test(
 -- with standard cluster
 
 test.register_coroutine_test(
+  "Refresh on device should read all necessary attributes with standard cluster",
+  function()
+    mock_standard:set_field(PRIVATE_MODE, 0, { persist = true })
+
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_standard.id,
+        Basic.attributes.ApplicationVersion:build_test_attr_report(mock_standard, 32)
+      }
+    )
+    mock_standard:set_field(APPLICATION_VERSION, 41, { persist = true })
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({ mock_standard.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    test.socket.zigbee:__expect_send({ mock_standard.id,
+      OnOff.attributes.OnOff:read(mock_standard) })
+    test.socket.zigbee:__expect_send({ mock_standard.id,
+      ElectricalMeasurement.attributes.ActivePower:read(mock_standard) })
+    test.socket.zigbee:__expect_send({ mock_standard.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:read(mock_standard) })
+  end
+)
+
+test.register_coroutine_test(
   "Handle power meter with standard cluster",
   function()
+    mock_standard:set_field(PRIVATE_MODE, 0, { persist = true })
+
     test.socket.zigbee:__queue_receive(
       {
         mock_standard.id,
@@ -245,6 +300,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle energy meter with standard cluster",
   function()
+    mock_standard:set_field(PRIVATE_MODE, 0, { persist = true })
+
     test.socket.zigbee:__queue_receive(
       {
         mock_standard.id,
@@ -253,9 +310,6 @@ test.register_coroutine_test(
     )
     mock_standard:set_field(APPLICATION_VERSION, 41, { persist = true })
     test.wait_for_events()
-
-    local current_time = os.time() - 60 * 20
-    mock_standard:set_field(LAST_REPORT_TIME, current_time)
 
     test.socket.zigbee:__queue_receive({
       mock_standard.id,
