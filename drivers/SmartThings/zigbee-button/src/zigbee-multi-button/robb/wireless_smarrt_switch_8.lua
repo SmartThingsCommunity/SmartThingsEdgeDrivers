@@ -44,7 +44,7 @@ local function can_handle(opts, driver, device, ...)
   return false
 end
 
-local function component_to_endpoint(device, component_id)
+--[[ local function component_to_endpoint(device, component_id)
   local ep_ini = device.fingerprinted_endpoint_id
 
   log.debug("### component_to_endpoint")
@@ -64,11 +64,11 @@ local function component_to_endpoint(device, component_id)
     end
   end
 
-  --[[ local ep_num = component_id:match("button(%d)")
-  return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id ]]
-end
+  local ep_num = component_id:match("button(%d)")
+  return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id
+end ]]
 
-local function endpoint_to_component(device, ep)
+--[[ local function endpoint_to_component(device, ep)
   local ep_ini = device.fingerprinted_endpoint_id
 
   log.debug("### endpoint_to_component")
@@ -78,18 +78,39 @@ local function endpoint_to_component(device, ep)
   else
     if ep == ep_ini + 1 then
       return { "button3", "button4" }
-      --[[    elseif ep == ep_ini then
+         elseif ep == ep_ini then
       return "button2"
     elseif ep == ep_ini + 1 then
       return "button3"
     elseif ep == ep_ini + 1 then
-      return "button4" ]]
+      return "button4"
     end
+  end
+end ]]
+
+local function component_to_endpoint(device, component_id)
+  local ep_num = component_id:match("button(%d)")
+  return { ep_num and tonumber(ep_num) }
+end
+
+local function endpoint_to_component(device, ep)
+  local button_comp = string.format("button%d", ep)
+  if device.profile.components[button_comp] ~= nil then
+    return button_comp
+  else
+    return "main"
   end
 end
 
 local function build_button_handler(MAPPING, pressed_type)
   return function(driver, device, zb_rx)
+    --local bytes = zb_rx.body
+
+    log.debug('### zbrx:' .. utils.stringify_table(zb_rx, 'body', true))
+    --[[ local button_num = bytes:byte(2) + 1
+    local button_name = "button" .. button_num
+    log.debug('### button_name:' .. button_name)]]
+
     local additional_fields = {
       state_change = true
     }
@@ -119,6 +140,19 @@ end
 local do_configuration = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x01))
+  device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x01))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x02))
+  device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x02))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x03))
+  device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x03))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x04))
+  device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x04))
+  
+  --device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1):to_endpoint(endpoint))
+  --[[ device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   for endpoint = 1, SWITCH8_NUM_ENDPOINT do
     device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
     device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
@@ -133,7 +167,7 @@ local do_configuration = function(self, device)
     self:add_hub_to_zigbee_group(0x0D03)
     self:add_hub_to_zigbee_group(0x0D04)
     self.datastore[SWITCH8_GROUP_CONFIGURE] = true
-  end
+  end ]]
 end
 
 local robb_wireless_8_control = {
