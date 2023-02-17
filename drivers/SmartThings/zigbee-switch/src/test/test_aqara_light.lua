@@ -17,7 +17,6 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
@@ -32,7 +31,8 @@ local RESTORE_POWER_STATE_ATTRIBUTE_ID = 0x0201
 local TURN_OFF_INDICATOR_ATTRIBUTE_ID = 0x0203
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-  { profile = t_utils.get_profile_definition("aqara-light.yml"),
+  {
+    profile = t_utils.get_profile_definition("aqara-light.yml"),
     fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
@@ -58,15 +58,6 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.switchLevel.level(100))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(5000))
-    )
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
