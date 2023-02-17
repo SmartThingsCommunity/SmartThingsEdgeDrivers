@@ -151,7 +151,8 @@ function CapCommandHandlers.handle_play_preset(driver, device, cmd)
     { namespace = "favorites", command = "loadFavorite" },
     {
       favoriteId = cmd.args.presetId,
-      playOnCompletion = true
+      playOnCompletion = true,
+      action = "replace"
     }
   }
   _do_send_to_group(driver, device, payload)
