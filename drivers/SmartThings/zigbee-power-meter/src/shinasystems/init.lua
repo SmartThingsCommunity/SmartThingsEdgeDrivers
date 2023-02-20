@@ -21,7 +21,9 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
-  { model = "PMM-300Z1" }
+  { model = "PMM-300Z1" },
+  { model = "PMM-300Z2" },
+  { model = "PMM-300Z3" }
 }
 
 local is_shinasystems_power_meter = function(opts, driver, device)
@@ -32,6 +34,23 @@ local is_shinasystems_power_meter = function(opts, driver, device)
   end
 
   return false
+end
+
+local function energy_meter_handler(driver, device, value, zb_rx)
+  local raw_value = value.value
+	local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
+	local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
+  local raw_value_kilowatts = raw_value * multiplier/divisor
+  local raw_value_watts = raw_value_kilowatts*1000
+  local delta_energy = 0.0
+  local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+  if current_power_consumption ~= nil then
+    delta_energy = math.max(raw_value_watts - current_power_consumption.energy, 0.0)
+  end
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value_watts, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
+
+  device:emit_event(capabilities.energyMeter.energy({value = raw_value_kilowatts, unit = "kWh"}))
 end
 
 local do_configure = function(self, device)
@@ -46,6 +65,13 @@ end
 
 local shinasystems_power_meter_handler = {
   NAME = "shinasystems power meter handler",
+  zigbee_handlers = {
+    attr = {
+      [SimpleMetering.ID] = {
+        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+      }
+    }
+  },
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,
