@@ -38,8 +38,8 @@ end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
-	local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-	local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
+  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
+  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
   local raw_value_kilowatts = raw_value * multiplier/divisor
   local raw_value_watts = raw_value_kilowatts*1000
   local delta_energy = 0.0
