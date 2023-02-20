@@ -1,6 +1,6 @@
 local clusters = require "st.zigbee.zcl.clusters"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
---local battery_defaults = require "battery-voltage"
+--local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local battery_defaults = require "battery-voltage"
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
@@ -9,18 +9,7 @@ local bind_request_resp = require "st.zigbee.zdo.bind_request_response"
 local FINGERPRINTS = {
   { mfr = "Sercomm Corp.", model = "Tripper" }
 }
---- Try adding this battery handler and see what happens
-local function battery_handler(device, value, zb_rx)
-  local MAX_VOLTAGE = 3.0
-  local batteryPercentage = math.min(math.floor(((value / MAX_VOLTAGE) * 100) + 0.5), 100)
 
-  if batteryPercentage ~= nil then
-    device:emit_event_for_endpoint(
-      zb_rx.address_header.src_endpoint.value,
-      capabilities.battery.battery(batteryPercentage)
-    )
-  end
-end
 local CONFIGURATIONS = {
   {
     cluster = IASZone.ID,
