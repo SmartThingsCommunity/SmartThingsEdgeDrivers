@@ -45,7 +45,7 @@ local zigbee_contact_driver_template = {
   },
   sub_drivers = {
     require("aqara"),
-    --require("battery-overrides"),
+    require("battery-overrides"),
     require("battery-voltage")
     require("aurora-contact-sensor"),
     require("contact-temperature-sensor"),
