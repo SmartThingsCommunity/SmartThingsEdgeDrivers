@@ -1,4 +1,0 @@
-name: 'Zigbee Contact - ADM'
-packageKey: 'zigbee-contact - ADM'
-permissions:
-  zigbee: {}
