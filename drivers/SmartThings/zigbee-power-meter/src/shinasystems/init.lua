@@ -60,7 +60,7 @@ end
 
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1000, {persist = true})
+  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1, {persist = true})
 end
 
 local shinasystems_power_meter_handler = {
