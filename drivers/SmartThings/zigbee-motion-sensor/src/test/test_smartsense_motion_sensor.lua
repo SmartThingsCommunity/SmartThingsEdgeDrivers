@@ -22,7 +22,6 @@ local SMARTSENSE_PROFILE_ID = 0xFC01
 local MFG_CODE = 0x110A
 local SMARTSENSE_MOTION_CLUSTER = 0xFC04
 local SMARTSENSE_MOTION_STATUS_CMD = 0x00
-local SMARTSENSE_MOTION_STATUS_REPORT_CMD = 0x02
 local FRAME_CTRL = 0x1D
 local ENDPOINT = 0x02
 
@@ -34,6 +33,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "SmartThings",
         model = "PGC314",
+        profileId = 0xFC01,
         server_clusters = {}
       }
     }
