@@ -813,6 +813,11 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: 01MINIZB
     deviceProfileName: basic-switch
+  - id: SONOFF/ZBMINIL2
+    deviceLabel: SONOFF Switch
+    manufacturer: SONOFF
+    model: ZBMINIL2
+    deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
     manufacturer:
