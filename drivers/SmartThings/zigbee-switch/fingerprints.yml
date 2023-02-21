@@ -1567,7 +1567,7 @@ zigbeeManufacturer:
     deviceLabel: Eria Switch
     manufacturer: AduroSmart Eria
     model: BDP3001
-    deviceProfileName: switch-power
+    deviceProfileName: switch-level
   - id: "AduroSmart Eria/ZLL-DimmableLight"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
