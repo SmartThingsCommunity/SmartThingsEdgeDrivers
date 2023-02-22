@@ -286,4 +286,8 @@ function Listener:stop()
   end
 end
 
+function Listener:is_stopped()
+  return self._stopped
+end
+
 return Listener
