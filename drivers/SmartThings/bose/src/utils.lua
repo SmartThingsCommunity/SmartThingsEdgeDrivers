@@ -27,4 +27,18 @@ utils.get_serial_number = function(device)
   return res
 end
 
+--- Sanitize xml fields parsed from device responses
+--- Namely this converts empty tables to nil.
+---
+--- @param f any the field to sanitize
+--- @param def any the default value to return if field is empty or nil
+--- @return any the sanitized field or the default
+utils.sanitize_field = function(f, def)
+  if not f or (type(f) == "table" and #f == 0) then
+    return def
+  else
+    return f
+  end
+end
+
 return utils

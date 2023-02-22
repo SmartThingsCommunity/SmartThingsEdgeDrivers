@@ -17,6 +17,7 @@ local log = require "log"
 local ltn12 = require "ltn12"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
+local bose_utils = require "utils"
 
 local SOUNDTOUCH_HTTP_PORT = 8090
 
@@ -25,11 +26,6 @@ local Command = {}
 
 local function format_url(ip, path)
   return string.format("http://%s:%d%s", ip, SOUNDTOUCH_HTTP_PORT, path)
-end
-
-local function is_empty(t)
-  -- empty tables should be nil instead
-  return not t or (type(t) == "table" and #t == 0)
 end
 
 local function handle_http_resp(r, c)
@@ -301,20 +297,15 @@ function Command.now_playing(ip)
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(table.concat(resp))
   local res = {}
-  if handler.root.nowPlaying.art then res.art_url = handler.root.nowPlaying.art[1] end
-  if not is_empty(handler.root.nowPlaying.track) then res.track = handler.root.nowPlaying.track end
-  if not is_empty(handler.root.nowPlaying.artist) then res.artist = handler.root.nowPlaying.artist end
-  if not is_empty(handler.root.nowPlaying.album) then res.album = handler.root.nowPlaying.album end
-  if not is_empty(handler.root.nowPlaying.stationName) then
-    res.station = handler.root.nowPlaying.stationName
+  if handler.root.nowPlaying.art then
+    res.art_url = bose_utils.sanitize_field(handler.root.nowPlaying.art[1])
   end
-  if not is_empty(handler.root.nowPlaying.playStatus) then
-    res.play_state = handler.root.nowPlaying.playStatus
-  end
-  if not is_empty(handler.root.nowPlaying._attr.source) then
-    res.source = handler.root.nowPlaying._attr.source
-  end
-
+  res.track = bose_utils.sanitize_field(handler.root.nowPlaying.track)
+  res.artist = bose_utils.sanitize_field(handler.root.nowPlaying.artist)
+  res.album = bose_utils.sanitize_field(handler.root.nowPlaying.album)
+  res.station = bose_utils.sanitize_field(handler.root.nowPlaying.stationName)
+  res.play_state = bose_utils.sanitize_field(handler.root.nowPlaying.playStatus)
+  res.source = bose_utils.sanitize_field(handler.root.nowPlaying._attr.source)
   return res
 end
 
@@ -331,35 +322,28 @@ function Command.presets(ip)
   if err then
     return nil, err
   end
-
   local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(table.concat(resp))
 
   local result = {}
-
   if handler.root.presets.preset then
     if not handler.root.presets.preset._attr then -- it is a list of presets rather than just one preset
       for _, preset in ipairs(handler.root.presets.preset) do
-        if is_empty(preset.ContentItem.itemName) then
-          preset.ContentItem.itemName = preset._attr.id
-        end
         table.insert(result, {
-          id = preset._attr.id,
-          name = preset.ContentItem.itemName,
-          mediaSource = preset.ContentItem._attr.source,
-          imageUrl = preset.ContentItem.containerArt,
+          id = preset._attr.id, --always exists
+          name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+          mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+          imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
         })
       end
     else
-      if is_empty(handler.root.presets.preset.ContentItem.itemName) then
-        handler.root.presets.preset.ContentItem.itemName = handler.root.presets.preset._attr.id
-      end
       table.insert(result, {
         id = handler.root.presets.preset._attr.id,
-        name = handler.root.presets.preset.ContentItem.itemName,
-        mediaSource = handler.root.presets.preset.ContentItem._attr.source,
-        imageUrl = handler.root.presets.preset.ContentItem.containerArt,
+        name = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.itemName,
+          handler.root.presets.preset._attr.id),
+        mediaSource = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem._attr.source),
+        imageUrl = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.containerArt),
       })
     end
   end
