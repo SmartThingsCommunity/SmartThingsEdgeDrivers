@@ -571,5 +571,36 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "SetCredential FAILURE requests next_credential_index if available", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    expect_kick_off_cota_process(mock_device)
+
+    local next_credential_index = 6
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1,
+        DoorLock.types.DlStatus.FAILURE,
+        1, --user_index
+        next_credential_index
+      ),
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.SetCredential(
+        mock_device, 1, -- endpoint
+        DoorLock.types.DlDataOperationType.ADD, -- operation_type
+        DoorLock.types.DlCredential(
+          {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = next_credential_index}
+        ), -- credential
+        test_credential_data, -- credential_data
+        nil, -- user_index
+        DoorLock.types.DlUserStatus.OCCUPIED_ENABLED, -- user_status
+        DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
+      )
+    })
+  end
+)
 
 test.run_registered_tests()
