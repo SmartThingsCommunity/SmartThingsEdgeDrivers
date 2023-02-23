@@ -53,13 +53,13 @@ local do_configuration = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   for endpoint = 1,CENTRALITE_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
   end
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 
 local function attr_on_handler(driver, device, zb_rx)
-  button_utils.init_button_press(device)
+  button_utils.init_button_press(device, EP_BUTTON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value])
 end
 
 local function attr_off_handler(driver, device, zb_rx)

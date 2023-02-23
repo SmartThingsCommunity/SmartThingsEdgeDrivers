@@ -44,10 +44,10 @@ end
 
 local do_configuration = function(self, device)
   for endpoint = 1,ADURO_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
   end
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x02))
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x03))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui, 0x02))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui, 0x03))
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 
