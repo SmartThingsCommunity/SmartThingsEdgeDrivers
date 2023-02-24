@@ -113,11 +113,36 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
   end
 end
 
+--TODO remove function in favor of "st.utils" function once
+--all hubs have 0.46 firmware
+local function backoff_builder(max, inc, rand)
+  local count = 0
+  inc = inc or 1
+  return function()
+    local randval = 0
+    if rand then
+      --- We use this pattern because the version of math.random()
+      --- that takes a range only works for integer values and we
+      --- want floating point.
+      randval = math.random() * rand * 2 - rand
+    end
+
+    local base = inc * (2 ^ count - 1)
+    count = count + 1
+
+    -- ensure base backoff (not including random factor) is less than max
+    if max then base = math.min(base, max) end
+
+    -- ensure total backoff is >= 0
+    return math.max(base + randval, 0)
+  end
+end
+
 ---@param sonos_conn SonosConnection
 local function _spawn_reconnect_task(sonos_conn)
   log.trace("Spawning reconnect task for ", sonos_conn.device.label)
   cosock.spawn(function()
-    local backoff = st_utils.backoff_builder(60, 1, 0.1)
+    local backoff = backoff_builder(60, 1, 0.1)
     while not sonos_conn:is_running() do
       local start_success = sonos_conn:start()
       if start_success then return end
