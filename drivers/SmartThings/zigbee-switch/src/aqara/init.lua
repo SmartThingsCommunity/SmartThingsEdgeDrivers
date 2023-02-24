@@ -39,16 +39,6 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
 }
 
-local wireless_switch_endpoint_map = {
-  [0x29] = 1,
-  [0x2A] = 2,
-  [0x2B] = 3,
-}
-
-local wireless_switch_button_event_map = {
-  [1] = capabilities.button.button.pushed({ state_change = true }),
-}
-
 local preference_map = {
   [restorePowerState.ID] = {
     cluster_id = PRIVATE_CLUSTER_ID,
@@ -130,10 +120,9 @@ local function on_off_handler(driver, device, value, zb_rx)
 end
 
 local function wireless_switch_handler(driver, device, value, zb_rx)
-  local endpoint = wireless_switch_endpoint_map[zb_rx.address_header.src_endpoint.value]
-  local event = wireless_switch_button_event_map[value.value]
-  if event ~= nil then
-    device:emit_event_for_endpoint(endpoint, event)
+  if value.value == 1 then
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
+      capabilities.button.button.pushed({ state_change = true }))
   end
 end
 

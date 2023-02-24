@@ -46,7 +46,15 @@ local function get_child_profile_name(device)
 end
 
 local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  if ep_id == 0x29 then
+    return parent:get_child_by_parent_assigned_key("01")
+  elseif ep_id == 0x2A then
+    return parent:get_child_by_parent_assigned_key("02")
+  elseif ep_id == 0x2B then
+    return parent:get_child_by_parent_assigned_key("03")
+  else
+    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  end
 end
 
 local function device_added(driver, device)
@@ -86,24 +94,17 @@ local function device_added(driver, device)
   end
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
-end
-
-local function init(driver, device)
+local function device_init(self, device)
   -- for multiple switch
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
-    local children_amount = get_children_amount(device)
-    if children_amount > 1 then
-      device:set_find_child(find_child)
-    end
+    device:set_find_child(find_child)
   end
 end
 
 local aqara_multi_switch_handler = {
   NAME = "Aqara Multi Switch Handler",
   lifecycle_handlers = {
-    init = init,
+    init = device_init,
     added = device_added,
     doConfigure = do_configure
   },
