@@ -31,11 +31,6 @@ local Listener = {}
 Listener.__index = Listener
 Listener.WS_PORT = 8080
 
-local function is_empty(t)
-  -- empty tables should be nil instead
-  return not t or (type(t) == "table" and #t == 0)
-end
-
 function Listener:presets_update(presets)
   log.info(
     string.format("(%s)[%s] presets_update", bose_utils.get_serial_number(self.device), self.device.label))
@@ -63,22 +58,22 @@ function Listener:now_playing_update(info)
 
     -- get audio track data
     local trackdata = {}
-    if not is_empty(info.artist) then trackdata.artist = info.artist end
-    if not is_empty(info.album) then trackdata.album = info.album end
-    if not is_empty(info.art_url) then trackdata.albumArtUrl = info.art_url end
-    if not is_empty(info.source) then
-      trackdata.mediaSource = info.source
+    trackdata.artist = bose_utils.sanitize_field(info.artist)
+    trackdata.album = bose_utils.sanitize_field(info.album)
+    trackdata.albumArtUrl = bose_utils.sanitize_field(info.art_url)
+    trackdata.mediaSource = bose_utils.sanitize_field(info.source)
+    if trackdata.mediaSource ~= nil then
       local cached_track_control_cmds = self.device:get_latest_state(
         "main", capabilities.mediaTrackControl.ID,
         capabilities.mediaTrackControl.supportedTrackControlCommands.NAME
       )
       -- Note changing supportedTrackControlCommands after join does not seem to take effect in the app immediately.
       -- This indicates a bug in the mobile app.
-      if info.source == "TUNEIN" and
+      if trackdata.mediaSource == "TUNEIN" and
         (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) > 0) then
         -- Switching to radio source which disables track controls
         self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-      elseif info.source ~= "TUNEIN" and
+      elseif trackdata.mediaSource ~= "TUNEIN" and
         (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) == 0) then
         self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
           capabilities.mediaTrackControl.commands.nextTrack.NAME,
@@ -86,13 +81,9 @@ function Listener:now_playing_update(info)
         }))
       end
     end
-    if not is_empty(info.track) then
-      trackdata.title = info.track
-    elseif not is_empty(info.station) then
-      trackdata.title = info.station
-    elseif info.source == "AUX" then
-      trackdata.title = "Auxilary input"
-    end
+    trackdata.title = bose_utils.sanitize_field(info.track) or
+      bose_utils.sanitize_field(info.station) or
+      (info.source == "AUX" and "Auxiliary input") or nil
     self.device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
   end
 end
@@ -140,16 +131,16 @@ function Listener:handle_xml_event(xml)
     elseif updates.nowPlayingUpdated then
       local art_url
       if updates.nowPlayingUpdated.nowPlaying.art then
-        art_url = updates.nowPlayingUpdated.nowPlaying.art[1]
+        art_url = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.art[1])
       end
       self:now_playing_update({
-        track = updates.nowPlayingUpdated.nowPlaying.track,
-        artist = updates.nowPlayingUpdated.nowPlaying.artist,
-        album = updates.nowPlayingUpdated.nowPlaying.album,
-        station = updates.nowPlayingUpdated.nowPlaying.stationName,
-        play_state = updates.nowPlayingUpdated.nowPlaying.playStatus,
-        source = updates.nowPlayingUpdated.nowPlaying._attr.source,
-        art_url = art_url,
+        track = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.track),
+        artist = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.artist),
+        album = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.album),
+        station = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.stationName),
+        play_state = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying.playStatus),
+        source = bose_utils.sanitize_field(updates.nowPlayingUpdated.nowPlaying._attr.source),
+        art_url = bose_utils.sanitize_field(art_url),
       })
     elseif updates.nowSelectionUpdated then
       self:preset_select_update(updates.nowSelectionUpdated.preset._attr.id)
@@ -160,26 +151,20 @@ function Listener:handle_xml_event(xml)
       local result = {}
       if not updates.presetsUpdated.presets.preset._attr then -- it is a list of presets rather than just one preset
         for _, preset in ipairs(updates.presetsUpdated.presets.preset) do
-          if is_empty(preset.ContentItem.itemName) then
-            preset.ContentItem.itemName = preset._attr.id
-          end
           table.insert(result, {
-            id = preset._attr.id,
-            name = preset.ContentItem.itemName,
-            mediaSource = preset.ContentItem._attr.source,
-            imageUrl = preset.ContentItem.containerArt,
+            id = preset._attr.id, --always exists
+            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
           })
         end
       else
-        if is_empty(updates.presetsUpdated.presets.preset.ContentItem.itemName) then
-          updates.presetsUpdated.presets.preset.ContentItem.itemName = updates.presetsUpdated
-                                                                         .presets.preset._attr.id
-        end
         table.insert(result, {
           id = updates.presetsUpdated.presets.preset._attr.id,
-          name = updates.presetsUpdated.presets.preset.ContentItem.itemName,
-          mediaSource = updates.presetsUpdated.presets.preset.ContentItem._attr.source,
-          imageUrl = updates.presetsUpdated.presets.preset.ContentItem.containerArt,
+          name = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.itemName,
+            updates.presetsUpdated.presets.preset._attr.id),
+          mediaSource = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem._attr.source),
+          imageUrl = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.containerArt),
         })
       end
       self:presets_update(result)
@@ -284,6 +269,10 @@ function Listener:stop()
     log.error(string.format("[%s](%s) failed to close websocket: %s", bose_utils.get_serial_number(self.device),
                             self.device.label, err))
   end
+end
+
+function Listener:is_stopped()
+  return self._stopped
 end
 
 return Listener
