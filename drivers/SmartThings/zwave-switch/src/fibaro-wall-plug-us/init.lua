@@ -12,10 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
-
 local FIBARO_WALL_PLUG_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x1401, model = 0x1001}, -- Fibaro Outlet
   {mfr = 0x010F, prod = 0x1401, model = 0x2000}, -- Fibaro Outlet

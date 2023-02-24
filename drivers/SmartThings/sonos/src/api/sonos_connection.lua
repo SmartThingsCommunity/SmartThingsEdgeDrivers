@@ -3,7 +3,6 @@ local log = require "log"
 local json = require "st.json"
 
 local lb_utils = require "lunchbox.util"
-local st_utils = require "st.utils"
 
 local EventHandlers = require "api.event_handlers"
 local PlayerFields = require "fields".SonosPlayerFields
@@ -40,7 +39,7 @@ local favorites_version = ""
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-_update_subscriptions_helper = function(sonos_conn, householdId, playerId, groupId, namespaces, command)
+local _update_subscriptions_helper = function(sonos_conn, householdId, playerId, groupId, namespaces, command)
   for _, namespace in ipairs(namespaces) do
     local payload_table = {
       {
@@ -60,7 +59,7 @@ end
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-_update_self_subscriptions = function(sonos_conn, namespaces, command)
+local _update_self_subscriptions = function(sonos_conn, namespaces, command)
   local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOULD_ID)
   local _, playerId = sonos_conn.driver.sonos:get_player_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
@@ -70,7 +69,7 @@ end
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-_update_coordinator_subscriptions = function(sonos_conn, namespaces, command)
+local _update_coordinator_subscriptions = function(sonos_conn, namespaces, command)
   local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOULD_ID)
   local _, coordinatorId = sonos_conn.driver.sonos:get_coordinator_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
@@ -93,8 +92,7 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
 
   if coordinator_id ~= self_player_id then
     local coordinator = sonos_conn.driver.sonos:get_household(household_id).players[coordinator_id]
-    local _, err =
-    Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
+    _, err = Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
 
     if err ~= nil then
       log.error(
@@ -104,6 +102,7 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
       )
     end
 
+    local listener_id
     listener_id, err = Router.register_listener_for_socket(sonos_conn, coordinator_id)
     if err ~= nil or not listener_id then
       log.error(err)
@@ -158,7 +157,6 @@ end
 function SonosConnection.new(driver, device)
   local self = setmetatable({ driver = driver, device = device, _listener_uuids = {}, _initialized = false },
     SonosConnection)
-  local _name = self.device.label
 
   self.on_message = function(uuid, msg)
     if msg.data then
@@ -375,7 +373,7 @@ function SonosConnection:stop()
   local household_id, group_id = self.driver.sonos:get_group_for_device(self.device)
   local coordinator_id = self.driver.sonos:get_coordinator_for_group(household_id, group_id)
 
-  if not player_id == coordinator_id then
+  if player_id ~= coordinator_id then
     Router.close_socket_for_player(player_id)
   end
 end

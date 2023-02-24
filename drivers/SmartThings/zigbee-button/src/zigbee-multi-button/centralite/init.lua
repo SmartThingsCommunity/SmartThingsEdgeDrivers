@@ -12,10 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
-local log = require "log"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local button_utils = require "button_utils"
@@ -24,9 +22,6 @@ local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 
 local CENTRALITE_NUM_ENDPOINT = 0x04
-local HELD_THRESHOLD_TIMEOUT = 10000
-local HOLD_TIME = 1000
-local PRESS_TIME_EVENT = "press_time_event"
 
 local EP_BUTTON_COMPONENT_MAP = {
   [0x01] = 4,

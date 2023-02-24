@@ -14,11 +14,9 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local OnOff = clusters.OnOff
-local PowerConfiguration = clusters.PowerConfiguration
 
 local SHINASYSTEM_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "MSM-300Z" },
@@ -28,19 +26,11 @@ local SHINASYSTEM_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "SBM300ZB3" },
 }
 
-local SHINASYSTEM_NUM_EP_MAP = {
-  ["MSM-300Z"] = 4,
-  ["BSM-300Z"] = 1,
-  ["SBM300ZB1"] = 1,
-  ["SBM300ZB2"] = 2,
-  ["SBM300ZB3"] = 3,
-}
-
 local is_shinasystem_button = function(opts, driver, device)
   for _, fingerprint in ipairs(SHINASYSTEM_BUTTON_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end

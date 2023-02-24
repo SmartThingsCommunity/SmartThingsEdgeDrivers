@@ -13,8 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = (require "st.zwave.CommandClass")
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver

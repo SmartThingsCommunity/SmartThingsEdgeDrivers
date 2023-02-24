@@ -27,7 +27,6 @@ local cosock = require "cosock"
 local Driver = require "st.driver"
 
 local socket = require "cosock.socket"
-local json = require "dkjson"
 local log = require "log"
 local utils = require "st.utils"
 
