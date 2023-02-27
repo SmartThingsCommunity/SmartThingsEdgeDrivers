@@ -16,6 +16,7 @@ local command = require "command"
 local log = require "log"
 local utils = require "st.utils"
 local capabilities = require "st.capabilities"
+local VOL_STEP = 5
 
 --- @module Samsung-audio.CapabilityHandlers
 local CapabilityHandlers = {}
@@ -106,7 +107,7 @@ function CapabilityHandlers.handle_volume_up(driver, device, cmd)
   local ip = device:get_field("ip")
   local vol = command.volume(ip)
   if vol then
-    local set_vol = command.set_volume(ip, tonumber(vol.volume) + 5)
+    local set_vol = command.set_volume(ip, tonumber(vol.volume) + VOL_STEP)
     if set_vol then
       device:emit_event(capabilities.audioVolume.volume(tonumber(set_vol.volume)))
       device:emit_event(capabilities.audioMute.mute.unmuted())
@@ -118,7 +119,7 @@ function CapabilityHandlers.handle_volume_down(driver, device, cmd)
   local ip = device:get_field("ip")
   local vol = command.volume(ip)
   if vol then
-    local set_vol = command.set_volume(ip, tonumber(vol.volume) - 5)
+    local set_vol = command.set_volume(ip, tonumber(vol.volume) - VOL_STEP)
     if set_vol then
       device:emit_event(capabilities.audioVolume.volume(tonumber(set_vol.volume)))
       device:emit_event(capabilities.audioMute.mute.unmuted())
