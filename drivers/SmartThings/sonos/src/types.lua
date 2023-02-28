@@ -202,7 +202,7 @@ function SonosState.new()
       local group_id = self:get_group_for_player(id, device_player_id)
       local coordinator_id = self:get_coordinator_for_player(id, device_player_id)
 
-      local role = ""
+      local role
       if device_player_id == coordinator_id then
         if #household.groups[group_id].playerIds > 1 then
           role = "primary"

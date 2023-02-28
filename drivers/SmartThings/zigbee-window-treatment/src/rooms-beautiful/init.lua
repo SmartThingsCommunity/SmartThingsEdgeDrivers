@@ -14,9 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local window_shade_defaults = require "st.zigbee.defaults.windowShade_defaults"
 local cluster_base = require "st.zigbee.cluster_base"
-local utils = require "st.utils"
 local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = zcl_clusters.PowerConfiguration

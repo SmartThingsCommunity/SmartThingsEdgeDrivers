@@ -13,8 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=3 })
 
@@ -46,7 +44,7 @@ function capability_handlers.close(driver, device)
 end
 
 local function set_shade_level_helper(driver, device, value)
-  local value = math.max(math.min(value, 99), 0)
+  value = math.max(math.min(value, 99), 0)
   if value == 0 or value == 99 then
     device:emit_event(capabilities.windowShade.windowShade.closed())
   elseif value == (device.preferences.defaultOnValue or 50) then

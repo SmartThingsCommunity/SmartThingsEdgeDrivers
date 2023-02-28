@@ -33,7 +33,6 @@ local json = require "st.json"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
-local data_types = require "st.matter.data_types"
 local mock_device_record = {
   profile = t_utils.get_profile_definition("base-lock.yml"),
   manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
@@ -224,9 +223,6 @@ test.register_coroutine_test(
   end
 )
 
-local credential = DoorLock.types.DlCredential(
-                     {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = 1}
-                   )
 test.register_coroutine_test(
   "Credential status response reporting should be handled", function()
     init_code_slot(1, "initialName", mock_device)

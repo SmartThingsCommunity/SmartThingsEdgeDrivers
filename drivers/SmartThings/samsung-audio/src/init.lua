@@ -16,7 +16,6 @@
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local log = require "log"
-local json = require "dkjson"
 local utils = require "st.utils"
 local command = require "command"
 local socket = require "cosock.socket"
@@ -38,7 +37,6 @@ local function discovery_handler(driver, _, should_continue)
   while should_continue() do
     discovery.find(nil, function(device) -- This is called after finding a device
       local id = device.id
-      local ip = device.ip
       local spk_name = device.name
       local spk_model = device.model
       log.info(string.format("Found a device. ip: %s, id: %s, device_name: %s, device_model: %s", device.ip, device.id, device.name, device.model))

@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local zw = require "st.zwave"
 local Association = (require "st.zwave.CommandClass.Association")({ version = 2 })
 
 local QUBINO_FLUSH_RELAY_FINGERPRINT = {

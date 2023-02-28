@@ -1,7 +1,5 @@
 local cosock = require "cosock"
 local socket = require "cosock.socket"
-local http = cosock.asyncify "socket.http"
-local ltn12 = require "ltn12"
 local protocol = require "protocol"
 local Request = require 'luncheon.request'
 local Response = require 'luncheon.response'

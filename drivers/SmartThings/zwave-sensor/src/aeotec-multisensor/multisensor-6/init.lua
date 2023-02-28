@@ -19,8 +19,6 @@ local cc = require "st.zwave.CommandClass"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version = 2})
 
-local preferences = require "preferences" 
-
 local MULTISENSOR_6_PRODUCT_ID = 0x0064
 local PREFERENCE_NUM = 9
 
@@ -29,7 +27,7 @@ local function can_handle_multisensor_6(opts, self, device, ...)
 end
 
 local function wakeup_notification(driver, device, cmd)
-  device:send(Configuration:Get({parameter_number = PREFERENCE_NUM})) 
+  device:send(Configuration:Get({parameter_number = PREFERENCE_NUM}))
   device:refresh()
 end
 

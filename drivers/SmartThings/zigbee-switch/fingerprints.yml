@@ -907,7 +907,7 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria

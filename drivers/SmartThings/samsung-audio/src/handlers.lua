@@ -13,8 +13,6 @@
 -- limitations under the License.
 
 local command = require "command"
-local log = require "log"
-local utils = require "st.utils"
 local capabilities = require "st.capabilities"
 
 --- @module Samsung-audio.CapabilityHandlers

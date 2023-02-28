@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local cc = (require "st.zwave.CommandClass")
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=3})
 

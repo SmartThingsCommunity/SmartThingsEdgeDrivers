@@ -222,7 +222,6 @@ test.register_message_test(
   }
 )
 
-local level = 3
 test.register_message_test(
   "Z-Wave SwitchMultilevel reports with non-zero values should evoke Switch and Switch Level capability events",
   {

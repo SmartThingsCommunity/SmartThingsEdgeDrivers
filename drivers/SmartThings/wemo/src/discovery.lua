@@ -58,7 +58,7 @@ end
 function Discovery.fetch_device_metadata(url)
   -- Wemo responds with chunked encoding, must use ltn12 sink
   local responsechunks = {}
-  local body, status, headers = http.request {
+  local _, status, _ = http.request {
     url = url,
     sink = ltn12.sink.table(responsechunks),
   }
