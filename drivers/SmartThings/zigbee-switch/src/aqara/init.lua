@@ -89,7 +89,7 @@ local preference_map = {
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
-    value_map = { ['rocker'] = 0x01,['rebound'] = 0x02 },
+    value_map = { rocker = 0x01, rebound = 0x02 },
   },
 }
 
@@ -104,6 +104,12 @@ end
 
 local function private_mode_handler(driver, device, value, zb_rx)
   device:set_field(PRIVATE_MODE, value.value, { persist = true })
+
+  if value.value ~= 1 then
+    device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1)) -- minimal interval : 15min
+    device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, { persist = true })
+    device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, { persist = true })
+  end
 end
 
 local function on_off_handler(driver, device, value, zb_rx)
@@ -115,7 +121,9 @@ local function on_off_handler(driver, device, value, zb_rx)
   local private_mode = device:get_field(PRIVATE_MODE) or 0
   if private_mode == 1 then
     -- read power meter
-    device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
+    device.thread:call_with_delay(2, function(t)
+      device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
+    end)
   end
 end
 
@@ -129,6 +137,15 @@ end
 local function energy_meter_power_consumption_report(device, raw_value)
   -- energy meter
   device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+
+  -- report interval
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_REPORT_TIME) or 0
+  local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
+  if current_time < next_time then
+    return
+  end
+  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
 
   -- power consumption report
   local delta_energy = 0.0
@@ -176,16 +193,6 @@ local function present_value_handler(driver, device, value, zb_rx)
       device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
     elseif src_endpoint == ENERGY_METER_ENDPOINT then
       -- energy meter, power consumption report
-
-      -- report interval
-      local current_time = os.time()
-      local last_time = device:get_field(LAST_REPORT_TIME) or 0
-      local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
-      if current_time < next_time then
-        return
-      end
-      device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
-
       local raw_value = value.value -- 'kWh'
       raw_value = round(raw_value * 1000)
       energy_meter_power_consumption_report(device, raw_value)
@@ -228,9 +235,6 @@ local function do_configure(self, device)
   device:configure()
   device:send(cluster_base.read_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE))
-  device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1)) -- minimal interval : 15min
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, { persist = true })
-  device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, { persist = true })
   do_refresh(self, device)
 end
 

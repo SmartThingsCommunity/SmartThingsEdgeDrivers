@@ -1,11 +1,7 @@
 local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local constants = require "st.zigbee.constants"
-
-local SimpleMetering = clusters.SimpleMetering
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -16,18 +12,6 @@ local FINGERPRINTS = {
   { model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
   { model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
 }
-
-local function do_configure(self, device)
-  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
-    device:configure()
-    device:send(cluster_base.read_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE))
-    device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1)) -- minimal interval : 15min
-    device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, { persist = true })
-    device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, { persist = true })
-    device:refresh()
-  end
-end
 
 local function get_children_amount(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
@@ -46,15 +30,11 @@ local function get_child_profile_name(device)
 end
 
 local function find_child(parent, ep_id)
-  if ep_id == 0x29 then
-    return parent:get_child_by_parent_assigned_key("01")
-  elseif ep_id == 0x2A then
-    return parent:get_child_by_parent_assigned_key("02")
-  elseif ep_id == 0x2B then
-    return parent:get_child_by_parent_assigned_key("03")
-  else
-    return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+  -- Buttons 1-3 report using endpoints 0x29, 0x2A, 0x2B, respectively
+  if ep_id >= 0x29 then
+    ep_id = ep_id - 0x28
   end
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
 local function device_added(driver, device)
@@ -105,8 +85,7 @@ local aqara_multi_switch_handler = {
   NAME = "Aqara Multi Switch Handler",
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
-    doConfigure = do_configure
+    added = device_added
   },
   can_handle = function(opts, driver, device)
     for _, fingerprint in ipairs(FINGERPRINTS) do

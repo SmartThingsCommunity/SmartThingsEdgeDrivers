@@ -23,7 +23,6 @@ local test = require "integration_test"
 
 local OnOff = clusters.OnOff
 local AnalogInput = clusters.AnalogInput
-local Basic = clusters.Basic
 
 local MFG_CODE = 0x115F
 local PRIVATE_CLUSTER_ID = 0xFCC0
@@ -83,10 +82,11 @@ test.register_coroutine_test(
   "Reported on status should be handled",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end
@@ -96,10 +96,11 @@ test.register_coroutine_test(
   "Reported off status should be handled",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end

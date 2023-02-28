@@ -71,7 +71,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Refresh on device should read all necessary attributes",
+  "Refresh device should read all necessary attributes",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
 
@@ -90,10 +90,11 @@ test.register_coroutine_test(
   "Reported on status should be handled : parent device",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end
@@ -103,10 +104,11 @@ test.register_coroutine_test(
   "Reported on status should be handled : child device",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end
@@ -116,10 +118,11 @@ test.register_coroutine_test(
   "Reported off status should be handled by parent device",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end
@@ -129,10 +132,11 @@ test.register_coroutine_test(
   "Reported off status should be handled by child device",
   function()
     mock_device:set_field(PRIVATE_MODE, 1, { persist = true })
-
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
+    test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end
