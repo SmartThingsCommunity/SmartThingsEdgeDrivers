@@ -309,7 +309,7 @@ local function migrate_light(driver, device, parent_device_id)
       end
 
       for _, light in ipairs(light_resource.data or {}) do
-        local profile_ref = nil
+        local profile_ref
 
         if light.color then
           profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)

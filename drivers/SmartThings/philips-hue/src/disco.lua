@@ -283,7 +283,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
   end
 
   for _, light in ipairs(light_resource.data or {}) do
-    local profile_ref = nil
+    local profile_ref
 
     if light.color then
       if light.color_temperature then

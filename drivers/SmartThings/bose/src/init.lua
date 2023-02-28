@@ -26,7 +26,6 @@
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local log = require "log"
-local json = require "dkjson"
 local utils = require "st.utils"
 local bose_utils = require "utils"
 local command = require "command"
@@ -155,7 +154,6 @@ local function do_refresh(driver, device, cmd)
 
   -- restart listener if needed
   local listener = device:get_field("listener")
-  local success = false
   if listener and (listener:is_stopped() or listener.websocket == nil)then
     device.log.info("Restarting listening websocket client for device updates")
     listener:stop()
@@ -163,6 +161,31 @@ local function do_refresh(driver, device, cmd)
     if not listener:start() then
       device.log.warn_with({hub_logs = true}, "Failed to restart listening websocket client for device updates")
     end
+  end
+end
+
+--TODO remove function in favor of "st.utils" function once
+--all hubs have 0.46 firmware
+local function backoff_builder(max, inc, rand)
+  local count = 0
+  inc = inc or 1
+  return function()
+    local randval = 0
+    if rand then
+      --- We use this pattern because the version of math.random()
+      --- that takes a range only works for integer values and we
+      --- want floating point.
+      randval = math.random() * rand * 2 - rand
+    end
+
+    local base = inc * (2 ^ count - 1)
+    count = count + 1
+
+    -- ensure base backoff (not including random factor) is less than max
+    if max then base = math.min(base, max) end
+
+    -- ensure total backoff is >= 0
+    return math.max(base + randval, 0)
   end
 end
 
@@ -177,7 +200,7 @@ local function device_init(driver, device)
   local serial_number = bose_utils.get_serial_number(device)
 
   cosock.spawn(function()
-    local backoff = utils.backoff_builder(300, 1, 0.25)
+    local backoff = backoff_builder(300, 1, 0.25)
     local dev_info
     while true do
       discovery.find(serial_number, function(found) dev_info = found end)
@@ -200,7 +223,7 @@ local function device_init(driver, device)
     }))
     do_refresh(driver, device)
 
-    backoff = utils.backoff_builder(300, 1, 0.25)
+    backoff = backoff_builder(300, 1, 0.25)
     while true do
       local listener = Listener.create_device_event_listener(driver, device)
       device:set_field("listener", listener)

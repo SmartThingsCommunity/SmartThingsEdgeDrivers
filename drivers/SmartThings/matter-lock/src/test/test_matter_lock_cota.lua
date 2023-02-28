@@ -33,7 +33,6 @@ local json = require "st.json"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
-local data_types = require "st.matter.data_types"
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("base-lock.yml"),
@@ -182,7 +181,6 @@ test.register_coroutine_test(
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
 
-    local next_credential_index = data_types.Null()
     test.socket.matter:__queue_receive({
       mock_device.id,
       DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
@@ -204,7 +202,6 @@ test.register_coroutine_test(
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
 
-    local next_credential_index = data_types.Null()
     test.socket.matter:__queue_receive({
       mock_device.id,
       DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
@@ -306,7 +303,6 @@ test.register_coroutine_test(
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
 
-    local next_credential_index = data_types.Null()
     test.socket.matter:__queue_receive({
       mock_device.id,
       DoorLock.client.commands.SetCredentialResponse:build_test_command_response(

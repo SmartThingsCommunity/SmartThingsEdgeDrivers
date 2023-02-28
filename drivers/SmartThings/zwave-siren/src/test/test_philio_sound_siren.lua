@@ -262,11 +262,11 @@ test.register_coroutine_test(
       mock_siren.id,
       { capability = "chime", component = "main", command = "chime", args = {} }
     })
-    
+
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
     )
-    
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_siren,
@@ -276,7 +276,7 @@ test.register_coroutine_test(
         })
       )
     )
-  
+
     test.wait_for_events()
     test.mock_time.advance_time(1)
     test.socket.capability:__expect_send(

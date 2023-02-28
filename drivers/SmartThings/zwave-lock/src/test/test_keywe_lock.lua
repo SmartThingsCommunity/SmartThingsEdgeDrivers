@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
 
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
