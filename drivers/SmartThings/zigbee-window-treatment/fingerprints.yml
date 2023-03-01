@@ -88,6 +88,11 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+  - id: "Third Reality/3RSB015BZ"
+    deviceLabel: ThirdReality Smart Blind
+    manufacturer: Third Reality, Inc
+    model: 3RSB015BZ
+    deviceProfileName: window-treatment-battery
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
