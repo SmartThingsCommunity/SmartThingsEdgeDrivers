@@ -8,7 +8,6 @@ local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
-local AnalogInput = clusters.AnalogInput
 
 local maxPower = capabilities["stse.maxPower"]
 local restorePowerState = capabilities["stse.restorePowerState"]
@@ -24,9 +23,6 @@ local RESTORE_POWER_STATE_ATTRIBUTE_ID = 0x0201
 local CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID = 0x0200
 local MAX_POWER_ATTRIBUTE_ID = 0x020B
 local ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID = 0x000A
-
-local POWER_METER_ENDPOINT = 0x15
-local ENERGY_METER_ENDPOINT = 0x1F
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local PRIVATE_MODE = "PRIVATE_MODE"
@@ -112,21 +108,6 @@ local function private_mode_handler(driver, device, value, zb_rx)
   end
 end
 
-local function on_off_handler(driver, device, value, zb_rx)
-  device:emit_event_for_endpoint(
-    zb_rx.address_header.src_endpoint.value,
-    value.value and capabilities.switch.switch.on() or capabilities.switch.switch.off()
-  )
-
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode == 1 then
-    -- read power meter
-    device.thread:call_with_delay(2, function(t)
-      device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
-    end)
-  end
-end
-
 local function wireless_switch_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
@@ -158,59 +139,20 @@ local function energy_meter_power_consumption_report(device, raw_value)
 end
 
 local function power_meter_handler(driver, device, value, zb_rx)
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode ~= 1 then
-    local raw_value = value.value -- '10W'
-    raw_value = raw_value / 10
-    device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
-  end
+  local raw_value = value.value -- '10W'
+  raw_value = raw_value / 10
+  device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode ~= 1 then
-    local raw_value = value.value -- 'Wh'
-    energy_meter_power_consumption_report(device, raw_value)
-  end
-end
-
-local function round(num)
-  local mult = 10
-  return math.floor(num * mult + 0.5) / mult
-end
-
-local function present_value_handler(driver, device, value, zb_rx)
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode == 1 then
-    local src_endpoint = zb_rx.address_header.src_endpoint.value
-    if src_endpoint == POWER_METER_ENDPOINT then
-      -- power meter
-      local raw_value = value.value -- 'W'
-      raw_value = round(raw_value)
-      device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
-
-      -- read energy meter
-      device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
-    elseif src_endpoint == ENERGY_METER_ENDPOINT then
-      -- energy meter, power consumption report
-      local raw_value = value.value -- 'kWh'
-      raw_value = round(raw_value * 1000)
-      energy_meter_power_consumption_report(device, raw_value)
-    end
-  end
+  local raw_value = value.value -- 'Wh'
+  energy_meter_power_consumption_report(device, raw_value)
 end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
-
-  local private_mode = device:get_field(PRIVATE_MODE) or 0
-  if private_mode == 1 then
-    device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
-    device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
-  else
-    device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
-    device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
-  end
+  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
+  device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -266,12 +208,6 @@ local aqara_switch_handler = {
       [SimpleMetering.ID] = {
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
       },
-      [AnalogInput.ID] = {
-        [AnalogInput.attributes.PresentValue.ID] = present_value_handler
-      },
-      [OnOff.ID] = {
-        [OnOff.attributes.OnOff.ID] = on_off_handler
-      },
       [WIRELESS_SWITCH_CLUSTER_ID] = {
         [WIRELESS_SWITCH_ATTRIBUTE_ID] = wireless_switch_handler
       },
@@ -281,6 +217,7 @@ local aqara_switch_handler = {
     }
   },
   sub_drivers = {
+    require("aqara.version"),
     require("aqara.multi-switch")
   },
   can_handle = is_aqara_products

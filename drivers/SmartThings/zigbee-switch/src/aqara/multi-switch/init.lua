@@ -8,10 +8,19 @@ local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
 local FINGERPRINTS = {
-  { model = "lumi.switch.n1acn1", children = 1, child_profile = "" },
-  { model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
-  { model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.n1acn1", children = 1, child_profile = "" },
+  { mfr = "LUMI", model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
 }
+
+local function is_aqara_products(opts, driver, device)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
+  end
+  return false
+end
 
 local function get_children_amount(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
@@ -87,14 +96,7 @@ local aqara_multi_switch_handler = {
     init = device_init,
     added = device_added
   },
-  can_handle = function(opts, driver, device)
-    for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:get_model() == fingerprint.model then
-        return true
-      end
-    end
-    return false
-  end
+  can_handle = is_aqara_products
 }
 
 return aqara_multi_switch_handler
