@@ -234,7 +234,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle())
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
     )
   end
 )
@@ -251,7 +251,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle())
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
     )
   end
 )

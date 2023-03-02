@@ -47,7 +47,7 @@ local function window_shade_close_cmd(driver, device, command)
 end
 
 local function set_rotate_command_handler(driver, device, command)
-  device:emit_event(shadeRotateState.rotateState.idle()) -- update UI
+  device:emit_event(shadeRotateState.rotateState.idle({state_change = true})) -- update UI
 
   -- Cannot be controlled if not initialized
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
