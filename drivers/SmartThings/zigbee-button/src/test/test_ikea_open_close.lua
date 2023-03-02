@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"

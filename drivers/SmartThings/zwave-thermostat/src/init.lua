@@ -56,11 +56,27 @@ local function set_setpoint_factory(setpoint_type)
     local scale = device:get_field(constants.TEMPERATURE_SCALE)
     local value = convert_to_device_temp(command.args.setpoint, scale)
 
-    local set = ThermostatSetpoint:Set({
-      setpoint_type = setpoint_type,
-      scale = scale,
-      value = value
-    })
+    -- Zwave thermostat devices expect to get fractional values as an integer value
+    -- with a provided precision such that the temp is value * 10^(-precision)
+    -- See section 2.2.113.2 of the Zwave Specification for more info
+    -- This is a temporary workaround for the Aeotec Thermostat device while
+    -- more permanent fixes are added to scripting-engine
+    local set
+    if value % 1 == 0.5 then
+      set = ThermostatSetpoint:Set({
+        setpoint_type = setpoint_type,
+        scale = scale,
+        value = value,
+        precision = 1,
+        size = 2
+      })
+    else
+      set = ThermostatSetpoint:Set({
+        setpoint_type = setpoint_type,
+        scale = scale,
+        value = value
+      })
+    end
     device:send_to_component(set, command.component)
 
     local follow_up_poll = function()

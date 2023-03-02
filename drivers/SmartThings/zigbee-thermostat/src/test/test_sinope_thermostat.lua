@@ -120,7 +120,6 @@ test.register_coroutine_test(
           timeFormat = 1 --12h
         }
       }
-      local MFG_CODE = 0x0000
       local SINOPE_CUSTOM_CLUSTER = 0xFF01
       local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
       local MFR_BACKLIGHT_MODE_ATTRIBUTE = 0x0402

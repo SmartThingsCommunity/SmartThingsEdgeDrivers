@@ -21,8 +21,6 @@ local constants = require "st.zwave.constants"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
---- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 
@@ -58,11 +56,6 @@ local function basic_report_handler(driver, device, cmd)
 -- When switch is on/off, driver gets the below messages.
 -- received Z-Wave command: {args={value=96}, cmd_class="BASIC", cmd_id="REPORT", dst_channels={}, encap="NONE", payload="`", src_channel=0, version=1}
 -- received Z-Wave command: {args={value=92}, cmd_class="BASIC", cmd_id="REPORT", dst_channels={}, encap="NONE", payload="\", src_channel=0, version=1}
-end
-
-local function switch_multilevel_stop_level_change_handler(driver, device, cmd)
-  device:emit_event(capabilities.switch.switch.on())
-  device:send(SwitchMultilevel:Get({}))
 end
 
 local function switch_on_handler(driver, device)
@@ -104,8 +97,7 @@ local eaton_accessory_dimmer = {
     },
     [cc.SWITCH_MULTILEVEL] = {
       [SwitchMultilevel.SET] = dimmer_event,
-      [SwitchMultilevel.REPORT] = dimmer_event,
-      [SwitchMultilevel.STOP_LEVEL_CHANGE] = switch_multilevel_stop_level_change_handler
+      [SwitchMultilevel.REPORT] = dimmer_event
     }
   },
   capability_handlers = {

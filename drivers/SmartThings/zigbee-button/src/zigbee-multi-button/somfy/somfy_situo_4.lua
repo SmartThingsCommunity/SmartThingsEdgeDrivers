@@ -65,10 +65,10 @@ end
 local do_configure = function(self, device)
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device):to_endpoint(0xE8))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1):to_endpoint(0xE8))
-  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x01))
-  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x02))
-  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x03))
-  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x04))
+  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui, 1))
+  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui, 2))
+  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui, 3))
+  device:send(device_management.build_bind_request(device, WindowCovering.ID, self.environment_info.hub_zigbee_eui, 4))
   -- Read binding table
   local addr_header = messages.AddressHeader(
     constants.HUB.ADDR,

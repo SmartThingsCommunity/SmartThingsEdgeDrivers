@@ -1,3 +1,26 @@
+matterManufacturer:
+#Eve
+  - id: "Eve/Energy/US"
+    deviceLabel: Eve Energy US
+    vendorId: 0x130A
+    productId: 0x53
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/Europe"
+    deviceLabel: Eve Energy Europe
+    vendorId: 0x130A
+    productId: 0x50
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/U.K."
+    deviceLabel: Eve Energy U.K.
+    vendorId: 0x130A
+    productId: 0x54
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/Australia"
+    deviceLabel: Eve Energy Australia
+    vendorId: 0x130A
+    productId: 0x5E
+    deviceProfileName: plug-binary
+
 matterGeneric:
   - id: "matter/on-off/light"
     deviceLabel: Matter OnOff Light

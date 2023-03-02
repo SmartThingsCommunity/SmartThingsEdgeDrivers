@@ -84,7 +84,7 @@ end
 
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
+  local req
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
@@ -99,11 +99,10 @@ end
 
 local function handle_set_hue(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
-    req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -112,11 +111,10 @@ end
 
 local function handle_set_saturation(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
-    req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -177,8 +175,8 @@ local function temp_attr_handler(driver, device, ib, response)
     local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
-      most_recent_temp >= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value + 1)) then
+      most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
+      most_recent_temp >= utils.round(CONVERSION_CONSTANT/(ib.data.value + 1)) then
         temp = most_recent_temp
     end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))

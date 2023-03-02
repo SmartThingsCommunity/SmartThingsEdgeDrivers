@@ -6,12 +6,7 @@ local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 
-local utils = require "st.utils"
-
 local protocol = {}
-
--- map subscription IDs to device handles
-local subscriptions = {}
 
 local request_wrapper = [[<?xml version="1.0" encoding="utf-8"?>
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
@@ -22,15 +17,16 @@ local request_wrapper = [[<?xml version="1.0" encoding="utf-8"?>
 </s:Envelope>]]
 
 local function get_ip_and_port(device)
-    local ip = device:get_field("ip")
-    if not ip then log.warn("device ip is not yet known") end
+  local ip = device:get_field("ip")
+  if not ip then log.warn("proto| device ip is not yet known") end
 
-    local port = device:get_field("port")
-    if not port then log.warn("device port is not known") end
+  local port = device:get_field("port")
+  if not port then log.warn("proto| device port is not known") end
 
-    return ip, port
+  return ip, port
 end
 
+--TODO this info should be present in driver.environment_info.hub_ipv4
 local function find_interface_ip_for_remote(ip)
   local s = socket:udp()
   s:setpeername(ip, 9) -- port unimportant, use "discard" protocol port for lack of anything better
@@ -40,343 +36,205 @@ local function find_interface_ip_for_remote(ip)
   return localip
 end
 
--- listen socket channel handler
--- first parameter is driver, which we don't need
-function protocol.accept_handler(_, listen_sock)
-    local client, accept_err = listen_sock:accept()
+function protocol.poll(device)
+  local ip, port = get_ip_and_port(device)
+  log.debug(string.format("proto| polling %s at %s:%s", device.label, ip, port))
+  if not (ip and port) then
+    return
+  end
 
-    log.trace("accept connection from", client:getpeername())
+  local reqbody = string.format(request_wrapper,
+    [[<u:GetBinaryState xmlns:u="urn:Belkin:service:basicevent:1"></u:GetBinaryState>]]
+  )
 
-    if accept_err ~= nil then
-        log.info("Hit accept error: " .. accept_err)
-        listen_sock:close()
-        return
-    end
+  local response_chunks = {}
 
-    client:settimeout(1)
-
-    local ip, _, _ = client:getpeername()
-    if ip ~= nil then
-        do -- Read first line and verify it matches the expect request-line with NOTIFY method type
-            local line, err = client:receive()
-            if err == nil then
-                if line ~= "NOTIFY / HTTP/1.1" then
-                    log.warn("Received unexpected " .. line)
-                    client:close()
-                    return
-                end
-            else
-                log.warn("Hit error on client receive: " .. err)
-                client:close()
-                return
-            end
-        end
-
-        local content_length = 0
-        local subscriptionid = 0
-        do -- Receive all headers until blank line is found, saving off content-length
-            local line, err = client:receive()
-            if err then
-                log.warn("Hit error on client receive: " .. err)
-                client:close()
-                return
-            end
-
-            while line ~= "" do
-                local name, value = socket.skip(2, line:find("^(.-):%s*(.*)"))
-                if not (name and value) then
-                    log.warn("Received malformed response headers")
-                    client:close()
-                    return
-                end
-
-                if string.lower(name) == "content-length" then
-                    content_length = tonumber(value)
-                end
-
-                if string.lower(name) == "sid" then
-                    subscriptionid = value
-                end
-
-                line, err  = client:receive()
-                if err ~= nil then
-                    log.warn("error while receiving headers: " .. err)
-                    return
-                end
-            end
-
-            if content_length == nil or content_length <= 0 then
-                log.warn("Failed to parse content-length from headers")
-                return
-            end
-        end
-
-
-        do -- receive `content_length` bytes as body
-            local body = ""
-            while #body < content_length do
-                local bytes_remaining = content_length - #body
-                local recv, err = client:receive(bytes_remaining)
-                if err == nil then
-                    body = body .. recv
-                else
-                    log.warn("error while receiving body: " .. err)
-                    break
-                end
-            end
-
-            local device = subscriptions[subscriptionid]
-            if not device then
-                log.error("received subscription event for unknown subscription", subscriptionid)
-                client:close()
-                return
-            end
-
-
-            if body ~= nil then
-                parser.parse_subscription_resp_xml(device, body)
-
-                -- For now always return 200 OK if we received a request, regardless of potential parsing failures.
-                -- Consider returning error code if parsing fails.
-                local resp = "HTTP/1.1 200 OK\r\n\r\n";
-                client:send(resp);
-            else
-                log.warn("Received no HTTP body on accepted socket")
-            end
-        end
-
-        client:close()
-    else
-        log.warn("Could not get IP from getpeername()")
-    end
-end
-
-function protocol.poll(_, device)
-    local ip, port = get_ip_and_port(device)
-    log.debug("protocol.poll() ip is = ", ip)
-    log.debug("protocol.poll() port is = ", port)
-    if not (ip and port) then
-        return
-    end
-
-    local reqbody = string.format(request_wrapper,
-        [[<u:GetBinaryState xmlns:u="urn:Belkin:service:basicevent:1"></u:GetBinaryState>]]
-    )
-
-    local response_chunks = {}
-
-    local resp, code_or_err, _, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
-        method = "POST",
-        sink = ltn12.sink.table(response_chunks),
-        source = ltn12.source.string(reqbody),
-        headers = {
-            ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#GetBinaryState"]],
-            ["Content-Type"] = "text/xml",
-            ["Host"] =  ip .. ":" .. port,
-            ["Content-Length"] = #reqbody
-        }
+  --TODO use luncheon
+  local resp, code_or_err, _, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
+    method = "POST",
+    sink = ltn12.sink.table(response_chunks),
+    source = ltn12.source.string(reqbody),
+    headers = {
+      ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#GetBinaryState"]],
+      ["Content-Type"] = "text/xml",
+      ["Host"] = ip .. ":" .. port,
+      ["Content-Length"] = #reqbody
     }
+  }
 
-    -- TODO: some retries needed here to get device health if we timeout
+  -- TODO: some retries needed here to get device health if we timeout
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        
-	-- retry
-	resp, code_or_err, _, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
-        method = "POST",
-        sink = ltn12.sink.table(response_chunks),
-        source = ltn12.source.string(reqbody),
-        headers = {
-            ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#GetBinaryState"]],
-            ["Content-Type"] = "text/xml",
-            ["Host"] =  ip .. ":" .. port,
-            ["Content-Length"] = #reqbody
-            }
-        }
+  if resp == nil then
+    log.warn_with({hub_logs=true},
+      string.format("proto| retry sending poll request for %s: %s", device.label, code_or_err))
 
-        if resp == nil then
-           log.warn("Error sending http request: " .. code_or_err)
-	   device:offline() -- Mark device as being unavailable/offline
-           return
-        end
-    end
-
-    device:online() -- Mark device as being online
-
-    if code_or_err ~= 200 then
-        log.warn("received " .. code_or_err .. " http status response :" .. status_line)
-    else
-        local resp_body = table.concat(response_chunks)
-        parser.parse_get_state_resp_xml(device, resp_body)
-    end
-end
-
-function protocol.subscribe(server, device)
-    local ip, port = get_ip_and_port(device)
-    if not (ip and port) then
-        return
-    end
-
-    local device_facing_local_ip = find_interface_ip_for_remote(ip)
-
-    if server.listen_ip == nil or server.listen_port == nil then
-        log.info("failed to subscribe, no listen server")
-        return
-    end
-
-    log.debug("subscribing", "<http://" .. device_facing_local_ip .. ":" .. server.listen_port .. "/>")
-
-    local response_body = {}
-
-    local resp, code_or_err, headers, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
-        method = "SUBSCRIBE",
-        sink = ltn12.sink.table(response_body),
-        headers = {
-            ["HOST"] =  ip .. ":" .. port,
-            ["CALLBACK"] = "<http://" .. device_facing_local_ip .. ":" .. server.listen_port .. "/>",
-            ["NT"] = "upnp:event",
-            ["TIMEOUT"] = "Second-5400",
-        }
+    -- retry
+    resp, code_or_err, _, status_line = http.request {
+      url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
+      method = "POST",
+      sink = ltn12.sink.table(response_chunks),
+      source = ltn12.source.string(reqbody),
+      headers = {
+        ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#GetBinaryState"]],
+        ["Content-Type"] = "text/xml",
+        ["Host"] = ip .. ":" .. port,
+        ["Content-Length"] = #reqbody
+      }
     }
 
     if resp == nil then
-        log.warn("error sending http request: " .. code_or_err)
-        return
+      log.warn_with({hub_logs=true},
+        string.format("proto| Failed to send poll request to %s: %s", device.label, code_or_err))
+      device:offline()
+      return
     end
+  end
 
-    if code_or_err ~= 200 then
-        log.warn("subcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
-        return
-    end
+  device:online()
 
-    local sid = headers["sid"]
-    if sid ~= nil then
-        if device:get_field("sid") ~= sid then
-            device:set_field("sid", sid)
-            subscriptions[sid] = device
-	    log.info("["..device.id.."] setup subscription: "..tostring(sid))
-        end
-    else
-        log.warn("no SID header in subscription response")
-    end
+  if code_or_err ~= 200 then
+    log.warn(string.format("proto| poll to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
+  else
+    local resp_body = table.concat(response_chunks)
+    parser.parse_get_state_resp_xml(device, resp_body)
+  end
 end
 
-function protocol.unsubscribe(device)
-    local ip, port = get_ip_and_port(device)
-    if not (ip and port) then
-        return
-    end
+function protocol.subscribe(device, listen_ip, listen_port)
+  local ip, port = get_ip_and_port(device)
+  if not (ip and port) then
+    return
+  end
 
-    log.info("Unsubscribing")
+  local device_facing_local_ip = find_interface_ip_for_remote(ip)
 
-    local sid = device:get_field("sid")
-    if sid == nil then
-        return
-    else
-        subscriptions[sid] = nil
-    end
-
-
-    local response_body = {}
-
-    local resp, code_or_err, _, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
-        method = "UNSUBSCRIBE",
-        sink = ltn12.sink.table(response_body),
-        headers = {
-            ["HOST"] =  ip .. ":" .. port,
-            ["SID"] = sid,
-        }
+  local response_body = {}
+  local resp, code_or_err, headers, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
+    method = "SUBSCRIBE",
+    sink = ltn12.sink.table(response_body),
+    headers = {
+      ["HOST"] = ip .. ":" .. port,
+      ["CALLBACK"] = "<http://" .. device_facing_local_ip .. ":" .. listen_port .. "/>",
+      ["NT"] = "upnp:event",
+      ["TIMEOUT"] = "Second-5400",
     }
+  }
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        return
-    end
+  if resp == nil then
+    log.warn_with({hub_logs=true}, string.format("proto| error sending subscribe request to %s: %s", device.label, code_or_err))
+    return
+  end
 
-    if code_or_err ~= 200 then
-        log.warn("Unsubcribe failed with error code " .. code_or_err .. " and status: " .. status_line)
-    end
+  if code_or_err ~= 200 then
+    log.warn_with({hub_logs=true},
+      string.format("proto| subscribe request to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
+    return
+  end
+
+  return headers["sid"]
+end
+
+function protocol.unsubscribe(device, sid)
+  local ip, port = get_ip_and_port(device)
+  if not (ip and port) then
+    return
+  end
+
+  local response_body = {}
+  local resp, code_or_err, _, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/event/basicevent1",
+    method = "UNSUBSCRIBE",
+    sink = ltn12.sink.table(response_body),
+    headers = {
+      ["HOST"] = ip .. ":" .. port,
+      ["SID"] = sid,
+    }
+  }
+
+  if resp == nil then
+    log.warn_with({hub_logs=true}, string.format("proto| error sending unsubscribe request to %s: %s", device.label, code_or_err))
+    return false
+  end
+
+  if code_or_err ~= 200 then
+    log.warn_with({hub_logs=true},
+      string.format("proto| subscribe request to %s failed with error code %s and status: %s", device.label, code_or_err, status_line))
+    return false
+  end
+  return true
 end
 
 function protocol.send_switch_cmd(device, power)
-    local ip, port = get_ip_and_port(device)
-    if not (ip and port) then
-        return
-    end
+  local ip, port = get_ip_and_port(device)
+  if not (ip and port) then
+    return
+  end
 
-    local body = string.format(request_wrapper,
-        [[<m:SetBinaryState xmlns:m="urn:Belkin:service:basicevent:1"><BinaryState>]] ..
-            (power and 1 or 0) ..
-        [[</BinaryState></m:SetBinaryState>]]
-    )
+  local body = string.format(request_wrapper,
+    [[<m:SetBinaryState xmlns:m="urn:Belkin:service:basicevent:1"><BinaryState>]] ..
+    (power and 1 or 0) ..
+    [[</BinaryState></m:SetBinaryState>]]
+  )
 
-    local response_body = {}
+  local response_body = {}
 
-    log.trace("make request")
-    local resp, code_or_err, _, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
-        method = "POST",
-        sink = ltn12.sink.table(response_body),
-        source = ltn12.source.string(body),
-        headers = {
-            ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#SetBinaryState"]],
-            ["Content-Type"] = "text/xml",
-            ["Host"] =  ip .. ":" .. port,
-            ["Content-Length"] = #body
-        }
+  log.trace(string.format("proto| %s set_switch_state %s", device.label, (power and 1 or 0)))
+  local resp, code_or_err, _, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
+    method = "POST",
+    sink = ltn12.sink.table(response_body),
+    source = ltn12.source.string(body),
+    headers = {
+      ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#SetBinaryState"]],
+      ["Content-Type"] = "text/xml",
+      ["Host"] = ip .. ":" .. port,
+      ["Content-Length"] = #body
     }
-    log.trace("got response", code_or_err, status_line)
+  }
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        return
-    end
-
-    if code_or_err ~= 200 then
-        log.warn("Switch command failed with error code " .. code_or_err .. " and status: " .. status_line)
-    end
+  if resp == nil or code_or_err ~= 200 then
+    log.warn_with({ hub_logs = true }, string.format(
+      "proto| %s set_switch_state failed with error code %s and status: %s",
+      device.label, code_or_err, status_line
+    ))
+  end
 end
 
 function protocol.send_switch_level_cmd(device, level)
-    local ip, port = get_ip_and_port(device)
-    if not (ip and port) then
-        return
-    end
+  local ip, port = get_ip_and_port(device)
+  if not (ip and port) then
+    return
+  end
 
-    local body = string.format(request_wrapper,
-        [[<m:SetBinaryState xmlns:m="urn:Belkin:service:basicevent:1"><brightness>]] ..
-            level ..
-        [[</brightness></m:SetBinaryState>]]
-    )
+  local body = string.format(request_wrapper,
+    [[<m:SetBinaryState xmlns:m="urn:Belkin:service:basicevent:1"><brightness>]] ..
+    level ..
+    [[</brightness></m:SetBinaryState>]]
+  )
 
-    local response_body = {}
-
-    local resp, code_or_err, _, status_line = http.request {
-        url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
-        method = "POST",
-        sink = ltn12.sink.table(response_body),
-        source = ltn12.source.string(body),
-        headers = {
-            ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#SetBinaryState"]],
-            ["Content-Type"] = "text/xml",
-            ["Host"] =  ip .. ":" .. port,
-            ["Content-Length"] = #body
-        }
+  local response_body = {}
+  log.trace(string.format("proto| %s set_switch_level %s", device.label, level))
+  local resp, code_or_err, _, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/control/basicevent1",
+    method = "POST",
+    sink = ltn12.sink.table(response_body),
+    source = ltn12.source.string(body),
+    headers = {
+      ["SOAPAction"] = [["urn:Belkin:service:basicevent:1#SetBinaryState"]],
+      ["Content-Type"] = "text/xml",
+      ["Host"] = ip .. ":" .. port,
+      ["Content-Length"] = #body
     }
+  }
 
-    if resp == nil then
-        log.warn("Error sending http request: " .. code_or_err)
-        return
-    end
-
-    if code_or_err ~= 200 then
-        log.warn("Switch level command failed with error code " .. code_or_err .. " and status: " .. status_line)
-    end
+  if resp == nil or code_or_err ~= 200 then
+    log.warn_with({ hub_logs = true }, string.format(
+      "proto| %s set_switch_level failed with error code %s and status: %s",
+      device.label, code_or_err, status_line
+    ))
+  end
 end
 
 return protocol

@@ -813,6 +813,11 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: 01MINIZB
     deviceProfileName: basic-switch
+  - id: SONOFF/ZBMINIL2
+    deviceLabel: SONOFF Switch
+    manufacturer: SONOFF
+    model: ZBMINIL2
+    deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
     manufacturer:
@@ -902,7 +907,7 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -1192,12 +1197,12 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-5000K
   - id: Juno/ABL-LIGHT-Z-001
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-5000K
   - id: Samsung/SAMSUNG-ITM-Z-001
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -1567,7 +1572,7 @@ zigbeeManufacturer:
     deviceLabel: Eria Switch
     manufacturer: AduroSmart Eria
     model: BDP3001
-    deviceProfileName: switch-power
+    deviceProfileName: switch-level
   - id: "AduroSmart Eria/ZLL-DimmableLight"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria

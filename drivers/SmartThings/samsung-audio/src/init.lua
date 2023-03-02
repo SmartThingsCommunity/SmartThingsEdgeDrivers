@@ -16,7 +16,6 @@
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local log = require "log"
-local json = require "dkjson"
 local utils = require "st.utils"
 local command = require "command"
 local socket = require "cosock.socket"
@@ -38,7 +37,6 @@ local function discovery_handler(driver, _, should_continue)
   while should_continue() do
     discovery.find(nil, function(device) -- This is called after finding a device
       local id = device.id
-      local ip = device.ip
       local spk_name = device.name
       local spk_model = device.model
       log.info(string.format("Found a device. ip: %s, id: %s, device_name: %s, device_model: %s", device.ip, device.id, device.name, device.model))
@@ -140,8 +138,9 @@ local function device_init(driver, device)
   local backoff = backoff_builder(60, 1, 0.1)
   local dev_info
   while true do -- todo should we limit this? I think this will just spin forever if the device goes down
-    log.info("Doing DISCOVERY to find a specific device")
-    discovery.find(device.device_network_id, function(found) dev_info = found end)
+    local id_search = string.upper(device.device_network_id)
+    log.debug(string.format("Trigger DISCOVERY to find a specific device having network ID --> %s", id_search))
+    discovery.find(id_search, function(found) dev_info = found end)
     if dev_info then break end
     socket.sleep(backoff())
   end

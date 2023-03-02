@@ -15,18 +15,19 @@
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http" -- TODO use luncheon instead
---- local ltn12 = require "ltn12"
 local log = require "log"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
-local utils = require "st.utils"
-local command = require "command"
-
 local ltn12 = require "ltn12"
 
 --- @module samsung-audio.Disco
 local Disco = {}
 
+local SAMSUNG_AUDIO_MODEL_NAMES = {
+  'WAM7500', 'WAM6500', 'WAM5500', 'WAM3500', 'WAM3501', 'WAM1500', 'WAM1501',
+  'WAM1400', 'WAM750', 'WAM550', 'WAM350', 'J8500', 'J7500', 'J6500', 'J650',
+  'H750', 'K650', 'K850', 'K950', 'J6500R', 'J7500R', 'J8500R'
+}
 
 local function tablefind(t, path)
   local pathelements = string.gmatch(path, "([^.]+)%.?")
@@ -73,9 +74,15 @@ local function fetch_device_metadata(url)
     return nil
   end
 
+  local udn_value = tablefind(parsed_xml, "root.device.UDN")
+  local mac_raw = string.sub(udn_value, -12)
+  local mac_val = string.upper(mac_raw)
+  log.debug(string.format("SPEAKER_MAC_VAL --> %s", mac_val))
+
   return {
     name = tablefind(parsed_xml, "root.device.friendlyName"),
-    model = tablefind(parsed_xml, "root.device.modelName")
+    model = tablefind(parsed_xml, "root.device.modelName"),
+    mac = mac_val
   }
 end
 
@@ -85,6 +92,17 @@ local function process_response(val)
   val = string.gsub(val, "HTTP/1.1 200 OK\r\n", "", 1)
   for k, v in string.gmatch(val, "([%g]+): ([%g ]*)\r\n") do info[string.lower(k)] = v end
   return info
+end
+
+local function check_samsung_model(val)
+  log.debug(string.format("Doing the Device Model check --> %s", val))
+  for _, model in ipairs(SAMSUNG_AUDIO_MODEL_NAMES) do
+    if string.find(val, model) then
+      log.debug(string.format("Found the Samsung Audio Device Model --> %s", val))
+      return true
+    end
+  end
+  return false
 end
 
 function Disco.find(deviceid, callback)
@@ -107,9 +125,6 @@ function Disco.find(deviceid, callback)
   assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
   local timeouttime = socket.gettime() + 3 -- 3 second timeout, `MX` + 1 for network delay
 
-  local ids_found = {} -- used to filter duplicates
-  local number_found = 0
-
   log.debug("sending discovery multicast request")
   assert(s:sendto(multicast_msg, multicast_ip, multicast_port))
   while true do
@@ -118,35 +133,46 @@ function Disco.find(deviceid, callback)
     local val, rip, _ = s:receivefrom()
     if val then
       local headers = process_response(val)
-      local ip, port = headers["location"]:match(
+      local ip, _ = headers["location"]:match(
                              "http://([^,/]+):([^/]+)") -- TODO : We need to check the xml filename for samsung audio device for ex: http://192.168.0.1:59666/rootDesc.xml
-      local id = headers["usn"]
 
       -- TODO how do I know the device that responded is actually a samsung-audio device
       -- potentially will need to make a request to the endpoint
       local meta = fetch_device_metadata(headers["location"])
       local speaker_name = "samsung-audio speaker"
       local speaker_model = "unknown samsung-audio"
+      local id = nil
       if not meta then
-          meta = {}
           log.trace("fetch_device_metadata INFO is NULL")
       else
           speaker_name = meta.name
           speaker_model = meta.model
+          id = meta.mac
       end
+      log.debug(string.format("Device Network ID --> %s", id))
 
-      if rip ~= ip then
+      if id == nil then
+	log.warn("Device Network ID of discovered device is NIL, ignoring this device")
+      elseif rip ~= ip then
         log.warn(string.format(
                    "recieved discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
                    rip, ip))
         log.debug(rip, "!=", ip)
+      elseif not check_samsung_model(speaker_model) then  -- to know the device that responded is actually a samsung-audio device
+	log.warn("Found non-samsung speaker device, ignoring this device")
       elseif ip and id then
-        callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})
-
-        if id == deviceid then
-          -- check if the speaker we just found was the one we were looking for
-          break
-        end
+	if deviceid then  -- this is device init flow
+	  if id == deviceid then -- check if the speaker we just found was the one we were looking for
+            callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})
+            log.debug(string.format("Found the Target Device in Device Init Discovery --> %s", id))
+            break
+	  else
+	    log.debug(string.format("Found the Different Device during Device Init Discovery --> %s", id))
+	  end
+	else  -- this is device onboarding/search flow
+	  callback({id = id, ip = ip, raw = val, name = speaker_name, model = speaker_model})
+          log.debug(string.format("Found the Devices during Device Onboarding Discovery --> %s", id))
+	end
       end
     elseif rip == "timeout" then
       break

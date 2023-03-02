@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local MatterDriver = require "st.matter.driver"
-local interaction_model = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 
 local DoorLock = clusters.DoorLock
@@ -203,6 +202,11 @@ local function set_credential_response_handler(driver, device, ib, response)
       device.thread:call_with_delay(0, function(t) set_cota_credential(device, credential_index) end)
     elseif status == DoorLock.types.DlStatus.INVALID_FIELD then
       device.log.error("Invalid SetCredential command sent to set a COTA credential. This is a bug.")
+    elseif elements.next_credential_index.value ~= nil then
+      device.log.warn(string.format(
+        "Received non-success SetCredentialResponse status (%s), but there is a next credential index available", elements.status
+      ))
+      set_cota_credential(device, elements.next_credential_index.value)
     end
   else
     device.log.error(
@@ -223,7 +227,6 @@ local function get_credential_status_response_handler(driver, device, ib, respon
     return
   end
   local elements = ib.info_block.data.elements
-  local user_index = elements.user_index.value
   local credential_exists = elements.credential_exists.value
   local next_credential_index = elements.next_credential_index and elements.next_credential_index.value or nil
 

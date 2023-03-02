@@ -107,7 +107,7 @@ function WebSocket:send_text(text)
     header:set_length(#payload)
     local frame = Frame.from_parts(header, payload)
     frame:set_mask() -- todo handle client vs server
-    local suc, err = self._tx:send(frame)
+    local _, err = self._tx:send(frame)
     if err then return "channel error:" .. err end
     data_idx = data_idx + frame:payload_len()
     frames_sent = frames_sent + 1
@@ -134,7 +134,7 @@ function WebSocket:send_bytes(bytes)
     header:set_length(#payload)
     local frame = Frame.from_parts(header, payload)
     frame:set_mask() -- todo handle client vs server
-    local suc, err = self._tx:send(frame)
+    local _, err = self._tx:send(frame)
     if err then return "channel error:" .. err end
     data_idx = data_idx + frame:payload_len()
     frames_sent = frames_sent + 1
@@ -214,7 +214,7 @@ function WebSocket:receive_loop()
           return
         end
         local fm = Frame.ping():set_mask()
-        local sent_bytes, err = send_utils.send_all(self.socket, fm:encode())
+        local _, err = send_utils.send_all(self.socket, fm:encode())
         if not err then
           --log.debug(string.format("SENT FRAME: \n%s\n\n", utils.table_string(fm, nil, true)))
           pending_pongs = pending_pongs + 1
@@ -293,7 +293,7 @@ function WebSocket:receive_loop()
         if frames_since_last_ping > self.config._max_frames_without_pong then
           frames_since_last_ping = 0
           log.trace("PROTOCOL ERR: received too many frames while waiting for pong")
-          local err = self:close(CloseCode.policy(), "no pong after ping")
+          self:close(CloseCode.policy(), "no pong after ping")
         end
       end
 

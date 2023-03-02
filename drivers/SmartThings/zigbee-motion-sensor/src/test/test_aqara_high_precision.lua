@@ -31,8 +31,6 @@ local OccupancySensing = clusters.OccupancySensing
 local PREF_FREQUENCY_VALUE_DEFAULT = 60
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
-local FREQUENCY_ATTRIBUTE_ID = 0x0102
-local SENSITIVITY_ATTRIBUTE_ID = 0x010C
 local MFG_CODE = 0x115F
 
 local mock_device = test.mock_device.build_test_zigbee_device(
