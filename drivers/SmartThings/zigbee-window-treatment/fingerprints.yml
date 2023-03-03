@@ -88,6 +88,11 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+  - id: "Micronic/ACM301"
+    deviceLabel: Micronic Window Treatment (ACM301) 
+    manufacturer: micronic-ko
+    model: acm301
+    deviceProfileName: window-treatment-micronic
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
