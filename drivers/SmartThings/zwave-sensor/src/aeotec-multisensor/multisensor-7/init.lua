@@ -19,8 +19,6 @@ local cc = require "st.zwave.CommandClass"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
-local preferences = require "preferences"
-
 local MULTISENSOR_7_PRODUCT_ID = 0x0018
 local PREFERENCE_NUM = 10
 

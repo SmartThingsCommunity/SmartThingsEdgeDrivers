@@ -13,7 +13,6 @@
 
 local command = require "command"
 local log = require "log"
-local utils = require "st.utils"
 local bose_utils = require "utils"
 local caps = require "st.capabilities"
 

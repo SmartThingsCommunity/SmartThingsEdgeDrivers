@@ -24,15 +24,6 @@ local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require 'dkjson'
 
--- supported comand classes: BASIC
-local window_shade_basic_endpoints = {
-  {
-    command_classes = {
-      {value = zw.BASIC}
-    }
-  }
-}
-
 -- supported comand classes: SWITCH_MULTILEVEL
 local fibaro_roller_shutter_endpoints = {
   {

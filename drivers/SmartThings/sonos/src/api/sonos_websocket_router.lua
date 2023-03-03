@@ -39,8 +39,7 @@ cosock.spawn(function()
     for _, player_id in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
       local wss = websockets[player_id]
       if wss ~= nil then
-        local _, _err = wss:close(CloseCode.normal(),
-          "Shutdown requested by client")
+        wss:close(CloseCode.normal(), "Shutdown requested by client")
       end
       websockets[player_id] = nil
     end
@@ -51,7 +50,7 @@ cosock.spawn(function()
       table.insert(socks, wss)
     end
     local receivers, _, err = socket.select(socks, nil, 10)
-    local msg = {}
+    local msg
 
     if err ~= nil then
       if err ~= "timeout" then

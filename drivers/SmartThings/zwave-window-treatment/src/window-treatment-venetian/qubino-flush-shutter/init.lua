@@ -98,7 +98,7 @@ end
 local function multilevel_set_handler(self, device, cmd)
   local targetLevel = cmd.args.value
   local currentLevel = device:get_latest_state("main",  capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
-  local blindsCommand = nil
+  local blindsCommand
   if currentLevel > targetLevel then
     blindsCommand = capabilities.windowShade.windowShade.closing()
   else
@@ -115,7 +115,7 @@ end
 
 local function meter_report_handler(self, device, cmd)
   local event = nil
-  local event_arguments = nil
+  local event_arguments
   if cmd.args.scale == Meter.scale.electric_meter.WATTS then
     event_arguments = {
       value = cmd.args.meter_value,

@@ -23,11 +23,6 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local lock_code_defaults = require "st.zwave.defaults.lockCodes"
 local json = require "dkjson"
 
-local LOCK_V1_FINGERPRINTS = {
-  -- list of models that use these parameters
-  { mfr = 0x0129, prod = 0x0002, model = 0x0800 }, -- Yale YRD120
-}
-
 local METHOD = {
   KEYPAD = "keypad",
   MANUAL = "manual",

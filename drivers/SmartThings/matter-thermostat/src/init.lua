@@ -172,9 +172,7 @@ local function fan_mode_handler(driver, device, ib, response)
   if ib.data.value == clusters.FanControl.attributes.FanMode.AUTO or
     ib.data.value == clusters.FanControl.attributes.FanMode.SMART then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.auto())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-    -- we don't have an "off" value
-  else
+  elseif ib.data.value ~= clusters.FanControl.attributes.FanMode.OFF then -- we don't have an "off" value
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.on())
   end
 end

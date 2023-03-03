@@ -30,7 +30,6 @@ local PREF_FREQUENCY_VALUE_DEFAULT = 60
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
-local FREQUENCY_ATTRIBUTE_ID = 0x0102
 local MFG_CODE = 0x115F
 
 local mock_device = test.mock_device.build_test_zigbee_device(
