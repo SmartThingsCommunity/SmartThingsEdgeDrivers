@@ -227,12 +227,12 @@ local driver = Driver("Sonos", {
       [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
     },
     [capabilities.mediaGroup.ID] = {
-      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_mute,
-      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_unmute,
-      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_set_mute,
-      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_volume_up,
-      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_volume_down,
-      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_set_volume,
+      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_volume_up,
+      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_volume_down,
+      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_set_volume,
+      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_mute,
+      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_unmute,
+      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_set_mute,
     },
     [capabilities.mediaPlayback.ID] = {
       [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
