@@ -20,7 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 3 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"
 
 local WARM_WHITE_CONFIG = 0x51

@@ -15,7 +15,6 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
-local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 
 -- Not sure if I need status yet
@@ -44,7 +43,7 @@ local function handle_preset(driver, device, cmd)
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
                 device, endpoint_id, hundredths_lift_percent
               )
-              
+
   device:send(req)
 end
 
@@ -99,7 +98,7 @@ local function current_status_handler(driver, device, ib, response)
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
   for _, rb in ipairs(response.info_blocks) do
-    if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and 
+    if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID then
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
@@ -117,7 +116,7 @@ local function current_status_handler(driver, device, ib, response)
       end
     elseif state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-    elseif state == 2 then ---closing 
+    elseif state == 2 then ---closing
       device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
     end
 
@@ -129,7 +128,7 @@ end
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level)) 
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
   end
 end
 
@@ -170,7 +169,9 @@ local matter_driver_template = {
     }
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {[capabilities.refresh.commands.refresh.NAME] = handle_refresh},
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = nil --TODO: define me!
+    },
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = handle_preset,
     },

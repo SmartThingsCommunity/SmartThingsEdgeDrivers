@@ -1,5 +1,7 @@
+local handlers = require "api.event_handlers"
 local log = require "log"
 local PlayerFields = require "fields".SonosPlayerFields
+
 --- @module 'sonos.types'
 local Types = {}
 
@@ -111,7 +113,7 @@ Types.SonosCapabilities = {
 --- Sonos systems local state
 --- @class SonosState
 --- @field public get_household fun(self: SonosState, id: HouseholdId): SonosHousehold
---- @field public update_household_info fun(self: SonosState, id: HouseholdId, groups_event: SonosGroupsResponseBody)
+--- @field public update_household_info fun(self: SonosState, id: HouseholdId, groups_event: SonosGroupsResponseBody, device: SonosDevice|nil)
 --- @field public update_household_favorites fun(self: SonosState, id: HouseholdId, favorites: SonosFavorites)
 --- @field public get_group_for_player fun(self: SonosState, household_id: HouseholdId, player_id: PlayerId): GroupId
 --- @field public get_coordinator_for_player fun(self: SonosState, household_id: HouseholdId, player_id: PlayerId): PlayerId
@@ -119,9 +121,8 @@ Types.SonosCapabilities = {
 --- @field public get_player_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,PlayerId,string
 --- @field public get_coordinator_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,PlayerId,string
 --- @field public get_group_for_device fun(self: SonosState, device: SonosDevice): HouseholdId,GroupId,string
---- @field public get_dni_for_player_id fun(self: SonosState, player_id: PlayerId): DNI,nil|string
---- @field public mark_player_as_joined fun(self: SonosState, dni: DNI, player_id: PlayerId)
---- @field public mark_player_as_removed fun(self: SonosState, dni: DNI, player_id: PlayerId)
+--- @field public mark_player_as_joined fun(self: SonosState, player_id: PlayerId)
+--- @field public mark_player_as_removed fun(self: SonosState, player_id: PlayerId)
 --- @field public is_player_joined fun(self: SonosState, household_id_or_dni: HouseholdId|string, player_id?: PlayerId): boolean
 local SonosState = {}
 SonosState.__index = SonosState
@@ -131,25 +132,15 @@ function SonosState.new()
 
   local private = {
     households = {},
-    joined_players = {},
-    player_id_to_dni = {},
+    joined_players = {}
   }
 
-  ret.mark_player_as_joined = function(self, dni, player_id)
-    private.joined_players[dni] = true
-    private.player_id_to_dni[player_id] = dni
+  ret.mark_player_as_joined = function(self, player_id)
+    private.joined_players[player_id] = true
   end
 
-  ret.mark_player_as_removed = function(self, dni, player_id)
-    if dni == private.player_id_to_dni[player_id] then private.player_id_to_dni[player_id] = nil end
-    private.joined_players[dni] = false
-  end
-
-  ret.get_dni_for_player_id = function(self, player_id)
-    local ret = private.player_id_to_dni[player_id]
-    local err = nil
-    if not ret then err = string.format("No mapping from %s to DNI", player_id) end
-    return ret, err
+  ret.mark_player_as_removed = function(self, player_id)
+    private.joined_players[player_id] = false
   end
 
   ret.is_player_joined = function(self, dni)
@@ -171,7 +162,8 @@ function SonosState.new()
   --- @param self SonosState
   --- @param id HouseholdId
   --- @param groups_event SonosGroupsResponseBody
-  ret.update_household_info = function(self, id, groups_event)
+  --- @param device SonosDevice|nil
+  ret.update_household_info = function(self, id, groups_event, device)
     local household = private.households[id] or {}
     local groups, players = groups_event.groups, groups_event.players
 
@@ -203,6 +195,26 @@ function SonosState.new()
     end
 
     private.households[id] = household
+
+    -- emit group info update [groupId, groupRole, groupPrimaryDeviceId]
+    if device ~= nil then
+      local device_player_id = device:get_field(PlayerFields.PLAYER_ID)
+      local group_id = self:get_group_for_player(id, device_player_id)
+      local coordinator_id = self:get_coordinator_for_player(id, device_player_id)
+
+      local role
+      if device_player_id == coordinator_id then
+        if #household.groups[group_id].playerIds > 1 then
+          role = "primary"
+        else
+          role = "ungrouped"
+        end
+      else
+        role = "auxilary"
+      end
+
+      handlers.handle_group_update(device, {role, coordinator_id, group_id})
+    end
   end
 
   --- @param self SonosState
@@ -301,7 +313,7 @@ Types.SonosState = SonosState
 --- Sonos Edge Driver extensions
 --- @class SonosDriver : Driver
 --- @field public sonos SonosState Local state related to the sonos systems
---- @field private _dni_to_device table<string,SonosDevice>
+--- @field private _player_id_to_device table<string,SonosDevice>
 --- @field public update_group_state fun(self: SonosDriver, header: SonosResponseHeader, body: SonosGroupsResponseBody)
 --- @field public handle_ssdp_discovery fun(self: SonosDriver, ssdp_group_info: SonosSSDPInfo, callback?: DiscoCallback)
 --- @field public is_same_mac_address fun(dni: string, other: string): boolean

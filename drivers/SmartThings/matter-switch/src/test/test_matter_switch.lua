@@ -82,7 +82,7 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
+  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device_no_hue_sat))
@@ -234,7 +234,7 @@ test.register_message_test(
         clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
       }
     },
-    { 
+    {
       channel = "capability",
       direction = "send",
       message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.hue(50))
@@ -352,7 +352,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1799))
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
   }
 )

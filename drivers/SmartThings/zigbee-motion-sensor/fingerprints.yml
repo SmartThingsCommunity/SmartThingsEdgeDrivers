@@ -189,3 +189,11 @@ zigbeeManufacturer:
     manufacturer: THIRDREALITY
     model: 3RMS16BZ
     deviceProfileName: motion-battery
+zigbeeGeneric:
+  - id: kickstarter/motion/1
+    deviceLabel: SmartThings Motion Sensor
+    zigbeeProfiles:
+      - 0xFC01
+    deviceIdentifiers:
+      - 0x013A
+    deviceProfileName: smartsense-motion

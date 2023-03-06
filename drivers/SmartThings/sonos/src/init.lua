@@ -27,7 +27,7 @@ local function find_player_for_device(driver, device, should_continue)
     local attempts = 0
     should_continue = function()
       attempts = attempts + 1
-      return attempts <= 20
+      return attempts <= 10
     end
   end
 
@@ -63,19 +63,18 @@ local function _initialize_device(driver, device)
       log.debug("Rescanning for player with DNI " .. device.device_network_id)
       local success = find_player_for_device(driver, device)
       if not success then
-        error(string.format(
-          "Received event for device DNI [%s] but could not find matching player on local network",
-          device.device_network_id
+        device:offline()
+        log.error(string.format(
+          "Could not initialize Sonos Player [%s], it does not appear to be on the network",
+          device.label
         ))
+        return
       end
     end
 
-    driver._dni_to_device[device.device_network_id] = device -- quickly look up device from dni string
-    -- local household_id, player_id = driver.sonos:get_player_for_device(device)
-    -- local player = driver.sonos:get_household(household_id).players[player_id]
-
     local fields = driver._field_cache[device.device_network_id]
-    driver.sonos:mark_player_as_joined(device.device_network_id, fields.player_id)
+    driver._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
+    driver.sonos:mark_player_as_joined(fields.player_id)
 
     log.trace("Setting persistent fields")
     device:set_field(PlayerFields.WSS_URL, fields.wss_url, { persist = true })
@@ -133,10 +132,11 @@ end
 --- @param device SonosDevice
 local function device_removed(driver, device)
   log.trace(string.format("%s device removed", device.label))
+  local player_id = device:get_field(PlayerFields.PLAYER_ID)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   if sonos_conn and sonos_conn:is_running() then sonos_conn:stop() end
-
-  driver.sonos:mark_player_as_removed(device.device_network_id, device:get_field(PlayerFields.PLAYER_ID))
+  driver.sonos:mark_player_as_removed(device:get_field(PlayerFields.PLAYER_ID))
+  driver._player_id_to_device[player_id] = nil
 end
 
 local function do_refresh(driver, device, cmd)
@@ -211,33 +211,46 @@ local driver = Driver("Sonos", {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
-    [capabilities.mediaPlayback.ID] = {
-      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
-      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
-      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
-    },
-    [capabilities.mediaTrackControl.ID] = {
-      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
-      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
-    },
     [capabilities.audioMute.ID] = {
       [capabilities.audioMute.commands.mute.NAME] = CmdHandlers.handle_mute,
       [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
       [capabilities.audioMute.commands.setMute.NAME] = CmdHandlers.handle_set_mute,
+    },
+    [capabilities.audioNotification.ID] = {
+      [capabilities.audioNotification.commands.playTrack.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndResume.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = CmdHandlers.handle_audio_notification,
     },
     [capabilities.audioVolume.ID] = {
       [capabilities.audioVolume.commands.volumeUp.NAME] = CmdHandlers.handle_volume_up,
       [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,
       [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
     },
+    [capabilities.mediaGroup.ID] = {
+      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_mute,
+      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_unmute,
+      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_set_mute,
+      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_volume_up,
+      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_volume_down,
+      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_set_volume,
+    },
+    [capabilities.mediaPlayback.ID] = {
+      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
+      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
+      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
+    },
     [capabilities.mediaPresets.ID] = {
       [capabilities.mediaPresets.commands.playPreset.NAME] = CmdHandlers.handle_play_preset,
     },
+    [capabilities.mediaTrackControl.ID] = {
+      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
+      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
+    }
   },
   sonos = SonosState.new(),
   update_group_state = update_group_state,
   handle_ssdp_discovery = handle_ssdp_discovery,
-  _dni_to_device = {},
+  _player_id_to_device = {},
   _field_cache = {},
   is_same_mac_address = function(dni, other)
     if not (type(dni) == "string" and type(other) == "string") then return false end

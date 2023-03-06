@@ -23,7 +23,6 @@ local data_types = require "st.zigbee.data_types"
 local PollControl = clusters.PollControl
 
 local IASZone = clusters.IASZone
-local IASWD = clusters.IASWD
 local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 

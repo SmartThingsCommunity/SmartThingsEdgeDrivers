@@ -222,7 +222,9 @@ test.register_coroutine_test(
               mock_device,
               ThermostatSetpoint:Set({
                                        setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-                                       value = 21.5
+                                       value = 21.5,
+                                       precision = 1,
+                                       size = 2
                                      })
           )
       )

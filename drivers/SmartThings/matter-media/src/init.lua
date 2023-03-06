@@ -15,7 +15,6 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local utils = require "st.utils"
 
 local VOLUME_STEP = 5
 

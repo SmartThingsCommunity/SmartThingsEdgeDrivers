@@ -10,5 +10,7 @@ components:
           range: [0, 32000]
   - id: battery
     version: 1
+  - id: firmwareUpdate
+    version: 1
   categories:
   - name: LightSensor

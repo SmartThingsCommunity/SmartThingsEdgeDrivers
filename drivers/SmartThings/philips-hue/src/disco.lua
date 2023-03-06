@@ -35,7 +35,8 @@ function HueDiscovery.discover(driver, _, should_continue)
     local known_dni_to_device_map = {}
     local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
-      local dni = device.device_network_id or device.parent_assigned_child_key
+      -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
+      local dni = device.parent_assigned_child_key or device.device_network_id
       known_dni_to_device_map[dni] = device
       local ipv4 = device:get_field(Fields.IPV4);
       if ipv4 then
@@ -282,10 +283,14 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
   end
 
   for _, light in ipairs(light_resource.data or {}) do
-    local profile_ref = nil
+    local profile_ref
 
     if light.color then
-      profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)
+      if light.color_temperature then
+        profile_ref = "white-and-color-ambiance"
+      else
+        profile_ref = "legacy-color"
+      end
     elseif light.color_temperature then
       profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
     elseif light.dimming then

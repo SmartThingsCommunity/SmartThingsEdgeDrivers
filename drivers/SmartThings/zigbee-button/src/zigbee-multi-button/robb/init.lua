@@ -1,16 +1,41 @@
 local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
-local function zdo_binding_table_handler(driver, device, zb_rx)
-  for _, binding_table in pairs(zb_rx.body.zdo_body.binding_table_entries) do
-    if binding_table.dest_addr_mode.value == binding_table.DEST_ADDR_MODE_SHORT then
-      -- send add hub to zigbee group command
-      driver:add_hub_to_zigbee_group(binding_table.dest_addr.value)
-      return
+local zcl_clusters = require "st.zigbee.zcl.clusters"
+local Basic = zcl_clusters.Basic
+local Level = zcl_clusters.Level
+local OnOff = zcl_clusters.OnOff
+local PowerConfiguration = zcl_clusters.PowerConfiguration
+local capabilities = require "st.capabilities"
+
+--[[
+The ROBB Wireless Remote Control has 4 or 8 buttons. They are arranged in two columns:
+
+All buttons on the left side support 'pressed' (OnOff > ON) and 'up_hold' (Level > MoveStepMode.UP).
+All buttons on the right side support 'pressed' (OnOff > OFF) and 'down_hold' (Level > MoveStepMode.DOWN).
+
+Each button-row represents one endpoint. The 8x remote control has four endpoints, the 4x remote control has two.
+That means each endpoint has two buttons.
+--]]
+
+local SWITCH_GROUP_CONFIGURE = "is_group_configured"
+local SWITCH8_NUM_ENDPOINT = 4
+local SWITCH8_NUM_BUTTONS = 8
+local SWITCH4_NUM_ENDPOINT = 2
+local SWITCH4_NUM_BUTTONS = 4
+
+local WIRELESS_REMOTE_FINGERPRINTS = {
+  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+  { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
+}
+
+local function can_handle(opts, driver, device, ...)
+  for _, fingerprint in ipairs(WIRELESS_REMOTE_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
     end
   end
-  driver:add_hub_to_zigbee_group(0x0000) -- fallback if no binding table entries found
-  device:send(Groups.commands.AddGroup(device, 0x0000))
+  return false
 end
 
 -- Map left column buttons to endpoints
@@ -155,4 +180,4 @@ local robb_wireless_control = {
   can_handle = can_handle
 }
 
-return robb
+return robb_wireless_control

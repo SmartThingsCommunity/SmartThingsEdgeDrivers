@@ -12,7 +12,6 @@
 --
 
 local OpCode = require "lustre.frame.opcode"
-local opcode = require "lustre.frame.opcode"
 local U16_MAX = 0xFFFF
 
 ---@class FrameHeader
