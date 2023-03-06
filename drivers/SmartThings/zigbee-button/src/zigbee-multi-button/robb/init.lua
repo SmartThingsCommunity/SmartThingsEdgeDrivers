@@ -1,4 +1,5 @@
 local device_management = require "st.zigbee.device_management"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Basic = zcl_clusters.Basic
@@ -53,18 +54,18 @@ local EP_BUTTON_OFF_COMPONENT_MAP = {
   [0x04] = "button8"
 }
 
-local build_button_handler = function(onOrOff, pressed_type)
-  return function(driver, device, zb_rx)
+local build_button_handler = function(driver, device, zb_rx)
     local button_name
+    local additional_fields = { state_change = true }
 
     -- Fetch correct button name 
-    if onOrOff == "on" then
+    if zb_rx.body.zcl_header.cmd.value == 0x01 then
       button_name = EP_BUTTON_ON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value]
     else
       button_name = EP_BUTTON_OFF_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value]
     end
 
-    local event = capabilities.button.button.pushed({ state_change = true })
+    local event = capabilities.button.button.pushed(additional_fields)
     local comp = device.profile.components[button_name]
     -- Emit events
     if comp ~= nil then
@@ -73,12 +74,12 @@ local build_button_handler = function(onOrOff, pressed_type)
         device:emit_event(event)
       end
     end
-  end
 end
 
 local function hold_handler(driver, device, zb_rx)
   local button_name
   local pressed_type
+  local additional_fields = { state_change = true }
 
   -- Handle MoveStepMode.UP
   if zcl_clusters.Level.types.MoveStepMode.UP == zb_rx.body.zcl_body.move_mode.value then
@@ -90,31 +91,22 @@ local function hold_handler(driver, device, zb_rx)
     pressed_type = "down_hold"
   end
 
-  local event = capabilities.button.button[pressed_type]({ state_change = true })
+  local event = capabilities.button.button[pressed_type](additional_fields)
   local comp = device.profile.components[button_name]
   -- Emit events
   if comp ~= nil then
     device:emit_component_event(comp, event)
-    if button_name ~= "main" then
-      device:emit_event(event)
-    end
+    device:emit_event(event)
   end
 end
 
-local do_refresh = function(self, device)
-  -- Request Battery
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-end
-
-local do_configuration = function(driver, device)
-  do_refresh(driver, device)
-  
+local do_configuration = function(driver, device) 
   local has8Btns = device:get_model() == "ROB_200-007-0"
   -- Get the right number of endpoints
   local endpoints = has8Btns and SWITCH8_NUM_ENDPOINT or SWITCH4_NUM_ENDPOINT
   
+  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
   
   for endpoint = 1, endpoints do
     device:send(device_management.build_bind_request(device, Level.ID, driver.environment_info.hub_zigbee_eui, endpoint))
@@ -164,18 +156,15 @@ local function added_handler(self, device)
       capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 
 local robb_wireless_control = {
   NAME = "ROBB Wireless Remote Control",
   lifecycle_handlers = {
-    doConfigure = do_configuration,
-    added = added_handler
-  },
-  capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
-    }
+    init = battery_defaults.build_linear_voltage_init(2.1, 3.0),
+    added = added_handler,
+    doConfigure = do_configuration
   },
   zigbee_handlers = {
     cluster = {
@@ -183,8 +172,8 @@ local robb_wireless_control = {
         [Level.server.commands.MoveWithOnOff.ID] = hold_handler,
       },
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = build_button_handler('off'),
-        [OnOff.server.commands.On.ID] = build_button_handler('on'),
+        [OnOff.server.commands.Off.ID] = build_button_handler,
+        [OnOff.server.commands.On.ID] = build_button_handler
       }
     }
   },
