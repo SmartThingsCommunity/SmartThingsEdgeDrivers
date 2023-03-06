@@ -134,4 +134,10 @@ function CapabilityHandlers.handle_set_volume(driver, device, cmd)
   end
 end
 
+function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
+  local ip = device:get_field("ip")
+  log.info(string.format("Received audio notification with uri %s at level %d", cmd.args.uri, cmd.args.level))
+  command.play_streaming_uri(ip, cmd.args.uri, cmd.args.level)
+end
+
 return CapabilityHandlers
