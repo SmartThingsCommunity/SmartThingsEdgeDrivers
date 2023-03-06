@@ -137,9 +137,9 @@ end
 
 function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
   local ip = device:get_field("ip")
-  log.info(string.format("Received audio notification with uri %s at level %d", cmd.args.uri, cmd.args.level))
+  log.info(string.format("Received audio notification with uri %s", cmd.args.uri))
   -- Need to check whether any emit_event is required here
-  command.play_streaming_uri(ip, cmd.args.uri, cmd.args.level)
+  command.play_streaming_uri(ip, cmd.args.uri)
 end
 
 return CapabilityHandlers
