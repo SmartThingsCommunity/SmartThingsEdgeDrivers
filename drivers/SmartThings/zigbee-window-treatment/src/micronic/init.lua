@@ -11,16 +11,12 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local log = require "log"
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local window_shade_defaults = require "st.zigbee.defaults.windowShade_defaults"
 local WindowCovering = zcl_clusters.WindowCovering
 local cluster_base = require "st.zigbee.cluster_base"
 local utils = require "st.utils"
 local data_types = require "st.zigbee.data_types"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
-local SHADE_SET_STATUS = "shade_set_status"
 
 local INVERT_CLUSTER = 0xFC00
 local INVERT_CLUSTER_ATTRIBUTE = 0x0000
