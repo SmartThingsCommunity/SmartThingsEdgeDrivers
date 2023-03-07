@@ -58,7 +58,7 @@ local build_button_handler = function(driver, device, zb_rx)
     local button_name
     local additional_fields = { state_change = true }
 
-    -- Fetch correct button name 
+    -- Fetch correct button name
     if zb_rx.body.zcl_header.cmd.value == 0x01 then
       button_name = EP_BUTTON_ON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value]
     else
@@ -100,14 +100,14 @@ local function hold_handler(driver, device, zb_rx)
   end
 end
 
-local do_configuration = function(driver, device) 
+local do_configuration = function(driver, device)
   local has8Btns = device:get_model() == "ROB_200-007-0"
   -- Get the right number of endpoints
   local endpoints = has8Btns and SWITCH8_NUM_ENDPOINT or SWITCH4_NUM_ENDPOINT
-  
+
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
-  
+
   for endpoint = 1, endpoints do
     device:send(device_management.build_bind_request(device, Level.ID, driver.environment_info.hub_zigbee_eui, endpoint))
     device:send(device_management.build_bind_request(device, OnOff.ID, driver.environment_info.hub_zigbee_eui, endpoint))
