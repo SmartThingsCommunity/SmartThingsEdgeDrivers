@@ -203,6 +203,11 @@ local function set_credential_response_handler(driver, device, ib, response)
       device.thread:call_with_delay(0, function(t) set_cota_credential(device, credential_index) end)
     elseif status == DoorLock.types.DlStatus.INVALID_FIELD then
       device.log.error("Invalid SetCredential command sent to set a COTA credential. This is a bug.")
+    elseif elements.next_credential_index.value ~= nil then
+      device.log.warn(string.format(
+        "Received non-success SetCredentialResponse status (%s), but there is a next credential index available", elements.status
+      ))
+      set_cota_credential(device, elements.next_credential_index.value)
     end
   else
     device.log.error(

@@ -229,12 +229,12 @@ zigbeeManufacturer:
     manufacturer: Sinope Technologies
     model: SW2500ZB
     deviceProfileName: switch-led-intensity
-#   #Jasco Product
-#   - id: "Jasco Products/43082"
-#     deviceLabel: "Enbrighten Dimmer Switch"
-#     manufacturer: Jasco Products
-#     model: 43082
-#     deviceProfileName: switch-dimmer-power-energy
+  #Jasco Product
+  - id: "Jasco Products/43082"
+    deviceLabel: "Enbrighten Dimmer Switch"
+    manufacturer: Jasco Products
+    model: 43082
+    deviceProfileName: switch-dimmer-power-energy
 #   - id: "Jasco Products/43095"
 #     deviceLabel: "Enbrighten Outlet"
 #     manufacturer: Jasco Products
@@ -907,7 +907,7 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria

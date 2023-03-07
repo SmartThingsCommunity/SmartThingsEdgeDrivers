@@ -1,3 +1,11 @@
+matterManufacturer:
+  #Eve
+  - id: "Eve/DoorAndWindow"
+    deviceLabel: Eve Door and Window
+    vendorId: 0x130a
+    productId: 0x004D
+    deviceProfileName: contact-battery
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -20,7 +28,7 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
     deviceProfileName: humidity-battery
   - id: "matter/temperature-humidity/sensor"
-    deviceLabel: Matter Humidity Sensor
+    deviceLabel: Matter Temp/Humidity Sensor
     deviceTypes:
       - id: 0x0307 # Humidity Sensor
       - id: 0x0302 # Temperature Sensor
