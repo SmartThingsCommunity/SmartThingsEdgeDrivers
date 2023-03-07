@@ -1,4 +1,0 @@
-name: 'aqara'
-packageKey: 'aqara'
-permissions:
-  zigbee: {}
