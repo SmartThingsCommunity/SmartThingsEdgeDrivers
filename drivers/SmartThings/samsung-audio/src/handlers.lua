@@ -15,7 +15,6 @@
 local command = require "command"
 local capabilities = require "st.capabilities"
 local VOL_STEP = 5
-local log = require "log"
 
 --- @module Samsung-audio.CapabilityHandlers
 local CapabilityHandlers = {}
@@ -137,8 +136,7 @@ end
 
 function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
   local ip = device:get_field("ip")
-  log.info(string.format("RETRY for SPECIFIER ----> Received audio notification with uri %s", cmd.args.uri))
-  -- Need to check whether any emit_event is required here
+  -- Audio Notification working fine when checked through routine. Need to confirm later for any issue whether ST app expect any emit_event here
   command.play_streaming_uri(ip, cmd.args.uri)
 end
 
