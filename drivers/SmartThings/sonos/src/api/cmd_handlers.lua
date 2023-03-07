@@ -140,7 +140,7 @@ function CapCommandHandlers.handle_group_volume_down(driver, device, cmd)
 end
 
 function CapCommandHandlers.handle_group_set_volume(driver, device, cmd)
-  local new_volume = st_utils.clamp_value(cmd.args.volume, 0, 100)
+  local new_volume = st_utils.clamp_value(cmd.args.groupVolume, 0, 100)
   local payload = {
     { namespace = "groupVolume", command = "setVolume" },
     { volume = new_volume }
