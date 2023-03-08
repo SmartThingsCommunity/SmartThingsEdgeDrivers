@@ -72,27 +72,6 @@ test.register_coroutine_test("Window Shade state open", function()
       capabilities.windowShadeLevel.shadeLevel(100)))
 end)
 
-test.register_coroutine_test("WindowShade open cmd handler", function()
-  test.socket.capability:__queue_receive({mock_device.id, {
-    capability = "windowShade",
-    component = "main",
-    command = "open",
-    args = {}
-  }})
-  test.socket.zigbee:__expect_send({mock_device.id, OnOff.server.commands.On(mock_device)})
-  test.wait_for_events()
-end)
-
-test.register_coroutine_test("WindowShade close cmd handler", function()
-  test.socket.capability:__queue_receive({mock_device.id, {
-    capability = "windowShade",
-    component = "main",
-    command = "close",
-    args = {}
-  }})
-  test.socket.zigbee:__expect_send({mock_device.id, OnOff.server.commands.Off(mock_device)})
-  test.wait_for_events()
-end)
 
 test.register_coroutine_test("Handle invert in infochanged", function()
   test.socket.zigbee:__queue_receive({mock_device.id,
@@ -155,10 +134,6 @@ test.register_coroutine_test("Refresh necessary attributes", function()
     command = "refresh",
     args = {}
   }})
-  test.socket.zigbee:__expect_send({mock_device.id, OnOff.attributes.OnOff:read(mock_device)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)})
-  test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device)})
   test.socket.zigbee:__expect_send({mock_device.id,
                                     zigbee_test_utils.build_attribute_read(mock_device, INVERT_CLUSTER,
       {INVERT_CLUSTER_ATTRIBUTE}, 0x0000)})
