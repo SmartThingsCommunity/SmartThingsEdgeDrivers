@@ -15,11 +15,8 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw_test_utilities = require "integration_test.zwave_test_utils"
-local Association = (require "st.zwave.CommandClass.Association")({ version = 2 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-local ManufacturerSpecific = (require "st.zwave.CommandClass.ManufacturerSpecific")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version = 2})
-local SensorMultilevelv5 = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
@@ -69,14 +66,6 @@ test.register_message_test(
       message = {mock_device.id, "added"}
     },
     {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "refresh", command = "refresh", args = {} }
-      }
-    },
-    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utilities.zwave_test_build_send_command(
@@ -89,7 +78,7 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        ThermostatFanMode:Get({})
+        ThermostatMode:SupportedGet({})
       )
     },
     {
@@ -97,7 +86,7 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        ThermostatMode:SupportedGet({})
+        ThermostatFanMode:Get({})
       )
     },
     {
@@ -121,7 +110,9 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        SensorMultilevel:Get({})
+        SensorMultilevel:Get({},
+        { dst_channels = {1}}
+      )
       )
     },
     {
@@ -129,15 +120,9 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        ThermostatSetpoint:Get({setpoint_type = 1})
+        SensorMultilevel:Get({},
+        { dst_channels = {2}}
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        ThermostatSetpoint:Get({setpoint_type = 2})
       )
     },
     {
@@ -152,58 +137,6 @@ test.register_message_test(
   {
     inner_block_ordering = "relaxed"
   }
-)
-
-test.register_coroutine_test(
-  "Thermostat setpoint reports should be handled",
-  function()
-    mock_device:set_field("mode", "auto", {persist = true})
-
-      -- receiving a report in fahrenheit should make subsequent sets also be sent in fahrenheit
-    test.socket.zwave:__queue_receive(
-        {
-          mock_device.id,
-          zw_test_utilities.zwave_test_build_receive_command(
-              ThermostatSetpoint:Report(
-                  {
-                    setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-                    scale = 0,
-                    value = 68.0
-                  })
-          )
-
-        }
-    )
-    test.socket.zwave:__expect_send(
-        zw_test_utilities.zwave_test_build_send_command(
-            mock_device,
-            ThermostatSetpoint:Set({
-                                      setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
-                                      scale = 0,
-                                      precision = 0,
-                                      value = 70.0
-                                    })
-        )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        SensorMultilevelv5:Get({sensor_type = SensorMultilevelv5.sensor_type.TEMPERATURE, scale = 0})
-      )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        ThermostatOperatingState:Get({})
-      )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
-      )
-    )
-  end
 )
 
 test.register_coroutine_test(
@@ -252,6 +185,31 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = 68, unit = "C"})
+    ))
+  end
+)
+
+test.register_coroutine_test(
+  "Encapsulated humidity reports should be parsed correctly",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_device.id,
+      zw_test_utilities.zwave_test_build_receive_command(
+        SensorMultilevel:Report(
+          {
+            sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY,
+            sensor_value = 45
+          },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 2,
+            dst_channels = {0}
+          }
+        )
+      )
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.relativeHumidityMeasurement.humidity({value = 45})
     ))
   end
 )
@@ -343,7 +301,6 @@ test.register_coroutine_test(
   function()
 
     mock_device:set_field("temperature_scale", 0, {persist = true})
-    mock_device:set_field("precision", 0, {persist = true})
 
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatCoolingSetpoint", command = "setCoolingSetpoint", args = { 25 } } })
@@ -360,23 +317,26 @@ test.register_coroutine_test(
       )
     )
 
+    test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        SensorMultilevelv5:Get({sensor_type = SensorMultilevelv5.sensor_type.TEMPERATURE, scale = 0})
+        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
       )
     )
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        ThermostatOperatingState:Get({})
+        SensorMultilevel:Get({},{
+          dst_channels={1}
+        })
       )
     )
 
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
+        ThermostatOperatingState:Get({})
       )
     )
   end
@@ -385,11 +345,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Setting heating setpoint should be handled",
   function()
-    mock_device:set_field("temperature_scale", 1, {persist = true})
-    mock_device:set_field("precision", 0, {persist = true})
-
+    mock_device:set_field("_temperature_scale", 1, {persist = true})
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 100 } } })
+
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 92 } } })
 
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
@@ -403,22 +362,19 @@ test.register_coroutine_test(
       )
     )
 
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-          mock_device,
-          ThermostatSetpoint:Set({
-            setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
-            scale = 1,
-            precision = 0,
-            value = 95
-          })
-      )
-    )
-
+    test.mock_time.advance_time(1)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
-        SensorMultilevelv5:Get({sensor_type = SensorMultilevelv5.sensor_type.TEMPERATURE, scale = 0})
+        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        SensorMultilevel:Get({},{
+          dst_channels={1}
+        })
       )
     )
 
@@ -426,20 +382,6 @@ test.register_coroutine_test(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
         ThermostatOperatingState:Get({})
-      )
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
-      )
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utilities.zwave_test_build_send_command(
-        mock_device,
-        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
       )
     )
   end

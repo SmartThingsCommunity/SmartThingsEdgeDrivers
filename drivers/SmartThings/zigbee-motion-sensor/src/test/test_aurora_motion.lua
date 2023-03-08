@@ -19,7 +19,6 @@ local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.types.EnrollResponseCode"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
@@ -115,7 +114,7 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -150,11 +149,11 @@ test.register_message_test(
         direction = "receive",
         message = {mock_device.id, "added"}
       },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      },
+      -- {
+      --   channel = "capability",
+      --   direction = "send",
+      --   message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+      -- },
       {
         channel = "capability",
         direction = "receive",

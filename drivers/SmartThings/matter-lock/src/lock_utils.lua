@@ -16,14 +16,15 @@ local lock_utils = {
   -- Lock device field names
   LOCK_CODES = "lockCodes",
   CHECKING_CREDENTIAL = "checkingCredential",
-  CHECKING_CODE = "checkingUser",
   CODE_STATE = "codeState",
   DELETING_CODE = "deletingCode",
   CREDENTIALS_PER_USER = "credsPerUser",
   TOTAL_PIN_USERS = "totalPinUsers",
   SET_CREDENTIAL = "setCredential",
   COTA_CRED = "cotaCred",
-  COTA_CODE_NAME = "ST Remote Operation Code"
+  COTA_CODE_NAME = "ST Remote Operation Code",
+  COTA_CRED_INDEX = "cotaCredIndex",
+  NONFUNCTIONAL = "nonFunctional"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
@@ -86,5 +87,4 @@ end
 -- keys are the code slots that ST uses
 -- user_index and credential_index are used in the matter commands
 --
-local user_database_mirror = {}
 return lock_utils

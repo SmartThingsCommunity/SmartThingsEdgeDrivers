@@ -73,7 +73,7 @@ local level_step_command_handler = function(driver, device, zb_rx)
   if value == 0 then
     generate_switch_onoff_event(device, "off")
   elseif status == "off" then
-      generate_switch_onoff_event(device, "on")
+    generate_switch_onoff_event(device, "on")
   end
 
   generate_switch_level_event(device, value)
@@ -112,7 +112,7 @@ local switch_level_set_level_command_handler = function(driver, device, command)
     -- TBD: do we need to send zigbee cmd to change device status?
     --device:send_to_component(command.component, zcl_clusters.OnOff.server.commands.Off(device))
     level = device:get_field(CURRENT_LEVEL)
-  else
+  -- else
     --device:send_to_component(command.component, zcl_clusters.OnOff.server.commands.On(device))
   end
 
@@ -122,11 +122,11 @@ local switch_level_set_level_command_handler = function(driver, device, command)
 end
 
 local device_added = function(self, device)
-  generate_switch_onoff_event(device, "on")
-  generate_switch_level_event(device, 100)
+  -- generate_switch_onoff_event(device, "on")
+  -- generate_switch_level_event(device, 100)
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({state_change = true}))
+  -- device:emit_event(capabilities.button.button.pushed({state_change = true}))
 end
 
 local do_configure = function(self, device)

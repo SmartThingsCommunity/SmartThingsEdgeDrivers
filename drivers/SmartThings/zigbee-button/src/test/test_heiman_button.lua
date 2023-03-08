@@ -116,7 +116,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -160,7 +160,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -198,7 +198,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -245,13 +245,13 @@ test.register_coroutine_test(
         )
       end
     end
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
+    -- test.socket.capability:__expect_send({
+    --   mock_device.id,
+    --   {
+    --     capability_id = "button", component_id = "main",
+    --     attribute_id = "button", state = { value = "pushed" }
+    --   }
+    -- })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()

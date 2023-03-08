@@ -47,9 +47,9 @@ end
 
 local function device_added(self, device)
   device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = FIBARO_SMOKE_SENSOR_WAKEUP_INTERVAL}))
-  device:emit_event(capabilities.smokeDetector.smoke.clear())
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.smokeDetector.smoke.clear())
+  -- device:emit_event(capabilities.tamperAlert.tamper.clear())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
   device:send(Battery:Get({}))
   device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
 end

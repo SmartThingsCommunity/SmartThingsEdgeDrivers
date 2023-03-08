@@ -9,7 +9,7 @@ components:
     config:
       values:
         - key: "heatingSetpoint.value"
-          range: [ 4, 28 ]
+          range: [ 5, 30 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState

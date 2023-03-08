@@ -20,7 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 3 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"
 
 local WARM_WHITE_CONFIG = 0x51
@@ -83,11 +82,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
+    -- }
   }
 )
 

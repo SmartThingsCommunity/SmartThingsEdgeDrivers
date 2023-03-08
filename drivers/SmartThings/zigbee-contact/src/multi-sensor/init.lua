@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -64,7 +63,7 @@ local function zone_status_handler(driver, device, zone_status, zb_rx)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.accelerationSensor.acceleration.inactive())
+  -- device:emit_event(capabilities.accelerationSensor.acceleration.inactive())
   device:refresh()
 end
 

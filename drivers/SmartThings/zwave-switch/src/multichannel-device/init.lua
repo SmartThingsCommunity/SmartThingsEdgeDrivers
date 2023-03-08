@@ -15,6 +15,7 @@ local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 3 })
+local utils = require "st.utils"
 
 local map_device_class_to_profile = {
   [0x10] = "metering-switch",
@@ -66,9 +67,12 @@ local function device_added(driver, device)
 end
 
 local function capability_get_report_handler(driver, device, cmd)
-  local profile = map_device_class_to_profile[cmd.args.generic_device_class]
-  if find_child(device, cmd.args.end_point) == nil and profile ~= nil then
-    driver:try_create_device(prepare_metadata(device, cmd.args.end_point, profile))
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
+    local profile = map_device_class_to_profile[cmd.args.generic_device_class]
+    if find_child(device, cmd.args.end_point) == nil and profile ~= nil then
+      driver:try_create_device(prepare_metadata(device, cmd.args.end_point, profile))
+    end
   end
 end
 
