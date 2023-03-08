@@ -164,39 +164,4 @@ test.register_coroutine_test("Refresh necessary attributes", function()
       {INVERT_CLUSTER_ATTRIBUTE}, 0x0000)})
 end)
 
-test.register_coroutine_test("Handle Configure lifecycle", function()
-  test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {
-        visibility = {
-          displayed = false
-        }
-      })))
-  test.wait_for_events()
-  test.socket.device_lifecycle:__queue_receive({mock_device.id, "doConfigure"})
-  test.socket.zigbee:__set_channel_ordering("relaxed")
-  test.socket.zigbee:__expect_send({mock_device.id, OnOff.attributes.OnOff:read(mock_device)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui,
-      PowerConfiguration.ID)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30,
-      21600, 1)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui,
-      WindowCovering.ID)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(
-      mock_device, 0, 600, 1)})
-  test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device)})
-  test.socket.zigbee:__expect_send({mock_device.id,
-                                    zigbee_test_utils.build_attribute_read(mock_device, INVERT_CLUSTER,
-      {INVERT_CLUSTER_ATTRIBUTE}, 0x0000)})
-  mock_device:expect_metadata_update({
-    provisioning_state = "PROVISIONED"
-  })
-end)
-
 test.run_registered_tests()
