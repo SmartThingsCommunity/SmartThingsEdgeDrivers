@@ -3,3 +3,7 @@
 .vscode/
 docs/
 lua_libs-api_*
+*.out
+tools/test_output/*
+tools/coverage_output/*
+.DS_Store
