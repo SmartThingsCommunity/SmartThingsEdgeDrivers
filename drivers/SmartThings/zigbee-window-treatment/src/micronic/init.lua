@@ -80,13 +80,6 @@ local function window_shade_level_cmd(driver, device, command)
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
 end
 
-local function window_shade_preset_cmd(driver, device, command)
-  if device.preferences ~= nil and device.preferences.presetPosition ~= nil then
-    device:send_to_component(command.component, WindowCovering.server.commands
-        .GoToLiftPercentage(device, device.preferences.presetPosition))
-  end
-end
-
 local do_refresh = function(self, device)
   device:send(WindowCovering.attributes.CurrentPositionLiftPercentage:read(device))
   local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,
@@ -110,9 +103,6 @@ local micronic_window_shade = {
     },
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd
-    },
-    [capabilities.windowShadePreset.ID] = {
-      [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset_cmd
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
