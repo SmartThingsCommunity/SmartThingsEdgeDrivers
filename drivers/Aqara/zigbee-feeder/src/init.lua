@@ -1,5 +1,4 @@
 local ZigbeeDriver = require "st.zigbee"
-local defaults = require "st.zigbee.defaults"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
@@ -97,7 +96,7 @@ local function petFeeder_handler(driver, device, value, zb_rx)
       local reset_status = function()
         device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
       end
-      local waiting_timer = device.thread:call_with_delay(1, reset_status)
+      device.thread:call_with_delay(1, reset_status)
       device:emit_event(capabilities.feederOperatingState.feederOperatingState("feeding"))
     end
     device:set_field(FEED_SOURCE, 0, { persist = true })
