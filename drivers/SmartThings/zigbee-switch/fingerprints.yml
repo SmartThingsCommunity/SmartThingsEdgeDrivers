@@ -848,6 +848,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSP019BZ
     deviceProfileName: basic-switch
+  - id: Third Reality/3RSP02028BZ
+    deviceLabel: ThirdReality Plug
+    manufacturer: Third Reality, Inc
+    model: 3RSP02028BZ
+    deviceProfileName: switch-power-energy
   - id: "DAWON_DNS/PM-S140-ZB"
     deviceLabel: Dawon Switch
     manufacturer: DAWON_DNS
