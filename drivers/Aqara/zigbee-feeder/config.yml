@@ -1,4 +1,0 @@
-name: 'Zigbee Feeder'
-packageKey: 'zigbee-feeder'
-permissions:
-  zigbee: {}
