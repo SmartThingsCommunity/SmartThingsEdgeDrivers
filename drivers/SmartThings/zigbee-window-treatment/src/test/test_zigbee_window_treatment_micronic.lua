@@ -20,9 +20,7 @@ local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-
-local OnOff = clusters.OnOff
-local PowerConfiguration = clusters.PowerConfiguration
+ 
 local WindowCovering = clusters.WindowCovering
 
 local INVERT_CLUSTER = 0xFC00
