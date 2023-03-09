@@ -20,9 +20,7 @@ local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
- 
 local WindowCovering = clusters.WindowCovering
-
 local INVERT_CLUSTER = 0xFC00
 local INVERT_CLUSTER_ATTRIBUTE = 0x0000
 local MFG_CODE = 0x0000
@@ -69,7 +67,6 @@ test.register_coroutine_test("Window Shade state open", function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShadeLevel.shadeLevel(100)))
 end)
-
 
 test.register_coroutine_test("Handle invert in infochanged", function()
   test.socket.zigbee:__queue_receive({mock_device.id,

@@ -58,26 +58,14 @@ end
 local function current_position_attr_handler(driver, device, value, zb_rx)
 
   local level = value.value
-  local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
-      capabilities.windowShadeLevel.shadeLevel.NAME)
-  --log.debug(string.format(" current_position_attr_handler   level=(%s) current level=(%s)", level, current_level))
   local windowShade = capabilities.windowShade.windowShade
   if level == 0 then
     device:emit_event(windowShade.closed())
-    device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   elseif level == 100 then
     device:emit_event(windowShade.open())
-    device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
   else
-    if current_level ~= level or current_level == nil then
       device:emit_event(windowShade.partially_open())
-    end
   end
-end
-
-local function window_shade_level_cmd(driver, device, command)
-  local level = utils.clamp_value(command.args.shadeLevel, 0, 100)
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
 end
 
 local do_refresh = function(self, device)
@@ -100,9 +88,6 @@ local micronic_window_shade = {
     [capabilities.windowShade.ID] = {
       [capabilities.windowShade.commands.open.NAME] = set_window_shade_level(100),
       [capabilities.windowShade.commands.close.NAME] = set_window_shade_level(0)
-    },
-    [capabilities.windowShadeLevel.ID] = {
-      [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
