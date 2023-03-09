@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "Vimar/02973-smart-wheel-thermostat"
+    deviceLabel: Vimar Smart Thermostat
+    manufacturer: Vimar
+    model: WheelThermostat_v1.0
+    deviceProfileName: thermostat-fanless-heating-cooling-no-fw
   - id: "LUX/KONOZ"
     deviceLabel: LUX Thermostat
     manufacturer: LUX
