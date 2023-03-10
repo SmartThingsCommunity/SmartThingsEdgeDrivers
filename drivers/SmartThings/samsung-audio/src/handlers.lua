@@ -134,4 +134,10 @@ function CapabilityHandlers.handle_set_volume(driver, device, cmd)
   end
 end
 
+function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
+  local ip = device:get_field("ip")
+  -- Audio Notification working fine when checked through routine. Need to confirm later for any issue whether ST app expect any emit_event here
+  command.play_streaming_uri(ip, cmd.args.uri)
+end
+
 return CapabilityHandlers
