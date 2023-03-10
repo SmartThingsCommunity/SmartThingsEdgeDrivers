@@ -96,7 +96,7 @@ zigbeeManufacturer:
     deviceProfileName: water-battery
   - id: "sengled E1L-G7K"
     deviceLabel: Sengled Water Leak Sensor
-    manufacturer: sengled.
+    manufacturer: SENGLED.
     model: E1L-G7K
-    deviceProfileName: water-temp-battery-tempOffset
+    deviceProfileName: water-battery
     
