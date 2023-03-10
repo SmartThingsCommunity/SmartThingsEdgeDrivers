@@ -53,8 +53,6 @@ test.register_coroutine_test("Window Shade state closed", function()
       mock_device, 0)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.closed()))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(0)))
 end)
 
 test.register_coroutine_test("Window Shade state open", function()
@@ -64,8 +62,6 @@ test.register_coroutine_test("Window Shade state open", function()
       mock_device, 100)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.open()))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(100)))
 end)
 
 test.register_coroutine_test("Handle invert in infochanged", function()
@@ -75,8 +71,6 @@ test.register_coroutine_test("Handle invert in infochanged", function()
   test.socket.capability:__set_channel_ordering("relaxed")
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.open()))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(100)))
   test.wait_for_events()
   test.socket.environment_update:__queue_receive({"zigbee", {
     hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui)
@@ -94,8 +88,6 @@ test.register_coroutine_test("Handle invert in infochanged", function()
       INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.invert)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.closed()))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(0)))
   -- Emit same InfoChanged event again
   test.wait_for_events()
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
@@ -108,8 +100,6 @@ test.register_coroutine_test("Handle invert in infochanged", function()
       INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.invert)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.open()))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.windowShadeLevel.shadeLevel(100)))
 end)
 
 test.register_coroutine_test("Refresh necessary attributes", function()
