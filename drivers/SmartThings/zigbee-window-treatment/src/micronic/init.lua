@@ -15,9 +15,7 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 local cluster_base = require "st.zigbee.cluster_base"
-local utils = require "st.utils"
 local data_types = require "st.zigbee.data_types"
-
 local INVERT_CLUSTER = 0xFC00
 local INVERT_CLUSTER_ATTRIBUTE = 0x0000
 
