@@ -73,17 +73,36 @@ local function _initialize_device(driver, device)
     end
 
     local fields = driver._field_cache[device.device_network_id]
-    driver._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
-    driver.sonos:mark_player_as_joined(fields.player_id)
 
     log.trace("Setting persistent fields")
     device:set_field(PlayerFields.WSS_URL, fields.wss_url, { persist = true })
     device:set_field(PlayerFields.HOUSEHOULD_ID, fields.household_id, { persist = true })
     device:set_field(PlayerFields.PLAYER_ID, fields.player_id, { persist = true })
 
-    device:set_field(PlayerFields._IS_INIT, true)
+    device:set_field(PlayerFields._IS_INIT, true, { persist = true })
   end
 
+  local player_id = device:get_field(PlayerFields.PLAYER_ID)
+  local household_id = device:get_field(PlayerFields.HOUSEHOULD_ID)
+
+  driver._player_id_to_device[player_id] = device -- quickly look up device from player id string
+  driver.sonos:mark_player_as_joined(player_id)
+
+  if not driver.sonos:is_household_known(household_id) then
+    local ip = device:get_field(PlayerFields.WSS_URL):match(".*://(.*):.*")
+    local group_info, err = SonosRestApi.get_groups_info(
+      ip,
+      SonosApi.DEFAULT_SONOS_PORT,
+      household_id
+    )
+
+    if err or not group_info then
+      log.error("Error querying group info: " .. err)
+      return
+    end
+
+    driver.sonos:update_household_info(household_id, group_info)
+  end
   local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection
 
   if not sonos_conn then

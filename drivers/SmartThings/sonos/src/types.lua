@@ -113,6 +113,7 @@ Types.SonosCapabilities = {
 --- Sonos systems local state
 --- @class SonosState
 --- @field public get_household fun(self: SonosState, id: HouseholdId): SonosHousehold
+--- @field public is_household_known fun(self: SonosState, id: HouseholdId): boolean
 --- @field public update_household_info fun(self: SonosState, id: HouseholdId, groups_event: SonosGroupsResponseBody, device: SonosDevice|nil)
 --- @field public update_household_favorites fun(self: SonosState, id: HouseholdId, favorites: SonosFavorites)
 --- @field public get_group_for_player fun(self: SonosState, household_id: HouseholdId, player_id: PlayerId): GroupId
@@ -161,6 +162,12 @@ function SonosState.new()
 
   --- @param self SonosState
   --- @param id HouseholdId
+  ret.is_household_known = function(self, id)
+    return private.households[id] ~= nil and private.households[id].mapped_once
+  end
+
+  --- @param self SonosState
+  --- @param id HouseholdId
   --- @param groups_event SonosGroupsResponseBody
   --- @param device SonosDevice|nil
   ret.update_household_info = function(self, id, groups_event, device)
@@ -195,6 +202,7 @@ function SonosState.new()
     end
 
     private.households[id] = household
+    private.households[id].mapped_once = true
 
     -- emit group info update [groupId, groupRole, groupPrimaryDeviceId]
     if device ~= nil then
