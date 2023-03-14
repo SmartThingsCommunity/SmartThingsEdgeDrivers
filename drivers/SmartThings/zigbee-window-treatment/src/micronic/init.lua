@@ -67,9 +67,7 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
 end
 
 local do_refresh = function(self, device)
-  device:send(WindowCovering.attributes.CurrentPositionLiftPercentage:read(device))
-  local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,
-      INVERT_CLUSTER_ATTRIBUTE, 0x0000)
+  local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,INVERT_CLUSTER_ATTRIBUTE, 0x0000)
   device:send(invert_cluster_read)
 end
 

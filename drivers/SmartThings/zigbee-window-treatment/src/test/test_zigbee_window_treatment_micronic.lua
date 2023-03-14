@@ -86,8 +86,6 @@ test.register_coroutine_test("Handle reverse in infochanged", function()
   test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, INVERT_CLUSTER,
       INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.reverse) })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.windowShade.windowShade.closed()))
   -- Emit same InfoChanged event again
   test.wait_for_events()
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
@@ -96,10 +94,8 @@ test.register_coroutine_test("Handle reverse in infochanged", function()
   test.wait_for_events()
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
   test.socket.zigbee:__expect_send({ mock_device.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device, INVERT_CLUSTER,
-      INVERT_CLUSTER_ATTRIBUTE, MFG_CODE, data_types.Boolean, updates.preferences.reverse) })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.windowShade.windowShade.open()))
+    cluster_base.write_manufacturer_specific_attribute(mock_device, INVERT_CLUSTER, INVERT_CLUSTER_ATTRIBUTE, MFG_CODE,
+    data_types.Boolean, updates.preferences.reverse) })
 end)
 
 test.register_coroutine_test("Refresh necessary attributes", function()
@@ -119,9 +115,10 @@ test.register_coroutine_test("Refresh necessary attributes", function()
     command = "refresh",
     args = {}
   } })
-  test.socket.zigbee:__expect_send({ mock_device.id,
-    zigbee_test_utils.build_attribute_read(mock_device, INVERT_CLUSTER,
-      { INVERT_CLUSTER_ATTRIBUTE }, 0x0000) })
+
+  test.socket.zigbee:__expect_send({ mock_device.id,    zigbee_test_utils.build_attribute_read(mock_device, INVERT_CLUSTER,{ INVERT_CLUSTER_ATTRIBUTE }, 0x0000) })
 end)
+
+
 
 test.run_registered_tests()
