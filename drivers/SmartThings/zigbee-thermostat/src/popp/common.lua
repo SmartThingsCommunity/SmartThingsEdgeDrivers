@@ -63,7 +63,7 @@ end
 
 common.switch_handle_on = function(driver, device, cmd)
   local get_cmd = cmd.command or cmd
-  
+
   if get_cmd == "on" then
     device:send(cluster_base.write_manufacturer_specific_attribute(device, common.THERMOSTAT_CLUSTER_ID,
       common.EXTERNAL_OPEN_WINDOW_DETECTION_ID,
@@ -72,7 +72,7 @@ common.switch_handle_on = function(driver, device, cmd)
   end
 end
 
-common.switch_handle_off = function(driver, device, cmd)  
+common.switch_handle_off = function(driver, device, cmd)
   local get_cmd = cmd.command or cmd
 
   if get_cmd == "off" then
@@ -95,7 +95,7 @@ common.heat_cmd_handler = function(driver, device, mode)
   local payload = nil
 
   if has_member(SUPPORTED_MODES, mode) then
-    
+
     -- fetch last_setpointTemp
     last_setpointTemp = device:get_field("last_setpointTemp")
 
@@ -117,7 +117,7 @@ common.heat_cmd_handler = function(driver, device, mode)
       payload = string.char(t1, p2, p3)
       -- send the specific command as ZigbeeMessageTx to the device
       device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID, common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
-      
+
       log.debug("### switch state heat:" .. device:get_latest_state("main", Switch.ID, Switch.switch.NAME))
       -- turn switch on
       if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
@@ -130,9 +130,9 @@ common.heat_cmd_handler = function(driver, device, mode)
       payload = string.char(t2, p2, p3)
       -- send the specific command as ZigbeeMessageTx to the device
       device:send(cluster_base.build_manufacturer_specific_command(device, common.THERMOSTAT_CLUSTER_ID, common.THERMOSTAT_SETPOINT_CMD_ID, common.MFG_CODE, payload))
-      
+
       log.debug("### switch state eco:" .. device:get_latest_state("main", Switch.ID, Switch.switch.NAME))
-      -- turn switch on 
+      -- turn switch on
       if device:get_latest_state("main", Switch.ID, Switch.switch.NAME) == "off" then
         common.switch_handle_on(driver, device, 'on')
       end

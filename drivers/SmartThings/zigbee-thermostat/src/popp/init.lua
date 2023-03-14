@@ -203,7 +203,7 @@ end
 local device_added = function(driver, device)
   -- Set supported thermostat modes
   device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES, { visibility = { displayed = false } }))
-  
+
   -- Add the manufacturer-specific attributes to generate their configure reporting and bind requests
   for capability_id, config in pairs(get_cluster_configurations()) do
     device:add_configured_attribute(config)
