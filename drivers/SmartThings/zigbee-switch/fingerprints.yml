@@ -1202,12 +1202,12 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb-2700K-5000K
+    deviceProfileName: abl-light-z-001-bulb
   - id: Juno/ABL-LIGHT-Z-001
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb-2700K-5000K
+    deviceProfileName: abl-light-z-001-bulb
   - id: Samsung/SAMSUNG-ITM-Z-001
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics

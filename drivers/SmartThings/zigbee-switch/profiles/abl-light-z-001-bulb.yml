@@ -1,0 +1,19 @@
+name: abl-light-z-001-bulb
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: colorTemperature
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light
+metadata:
+  mnmn: Samsung Electronics
+  vid: ABL-LIGHT-Z-001
