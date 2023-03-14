@@ -26,6 +26,7 @@ local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local AnalogInput = clusters.AnalogInput
 local Basic = clusters.Basic
+local Groups = clusters.Groups
 
 local MFG_CODE = 0x115F
 local PRIVATE_CLUSTER_ID = 0xFCC0
@@ -115,6 +116,10 @@ test.register_coroutine_test(
           , MFG_CODE)
       }
     )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Groups.server.commands.RemoveAllGroups(mock_device)
+    })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       OnOff.attributes.OnOff:read(mock_device)

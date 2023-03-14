@@ -8,6 +8,7 @@ local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
+local Groups = clusters.Groups
 
 local maxPower = capabilities["stse.maxPower"]
 local restorePowerState = capabilities["stse.restorePowerState"]
@@ -177,6 +178,7 @@ local function do_configure(self, device)
   device:configure()
   device:send(cluster_base.read_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE))
+  device:send(Groups.server.commands.RemoveAllGroups(device)) -- required
   do_refresh(self, device)
 end
 
