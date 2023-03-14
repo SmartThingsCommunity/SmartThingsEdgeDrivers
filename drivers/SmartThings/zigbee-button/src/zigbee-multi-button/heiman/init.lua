@@ -42,7 +42,7 @@ local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   for endpoint = 1,HEIMAN_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
   end
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
   device:send(Basic.attributes.DeviceEnabled:write(device, true))

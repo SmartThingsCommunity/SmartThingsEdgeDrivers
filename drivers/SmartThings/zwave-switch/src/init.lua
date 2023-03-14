@@ -15,6 +15,8 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
+--- @type st.Device
+local st_device = require "st.device"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.CommandClass
@@ -55,8 +57,10 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+  end
 end
 
 --- Handle preference changes
@@ -70,7 +74,7 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
+      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value }))
     end
   end
 end
@@ -83,7 +87,7 @@ local function do_configure(driver, device)
   local configuration = configurationsMap.get_device_configuration(device)
   if configuration ~= nil then
     for _, value in ipairs(configuration) do
-      device:send(Configuration:Set({parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value}))
+      device:send(Configuration:Set({ parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value }))
     end
   end
 end
@@ -112,7 +116,13 @@ local driver_template = {
     capabilities.colorControl,
     capabilities.button,
     capabilities.temperatureMeasurement,
-    capabilities.relativeHumidityMeasurement
+    capabilities.relativeHumidityMeasurement,
+    capabilities.illuminanceMeasurement,
+    capabilities.contactSensor,
+    capabilities.motionSensor,
+    capabilities.smokeDetector,
+    capabilities.waterSensor,
+    capabilities.zwMultichannel
   },
   zwave_handlers = {
     [cc.SWITCH_MULTILEVEL] = {
@@ -135,7 +145,9 @@ local driver_template = {
     require("fibaro-single-switch"),
     require("eaton-5-scene-keypad"),
     require("ecolink-switch"),
-    require("zooz-zen-30-dimmer-relay")
+    require("multi-metering-switch"),
+    require("zooz-zen-30-dimmer-relay"),
+    require("multichannel-device")
   },
   lifecycle_handlers = {
     init = device_init,

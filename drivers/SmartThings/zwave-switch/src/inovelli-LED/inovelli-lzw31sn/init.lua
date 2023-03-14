@@ -13,14 +13,8 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.utils
-local utils = require "st.utils"
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 --- @type st.zwave.CommandClass.CentralScene
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 
@@ -29,13 +23,19 @@ local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
 local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
+local supported_button_values = {
+  ["button1"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button2"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button3"] = {"pushed"}
+}
+
 local function device_added(driver, device)
   for _, component in pairs(device.profile.components) do
     if component.id ~= "main" and component.id ~= LED_BAR_COMPONENT_NAME then
       device:emit_component_event(
         component,
         capabilities.button.supportedButtonValues(
-          {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+          supported_button_values[component.id],
           { visibility = { displayed = false } }
         )
       )
@@ -57,8 +57,6 @@ local map_scene_number_to_component = {
 
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
-  [CentralScene.key_attributes.KEY_RELEASED] = capabilities.button.button.held,
-  [CentralScene.key_attributes.KEY_HELD_DOWN] = capabilities.button.button.down_hold,
   [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = capabilities.button.button.pushed_2x,
   [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = capabilities.button.button.pushed_3x,
   [CentralScene.key_attributes.KEY_PRESSED_4_TIMES] = capabilities.button.button.pushed_4x,

@@ -23,12 +23,12 @@ zwaveManufacturer:
     productType: 0x0005
     productId: 0x000A
     deviceProfileName: ecolink-wireless-siren
-  # - id: 013C/0004/000A
-  #   deviceLabel: Philio Siren
-  #   manufacturerId: 0x013C
-  #   productType: 0x0004
-  #   productId: 0x000A
-  #   deviceProfileName: philio-sound-siren
+  - id: 013C/0004/000A
+    deviceLabel: Philio Siren
+    manufacturerId: 0x013C
+    productType: 0x0004
+    productId: 0x000A
+    deviceProfileName: philio-sound-siren
   - id: 0371/00A2 # Aeotec Doorbell 6, productType: 0x0003 (EU), 0x0103 (US), 0x0203 (AU)
     deviceLabel: Aeotec Doorbell
     manufacturerId: 0x0371
