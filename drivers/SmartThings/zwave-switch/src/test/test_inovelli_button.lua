@@ -65,6 +65,12 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+local supported_button_values = {
+  ["button1"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button2"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button3"] = {"pushed"}
+}
+
 test.register_coroutine_test(
   "added lifecycle event",
   function()
@@ -77,7 +83,7 @@ test.register_coroutine_test(
           mock_inovelli_dimmer:generate_test_message(
             button_name,
             capabilities.button.supportedButtonValues(
-              {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+              supported_button_values[button_name],
               { visibility = { displayed = false } }
             )
           )

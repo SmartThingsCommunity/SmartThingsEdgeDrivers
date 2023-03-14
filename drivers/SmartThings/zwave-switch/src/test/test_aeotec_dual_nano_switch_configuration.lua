@@ -31,7 +31,7 @@ local aeotec_dual_nano_switch_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("dual-metering-switch.yml"),
+  profile = t_utils.get_profile_definition("metering-switch.yml"),
   zwave_endpoints = aeotec_dual_nano_switch_endpoints,
   zwave_manufacturer_id = 0x0086,
   zwave_product_type = 0x0003,
