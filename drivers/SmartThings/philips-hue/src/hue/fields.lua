@@ -27,7 +27,8 @@ local Fields = {
   MIN_KELVIN = "mintemp",
   MODEL_ID = "modelid",
   PARENT_DEVICE_ID = "parent_device_id_local",
-  RESOURCE_ID = "rid"
+  RESOURCE_ID = "rid",
+  WRAPPED_HUE = "_wrapped_hue"
 }
 
 return Fields

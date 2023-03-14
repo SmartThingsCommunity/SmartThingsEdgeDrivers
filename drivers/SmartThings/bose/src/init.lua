@@ -198,6 +198,14 @@ local function device_init(driver, device)
   device:set_field("init_started", true)
   device.log.info_with({ hub_logs = true }, "initializing device")
   local serial_number = bose_utils.get_serial_number(device)
+  -- Carry over DTH discovered ip during migration to enable some communication
+  -- in cases where it takes a long time to rediscover the device on the LAN.
+  if not device:get_field("ip") and device.data and device.data.ip then
+    local nu = require "st.net_utils"
+    local ip = nu.convert_ipv4_hex_to_dotted_decimal(device.data.ip)
+    device:set_field("ip", ip, { persist = true })
+    device.log.info(string.format("Using migrated ip address: %s", ip))
+  end
 
   cosock.spawn(function()
     local backoff = backoff_builder(300, 1, 0.25)

@@ -239,6 +239,11 @@ zigbeeManufacturer:
     manufacturer: Sinope Technologies
     model: RM3250ZB
     deviceProfileName: switch-power-smartplug
+  - id: "Sinope Switch/RM3500ZB"
+    deviceLabel: "RM3500ZB Sinope Load Controller"
+    manufacturer: Sinope Technologies
+    model: RM3500ZB
+    deviceProfileName: switch-power-smartplug
   - id: "Sinope Dimmer Switch/DM2500ZB"
     deviceLabel: "DM2500ZB Sinope Dimmer"
     manufacturer: Sinope Technologies
