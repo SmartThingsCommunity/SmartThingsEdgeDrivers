@@ -396,6 +396,96 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "All users cleared re-sets COTA cred", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    expect_kick_off_cota_process(mock_device)
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1,
+        DoorLock.types.DlStatus.OCCUPIED,
+        1,  -- user_index
+        nil -- next_redential_index
+      ),
+    })
+    mock_device:expect_metadata_update({
+      profile = "nonfunctional-lock",
+      provisioning_state = "NONFUNCTIONAL"
+    })
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.events.LockUserChange:build_test_event_report(
+          mock_device, 1, -- endpoint
+          {
+            lock_data_type = types.DlLockDataType.USER_INDEX,
+            data_operation_type = types.DlDataOperationType.CLEAR,
+            operation_source = types.DlOperationSource.KEYPAD,
+            user_index = 0xFFFE,
+          }
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+          capabilities.lockCodes.lockCodes(json.encode({}), {visibility = {displayed = false}})
+      )
+    )
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.SetCredential(
+        mock_device, 1, -- endpoint
+        DoorLock.types.DlDataOperationType.ADD, -- operation_type
+        DoorLock.types.DlCredential(
+          {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = 1}
+        ), -- credential
+        test_credential_data, -- credential_data
+        nil, -- user_index
+        DoorLock.types.DlUserStatus.OCCUPIED_ENABLED, -- user_status
+        DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
+      )
+    })
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1,
+        DoorLock.types.DlStatus.SUCCESS,
+        1,  -- user_index
+        nil -- next_redential_index
+      ),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.codeChanged(
+          1 .. " set", {data = {codeName = "ST Remote Operation Code"}, state_change = true}
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes
+          .lockCodes(json.encode({["1"] = "ST Remote Operation Code"}), {visibility = {displayed = false}})
+      )
+    )
+    mock_device:expect_metadata_update({
+      profile = "base-lock",
+      provisioning_state = "PROVISIONED"
+    })
+  end
+)
+
+test.register_coroutine_test(
   "SetCredential for OCCUPIED credential index no space, but need full search", function()
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
