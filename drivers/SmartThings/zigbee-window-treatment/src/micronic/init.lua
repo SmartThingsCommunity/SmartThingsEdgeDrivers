@@ -19,10 +19,10 @@ local data_types = require "st.zigbee.data_types"
 local INVERT_CLUSTER = 0xFC00
 local INVERT_CLUSTER_ATTRIBUTE = 0x0000
 
-local micronic_window_shade_FINGERPRINTS = {{
+local micronic_window_shade_FINGERPRINTS = { {
   mfr = "micronic-ko",
   model = "acm301"
-}}
+} }
 
 local is_micronic_window_shade = function(opts, driver, device)
   for _, fingerprint in ipairs(micronic_window_shade_FINGERPRINTS) do
@@ -37,7 +37,7 @@ local function invert_preference_handler(device)
   -- if invert is false then normal case handler or reverse case handler
   local invert_value = device.preferences.reverse
   local invert_cluster_cmd = cluster_base.write_manufacturer_specific_attribute(device, INVERT_CLUSTER,
-      INVERT_CLUSTER_ATTRIBUTE, 0x0000, data_types.Boolean, invert_value)
+    INVERT_CLUSTER_ATTRIBUTE, 0x0000, data_types.Boolean, invert_value)
   device:send(invert_cluster_cmd)
 end
 
@@ -54,7 +54,6 @@ local set_window_shade_level = function(level)
 end
 
 local function current_position_attr_handler(driver, device, value, zb_rx)
-
   local level = value.value
   local windowShade = capabilities.windowShade.windowShade
   if level == 0 then
@@ -62,12 +61,13 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   elseif level == 100 then
     device:emit_event(windowShade.open())
   else
-      device:emit_event(windowShade.partially_open())
+    device:emit_event(windowShade.partially_open())
   end
 end
 
 local do_refresh = function(self, device)
-  local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,INVERT_CLUSTER_ATTRIBUTE, 0x0000)
+  local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,
+  INVERT_CLUSTER_ATTRIBUTE, 0x0000)
   device:send(invert_cluster_read)
 end
 
