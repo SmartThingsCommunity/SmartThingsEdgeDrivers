@@ -29,13 +29,6 @@ local devices = {
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 4
   },
-  BUTTON_PUSH_HELD_8 = {
-    MATCHING_MATRIX = {
-      { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
-    },
-    SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
-    NUMBER_OF_BUTTONS = 8
-  },
   BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {
       { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },

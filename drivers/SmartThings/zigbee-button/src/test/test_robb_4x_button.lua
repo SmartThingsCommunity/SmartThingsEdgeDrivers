@@ -184,7 +184,7 @@ test.register_coroutine_test(
     })
       test.socket.zigbee:__expect_send({
             mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
+      PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
       })
 
       for endpoint = 1,2 do
@@ -264,34 +264,38 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
   end
 )
 
 test.register_message_test(
-  "Max battery voltage report should be handled",
+  "Battery voltage report should be handled",
   {
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 30) }
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 100) }
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
-    }
-  }
-)
-
-test.register_message_test(
-  "Min battery voltage report should be handled",
-  {
+    },
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 21) }
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 34) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.battery.battery(34))
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0) }
     },
     {
       channel = "capability",
@@ -299,6 +303,21 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
   }
+)
+
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+      }
+    )
+  end
 )
 
 test.run_registered_tests()
