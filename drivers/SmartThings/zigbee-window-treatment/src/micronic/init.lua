@@ -67,7 +67,7 @@ end
 
 local do_refresh = function(self, device)
   local invert_cluster_read = cluster_base.read_manufacturer_specific_attribute(device, INVERT_CLUSTER,
-  INVERT_CLUSTER_ATTRIBUTE, 0x0000)
+    INVERT_CLUSTER_ATTRIBUTE, 0x0000)
   device:send(invert_cluster_read)
 end
 
