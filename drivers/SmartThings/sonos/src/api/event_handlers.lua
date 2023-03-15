@@ -82,9 +82,12 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
   end
 
   local track_info = nil
-  if metadata_status_body.track then track_info = metadata_status_body.track
-  elseif metadata_status_body.currentItem and metadata_status_body.currentItem.track then track_info = metadata_status_body
-      .currentItem.track end
+  if metadata_status_body.track then
+    track_info = metadata_status_body.track
+  elseif metadata_status_body.currentItem and metadata_status_body.currentItem.track then
+    track_info = metadata_status_body
+        .currentItem.track
+  end
 
   if track_info ~= nil then
     if track_info.album and track_info.album.name then
@@ -104,7 +107,9 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
     end
   end
 
-  device:emit_event(capabilities.audioTrackData.audioTrackData(audio_track_data))
+  if type(audio_track_data.title) == "string" then
+    device:emit_event(capabilities.audioTrackData.audioTrackData(audio_track_data))
+  end
 end
 
 return CapEventHandlers

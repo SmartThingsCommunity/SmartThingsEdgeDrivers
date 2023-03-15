@@ -92,6 +92,10 @@ end
 ---@param device HueChildDevice
 local function do_color_action(driver, device, args)
   local hue, sat = (args.args.color.hue / 100), (args.args.color.saturation / 100)
+  if hue == 1 then -- 0 and 360 degrees are equivalent in HSV, but not in our conversion function
+    hue = 0
+    device:set_field(Fields.WRAPPED_HUE, true)
+  end
   local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
 
   if not bridge_device then

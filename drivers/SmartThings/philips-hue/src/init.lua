@@ -90,6 +90,11 @@ local function emit_light_status_events(light_device, light)
       light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
       local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
       local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
+      -- We sent a command where hue == 100 and wrapped the value to 0, reverse that here
+      if light_device:get_field(Fields.WRAPPED_HUE) == true and (hue + .05 >= 1 or hue - .05 <= 0) then
+        hue = 1
+        light_device:set_field(Fields.WRAPPED_HUE, false)
+      end
 
       light_device:emit_event(capabilities.colorControl.hue(st_utils.round(hue * 100)))
       light_device:emit_event(capabilities.colorControl.saturation(st_utils.round(sat * 100)))

@@ -430,7 +430,29 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "The lock reporting unlock via code should include the code info in the report",
   function()
-    init_code_slot(1, "Code 1", mock_device)
+    init_code_slot(1, "Superb Owl", mock_device)
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        Notification:Report({
+          notification_type = Notification.notification_type.ACCESS_CONTROL,
+          event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
+          event_parameter = ""
+        })
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Superb Owl" } })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "The lock reporting unlock via code should include the code number as the name if no name is set",
+  function()
+    init_code_slot(1, nil, mock_device)
     test.socket.zwave:__queue_receive(
       {
         mock_device.id,
