@@ -25,7 +25,8 @@ local driver_template = {
     capabilities.contactSensor,
   },
   sub_drivers = {
-    require("mimolite-garage-door")
+    require("mimolite-garage-door"),
+    require("ecolink-zw-gdo")
   }
 }
 
