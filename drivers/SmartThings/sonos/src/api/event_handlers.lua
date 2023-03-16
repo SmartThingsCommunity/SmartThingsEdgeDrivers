@@ -99,7 +99,12 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
     if track_info.name then
       audio_track_data.title = track_info.name
     end
+    local radio_bool = false
     if track_info.service and track_info.service.name then
+      log.info_with({hub_logs=true}, string.format("service name is: %s", track_info.service.name))
+      if track_info.service.name == "Sonos Radio" then 
+        device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({}))
+      end
       audio_track_data.mediaSource = track_info.service.name
     end
   end
