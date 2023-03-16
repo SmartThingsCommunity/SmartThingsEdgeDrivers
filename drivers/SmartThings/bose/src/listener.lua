@@ -62,25 +62,6 @@ function Listener:now_playing_update(info)
     trackdata.album = bose_utils.sanitize_field(info.album)
     trackdata.albumArtUrl = bose_utils.sanitize_field(info.art_url)
     trackdata.mediaSource = bose_utils.sanitize_field(info.source)
-    if trackdata.mediaSource ~= nil then
-      local cached_track_control_cmds = self.device:get_latest_state(
-        "main", capabilities.mediaTrackControl.ID,
-        capabilities.mediaTrackControl.supportedTrackControlCommands.NAME
-      )
-      -- Note changing supportedTrackControlCommands after join does not seem to take effect in the app immediately.
-      -- This indicates a bug in the mobile app.
-      if trackdata.mediaSource == "TUNEIN" and
-        (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) > 0) then
-        -- Switching to radio source which disables track controls
-        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-      elseif trackdata.mediaSource ~= "TUNEIN" and
-        (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) == 0) then
-        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-          capabilities.mediaTrackControl.commands.nextTrack.NAME,
-          capabilities.mediaTrackControl.commands.previousTrack.NAME,
-        }))
-      end
-    end
     trackdata.title = bose_utils.sanitize_field(info.track) or
       bose_utils.sanitize_field(info.station) or
       (info.source == "AUX" and "Auxiliary input") or nil
