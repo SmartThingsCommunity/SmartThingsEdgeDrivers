@@ -39,54 +39,42 @@ local function can_handle(opts, driver, device, ...)
   end
 end
 
-local build_button_handler = function(addF)
+local button_push_handler = function(addF)
   return function(driver, device, zb_rx)
-    local comp
     local additional_fields = { state_change = true }
     local ep = zb_rx.address_header.src_endpoint.value
 
     -- Fetch correct button name
+    local offset = 0
     if addF == true then
-      comp = device:get_component_id_for_endpoint(ep + 240)
-    else
-      comp = device:get_component_id_for_endpoint(ep)
+      offset = 0xF0
     end
 
     local event = capabilities.button.button.pushed(additional_fields)
-    local comp = device.profile.components[comp.id]
-    -- Emit events
-    if comp ~= nil then
-      device:emit_component_event(comp, event)
-      if comp.id ~= "main" then
-        device:emit_event(event)
-      end
-    end
+    device:emit_event_for_endpoint(ep + offset, event)
+    device:emit_event(event)
   end
 end
 
-local function hold_handler(driver, device, zb_rx)
-  local comp
+local function button_hold_handler(driver, device, zb_rx)
   local pressed_type
   local additional_fields = { state_change = true }
   local ep = zb_rx.address_header.src_endpoint.value
 
+  local offset = 0
+
   -- Handle MoveStepMode.UP
   if zcl_clusters.Level.types.MoveStepMode.UP == zb_rx.body.zcl_body.move_mode.value then
-    comp = device:get_component_id_for_endpoint(ep)
     pressed_type = "up_hold"
   -- Handle MoveStepMode.DOWN
   else
-    comp = device:get_component_id_for_endpoint(ep + 240)
+    offset = 0xF0
     pressed_type = "down_hold"
   end
 
   local event = capabilities.button.button[pressed_type](additional_fields)
-  local comp = device.profile.components[comp.id]
-  -- Emit events
-  if comp ~= nil then
-    device:emit_component_event(comp, event)
-    device:emit_event(event)
-  end
+  device:emit_event_for_endpoint(ep + offset, event)
+  device:emit_event(event)
 end
 
 local do_configuration = function(driver, device)
@@ -149,27 +137,7 @@ local function added_handler(self, device)
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)
-  device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 100)))
-end
-
--- Map components to endpoints
-local function component_to_endpoint(device, component_id)
-  local COMP_MAP = {
-    ["button1"] = 1,
-    ["button3"] = 2,
-    ["button5"] = 3,
-    ["button7"] = 4,
-    ["button2"] = 1,
-    ["button4"] = 2,
-    ["button6"] = 3,
-    ["button8"] = 4
-  }
-
-  if COMP_MAP[component_id] ~= nil then
-    return COMP_MAP[component_id]
-  else
-    return 1
-  end
+  device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 200)))
 end
 
 -- Map endpoints to component
@@ -185,15 +153,14 @@ local function endpoint_to_component(device, ep)
     [0xF4] = "button8"
   }
 
-  if device.profile.components[EP_MAP[ep]] ~= nil then
-    return device.profile.components[EP_MAP[ep]]
+  if EP_MAP[ep] ~= nil then
+    return EP_MAP[ep]
   else
     return "main"
   end
 end
 
 local function device_init(driver, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
 end
 
@@ -207,11 +174,11 @@ local robb_wireless_control = {
   zigbee_handlers = {
     cluster = {
       [Level.ID] = {
-        [Level.server.commands.MoveWithOnOff.ID] = hold_handler,
+        [Level.server.commands.MoveWithOnOff.ID] = button_hold_handler,
       },
       [OnOff.ID] = {
-        [OnOff.server.commands.Off.ID] = build_button_handler(true),
-        [OnOff.server.commands.On.ID] = build_button_handler(false)
+        [OnOff.server.commands.Off.ID] = button_push_handler(true),
+        [OnOff.server.commands.On.ID] = button_push_handler(false)
       }
     },
     attr = {

@@ -275,7 +275,8 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 100) }
+      message = { mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0x64) }
     },
     {
       channel = "capability",
@@ -285,12 +286,12 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 34) }
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0x32) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.battery.battery(34))
+      message = mock_device:generate_test_message("main", capabilities.battery.battery(50))
     },
     {
       channel = "zigbee",

@@ -23,8 +23,7 @@ local devices = {
   BUTTON_PUSH_HELD_4 = {
     MATCHING_MATRIX = {
       { mfr = "CentraLite", model = "3450-L" },
-      { mfr = "CentraLite", model = "3450-L2" },
-      { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
+      { mfr = "CentraLite", model = "3450-L2" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 4
