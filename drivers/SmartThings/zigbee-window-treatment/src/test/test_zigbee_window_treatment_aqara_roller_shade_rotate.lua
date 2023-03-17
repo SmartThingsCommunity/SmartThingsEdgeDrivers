@@ -31,6 +31,7 @@ test.add_package_capability("shadeRotateState.yaml")
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
+local Groups = clusters.Groups
 
 local SHADE_LEVEL = "shadeLevel"
 
@@ -113,6 +114,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Basic.attributes.ApplicationVersion:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Groups.server.commands.RemoveAllGroups(mock_device)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
