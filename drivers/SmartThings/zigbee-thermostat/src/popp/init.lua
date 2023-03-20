@@ -203,6 +203,19 @@ end
 local device_added = function(driver, device)
   -- Set supported thermostat modes
   device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES, { visibility = { displayed = false } }))
+end
+
+-- Configuration Function
+local do_configure = function(driver, device)
+  device:send(device_management.build_bind_request(device, Thermostat.ID, driver.environment_info.hub_zigbee_eui))
+  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
+  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 5, 300, 10)) -- report temperature changes over 0.1°C
+  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 5, 300, 50))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+end
+
+local function device_init(driver, device)
+  battery_defaults.build_linear_voltage_init(2.4, 3.2)(driver, device)
 
   -- Add the manufacturer-specific attributes to generate their configure reporting and bind requests
   for capability_id, config in pairs(get_cluster_configurations()) do
@@ -211,7 +224,7 @@ local device_added = function(driver, device)
   end
 
   -- initial set of heating mode
-  device.thread:call_with_delay(3, function()
+  --device.thread:call_with_delay(3, function()
     local stored_heat_mode = device:get_field(common.STORED_HEAT_MODE) or 'eco'
     local stored_switch_state = device:get_latest_state("main", Switch.ID, Switch.switch.NAME) or 'on'
 
@@ -228,16 +241,7 @@ local device_added = function(driver, device)
     end
 
     do_refresh(driver, device)
-  end)
-end
-
--- Configuration Function
-local do_configure = function(driver, device)
-  device:send(device_management.build_bind_request(device, Thermostat.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 5, 300, 10)) -- report temperature changes over 0.1°C
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 5, 300, 50))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+  --end)
 end
 
 local function info_changed(driver, device, event, args)
@@ -314,7 +318,7 @@ local popp_thermostat = {
     }
   },
   lifecycle_handlers = {
-    init = battery_defaults.build_linear_voltage_init(2.4, 3.2),
+    init = device_init,
     added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed

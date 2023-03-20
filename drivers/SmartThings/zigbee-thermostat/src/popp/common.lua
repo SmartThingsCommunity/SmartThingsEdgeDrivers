@@ -37,8 +37,6 @@ local SUPPORTED_MODES = {
   ThermostatMode.thermostatMode.eco.NAME
 }
 
-common.STORED_HEAT_MODE = "stored_heat_mode"
-
 local function has_member(haystack, needle)
   for _, value in ipairs(haystack) do
     if (value == needle) then
