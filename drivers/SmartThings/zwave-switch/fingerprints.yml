@@ -160,11 +160,11 @@ zwaveManufacturer:
     productType: 0x4243
     productId: 0x0000
     deviceProfileName: switch-binary
-  # - id: 010F/1401
-  #   deviceLabel: Fibaro Outlet
-  #   manufacturerId: 0x010F
-  #   productType: 0x1401
-  #   deviceProfileName: smartplug-1
+  - id: 010F/1401
+    deviceLabel: Fibaro Outlet
+    manufacturerId: 0x010F
+    productType: 0x1401
+    deviceProfileName: smartplug-1
   - id: 0157/0100/0100
     deviceLabel: EcoNet Vent
     manufacturerId: 0x0157
@@ -609,6 +609,13 @@ zwaveManufacturer:
     deviceLabel: Leviton Dimmer Switch
     manufacturerId: 0x001D
     productId: 0x0001
+    productType: 0x3301
+    deviceProfileName: switch-level
+  - id: 001D/3201/0001
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productId: 0x0001
+    productType: 0x3201
     deviceProfileName: switch-level
   - id: 001D/1B03/0334
     deviceLabel: Leviton Dimmer Switch

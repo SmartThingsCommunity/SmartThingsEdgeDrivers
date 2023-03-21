@@ -18,6 +18,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
@@ -300,9 +301,9 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Set({
-                target_value = SwitchBinary.value.ON_ENABLE,
-                duration = 0
+              SwitchMultilevel:Set({
+                value = 0xFF,
+                duration = "default"
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -316,7 +317,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({},
+              SwitchMultilevel:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -338,9 +339,9 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Set({
-                target_value = SwitchBinary.value.ON_ENABLE,
-                duration = 0
+              SwitchMultilevel:Set({
+                value = 0xFF,
+                duration = "default"
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -354,7 +355,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({},
+              SwitchMultilevel:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -376,9 +377,9 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Set({
-                target_value = SwitchBinary.value.OFF_DISABLE,
-                duration = 0
+              SwitchMultilevel:Set({
+                value = 0x00,
+                duration = "default"
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -392,7 +393,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({},
+              SwitchMultilevel:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -414,9 +415,9 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Set({
-                target_value = SwitchBinary.value.OFF_DISABLE,
-                duration = 0
+              SwitchMultilevel:Set({
+                value = 0x00,
+                duration = "default"
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -430,7 +431,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchBinary:Get({},
+              SwitchMultilevel:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,

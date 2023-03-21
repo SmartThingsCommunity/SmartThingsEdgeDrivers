@@ -251,7 +251,7 @@ local function get_credential_status_response_handler(driver, device, ib, respon
       -- Code has been deleted
       lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
       if cred_index == cota_cred_index then --make sure cota credential exists if it was deleted
-        set_cota_credential(device)
+        set_cota_credential(device, INITIAL_COTA_INDEX)
       end
     else
       -- Code is unset
@@ -349,7 +349,7 @@ local function lock_user_change_event_handler(driver, device, ib, response)
         lock_utils.code_deleted(device, cs)
       end
       lock_utils.lock_codes_event(device, {})
-      if device:get_field(lock_utils.COTA_CRED) ~= nil then set_cota_credential(device) end
+      if device:get_field(lock_utils.COTA_CRED) ~= nil then set_cota_credential(device, INITIAL_COTA_INDEX) end
     else
       device.log.info("Not handling LockUserChange event")
     end
