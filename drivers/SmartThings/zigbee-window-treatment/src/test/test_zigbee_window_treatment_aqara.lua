@@ -27,6 +27,7 @@ test.add_package_capability("deviceInitialization.yaml")
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
+local Groups = clusters.Groups
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -135,6 +136,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Basic.attributes.ApplicationVersion:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Groups.server.commands.RemoveAllGroups(mock_device)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
