@@ -26,6 +26,10 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local utils = require "st.utils"
+local constants = require "st.zwave.constants"
+
+local ON = 0xFF
+local OFF = 0x00
 
 local ENDPOINTS = {
   parent = 1,
@@ -126,6 +130,19 @@ local function switch_report(driver, device, cmd)
   end
 end
 
+local function set_switch(value)
+  return function(driver, device, cmd)
+    local delay = constants.MIN_DIMMING_GET_STATUS_DELAY
+    local query_device = function()
+      local component = cmd and cmd.component and cmd.component or "main"
+      device:send_to_component(SwitchBinary:Get({}), component)
+    end
+
+    device:send_to_component(Basic:Set({ value = value }), cmd.component)
+    device.thread:call_with_delay(delay, query_device)
+  end
+end
+
 local fibaro_double_switch = {
   NAME = "fibaro double switch",
   zwave_handlers = {
@@ -140,6 +157,10 @@ local fibaro_double_switch = {
     }
   },
   capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = set_switch(ON),
+      [capabilities.switch.commands.off.NAME] = set_switch(OFF)
+    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
