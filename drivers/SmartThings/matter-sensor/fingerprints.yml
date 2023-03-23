@@ -44,3 +44,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
     deviceProfileName: matter-motion-battery
+  - id: "matter/motion-sensor/contact"
+    deviceLabel: Matter Motion/Contact Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+      - id: 0x0015 # Contact Sensor
+    deviceProfileName: motion-contact-battery
