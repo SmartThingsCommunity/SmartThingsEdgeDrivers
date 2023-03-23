@@ -41,7 +41,6 @@ local CONTACTSENSOR_ENDPOINT_NUMBER = 2
 
 local CONTACTSENSOR_BATTERY_LEVEL_NORMAL = 100
 local CONTACTSENSOR_BATTERY_LEVEL_LOW = 1
-local CONTACTSENSOR_BATTERY_LEVEL_DEAD = 0
 
 local GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT = 1
 local GDO_CONFIG_PARAM_NO_ACTIVATION_TIME = 2
@@ -68,7 +67,7 @@ end
 
 local function component_to_endpoint(device, component_id)
   if (CONTACTSENSOR_ENDPOINT_NAME == component_id)  then
-    --contactSensor is 2 
+    --contactSensor is 2
     return CONTACTSENSOR_ENDPOINT_NUMBER
   end
   -- main endpoint is garage door
@@ -82,36 +81,6 @@ local function endpoint_to_component(device, ep)
   return GDO_ENDPOINT_NAME
 end
 
---- Handle BarrierOperator Report
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd st.zwave.CommandClass.BarrierOperator.Report
-local function barrieroperator_report_handler(driver, device, cmd)
-  local barrier_event = nil
-  log.info_with
-  (
-    {hub_logs=true}, 
-    "barrieroperator_report_handler> device:%s, cmd:%s", tostring(device), tostring(cmd)
-  )
-  if cmd.args.state == BarrierOperator.state.CLOSED then
-    barrier_event = capabilities.doorControl.door.closed()
-  elseif cmd.args.state == BarrierOperator.state.CLOSING then
-    barrier_event = capabilities.doorControl.door.closing()
-  elseif cmd.args.state == BarrierOperator.state.STOPPED then
-    barrier_event = capabilities.doorControl.door.unknown()
-  elseif cmd.args.state == BarrierOperator.state.OPENING then
-    barrier_event = capabilities.doorControl.door.opening()
-  elseif cmd.args.state == BarrierOperator.state.OPEN then
-    barrier_event = capabilities.doorControl.door.open()
-  end
-
-  if (barrier_event ~= nil) then
-    device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER, barrier_event)
-  end
-
-end
-
 local function send_open_to_gdo(driver, device, command)
   if (
     device:get_latest_state(
@@ -119,16 +88,10 @@ local function send_open_to_gdo(driver, device, command)
             capabilities.tamperAlert.ID,
             capabilities.tamperAlert.tamper.NAME) == "clear"
     ) then
-    log.info_with({hub_logs=true}, "<<send_open_to_gdo>> - SUCCESS")
-
     device:send(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN }))
     device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
-      device:send(BarrierOperator:Get({}))
-    end)
-
+      device:send(BarrierOperator:Get({}))end)
   else
-    log.info_with({hub_logs=true}, "<<send_open_to_gdo>> FAILED - SENSOR IN TAMPER")
-
     device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
                                   capabilities.doorControl.door.unknown()
                                   )
@@ -141,32 +104,25 @@ local function send_close_to_gdo(driver, device, command)
                             capabilities.tamperAlert.ID,
                             capabilities.tamperAlert.tamper.NAME) == "clear"
   ) then
-    log.info_with({hub_logs=true}, "<<send_close_to_gdo>> - SUCCESS")
-
     device:send(BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED }))
     device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
       device:send(BarrierOperator:Get({}))
     end)
 else
-  log.info_with({hub_logs=true}, "<<send_close_to_gdo>> FAILED - SENSOR IN TAMPER")
-
   device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
                                 capabilities.doorControl.door.unknown()
                                 )
 end
 end
 
-
 --- Handle Device Instantiated Event
 ---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
-local function device_instatiated(driver, device)
+local function device_instantiated(driver, device)
   log.info_with({hub_logs=true}, "device init")
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
-  -- device:subscribe()
-
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
     device:send(BarrierOperator:Get({}))
   end)
@@ -176,24 +132,6 @@ local function device_instatiated(driver, device)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY*3, function(d)
     device:send(Configuration:BulkGetV2({parameter_offset = 1, number_of_parameters = 6}) )
   end)
-
-  -- Reset contact sensor battery level... This should be pollable on the GDO side.
-  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-                                capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_NORMAL)
-                                )
-  -- Reset contact sensor fields
-  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-                                capabilities.tamperAlert.tamper.clear()
-                                )
-  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-                                capabilities.contactSensor.contact.closed()
-                                )
-
-  -- Init barrier door state
-  device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
-                                capabilities.doorControl.door.closed()
-                                )
-
 end
 
 --- Handle Device Added Event
@@ -201,8 +139,22 @@ end
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 local function device_added(driver, device)
-  log.info_with({hub_logs=true}, "Ecolink GDO device_added")
   device:send(BarrierOperator:Get({}))
+  -- Reset contact sensor battery level... This should be pollable on the GDO side.
+  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
+  capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_NORMAL)
+  )
+  -- Reset contact sensor fields
+  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
+    capabilities.tamperAlert.tamper.clear()
+    )
+  device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
+    capabilities.contactSensor.contact.closed()
+    )
+  -- Init barrier door state
+  device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
+    capabilities.doorControl.door.closed()
+    )
 end
 
 --- Configuration Report Handler
@@ -210,19 +162,12 @@ end
 --- @param device st.zwave.Device
 local function configure_device_with_updated_config(device)
   local updated_params = {}
-  updated_params[GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT]
-                                            = {parameter = device.preferences.closeWaitPeriodSec}
-  updated_params[GDO_CONFIG_PARAM_NO_ACTIVATION_TIME] 
-                                            = {parameter = device.preferences.activationTimeMS}
-  updated_params[GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT]
-                                            = {parameter = device.preferences.doorOpenTimeoutSec}
-  updated_params[GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT]
-                                            = {parameter = device.preferences.doorCloseTimeoutSec}
-  updated_params[GDO_CONFIG_PARAM_NO_SHAKE_SENSE]
-                                            = {parameter = device.preferences.shakeSensitivity}
-  updated_params[GDO_CONFIG_PARAM_NO_APP_RETRY]
-                                            = {parameter = device.preferences.applicationLevelRetries}
-
+  updated_params[GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT] = {parameter = device.preferences.closeWaitPeriodSec}
+  updated_params[GDO_CONFIG_PARAM_NO_ACTIVATION_TIME] = {parameter = device.preferences.activationTimeMS}
+  updated_params[GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT] = {parameter = device.preferences.doorOpenTimeoutSec}
+  updated_params[GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT] = {parameter = device.preferences.doorCloseTimeoutSec}
+  updated_params[GDO_CONFIG_PARAM_NO_SHAKE_SENSE] = {parameter = device.preferences.shakeSensitivity}
+  updated_params[GDO_CONFIG_PARAM_NO_APP_RETRY] = {parameter = device.preferences.applicationLevelRetries}
   device:send(Configuration:BulkSetV2({
                                         parameter_offset = 1, 
                                         size = 2, 
@@ -237,15 +182,11 @@ end
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 local function do_configure(driver, device)
-  log.info_with({hub_logs=true}, "do_configure")
   configure_device_with_updated_config(device)
 end
 
 local function device_preferences_updated(driver, device, event, args)
   -- Did my preference value change
-  log.info_with({hub_logs=true}, 
-                string.format("device_preferences_updated> device:%s event:%s args:%s", 
-                tostring(device), tostring(event), tostring(args)))
   configure_device_with_updated_config(device)
 end
 
@@ -259,113 +200,58 @@ local function notification_report_handler(driver, device, cmd)
   local notificationEvent = cmd.args.event
   local barrier_event = nil
   local contact_event = nil
-
-  log.info_with({hub_logs=true}, 
-                string.format("notification_report_handler> Type:%d Event:%d", 
-                notificationType, notificationEvent) )
-
   if ( 0 == notificationEvent ) then
     -- Clear Notifications
     -- First byte of the parameters is the notification being cleared
     -- so reuse notificationEvent variable as the event being cleared
     if (0 ~= string.len(cmd.args.event_parameter)) then
       notificationEvent = string.byte(cmd.args.event_parameter)
-      log.info_with({hub_logs=true}, string.format("NOTIFICATION CLEARED EVENT"))
-
     end
-
     if (notificationType == Notification.notification_type.SYSTEM) then
-
       if (notificationEvent == Notification.event.system.TAMPERING_PRODUCT_COVER_REMOVED) then
-        log.info_with({hub_logs=true}, "NOTIFICATION[DEBUG] TAMPER CLEAR!")
         contact_event = capabilities.tamperAlert.tamper.clear()
       else
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION[DEBUG] UNHANDLED SYSTEM CLEAR EVENT:%d", 
-                      notificationEvent))
       end
-
     elseif (notificationType == Notification.notification_type.ACCESS_CONTROL) then
-
-      if (notificationEvent == 
+      if (notificationEvent ==
           Notification.event.access_control.BARRIER_SENSOR_LOW_BATTERY_WARNING) then
         barrier_event = capabilities.doorControl.door.closed()
-        contact_event = capabilities.healthCheck.healthStatus.online()
         contact_event = capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_NORMAL)
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - SENSOR LOW BATT WARNING"))
-
-      elseif (notificationEvent == 
+      elseif (notificationEvent ==
               Notification.event.access_control.BARRIER_SENSOR_NOT_DETECTED_SUPERVISORY_ERROR) then
         barrier_event = capabilities.doorControl.door.closed()
-        contact_event = capabilities.healthCheck.healthStatus.online()
-        log.info_with({hub_logs=true},
-              string.format("NOTIFICATION ACCESS CONTROL - SENSOR NOT DETECTED SUPERVISORY ERROR"))
-
-      else
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION[DEBUG] UNHANDLED ACCESS CONTROL CLEAR EVENT:%d", 
-                      notificationEvent))
       end
-
     end
-
   else
     -- Handle Notification events
     if (notificationType == Notification.notification_type.SYSTEM) then
       if (notificationEvent == Notification.event.system.TAMPERING_PRODUCT_COVER_REMOVED) then
         contact_event = capabilities.tamperAlert.tamper.detected()
-        log.info_with({hub_logs=true}, string.format("NOTIFICATION SYSTEM - TAMPER DETECTED"))
       end
-
     elseif (notificationType == Notification.notification_type.ACCESS_CONTROL) then
-
       if (notificationEvent == Notification.event.access_control.WINDOW_DOOR_IS_OPEN) then
         barrier_event = capabilities.doorControl.door.open()
         contact_event = capabilities.contactSensor.contact.open()
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - DOOR IS OPEN"))
-
       elseif (notificationEvent == Notification.event.access_control.WINDOW_DOOR_IS_CLOSED) then
         barrier_event = capabilities.doorControl.door.closed()
         contact_event = capabilities.contactSensor.contact.closed()
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - DOOR IS CLOSED"))
-
       elseif (notificationEvent ==
       Notification.event.access_control.BARRIER_MOTOR_HAS_EXCEEDED_MANUFACTURERS_OPERATIONAL_TIME_LIMIT) then
         barrier_event = capabilities.doorControl.door.unknown()
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - MOTOR EXCEEDED TIME LIMIT"))
-
       elseif (notificationEvent ==
       Notification.event.access_control.BARRIER_UNABLE_TO_PERFORM_REQUESTED_OPERATION_DUE_TO_UL_REQUIREMENTS) then
         barrier_event = capabilities.doorControl.door.unknown()
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - UNABLE TO PERFORM DUE TO UL"))
-
       elseif (notificationEvent ==
       Notification.event.access_control.BARRIER_FAILED_TO_PERFORM_REQUESTED_OPERATION_DEVICE_MALFUNCTION) then
         barrier_event = capabilities.doorControl.door.unknown()
-        log.info_with({hub_logs=true},
-              string.format("NOTIFICATION ACCESS CONTROL - UNABLE TO PERFORM DUE TO DEVICE MALFUNCTION"))
-
       elseif (notificationEvent ==
               Notification.event.access_control.BARRIER_SENSOR_NOT_DETECTED_SUPERVISORY_ERROR) then
         barrier_event = capabilities.doorControl.door.closed()
-        contact_event = capabilities.healthCheck.healthStatus.online()
-        log.info_with({hub_logs=true},
-                    string.format("NOTIFICATION ACCESS CONTROL - SENSOR NOT DETECTED SUPERVISORY ERROR"))
-
       elseif (notificationEvent ==
               Notification.event.access_control.BARRIER_SENSOR_LOW_BATTERY_WARNING) then
         barrier_event = capabilities.doorControl.door.closed()
         contact_event = capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_LOW)
-        log.info_with({hub_logs=true},
-                      string.format("NOTIFICATION ACCESS CONTROL - SENSOR LOW BATTERY WARNING"))
-
       end
-
     end
   end
 
@@ -374,7 +260,7 @@ local function notification_report_handler(driver, device, cmd)
     device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER, barrier_event)
   end
 
-  if (contact_event ~= nil) then 
+  if (contact_event ~= nil) then
     device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER, contact_event)
   end
 
@@ -386,18 +272,13 @@ end
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.SensorMultilevel.Report
 local function sensor_multilevel_report_handler(driver, device, cmd)
-  log.info_with({hub_logs=true}, 
-                string.format("sensor_multilevel_report_handler> Type:%d Value:%s", 
-                cmd.args.sensor_type, cmd.args.sensor_value) )
   -- Handle Temperature Report
   if (SensorMultilevel.sensor_type.TEMPERATURE == cmd.args.sensor_type) then
     local scale = 'C'
     if (SensorMultilevel.scale.temperature.FAHRENHEIT == cmd.args.scale) then
       scale = 'F'
     end
-    log.info_with({hub_logs=true}, 
-                  string.format("Temperature> Value:%s Scale:%s", 
-                  tostring(cmd.args.sensor_value), scale) )
+
     local event = capabilities.temperatureMeasurement.temperature(
                                           {value = cmd.args.sensor_value, unit = scale})
     device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER, event)
@@ -411,12 +292,12 @@ local function do_refresh(driver, device)
 
   -- State of tilt sensor
   device:send_to_component(Notification:Get({
-                                        v1_alarm_type = 0, 
-                                        notification_type = Notification.notification_type.SYSTEM, 
+                                        v1_alarm_type = 0,
+                                        notification_type = Notification.notification_type.SYSTEM,
                                         event = 0}))
   device:send_to_component(Notification:Get({
-                                        v1_alarm_type = 0, 
-                                        notification_type = Notification.notification_type.ACCESS_CONTROL, 
+                                        v1_alarm_type = 0,
+                                        notification_type = Notification.notification_type.ACCESS_CONTROL,
                                         event = 0}))
 
   -- State of Temperature Sensor
@@ -426,9 +307,6 @@ end
 local ecolink_garage_door_operator = {
   NAME = "Ecolink Garage Door Controller",
   zwave_handlers = {
-    [cc.BARRIER_OPERATOR] = {
-      [BarrierOperator.REPORT] = barrieroperator_report_handler
-    },
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
     },
@@ -446,7 +324,7 @@ local ecolink_garage_door_operator = {
     }
   },
   lifecycle_handlers = {
-    init = device_instatiated,
+    init = device_instantiated,
     added = device_added,
     doConfigure = do_configure,
     infoChanged = device_preferences_updated
@@ -454,5 +332,4 @@ local ecolink_garage_door_operator = {
   can_handle = can_handle_ecolink_garage_door
 }
 
-log.info_with({hub_logs=true}, "Starting Ecolink Garage Door Opener driver...")
 return ecolink_garage_door_operator

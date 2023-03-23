@@ -17,9 +17,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 8 })
 local t_utils = require "integration_test.utils"
 
 local garage_door_endpoints = {
