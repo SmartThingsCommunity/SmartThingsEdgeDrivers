@@ -17,9 +17,43 @@ local capabilities = require "st.capabilities"
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
+--- @type st.zwave.CommandClass.BarrierOperator
+local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
+--- @type st.zwave.constants
+local constants = require "st.zwave.constants"
 
+local GDO_ENDPOINT_NUMBER = 1
+local CONTACTSENSOR_ENDPOINT_NAME = "sensor"
+
+--- Handle Door control
+local set_doorControl_factory = function(doorControl_attribute)
+  return function(driver, device, cmd)
+    if (
+      device:get_latest_state(
+              CONTACTSENSOR_ENDPOINT_NAME,
+              capabilities.tamperAlert.ID,
+              capabilities.tamperAlert.tamper.NAME) == "clear"
+      ) then
+      device:send(BarrierOperator:Set({ target_value = doorControl_attribute }))
+      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
+        device:send(BarrierOperator:Get({}))end)
+    else
+      device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
+                                    capabilities.doorControl.door.unknown()
+                                    )
+    end
+  end
+end
 
 local driver_template = {
+  capability_handlers = {
+    [capabilities.doorControl.ID] = {
+      [capabilities.doorControl.commands.open.NAME] = set_doorControl_factory(BarrierOperator.state.OPEN)
+  },
+    [capabilities.doorControl.ID] = {
+      [capabilities.doorControl.commands.close.NAME] = set_doorControl_factory(BarrierOperator.state.CLOSED)
+  }
+  },
   supported_capabilities = {
     capabilities.doorControl,
     capabilities.contactSensor,

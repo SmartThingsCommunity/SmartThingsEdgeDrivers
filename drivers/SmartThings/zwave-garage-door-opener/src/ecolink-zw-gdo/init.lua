@@ -81,40 +81,6 @@ local function endpoint_to_component(device, ep)
   return GDO_ENDPOINT_NAME
 end
 
-local function send_open_to_gdo(driver, device, command)
-  if (
-    device:get_latest_state(
-            CONTACTSENSOR_ENDPOINT_NAME,
-            capabilities.tamperAlert.ID,
-            capabilities.tamperAlert.tamper.NAME) == "clear"
-    ) then
-    device:send(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN }))
-    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
-      device:send(BarrierOperator:Get({}))end)
-  else
-    device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
-                                  capabilities.doorControl.door.unknown()
-                                  )
-  end
-end
-
-local function send_close_to_gdo(driver, device, command)
-  if (
-    device:get_latest_state(CONTACTSENSOR_ENDPOINT_NAME,
-                            capabilities.tamperAlert.ID,
-                            capabilities.tamperAlert.tamper.NAME) == "clear"
-  ) then
-    device:send(BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED }))
-    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
-      device:send(BarrierOperator:Get({}))
-    end)
-else
-  device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
-                                capabilities.doorControl.door.unknown()
-                                )
-end
-end
-
 --- Handle Device Instantiated Event
 ---
 --- @param driver st.zwave.Driver
@@ -281,7 +247,7 @@ local function sensor_multilevel_report_handler(driver, device, cmd)
 
     local event = capabilities.temperatureMeasurement.temperature(
                                           {value = cmd.args.sensor_value, unit = scale})
-    device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER, event)
+    device:emit_event(event)
   end
 
 end
@@ -315,10 +281,6 @@ local ecolink_garage_door_operator = {
     }
   },
   capability_handlers = {
-    [capabilities.doorControl.ID] = {
-      [capabilities.doorControl.commands.open.NAME] = send_open_to_gdo,
-      [capabilities.doorControl.commands.close.NAME] = send_close_to_gdo
-    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
