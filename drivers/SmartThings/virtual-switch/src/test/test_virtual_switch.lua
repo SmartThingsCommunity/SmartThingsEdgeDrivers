@@ -11,7 +11,6 @@ local function test_init()
   test.mock_device.add_test_device(mock_simple_device)
 end
 
-
 test.set_test_init_function(test_init)
 
 test.register_message_test(
