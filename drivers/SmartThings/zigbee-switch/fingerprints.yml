@@ -27,52 +27,52 @@ zigbeeManufacturer:
     model: "Mains_Power_Outlet_v1.0"
     deviceProfileName: switch-power-smartplug-no-firmware-update
   # EZEX
-  # - id: "eZEX/E220-KR2N0Z0-HA"
-  #   deviceLabel: eZEX Switch 1
-  #   model: "E220-KR2N0Z0-HA"
-  #   deviceProfileName: basic-switch
-  # - id: "eZEX/E220-KR3N0Z0-HA"
-  #   deviceLabel: eZEX Switch 1
-  #   model: "E220-KR3N0Z0-HA"
-  #   deviceProfileName: basic-switch
-  # - id: "eZEX/E220-KR4N0Z0-HA"
-  #   deviceLabel: eZEX Switch 1
-  #   model: "E220-KR4N0Z0-HA"
-  #   deviceProfileName: basic-switch
-  # - id: "eZEX/E220-KR5N0Z0-HA"
-  #   deviceLabel: eZEX Switch 1
-  #   model: "E220-KR5N0Z0-HA"
-  #   deviceProfileName: basic-switch
-  # - id: "eZEX/E220-KR6N0Z0-HA"
-  #   deviceLabel: eZEX Switch 1
-  #   model: "E220-KR6N0Z0-HA"
-  #   deviceProfileName: basic-switch
+  - id: "eZEX/E220-KR2N0Z0-HA"
+    deviceLabel: eZEX Switch 1
+    model: "E220-KR2N0Z0-HA"
+    deviceProfileName: basic-switch
+  - id: "eZEX/E220-KR3N0Z0-HA"
+    deviceLabel: eZEX Switch 1
+    model: "E220-KR3N0Z0-HA"
+    deviceProfileName: basic-switch
+  - id: "eZEX/E220-KR4N0Z0-HA"
+    deviceLabel: eZEX Switch 1
+    model: "E220-KR4N0Z0-HA"
+    deviceProfileName: basic-switch
+  - id: "eZEX/E220-KR5N0Z0-HA"
+    deviceLabel: eZEX Switch 1
+    model: "E220-KR5N0Z0-HA"
+    deviceProfileName: basic-switch
+  - id: "eZEX/E220-KR6N0Z0-HA"
+    deviceLabel: eZEX Switch 1
+    model: "E220-KR6N0Z0-HA"
+    deviceProfileName: basic-switch
   - id: "eZEX/E240-KR116Z-HA"
     deviceLabel: eZEX Switch
     model: "E240-KR116Z-HA"
     deviceProfileName: switch-power-energy
-#   #ORVIBO
-#   - id: "Orvibo/074b3"
-#     deviceLabel: Orvibo Switch
-#     manufacturer: ORVIBO
-#     model: "074b3ffba5a045b7afd94c47079dd553"
-#     deviceProfileName: switch-2
-#   - id: "Orvibo/9f76c"
-#     deviceLabel: Orvibo Switch
-#     manufacturer: ORVIBO
-#     model: "9f76c9f31b4c4a499e3aca0977ac4494"
-#     deviceProfileName: switch-3
-#   #REXENSE
-#   - id: "REXENSE/HY0003"
-#     deviceLabel: "GDKES Switch"
-#     manufacturer: REXENSE
-#     model: HY0003
-#     deviceProfileName: switch-3
-#   - id: "REXENSE/HY0002"
-#     deviceLabel: "GDKES Switch"
-#     manufacturer: REXENSE
-#     model: HY0002
-#     deviceProfileName: switch-2
+  #ORVIBO
+  - id: "Orvibo/074b3"
+    deviceLabel: Orvibo Switch 1
+    manufacturer: ORVIBO
+    model: "074b3ffba5a045b7afd94c47079dd553"
+    deviceProfileName: basic-switch
+  - id: "Orvibo/9f76c"
+    deviceLabel: Orvibo Switch 1
+    manufacturer: ORVIBO
+    model: "9f76c9f31b4c4a499e3aca0977ac4494"
+    deviceProfileName: basic-switch
+  #REXENSE
+  - id: "REXENSE/HY0003"
+    deviceLabel: "GDKES Switch 1"
+    manufacturer: REXENSE
+    model: HY0003
+    deviceProfileName: basic-switch
+  - id: "REXENSE/HY0002"
+    deviceLabel: "GDKES Switch 1"
+    manufacturer: REXENSE
+    model: HY0002
+    deviceProfileName: basic-switch
   - id: "REXENSE/HY0105"
     deviceLabel: "HONYAR Outlet"
     manufacturer: REXENSE
@@ -83,74 +83,74 @@ zigbeeManufacturer:
     manufacturer: REXENSE
     model: HY0104
     deviceProfileName: switch-power-energy
-#   #REX
-#   - id: "REX/HY0097"
-#     deviceLabel: "HONYAR Switch"
-#     manufacturer: REX
-#     model: HY0097
-#     deviceProfileName: switch-3
-#   - id: "REX/HY0096"
-#     deviceLabel: "HONYAR Switch"
-#     manufacturer: REX
-#     model: HY0096
-#     deviceProfileName: switch-2
-#   #HEIMAN
-#   - id: "HEIMAN/HS2SW3L-EFR-3.0"
-#     deviceLabel: "HEIMAN Switch"
-#     manufacturer: HEIMAN
-#     model: HS2SW3L-EFR-3.0
-#     deviceProfileName: switch-3
-#   - id: "HEIMAN/HS2SW2L-EFR-3.0"
-#     deviceLabel: "HEIMAN Switch"
-#     manufacturer: HEIMAN
-#     model: HS2SW2L-EFR-3.0
-#     deviceProfileName: switch-2
+  #REX
+  - id: "REX/HY0097"
+    deviceLabel: "HONYAR Switch 1"
+    manufacturer: REX
+    model: HY0097
+    deviceProfileName: basic-switch
+  - id: "REX/HY0096"
+    deviceLabel: "HONYAR Switch 1"
+    manufacturer: REX
+    model: HY0096
+    deviceProfileName: basic-switch
+  #HEIMAN
+  - id: "HEIMAN/HS2SW3L-EFR-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS2SW3L-EFR-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS2SW2L-EFR-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS2SW2L-EFR-3.0
+    deviceProfileName: basic-switch
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
     model: E_Socket
     deviceProfileName: switch-power-energy
-#   #Dawon
-#   - id: "DAWON_DNS/PM-S240-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S240-ZB
-#     deviceProfileName: multi-switch-no-master-1
-#   - id: "DAWON_DNS/PM-S240R-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S240R-ZB
-#     deviceProfileName: multi-switch-no-master-1
-#   - id: "DAWON_DNS/PM-S340-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S340-ZB
-#     deviceProfileName: multi-switch-no-master-2
-#   - id: "DAWON_DNS/PM-S340R-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S340R-ZB
-#     deviceProfileName: multi-switch-no-master-2
-#   - id: "DAWON_DNS/PM-S250-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S250-ZB
-#     deviceProfileName: multi-switch-no-master-1
-#   - id: "DAWON_DNS/PM-S350-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: PM-S350-ZB
-#     deviceProfileName: multi-switch-no-master-2
-#   - id: "DAWON_DNS/ST-S250-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: ST-S250-ZB
-#     deviceProfileName: multi-switch-no-master-1
-#   - id: "DAWON_DNS/ST-S350-ZB"
-#     deviceLabel: "Dawon Switch"
-#     manufacturer: DAWON_DNS
-#     model: ST-S350-ZB
-#     deviceProfileName: multi-switch-no-master-2
+  #Dawon
+  - id: "DAWON_DNS/PM-S240-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S240-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S240R-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S240R-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S340-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S340-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S340R-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S340R-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S250-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S250-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/PM-S350-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: PM-S350-ZB
+    deviceProfileName: basic-switch
+  # - id: "DAWON_DNS/ST-S250-ZB"
+  #   deviceLabel: "Dawon Switch 1"
+  #   manufacturer: DAWON_DNS
+  #   model: ST-S250-ZB
+  #   deviceProfileName: basic-switch
+  # - id: "DAWON_DNS/ST-S350-ZB"
+  #   deviceLabel: "Dawon Switch 1"
+  #   manufacturer: DAWON_DNS
+  #   model: ST-S350-ZB
+  #   deviceProfileName: basic-switch
   - id: "DAWON_DNS/PM-B430-ZB"
     deviceLabel: "Dawon Outlet"
     manufacturer: DAWON_DNS
@@ -186,34 +186,34 @@ zigbeeManufacturer:
     manufacturer: DAWON_DNS
     model: PM-C250-ZB
     deviceProfileName: switch-power-energy-consumption-report
-#   - id: "DAWON_DNS/PM-B440-ZB"
-#     deviceLabel: "Dawon Outlet"
-#     manufacturer: DAWON_DNS
-#     model: PM-B440-ZB
-#     deviceProfileName: switch-power-energy-consumption-report
-#   #eWeLink
-#   - id: "eWeLink/ZB-SW02"
-#     deviceLabel: "eWeLink Switch"
-#     manufacturer: eWeLink
-#     model: ZB-SW02
-#     deviceProfileName: switch-2
-#   - id: "eWeLink/ZB-SW03"
-#     deviceLabel: "eWeLink Switch"
-#     manufacturer: eWeLink
-#     model: ZB-SW03
-#     deviceProfileName: switch-3
-#   - id: "eWeLink/ZB-SW04"
-#     deviceLabel: "eWeLink Switch"
-#     manufacturer: eWeLink
-#     model: ZB-SW04
-#     deviceProfileName: switch-4
-#   #Aurora
-#   - id: Aurora/DoubleSocket50AU
-#     deviceLabel: AURORA Outlet 1
-#     manufacturer: Aurora
-#     model: DoubleSocket50AU
-#     deviceProfileName: switch-power-2
-#   #Sinope
+  # - id: "DAWON_DNS/PM-B440-ZB"
+  #   deviceLabel: "Dawon Outlet"
+  #   manufacturer: DAWON_DNS
+  #   model: PM-B440-ZB
+  #   deviceProfileName: switch-power-energy-consumption-report
+  #eWeLink
+  - id: "eWeLink/ZB-SW02"
+    deviceLabel: "eWeLink Switch 1"
+    manufacturer: eWeLink
+    model: ZB-SW02
+    deviceProfileName: basic-switch
+  - id: "eWeLink/ZB-SW03"
+    deviceLabel: "eWeLink Switch 1"
+    manufacturer: eWeLink
+    model: ZB-SW03
+    deviceProfileName: basic-switch
+  - id: "eWeLink/ZB-SW04"
+    deviceLabel: "eWeLink Switch 1"
+    manufacturer: eWeLink
+    model: ZB-SW04
+    deviceProfileName: basic-switch
+  #Aurora
+  # - id: Aurora/DoubleSocket50AU
+  #   deviceLabel: AURORA Outlet 1
+  #   manufacturer: Aurora
+  #   model: DoubleSocket50AU
+  #   deviceProfileName: switch-power-smartplug
+  #Sinope
   - id: "Sinope Switch/RM3250ZB"
     deviceLabel: "RM3250ZB Sinope Load Controller"
     manufacturer: Sinope Technologies
@@ -240,28 +240,28 @@ zigbeeManufacturer:
     manufacturer: Jasco Products
     model: 43082
     deviceProfileName: switch-dimmer-power-energy
-#   - id: "Jasco Products/43095"
-#     deviceLabel: "Enbrighten Outlet"
-#     manufacturer: Jasco Products
-#     model: "43095"
-#     deviceProfileName: switch-power-energy
-#   - id: "Jasco Products/43132"
-#     deviceLabel: "Jasco Outlet"
-#     manufacturer: Jasco Products
-#     model: "43132"
-#     deviceProfileName: switch-power-energy
-#   - id: "Jasco Products/43078"
-#     deviceLabel: "Enbrighten Switch"
-#     manufacturer: Jasco Products
-#     model: "43078"
-#     deviceProfileName: switch-power-energy
-#   #sengled
+  # - id: "Jasco Products/43095"
+  #   deviceLabel: "Enbrighten Outlet"
+  #   manufacturer: Jasco Products
+  #   model: "43095"
+  #   deviceProfileName: switch-power-energy
+  # - id: "Jasco Products/43132"
+  #   deviceLabel: "Jasco Outlet"
+  #   manufacturer: Jasco Products
+  #   model: "43132"
+  #   deviceProfileName: switch-power-energy
+  # - id: "Jasco Products/43078"
+  #   deviceLabel: "Enbrighten Switch"
+  #   manufacturer: Jasco Products
+  #   model: "43078"
+  #   deviceProfileName: switch-power-energy
+  #sengled
   - id: "sengled/E1C-NB7"
     deviceLabel: "Sengled Outlet"
     manufacturer: sengled
     model: E1C-NB7
     deviceProfileName: switch-power-energy
-#   #LDS
+  #LDS
   - id: "LDS/ZB-ONOFFPlug-D0000"
     deviceLabel: "LDS Outlet"
     manufacturer: LDS
@@ -272,7 +272,7 @@ zigbeeManufacturer:
     manufacturer: LDS
     model: ZB-ONOFFPlug-D0005
     deviceProfileName: switch-power-energy
-#   #frient A/S
+  #frient A/S
   - id: "frient A/S/SPLZB-131"
     deviceLabel: "frient Outlet"
     manufacturer: frient A/S
