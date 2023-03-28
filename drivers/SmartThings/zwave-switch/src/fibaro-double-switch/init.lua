@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local switch_defaults = require "st.zwave.defaults.switch"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.CommandClass.CentralScene
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1, strict = true})
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 --- @type st.zwave.CommandClass.SwitchBinary
@@ -49,31 +47,6 @@ local function can_handle_fibaro_double_switch(opts, driver, device, ...)
     end
   end
   return false
-end
-
-local function central_scene_notification_handler(self, device, cmd)
-  local map_key_attribute_to_capability = {
-    [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
-    [CentralScene.key_attributes.KEY_RELEASED] = capabilities.button.button.held,
-    [CentralScene.key_attributes.KEY_HELD_DOWN] = capabilities.button.button.down_hold,
-    [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = capabilities.button.button.double,
-    [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = capabilities.button.button.pushed_3x
-  }
-
-  local event = map_key_attribute_to_capability[cmd.args.key_attributes]
-  local button_number = 0
-  if cmd.args.key_attributes == 0 or cmd.args.key_attributes == 1 or cmd.args.key_attributes == 2 then
-    button_number = cmd.args.scene_number
-  elseif cmd.args.key_attributes == 3 then
-    button_number = cmd.args.scene_number + 2
-  elseif cmd.args.key_attributes == 4 then
-    button_number = cmd.args.scene_number + 4
-  end
-  local component = device.profile.components["button" .. button_number]
-
-  if component ~= nil then
-    device:emit_component_event(component, event({state_change = true}))
-  end
 end
 
 local function do_refresh(driver, device, command)
@@ -146,9 +119,6 @@ end
 local fibaro_double_switch = {
   NAME = "fibaro double switch",
   zwave_handlers = {
-    [cc.CENTRAL_SCENE] = {
-      [CentralScene.NOTIFICATION] = central_scene_notification_handler
-    },
     [cc.BASIC] = {
       [Basic.REPORT] = switch_report
     },
