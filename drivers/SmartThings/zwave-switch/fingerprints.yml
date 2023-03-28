@@ -112,48 +112,48 @@ zwaveManufacturer:
     productType: 0x2500
     productId: 0x2500
     deviceProfileName: smartplug-switch-2
-  # - id: 0086/0103/008C
-  #   deviceLabel: Aeotec Switch 1
-  #   manufacturerId: 0x0086
-  #   productType: 0x0103
-  #   productId: 0x008C
-  #   deviceProfileName: switch-binary
-  # - id: 0086/0003/008C
-  #   deviceLabel: Aeotec Switch 1
-  #   manufacturerId: 0x0086
-  #   productType: 0x0003
-  #   productId: 0x008C
-  #   deviceProfileName: switch-binary
-  # - id: 0258/0003/008B
-  #   deviceLabel: NEO Coolcam Switch 1
-  #   manufacturerId: 0x0258
-  #   productType: 0x0003
-  #   productId: 0x008B
-  #   deviceProfileName: switch-binary
-  # - id: 0258/0003/108B
-  #   deviceLabel: NEO Coolcam Switch 1
-  #   manufacturerId: 0x0258
-  #   productType: 0x0003
-  #   productId: 0x108B
-  #   deviceProfileName: switch-binary
-  # - id: 0312/C000/C004
-  #   deviceLabel: EVA Switch 1
-  #   manufacturerId: 0x0312
-  #   productType: 0xC000
-  #   productId: 0xC004
-  #   deviceProfileName: switch-binary
-  # - id: 0312/FF00/FF05
-  #   deviceLabel: Minoston Switch 1
-  #   manufacturerId: 0x0312
-  #   productType: 0xFF00
-  #   productId: 0xFF05
-  #   deviceProfileName: switch-binary
-  # - id: 0312/C000/C007
-  #   deviceLabel: Evalogik Switch 1
-  #   manufacturerId: 0x0312
-  #   productType: 0xC000
-  #   productId: 0xC007
-  #   deviceProfileName: switch-binary
+  - id: 0086/0103/008C
+    deviceLabel: Aeotec Switch 1
+    manufacturerId: 0x0086
+    productType: 0x0103
+    productId: 0x008C
+    deviceProfileName: switch-binary
+  - id: 0086/0003/008C
+    deviceLabel: Aeotec Switch 1
+    manufacturerId: 0x0086
+    productType: 0x0003
+    productId: 0x008C
+    deviceProfileName: switch-binary
+  - id: 0258/0003/008B
+    deviceLabel: NEO Coolcam Switch 1
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x008B
+    deviceProfileName: switch-binary
+  - id: 0258/0003/108B
+    deviceLabel: NEO Coolcam Switch 1
+    manufacturerId: 0x0258
+    productType: 0x0003
+    productId: 0x108B
+    deviceProfileName: switch-binary
+  - id: 0312/C000/C004
+    deviceLabel: EVA Switch 1
+    manufacturerId: 0x0312
+    productType: 0xC000
+    productId: 0xC004
+    deviceProfileName: switch-binary
+  - id: 0312/FF00/FF05
+    deviceLabel: Minoston Switch 1
+    manufacturerId: 0x0312
+    productType: 0xFF00
+    productId: 0xFF05
+    deviceProfileName: switch-binary
+  - id: 0312/C000/C007
+    deviceLabel: Evalogik Switch 1
+    manufacturerId: 0x0312
+    productType: 0xC000
+    productId: 0xC007
+    deviceProfileName: switch-binary
   - id: 001A/4243/0000
     deviceLabel: Eaton Anyplace Switch
     manufacturerId: 0x001A
@@ -207,12 +207,12 @@ zwaveManufacturer:
     productType: 0x0066
     productId: 0x0001
     deviceProfileName: multipurpose-switch-3
-  # - id: 010F/1B01/1000
-  #   deviceLabel: Fibaro Walli Double Switch
-  #   manufacturerId: 0x010F
-  #   productType: 0x1B01
-  #   productId: 0x1000
-  #   deviceProfileName: fibaro-walli-double-switch
+  - id: 010F/1B01/1000
+    deviceLabel: Fibaro Walli Double Switch
+    manufacturerId: 0x010F
+    productType: 0x1B01
+    productId: 0x1000
+    deviceProfileName: fibaro-walli-double-switch
   # - id: 0086/0003/0084
   #   deviceLabel: Aeotec Switch 1
   #   manufacturerId: 0x0086

@@ -53,11 +53,11 @@ zwaveManufacturer:
     productType: 0x6501
     productId: 0x000B
     deviceProfileName: base-thermostat
-  # - id: "fibaro/thermostat/1"
-  #   deviceLabel: Fibaro Thermostat
-  #   manufacturerId: 0x010F
-  #   productType: 0x1301
-  #   deviceProfileName: base-radiator-thermostat-10to30C
+  - id: "fibaro/thermostat/1"
+    deviceLabel: Fibaro Thermostat
+    manufacturerId: 0x010F
+    productType: 0x1301
+    deviceProfileName: base-radiator-thermostat-10to30C
   - id: "0239/0001/0001"
     deviceLabel: Stelpro Ki Thermostat
     manufacturerId: 0x0239
