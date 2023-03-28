@@ -23,6 +23,7 @@ local t_utils = require "integration_test.utils"
 local garage_door_endpoints = {
   {
     command_classes = {
+      {value = zw.BASIC},
       {value = zw.BARRIER_OPERATOR},
       {value = zw.CONFIGURATION},
       {value = zw.SENSOR_MULTILEVEL},
@@ -51,7 +52,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.CLOSED })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ value = 0x00 })) }
       },
       {
         channel = "capability",
@@ -72,7 +73,7 @@ test.register_message_test(
             {
                 channel = "zwave",
                 direction = "receive",
-                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.OPENING })) }
+                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ value = 0xFF })) }
             },
             {
                 channel = "capability",
@@ -93,7 +94,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.OPEN })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ value = 0xFF })) }
       },
       {
         channel = "capability",
@@ -114,7 +115,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.CLOSING })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ value = 0x00 })) }
       },
       {
         channel = "capability",
@@ -136,7 +137,11 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE, scale = SensorMultilevel.scale.temperature.CELCIUS, sensor_value = 123, precision = 1, size = 2 })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+                                                                                        sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+                                                                                        scale = 0,
+                                                                                        sensor_value = 12.3,
+                                                                                      })) }
       },
       {
         channel = "capability",
@@ -152,7 +157,11 @@ test.register_message_test(
             {
                 channel = "zwave",
                 direction = "receive",
-                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({ sensor_type = SensorMultilevel.sensor_type.TEMPERATURE, scale = SensorMultilevel.scale.temperature.FAHRENHEIT, sensor_value = 456, precision = 1, size = 2 })) }
+                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+                                                                                                sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+                                                                                                scale = 1,
+                                                                                                sensor_value = 45.6
+                                                                                              })) }
             },
             {
                 channel = "capability",
@@ -176,7 +185,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-              BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN })
+              BarrierOperator:Set({ value = 0xFF })
           )
       )
       test.wait_for_events()
@@ -184,7 +193,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-                  BarrierOperator:Get({})
+              BarrierOperator:Get({})
           )
       )
     end
@@ -203,7 +212,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-                  BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED })
+              BarrierOperator:Set({ value = 0x00 })
           )
       )
       test.wait_for_events()
@@ -211,7 +220,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-                  BarrierOperator:Get({})
+              BarrierOperator:Get({})
           )
       )
     end

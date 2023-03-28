@@ -94,7 +94,7 @@ local function device_instantiated(driver, device)
   end)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY*2, function(d)
     device:send(SensorMultilevel:Get({}))
-  end)  
+  end)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY*3, function(d)
     device:send(Configuration:BulkGetV2({parameter_offset = 1, number_of_parameters = 6}) )
   end)
@@ -135,9 +135,9 @@ local function configure_device_with_updated_config(device)
   updated_params[GDO_CONFIG_PARAM_NO_SHAKE_SENSE] = {parameter = device.preferences.shakeSensitivity}
   updated_params[GDO_CONFIG_PARAM_NO_APP_RETRY] = {parameter = device.preferences.applicationLevelRetries}
   device:send(Configuration:BulkSetV2({
-                                        parameter_offset = 1, 
-                                        size = 2, 
-                                        handshake = false, 
+                                        parameter_offset = 1,
+                                        size = 2,
+                                        handshake = false,
                                         default = false,
                                         parameters = updated_params
                                       }))
@@ -176,7 +176,6 @@ local function notification_report_handler(driver, device, cmd)
     if (notificationType == Notification.notification_type.SYSTEM) then
       if (notificationEvent == Notification.event.system.TAMPERING_PRODUCT_COVER_REMOVED) then
         contact_event = capabilities.tamperAlert.tamper.clear()
-      else
       end
     elseif (notificationType == Notification.notification_type.ACCESS_CONTROL) then
       if (notificationEvent ==
@@ -232,6 +231,26 @@ local function notification_report_handler(driver, device, cmd)
 
 end
 
+--- Handle Door control
+local set_doorControl_factory = function(doorControl_attribute)
+  return function(driver, device, cmd)
+    if (
+      device:get_latest_state(
+              CONTACTSENSOR_ENDPOINT_NAME,
+              capabilities.tamperAlert.ID,
+              capabilities.tamperAlert.tamper.NAME) == "clear"
+      ) then
+      device:send(BarrierOperator:Set({ target_value = doorControl_attribute }))
+      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
+        device:send(BarrierOperator:Get({}))end)
+    else
+      device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
+                                    capabilities.doorControl.door.unknown()
+                                    )
+    end
+  end
+end
+
 --- Multilevel Sensor Report Handler
 ---
 --- @param driver st.zwave.Driver
@@ -281,6 +300,10 @@ local ecolink_garage_door_operator = {
     }
   },
   capability_handlers = {
+    [capabilities.doorControl.ID] = {
+      [capabilities.doorControl.commands.open.NAME] = set_doorControl_factory(BarrierOperator.state.OPEN),
+      [capabilities.doorControl.commands.close.NAME] = set_doorControl_factory(BarrierOperator.state.CLOSED)
+    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
