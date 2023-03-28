@@ -114,15 +114,10 @@ local function do_refresh(driver, device, cmd)
     trackdata.album = info.album
     trackdata.albumArtUrl = info.art_url
     trackdata.mediaSource = info.source
-    if info.source == "TUNEIN" then
-      -- Switching to radio source which disables track controls
-      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-    else
-      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-        capabilities.mediaTrackControl.commands.nextTrack.NAME,
-        capabilities.mediaTrackControl.commands.previousTrack.NAME,
-      }))
-    end
+    device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+      capabilities.mediaTrackControl.commands.nextTrack.NAME,
+      capabilities.mediaTrackControl.commands.previousTrack.NAME,
+    }))
 
     if info.track then
       trackdata.title = info.track

@@ -49,7 +49,7 @@ end
 local function process_response(val)
   local info = {}
   val = string.gsub(val, "HTTP/1.1 200 OK\r\n", "", 1)
-  for k, v in string.gmatch(val, "([%g]+): ([%g ]*)\r\n") do
+  for k, v in string.gmatch(val, "([%w_-]+):[ ]*([%g ]*)\r\n") do
     info[string.lower(k)] = v
   end
   return info
@@ -90,6 +90,7 @@ function Discovery.fetch_device_metadata(url)
 
   -- check if we parsed a <root> element
   if not parsed_xml.root then
+    log.error("disco| parsed metadata does not contain a root element")
     return nil
   end
 
@@ -158,36 +159,41 @@ function Discovery.run_discovery_task()
         -- sock:settimeout(timeout)
         if val then
           local headers = process_response(val)
-          local ip, port = headers["location"]:match("http://([^,/]+):([^/]+)")
-          if rip ~= ip then
-            log.warn("recieved discovery response with reported & source IP mismatch, ignoring")
-            log.debug(rip, "!=", ip)
-            goto continue
-          end
-          local meta = Discovery.fetch_device_metadata(headers["location"])
-          if not meta or not meta.mac or not ip then
-            log.warn("disco| failed to get ip or mac for discovered device, not adding")
-            goto continue
-          end
-          local id = meta.mac
+          if headers["location"] ~= nil then
+            local ip, port = headers["location"]:match("http://([^,/]+):([^/]+)")
+            if rip ~= ip then
+              log.warn("recieved discovery response with reported & source IP mismatch, ignoring")
+              log.debug(rip, "!=", ip)
+              goto continue
+            end
+            local meta = Discovery.fetch_device_metadata(headers["location"])
+            if not meta or not meta.mac or not ip then
+              log.warn(string.format("disco| failed to get ip(%s) or mac(%s) for discovered device, not adding", ip, meta and meta.mac))
+              goto continue
+            end
+            local id = meta.mac
 
-          if ip and port and id and not infos_found[id] then
-            infos_found[id] = {
-              id = id,
-              ip = ip,
-              port = port,
-              raw = headers,
-              name = meta.name,
-              model = meta.model,
-              serial_num = meta.serial_num,
-            }
-            number_found = number_found + 1
-            log.trace("disco| found device:", ip, port, id)
-            for _, search_id in ipairs(search_ids) do
-              if search_id.id == "scan" or mac_equal(search_id.id, id) then
-                search_id.reply_tx:send(infos_found[id])
+            if ip and port and id and not infos_found[id] then
+              infos_found[id] = {
+                id = id,
+                ip = ip,
+                port = port,
+                raw = headers,
+                name = meta.name,
+                model = meta.model,
+                serial_num = meta.serial_num,
+              }
+              number_found = number_found + 1
+              log.trace("disco| found device:", ip, port, id)
+              for _, search_id in ipairs(search_ids) do
+                if search_id.id == "scan" or mac_equal(search_id.id, id) then
+                  search_id.reply_tx:send(infos_found[id])
+                end
               end
             end
+          else
+            log.warn_with({ hub_logs = true },
+              string.format("disco| response from %s doesn't contain a location header: %s", rip, val))
           end
         else
           error(string.format("error receving discovery replies: %s", rip))
