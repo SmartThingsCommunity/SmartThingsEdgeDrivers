@@ -19,11 +19,12 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 local t_utils = require "integration_test.utils"
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
+
 
 local garage_door_endpoints = {
   {
     command_classes = {
-      {value = zw.BASIC},
       {value = zw.BARRIER_OPERATOR},
       {value = zw.CONFIGURATION},
       {value = zw.SENSOR_MULTILEVEL},
@@ -130,6 +131,85 @@ test.register_message_test(
     }
 )
 
+test.register_message_test(
+    "Open commands should generate correct zwave commands",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_garage_door.id, { capability = "doorControl", command = "open", args = {} } }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ value = 0xFF }))
+      },
+    },
+    {
+      test_init = test_init
+    }
+)
+
+test.register_message_test(
+    "Close commands should generate correct zwave commands",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_garage_door.id, { capability = "doorControl", command = "close", args = {} } }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ value = 0x00 }))
+      },
+    },
+    {
+      test_init = test_init
+    }
+)
+
+test.register_message_test(
+  "Refresh command should prompt correct response",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = { mock_garage_door.id, { capability = "refresh", component = "main", command = "refresh", args = {} } }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, BarrierOperator:Get({}))
+    }
+  },
+  {
+    test_init = test_init,
+    inner_block_ordering = "relaxed"
+  }
+)
+
+test.register_message_test(
+  "doConfigure lifecycle event should generate the correct commands",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_garage_door.id, "added" },
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_garage_door,
+        BarrierOperator:Get({})
+      )
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
 
 test.register_message_test(
     "Multi-level sensor reports for celcius should be handled as temperature capability",
@@ -154,23 +234,34 @@ test.register_message_test(
 test.register_message_test(
         "Multi-level sensor reports fahrenheight should be handled as temperature capability",
         {
-            {
-                channel = "zwave",
-                direction = "receive",
-                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-                                                                                                sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
-                                                                                                scale = 1,
-                                                                                                sensor_value = 45.6
-                                                                                              })) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 45.6, unit = 'F'}))
-            }
+          {
+              channel = "zwave",
+              direction = "receive",
+              message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+                                                                                              sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
+                                                                                              scale = 1,
+                                                                                              sensor_value = 45.6
+                                                                                            })) }
+          },
+          {
+              channel = "capability",
+              direction = "send",
+              message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 45.6, unit = 'F'}))
+          }
         }
 )
 
+test.register_coroutine_test(
+    "doConfigure lifecycle event should generate the correct commands",
+    function ()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({mock_garage_door.id, "doConfigure"})
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_garage_door,
+          Configuration:Set({parameter_number = 11, size = 1, configuration_value = 25})
+      ))
+    end
+)
 
 test.register_coroutine_test(
     "Door control open commands should generate correct zwave commands",
