@@ -15,28 +15,24 @@
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local utils = require "st.utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local t_utils = require "integration_test.utils"
-local dkjson = require 'dkjson'
 
 local FIBARO_WALLI_DOUBLE_SWITCH_MANUFACTURER_ID = 0x010F
 local FIBARO_WALLI_DOUBLE_SWITCH_PRODUCT_TYPE = 0x1B01
 local FIBARO_WALLI_DOUBLE_SWITCH_PRODUCT_ID = 0x1000
 
 local fibaro_walli_double_switch_endpoints = {
-  {
-    command_classes = {
-      {value = zw.METER},
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.METER},
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    }
-  }
+  {command_classes = {
+    {value = zw.METER},
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.METER},
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }}
 }
 
 local mock_fibaro_walli_double_switch = test.mock_device.build_test_zwave_device({

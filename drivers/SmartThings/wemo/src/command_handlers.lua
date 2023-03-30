@@ -1,5 +1,4 @@
 local protocol = require "protocol"
-local log = require "log"
 
 local command_handlers = {}
 

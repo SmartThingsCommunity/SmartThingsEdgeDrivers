@@ -24,7 +24,7 @@ local function device_init(driver, device)
 end
 
 local function illuminance_attr_handler(driver, device, ib, response)
-  local lux = math.floor(math.pow(10, (ib.data.value - 1) / 10000))
+  local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
 end
 

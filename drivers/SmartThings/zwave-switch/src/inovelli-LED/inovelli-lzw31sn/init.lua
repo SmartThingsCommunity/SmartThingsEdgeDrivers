@@ -13,14 +13,8 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.utils
-local utils = require "st.utils"
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 --- @type st.zwave.CommandClass.CentralScene
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 

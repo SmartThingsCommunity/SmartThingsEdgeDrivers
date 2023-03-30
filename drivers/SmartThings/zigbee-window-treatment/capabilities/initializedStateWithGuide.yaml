@@ -1,0 +1,20 @@
+id: stse.initializedStateWithGuide
+version: 1
+status: proposed
+name: Initialized State With Guide
+ephemeral: false
+attributes:
+  initializedStateWithGuide:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - notInitialized
+            - initialized
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

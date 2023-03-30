@@ -9,6 +9,8 @@ local st_utils = require "st.utils"
 --- https://developer.sonos.com/reference/control-api-examples-lan/
 local CapCommandHandlers = {}
 
+local QUEUE_ACTION_PREF = "queueAction"
+
 local function _do_send(device, payload)
   local conn = device:get_field(PlayerFields.CONNECTION)
   if conn and conn:is_running() then
@@ -138,7 +140,7 @@ function CapCommandHandlers.handle_group_volume_down(driver, device, cmd)
 end
 
 function CapCommandHandlers.handle_group_set_volume(driver, device, cmd)
-  local new_volume = st_utils.clamp_value(cmd.args.volume, 0, 100)
+  local new_volume = st_utils.clamp_value(cmd.args.groupVolume, 0, 100)
   local payload = {
     { namespace = "groupVolume", command = "setVolume" },
     { volume = new_volume }
@@ -151,7 +153,8 @@ function CapCommandHandlers.handle_play_preset(driver, device, cmd)
     { namespace = "favorites", command = "loadFavorite" },
     {
       favoriteId = cmd.args.presetId,
-      playOnCompletion = true
+      playOnCompletion = true,
+      action = (device.preferences[QUEUE_ACTION_PREF] or "APPEND")
     }
   }
   _do_send_to_group(driver, device, payload)
