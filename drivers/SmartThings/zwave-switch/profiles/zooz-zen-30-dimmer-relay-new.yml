@@ -210,7 +210,7 @@ preferences:
     title: "Dimmer Brightness Control"
     description: "Dimmer Brightness Control"
     required: false
-    preferenceType: integer
+    preferenceType: enumeration
     definition:
       options:
         0 : "Double Tap Maximum"
@@ -221,7 +221,7 @@ preferences:
     title: "Dimmer Double Tap Function"
     description: "Dimmer Brightness Control"
     required: false
-    preferenceType: integer
+    preferenceType: enumeration
     definition:
       options:
         0 : "Turn on Full Brightness"

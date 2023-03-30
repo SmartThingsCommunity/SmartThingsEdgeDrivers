@@ -29,3 +29,16 @@ components:
     version: 1
   categories:
   - name: Speaker
+preferences:
+- name: "queueAction"
+  title: "\"Load Favorites\" Queuing Action"
+  description: Determines the playback behavior when a Favorite is loaded while content is already queued on the speaker.
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      Append: "Add to End of Queue"
+      Insert: "Play Now"
+      Insert_Next: "Play Next"
+      Replace: "Replace Queue"
+    default: Append

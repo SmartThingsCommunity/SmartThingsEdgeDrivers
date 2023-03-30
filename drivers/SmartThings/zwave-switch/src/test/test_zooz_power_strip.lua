@@ -22,32 +22,30 @@ local t_utils = require "integration_test.utils"
 
 -- supported comand classes
 local sensor_endpoints = {
-  {
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    }
-  }
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }}
 }
 
 local mock_device = test.mock_device.build_test_zwave_device({

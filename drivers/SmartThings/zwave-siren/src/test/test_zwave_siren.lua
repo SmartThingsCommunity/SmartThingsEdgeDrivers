@@ -15,7 +15,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local constants = require "st.zwave.constants"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})

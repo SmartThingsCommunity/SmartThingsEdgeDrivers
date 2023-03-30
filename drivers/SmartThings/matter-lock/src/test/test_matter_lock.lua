@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local im = require "st.matter.interaction_model"
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("lock-without-codes.yml"),

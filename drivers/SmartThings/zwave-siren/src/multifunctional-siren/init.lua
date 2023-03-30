@@ -39,8 +39,6 @@ local function can_handle_multifunctional_siren(opts, driver, device, ...)
   return false
 end
 
-local zwave_handlers = {}
-
 --- Default handler for notification command class reports
 ---
 --- This converts tamper reports across tamper alert types into tamper events.
@@ -65,8 +63,6 @@ local do_configure = function(self, device)
   device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY}))
   device:send(Basic:Get({}))
 end
-
-local capability_handlers = {}
 
 local multifunctional_siren = {
   zwave_handlers = {

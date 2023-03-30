@@ -35,8 +35,6 @@ function SSDP.search(search_term, callback)
   assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
   local timeouttime = socket.gettime() + 3 -- 3 second timeout, `MX` + 1 for network delay
 
-  local ids_found = {} -- used to filter duplicates
-  local number_found = 0
   -- local deviceid = "placeholder"
 
   log.debug("sending discovery multicast request")

@@ -4,6 +4,7 @@ local additional_fields = {
   state_change = true
 }
 
+
 local function handle_set_level(driver, device, command)
   if (command.args.level == 0) then
     device:emit_event(capabilities.switch.switch.off(additional_fields))

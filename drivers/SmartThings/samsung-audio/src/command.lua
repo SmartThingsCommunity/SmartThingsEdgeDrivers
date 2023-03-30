@@ -17,7 +17,6 @@ local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
-local utils = require "st.utils"
 local log = require "log"
 
 
@@ -54,7 +53,7 @@ local function handle_http_request(ip, url)
   end
 
   local resp = {}
-  local r, c, h = http.request {
+  local _, c, _ = http.request {
      url = url,
      method = "GET",
      sink = ltn12.sink.table(resp)
@@ -65,7 +64,7 @@ local function handle_http_request(ip, url)
     return nil
   end
 
-  handler = xml_handler:new()
+  local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(table.concat(resp))
   if is_empty (resp) then
@@ -93,7 +92,7 @@ function Command.volume(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetVolume</name>")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { volume = ret.handler_res.root.UIC.response.volume, }
    end
@@ -113,7 +112,7 @@ function Command.set_volume(ip, level)
    level = math.min(100, math.max(level, 0))
    local encoded_str_vol = "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetVolume%3C/name%3E%3Cp%20type=%22dec%22%20name=%22volume%22%20val=%22" .. level .. "%22%3E%3C/p%3E"
    local url = format_url(ip, encoded_str_vol)
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { volume = ret.handler_res.root.UIC.response.volume, }
    end
@@ -130,7 +129,7 @@ function Command.getSpeakerName(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetSpkName</name>")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerName = ret.handler_res.root.UIC.response.spkname, }
    end
@@ -147,7 +146,7 @@ function Command.getMainInfoforGroup(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetMainInfo</name>")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { groupmainip = ret.handler_res.root.UIC.response.groupmainip, spkmodelname = ret.handler_res.root.UIC.response.spkmodelname, groupmode = ret.handler_res.root.UIC.response.groupmode,}
    end
@@ -165,7 +164,7 @@ function Command.powerOn(ip)
   if ip then
    local press = "/UIC?cmd=%3Cname%3ESetStandbyMode%3C/name%3E%3Cp%20type=%22str%22%20name=%22mode%22%20val=%22on%22/%3E"
    local url = format_url(ip, press)
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { playstatus = ret.handler_res.root.UIC.response.playstatus, }
    end
@@ -183,7 +182,7 @@ function Command.powerOff(ip)
   if ip then
    local press = "/UIC?cmd=%3Cname%3ESetStandbyMode%3C/name%3E%3Cp%20type=%22str%22%20name=%22mode%22%20val=%22off%22/%3E"
    local url = format_url(ip, press)
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { playstatus = ret.handler_res.root.UIC.response.playstatus, }
    end
@@ -205,7 +204,8 @@ function Command.setSpeakerName(ip, name)
    local path = string.format("/UIC?cmd=<name>SetSpkName</name><p type=\"cdata\" name=\"spkname\" val=\"empty\"><![CDATA[%s]]></p>", encodedName)
    mappings = {[" "]="%20"}
    path = tr(path, mappings)
-   ret = handle_http_request(ip, url)
+   local url = format_url(ip, path)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerName = ret.handler_res.root.UIC.response.spkname, }
    end
@@ -222,7 +222,7 @@ function Command.play(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetPlaybackControl%3C/name%3E%3Cp%20type=%22str%22%20name=%22playbackcontrol%22%20val=%22resume%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerip = ret.handler_res.root.UIC.speakerip, playstatus = ret.handler_res.root.UIC.response.playstatus,}
    end
@@ -239,7 +239,7 @@ function Command.pause(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetPlaybackControl%3C/name%3E%3Cp%20type=%22str%22%20name=%22playbackcontrol%22%20val=%22pause%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerip = ret.handler_res.root.UIC.speakerip, playstatus = ret.handler_res.root.UIC.response.playstatus,}
    end
@@ -256,7 +256,7 @@ function Command.previous(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cname%3ESetTrickMode%3C/name%3E%3Cp%20type=%22str%22%20name=%22trickmode%22%20val=%22previous%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerip = ret.handler_res.root.UIC.speakerip,}
    end
@@ -273,7 +273,7 @@ function Command.next(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cname%3ESetTrickMode%3C/name%3E%3Cp%20type=%22str%22%20name=%22trickmode%22%20val=%22next%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { speakerip = ret.handler_res.root.UIC.speakerip,}
    end
@@ -290,7 +290,7 @@ function Command.mute(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cname%3ESetMute%3C/name%3E%3Cp%20type=%22str%22%20name=%22mute%22%20val=%22on%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { muted = ret.handler_res.root.UIC.response.mute,}
    end
@@ -307,7 +307,7 @@ function Command.unmute(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=%3Cname%3ESetMute%3C/name%3E%3Cp%20type=%22str%22%20name=%22mute%22%20val=%22off%22%3E%3C/p%3E")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { muted = ret.handler_res.root.UIC.response.mute,}
    end
@@ -324,7 +324,7 @@ function Command.getMute(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetMute</name>")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { muted = ret.handler_res.root.UIC.response.mute,}
    end
@@ -340,7 +340,7 @@ function Command.getPlayStatus(ip)
   local response_map = nil
   if ip then
    local url = format_url(ip, "/UIC?cmd=<name>GetPlayStatus</name>")
-   ret = handle_http_request(ip, url)
+   local ret = handle_http_request(ip, url)
    if ret then
      response_map = { playstatus = ret.handler_res.root.UIC.response.playstatus,}
    end
@@ -348,5 +348,16 @@ function Command.getPlayStatus(ip)
   return response_map
 end
 
+function Command.play_streaming_uri(ip, uri)
+  log.trace("Triggering UPnP Command Request for [Audio Notification -> SetUrlPlayback]")
+  local response_map = nil
+  if ip then
+   local path = "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetUrlPlayback%3C/name%3E%3Cp%20type=%22cdata%22%20name=%22url%22%20val=%22empty%22%3E%3C![CDATA[" .. uri .. "]]%3E%3C/p%3E%3Cp%20type=%22dec%22%20name=%22buffersize%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22seektime%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22resume%22%20val=%221%22/%3E"
+   local url = format_url(ip, path)
+   log.trace(string.format("Final Notification Command URL for making Audio Notification http request = %s", url))
+   response_map = handle_http_request(ip, url)
+  end
+  return response_map
+end
 
 return Command

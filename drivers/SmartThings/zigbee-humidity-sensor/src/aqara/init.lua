@@ -1,6 +1,5 @@
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
-local capabilities = require "st.capabilities"
 
 local PowerConfiguration = clusters.PowerConfiguration
 

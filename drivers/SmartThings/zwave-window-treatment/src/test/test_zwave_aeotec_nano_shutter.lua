@@ -13,24 +13,11 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 local t_utils = require "integration_test.utils"
-
-local zwave_window_button_profile = {
-  components = {
-    main = {
-      capabilities = {
-        [capabilities.statelessCurtainPowerButton.ID] = { id = capabilities.statelessCurtainPowerButton.ID },
-        [capabilities.refresh.ID] = { id = capabilities.refresh.ID }
-      },
-      id = "main"
-    }
-  }
-}
 
 local zwave_window_button_endpoint = {
   {

@@ -13,9 +13,8 @@
 -- limitations under the License.
 
 local command = require "command"
-local log = require "log"
-local utils = require "st.utils"
 local capabilities = require "st.capabilities"
+local VOL_STEP = 5
 
 --- @module Samsung-audio.CapabilityHandlers
 local CapabilityHandlers = {}
@@ -39,7 +38,7 @@ end
 
 function CapabilityHandlers.handle_play(driver, device, cmd)
   local ip = device:get_field("ip")
-  CapabilityHandlers.handle_on(driver, device, nil) --turn on if device is off
+  -- CapabilityHandlers.handle_on(driver, device, nil) --on/off is not working for samsung-audio (same issue with cloud DTH)
   local ret = command.play(ip)
   if ret then
    device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
@@ -80,19 +79,37 @@ end
 
 function CapabilityHandlers.handle_mute(driver, device, cmd)
   local ip = device:get_field("ip")
-  command.mute(ip)
+  local muteStatus = command.mute(ip)
+  if muteStatus then
+    if muteStatus.muted ~= "off" then
+      device:emit_event(capabilities.audioMute.mute.muted())
+    else
+      device:emit_event(capabilities.audioMute.mute.unmuted())
+    end
+  end
 end
 
 function CapabilityHandlers.handle_unmute(driver, device, cmd)
   local ip = device:get_field("ip")
-  command.unmute(ip)
+  local muteStatus = command.unmute(ip)
+  if muteStatus then
+    if muteStatus.muted ~= "off" then
+      device:emit_event(capabilities.audioMute.mute.muted())
+    else
+      device:emit_event(capabilities.audioMute.mute.unmuted())
+    end
+  end
 end
 
 function CapabilityHandlers.handle_volume_up(driver, device, cmd)
   local ip = device:get_field("ip")
   local vol = command.volume(ip)
   if vol then
-    command.set_volume(ip, vol.volume + 5)
+    local set_vol = command.set_volume(ip, tonumber(vol.volume) + VOL_STEP)
+    if set_vol then
+      device:emit_event(capabilities.audioVolume.volume(tonumber(set_vol.volume)))
+      device:emit_event(capabilities.audioMute.mute.unmuted())
+    end
   end
 end
 
@@ -100,13 +117,27 @@ function CapabilityHandlers.handle_volume_down(driver, device, cmd)
   local ip = device:get_field("ip")
   local vol = command.volume(ip)
   if vol then
-    command.set_volume(ip, vol.volume - 5)
+    local set_vol = command.set_volume(ip, tonumber(vol.volume) - VOL_STEP)
+    if set_vol then
+      device:emit_event(capabilities.audioVolume.volume(tonumber(set_vol.volume)))
+      device:emit_event(capabilities.audioMute.mute.unmuted())
+    end
   end
 end
 
 function CapabilityHandlers.handle_set_volume(driver, device, cmd)
   local ip = device:get_field("ip")
-  command.set_volume(ip, cmd.args.volume)
+  local vol = command.set_volume(ip, cmd.args.volume)
+  if vol then
+    device:emit_event(capabilities.audioVolume.volume(tonumber(vol.volume)))
+    device:emit_event(capabilities.audioMute.mute.unmuted())
+  end
+end
+
+function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
+  local ip = device:get_field("ip")
+  -- Audio Notification working fine when checked through routine. Need to confirm later for any issue whether ST app expect any emit_event here
+  command.play_streaming_uri(ip, cmd.args.uri)
 end
 
 return CapabilityHandlers

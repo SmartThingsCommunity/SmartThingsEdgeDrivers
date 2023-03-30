@@ -119,7 +119,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -130,13 +130,13 @@ test.register_coroutine_test(
         mock_device.id,
         zigbee_test_utils.build_bind_request(mock_device,
                                              zigbee_test_utils.mock_hub_eui,
-                                             Level.ID):to_endpoint(0x02)
+                                             Level.ID, 2)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
         zigbee_test_utils.build_bind_request(mock_device,
                                              zigbee_test_utils.mock_hub_eui,
-                                             Level.ID):to_endpoint(0x03)
+                                             Level.ID, 3)
       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end

@@ -27,7 +27,6 @@ local OPERATING_MODE_CONFIGURATION = 151
 
 -- fieldnames
 local CALIBRATION = "calibration"
-local OPERATING_MODE = "operating_mode"
 
 -- calibration statuses
 local CLB_NOT_STARTED = "not_started"

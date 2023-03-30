@@ -15,8 +15,6 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SensorAlarm
