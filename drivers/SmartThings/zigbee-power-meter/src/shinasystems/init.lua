@@ -37,19 +37,44 @@ local is_shinasystems_power_meter = function(opts, driver, device)
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
   local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
   local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
+  local raw_value = value.value
   local raw_value_kilowatts = raw_value * multiplier/divisor
-  local raw_value_watts = raw_value_kilowatts*1000
-  local delta_energy = 0.0
-  local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
 
-  if current_power_consumption ~= nil then
-    delta_energy = math.max(raw_value_watts - current_power_consumption.energy, 0.0)
+  local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
+  if raw_value_kilowatts < offset then
+    --- somehow our value has gone below the offset, so we'll reset the offset, since the device seems to have
+    offset = 0
+    device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
   end
-  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value_watts, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
+  raw_value_kilowatts = raw_value_kilowatts - offset
+  raw_value_kilowatts = math.floor((raw_value_kilowatts*10^5+0.5))/(10^5) -- Let's round it to 5 decimal places.
 
+  local raw_value_watts = raw_value_kilowatts*1000
+  local delta_tick = 0
+  local last_save_ticks = device:get_field("LAST_SAVE_TICK")
+
+  if last_save_ticks == nil then last_save_ticks = 0 end
+  delta_tick = os.time() - last_save_ticks
+
+  -- wwst energy certification : powerConsumptionReport capability values should be updated every 15 minutes.
+  -- Check if 15 minutes have passed since the reporting time of current_power_consumption.
+  if delta_tick >= 15*60 then
+    local delta_energy = 0.0
+    local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
+    if current_power_consumption ~= nil then
+      delta_energy = math.max(raw_value_watts - current_power_consumption.energy, 0.0)
+    end
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value_watts, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
+
+    local curr_save_tick = last_save_ticks + 15*60 -- Set the time to a regular interval by adding 15 minutes to the existing last_save_ticks.
+    -- If the time 15 minutes from now is less than the current time, set the current time as the last time.
+    if curr_save_tick + 15*60 < os.time() then
+      curr_save_tick = os.time()
+    end
+    device:set_field("LAST_SAVE_TICK", curr_save_tick, {persist = false})
+  end
   device:emit_event(capabilities.energyMeter.energy({value = raw_value_kilowatts, unit = "kWh"}))
 end
 
