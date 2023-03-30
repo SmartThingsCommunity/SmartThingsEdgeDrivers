@@ -19,12 +19,21 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local WindowCovering = clusters.WindowCovering
 
--- mock the actual device
 local mock_device = test.mock_device.build_test_matter_device(
                       {
     profile = t_utils.get_profile_definition("window-covering-profile.yml"),
-    manufacture_info = {vendor_id = 0x0000, product_id = 0x0000},
+    manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+    preferences = { presetPosition = 30 },
     endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = {
+          {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        },
+        device_types = {
+          device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        }
+      },
       {
         endpoint_id = 1,
         clusters = { -- list the clusters
@@ -33,19 +42,14 @@ local mock_device = test.mock_device.build_test_matter_device(
             cluster_type = "SERVER",
             cluster_revision = 1,
             feature_map = 0,
-            attributes = nil,
-            server_commands = nil,
-            client_commands = nil,
-            event = nil,
           },
           {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"}
         },
       },
-    }, -- ]]
+    },
   }
-                    )
--- add device for each mock device
+)
 
 local CLUSTER_SUBSCRIBE_LIST = {
   clusters.LevelControl.server.attributes.CurrentLevel,
@@ -66,7 +70,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Window Shade state closed", function()
+  "WindowCovering OperationalStatus state closed", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -96,7 +100,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Window Shade state open", function()
+  "WindowCovering OperationalStatus state open", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -126,7 +130,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Window Shade state partially open", function()
+  "WindowCovering OperationalStatus partially open", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -155,28 +159,89 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "WindowShadeLevel cmd handler with difference more than 1 second", function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.capability:__queue_receive(
-      {
-        mock_device.id,
-        {
-          capability = "windowShadeLevel",
-          component = "main",
-          command = "setShadeLevel",
-          args = {33},
-        },
-      }
+test.register_coroutine_test("WindowCovering OperationalStatus opening", function()
+  test.socket.capability:__set_channel_ordering("relaxed")
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+        mock_device, 1, ((100 - 25) *100)
+      ),
+    }
+  )
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 1),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.windowShade.opening()
     )
-    -- Command send after delay
-    test.mock_time.advance_time(2)
-    test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, (100*(100-33)))}
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShadeLevel.shadeLevel(25)
     )
-    test.wait_for_events()
-  end
-)
+  )
+end)
+
+test.register_coroutine_test("WindowCovering OperationalStatus closing", function()
+  test.socket.capability:__set_channel_ordering("relaxed")
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+        mock_device, 1, ((100 - 25) *100)
+      ),
+    }
+  )
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 2),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.windowShade.closing()
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShadeLevel.shadeLevel(25)
+    )
+  )
+end)
+
+test.register_coroutine_test("WindowCovering OperationalStatus unknown", function()
+  test.socket.capability:__set_channel_ordering("relaxed")
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+        mock_device, 1, ((100 - 25) *100)
+      ),
+    }
+  )
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 3),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.windowShade.unknown()
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShadeLevel.shadeLevel(25)
+    )
+  )
+end)
 
 test.register_coroutine_test(
   "WindowShade open cmd handler", function()
@@ -251,24 +316,31 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "WindowShade set level cmd handler", function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-          mock_device, 1, (20 * 100)
-        ),
-      }
+test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
+  test.socket.capability:__queue_receive(
+    {
+      mock_device.id,
+      {capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 20 }},
+    }
+  )
+  test.socket.matter:__expect_send(
+    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, 8000)}
+  )
+end)
+
+test.register_coroutine_test("LevelControl CurrentLevel handler", function()
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 100),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShadeLevel.shadeLevel(math.floor((100 / 254.0 * 100) + .5))
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main", capabilities.windowShadeLevel.shadeLevel(100 -20)
-      )
-    )
-    test.wait_for_events()
-  end
-)
+  )
+end)
 
 --test battery
 test.register_coroutine_test(
@@ -286,8 +358,38 @@ test.register_coroutine_test(
         "main", capabilities.battery.battery(math.floor(150/2.0+0.5))
       )
     )
-    test.wait_for_events()
   end
 )
+
+test.register_coroutine_test("OperationalStatus report contains current position report", function()
+  test.socket.capability:__set_channel_ordering("relaxed")
+  local report = WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+    mock_device, 1, ((100 - 25) *100)
+  )
+  table.insert(report.info_blocks, WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 0).info_blocks[1])
+  test.socket.matter:__queue_receive({ mock_device.id, report})
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.windowShade.partially_open()
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShadeLevel.shadeLevel(25)
+    )
+  )
+end)
+
+test.register_coroutine_test("Handle windowcoveringPreset", function()
+  test.socket.capability:__queue_receive(
+    {
+      mock_device.id,
+      {capability = "windowShadePreset", component = "main", command = "presetPosition", args = {}},
+    }
+  )
+  test.socket.matter:__expect_send(
+    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, 7000)}
+  )
+end)
 
 test.run_registered_tests()

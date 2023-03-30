@@ -78,6 +78,7 @@ end
 
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
+  --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
 end
