@@ -37,7 +37,7 @@ local is_sengled_products = function(opts, driver, device, ...)
 end
 
 local function device_init(driver, device)
-  battery_defaults.build_linear_voltage_init(2.2, 3.0)(driver, device)
+  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
 
   for _, attribute in ipairs(CONFIGURATIONS) do
     device:add_configured_attribute(attribute)
