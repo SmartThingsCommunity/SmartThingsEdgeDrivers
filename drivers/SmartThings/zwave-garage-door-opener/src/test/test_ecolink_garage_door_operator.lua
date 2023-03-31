@@ -95,7 +95,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ state = BarrierOperator.state.OPEN })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN })) }
       },
       {
         channel = "capability",
@@ -116,7 +116,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ state = BarrierOperator.state.CLOSED })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED })) }
       },
       {
         channel = "capability",
@@ -142,7 +142,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "send",
-        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ state = 0xFF }))
+        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ target_value = 0xFF }))
       },
     },
     {
@@ -161,7 +161,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "send",
-        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ state = 0x00 }))
+        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ target_value = 0x00 }))
       },
     },
     {
