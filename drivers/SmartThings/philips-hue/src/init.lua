@@ -425,7 +425,9 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
-  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  if light_info.color ~= nil and light_info.color.gamut then
+    device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
   device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
