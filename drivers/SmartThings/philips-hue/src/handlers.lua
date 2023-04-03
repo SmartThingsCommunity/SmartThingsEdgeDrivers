@@ -230,7 +230,9 @@ local function do_refresh_light(driver, light_device)
       else
         for _, light_info in ipairs(light_resp.data) do
           if light_info.id == light_resource_id then
-            light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
+            if light_info.color ~= nil and light_info.color.gamut then
+              light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
+            end
             driver.emit_light_status_events(light_device, light_info)
             success = true
           end
