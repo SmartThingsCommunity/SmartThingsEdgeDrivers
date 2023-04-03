@@ -53,7 +53,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.CLOSED })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = 0x00 })) }
       },
       {
         channel = "capability",
@@ -74,7 +74,7 @@ test.register_message_test(
             {
                 channel = "zwave",
                 direction = "receive",
-                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = BarrierOperator.state.OPEN })) }
+                message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Report({ state = 0xFF })) }
             },
             {
                 channel = "capability",
@@ -95,7 +95,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = 0xFF })) }
       },
       {
         channel = "capability",
@@ -116,7 +116,7 @@ test.register_message_test(
       {
         channel = "zwave",
         direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED })) }
+        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = 0xFF })) }
       },
       {
         channel = "capability",
@@ -276,7 +276,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-              BarrierOperator:Set({ value = 0xFF })
+              BarrierOperator:Set({ target_value = 0xFF })
           )
       )
       test.wait_for_events()
@@ -303,7 +303,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-              BarrierOperator:Set({ value = 0x00 })
+              BarrierOperator:Set({ target_value = 0x00 })
           )
       )
       test.wait_for_events()
