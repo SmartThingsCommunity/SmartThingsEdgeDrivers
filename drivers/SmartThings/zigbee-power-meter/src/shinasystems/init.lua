@@ -25,31 +25,32 @@ local ZIGBEE_POWER_METER_FINGERPRINTS = {
 }
 
 local POWERMETER_CONFIGURATION_V2 = {
-	{
-		cluster = SimpleMetering.ID,
-		attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
-		minimum_interval = 5,
-		maximum_interval = 300,
-		data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
-		reportable_change = 1
-	},
-	{
-		cluster = SimpleMetering.ID,
-		attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
-		minimum_interval = 5,
-		maximum_interval = 300,
-		data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
-		reportable_change = 1
-	},
-	{ -- reporting : no
-		cluster = ElectricalMeasurement.ID,
-		attribute = ElectricalMeasurement.attributes.ActivePower.ID,
-		minimum_interval = 0,
-		maximum_interval = 65535,
-		data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
-		reportable_change = 1
-	}
+  {
+    cluster = SimpleMetering.ID,
+    attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
+    minimum_interval = 5,
+    maximum_interval = 300,
+    data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
+    reportable_change = 1
+  },
+  {
+    cluster = SimpleMetering.ID,
+    attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
+    minimum_interval = 5,
+    maximum_interval = 300,
+    data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
+    reportable_change = 1
+  },
+  { -- reporting : no
+    cluster = ElectricalMeasurement.ID,
+    attribute = ElectricalMeasurement.attributes.ActivePower.ID,
+    minimum_interval = 0,
+    maximum_interval = 65535,
+    data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
+    reportable_change = 1
+  }
 }
+
 local is_shinasystems_power_meter = function(opts, driver, device)
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
@@ -111,9 +112,9 @@ local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1, {persist = true})
   for _, attribute in ipairs(POWERMETER_CONFIGURATION_V2) do
-		device:add_configured_attribute(attribute)
-		device:add_monitored_attribute(attribute)
-	end
+    device:add_configured_attribute(attribute)
+    device:add_monitored_attribute(attribute)
+  end
 end
 
 local shinasystems_power_meter_handler = {
