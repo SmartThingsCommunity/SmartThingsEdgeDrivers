@@ -14,42 +14,6 @@ components:
       version: 1
     categories:
     - name: Switch
-  - id: button1
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
-  - id: button2
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
-  - id: button3
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
-  - id: button4
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
-  - id: button5
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
-  - id: button6
-    capabilities:
-    - id: button
-      version: 1
-    categories:
-    - name: RemoteController
 preferences:
   - name: "restoreState"
     title: "Restore state"

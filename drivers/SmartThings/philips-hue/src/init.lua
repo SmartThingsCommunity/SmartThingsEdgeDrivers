@@ -425,7 +425,9 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
-  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  if light_info.color ~= nil and light_info.color.gamut then
+    device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
   device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
@@ -433,6 +435,8 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields._ADDED, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
+  -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
+  handlers.refresh_handler(driver, device)
 end
 
 ---@param driver HueDriver
