@@ -388,6 +388,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: on-off-level
+  - id: "ubisys/S2 (5502)"
+    deviceLabel: ubisys S2
+    manufacturer: ubisys
+    model: "S2 (5502)"
+    deviceProfileName: switch-power-firmware-2
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
