@@ -39,6 +39,15 @@ local mock_device_record = {
   manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
   endpoints = {
     {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
       endpoint_id = 1,
       clusters = {
         {
@@ -141,6 +150,34 @@ test.register_coroutine_test(
   "Added should kick off cota cred process", function()
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
+  end
+)
+
+test.register_coroutine_test(
+  "UnlockDoor uses cota cred when present", function()
+    test.socket.capability:__queue_receive(
+      {mock_device.id, {capability = capabilities.lock.ID, command = "unlock", args = {}}}
+    )
+    local lock_utils = require "lock_utils"
+    mock_device:set_field(lock_utils.COTA_CRED, "1111")
+    test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.DoorLock.server.commands.UnlockDoor(mock_device, 1, "1111"),
+      })
+  end
+)
+
+test.register_coroutine_test(
+  "LockDoor uses cota cred when present", function()
+    test.socket.capability:__queue_receive(
+      {mock_device.id, {capability = capabilities.lock.ID, command = "lock", args = {}}}
+    )
+    local lock_utils = require "lock_utils"
+    mock_device:set_field(lock_utils.COTA_CRED, "1111")
+    test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.DoorLock.server.commands.LockDoor(mock_device, 1, "1111"),
+      })
   end
 )
 
@@ -686,6 +723,11 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
+  end
+)
+
+test.register_coroutine_test(
+  "Delay setting COTA cred if another cred is already being set.", function()
   end
 )
 
