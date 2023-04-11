@@ -14,13 +14,21 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
+local json = require "dkjson"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 8 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 local t_utils = require "integration_test.utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
+local GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT = 1
+local GDO_CONFIG_PARAM_NO_ACTIVATION_TIME = 2
+local GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT = 3
+local GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT = 4
+local GDO_CONFIG_PARAM_NO_SHAKE_SENSE = 5
+local GDO_CONFIG_PARAM_NO_APP_RETRY = 6
 
 local garage_door_endpoints = {
   {
@@ -59,17 +67,12 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.closed())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_garage_door:generate_test_message("contactSensor", capabilities.contactSensor.contact.closed())
       }
     }
 )
 
 test.register_message_test(
-        "BarrierOperator set value 0xFF should be handled as proper capabilities",
+        "BarrierOperator reports value 0xFF should be handled as proper capabilities",
         {
             {
                 channel = "zwave",
@@ -79,94 +82,9 @@ test.register_message_test(
             {
                 channel = "capability",
                 direction = "send",
-                message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.opening())
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_garage_door:generate_test_message("contactSensor", capabilities.contactSensor.contact.closed())
+                message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.open())
             }
         }
-)
-
-test.register_message_test(
-    "BarrierOperator reports value 0xFF should be handled as proper capabilities",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.open())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_garage_door:generate_test_message("contactSensor", capabilities.contactSensor.contact.open())
-      }
-    }
-)
-
-test.register_message_test(
-    "BarrierOperator set value 0x00 should be handled as proper capabilities",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.closing())
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_garage_door:generate_test_message("contactSensor", capabilities.contactSensor.contact.open())
-      }
-    }
-)
-
-test.register_message_test(
-    "Open commands should generate correct zwave commands",
-    {
-      {
-        channel = "capability",
-        direction = "receive",
-        message = { mock_garage_door.id, { capability = "doorControl", command = "open", args = {} } }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN }))
-      },
-    },
-    {
-      test_init = test_init
-    }
-)
-
-test.register_message_test(
-    "Close commands should generate correct zwave commands",
-    {
-      {
-        channel = "capability",
-        direction = "receive",
-        message = { mock_garage_door.id, { capability = "doorControl", command = "close", args = {} } }
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_receive_command(mock_garage_door, BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED }))
-      },
-    },
-    {
-      test_init = test_init
-    }
 )
 
 test.register_message_test(
@@ -181,6 +99,27 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, BarrierOperator:Get({}))
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, Notification:Get({
+                                                            v1_alarm_type = 0,
+                                                            notification_type = Notification.notification_type.SYSTEM,
+                                                            event = 0}))
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, Notification:Get({
+                                                            v1_alarm_type = 0,
+                                                            notification_type = Notification.notification_type.ACCESS_CONTROL,
+                                                            event = 0}))
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, SensorMultilevel:Get({}))
     }
   },
   {
@@ -198,12 +137,24 @@ test.register_message_test(
       message = { mock_garage_door.id, "added" },
     },
     {
-      channel = "zwave",
+      channel = "capability",
       direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_garage_door,
-        BarrierOperator:Get({})
-      )
+      message = { mock_garage_door.id, {attribute_id="battery", capability_id="battery", component_id="sensor", state={value=100}}}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = { mock_garage_door.id, {attribute_id="tamper", capability_id="tamperAlert", component_id="sensor", state={value="clear"}}}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = { mock_garage_door.id, {attribute_id="contact", capability_id="contactSensor", component_id="sensor", state={value="closed"}}}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = { mock_garage_door.id, {attribute_id="door", capability_id="doorControl", component_id="main", state={value="closed"}}}
     }
   },
   {
@@ -220,13 +171,13 @@ test.register_message_test(
         message = { mock_garage_door.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
                                                                                         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
                                                                                         scale = 0,
-                                                                                        sensor_value = 12.3,
+                                                                                        sensor_value = 12.2999999,
                                                                                       })) }
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 12.3, unit = 'C'}))
+        message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 12.2999999, unit = 'C'}))
       }
     }
 )
@@ -254,18 +205,32 @@ test.register_message_test(
 test.register_coroutine_test(
     "doConfigure lifecycle event should generate the correct commands",
     function ()
+      local updated_params = {}
+      updated_params[GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT] = {parameter = mock_garage_door.preferences.closeWaitPeriodSec}
+      updated_params[GDO_CONFIG_PARAM_NO_ACTIVATION_TIME] = {parameter = mock_garage_door.preferences.activationTimeMS}
+      updated_params[GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT] = {parameter = mock_garage_door.preferences.doorOpenTimeoutSec}
+      updated_params[GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT] = {parameter = mock_garage_door.preferences.doorCloseTimeoutSec}
+      updated_params[GDO_CONFIG_PARAM_NO_SHAKE_SENSE] = {parameter = mock_garage_door.preferences.shakeSensitivity}
+      updated_params[GDO_CONFIG_PARAM_NO_APP_RETRY] = {parameter = mock_garage_door.preferences.applicationLevelRetries}
+
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({mock_garage_door.id, "doConfigure"})
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_garage_door,
-          Configuration:Set({parameter_number = 11, size = 1, configuration_value = 25})
+          Configuration:BulkSetV2({parameter_offset = 1,
+          size = 2,
+          handshake = false,
+          default = false,
+          parameters = updated_params})
       ))
+      mock_garage_door:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
 test.register_coroutine_test(
-    "Door control open commands should generate correct zwave commands",
+    "Door control commands should generate correct zwave commands",
     function()
+      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__queue_receive(
           {
@@ -293,6 +258,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Door control close commands should generate correct zwave commands",
     function()
+      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__queue_receive(
           {
@@ -303,7 +269,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-              BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED })
+                  BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED })
           )
       )
       test.wait_for_events()
@@ -311,10 +277,38 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_garage_door,
-              BarrierOperator:Get({})
+                  BarrierOperator:Get({})
           )
       )
     end
-)
+  )
+
+test.register_coroutine_test(
+  "Open commands should generate correct zwave commands",
+    function()
+      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zwave:__queue_receive({mock_garage_door.id,
+                      BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN
+                    })}
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(1)
+    end
+  )
+
+  test.register_coroutine_test(
+  "Close commands should generate correct zwave commands",
+    function()
+      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zwave:__queue_receive({mock_garage_door.id,
+                      BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED
+                    })}
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(1)
+    end
+  )
 
 test.run_registered_tests()
