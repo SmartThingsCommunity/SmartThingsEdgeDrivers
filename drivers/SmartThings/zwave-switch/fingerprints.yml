@@ -302,12 +302,12 @@ zwaveManufacturer:
     productType: 0x0651
     productId: 0xF51C
     deviceProfileName: switch-5
-  # - id: 027A/A000/A008
-  #   deviceLabel: Zooz Switch
-  #   manufacturerId: 0x027A
-  #   productType: 0xA000
-  #   productId: 0xA008
-  #   deviceProfileName: zooz-zen-30-dimmer-relay
+  - id: 027A/A000/A008
+    deviceLabel: Zooz Switch
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA008
+    deviceProfileName: zooz-zen-30-dimmer-relay
   - id: 0086/0003/000B
     deviceLabel: Aeon Smart Strip
     manufacturerId: 0x0086
@@ -332,11 +332,11 @@ zwaveManufacturer:
   #   productType: 0x0002
   #   productId: 0x0053
   #   deviceProfileName: qubino-flush1d-relay
-  # - id: "010F/0203"
-  #   deviceLabel: Fibaro Double Switch
-  #   manufacturerId: 0x010F
-  #   productType: 0x0203
-  #   deviceProfileName: fibaro-double-switch
+  - id: "010F/0203"
+    deviceLabel: Fibaro Double Switch
+    manufacturerId: 0x010F
+    productType: 0x0203
+    deviceProfileName: fibaro-double-switch
   - id: "Eaton/5740/0000"
     deviceLabel: Eaton 5-Scene Keypad
     manufacturerId: 0x001A
