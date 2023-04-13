@@ -91,7 +91,7 @@ end
 
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
+  local level = math.floor((cmd.args.level/100.0 * 254) + 0.5)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
   device:send(req)
 end
