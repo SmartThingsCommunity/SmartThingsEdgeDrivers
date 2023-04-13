@@ -155,6 +155,11 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = { mock_garage_door.id, {attribute_id="door", capability_id="doorControl", component_id="main", state={value="closed"}}}
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(mock_garage_door, BarrierOperator:Get({}))
     }
   },
   {
@@ -230,7 +235,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Door control commands should generate correct zwave commands",
     function()
-      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__queue_receive(
           {
@@ -258,7 +262,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Door control close commands should generate correct zwave commands",
     function()
-      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.capability:__queue_receive(
           {
@@ -286,7 +289,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Open commands should generate correct zwave commands",
     function()
-      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.zwave:__queue_receive({mock_garage_door.id,
                       BarrierOperator:Set({ target_value = BarrierOperator.state.OPEN
@@ -300,7 +302,6 @@ test.register_coroutine_test(
   test.register_coroutine_test(
   "Close commands should generate correct zwave commands",
     function()
-      mock_garage_door.wrapped_device.state_cache = {["sensor"] = {["tamperAlert"] = {["tamper"] = {["value"] = "clear"}}}}
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.zwave:__queue_receive({mock_garage_door.id,
                       BarrierOperator:Set({ target_value = BarrierOperator.state.CLOSED
