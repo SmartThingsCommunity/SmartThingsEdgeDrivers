@@ -25,31 +25,23 @@ local mock_device = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
       endpoint_id = 1,
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
         {
           cluster_id = clusters.Thermostat.ID,
-          attributes={
-            0,
-            18,
-            26,
-            27,
-            28,
-            65528,
-            65529,
-            65531,
-            65532,
-            65533,
-          },
-          client_commands={
-            0,
-          },
           cluster_revision=5,
           cluster_type="SERVER",
-          events={},
           feature_map=1, -- Heat feature only.
-          server_commands={},
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"}
@@ -66,30 +58,22 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
       endpoint_id = 1,
       clusters = {
         {
           cluster_id = clusters.Thermostat.ID,
-          attributes={
-            0,
-            18,
-            26,
-            27,
-            28,
-            65528,
-            65529,
-            65531,
-            65532,
-            65533,
-          },
-          client_commands={
-            0,
-          },
           cluster_revision=5,
           cluster_type="SERVER",
-          events={},
           feature_map=2, -- Cool feature only.
-          server_commands={},
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
       }

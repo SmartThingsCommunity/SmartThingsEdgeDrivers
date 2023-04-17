@@ -32,11 +32,21 @@ local t_utils = require "integration_test.utils"
 local json = require "st.json"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
+local im = require "st.matter.interaction_model"
 local types = DoorLock.types
 local mock_device_record = {
   profile = t_utils.get_profile_definition("base-lock.yml"),
   manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
   endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
     {
       endpoint_id = 1,
       clusters = {
@@ -299,6 +309,46 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "SetCredential failure does not emit events", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1, -- endpoint_id
+          DoorLock.types.DlStatus.SUCCESS, -- status
+          1, -- user_index
+          2, -- next_credential_index
+          im.InteractionResponse.Status.FAILURE
+        ),
+      },
+    }
+  }
+)
+
+test.register_message_test(
+  "GetCredentialStatus failure does not emit events", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.client.commands.GetCredentialStatusResponse:build_test_command_response(
+          mock_device, 1, -- endpoint_id
+          true, -- credential_exists
+          1, -- user_index
+          nil, -- creator_fabric_index
+          nil, -- last_modified_fabric_index
+          20, -- next_credential_index
+          im.InteractionResponse.Status.FAILURE
+        ),
+      },
+    }
+  }
+)
+
 test.register_coroutine_test(
   "Reloading all codes of an unconfigured lock should generate correct attribute checks", function()
     test.socket.capability:__queue_receive(
@@ -312,7 +362,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Requesting a user code should be handled", function()
+  "Requesting a set user code should be handled", function()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
@@ -353,6 +403,111 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Requesting an unset user code should be handled", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = capabilities.lockCodes.ID, command = "requestCode", args = {1}},
+      }
+    )
+    local credential = {credential_type = types.DlCredentialType.PIN, credential_index = 1}
+    test.socket.matter:__expect_send(
+      {mock_device.id, DoorLock.server.commands.GetCredentialStatus(mock_device, 1, credential)}
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.GetCredentialStatusResponse:build_test_command_response(
+          mock_device, 1, -- endpoint
+          false, -- credential_exists
+          1, -- user_index
+          nil, -- creator_fabric_index
+          nil, -- last_modified_fabric_index
+          20 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes
+          .codeChanged("1 unset", {data = {codeName = "Code 1"}, state_change = true})
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "ScanCodes discovers an unset code", function()
+    --Populate some existing codes
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {}},
+      }
+    )
+    expect_reload_all_codes_messages(mock_device)
+    test.wait_for_events()
+    -- Scan codes again, with first code being discovered as unset
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {}},
+      }
+    )
+    local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.scanCodes("Scanning")
+      )
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, DoorLock.server.commands.GetCredentialStatus(mock_device, 1, credential)}
+    )
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.GetCredentialStatusResponse:build_test_command_response(
+          mock_device, 1, -- endpoint
+          false, --credential exists
+          1,  --user_index
+          nil, --creator fabric index
+          nil, --last modified fabric index
+          nil
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes
+          .codeChanged("1 deleted", {data = {codeName = "Code 1"}, state_change = true})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.lockCodes(
+          json.encode({["2"] = "Code 2"}), {visibility = {displayed = false}}
+        )
+      )
+    )
+    -- Scan codes completes
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.scanCodes("Complete", {visibility = {displayed = false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.lockCodes(
+          json.encode({["2"] = "Code 2"}), {visibility = {displayed = false}}
+        )
+      )
+    )
+  end
+)
 test.register_coroutine_test(
   "Deleting a user code should be handled", function()
     init_code_slot(1, "initialName", mock_device)

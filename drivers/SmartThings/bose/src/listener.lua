@@ -64,7 +64,8 @@ function Listener:now_playing_update(info)
     trackdata.mediaSource = bose_utils.sanitize_field(info.source)
     trackdata.title = bose_utils.sanitize_field(info.track) or
       bose_utils.sanitize_field(info.station) or
-      (info.source == "AUX" and "Auxiliary input") or nil
+      (info.source == "AUX" and "Auxiliary input") or
+      trackdata.mediaSource or "No title"
     self.device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
   end
 end

@@ -66,7 +66,12 @@ matterGeneric:
   - id: "matter/dimmable/switch"
     deviceLabel: Matter Dimmable Switch
     deviceTypes:
-      - id: 0x0104 # Dimmable Switch
+      - id: 0x0104 # Dimmer Switch
+    deviceProfileName: switch-level
+  - id: "matter/dimmable/inunitswitch"
+    deviceLabel: Matter Dimmable Switch
+    deviceTypes:
+      - id: 0x010B # Dimmable PlugIn Unit
     deviceProfileName: switch-level
   - id: "matter/color/switch"
     deviceLabel: Matter Color Switch
