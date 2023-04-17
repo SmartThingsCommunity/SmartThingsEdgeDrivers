@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local json = require "dkjson"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
