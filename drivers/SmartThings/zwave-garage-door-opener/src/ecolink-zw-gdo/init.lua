@@ -103,19 +103,15 @@ local function device_added(driver, device)
   device:send(BarrierOperator:Get({}))
   -- Reset contact sensor battery level... This should be pollable on the GDO side.
   device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-  capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_NORMAL)
-  )
+    capabilities.battery.battery(CONTACTSENSOR_BATTERY_LEVEL_NORMAL))
   -- Reset contact sensor fields
   device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-    capabilities.tamperAlert.tamper.clear()
-    )
+    capabilities.tamperAlert.tamper.clear())
   device:emit_event_for_endpoint(CONTACTSENSOR_ENDPOINT_NUMBER,
-    capabilities.contactSensor.contact.closed()
-    )
+    capabilities.contactSensor.contact.closed())
   -- Init barrier door state
   device:emit_event_for_endpoint(GDO_ENDPOINT_NUMBER,
-    capabilities.doorControl.door.closed()
-    )
+    capabilities.doorControl.door.closed())
 end
 
 --- Configuration Report Handler
@@ -195,14 +191,14 @@ local function notification_report_handler(driver, device, cmd)
       elseif (notificationEvent == Notification.event.access_control.WINDOW_DOOR_IS_CLOSED) then
         barrier_event = capabilities.doorControl.door.closed()
         contact_event = capabilities.contactSensor.contact.closed()
-      elseif (notificationEvent ==
-      Notification.event.access_control.BARRIER_MOTOR_HAS_EXCEEDED_MANUFACTURERS_OPERATIONAL_TIME_LIMIT) then
-        barrier_event = capabilities.doorControl.door.unknown()
-      elseif (notificationEvent ==
-      Notification.event.access_control.BARRIER_UNABLE_TO_PERFORM_REQUESTED_OPERATION_DUE_TO_UL_REQUIREMENTS) then
-        barrier_event = capabilities.doorControl.door.unknown()
-      elseif (notificationEvent ==
-      Notification.event.access_control.BARRIER_FAILED_TO_PERFORM_REQUESTED_OPERATION_DEVICE_MALFUNCTION) then
+      elseif (
+      (notificationEvent ==
+        Notification.event.access_control.BARRIER_MOTOR_HAS_EXCEEDED_MANUFACTURERS_OPERATIONAL_TIME_LIMIT) or
+      (notificationEvent ==
+        Notification.event.access_control.BARRIER_UNABLE_TO_PERFORM_REQUESTED_OPERATION_DUE_TO_UL_REQUIREMENTS) or
+      (notificationEvent ==
+        Notification.event.access_control.BARRIER_FAILED_TO_PERFORM_REQUESTED_OPERATION_DEVICE_MALFUNCTION))
+      then
         barrier_event = capabilities.doorControl.door.unknown()
       elseif (notificationEvent ==
               Notification.event.access_control.BARRIER_SENSOR_NOT_DETECTED_SUPERVISORY_ERROR) then
