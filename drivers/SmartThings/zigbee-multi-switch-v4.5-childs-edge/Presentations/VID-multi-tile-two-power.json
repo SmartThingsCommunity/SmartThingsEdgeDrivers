@@ -1,0 +1,212 @@
+{
+    "mnmn": "SmartThingsCommunity",
+    "vid": "02efd7c3-116b-39d9-b4c9-5a37e763e6aa",
+    "version": "0.0.1",
+    "type": "profile",
+    "dashboard": {
+        "states": [
+            {
+                "component": "main",
+                "capability": "switch",
+                "version": 1,
+                "idx": 0,
+                "group": "main",
+                "values": [],
+                "composite": true
+            },
+            {
+                "component": "switch2",
+                "capability": "switch",
+                "version": 1,
+                "idx": 0,
+                "group": "Switch-2",
+                "values": [],
+                "composite": true
+            },
+            {
+                "component": "main",
+                "capability": "legendabsolute60149.switchAllOnOff1",
+                "version": 1,
+                "idx": 0,
+                "group": "All Switches On-Off",
+                "values": [],
+                "composite": true
+            },
+            {
+                "component": "main",
+                "capability": "powerMeter",
+                "version": 1,
+                "idx": 0,
+                "group": "Power Switch-1",
+                "values": [],
+                "composite": true
+            },
+            {
+                "component": "switch2",
+                "capability": "powerMeter",
+                "version": 1,
+                "idx": 0,
+                "group": "Power Switch-2",
+                "values": [],
+                "composite": true
+            }
+        ],
+        "actions": [
+            {
+                "component": "main",
+                "capability": "switch",
+                "version": 1,
+                "idx": 0,
+                "group": "main",
+                "inline": null
+            },
+            {
+                "component": "switch2",
+                "capability": "switch",
+                "version": 1,
+                "idx": 0,
+                "group": "Switch-2",
+                "inline": null
+            },
+            {
+                "component": "main",
+                "capability": "legendabsolute60149.switchAllOnOff1",
+                "version": 1,
+                "idx": 0,
+                "group": "All Switches On-Off",
+                "inline": null
+            }
+        ],
+        "basicPlus": []
+    },
+    "detailView": [
+        {
+            "component": "main",
+            "capability": "legendabsolute60149.switchAllOnOff1",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "main",
+            "capability": "switch",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "main",
+            "capability": "legendabsolute60149.signalMetrics",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "main",
+            "capability": "powerMeter",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "switch2",
+            "capability": "switch",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "switch2",
+            "capability": "powerMeter",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "main",
+            "capability": "refresh",
+            "version": 1,
+            "values": [],
+            "patch": []
+        },
+        {
+            "component": "switch2",
+            "capability": "refresh",
+            "version": 1,
+            "values": [],
+            "patch": []
+        }
+    ],
+    "automation": {
+        "conditions": [
+            {
+                "component": "main",
+                "capability": "legendabsolute60149.switchAllOnOff1",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "main",
+                "capability": "switch",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "main",
+                "capability": "powerMeter",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "switch2",
+                "capability": "switch",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "switch2",
+                "capability": "powerMeter",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            }
+        ],
+        "actions": [
+            {
+                "component": "main",
+                "capability": "legendabsolute60149.switchAllOnOff1",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "main",
+                "capability": "switch",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            },
+            {
+                "component": "switch2",
+                "capability": "switch",
+                "version": 1,
+                "values": [],
+                "patch": [],
+                "exclusion": []
+            }
+        ]
+    },
+    "presentationId": "02efd7c3-116b-39d9-b4c9-5a37e763e6aa",
+    "manufacturerName": "SmartThingsCommunity"
+}

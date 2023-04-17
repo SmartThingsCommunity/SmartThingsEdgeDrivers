@@ -1,0 +1,32 @@
+name: child-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: SmartPlug
+preferences:
+  - name: "version"
+    title: "Version 5.0 (Jan 2023)"
+    description: "Added: Child Devices Type EDGE_CHILD" 
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 0
+      default: ""
+  - name: "profileType"
+    title: "Child Profile Type"
+    description: "Child Profile Type: DO NOT CHANGE"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "switch": "child-switch"
+      default: "switch"
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch  

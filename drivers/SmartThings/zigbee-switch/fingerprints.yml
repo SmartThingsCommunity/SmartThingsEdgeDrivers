@@ -1993,6 +1993,17 @@ zigbeeManufacturer:
     manufacturer: GE
     model: Daylight
     deviceProfileName: ge-link-bulb
+#NodOn
+  - id: "NodOn/SIN-4-1-20"
+    deviceLabel: "NodOn Multifunction Relay Switch"
+    manufacturer: NodOn
+    model: SIN-4-1-20
+    deviceProfileName: basic-switch
+  - id: "NodOn/SIN-4-1-20-PRO"
+    deviceLabel: "NodOn Multifunction Relay Switch"
+    manufacturer: NodOn
+    model: SIN-4-1-20-PRO
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

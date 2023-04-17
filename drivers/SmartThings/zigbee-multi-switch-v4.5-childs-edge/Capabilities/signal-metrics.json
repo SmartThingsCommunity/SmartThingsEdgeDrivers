@@ -1,0 +1,21 @@
+{
+    "dashboard": {
+        "states": [
+            {
+                "label": "{{signalMetrics.value}}"
+            }
+        ],
+        "actions": []
+    },
+    "detailView": [
+        {
+            "label": "Device Last Hop Metrics:",  
+            "displayType": "state",
+            "state": {
+                "label": "{{signalMetrics.value}}"
+            }
+        }
+    ],
+    "id": "legendabsolute60149.signalMetrics",
+    "version": 1
+}

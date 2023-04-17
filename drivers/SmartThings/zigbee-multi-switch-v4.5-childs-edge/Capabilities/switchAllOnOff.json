@@ -1,0 +1,179 @@
+{
+    "dashboard": {
+        "states": [
+            {
+                "label": "{{switchAllOnOff.value}}",
+                "alternatives": [
+                    {
+                        "key": "All On",
+                        "value": "All On",
+                        "type": "active"
+                    },
+                    {
+                        "key": "All Off",
+                        "value": "All Off",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S1:On ",
+                        "value": "S1:On ",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S1:On S2:On ",      
+                        "value": "S1:On S2:On ",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S2:On ",
+                        "value": "S2:On ",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S2:On S3:On ",
+                        "value": "S2:On S3:On ",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S3:On ",
+                        "value": "S3:On ",
+                        "type": "inactive"
+                    },
+                    {
+                        "key": "S1:On S3:On ",
+                        "value": "S1:On S3:On ",
+                        "type": "inactive"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "displayType": "standbyPowerSwitch",
+                "standbyPowerSwitch": {
+                    "command": {
+                        "on": "All On",
+                        "off": "All Off"
+                    },
+                    "state": {
+                        "value": "switchAllOnOff.value",
+                        "on": "All On",
+                        "off": "All Off",
+                        "valueType": "string"
+                    }
+                }
+            }
+        ]
+    },
+    "detailView": [
+        {
+            "label": "All Switch On-Off",
+            "displayType": "standbyPowerSwitch",
+            "standbyPowerSwitch": {
+                "command": {
+                    "name": "setSwitchAllOnOff",
+                    "on": "All On",
+                    "off": "All Off",
+                    "argumentType": "string"
+                },
+                "state": {
+                    "value": "switchAllOnOff.value",
+                    "valueType": "string",
+                    "on": "All On",
+                    "off": "All Off",
+                    "alternatives": [
+                        {
+                            "key": "All On",
+                            "value": "All On",
+                            "type": "active"
+                        },
+                        {
+                            "key": "All Off",
+                            "value": "All Off",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S1:On ",
+                            "value": "S1:On ",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S1:On S2:On ",
+                            "value": "S1:On S2:On ",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S2:On ",
+                            "value": "S2:On ",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S2:On S3:On ",
+                            "value": "S2:On S3:On ",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S3:On ",
+                            "value": "S3:On ",
+                            "type": "inactive"
+                        },
+                        {
+                            "key": "S1:On S3:On ",
+                            "value": "S1:On S3:On ",
+                            "type": "inactive"
+                        }
+                    ]
+                }
+            },
+            "state": null
+        }
+    ],
+    "automation": {
+        "conditions": [
+            {
+                "label": "All Switch On-Off",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "All On",
+                            "value": "All On",
+                            "type": "active"
+                        },
+                        {
+                            "key": "All Off",
+                            "value": "All Off",
+                            "type": "active"
+                        }
+                    ],
+                    "value": "switchAllOnOff.value",
+                    "valueType": "string"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "label": "All Switch On-Off",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "All On",
+                            "value": "All On",
+                            "type": "active"
+                        },
+                        {
+                            "key": "All Off",
+                            "value": "All Off",
+                            "type": "active"
+                        }
+                    ],
+                    "command": "setSwitchAllOnOff",
+                    "argumentType": "string"
+                }
+            }
+        ]
+    },
+    "id": "legendabsolute60149.switchAllOnOff",
+    "version": 1
+}

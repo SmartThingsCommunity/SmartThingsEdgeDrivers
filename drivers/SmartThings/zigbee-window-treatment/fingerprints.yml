@@ -93,6 +93,17 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+#NodOn
+  - id: "NodOn/SIN-4-RS-20"
+    deviceLabel: "NodOn Roller Shutter Relay Switch"
+    manufacturer: NodOn
+    model: SIN-4-RS-20
+    deviceProfileName: window-treatment-profile-no-firmware-update
+  - id: "NodOn/SIN-4-RS-20-PRO"
+    deviceLabel: "NodOn Roller Shutter Relay Switch PRO"
+    manufacturer: NodOn
+    model: SIN-4-RS-20-PRO
+    deviceProfileName: window-treatment-profile-no-firmware-update
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
