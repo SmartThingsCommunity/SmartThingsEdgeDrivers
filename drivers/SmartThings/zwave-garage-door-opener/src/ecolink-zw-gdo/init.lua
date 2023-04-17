@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -55,14 +55,9 @@ local GDO_CONFIG_PARAM_NO_APP_RETRY = 6
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
 local function can_handle_ecolink_garage_door(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ECOLINK_GARAGE_DOOR_FINGERPRINTS) do
-    if
-    device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId)
-    then
-      return true
-    end
-  end
-  return false
+  return device:id_match(ECOLINK_GARAGE_DOOR_FINGERPRINTS.manufacturerId,
+                          ECOLINK_GARAGE_DOOR_FINGERPRINTS.productType,
+                          ECOLINK_GARAGE_DOOR_FINGERPRINTS.productId)
 end
 
 local function component_to_endpoint(device, component_id)
