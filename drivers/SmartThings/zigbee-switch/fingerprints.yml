@@ -186,11 +186,11 @@ zigbeeManufacturer:
     manufacturer: DAWON_DNS
     model: PM-C250-ZB
     deviceProfileName: switch-power-energy-consumption-report
-  # - id: "DAWON_DNS/PM-B440-ZB"
-  #   deviceLabel: "Dawon Outlet"
-  #   manufacturer: DAWON_DNS
-  #   model: PM-B440-ZB
-  #   deviceProfileName: switch-power-energy-consumption-report
+  - id: "DAWON_DNS/PM-B440-ZB"
+    deviceLabel: "Dawon Outlet"
+    manufacturer: DAWON_DNS
+    model: PM-B440-ZB
+    deviceProfileName: switch-power-energy-consumption-report
   #eWeLink
   - id: "eWeLink/ZB-SW02"
     deviceLabel: "eWeLink Switch 1"
@@ -240,21 +240,21 @@ zigbeeManufacturer:
     manufacturer: Jasco Products
     model: 43082
     deviceProfileName: switch-dimmer-power-energy
-  # - id: "Jasco Products/43095"
-  #   deviceLabel: "Enbrighten Outlet"
-  #   manufacturer: Jasco Products
-  #   model: "43095"
-  #   deviceProfileName: switch-power-energy
-  # - id: "Jasco Products/43132"
-  #   deviceLabel: "Jasco Outlet"
-  #   manufacturer: Jasco Products
-  #   model: "43132"
-  #   deviceProfileName: switch-power-energy
-  # - id: "Jasco Products/43078"
-  #   deviceLabel: "Enbrighten Switch"
-  #   manufacturer: Jasco Products
-  #   model: "43078"
-  #   deviceProfileName: switch-power-energy
+  - id: "Jasco Products/43095"
+    deviceLabel: "Enbrighten Outlet"
+    manufacturer: Jasco Products
+    model: "43095"
+    deviceProfileName: switch-power-energy
+  - id: "Jasco Products/43132"
+    deviceLabel: "Jasco Outlet"
+    manufacturer: Jasco Products
+    model: "43132"
+    deviceProfileName: switch-power-energy
+  - id: "Jasco Products/43078"
+    deviceLabel: "Enbrighten Switch"
+    manufacturer: Jasco Products
+    model: "43078"
+    deviceProfileName: switch-power-energy
   #sengled
   - id: "sengled/E1C-NB7"
     deviceLabel: "Sengled Outlet"
@@ -1103,11 +1103,11 @@ zigbeeManufacturer:
     manufacturer: Ajax online Ltd
     model: AJ_ZB30_GU10
     deviceProfileName: rgbw-bulb-2000K-6500K
-  # - id: "eWeLight/ZB-CL01"
-  #   deviceLabel: easyiot Light
-  #   manufacturer: eWeLight
-  #   model: ZB-CL01
-  #   deviceProfileName: rgbw-bulb-2000K-6500K
+  - id: "eWeLight/ZB-CL01"
+    deviceLabel: easyiot Light
+    manufacturer: eWeLight
+    model: ZB-CL01
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: "CREE/Connected A-19 60W Equivalent"
     deviceLabel: CREE Bulb
     manufacturer: CREE

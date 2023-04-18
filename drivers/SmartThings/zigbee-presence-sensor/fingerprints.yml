@@ -1,14 +1,14 @@
 zigbeeManufacturer:
-#   - id: SmartThings/Arrival/1
-#     deviceLabel: SmartThings Presence Sensor
-#     manufacturer: SmartThings
-#     model: PGC410
-#     deviceProfileName: smartthings-arrival-sensor-v1
-#   - id: SmartThings/Arrival/2
-#     deviceLabel: SmartThings Presence Sensor
-#     manufacturer: SmartThings
-#     model: PGC410EU
-#     deviceProfileName: smartthings-arrival-sensor-v1
+  - id: SmartThings/Arrival/1
+    deviceLabel: SmartThings Presence Sensor
+    manufacturer: SmartThings
+    model: PGC410
+    deviceProfileName: smartthings-arrival-sensor-v1
+  - id: SmartThings/Arrival/2
+    deviceLabel: SmartThings Presence Sensor
+    manufacturer: SmartThings
+    model: PGC410EU
+    deviceProfileName: smartthings-arrival-sensor-v1
   - id: SmartThings/Arrival/3
     deviceLabel: SmartThings Presence Sensor
     manufacturer: SmartThings

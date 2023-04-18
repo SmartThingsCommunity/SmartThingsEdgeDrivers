@@ -523,12 +523,12 @@ zwaveManufacturer:
     productType: 0x4447
     productId: 0x3033
     deviceProfileName: switch-binary
-  # - id: 0307/4447/3031
-  #   deviceLabel: Satco Outlet
-  #   manufacturerId: 0x0307
-  #   productType: 0x4447
-  #   productId: 0x3031
-  #   deviceProfileName: smartplug-binary
+  - id: 0307/4447/3031
+    deviceLabel: Satco Outlet
+    manufacturerId: 0x0307
+    productType: 0x4447
+    productId: 0x3031
+    deviceProfileName: smartplug-binary
   - id: 027A/B111/1E1C
     deviceLabel: Zooz Switch
     manufacturerId: 0x027A

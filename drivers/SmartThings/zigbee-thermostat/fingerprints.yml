@@ -14,11 +14,11 @@ zigbeeManufacturer:
     manufacturer: Danfoss
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
-#   - id: "D5X84YU/eT093WRO"
-#     deviceLabel: POPP Thermostat
-#     manufacturer: D5X84YU
-#     model: eT093WRO
-#     deviceProfileName: thermostat-popp-danfoss
+  - id: "D5X84YU/eT093WRO"
+    deviceLabel: POPP Thermostat
+    manufacturer: D5X84YU
+    model: eT093WRO
+    deviceProfileName: thermostat-popp-danfoss
   - id: "Zen Within/Zen-01"
     deviceLabel: Zen Thermostat
     manufacturer: Zen Within
@@ -29,11 +29,11 @@ zigbeeManufacturer:
     manufacturer: Fidure
     model: A1732R3
     deviceProfileName: base-thermostat
-#   - id: "Sinope Technologies/TH1123ZB"
-#     deviceLabel: Sinope Thermostat
-#     manufacturer: Sinope Technologies
-#     model: TH1123ZB
-#     deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1123ZB"
+    deviceLabel: Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1123ZB
+    deviceProfileName: thermostat-sinope
   - id: "Sinope Technologies/TH1124ZB"
     deviceLabel: Sinope Thermostat
     manufacturer: Sinope Technologies
