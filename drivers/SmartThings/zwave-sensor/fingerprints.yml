@@ -1,9 +1,4 @@
 zwaveManufacturer:
-#   - id: "aeotec/water/6"
-#     deviceLabel: Aeotec Water Leak Sensor
-#     manufacturerId: 0x0086
-#     productId: 0x007A
-#     deviceProfileName: base-water
   - id: "Everspring/0001"
     deviceLabel: Everspring Light
     manufacturerId: 0x0060
