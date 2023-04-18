@@ -74,7 +74,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
     device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
   end
   raw_value_kilowatts = raw_value_kilowatts - offset
-  raw_value_kilowatts = math.floor((raw_value_kilowatts*10^5+0.5))/(10^5) -- Let's round it to 5 decimal places.
+  raw_value_kilowatts = math.floor((raw_value_kilowatts*10^3+0.5))/(10^3) -- Let's round it to 3 decimal(W) places.
 
   local raw_value_watts = raw_value_kilowatts*1000
   local delta_tick = 0
