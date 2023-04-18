@@ -26,6 +26,15 @@ local mock_device = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
       endpoint_id = 1,
       clusters = {
         {
@@ -33,10 +42,6 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_type = "SERVER",
           cluster_revision = 1,
           feature_map = 0, --u32 bitmap
-          attributes = nil, -- attribute id list
-          server_commands = nil, --server cmd id list
-          client_commands = nil, --client cmd id list
-          events = nil, --event id list
         },
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       }
@@ -109,6 +114,19 @@ test.register_message_test(
             channel = "capability",
             direction = "send",
             message = mock_device:generate_test_message("main", capabilities.audioMute.mute.unmuted())
+        },
+        {
+            channel = "matter",
+            direction = "receive",
+            message = {
+                mock_device.id,
+                clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, false)
+            }
+        },
+        {
+            channel = "capability",
+            direction = "send",
+            message = mock_device:generate_test_message("main", capabilities.audioMute.mute.muted())
         }
       }
 )
