@@ -15,12 +15,12 @@ local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4, strict = true })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 2 })
 local constants = require "st.zwave.constants"
 local log = require "log"
+local utils = require "st.utils"
 
 local PROFILE_CHANGED = "profile_changed"
 local LAST_SEQ_NUMBER_KEY = -1
@@ -39,34 +39,34 @@ local ENDPOINTS = {
 
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = {
-    [0x01] = capabilities.button.button.up(),
-    [0x02] = capabilities.button.button.down(),
-    [0x03] = capabilities.button.button.pushed()
+    [0x01] = capabilities.button.button.up({state_change = true}),
+    [0x02] = capabilities.button.button.down({state_change = true}),
+    [0x03] = capabilities.button.button.pushed({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = {
-    [0x01] = capabilities.button.button.up_2x(),
-    [0x02] = capabilities.button.button.down_2x(),
-    [0x03] = capabilities.button.button.pushed_2x()
+    [0x01] = capabilities.button.button.up_2x({state_change = true}),
+    [0x02] = capabilities.button.button.down_2x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_2x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = {
-    [0x01] = capabilities.button.button.up_3x(),
-    [0x02] = capabilities.button.button.down_3x(),
-    [0x03] = capabilities.button.button.pushed_3x()
+    [0x01] = capabilities.button.button.up_3x({state_change = true}),
+    [0x02] = capabilities.button.button.down_3x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_3x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_4_TIMES] = {
-    [0x01] = capabilities.button.button.up_4x(),
-    [0x02] = capabilities.button.button.down_4x(),
-    [0x03] = capabilities.button.button.pushed_4x()
+    [0x01] = capabilities.button.button.up_4x({state_change = true}),
+    [0x02] = capabilities.button.button.down_4x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_4x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_5_TIMES] = {
-    [0x01] = capabilities.button.button.up_5x(),
-    [0x02] = capabilities.button.button.down_5x(),
-    [0x03] = capabilities.button.button.pushed_5x()
+    [0x01] = capabilities.button.button.up_5x({state_change = true}),
+    [0x02] = capabilities.button.button.down_5x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_5x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_HELD_DOWN] = {
-    [0x01] = capabilities.button.button.up_hold(),
-    [0x02] = capabilities.button.button.down_hold(),
-    [0x03] = capabilities.button.button.held()
+    [0x01] = capabilities.button.button.up_hold({state_change = true}),
+    [0x02] = capabilities.button.button.down_hold({state_change = true}),
+    [0x03] = capabilities.button.button.held({state_change = true})
   }
 }
 
@@ -115,16 +115,18 @@ end
 
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    if find_child(device, ENDPOINTS.relay) == nil then
-      local child_metadata = {
-        type = "EDGE_CHILD",
-        label = string.format("%s Relay", device.label),
-        profile = "child-switch",
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
-        vendor_provided_label = string.format("%s Relay", device.label)
-      }
-      driver:try_create_device(child_metadata)
+    if not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
+      if find_child(device, ENDPOINTS.relay) == nil then
+        local child_metadata = {
+          type = "EDGE_CHILD",
+          label = string.format("%s Relay", device.label),
+          profile = "child-switch",
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%02X", ENDPOINTS.relay),
+          vendor_provided_label = string.format("%s Relay", device.label)
+        }
+        driver:try_create_device(child_metadata)
+      end
     end
 
     device:emit_event(capabilities.button.supportedButtonValues(BUTTON_VALUES, { visibility = { displayed = false } }))

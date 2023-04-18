@@ -90,6 +90,11 @@ local function emit_light_status_events(light_device, light)
       light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
       local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
       local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
+      -- We sent a command where hue == 100 and wrapped the value to 0, reverse that here
+      if light_device:get_field(Fields.WRAPPED_HUE) == true and (hue + .05 >= 1 or hue - .05 <= 0) then
+        hue = 1
+        light_device:set_field(Fields.WRAPPED_HUE, false)
+      end
 
       light_device:emit_event(capabilities.colorControl.hue(st_utils.round(hue * 100)))
       light_device:emit_event(capabilities.colorControl.saturation(st_utils.round(sat * 100)))
@@ -309,7 +314,7 @@ local function migrate_light(driver, device, parent_device_id)
       end
 
       for _, light in ipairs(light_resource.data or {}) do
-        local profile_ref = nil
+        local profile_ref
 
         if light.color then
           profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)
@@ -420,7 +425,9 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
-  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  if light_info.color ~= nil and light_info.color.gamut then
+    device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
   device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
@@ -428,6 +435,8 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields._ADDED, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
+  -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
+  handlers.refresh_handler(driver, device)
 end
 
 ---@param driver HueDriver

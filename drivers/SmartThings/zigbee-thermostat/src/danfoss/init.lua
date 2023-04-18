@@ -1,9 +1,6 @@
 local clusters = require "st.zigbee.zcl.clusters"
-local capabilities = require "st.capabilities"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = clusters.PowerConfiguration
-local ThermostatMode = capabilities.thermostatMode
-local Thermostat = clusters.Thermostat
 
 local DANFOSS_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Danfoss", model = "eTRV0100" }
@@ -28,9 +25,6 @@ local danfoss_thermostat = {
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_defaults.battery_volt_attr_handler
-      },
-      [Thermostat.ID] = {
-        [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler
       }
     }
   },

@@ -20,8 +20,6 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
-local json = require "dkjson"
-
 
 local sensor_endpoints = {
   {

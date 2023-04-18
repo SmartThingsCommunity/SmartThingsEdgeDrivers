@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"

@@ -60,8 +60,8 @@ local function sensor_binary_report_handler(self, device, cmd)
 end
 
 local function switch_binary_report_handler(self, device, cmd)
-  local event = nil
   if cmd.args.value == 0 then
+    local event
     if device:get_latest_state("main", capabilities.contactSensor.ID, capabilities.contactSensor.contact.NAME) == "closed" then
       event = capabilities.doorControl.door.opening()
     else

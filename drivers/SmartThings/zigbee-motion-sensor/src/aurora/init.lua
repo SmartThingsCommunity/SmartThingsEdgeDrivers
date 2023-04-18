@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 
 local function added_handler(self, device)
   -- Aurora Smart PIR Sensor doesn't report when there is no motion during pairing process

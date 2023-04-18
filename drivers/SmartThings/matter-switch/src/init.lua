@@ -29,6 +29,7 @@ local function convert_huesat_st_to_matter(val)
 end
 
 local function component_to_endpoint(device, component_id)
+  -- Assumes matter endpoint layout is sequentional starting at 1.
   local ep_num = component_id:match("switch(%d)")
   return ep_num and tonumber(ep_num) or device.MATTER_DEFAULT_ENDPOINT
 end
@@ -53,8 +54,31 @@ local function device_removed(driver, device)
   log.info("device removed")
 end
 
+local function do_configure(driver, device)
+  -- New profiles need to be added for devices that have more switch endpoints
+  local MAX_MULTI_SWITCH_EPS = 7
+  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
+  -- where devices with multiple endpoints with the same device type cannot be detected
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local num_switch_eps = #switch_eps
+  table.sort(switch_eps)
+  --Default MCD switch handling depends on consecutive endpoint numbering
+  if num_switch_eps == switch_eps[num_switch_eps] then
+    if num_switch_eps > 1 then
+      device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
+    end
+    if num_switch_eps > MAX_MULTI_SWITCH_EPS then
+      error(string.format(
+        "Matter multi switch device will not function. Profile doesn't exist with %d components",
+        num_switch_eps
+      ))
+    end
+  end
+end
+
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
+  --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
 end
@@ -84,7 +108,7 @@ end
 
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
+  local req
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
@@ -99,11 +123,10 @@ end
 
 local function handle_set_hue(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
-    req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -112,11 +135,10 @@ end
 
 local function handle_set_saturation(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
-    req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -226,6 +248,7 @@ local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     removed = device_removed,
+    doConfigure = do_configure,
   },
   matter_handlers = {
     attr = {

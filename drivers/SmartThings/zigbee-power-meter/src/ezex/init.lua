@@ -13,11 +13,8 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local ZigbeeDriver = require "st.zigbee"
-local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
@@ -34,6 +31,15 @@ local is_ezex_power_meter = function(opts, driver, device)
   return false
 end
 
+local instantaneous_demand_configuration = {
+  cluster = clusters.SimpleMetering.ID,
+  attribute = clusters.SimpleMetering.attributes.InstantaneousDemand.ID,
+  minimum_interval = 1,
+  maximum_interval = 3600,
+  data_type = clusters.SimpleMetering.attributes.InstantaneousDemand.base_type,
+  reportable_change = 500
+}
+
 local do_configure = function(self, device)
   device:refresh()
   device:configure()
@@ -42,6 +48,9 @@ end
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
+
+  device:add_monitored_attribute(instantaneous_demand_configuration)
+  device:add_configured_attribute(instantaneous_demand_configuration)
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)

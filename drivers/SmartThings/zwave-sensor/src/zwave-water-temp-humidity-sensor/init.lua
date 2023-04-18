@@ -15,18 +15,8 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
---- @type st.zwave.CommandClass.SensorBinary
-local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
---- @type st.zwave.CommandClass.WakeUp
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS = {
   { manufacturerId = 0x0371, productType = 0x0002, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro EU
@@ -47,8 +37,6 @@ local function can_handle_zwave_water_temp_humidity_sensor(opts, driver, device,
   end
   return false
 end
-
-local zwave_handlers = {}
 
 --- Default handler for notification command class reports
 ---

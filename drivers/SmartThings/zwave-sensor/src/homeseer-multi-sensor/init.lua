@@ -21,7 +21,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version = 5})
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1})
-local utils = require "st.utils"
+
 local HOMESEER_MULTI_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x001E, productType = 0x0002, productId = 0x0001 }, -- Homeseer multi sensor HSM100
 }
@@ -58,9 +58,9 @@ end
 
 local function wakeup_notification(driver, device, cmd)
   local get_temp = SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels = {3}})
-  device:send(get_temp) 
+  device:send(get_temp)
   local get_luminance = SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels = {2}})
-  device:send(get_luminance) 
+  device:send(get_luminance)
   device:send(Battery:Get({}))
 end
 

@@ -14,7 +14,6 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local log = require "log"
 local button_utils = require "button_utils"
 
 local WindowCovering = clusters.WindowCovering
