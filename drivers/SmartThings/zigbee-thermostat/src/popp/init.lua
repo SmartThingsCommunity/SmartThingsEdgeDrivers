@@ -34,7 +34,7 @@ local get_cluster_configurations = function()
         attribute = common.WINDOW_OPEN_DETECTION_ID,
         minimum_interval = 60,
         maximum_interval = 43200,
-        reportable_change = 0x01,
+        reportable_change = 1,
         data_type = data_types.Enum8,
         mfg_code = common.MFG_CODE
       },
@@ -42,8 +42,8 @@ local get_cluster_configurations = function()
         cluster = Thermostat.ID,
         attribute = common.EXTERNAL_OPEN_WINDOW_DETECTION_ID,
         minimum_interval = 0,
-        maximum_interval = 1,
-        reportable_change = 0x00,
+        maximum_interval = 65534,
+        reportable_change = 5,
         data_type = data_types.Enum8,
         mfg_code = common.MFG_CODE
       }
