@@ -1,8 +1,6 @@
 require "integration_test"
 -- Mock out globals
 local test = require "integration_test"
-local utils = require "st.utils"
-local test_utils = require "integration_test.utils"
 
 -- clusters
 local clusters = require "st.zigbee.zcl.clusters"

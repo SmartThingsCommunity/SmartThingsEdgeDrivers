@@ -15,10 +15,6 @@ local is_danfoss_thermostat = function(opts, driver, device)
   return false
 end
 
-local supported_thermostat_modes_handler = function(driver, device, supported_modes)
-  device:emit_event(ThermostatMode.supportedThermostatModes({"heat"}, { visibility = { displayed = false } }))
-end
-
 local danfoss_thermostat = {
   NAME = "Danfoss Thermostat Handler",
   zigbee_handlers = {

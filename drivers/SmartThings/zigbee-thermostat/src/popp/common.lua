@@ -91,7 +91,7 @@ end
 
 -- Custom setpoint command handler
 common.setpoint_cmd_handler = function(driver, device, cmd)
-  local payload = nil
+  local payload
   local mode = cmd.args.mode
 
   if has_member(SUPPORTED_MODES, mode) then
