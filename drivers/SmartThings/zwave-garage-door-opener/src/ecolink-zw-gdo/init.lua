@@ -15,7 +15,6 @@
 --- @type st.capabilities
 local capabilities = require "st.capabilities"
 local log = require "log"
-
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.constants
@@ -42,12 +41,14 @@ local CONTACTSENSOR_ENDPOINT_NUMBER = 2
 local CONTACTSENSOR_BATTERY_LEVEL_NORMAL = 100
 local CONTACTSENSOR_BATTERY_LEVEL_LOW = 1
 
-local GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT = 1
-local GDO_CONFIG_PARAM_NO_ACTIVATION_TIME = 2
-local GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT = 3
-local GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT = 4
-local GDO_CONFIG_PARAM_NO_SHAKE_SENSE = 5
-local GDO_CONFIG_PARAM_NO_APP_RETRY = 6
+local GDO_CONFIG_PARAMS = {
+  closeWaitPeriodSec = 1,
+  activationTimeMS = 2,
+  doorOpenTimeoutSec = 3,
+  doorCloseTimeoutSec = 4,
+  shakeSensitivity = 5,
+  applicationLevelRetries = 6
+}
 
 --- Determine whether the passed device is an Ecolink garage door operator
 ---
@@ -116,15 +117,15 @@ end
 
 --- Configuration Report Handler
 ---
+--- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
-local function configure_device_with_updated_config(device)
+local function configure_device_with_updated_config(driver, device)
   local updated_params = {}
-  updated_params[GDO_CONFIG_PARAM_NO_UNATTENDED_WAIT] = {parameter = device.preferences.closeWaitPeriodSec}
-  updated_params[GDO_CONFIG_PARAM_NO_ACTIVATION_TIME] = {parameter = device.preferences.activationTimeMS}
-  updated_params[GDO_CONFIG_PARAM_NO_OPEN_TIMEOUT] = {parameter = device.preferences.doorOpenTimeoutSec}
-  updated_params[GDO_CONFIG_PARAM_NO_CLOSE_TIMEOUT] = {parameter = device.preferences.doorCloseTimeoutSec}
-  updated_params[GDO_CONFIG_PARAM_NO_SHAKE_SENSE] = {parameter = device.preferences.shakeSensitivity}
-  updated_params[GDO_CONFIG_PARAM_NO_APP_RETRY] = {parameter = device.preferences.applicationLevelRetries}
+
+  for param, value in pairs(device.preferences) do
+    updated_params[GDO_CONFIG_PARAMS[param]] = {parameter = value}
+  end
+
   device:send(Configuration:BulkSetV2({
                                         parameter_offset = 1,
                                         size = 2,
@@ -132,19 +133,6 @@ local function configure_device_with_updated_config(device)
                                         default = false,
                                         parameters = updated_params
                                       }))
-end
-
---- Handle Device Needs Configuring Event
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
-local function do_configure(driver, device)
-  configure_device_with_updated_config(device)
-end
-
-local function device_preferences_updated(driver, device, event, args)
-  -- Did my preference value change
-  configure_device_with_updated_config(device)
 end
 
 --- Notification Report Handler
@@ -291,8 +279,8 @@ local ecolink_garage_door_operator = {
   lifecycle_handlers = {
     init = device_instantiated,
     added = device_added,
-    doConfigure = do_configure,
-    infoChanged = device_preferences_updated
+    doConfigure = configure_device_with_updated_config,
+    infoChanged = configure_device_with_updated_config
   },
   can_handle = can_handle_ecolink_garage_door
 }
