@@ -14,6 +14,7 @@ local ThermostatUIConfig = clusters.ThermostatUserInterfaceConfiguration
 
 -- caps
 local capabilities = require "st.capabilities"
+local ThermostatMode = capabilities.thermostatMode
 
 -- MFR specific
 local MFG_CODE = 0x1246
@@ -34,7 +35,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "D5X84YU",
         model = "eT093WRO",
-        server_clusters = { 0x0000, 0x0001, 0x0201, 0x0204 }
+        server_clusters = { 0x0000, 0x0001, 0x0003, 0x0020, 0x0201, 0x0204, 0x0B05 },
+        client_clusters = { 0x000A, 0x0019 }
       }
     }
   }
@@ -48,6 +50,26 @@ end
 
 test.set_test_init_function(test_init)
 
+-- TEST MODEL eT093WRO --
+
+test.register_message_test(
+  "Heating setpoint reports are handled.",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device, 2500) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
+    }
+  }
+)
+
 test.register_coroutine_test(
   "Setting thermostat heating setpoint should generate correct zigbee messages",
   function()
@@ -55,13 +77,13 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 27 } }
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 27.5 } }
       }
     )
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2700)
+        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2750)
       }
     )
     test.wait_for_events()
@@ -75,7 +97,6 @@ test.register_coroutine_test(
     )
   end
 )
-
 
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
@@ -112,54 +133,9 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "heat", "eco" },
+        capabilities.thermostatMode.supportedThermostatModes(
+          { ThermostatMode.thermostatMode.heat.NAME, ThermostatMode.thermostatMode.eco.NAME },
           { visibility = { displayed = false } }))
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        Thermostat.attributes.LocalTemperature:read(mock_device)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        ThermostatUIConfig.attributes.KeypadLockout:read(mock_device)
-      }
-    },
-    {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-      }
-    }, {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, ETRV_WINDOW_OPEN_DETECTION_ATTR_ID, MFG_CODE)
-      }
-    }, {
-      channel = "zigbee",
-      direction = "send",
-      message = {
-        mock_device.id,
-        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, EXTERNAL_WINDOW_OPEN_DETECTION, MFG_CODE)
-      }
     }
   }
 )

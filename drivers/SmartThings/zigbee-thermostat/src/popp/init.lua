@@ -152,7 +152,8 @@ local function device_init(driver, device)
     device:add_monitored_attribute(config)
   end
 
-  -- initial set of heating mode
+  device.thread:call_with_delay(2, function(d)
+    -- initial set of heating mode
     local stored_heat_mode = device:get_field(common.STORED_HEAT_MODE) or 'eco'
     local stored_switch_state = device:get_latest_state("main", Switch.ID, Switch.switch.NAME) or 'on'
 
@@ -169,6 +170,7 @@ local function device_init(driver, device)
     end
 
     do_refresh(driver, device)
+  end)
 end
 
 local function info_changed(driver, device, event, args)
