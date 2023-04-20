@@ -20,6 +20,8 @@ local supported_resource_types = {
   light = true
 }
 
+local try_create_count = {}
+
 -- "forward declarations"
 local discovered_bridge_callback, discovered_device_callback, is_device_service_supported,
 process_discovered_light
@@ -30,6 +32,7 @@ process_discovered_light
 ---@param should_continue function
 function HueDiscovery.discover(driver, _, should_continue)
   log.info("Starting Hue discovery")
+  try_create_count = {}
 
   while should_continue() do
     local known_dni_to_device_map = {}
@@ -47,11 +50,8 @@ function HueDiscovery.discover(driver, _, should_continue)
     HueDiscovery.search_for_bridges(driver, computed_mac_addresses, function(hue_driver, bridge_ip, bridge_id)
       discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_dni_to_device_map)
     end)
-
-    -- The discovery loop needs to yield for `should_continue()` to eventually evaluate falsey
-    socket.sleep(0.2)
   end
-
+  log.trace(st_utils.stringify_table(try_create_count, "Try-Create Count", true))
   log.info("Ending Hue discovery")
 end
 
@@ -102,7 +102,6 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
 
       -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
       -- we strip thoes out and make the string uppercase
-      log.trace("Bridge MAC: ", bridge_info.mac)
       if bridge_info.mac then
         local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
         computed_mac_addresses[ip_addr] = bridge_id
@@ -138,7 +137,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
       and driver.joined_bridges[bridge_id]
       and HueDiscovery.api_keys[bridge_id]
       and known_bridge_device:get_field(Fields._INIT) then
-    log.debug(string.format("Scanning bridge %s for devices...", bridge_id))
+    log.trace(string.format("Scanning bridge %s for devices...", bridge_id))
 
     HueDiscovery.disco_api_instances[bridge_id] = HueDiscovery.disco_api_instances[bridge_id]
         or
@@ -202,6 +201,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
         vendor_provided_label = (bridge_info.name or "Philips Hue Bridge"),
       }
 
+      local count = try_create_count[create_device_msg.label] or 0
+      try_create_count[create_device_msg.label] = count + 1
       driver:try_create_device(create_device_msg)
     end
   end
@@ -294,7 +295,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     elseif light.color_temperature then
       profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
     elseif light.dimming then
-      profile_ref = "white" -- `white` refers to dimmable and includes filament bulbs
+      profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
     else
       log.warn(
         string.format(
@@ -329,7 +330,11 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
       hue_device_id = light.owner.rid
     }
 
+    local count = try_create_count[create_device_msg.label] or 0
+    try_create_count[create_device_msg.label] = count + 1
     driver:try_create_device(create_device_msg)
+    -- rate limit ourself.
+    socket.sleep(0.1)
     ::continue::
   end
 end
