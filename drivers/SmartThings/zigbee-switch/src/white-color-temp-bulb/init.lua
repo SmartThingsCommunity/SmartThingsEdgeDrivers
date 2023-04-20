@@ -21,7 +21,8 @@ local ColorControl = clusters.ColorControl
 local WHITE_COLOR_TEMP_BULB_FINGERPRINTS = {
   ["Samsung Electronics"] = {
     ["ABL-LIGHT-Z-001"] = true,
-    ["SAMSUNG-ITM-Z-001"] = true
+    ["SAMSUNG-ITM-Z-001"] = true,
+    ["SAMSUNG-ITM-Z-005"] = true
   },
   ["Juno"] = {
     ["ABL-LIGHT-Z-001"] = true
