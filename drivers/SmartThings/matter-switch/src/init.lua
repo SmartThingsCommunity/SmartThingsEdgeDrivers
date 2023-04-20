@@ -106,6 +106,12 @@ local tbl_contains = function(t, val)
   return false
 end
 
+local TRANSITION_TIME = 0 --1/10ths of a second
+-- When sent with a command, these options mask and override bitmaps cause the command
+-- to take effect when the switch/light is off.
+local OPTIONS_MASK = 0x01
+local OPTIONS_OVERRIDE = 0x01
+
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req
@@ -113,10 +119,10 @@ local function handle_set_color(driver, device, cmd)
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
     local sat = convert_huesat_st_to_matter(cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, 0, 0, 0)
+    req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   else
     local x, y, _ = utils.safe_hsv_to_xy(cmd.args.color.hue, cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, 0, 0, 0)
+    req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   end
   device:send(req)
 end
@@ -126,7 +132,7 @@ local function handle_set_hue(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
-    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -138,7 +144,7 @@ local function handle_set_saturation(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
-    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -148,7 +154,7 @@ end
 local function handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local temp_in_mired = utils.round(CONVERSION_CONSTANT/cmd.args.temperature)
-  local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, 0, 0, 0)
+  local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
 end
