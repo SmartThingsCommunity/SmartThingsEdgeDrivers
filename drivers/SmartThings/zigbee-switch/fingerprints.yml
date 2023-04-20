@@ -908,6 +908,11 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-002
     deviceProfileName: rgbw-bulb-2700K-5000K
+  - id: Samsung/SAMSUNG-ITM-Z-005
+    deviceLabel: Samsung Switch
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-005
+    deviceProfileName: switch-color-temp
   - id: Juno/ABL-LIGHT-Z-201
     deviceLabel: Juno Connect
     manufacturer: Juno
