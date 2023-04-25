@@ -37,18 +37,16 @@ end
 
 function Discovery.discover(driver, _, should_continue)
   log.info("Starting Sonos discovery")
-  local known_devices_dnis = {}
-  local found_ip_addrs = {}
-
-  local device_list = driver:get_devices()
-  for _, device in ipairs(device_list) do
-    local id = device.device_network_id
-    known_devices_dnis[id] = true
-  end
-
-  driver.found_ips = found_ip_addrs
+  driver.found_ips = {}
 
   while should_continue() do
+    local known_devices_dnis = {}
+    local device_list = driver:get_devices()
+    for _, device in ipairs(device_list) do
+      local id = device.device_network_id
+      known_devices_dnis[id] = true
+    end
+
     ssdp.search(SONOS_SSDP_SEARCH_TERM, function(group_info)
       ssdp_discovery_callback(driver, group_info, known_devices_dnis, driver.found_ips)
     end)
