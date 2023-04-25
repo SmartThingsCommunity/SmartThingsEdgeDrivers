@@ -77,7 +77,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   raw_value_kilowatts = math.floor((raw_value_kilowatts*10^3+0.5))/(10^3) -- Let's round it to 3 decimal(W) places.
 
   local raw_value_watts = raw_value_kilowatts*1000
-  local delta_tick = 0
+  local delta_tick
   local last_save_ticks = device:get_field("LAST_SAVE_TICK")
 
   if last_save_ticks == nil then last_save_ticks = 0 end
@@ -110,7 +110,6 @@ end
 
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1, {persist = true})
   for _, attribute in ipairs(POWERMETER_CONFIGURATION_V2) do
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
