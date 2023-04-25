@@ -20,7 +20,6 @@ local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
-local PowerConfiguration = clusters.PowerConfiguration
 
 local ADURO_NUM_ENDPOINT = 0x04
 local ADURO_MANUFACTURER_SPECIFIC_CLUSTER = 0xFCCC

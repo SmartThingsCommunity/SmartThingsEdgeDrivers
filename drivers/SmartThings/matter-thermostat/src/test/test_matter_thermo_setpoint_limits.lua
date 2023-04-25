@@ -14,7 +14,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
 
 local clusters = require "st.matter.clusters"
 
@@ -25,6 +24,15 @@ local mock_device = test.mock_device.build_test_matter_device({
     product_id = 0x0000,
   },
   endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
     {
       endpoint_id = 1,
       clusters = {

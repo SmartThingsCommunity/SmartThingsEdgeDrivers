@@ -27,12 +27,12 @@ test.add_package_capability("deviceInitialization.yaml")
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
+local Groups = clusters.Groups
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
-local SHADE_STATE_ATTR_ID = 0x0404
 
 local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
 local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
@@ -136,6 +136,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Basic.attributes.ApplicationVersion:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Groups.server.commands.RemoveAllGroups(mock_device)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,

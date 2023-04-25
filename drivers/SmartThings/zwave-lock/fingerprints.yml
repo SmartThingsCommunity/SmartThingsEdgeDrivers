@@ -267,7 +267,7 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x0446
     deviceProfileName: lock-battery
-#   # August
+  # August
   - id: "August"
     deviceLabel: August Door Lock
     manufacturerId: 0x033F

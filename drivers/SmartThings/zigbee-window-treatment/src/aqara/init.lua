@@ -7,6 +7,7 @@ local aqara_utils = require "aqara/aqara_utils"
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local AnalogOutput = clusters.AnalogOutput
+local Groups = clusters.Groups
 
 local deviceInitialization = capabilities["stse.deviceInitialization"]
 local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
@@ -160,6 +161,7 @@ end
 local function do_configure(self, device)
   device:configure()
   device:send(Basic.attributes.ApplicationVersion:read(device))
+  device:send(Groups.server.commands.RemoveAllGroups(device))
   do_refresh(self, device)
 end
 
