@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local MatterDriver = require "st.matter.driver"
-local interaction_model = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 
 local DoorLock = clusters.DoorLock
@@ -125,7 +124,7 @@ end
 
 local function clear_credential_response_handler(driver, device, ib, response)
   local deleted_code_slot = device:get_field(lock_utils.DELETING_CODE)
-  if deleted_code_slot == nil then
+  if deleted_code_slot == nil and ib.status == im.InteractionResponse.Status.SUCCESS then
     device.log.debug("Cleared space in lock credential db for COTA credential")
     return
   end
@@ -228,7 +227,6 @@ local function get_credential_status_response_handler(driver, device, ib, respon
     return
   end
   local elements = ib.info_block.data.elements
-  local user_index = elements.user_index.value
   local credential_exists = elements.credential_exists.value
   local next_credential_index = elements.next_credential_index and elements.next_credential_index.value or nil
 
@@ -481,6 +479,8 @@ end
 local function device_init(driver, device) device:subscribe() end
 
 local function device_added(driver, device)
+  --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
+  --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then

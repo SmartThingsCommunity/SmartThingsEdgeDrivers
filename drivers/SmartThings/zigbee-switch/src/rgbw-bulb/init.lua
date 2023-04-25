@@ -109,7 +109,9 @@ local function do_refresh(driver, device)
 end
 
 local function do_configure(driver, device)
-  device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
+  if device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME) == nil then
+    device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
+  end
   device:configure()
   do_refresh(driver, device)
 end

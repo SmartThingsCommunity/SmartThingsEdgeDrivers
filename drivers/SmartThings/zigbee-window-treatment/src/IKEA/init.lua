@@ -14,7 +14,6 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local window_shade_defaults = require "st.zigbee.defaults.windowShade_defaults"
 
 local WindowCovering = zcl_clusters.WindowCovering
 

@@ -78,6 +78,7 @@ end
 
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
+  --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
 end
@@ -107,7 +108,7 @@ end
 
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
+  local req
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
@@ -122,11 +123,10 @@ end
 
 local function handle_set_hue(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
-    req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
@@ -135,11 +135,10 @@ end
 
 local function handle_set_saturation(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = nil
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
-    req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
+    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, 0, 0, 0)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")

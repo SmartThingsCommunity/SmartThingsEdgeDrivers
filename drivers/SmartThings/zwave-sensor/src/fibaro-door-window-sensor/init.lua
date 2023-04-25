@@ -14,7 +14,6 @@
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
-local Association = (require "st.zwave.CommandClass.Association")({ version = 2 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })

@@ -125,7 +125,6 @@ test.register_coroutine_test(
           floorHighLimit = 30
         }
       }
-      local MFG_CODE = 0x0000
       local SINOPE_CUSTOM_CLUSTER = 0xFF01
       local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
       local MFR_AIR_FLOOR_MODE_ATTRIBUTE = 0x0105

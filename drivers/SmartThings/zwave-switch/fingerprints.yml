@@ -213,65 +213,65 @@ zwaveManufacturer:
     productType: 0x1B01
     productId: 0x1000
     deviceProfileName: fibaro-walli-double-switch
-  # - id: 0086/0003/0084
-  #   deviceLabel: Aeotec Switch 1
-  #   manufacturerId: 0x0086
-  #   productId: 0x0084
-  #   deviceProfileName: metering-switch
-  # - id: 027A/A000/A003
-  #   deviceLabel: Zooz Switch
-  #   manufacturerId: 0x027A
-  #   productType: 0xA000
-  #   productId: 0xA003
-  #   deviceProfileName: metering-switch
-  # - id: 015F/3102/0201
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3102
-  #   productId: 0x0201
-  #   deviceProfileName: switch-binary
-  # - id: 015F/3102/0202
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3102
-  #   productId: 0x0202
-  #   deviceProfileName: switch-binary
-  # - id: 015F/3102/0204
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3102
-  #   productId: 0x0204
-  #   deviceProfileName: switch-binary
-  # - id: 015F/3111/5102
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3111
-  #   productId: 0x3111
-  #   deviceProfileName: switch-binary
-  # - id: 015F/3121/5102
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3121
-  #   productId: 0x5102
-  #   deviceProfileName: switch-binary
-  # - id: 015F/3141/5102
-  #   deviceLabel: WYFY Switch 1
-  #   manufacturerId: 0x015F
-  #   productType: 0x3141
-  #   productId: 0x5102
-    # deviceProfileName: switch-binary
+  - id: 0086/0003/0084
+    deviceLabel: Aeotec Switch 1
+    manufacturerId: 0x0086
+    productId: 0x0084
+    deviceProfileName: metering-switch
+  - id: 027A/A000/A003
+    deviceLabel: Zooz Switch
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA003
+    deviceProfileName: metering-switch
+  - id: 015F/3102/0201
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3102
+    productId: 0x0201
+    deviceProfileName: switch-binary
+  - id: 015F/3102/0202
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3102
+    productId: 0x0202
+    deviceProfileName: switch-binary
+  - id: 015F/3102/0204
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3102
+    productId: 0x0204
+    deviceProfileName: switch-binary
+  - id: 015F/3111/5102
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3111
+    productId: 0x3111
+    deviceProfileName: switch-binary
+  - id: 015F/3121/5102
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3121
+    productId: 0x5102
+    deviceProfileName: switch-binary
+  - id: 015F/3141/5102
+    deviceLabel: WYFY Switch 1
+    manufacturerId: 0x015F
+    productType: 0x3141
+    productId: 0x5102
+    deviceProfileName: switch-binary
   - id: 010F/1C01/1000
     deviceLabel: Fibaro Walli Dimmer Switch
     manufacturerId: 0x010F
     productType: 0x1C01
     productId: 0x1000
     deviceProfileName: fibaro-walli-dimmer
-  # - id: "ZoozPowerStrip"
-  #   deviceLabel: Zooz Power Strip 1
-  #   manufacturerId: 0x027A
-  #   productType: 0xA000
-  #   productId: 0xA004
-  #   deviceProfileName: metering-switch
+  - id: "ZoozPowerStrip"
+    deviceLabel: Zooz Power Strip 1
+    manufacturerId: 0x027A
+    productType: 0xA000
+    productId: 0xA004
+    deviceProfileName: metering-switch
   - id: 0159/0001/0051
     deviceLabel: Qubino Dimmer
     manufacturerId: 0x0159
@@ -297,7 +297,7 @@ zwaveManufacturer:
     productId: 0x0055
     deviceProfileName: qubino-mini-dimmer
   - id: 015D/0651/F51C
-    deviceLabel: Zooz Outlet
+    deviceLabel: Zooz ZEN 20 Power Strip
     manufacturerId: 0x015D
     productType: 0x0651
     productId: 0xF51C
@@ -314,24 +314,24 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x000B
     deviceProfileName: metering-switch-5
-  # - id: 0159/0002/0051
-  #   deviceLabel: Qubino Switch 1
-  #   manufacturerId: 0x0159
-  #   productType: 0x0002
-  #   productId: 0x0051
-  #   deviceProfileName: qubino-flush2-relay
-  # - id: 0159/0002/0052
-  #   deviceLabel: Qubino Switch
-  #   manufacturerId: 0x0159
-  #   productType: 0x0002
-  #   productId: 0x0052
-  #   deviceProfileName: qubino-flush1-relay
-  # - id: 0159/0002/0053
-  #   deviceLabel: Qubino Switch
-  #   manufacturerId: 0x0159
-  #   productType: 0x0002
-  #   productId: 0x0053
-  #   deviceProfileName: qubino-flush1d-relay
+  - id: 0159/0002/0051
+    deviceLabel: Qubino Switch 1
+    manufacturerId: 0x0159
+    productType: 0x0002
+    productId: 0x0051
+    deviceProfileName: qubino-flush2-relay
+  - id: 0159/0002/0052
+    deviceLabel: Qubino Switch
+    manufacturerId: 0x0159
+    productType: 0x0002
+    productId: 0x0052
+    deviceProfileName: qubino-flush1-relay
+  - id: 0159/0002/0053
+    deviceLabel: Qubino Switch
+    manufacturerId: 0x0159
+    productType: 0x0002
+    productId: 0x0053
+    deviceProfileName: qubino-flush1d-relay
   - id: "010F/0203"
     deviceLabel: Fibaro Double Switch
     manufacturerId: 0x010F
@@ -406,12 +406,6 @@ zwaveManufacturer:
     manufacturerId: 0x0113
     productType: 0x5257
     deviceProfileName: switch-binary-indicator
-  - id: 011A/0102/0202
-    deviceLabel: Enerwave Dimmer Switch
-    manufacturerId: 0x011A
-    productType: 0x0102
-    productId: 0x0202
-    deviceProfileName: switch-level
   - id: 001D/1A02/0334
     deviceLabel: Leviton Outlet
     manufacturerId: 0x001D
@@ -617,10 +611,22 @@ zwaveManufacturer:
     productId: 0x0001
     productType: 0x3201
     deviceProfileName: switch-level
+  - id: 001D/3601/0001
+    deviceLabel: Leviton Plug-in Outlet
+    manufacturerId: 0x001D
+    productId: 0x0001
+    productType: 0x3601
+    deviceProfileName: smartplug-binary
   - id: 001D/1B03/0334
     deviceLabel: Leviton Dimmer Switch
     manufacturerId: 0x001D
     productId: 0x0334
+    deviceProfileName: switch-level
+  - id: 011A/0102/0201
+    deviceLabel: Enerwave Dimmer Switch
+    manufacturerId: 0x011A
+    productType: 0x0102
+    productId: 0x0201
     deviceProfileName: switch-level
   - id: 011A/0102/0202
     deviceLabel: Enerwave Dimmer Switch

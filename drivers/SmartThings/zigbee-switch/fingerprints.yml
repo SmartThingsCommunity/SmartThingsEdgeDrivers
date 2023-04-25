@@ -21,7 +21,7 @@ zigbeeManufacturer:
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
     model: "DimmerSwitch_v1.0"
-    deviceProfileName: on-off-level-no-firmware-update
+    deviceProfileName: on-off-level-no-firmware-update 
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
     model: "Mains_Power_Outlet_v1.0"
@@ -141,16 +141,16 @@ zigbeeManufacturer:
     manufacturer: DAWON_DNS
     model: PM-S350-ZB
     deviceProfileName: basic-switch
-  # - id: "DAWON_DNS/ST-S250-ZB"
-  #   deviceLabel: "Dawon Switch 1"
-  #   manufacturer: DAWON_DNS
-  #   model: ST-S250-ZB
-  #   deviceProfileName: basic-switch
-  # - id: "DAWON_DNS/ST-S350-ZB"
-  #   deviceLabel: "Dawon Switch 1"
-  #   manufacturer: DAWON_DNS
-  #   model: ST-S350-ZB
-  #   deviceProfileName: basic-switch
+  - id: "DAWON_DNS/ST-S250-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: ST-S250-ZB
+    deviceProfileName: basic-switch
+  - id: "DAWON_DNS/ST-S350-ZB"
+    deviceLabel: "Dawon Switch 1"
+    manufacturer: DAWON_DNS
+    model: ST-S350-ZB
+    deviceProfileName: basic-switch
   - id: "DAWON_DNS/PM-B430-ZB"
     deviceLabel: "Dawon Outlet"
     manufacturer: DAWON_DNS
