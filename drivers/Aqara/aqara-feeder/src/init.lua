@@ -15,6 +15,7 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTR_ID = 0xFFF1
 local MFG_CODE = 0x115F
 
+
 local function conv_data(param)
   -- convert param to data length & value
   local data_length = string.byte(param, 8)
