@@ -95,7 +95,7 @@ local zigbee_switch_driver_template = {
     require("zll-dimmer-bulb"),
     require("zigbee-switch-power"),
     require("ge-link-bulb"),
-    require("bad_on_off_data_type")
+    require("bad_on_off_data_type"),
     require("robb")
   },
   lifecycle_handlers = {
