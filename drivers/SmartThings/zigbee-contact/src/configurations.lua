@@ -17,7 +17,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
-local PollControl = clusters.PollControl
 
 local devices = {
   ORVIBO_CONTACT = {

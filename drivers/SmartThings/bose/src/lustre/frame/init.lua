@@ -13,7 +13,6 @@
 
 local FrameHeader = require "lustre.frame.frame_header"
 local OpCode = require "lustre.frame.opcode"
-local CloseCode = require"lustre.frame.close".CloseCode
 local CloseFrame = require"lustre.frame.close".CloseFrame
 
 local Frame = {}
@@ -24,10 +23,10 @@ Frame.MAX_CONTROL_FRAME_LENGTH = 125
 function Frame.from_stream(socket)
   local header, err = FrameHeader.from_stream(socket)
   if not header then return nil, err end
-  local payload, err, partial
+  local payload
   if header.length > 0 then
     -- TODO receive in chunks if header.length is too big
-    payload, err, partial = socket:receive(header.length) -- num bytes
+    payload, err, _ = socket:receive(header.length) -- num bytes
     if not payload then
       return nil, err -- TODO return partial frame
     end

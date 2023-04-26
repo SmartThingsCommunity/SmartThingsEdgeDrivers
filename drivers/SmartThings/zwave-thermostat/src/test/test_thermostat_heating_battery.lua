@@ -20,7 +20,6 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local Clock = (require "st.zwave.CommandClass.Clock")({ version = 1 })
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local zw = require "st.zwave"
 local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"

@@ -87,5 +87,4 @@ end
 -- keys are the code slots that ST uses
 -- user_index and credential_index are used in the matter commands
 --
-local user_database_mirror = {}
 return lock_utils

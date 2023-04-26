@@ -12,10 +12,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- Opportunities for improvement:
+-- * MediaInput cluster could be used to support the MediaSource capability.
+-- * Channel cluster could be used to support the TvChannel capability.
+-- * AdvancedSeek feature support.
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local utils = require "st.utils"
 
 local VOLUME_STEP = 5
 
@@ -42,12 +45,13 @@ local configure_handler = function(self, device)
     }))
   end
 
-
+  --Note cluster command support is not checked
   device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
     capabilities.mediaTrackControl.commands.previousTrack.NAME,
     capabilities.mediaTrackControl.commands.nextTrack.NAME,
   }))
 
+  --Note NV, LK, and NK features are not checked to determine if only a subset of these should be supported
   device:emit_event(capabilities.keypadInput.supportedKeyCodes({
     "UP",
     "DOWN",
@@ -102,7 +106,6 @@ local function media_playback_state_attr_handler(driver, device, ib, response)
     [CurrentState.PLAYING] = attr.playing(),
     [CurrentState.PAUSED] = attr.paused(),
     [CurrentState.NOT_PLAYING] = attr.stopped(),
-    -- TODO: Update to use buffering capability attribute once it is available
     [CurrentState.BUFFERING] = attr.playing()
   }
   if ib.data.value ~= nil then
@@ -189,6 +192,7 @@ local function handle_send_key(driver, device, cmd)
     ["NUMBER8"] = KeyCode.NUMBERS8,
     ["NUMBER9"] = KeyCode.NUMBERS9,
   }
+  --TODO may want to add SendKeyResponse handler to log errors if the cmd fails.
   local req = clusters.KeypadInput.server.commands.SendKey(device, endpoint_id, KEY_MAP[cmd.args.keyCode])
   device:send(req)
 end
@@ -222,7 +226,7 @@ local matter_driver_template = {
       clusters.LevelControl.attributes.CurrentLevel
     },
     [capabilities.mediaPlayback.ID] = {
-      clusters.MediaPlayback.attributes.CurrentState
+      clusters.MediaPlayback.attributes.CurrentState,
     }
   },
   capability_handlers = {

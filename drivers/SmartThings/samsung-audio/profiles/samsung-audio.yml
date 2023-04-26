@@ -4,6 +4,18 @@ components:
   capabilities:
   - id: mediaPlayback
     version: 1
+    config:
+      values:
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'play'
+            - 'pause'
+            - 'stop'
+        - key: "playbackStatus.value"
+          enabledValues:
+            - 'playing'
+            - 'paused'
+            - 'stopped'
   - id: mediaTrackControl
     version: 1
   - id: audioMute

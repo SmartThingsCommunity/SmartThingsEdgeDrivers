@@ -17,15 +17,12 @@ local capabilities = require "st.capabilities"
 local zw_test_utilities = require "integration_test.zwave_test_utils"
 local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require 'dkjson'
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 2 })
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
-local DIGITAL_TEMPERATURE_SENSOR_NOT_CONNECTED = -999.9
 
 -- supported comand classes
 local thermostat_endpoints = {
@@ -395,7 +392,9 @@ test.register_coroutine_test(
         mock_device,
         ThermostatSetpoint:Set({
           setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-          value = 21.5
+          value = 21.5,
+          precision = 1,
+          size = 2
         })
       )
     )

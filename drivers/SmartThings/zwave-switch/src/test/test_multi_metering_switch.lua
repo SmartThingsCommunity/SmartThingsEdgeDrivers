@@ -28,13 +28,6 @@ local AEOTEC_PRODUCT_TYPE = 0x0003
 local AEOTEC_PRODUCT_ID = 0x0084
 
 local switch_multicomponent_endpoints = {
-  { -- ep 0 (not used)
-    command_classes = {
-      { value = zw.BASIC },
-      { value = zw.SWITCH_BINARY },
-      { value = zw.METER }
-    }
-  },
   { -- ep 1 (parent)
     command_classes = {
       { value = zw.BASIC },
@@ -53,6 +46,16 @@ local switch_multicomponent_endpoints = {
 
 local mock_parent_device = test.mock_device.build_test_zwave_device({
   profile = profile,
+  label = "Aeotec Switch 1",
+  zwave_endpoints = switch_multicomponent_endpoints,
+  zwave_manufacturer_id = AEOTEC_MANUFACTURER_ID,
+  zwave_product_type = AEOTEC_PRODUCT_TYPE,
+  zwave_product_id = AEOTEC_PRODUCT_ID
+})
+
+local mock_base_device = test.mock_device.build_test_zwave_device({
+  profile = profile,
+  label = "Aeotec Switch 1",
   zwave_endpoints = switch_multicomponent_endpoints,
   zwave_manufacturer_id = AEOTEC_MANUFACTURER_ID,
   zwave_product_type = AEOTEC_PRODUCT_TYPE,
@@ -67,9 +70,63 @@ local mock_child_device = test.mock_device.build_test_child_device({
 
 local function test_init()
   test.mock_device.add_test_device(mock_parent_device)
+  test.mock_device.add_test_device(mock_base_device)
   test.mock_device.add_test_device(mock_child_device)
 end
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Added should create the correct number of children",
+  function ()
+    test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
+    mock_base_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Aeotec Switch 2",
+      profile = "metering-switch",
+      parent_device_id = mock_base_device.id,
+      parent_assigned_child_key = "02"
+    })
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_base_device,
+        SwitchBinary:Get({},
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = { 1 }
+          }
+        )
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_base_device,
+        Meter:Get(
+          { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = { 1 }
+          }
+        )
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+      mock_base_device,
+        Meter:Get(
+          { scale = Meter.scale.electric_meter.WATTS },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 0,
+            dst_channels = { 1 }
+          }
+        )
+      )
+    )
+  end
+)
 
 test.register_coroutine_test(
   "Refresh on parent device sends commands to 1 endpoint",
@@ -566,6 +623,110 @@ test.register_coroutine_test(
         )
       )
     )
+  end
+)
+
+do
+  local power = 89
+  test.register_coroutine_test(
+    "Power meter report from root node device should refresh all devices",
+    function ()
+      test.socket.zwave:__queue_receive({
+        mock_parent_device.id,
+        Meter:Report({
+          scale = Meter.scale.electric_meter.WATTS, meter_value = power
+        })
+      })
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SwitchBinary:Get({},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 1 }
+            }
+          )
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+            { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 1 }
+            }
+          )
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+        mock_parent_device,
+          Meter:Get(
+            { scale = Meter.scale.electric_meter.WATTS },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 1 }
+            }
+          )
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          SwitchBinary:Get({},
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 2 }
+            }
+          )
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_parent_device,
+          Meter:Get(
+            { scale = Meter.scale.electric_meter.KILOWATT_HOURS },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 2 }
+            }
+          )
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+        mock_parent_device,
+          Meter:Get(
+            { scale = Meter.scale.electric_meter.WATTS },
+            {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { 2 }
+            }
+          )
+        )
+      )
+    end
+  )
+end
+
+test.register_coroutine_test(
+  "Switch Binary report from root node device should be ignored",
+  function ()
+    test.socket.zwave:__queue_receive({
+      mock_parent_device.id,
+      SwitchBinary:Report({
+        current_value = 0xFF
+      })
+    })
   end
 )
 
