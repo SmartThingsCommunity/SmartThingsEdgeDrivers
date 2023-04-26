@@ -16,7 +16,6 @@
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
-local Level = clusters.Level
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local capabilities = require "st.capabilities"
