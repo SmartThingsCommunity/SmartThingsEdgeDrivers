@@ -8,13 +8,14 @@ def getEnvName() {
 
 def getChangedDrivers() {
   def drivers = [].toSet()
-  def driver_prefix = "drivers/SmartThings/"
+  def driver_prefix = "drivers/"
   for (changeLogSet in currentBuild.changeSets) {
     for (entry in changeLogSet.items) {
       for (file in entry.affectedFiles) {
         if (file.path.startsWith(driver_prefix) && !file.path.contains("test")) {
           def short_path = file.path.substring(driver_prefix.length())
-          def driver_name = short_path.substring(0, short_path.indexOf('/'))
+          def first_slash = short_path.indexOf('/') + 1
+          def driver_name = short_path.substring(first_slash, short_path.indexOf('/', first_slash))
           drivers.add(driver_name)
         }
       }
