@@ -48,7 +48,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, ElectricalMeasurement.attributes.ACPowerDivisor:build_test_attr_report(mock_device, 0x0A) }
+        message = { mock_device.id, ElectricalMeasurement.attributes.ACPowerDivisor:build_test_attr_report(mock_device, 0x01) }
       },
       {
         channel = "zigbee",
@@ -59,7 +59,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 2.7, unit = "W" }))
+        message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
     }
 )
@@ -75,12 +75,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1.0, deltaEnergy = 0.0 }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.001, unit = "kWh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.0, unit = "kWh"}))
     },
     {
       channel = "zigbee",
@@ -90,12 +85,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1.5, deltaEnergy = 0.5 }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.0015, unit = "kWh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
     }
   }
 )
@@ -125,11 +115,11 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 300, 1)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)
+                                         SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 300, 1)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -139,7 +129,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 0, 65535, 1)
                                        })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
