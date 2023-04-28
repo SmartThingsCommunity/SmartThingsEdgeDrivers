@@ -19,6 +19,11 @@ local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+local preferences = require "preferences"
+
+local function info_changed(self, device, event, args)
+  preferences.update_preferences(self, device, args)
+end
 
 local do_configure = function(self, device)
   device:refresh()
@@ -79,6 +84,7 @@ local zigbee_switch_driver_template = {
   },
   sub_drivers = {
     require("aqara"),
+    require("aqara-light"),
     require("ezex"),
     require("rexense"),
     require("sinope"),
@@ -99,6 +105,7 @@ local zigbee_switch_driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
+    infoChanged = info_changed,
     doConfigure = do_configure
   }
 }
