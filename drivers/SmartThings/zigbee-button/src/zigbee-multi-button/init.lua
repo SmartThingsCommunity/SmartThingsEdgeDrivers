@@ -14,8 +14,6 @@
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
-local log = require "log"
-local utils = require "st.utils"
 
 local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3450-L" },
