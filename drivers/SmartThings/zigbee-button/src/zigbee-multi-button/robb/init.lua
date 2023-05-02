@@ -7,8 +7,6 @@ local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 
-local utils = require "st.utils"
-
 --[[
 The ROBB Wireless Remote Control has 4 or 8 buttons. They are arranged in two columns:
 
@@ -137,7 +135,7 @@ local function added_handler(self, device)
 end
 
 local battery_perc_attr_handler = function(driver, device, value, zb_rx)
-  device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 200)))
+  device:emit_event(capabilities.battery.battery(math.floor(value.value / 2.0 + 0.5)))
 end
 
 -- Map endpoints to component

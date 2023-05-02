@@ -28,33 +28,33 @@ local PowerConfiguration = clusters.PowerConfiguration
 local button_attr = capabilities.button.button
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    {
-      profile = t_utils.get_profile_definition("eight-buttons-battery.yml"),
-      zigbee_endpoints = {
-        [1] = {
-          id = 1,
-          manufacturer = "ROBB smarrt",
-          model = "ROB_200-007-0",
-          server_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
-          client_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
-        },
-        [2] = {
-          id = 2,
-          client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
-          server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
-        },
-        [3] = {
-          id = 3,
-          client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
-          server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
-        },
-        [4] = {
-          id = 4,
-          client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
-          server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
-        }
+  {
+    profile = t_utils.get_profile_definition("eight-buttons-battery.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "ROBB smarrt",
+        model = "ROB_200-007-0",
+        server_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
+        client_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
+      },
+      [2] = {
+        id = 2,
+        client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
+        server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
+      },
+      [3] = {
+        id = 3,
+        client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
+        server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
+      },
+      [4] = {
+        id = 4,
+        client_clusters = { 0x0000, 0x0001, 0x0003, 0x0B05, 0x1000 },
+        server_clusters = { 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0019, 0x0300, 0x1000 }
       }
     }
+  }
 )
 
 local function test_init()
@@ -65,79 +65,79 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-    "Test cases for all 8 buttons beeing pushed",
-    function()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x01) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button1", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x01) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button2", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x02) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button3", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x02) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button4", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x03) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button5", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x03) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button6", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x04) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button7", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-      test.wait_for_events()
-      test.socket.zigbee:__queue_receive({ mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x04) })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("button8", (button_attr.pushed({ state_change = true })))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
-      )
-    end
+  "Test cases for all 8 buttons beeing pushed",
+  function()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x01) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button1", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x01) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button2", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x02) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button3", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x02) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button4", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x03) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button5", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x03) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button6", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.On.ID, 0x0000, "\x00", 0x04) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button7", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({ mock_device.id,
+      zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, OnOff.server.commands.Off.ID, 0x0000, "\x00", 0x04) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("button8", (button_attr.pushed({ state_change = true })))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+    )
+  end
 )
 
 test.register_message_test(
@@ -147,7 +147,8 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x00\x32\x00\x00", 0x01) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x00\x32\x00\x00", 0x01) }
     },
     {
       channel = "capability",
@@ -163,7 +164,8 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x00\x32\x00\x00", 0x02) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x00\x32\x00\x00", 0x02) }
     },
     {
       channel = "capability",
@@ -179,7 +181,8 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x00\x32\x00\x00", 0x03) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x00\x32\x00\x00", 0x03) }
     },
     {
       channel = "capability",
@@ -195,7 +198,8 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x00\x32\x00\x00", 0x04) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x00\x32\x00\x00", 0x04) }
     },
     {
       channel = "capability",
@@ -217,28 +221,14 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x01\x32\x00\x00", 0x01) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x01\x32\x00\x00", 0x01) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("button2", capabilities.button.button.down_hold({ state_change = true }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({ state_change = true }))
-    },
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x01\x32\x00\x00", 0x02) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("button4", capabilities.button.button.down_hold({ state_change = true }))
+      message = mock_device:generate_test_message("button2",
+        capabilities.button.button.down_hold({ state_change = true }))
     },
     {
       channel = "capability",
@@ -249,12 +239,14 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x01\x32\x00\x00", 0x03) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x01\x32\x00\x00", 0x02) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("button6", capabilities.button.button.down_hold({ state_change = true }))
+      message = mock_device:generate_test_message("button4",
+        capabilities.button.button.down_hold({ state_change = true }))
     },
     {
       channel = "capability",
@@ -265,12 +257,32 @@ test.register_message_test(
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id,
-        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000, "\x01\x32\x00\x00", 0x04) }
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x01\x32\x00\x00", 0x03) }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("button8", capabilities.button.button.down_hold({ state_change = true }))
+      message = mock_device:generate_test_message("button6",
+        capabilities.button.button.down_hold({ state_change = true }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({ state_change = true }))
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id,
+        zigbee_test_utils.build_custom_command_id(mock_device, Level.ID, Level.server.commands.MoveWithOnOff.ID, 0x0000,
+          "\x01\x32\x00\x00", 0x04) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("button8",
+        capabilities.button.button.down_hold({ state_change = true }))
     },
     {
       channel = "capability",
@@ -281,44 +293,45 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-    "Configure should configure all necessary attributes",
-    function()
-      test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
-      test.wait_for_events()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-      test.socket.zigbee:__set_channel_ordering("relaxed")
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.environment_update:__queue_receive({ "zigbee",
+      { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.zigbee:__expect_send({
       mock_device.id,
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
     })
-      test.socket.zigbee:__expect_send({
-            mock_device.id,
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
-      })
+    })
 
-      for endpoint = 1,4 do
-        test.socket.zigbee:__expect_send({
-          mock_device.id,
+    for endpoint = 1, 4 do
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOff.ID, endpoint)
-        })
-        test.socket.zigbee:__expect_send({
-          mock_device.id,
-          zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Level.ID, endpoint)
-        })
-      end
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 1)
       })
       test.socket.zigbee:__expect_send({
         mock_device.id,
-        Basic.attributes.DeviceEnabled:write(mock_device, true)
+        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Level.ID, endpoint)
       })
-      test.socket.zigbee:__expect_add_hub_to_group(0xE902)
-      test.socket.zigbee:__expect_add_hub_to_group(0xE903)
-      test.socket.zigbee:__expect_add_hub_to_group(0xE904)
-      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Basic.attributes.DeviceEnabled:write(mock_device, true)
+    })
+    test.socket.zigbee:__expect_add_hub_to_group(0xE902)
+    test.socket.zigbee:__expect_add_hub_to_group(0xE903)
+    test.socket.zigbee:__expect_add_hub_to_group(0xE904)
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.register_coroutine_test(
@@ -328,7 +341,7 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
 
     for button_name, _ in pairs(mock_device.profile.components) do
-      if button_name ~= "main" and ( button_name == "button1" or button_name == "button3" or button_name == "button5" or button_name == "button7") then
+      if button_name ~= "main" and (button_name == "button1" or button_name == "button3" or button_name == "button5" or button_name == "button7") then
         test.socket.capability:__expect_send(
           mock_device:generate_test_message(
             button_name,
@@ -386,7 +399,8 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0x64) }
+      message = { mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0xC8) }
     },
     {
       channel = "capability",
@@ -396,7 +410,8 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0x32) }
+      message = { mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0x64) }
     },
     {
       channel = "capability",
@@ -406,7 +421,8 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "receive",
-      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0) }
+      message = { mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 0) }
     },
     {
       channel = "capability",
