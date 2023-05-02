@@ -109,11 +109,13 @@ local function do_refresh(driver, device)
 end
 
 local function do_configure(driver, device)
-  if device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME) == nil then
-    device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
-  end
   device:configure()
   do_refresh(driver, device)
+end
+
+-- This is only intended to ever happen once, before the device has a color temp
+local function do_added(driver, device)
+  device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
 end
 
 local function set_color_temperature_handler(driver, device, cmd)
@@ -137,7 +139,8 @@ local rgbw_bulb = {
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    added = do_added
   },
   can_handle = can_handle_rgbw_bulb
 }
