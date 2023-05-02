@@ -99,3 +99,8 @@ zigbeeManufacturer:
     manufacturer: THIRDREALITY
     model: 3RWS18BZ
     deviceProfileName: water-battery
+  - id: "Sengled E1L-G7K"
+    deviceLabel: Sengled Water Leak Sensor
+    manufacturer: sengled.
+    model: E1L-G7K
+    deviceProfileName: water-battery
