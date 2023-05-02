@@ -25,6 +25,7 @@ local handlers = require "handlers"
 local HueApi = require "hue.api"
 local HueColorUtils = require "hue.cie_utils"
 local log = require "log"
+local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
 
 local capabilities = require "st.capabilities"
@@ -146,7 +147,8 @@ local function migrate_bridge(driver, device)
 
   if not driver.joined_bridges[device_dni] then
     log.error_with({ hub_logs = true },
-      string.format("Attempted to migrate DTH Hue Bridge %s to Edge Driver but could not find a compatible bridge on the network"
+      string.format(
+        "Attempted to migrate DTH Hue Bridge %s to Edge Driver but could not find a compatible bridge on the network"
         ,
         device.label))
   end
@@ -155,20 +157,31 @@ end
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
 local function spawn_bridge_add_api_key_task(driver, device)
-  local device_dni = device.device_network_id
-  local device_bridge_id = device_dni:get_field(Fields.BRIDGE_ID)
+  local device_bridge_id = device.device_network_id
   cosock.spawn(function()
     -- 30 seconds is the typical UX for waiting to hit the link button in the Hue ecosystem
     local timeout_time = cosock.socket.gettime() + 30
     local bridge_info = driver.joined_bridges[device_bridge_id]
     local bridge_ip = bridge_info.ip
 
-    local api_key = nil
+    -- we pre-declare these variables in the outer scope so that our gotos work.
+    -- a sad day that we need these gotos.
+    local api_key_response, err, api_key, _
     repeat
       local time_remaining = math.max(0, timeout_time - cosock.socket.gettime())
-      if time_remaining == 0 then break end
+      if time_remaining == 0 then
+        log.error(
+          string.format(
+            "Link button not pressed or API key not received for bridge \"%s\" after 30 seconds, sleeping then trying again in a few minutes.",
+            device.label
+          )
+        )
+        cosock.socket.sleep(120)                    -- two minutes
+        timeout_time = cosock.socket.gettime() + 30 -- refresh timeout time
+        goto continue
+      end
 
-      local api_key_response, err, _ = HueApi.request_api_key(bridge_ip)
+      api_key_response, err, _ = HueApi.request_api_key(bridge_ip)
 
       if err ~= nil or not api_key_response then
         log.warn("Error while trying to request Bridge API Key: ", err)
@@ -317,11 +330,12 @@ local function migrate_light(driver, device, parent_device_id)
         local profile_ref
 
         if light.color then
-          profile_ref = "white-and-color-ambiance" -- all color light products support `white` (dimming) and `ambiance` (color temp)
+          profile_ref =
+          "white-and-color-ambiance"     -- all color light products support `white` (dimming) and `ambiance` (color temp)
         elseif light.color_temperature then
           profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
         elseif light.dimming then
-          profile_ref = "white" -- `white` refers to dimmable and includes filament bulbs
+          profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
         else
           log.warn(
             string.format(
@@ -365,10 +379,12 @@ light_added = function(driver, device, parent_device_id, resource_id)
   local device_light_resource_id = resource_id or child_key
 
   if not Discovery.light_state_disco_cache[device_light_resource_id] then
-    local parent_bridge = driver:get_device_info(parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
+    local parent_bridge = driver:get_device_info(parent_device_id or device.parent_device_id or
+    device:get_field(Fields.PARENT_DEVICE_ID))
     if not parent_bridge then
-      log.error(string.format("Device added with parent UUID of %s but could not find a device with that UUID in the driver"
-        , device:get_field(Fields.PARENT_DEVICE_ID)))
+      log.error(string.format(
+        "Device added with parent UUID of %s but could not find a device with that UUID in the driver"
+        , (device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))))
       return
     end
 
@@ -425,7 +441,9 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
-  device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  if light_info.color ~= nil and light_info.color.gamut then
+    device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
+  end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
   device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
@@ -433,6 +451,8 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields._ADDED, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
+  -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
+  handlers.refresh_handler(driver, device)
 end
 
 ---@param driver HueDriver
@@ -453,39 +473,71 @@ local function init_bridge(driver, device)
 
   if not device:get_field(Fields.EVENT_SOURCE) then
     log.trace("Creating SSE EventSource for bridge " .. device.label)
+    device:offline()
+    local url_table = lunchbox_util.force_url_table(bridge_url .. "/eventstream/clip/v2")
     local eventsource = EventSource.new(
-      bridge_url .. "/eventstream/clip/v2",
+      url_table,
       { [HueApi.APPLICATION_KEY_HEADER] = api_key },
       nil
     )
 
     eventsource.onopen = function(msg)
-      log.debug("Event Source Connection re-established, marking online")
+      log.debug(string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
     end
 
-    eventsource.onerror = function(msg)
-      log.error(string.format("Hue Bridge %s Event Source Error: %s", device.label, msg))
+    eventsource.onerror = function()
+      log.error(string.format("Hue Bridge \"%s\" Event Source Error", device.label))
       device:offline()
     end
 
     eventsource.onmessage = function(msg)
       if msg and msg.data then
-        local data_tbl = json.decode(msg.data) or {}
+        local success, events = pcall(json.decode, msg.data)
 
-        for _, msg_data in ipairs(data_tbl) do
-          for _, data in ipairs(msg_data.data) do
-            --- for a regular message from a light doing something normal,
-            --- you get the rid of the light service for that device in
-            --- the data field
-            local light_resource_id = data.id
-            if data.type == "zigbee_connectivity" then
-              --- zigbee connectivity messages emit with the device as the owner
-              light_resource_id = driver.device_rid_to_light_rid[data.owner.rid]
+        if not success then
+          log.error("Couldn't decode JSON in SSE callback: " .. events)
+          return
+        end
+
+        for _, event in ipairs(events) do
+          if event.type == "update" then
+            for _, update_data in ipairs(event.data) do
+              --- for a regular message from a light doing something normal,
+              --- you get the resource id of the light service for that device in
+              --- the data field
+              local light_resource_id = update_data.id
+              if update_data.type == "zigbee_connectivity" and update_data.owner ~= nil then
+                --- zigbee connectivity messages sometimes emit with the device as the owner
+                light_resource_id = driver.device_rid_to_light_rid[update_data.owner.rid]
+              end
+              local light_device = driver.light_id_to_device[light_resource_id]
+              if light_device ~= nil then
+                driver.emit_light_status_events(light_device, update_data)
+              end
             end
-            local light_device = driver.light_id_to_device[light_resource_id]
-            if light_device ~= nil then
-              driver.emit_light_status_events(light_device, data)
+          elseif event.type == "delete" then
+            for _, delete_data in ipairs(event.data) do
+              if delete_data.type == "light" then
+                local light_resource_id = delete_data.id
+                local light_device = driver.light_id_to_device[light_resource_id]
+                if light_device ~= nil then
+                  log.info("Light device \"%s\" was deleted from hue bridge")
+                  light_device:offline()
+                end
+              end
+            end
+          elseif event.type == "add" then
+            for _, add_data in ipairs(event.data) do
+              if add_data.type == "light" then
+                log.info(
+                  string.format(
+                    "New light added to Hue Bridge \"%s\": \"%s\", " ..
+                    "re-run discovery to join new lights to SmartThings",
+                    device.label, st_utils.stringify_table(add_data, nil, false)
+                  )
+                )
+              end
             end
           end
         end
@@ -497,7 +549,8 @@ local function init_bridge(driver, device)
   device:set_field(Fields._INIT, true, { persist = false })
   local ids_to_remove = {}
   for id, light_device in ipairs(driver._lights_pending_refresh) do
-    if light_device:get_field(Fields.PARENT_DEVICE_ID) == device.id then
+    local bridge_id = light_device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+    if bridge_id == device.id then
       table.insert(ids_to_remove, id)
       handlers.refresh_handler(driver, light_device)
     end

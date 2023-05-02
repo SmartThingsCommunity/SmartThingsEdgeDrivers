@@ -139,7 +139,6 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-01P
     deviceProfileName: one-button-battery
-  #ROBB (Sunricher)
   - id: "ROBB smarrt/ROB_200-007-0"
     manufacturer: ROBB smarrt
     model: ROB_200-007-0

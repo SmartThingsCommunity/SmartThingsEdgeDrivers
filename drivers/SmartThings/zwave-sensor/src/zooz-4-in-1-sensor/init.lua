@@ -52,14 +52,7 @@ local function notification_report_handler(self, device, cmd)
   if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
     if cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
       event = cmd.args.notification_status == 0 and capabilities.motionSensor.motion.inactive() or capabilities.motionSensor.motion.active()
-    end
-    if cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
-      event = capabilities.tamperAlert.tamper.detected()
-      device.thread:call_with_delay(10, function(d)
-        device:emit_event(capabilities.tamperAlert.tamper.clear())
-      end)
-    end
-    if cmd.args.event == Notification.event.home_security.STATE_IDLE then
+    elseif cmd.args.event == Notification.event.home_security.STATE_IDLE then
       if #cmd.args.event_parameter >= 1 and string.byte(cmd.args.event_parameter, 1) == 8 then
         event = capabilities.motionSensor.motion.inactive()
       else

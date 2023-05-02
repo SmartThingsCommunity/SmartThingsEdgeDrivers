@@ -114,24 +114,16 @@ local function do_refresh(driver, device, cmd)
     trackdata.album = info.album
     trackdata.albumArtUrl = info.art_url
     trackdata.mediaSource = info.source
-    if info.source == "TUNEIN" then
-      -- Switching to radio source which disables track controls
-      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-    else
-      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-        capabilities.mediaTrackControl.commands.nextTrack.NAME,
-        capabilities.mediaTrackControl.commands.previousTrack.NAME,
-      }))
-    end
-
-    if info.track then
-      trackdata.title = info.track
-    elseif info.station then
-      trackdata.title = info.station
-    elseif info.source == "AUX" then
-      trackdata.title = "Auxilary input"
-    end
+    trackdata.title = info.track or info.station or
+      (info.source == "AUX" and "Auxiliary input") or
+      trackdata.mediaSource or "No title" --title is a required field
     device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+
+    device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+      capabilities.mediaTrackControl.commands.nextTrack.NAME,
+      capabilities.mediaTrackControl.commands.previousTrack.NAME,
+    }))
+
     device:online()
   end
 

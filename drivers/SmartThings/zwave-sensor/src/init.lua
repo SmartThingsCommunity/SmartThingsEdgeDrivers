@@ -123,7 +123,9 @@ local driver_template = {
     require("zwave-water-leak-sensor"),
     require("everspring-motion-light-sensor"),
     require("ezmultipli-multipurpose-sensor"),
-    require("fibaro-motion-sensor")
+    require("fibaro-motion-sensor"),
+    require("v1-contact-event"),
+    require("timed-tamper-clear")
   },
   lifecycle_handlers = {
     added = added_handler,

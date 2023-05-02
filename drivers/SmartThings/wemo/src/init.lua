@@ -34,7 +34,7 @@ local utils = require "st.utils"
 local profiles = {
   ["Insight"] = "wemo.mini-smart-plug.v1",
   ["Socket"] = "wemo.mini-smart-plug.v1",
-  ["Dimmer"] = "wemo.mini-smart-plug.v1",
+  ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
   ["Lightswitch"] = "wemo.light-switch.v1",
 }

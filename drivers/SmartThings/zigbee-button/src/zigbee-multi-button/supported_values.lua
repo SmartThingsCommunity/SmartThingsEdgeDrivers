@@ -23,10 +23,18 @@ local devices = {
   BUTTON_PUSH_HELD_4 = {
     MATCHING_MATRIX = {
       { mfr = "CentraLite", model = "3450-L" },
-      { mfr = "CentraLite", model = "3450-L2" }
+      { mfr = "CentraLite", model = "3450-L2" },
+      { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 4
+  },
+  BUTTON_PUSH_HELD_8 = {
+    MATCHING_MATRIX = {
+      { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
+    NUMBER_OF_BUTTONS = 8
   },
   BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {

@@ -18,11 +18,12 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+
+local ON = 0xFF
+local OFF = 0x00
 
 local sensor_endpoints = {
   {
@@ -301,9 +302,8 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Set({
-                value = 0xFF,
-                duration = "default"
+              Basic:Set({
+                value = ON
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -317,7 +317,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({},
+              SwitchBinary:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -339,9 +339,8 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Set({
-                value = 0xFF,
-                duration = "default"
+              Basic:Set({
+                value = ON
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -355,7 +354,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({},
+              SwitchBinary:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -377,9 +376,8 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Set({
-                value = 0x00,
-                duration = "default"
+              Basic:Set({
+                value = OFF
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -393,7 +391,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({},
+              SwitchBinary:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -415,9 +413,8 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Set({
-                value = 0x00,
-                duration = "default"
+              Basic:Set({
+                value = OFF
               },
                   {
                     encap = zw.ENCAP.AUTO,
@@ -431,7 +428,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
-              SwitchMultilevel:Get({},
+              SwitchBinary:Get({},
                   {
                     encap = zw.ENCAP.AUTO,
                     src_channel = 0,
@@ -440,206 +437,6 @@ test.register_coroutine_test(
           )
       )
     end
-)
-
-test.register_message_test(
-    "Central Scene notification Button pushed should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 1,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button1", capabilities.button.button.pushed({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button held should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 1,
-          key_attributes = CentralScene.key_attributes.KEY_RELEASED }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button1", capabilities.button.button.held({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button down_hold should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 1,
-          key_attributes = CentralScene.key_attributes.KEY_HELD_DOWN }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button1", capabilities.button.button.down_hold({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button double should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 1,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_2_TIMES }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button3", capabilities.button.button.double({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button pushed_3x should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 1,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button5", capabilities.button.button.pushed_3x({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button pushed should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 2,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button2", capabilities.button.button.pushed({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button held should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 2,
-          key_attributes = CentralScene.key_attributes.KEY_RELEASED }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button2", capabilities.button.button.held({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button down_hold should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 2,
-          key_attributes = CentralScene.key_attributes.KEY_HELD_DOWN }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button2", capabilities.button.button.down_hold({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button double should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 2,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_2_TIMES }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button4", capabilities.button.button.double({
-          state_change = true }))
-      }
-    }
-)
-
-test.register_message_test(
-    "Central Scene notification Button pushed should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
-          scene_number = 2,
-          key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES }))
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("button6", capabilities.button.button.pushed_3x({
-          state_change = true }))
-      }
-    }
 )
 
 test.register_coroutine_test(
