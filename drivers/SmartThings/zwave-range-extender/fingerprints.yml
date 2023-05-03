@@ -24,6 +24,13 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0001
     deviceProfileName: range-extender
+# Ring
+  - id: "0346/0401/0202"
+    deviceLabel: Ring Repeated/Extender
+    manufacturerId: 0x0346
+    productType: 0x0401
+    productId: 0x0202
+    deviceProfileName: range-extender
 zwaveGeneric:
   - id: "GenericRemote"
     deviceLabel: Z-Wave Remote
