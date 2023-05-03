@@ -26,7 +26,7 @@ zwaveManufacturer:
     deviceProfileName: range-extender
 # Ring
   - id: "0346/0401/0202"
-    deviceLabel: Ring Repeated/Extender
+    deviceLabel: Ring Repeater/Extender
     manufacturerId: 0x0346
     productType: 0x0401
     productId: 0x0202
