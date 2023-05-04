@@ -1998,6 +1998,11 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E23-N13
     deviceProfileName: rgbw-bulb
+  - id: "sengled/E23-N11"
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E23-N11
+    deviceProfileName: on-off-level
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

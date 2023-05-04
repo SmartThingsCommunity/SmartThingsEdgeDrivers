@@ -41,6 +41,7 @@ local DIMMING_LIGHT_FINGERPRINTS = {
   {mfr = "sengled", model = "E11-U21U31"},                    -- Sengled Element Touch
   {mfr = "sengled", model = "E13-A21"},                       -- Sengled LED Flood Light
   {mfr = "sengled", model = "E11-N1G"},                       -- Sengled Smart LED Vintage Edison Bulb
+  {mfr = "sengled", model = "E23-N11"},                       -- Sengled Element Classic
   {mfr = "Leviton", model = "DL6HD"},   -- Leviton Dimmer Switch
   {mfr = "Leviton", model = "DL3HL"},   -- Leviton Lumina RF Plug-In Dimmer
   {mfr = "Leviton", model = "DL1KD"},   -- Leviton Lumina RF Dimmer Switch
