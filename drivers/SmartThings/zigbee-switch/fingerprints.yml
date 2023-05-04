@@ -1993,6 +1993,11 @@ zigbeeManufacturer:
     manufacturer: GE
     model: Daylight
     deviceProfileName: ge-link-bulb
+  - id: sengled/E23-N13
+    deviceLabel: Sengled Light
+    manufacturer: sengled
+    model: E23-N13
+    deviceProfileName: rgbw-bulb
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
