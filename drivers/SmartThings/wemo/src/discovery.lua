@@ -79,11 +79,11 @@ function Discovery.fetch_device_metadata(url)
 
   local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
-  xml_parser:parse(response)
+  local success, err = pcall(xml_parser.parse, xml_parser, response)
 
-  if not handler.root then
+  if not handler.root or not success then
     log.error("disco| unable to parse device metadata as xml")
-    return nil, "xml parse error"
+    return nil, "xml parse error: " .. (err or "")
   end
 
   local parsed_xml = handler.root
