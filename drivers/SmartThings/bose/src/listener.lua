@@ -133,14 +133,16 @@ function Listener:handle_xml_event(xml)
       local result = {}
       if not updates.presetsUpdated.presets.preset._attr then -- it is a list of presets rather than just one preset
         for _, preset in ipairs(updates.presetsUpdated.presets.preset) do
-          table.insert(result, {
-            id = preset._attr.id, --always exists
-            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
-            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
-            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
-          })
+          if preset._attr and preset._attr.id then
+            table.insert(result, {
+              id = preset._attr.id, --must exist for valid preset
+              name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+              mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+              imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
+            })
+          end
         end
-      else
+      elseif updates.presetsUpdated.presets.preset._attr and updates.presetsUpdated.presets.preset._attr.id then
         table.insert(result, {
           id = updates.presetsUpdated.presets.preset._attr.id,
           name = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.itemName,
@@ -148,6 +150,8 @@ function Listener:handle_xml_event(xml)
           mediaSource = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem._attr.source),
           imageUrl = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.containerArt),
         })
+      else
+        log.warn("received invalid presets from device")
       end
       self:presets_update(result)
     else

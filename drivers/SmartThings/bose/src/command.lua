@@ -330,14 +330,16 @@ function Command.presets(ip)
   if handler.root.presets.preset then
     if not handler.root.presets.preset._attr then -- it is a list of presets rather than just one preset
       for _, preset in ipairs(handler.root.presets.preset) do
-        table.insert(result, {
-          id = preset._attr.id, --always exists
-          name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
-          mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
-          imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
-        })
+        if preset._attr and preset._attr.id then
+          table.insert(result, {
+            id = preset._attr.id, --must exist for a valid preset
+            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
+          })
+        end
       end
-    else
+    elseif handler.root.presets.preset._attr and handler.root.presets.preset._attr.id then
       table.insert(result, {
         id = handler.root.presets.preset._attr.id,
         name = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.itemName,
@@ -345,6 +347,8 @@ function Command.presets(ip)
         mediaSource = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem._attr.source),
         imageUrl = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.containerArt),
       })
+    else
+      log.warn("received invalid presets from device")
     end
   end
 
