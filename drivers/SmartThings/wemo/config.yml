@@ -1,0 +1,5 @@
+name: 'Wemo'
+packageKey: 'com.smartthings.wemo'
+permissions:
+  lan: {}
+  discovery: {}

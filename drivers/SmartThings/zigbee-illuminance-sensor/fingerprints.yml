@@ -1,9 +1,24 @@
+zigbeeManufacturer:
+  - id: "LUMI/lumi.sen_ill.agl01"
+    deviceLabel: Aqara Illuminance Sensor T1
+    manufacturer: LUMI
+    model: lumi.sen_ill.agl01
+    deviceProfileName: battery-illuminance-aqara
 zigbeeGeneric:
   - id: "generic-illuminance-sensor"
     deviceLabel: Illuminance Sensor
     deviceIdentifiers:
       - 0x0106
-    clusters: 
-      server: 
+    clusters:
+      server:
         - 0x0400 # Illuminance Measurement Cluster
     deviceProfileName: base-illuminance
+  - id: "battery-illuminance-sensor"
+    deviceLabel: Illuminance Sensor
+    deviceIdentifiers:
+      - 0x0106
+    clusters:
+      server:
+        - 0x0400 # Illuminance Measurement Cluster
+        - 0x0001 # PowerConfiguration
+    deviceProfileName: battery-illuminance

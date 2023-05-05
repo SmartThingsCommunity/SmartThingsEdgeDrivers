@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
@@ -64,7 +63,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         )
       }
     },
@@ -98,7 +97,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.OFF_DISABLE})
         )
       }
     },

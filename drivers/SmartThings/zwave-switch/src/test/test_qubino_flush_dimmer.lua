@@ -136,7 +136,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         )
       }
     },
@@ -168,7 +168,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value = SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value = SwitchBinary.value.OFF_DISABLE})
         )
       }
     },
@@ -199,8 +199,8 @@ test.register_message_test(
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -222,7 +222,6 @@ test.register_message_test(
   }
 )
 
-local level = 3
 test.register_message_test(
   "Z-Wave SwitchMultilevel reports with non-zero values should evoke Switch and Switch Level capability events",
   {
@@ -233,8 +232,8 @@ test.register_message_test(
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 5,
+            target_value = 0,
+            current_value = 5,
             duration = 0
           })
         )
@@ -331,9 +330,9 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchBinary:Set({
-          target_value = SwitchBinary.value.ON_ENABLE,
-          duration = 0
+        SwitchMultilevel:Set({
+          value = 0xFF,
+          duration = "default"
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -349,7 +348,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -396,9 +395,9 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchBinary:Set({
-          target_value = SwitchBinary.value.OFF_DISABLE,
-          duration = 0
+        SwitchMultilevel:Set({
+          value = 0x00,
+          duration = "default"
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -414,7 +413,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,

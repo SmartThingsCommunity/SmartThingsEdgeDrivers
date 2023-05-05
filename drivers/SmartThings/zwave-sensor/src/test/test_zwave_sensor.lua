@@ -150,31 +150,31 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+    -- },
     {
       channel = "capability",
       direction = "receive",
@@ -324,6 +324,42 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_motion_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_motion_device:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
     }
 )

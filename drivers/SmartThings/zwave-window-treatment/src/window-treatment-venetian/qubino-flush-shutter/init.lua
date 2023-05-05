@@ -24,8 +24,6 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ver
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 
-local WindowShadeDefaults = require "st.zwave.defaults.windowShade"
-local WindowShadeLevelDefaults = require "st.zwave.defaults.windowShadeLevel"
 local preferencesMap = require "preferences"
 
 local utils = require "st.utils"
@@ -37,9 +35,11 @@ local OPERATING_MODE_CONFIGURATION = 71
 local SLATS_TURN_TIME = "slatsTurnTime"
 
 -- fieldnames
-local OPERATING_MODE = "operating_mode"
 local BLINDS_LAST_COMMAND = "blinds_last_command"
 local SHADE_TARGET = "shade_target"
+
+local ENERGY_UNIT_KWH = "kWh"
+local POWER_UNIT_WATT = "W"
 
 local QUBINO_FLUSH_SHUTTER_FINGERPRINTS = {
   {mfr = 0x0159, prod = 0x0003, model = 0x0052}, -- Qubino Flush Shutter AC
@@ -96,10 +96,9 @@ local function close(driver, device, cmd)
 end
 
 local function multilevel_set_handler(self, device, cmd)
-  local event = nil
   local targetLevel = cmd.args.value
   local currentLevel = device:get_latest_state("main",  capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
-  local blindsCommand = nil
+  local blindsCommand
   if currentLevel > targetLevel then
     blindsCommand = capabilities.windowShade.windowShade.closing()
   else
@@ -116,7 +115,7 @@ end
 
 local function meter_report_handler(self, device, cmd)
   local event = nil
-  local event_arguments = nil
+  local event_arguments
   if cmd.args.scale == Meter.scale.electric_meter.WATTS then
     event_arguments = {
       value = cmd.args.meter_value,
@@ -165,7 +164,7 @@ local function device_added(self, device)
   device:send(Association:Set({grouping_identifier = 7, node_ids = {self.environment_info.hub_zwave_id}}))
   device:send(Configuration:Set({parameter_number = 40, size = 1, configuration_value = 1}))
   device:send(Configuration:Set({parameter_number = 71, size = 1, configuration_value = 0}))
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
   device:refresh()
 end
 

@@ -23,11 +23,9 @@ local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
 
--- supported comand classes
+-- supported command classes
 local sensor_endpoints = {
   {
     command_classes = {

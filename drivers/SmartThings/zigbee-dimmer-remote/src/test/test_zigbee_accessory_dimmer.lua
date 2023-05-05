@@ -21,7 +21,6 @@ local Scenes = clusters.Scenes
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(

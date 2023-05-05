@@ -20,9 +20,6 @@ local RelativeHumidity = clusters.RelativeHumidity
 local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
-local ThermostatMode = capabilities.thermostatMode
-local ThermostatOperatingState = capabilities.thermostatOperatingState
-
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
 }
@@ -51,7 +48,7 @@ local do_refresh = function(self, device)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
   do_refresh(self, device)
 end
 

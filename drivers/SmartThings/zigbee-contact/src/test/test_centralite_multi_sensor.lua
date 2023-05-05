@@ -150,7 +150,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
         {
             preferences = {
-              garageSensor = true
+              ["certifiedpreferences.garageSensor"] = true
             }
         }
     ))
@@ -165,7 +165,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
 
     test.wait_for_events()
-    local attr_report_data = {
+    attr_report_data = {
       { 0x0013, data_types.Int16.ID, -50}
     }
     test.socket.zigbee:__queue_receive({
@@ -205,7 +205,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
+    -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
     test.socket.zigbee:__expect_send({
       mock_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_device)

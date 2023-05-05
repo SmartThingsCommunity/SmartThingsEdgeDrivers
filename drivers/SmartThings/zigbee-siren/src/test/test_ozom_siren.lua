@@ -18,7 +18,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local IASZone = clusters.IASZone
 local IASWD = clusters.IASWD
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local data_types = require "st.zigbee.data_types"
 local SirenConfiguration = require "st.zigbee.generated.zcl_clusters.IASWD.types.SirenConfiguration"
 local t_utils = require "integration_test.utils"
@@ -102,7 +101,7 @@ test.register_coroutine_test(
 
 test.register_message_test(
     "Refresh should read all necessary attributes",
-    {   
+    {
       {
         channel = "capability",
         direction = "receive",

@@ -20,7 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 3 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"
 
 local WARM_WHITE_CONFIG = 0x51
@@ -83,11 +82,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
+    -- }
   }
 )
 
@@ -388,7 +387,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchMultilevel:Set({ duration = 1, value = 0xFF })
+      SwitchMultilevel:Set({ duration = "default", value = 0xFF })
       )
     )
     test.wait_for_events()
@@ -411,7 +410,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchMultilevel:Set({ duration = 1, value = 0x00 })
+        SwitchMultilevel:Set({ duration = "default", value = 0x00 })
       )
     )
     test.wait_for_events()

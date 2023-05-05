@@ -19,11 +19,8 @@ local zcl_cmds = require "st.zigbee.zcl.global_commands"
 local IASZone = clusters.IASZone
 local IASWD = clusters.IASWD
 local OnOff = clusters.OnOff
-local PowerConfiguration = clusters.PowerConfiguration
-local TemperatureMeasurement = clusters.TemperatureMeasurement
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local data_types = require "st.zigbee.data_types"
 local SirenConfiguration = require "st.zigbee.generated.zcl_clusters.IASWD.types.SirenConfiguration"
 
@@ -228,16 +225,16 @@ test.register_message_test(
       direction = "receive",
       message = {mock_device.id, "added"}
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.alarm.alarm.off())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.alarm.alarm.off())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    -- }
   }
 )
 

@@ -50,12 +50,12 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_added = function(self, device)
-  if device:supports_capability_by_id("smokeDetector") then
-    device:emit_event(capabilities.smokeDetector.smoke.clear())
-  end
-  if device:supports_capability_by_id("carbonMonoxideDetector") then
-    device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-  end
+  -- if device:supports_capability_by_id("smokeDetector") then
+  --   device:emit_event(capabilities.smokeDetector.smoke.clear())
+  -- end
+  -- if device:supports_capability_by_id("carbonMonoxideDetector") then
+  --   device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  -- end
 end
 
 --- Handle preference changes
@@ -64,7 +64,7 @@ end
 --- @param device st.zwave.Device
 --- @param event table
 --- @param args
-local function info_changed(driver, device, event, args)
+local function info_changed(self, device, event, args)
   if not device:is_cc_supported(cc.WAKE_UP) then
     update_preferences(self, device, args)
   end

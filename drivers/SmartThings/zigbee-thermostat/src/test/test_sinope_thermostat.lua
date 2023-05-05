@@ -120,7 +120,6 @@ test.register_coroutine_test(
           timeFormat = 1 --12h
         }
       }
-      local MFG_CODE = 0x0000
       local SINOPE_CUSTOM_CLUSTER = 0xFF01
       local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
       local MFR_BACKLIGHT_MODE_ATTRIBUTE = 0x0402
@@ -151,6 +150,7 @@ test.register_coroutine_test(
           data_types.validate_or_build_type(0x0001, data_types.Enum8, "payload")
         )
       })
+      test.wait_for_events()
       local updates2 = {
         preferences = {
           keypadLock = 0, --Lock
@@ -183,6 +183,7 @@ test.register_coroutine_test(
           data_types.validate_or_build_type(0x0000, data_types.Enum8, "payload")
         )
       })
+      test.wait_for_events()
     end
 )
 

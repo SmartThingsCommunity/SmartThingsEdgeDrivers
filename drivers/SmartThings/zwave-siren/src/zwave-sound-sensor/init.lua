@@ -15,8 +15,6 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Alarm
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
 
@@ -37,8 +35,6 @@ local function can_handle_zwave_sound_sensor(opts, driver, device, ...)
   end
   return false
 end
-
-local zwave_handlers = {}
 
 --- Default handler for alarm command class reports
 ---
@@ -64,7 +60,7 @@ local function alarm_report_handler(driver, device, cmd)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.soundSensor.sound.not_detected())
+  -- device:emit_event(capabilities.soundSensor.sound.not_detected())
 end
 
 local zwave_sound_sensor = {

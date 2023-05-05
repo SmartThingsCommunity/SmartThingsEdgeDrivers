@@ -14,9 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local window_shade_defaults = require "st.zigbee.defaults.windowShade_defaults"
 local cluster_base = require "st.zigbee.cluster_base"
-local utils = require "st.utils"
 local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = zcl_clusters.PowerConfiguration
@@ -24,7 +22,7 @@ local OnOff = zcl_clusters.OnOff
 local WindowCovering = zcl_clusters.WindowCovering
 
 local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
-    { mfr = "Rooms Beautiful", model = "C001" }
+  { mfr = "Rooms Beautiful", model = "C001" }
 }
 
 local INVERT_CLUSTER = 0xFC00
@@ -33,9 +31,9 @@ local PREV_TIME = "shadeLevelCmdTime"
 
 local is_zigbee_window_shade = function(opts, driver, device)
   for _, fingerprint in ipairs(ZIGBEE_WINDOW_SHADE_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end

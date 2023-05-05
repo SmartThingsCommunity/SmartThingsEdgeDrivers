@@ -87,16 +87,16 @@ test.register_message_test(
         SensorAlarm:Get({})
       )
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
-    }
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    -- },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
+    -- }
   },
   {
     inner_block_ordering = "relaxed"
@@ -111,7 +111,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
           mock_fibaro_door_window_sensor1,
-          Configuration:Set({parameter_number=1, configuration_value=0, size=1})
+          Configuration:Set({parameter_number=1, configuration_value=0, size=2})
         )
       )
       test.socket.zwave:__expect_send(

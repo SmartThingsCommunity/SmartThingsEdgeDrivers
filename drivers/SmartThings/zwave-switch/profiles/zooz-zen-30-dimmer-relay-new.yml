@@ -1,0 +1,280 @@
+name: zooz-zen-30-dimmer-relay-new
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+        config:
+          values:
+            - key: "level.value"
+              range: [1, 100]
+      - id: button
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+preferences:
+  - name: "powerFailure"
+    title: "On Off Status After Power Failure"
+    description: "Set On Off Status After Power Failure"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Dimmer Off / Relay Off"
+        1 : "Dimmer Off / Relay On"
+        2 : "Dimmer On / Relay Off"
+        3 : "Dimmer Remember / Relay Remember"
+        4 : "Dimmer Remember / Relay On"
+        5 : "Dimmer Remember / Relay Off"
+        6 : "Dimmer On / Relay Remember"
+        7 : "Dimmer Off / Relay Remember"
+        8 : "Dimmer On / Relay On"
+      default: 3
+  - name: "ledSceneControl"
+    title: "LED Indicator Mode for Scene Control"
+    description: "LED Indicator Mode for Scene Control can be enabled or disabled"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "LED Enabled"
+        1 : "LED Disabled"
+      default: 1
+  - name: "relayLedMode"
+    title: "Relay LED Indicator Mode"
+    description: "LED Indicator Mode can be set on when device is off, can be set off when device is on and also can be set always on or off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "On When Off"
+        1 : "On When On"
+        2 : "Always Off"
+        3 : "Always On"
+      default: 0
+  - name: "relayLedColor"
+    title: "Relay LED Indicator Color"
+    description: "Set the color of LED Indicator"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "White"
+        1 : "Blue"
+        2 : "Green"
+        3 : "Red"
+      default: 0
+  - name: "relayLedBrightness"
+    title: "Relay LED Indicator Brightness"
+    description: "Set the brightness of LED Indicator"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "100%"
+        1 : "60%"
+        2 : "30%"
+      default: 1
+  - name: "relayAutoOff"
+    title: "Relay Auto Turn-Off Timer (Minutes)"
+    description: "Turn off when set time comes"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  - name: "relayAutoOn"
+    title: "Relay Auto Turn-On Timer (Minutes)"
+    description: "Turn off when set time comes"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  - name: "relayLoadControl"
+    title: "Relay Load Control"
+    description: "Relay Load Control"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Physical Disabled"
+        1 : "Physical / Digital Enabled"
+        2 : "Physical / Digital Disabled"
+      default: 1
+  - name: "dimmerLedMode"
+    title: "Dimmer LED Indicator Mode"
+    description: "LED Indicator Mode can be set on when device is off, can be set off when device is on and also can be set always on or off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "On When Off"
+        1 : "On When On"
+        2 : "Always Off"
+        3 : "Always On"
+      default: 0
+  - name: "dimmerLedColor"
+    title: "Dimmer LED Indicator Color"
+    description: "Set the color of LED Indicator"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "White"
+        1 : "Blue"
+        2 : "Green"
+        3 : "Red"
+      default: 0
+  - name: "dimmerLedBright"
+    title: "Dimmer LED Indicator Brightness"
+    description: "Set the brightness of LED Indicator"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "100%"
+        1 : "60%"
+        2 : "30%"
+      default: 1
+  - name: "dimmerAutoOff"
+    title: "Dimmer Auto Turn-Off Timer (Minutes)"
+    description: "Turn off when set time comes"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  - name: "dimmerAutoOn"
+    title: "Dimmer Auto Turn-On Timer (Minutes)"
+    description: "Turn on when set time comes"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0
+  - name: "dimmerRampRate"
+    title: "Dimmer Physical Ramp Rate (Seconds)"
+    description: "Set the ramp rate due to physical speed"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 1
+  - name: "dimmerPaddleRamp"
+    title: "Dimming Speed when Paddle is Held"
+    description: "Dimming Speed when Paddle is Held"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 4
+  - name: "dimmerMinimumBright"
+    title: "Dimmer Minimum Brightness (%)"
+    description: "Select the minimum level of brightness"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 1
+  - name: "dimmerMaximumBright"
+    title: "Dimmer Maximum Brightness (%)"
+    description: "Select the maximum level of brightness"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 99
+  - name: "dimmerCustomBright"
+    title: "Custom Brightness (%)"
+    description: "Select the custom level of brightness"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 0
+  - name: "dimmerBrightControl"
+    title: "Dimmer Brightness Control"
+    description: "Dimmer Brightness Control"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Double Tap Maximum"
+        1 : "Single Tap Custom"
+        2 : "Single Tap Maximum"
+      default: 0
+  - name: "dimmerDoubleTapFunc"
+    title: "Dimmer Double Tap Function"
+    description: "Dimmer Brightness Control"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Turn on Full Brightness"
+        1 : "Turn on Maximum Brightness"
+      default: 0
+  - name: "dimmerLoadControl"
+    title: "Dimmer Load Control"
+    description: "Dimmer Load Control"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "Physical Disabled"
+        1 : "Physical / Digital Enabled"
+        2 : "Physical / Digital Disabled"
+      default: 1
+  - name: "relayPhysicalDisabledBeh"
+    title: "Relay Physical Disabled Behavior"
+    description: "Relay Physical Disabled Behavior"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Change Status/LED"
+        1: "Don't Change Status/LED"
+      default: 0
+  - name: "dimmerPhysDisBeh"
+    title: "Dimmer Physical Disabled Behavior"
+    description: "Dimmer Physical Disabled Behavior"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Change Status/LED"
+        1: "Don't Change Status/LED"
+      default: 0
+  - name: "dimmerNightBright"
+    title: "Night Mode Brightness (%)"
+    description: "Night Mode Brightness (%)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 20
+  - name: "dimmerPaddleControl"
+    title: "Paddle Orientation for Dimmer"
+    description: "Paddle Orientation for Dimmer"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Normal"
+        1: "Reverse"
+        2: "Toggle"
+      default: 0

@@ -12,19 +12,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local device_management = require "st.zigbee.device_management"
-local utils = require "st.utils"
-
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local OnOff = zcl_clusters.OnOff
-local PowerConfiguration = zcl_clusters.PowerConfiguration
 
 local capabilities = require "st.capabilities"
 local Switch = capabilities.switch
 local SwitchLevel = capabilities.switchLevel
 
 local DEFAULT_LEVEL = 100
-local STEP = 5
 local DOUBLE_STEP = 10
 
 local ZIGBEE_BATTERY_ACCESSORY_DIMMER_FINGERPRINTS = {
@@ -86,8 +81,8 @@ local switch_level_set_level_command_handler = function(driver, device, command)
 end
 
 local device_added = function(self, device)
-  generate_switch_onoff_event(device, "on")
-  generate_switch_level_event(device, DEFAULT_LEVEL)
+  -- generate_switch_onoff_event(device, "on")
+  -- generate_switch_level_event(device, DEFAULT_LEVEL)
 end
 
 local is_zigbee_battery_accessory_dimmer = function(opts, driver, device)

@@ -13,15 +13,13 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=3 })
 
 local IBLINDS_WINDOW_TREATMENT_FINGERPRINTS = {
-  {mfr = 0x0287, prod = 0x0003, model = 0x000D}, -- iBlinds Window Treatment
+  {mfr = 0x0287, prod = 0x0003, model = 0x000D}, -- iBlinds Window Treatment v1 / v2
   {mfr = 0x0287, prod = 0x0004, model = 0x0071}, -- iBlinds Window Treatment v3
-  {mfr = 0x0287, prod = 0x0004, model = 0x0072}  -- iBlinds Window Treatment v3
+  {mfr = 0x0287, prod = 0x0004, model = 0x0072}  -- iBlinds Window Treatment v3.1
 }
 
 --- Determine whether the passed device is iblinds window treatment
@@ -55,7 +53,7 @@ function capability_handlers.close(driver, device)
 end
 
 local function set_shade_level_helper(driver, device, value)
-  local value = math.max(math.min(value, 99), 0)
+  value = math.max(math.min(value, 99), 0)
   value = device.preferences.reverse and 99 - value or value
   if value == 0 or value == 99 then
     device:emit_event(capabilities.windowShade.windowShade.closed())

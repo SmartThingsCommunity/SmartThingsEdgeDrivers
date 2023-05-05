@@ -24,8 +24,6 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Association
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 
-local log = require "log"
-
 local INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS = {
   {mfr = 0x015D, prod = 0x0221, model = 0x251C}, -- Show Home Outlet
   {mfr = 0x0312, prod = 0x0221, model = 0x251C}, -- Inovelli Outlet
@@ -74,7 +72,7 @@ local function basic_set_handler(driver, device, cmd)
 end
 
 local function basic_and_switch_binary_report_handler(driver, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  local value = cmd.args.value and cmd.args.value or cmd.args.target_value
   local event = value == SwitchBinary.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on()
 
 

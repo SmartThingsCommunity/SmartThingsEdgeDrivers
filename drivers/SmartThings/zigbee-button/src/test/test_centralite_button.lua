@@ -35,7 +35,23 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           id = 1,
           manufacturer = "CentraLite",
           model = "3450-L",
+          client_clusters = {0x0006},
           server_clusters = {0x0000, 0x0001, 0x0003, 0x0007, 0x0020, 0x0B05}
+        },
+        [2] = {
+          id = 2,
+          client_clusters = {0x0006},
+          server_clusters = {0x0007}
+        },
+        [3] = {
+          id = 3,
+          client_clusters = {0x0006},
+          server_clusters = {0x0007}
+        },
+        [4] = {
+          id = 4,
+          client_clusters = {0x0006},
+          server_clusters = {0x0007}
         }
       }
     }
@@ -172,7 +188,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -198,45 +214,41 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 4 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } })
+      )
+    )
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "supportedButtonValues", state = { value = { "pushed", "held" } }
-          }
-        })
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        })
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
       end
     end
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
+    -- test.socket.capability:__expect_send({
+    --   mock_device.id,
+    --   {
+    --     capability_id = "button", component_id = "main",
+    --     attribute_id = "button", state = { value = "pushed" }
+    --   }
+    -- })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()

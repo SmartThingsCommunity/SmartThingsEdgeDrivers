@@ -17,10 +17,8 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
-local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
@@ -28,11 +26,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 
 local KILO_PASCAL_PER_INCH_OF_MERCURY = 3.386389
-
-local CLEAN_EVENT_PARAMETER = 0x01
-local SLIGHTLY_POLLUTED_EVENT_PARAMETER = 0x02
-local MODERATELY_POLLUTED_EVENT_PARAMETER = 0x03
-local HIGHLY_POLLUTED_EVENT_PARAMETER = 0x04
 
 local sensor_endpoints = {
   {

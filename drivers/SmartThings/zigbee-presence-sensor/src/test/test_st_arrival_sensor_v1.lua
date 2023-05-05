@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local data_types = require "st.zigbee.data_types"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -70,9 +69,9 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local add_device = function()
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
-  test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
-    capabilities.presenceSensor.presence("present")
-  ))
+  -- test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
+  --   capabilities.presenceSensor.presence("present")
+  -- ))
   test.wait_for_events()
 end
 
@@ -181,6 +180,23 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
   end
+)
+
+test.register_coroutine_test(
+    "init followed by no action should result in timeout",
+    function ()
+      test.mock_device.add_test_device(mock_simple_device)
+      test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+      test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "init"})
+      test.wait_for_events()
+      test.mock_time.advance_time(121)
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
+    end,
+    {
+      test_init = function()
+        zigbee_test_utils.init_noop_health_check_timer()
+      end
+    }
 )
 
 test.run_registered_tests()

@@ -28,44 +28,42 @@ local BUTTON_BATTERY_LOW = 5
 local BUTTON_BATTERY_NORMAL = 99
 
 local aeotec_doorbell_siren_endpoints = {
-  {
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.NOTIFICATION}
-    }
-  }
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.NOTIFICATION}
+  }}
 }
 
 local mock_siren = test.mock_device.build_test_zwave_device({

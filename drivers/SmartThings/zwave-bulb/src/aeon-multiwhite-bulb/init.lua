@@ -15,8 +15,6 @@
 local capabilities = require "st.capabilities"
 --- @type st.utils
 local utils = require "st.utils"
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Basic
@@ -37,7 +35,6 @@ local AEON_MULTIWHITE_BULB_FINGERPRINTS = {
 local WARM_WHITE_CONFIG = 0x51
 local COLD_WHITE_CONFIG = 0x52
 local SWITCH_COLOR_QUERY_DELAY = 2
-local DEFAULT_COLOR_TEMPERATURE = 2700
 
 local function can_handle_aeon_multiwhite_bulb(opts, driver, device, ...)
   for _, fingerprint in ipairs(AEON_MULTIWHITE_BULB_FINGERPRINTS) do
@@ -80,7 +77,6 @@ local function set_color_temperature(driver, device, cmd)
   local warm_value = temp < 5000 and 255 or 0
   local cold_value = temp >= 5000 and 255 or 0
   local parameter_number = temp < 5000 and WARM_WHITE_CONFIG or COLD_WHITE_CONFIG
-  local duration = constants.DEFAULT_DIMMING_DURATION
 
   device:send(Configuration:Set({parameter_number = parameter_number, size = 2, configuration_value = cmd.args.temperature}))
   device:send(SwitchColor:Set({
@@ -104,7 +100,7 @@ local function set_color_temperature(driver, device, cmd)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.colorTemperature.colorTemperature(DEFAULT_COLOR_TEMPERATURE))
+  -- device:emit_event(capabilities.colorTemperature.colorTemperature(DEFAULT_COLOR_TEMPERATURE))
 end
 
 local aeon_multiwhite_bulb = {

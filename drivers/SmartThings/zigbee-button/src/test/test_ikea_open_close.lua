@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"
@@ -24,6 +23,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local WindowCovering = clusters.WindowCovering
+local Groups = clusters.Groups
 
 local button_attr = capabilities.button.button
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -150,6 +150,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.zigbee:__expect_add_hub_to_group(0x0000)
+      test.socket.zigbee:__expect_send({mock_device.id, Groups.commands.AddGroup(mock_device, 0x0000) })
     end
 )
 
@@ -189,13 +190,13 @@ test.register_coroutine_test(
         })
       end
     end
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
+    -- test.socket.capability:__expect_send({
+    --   mock_device.id,
+    --   {
+    --     capability_id = "button", component_id = "main",
+    --     attribute_id = "button", state = { value = "pushed" }
+    --   }
+    -- })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({

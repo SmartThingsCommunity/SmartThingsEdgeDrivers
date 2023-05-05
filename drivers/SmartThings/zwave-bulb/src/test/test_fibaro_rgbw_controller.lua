@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local color_utils = require "st.zwave.utils.color"
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 local t_utils = require "integration_test.utils"
@@ -202,7 +201,7 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION)
+    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_rgbw_controller,
@@ -231,7 +230,7 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION)
+    test.mock_time.advance_time(constants.DEFAULT_GET_STATUS_DELAY)
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_rgbw_controller,

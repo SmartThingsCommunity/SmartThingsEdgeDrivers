@@ -113,7 +113,7 @@ local do_configure = function(self, device)
 end
 
 local device_added = function(self, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
   device:set_field(SOFTWARE_VERSION, 0)
   device:send(Basic.attributes.SWBuildID:read(device))
 end

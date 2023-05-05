@@ -13,8 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = (require "st.zwave.CommandClass")
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver
@@ -42,7 +40,7 @@ end
 local function momentary_switch_on(driver, device)
   device:send(Basic:Set({value = SwitchBinary.value.ON_ENABLE}))
   device:send(SwitchBinary:Get({}))
-  driver:call_with_delay(3, switch_off(driver, device))
+  driver:call_with_delay(3, function() switch_off(driver, device) end)
 end
 
 -------------------------------------------------------------------------------------------

@@ -24,15 +24,6 @@ local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require 'dkjson'
 
--- supported comand classes: BASIC
-local window_shade_basic_endpoints = {
-  {
-    command_classes = {
-      {value = zw.BASIC}
-    }
-  }
-}
-
 -- supported comand classes: SWITCH_MULTILEVEL
 local fibaro_roller_shutter_endpoints = {
   {
@@ -144,8 +135,8 @@ test.register_message_test(
         mock_fibaro_roller_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -174,8 +165,8 @@ test.register_message_test(
         mock_fibaro_roller_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           })
         )
@@ -204,8 +195,8 @@ test.register_message_test(
         mock_fibaro_roller_shutter.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 99,
+            target_value = 0,
+            current_value = 99,
             duration = 0
           })
         )
@@ -377,8 +368,8 @@ test.register_message_test(
         mock_fibaro_roller_shutter_venetian.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           },{encap = zw.ENCAP.AUTO, src_channel = 2, dst_channels = {0}})
         )

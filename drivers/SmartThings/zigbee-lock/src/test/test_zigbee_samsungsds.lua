@@ -16,7 +16,6 @@
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local PowerConfiguration = clusters.PowerConfiguration
@@ -1327,8 +1326,8 @@ test.register_coroutine_test(
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
       test.wait_for_events()
     end
 )

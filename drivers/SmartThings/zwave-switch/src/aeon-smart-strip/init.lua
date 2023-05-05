@@ -19,8 +19,6 @@ local cc = require "st.zwave.CommandClass"
 local utils = require "st.utils"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
@@ -49,7 +47,7 @@ local function can_handle_aeon_smart_strip(opts, driver, device, ...)
 end
 
 local function binary_event_helper(self, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  local value = cmd.args.value and cmd.args.value or cmd.args.target_value
   local event = value == SwitchBinary.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on()
   if cmd.src_channel == 0 then
     device:emit_event_for_endpoint(cmd.src_channel, event)
@@ -108,9 +106,6 @@ local aeon_smart_strip = {
     [cc.METER] = {
       [Meter.REPORT] = meter_report_handler
     }
-  },
-  lifecycle_handlers = {
-    init = device_init
   },
   can_handle = can_handle_aeon_smart_strip,
 }

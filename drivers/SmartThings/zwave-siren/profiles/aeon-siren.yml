@@ -4,15 +4,22 @@ components:
   capabilities:
   - id: alarm
     version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - both
   - id: switch
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: Siren
-metadata:
-  mnmn: SmartThingsEdge
-  vid: Aeon_Siren  # Filtering non-supported alarm values (signal/strobe only)
 preferences:
 - name: type
   title: Sound type

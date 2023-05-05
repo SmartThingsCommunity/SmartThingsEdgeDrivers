@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.flood.agl02"
+    deviceLabel: Aqara Water Leak Sensor
+    manufacturer: LUMI
+    model: lumi.flood.agl02
+    deviceProfileName: water-battery
   - id: "Heiman/Water/1"
     deviceLabel: Orvibo Water Leak Sensor
     manufacturer: Heiman
@@ -83,7 +88,7 @@ zigbeeManufacturer:
     deviceLabel: ADT Water Leak Detector
     manufacturer: Nortek Security and Control
     model: F-ADT-WTR-1
-    deviceProfileName: water-temp-battery
+    deviceProfileName: water-temp-battery-tempOffset
   - id: ThirdReality/3RWS18BZ/1
     deviceLabel: ThirdReality Water Leak Sensor
     manufacturer: Third Reality, Inc

@@ -30,7 +30,7 @@ local metering_switch_endpoints = {
 }
 
 local mock_metering_switch = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("metering-switch.yml"),
+  profile = t_utils.get_profile_definition("smartplug-switch-power-energy.yml"),
   zwave_endpoints = metering_switch_endpoints,
   zwave_manufacturer_id = 0x018C,
   zwave_product_type = 0x0042,

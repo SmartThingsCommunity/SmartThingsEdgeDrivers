@@ -200,15 +200,15 @@ local function activateTamper(device)
   )
 end
 
-local function clearAlarmAndChimeStateOfSoundComponents(device)
-  for endpoint = 1, NUMBER_OF_SOUND_COMPONENTS do
-    clearAlarmAndChime(device, endpoint)
-  end
-end
+-- local function clearAlarmAndChimeStateOfSoundComponents(device)
+--   for endpoint = 1, NUMBER_OF_SOUND_COMPONENTS do
+--     clearAlarmAndChime(device, endpoint)
+--   end
+-- end
 
 local function device_added(self, device)
-  deactivateTamper(device)
-  clearAlarmAndChimeStateOfSoundComponents(device)
+  -- deactivateTamper(device)
+  -- clearAlarmAndChimeStateOfSoundComponents(device)
 end
 
 local function device_init(self, device)

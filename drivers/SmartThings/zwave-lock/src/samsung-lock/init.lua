@@ -20,7 +20,6 @@ local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local access_control_event = Notification.event.access_control
 
 local json = require "dkjson"
-local utils = require "st.utils"
 local constants = require "st.zwave.constants"
 
 local LockDefaults = require "st.zwave.defaults.lock"
@@ -63,20 +62,20 @@ local function notification_report_handler(self, device, cmd)
     elseif event_code == access_control_event.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE then
       local code_id = get_ongoing_code_set(device)
       if code_id ~= nil then
-        event = capabilities.lockCodes.codeChanged(code_id .. " failed")
+        event = capabilities.lockCodes.codeChanged(code_id .. " failed", { state_change = true })
         clear_code_state(device, code_id)
       end
     elseif event_code == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
       -- Update Master Code in the same way as in defaults...
       LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
       -- ...and delete rest of them, as lock does
-      local lock_codes = utils.deep_copy(get_lock_codes(device))
+      local lock_codes = get_lock_codes(device)
       for code_id, _ in pairs(lock_codes) do
         if code_id ~= "0" then
           code_deleted(device, code_id)
         end
       end
-      event = capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device)))
+      event = capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device)), { visibility = { displayed = false } })
     end
   end
 
@@ -93,7 +92,7 @@ local function do_configure(self, device)
   -- taken directly from DTH
   -- Samsung locks won't allow you to enter the pairing menu when locked, so it must be unlocked
   device:emit_event(capabilities.lock.lock.unlocked())
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} )))
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} ), { visibility = { displayed = false } }))
 end
 
 local samsung_lock = {

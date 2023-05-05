@@ -108,12 +108,12 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Button
     manufacturer: OSRAM
     model: LIGHTIFY Dimming Switch
-    deviceProfileName: two-buttons-battery
+    deviceProfileName: two-buttons-battery-holdTime
   - id: CentraLite/3130
     deviceLabel: Centralite Button
     manufacturer: CentraLite
     model: 3130
-    deviceProfileName: two-buttons-battery
+    deviceProfileName: two-buttons-battery-holdTime
   - id: CentraLite/3455-L
     deviceLabel: Iris Button
     manufacturer: CentraLite
@@ -129,3 +129,13 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: button
     deviceProfileName: one-button-temp-battery
+  - id: eWeLink/WB01
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: WB01
+    deviceProfileName: one-button-battery
+  - id: eWeLink/SNZB-01P
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: SNZB-01P
+    deviceProfileName: one-button-battery

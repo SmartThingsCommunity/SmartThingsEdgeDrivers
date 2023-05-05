@@ -17,7 +17,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-local dkjson = require "dkjson"
 local constants = require "st.zwave.constants"
 local capabilities = require "st.capabilities"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
@@ -82,7 +81,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(0))
-      },      
+      },
       {
         channel = "capability",
         direction = "send",
@@ -97,13 +96,13 @@ do
     local r, g, b = utils.hsl_to_rgb(hue, sat)
     r = (r >= 191) and 255 or 0
     g = (g >= 191) and 255 or 0
-    b = (b >= 191) and 255 or 0    
+    b = (b >= 191) and 255 or 0
     test.register_coroutine_test(
         "Color Control capability setColor commands should evoke the correct Z-Wave SETs and GETs",
         function()
             test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
             test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", command = "setColor", args = { { hue = hue, saturation = sat, level = 100 } } } })
-            
+
             test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
                 mock_device,
@@ -142,7 +141,7 @@ do
         function()
             test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
             test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", command = "setColor", args = { { hue = hue, saturation = sat } } } })
-            
+
             test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
                 mock_device,
@@ -272,7 +271,7 @@ test.register_coroutine_test(
                 Basic:Get({})
             )
         )
-        
+
         test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
               mock_device,
@@ -286,7 +285,7 @@ test.register_coroutine_test(
               SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.GREEN })
             )
         )
-        
+
         test.socket.zwave:__expect_send(
             zw_test_utils.zwave_test_build_send_command(
               mock_device,
