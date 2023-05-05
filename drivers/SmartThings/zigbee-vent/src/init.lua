@@ -124,4 +124,5 @@ local zigbee_vent_driver = {
 
 defaults.register_for_default_handlers(zigbee_vent_driver, zigbee_vent_driver.supported_capabilities)
 local driver = ZigbeeDriver("zigbee-vent", zigbee_vent_driver)
+
 driver:run()
