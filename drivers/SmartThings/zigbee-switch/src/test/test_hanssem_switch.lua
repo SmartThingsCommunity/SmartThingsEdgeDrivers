@@ -19,7 +19,7 @@ local OnOff = clusters.OnOff
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
-local profile_def = t_utils.get_profile_definition("basic-switch-no-firmware-update.yaml")
+local profile_def = t_utils.get_profile_definition("basic-switch-no-firmware-update.yml")
 
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
   {
