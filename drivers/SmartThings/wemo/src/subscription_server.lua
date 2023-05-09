@@ -29,11 +29,19 @@ SubscriptionServer.mt = {
 }
 
 function SubscriptionServer:subscribe(device)
-  self.ctrl_tx:send(ControlMessage.Subscribe(device))
+  if device ~= nil then
+    self.ctrl_tx:send(ControlMessage.Subscribe(device))
+  else
+    log.warn("serve| invalid device, cannot subscribe")
+  end
 end
 
 function SubscriptionServer:unsubscribe(device)
-  self.ctrl_tx:send(ControlMessage.Unsubscribe(device))
+  if device ~= nil then
+    self.ctrl_tx:send(ControlMessage.Unsubscribe(device))
+  else
+    log.warn("serve| invalid device, cannot unsubscribe")
+  end
 end
 
 function SubscriptionServer:shutdown()
