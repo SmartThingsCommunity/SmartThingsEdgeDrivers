@@ -18,8 +18,6 @@ local cc = require "st.zwave.CommandClass"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 4 })
 local capabilities = require "st.capabilities"
 
-local TAMPER_TIMER = "_tamper_timer"
-
 local function can_handle_v1_contact_event(opts, driver, device, cmd, ...)
   return opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
@@ -40,17 +38,6 @@ local function handle_v1_contact_event(driver, device, cmd)
     else
       device:emit_event_for_endpoint(cmd.src_channel, capabilities.contactSensor.contact.open())
     end
-  elseif cmd.args.event == 0x03 then
-    device:emit_event_for_endpoint(cmd.src_channel, capabilities.tamperAlert.tamper.detected())
-    -- device doesn't report all clear
-    local tamper_timer = device:get_field(TAMPER_TIMER)
-    if tamper_timer ~= nil then
-      device.thread:cancel_timer(tamper_timer)
-    end
-    device:set_field(TAMPER_TIMER, device.thread:call_with_delay(10, function()
-      device:emit_event_for_endpoint(cmd.src_channel, capabilities.tamperAlert.tamper.clear())
-      device:set_field(TAMPER_TIMER, nil)
-    end))
   end
 end
 
