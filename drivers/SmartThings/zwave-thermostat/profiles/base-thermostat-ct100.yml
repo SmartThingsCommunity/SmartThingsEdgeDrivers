@@ -1,0 +1,40 @@
+name: base-thermostat-ct100
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 1.6, 33.3 ]
+  - id: thermostatCoolingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "coolingSetpoint.value"
+          range: [ 3.3, 35 ]
+  - id: thermostatMode
+    version: 1
+  - id: thermostatFanMode
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - cooling
+            - fan only
+            - idle
+  - id: battery
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat

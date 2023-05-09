@@ -4,7 +4,12 @@ components:
   capabilities:
   - id: relativeHumidityMeasurement
     version: 1
+  - id: firmwareUpdate
+    version: 1
   - id: refresh
     version: 1
   categories:
-  - name: HumiditySensor
+  - name: GenericSensor
+preferences:
+  - preferenceId: humidityOffset
+    explicit: true

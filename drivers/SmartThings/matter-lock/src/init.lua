@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local MatterDriver = require "st.matter.driver"
-local interaction_model = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
 
 local DoorLock = clusters.DoorLock
@@ -125,7 +124,7 @@ end
 
 local function clear_credential_response_handler(driver, device, ib, response)
   local deleted_code_slot = device:get_field(lock_utils.DELETING_CODE)
-  if deleted_code_slot == nil then
+  if deleted_code_slot == nil and ib.status == im.InteractionResponse.Status.SUCCESS then
     device.log.debug("Cleared space in lock credential db for COTA credential")
     return
   end
@@ -203,6 +202,11 @@ local function set_credential_response_handler(driver, device, ib, response)
       device.thread:call_with_delay(0, function(t) set_cota_credential(device, credential_index) end)
     elseif status == DoorLock.types.DlStatus.INVALID_FIELD then
       device.log.error("Invalid SetCredential command sent to set a COTA credential. This is a bug.")
+    elseif elements.next_credential_index.value ~= nil then
+      device.log.warn(string.format(
+        "Received non-success SetCredentialResponse status (%s), but there is a next credential index available", elements.status
+      ))
+      set_cota_credential(device, elements.next_credential_index.value)
     end
   else
     device.log.error(
@@ -223,7 +227,6 @@ local function get_credential_status_response_handler(driver, device, ib, respon
     return
   end
   local elements = ib.info_block.data.elements
-  local user_index = elements.user_index.value
   local credential_exists = elements.credential_exists.value
   local next_credential_index = elements.next_credential_index and elements.next_credential_index.value or nil
 
@@ -246,7 +249,7 @@ local function get_credential_status_response_handler(driver, device, ib, respon
       -- Code has been deleted
       lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
       if cred_index == cota_cred_index then --make sure cota credential exists if it was deleted
-        set_cota_credential(device)
+        set_cota_credential(device, INITIAL_COTA_INDEX)
       end
     else
       -- Code is unset
@@ -344,7 +347,7 @@ local function lock_user_change_event_handler(driver, device, ib, response)
         lock_utils.code_deleted(device, cs)
       end
       lock_utils.lock_codes_event(device, {})
-      if device:get_field(lock_utils.COTA_CRED) ~= nil then set_cota_credential(device) end
+      if device:get_field(lock_utils.COTA_CRED) ~= nil then set_cota_credential(device, INITIAL_COTA_INDEX) end
     else
       device.log.info("Not handling LockUserChange event")
     end
@@ -476,6 +479,8 @@ end
 local function device_init(driver, device) device:subscribe() end
 
 local function device_added(driver, device)
+  --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
+  --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
@@ -559,6 +564,7 @@ local matter_lock_driver = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
+    capabilities.battery,
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }
