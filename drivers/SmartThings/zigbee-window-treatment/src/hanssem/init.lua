@@ -19,7 +19,6 @@ local Messages = require "st.zigbee.messages"
 local data_types = require "st.zigbee.data_types"
 local ZigbeeConstants = require "st.zigbee.constants"
 local generic_body = require "st.zigbee.generic_body"
-local Log = require "log"
 local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local TUYA_CLUSTER = 0xEF00
@@ -63,8 +62,7 @@ local function SendCommand(device, DpId, Type, Value)
   local LenOfValue = string.pack(">I2",string.len(Value))  -- Pack length of Value to 2 bytes unsigned integer type wiht big endian.
   local PayloadBody = generic_body.GenericBody(strSeqNum .. DpId .. Type .. LenOfValue .. Value)
   local MsgBody = ZigbeeZcl.ZclMessageBody({zcl_header = zclh, zcl_body = PayloadBody})
-  local TxMsg = Messages.ZigbeeMessageTx({address_header = addrh, body = MsgBody})
-  Log.debug(string.format(" ###########>>>>>>>>>>>> Send DpId : %d   Value : %d", string.byte(DpId,1), string.unpack(">I"..string.len(Value),Value)))
+  local TxMsg = Messages.ZigbeeMessageTx({address_header = addrh, body = MsgBody})  
   device:send(TxMsg)
 end
 
