@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
 
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local clusters = require "st.zigbee.zcl.clusters"
-local ZigbeeZcl = require "st.zigbee.zcl"
-local Messages = require "st.zigbee.messages"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
@@ -28,13 +25,11 @@ local PROFILE_ID = 0x104
 
 local TY_DATA_REQUEST = 0x00	--The gateway sends a data request to the Zigbee device.
 local TY_DATA_RESPONE = 0x01    --The Zigbee device responds to the gateway
-local DP_TYPE_VALUE = "\x02"
-local DP_TYPE_ENUM = "\x04"
 
 local SeqNum = 0
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-  { profile = t_utils.get_profile_definition("window-treatment-hanssem.yml"),
+  { profile = t_utils.get_profile_definition("window-treatment-reverse.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -43,7 +38,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         server_clusters = {0x0000, 0x0102, TUYA_CLUSTER}
       }
     }
-  } 
+  }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -63,9 +58,9 @@ local function build_rx_message(device, payload)
     MFG_CODE,
     strSeqNum .. payload,
     0x00
-  )  
+  )
   message.body.zcl_header.frame_ctrl.value = FRAME_CTRL_RX
-  message.address_header.profile.value = PROFILE_ID  
+  message.address_header.profile.value = PROFILE_ID
   return message
 end
 
@@ -81,7 +76,7 @@ local function build_tx_message(device, payload)
     0x00
   )
   message.body.zcl_header.frame_ctrl.value = FRAME_CTRL_TX
-  message.address_header.profile.value = PROFILE_ID  
+  message.address_header.profile.value = PROFILE_ID
   return message
 end
 
@@ -92,7 +87,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
-      )    
+      )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
     test.mock_time.advance_time(3)
@@ -127,15 +122,14 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x01\x04\x00\x01\x00")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening()))
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x07\x04\x00\x01\x00")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening()))
-
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -143,7 +137,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))
-    
   end
 )
 
@@ -171,15 +164,14 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x01\x04\x00\x01\x02")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x07\x04\x00\x01\x01")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
-
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -187,7 +179,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
-    
   end
 )
 
@@ -215,13 +206,13 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x01\x04\x00\x01\x02")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x07\x04\x00\x01\x01")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
     test.wait_for_events()
     test.socket.capability:__queue_receive(
@@ -235,7 +226,6 @@ test.register_coroutine_test(
       mock_device.id,
       build_tx_message(mock_device,"\x01\x04\x00\x01\x01")
     })
-
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -243,7 +233,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
-    
   end
 )
 
@@ -271,15 +260,14 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x02\x02\x00\x04\x00\x00\x00\x32")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x07\x04\x00\x01\x01")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
-
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -287,7 +275,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
-    
   end
 )
 
@@ -318,15 +305,14 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x02\x02\x00\x04\x00\x00\x00\x1E")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x07\x04\x00\x01\x01")
-    })    
+    })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing()))
-
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
@@ -334,7 +320,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(30)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
-    
   end
 )
 
@@ -349,28 +334,23 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))
     test.wait_for_events()
-
     test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {reverse = true}}))
-    
     test.socket.zigbee:__expect_send({
       mock_device.id,
       build_tx_message(mock_device,"\x02\x02\x00\x04\x00\x00\x00\x32")
     })
-    
     test.wait_for_events()
-
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x32")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
-
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({
       mock_device.id,
       build_tx_message(mock_device,"\x05\x04\x00\x01\x01")
-    }) 
+    })
   end
 )
 
