@@ -62,7 +62,7 @@ local function SendCommand(device, DpId, Type, Value)
   local LenOfValue = string.pack(">I2",string.len(Value))  -- Pack length of Value to 2 bytes unsigned integer type wiht big endian.
   local PayloadBody = generic_body.GenericBody(strSeqNum .. DpId .. Type .. LenOfValue .. Value)
   local MsgBody = ZigbeeZcl.ZclMessageBody({zcl_header = zclh, zcl_body = PayloadBody})
-  local TxMsg = Messages.ZigbeeMessageTx({address_header = addrh, body = MsgBody})  
+  local TxMsg = Messages.ZigbeeMessageTx({address_header = addrh, body = MsgBody})
   device:send(TxMsg)
 end
 
@@ -168,7 +168,7 @@ local function TuyaClusterRx(driver, device, zb_rx)
     elseif value == 2 then	-- 2 : close
       device:emit_event(capabilities.windowShade.windowShade.closing())
     end
-  elseif dp_id == 2 then -- 0x02: Set Curtain Position in Percentage	
+  elseif dp_id == 2 then -- 0x02: Set Curtain Position in Percentage
     emit_event_movement_status(device, value)
   elseif dp_id == 3 then -- 0x03: Current Curtain Position
     emit_event_final_position(device, value)
@@ -182,7 +182,7 @@ local function TuyaClusterRx(driver, device, zb_rx)
     end
     if device:get_field("DirectionChange") == 1 then
       device:set_field("DirectionChange",0)
-      emit_event_final_position(device, getLatestLevel(device))	
+      emit_event_final_position(device, getLatestLevel(device))
     end
   end
 end
@@ -205,7 +205,7 @@ local function device_info_changed(driver, device, event, args)
     device.thread:call_with_delay(2, function()
       SendCommand(device, DP_ID_RESET_DIRECTION, DP_TYPE_ENUM, device.preferences.reverse and DP_VAL_REVERSE or DP_VAL_DIRECT)
     end)
-  end	
+  end
 end
 
 ---------------------- Driver Template ------------------------h
