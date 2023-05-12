@@ -9,7 +9,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: GenericSensor
+  - name: Thermostat
 preferences:
   - preferenceId: tempOffset
     explicit: true

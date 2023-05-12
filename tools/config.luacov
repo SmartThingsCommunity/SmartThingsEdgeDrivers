@@ -1,0 +1,16 @@
+configuration = {
+  exclude = {
+    "scripting-engine",
+    "lua_libs",
+    "test",
+    "unofficial"
+  },
+  cobertura = {
+    filenameparser = function(filename)
+      local cwd = os.getenv("PWD")
+      return cwd..'/'..filename
+    end
+  }
+}
+
+return configuration

@@ -55,7 +55,7 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-    device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
 local matter_driver_template = {

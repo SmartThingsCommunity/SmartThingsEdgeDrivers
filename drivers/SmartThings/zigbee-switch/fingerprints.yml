@@ -29,6 +29,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.n0agl1
     deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.light.acn004"
+    deviceLabel: Aqara Smart Dimmer Controller T1 Pro
+    manufacturer: LUMI
+    model: lumi.light.acn004
+    deviceProfileName: aqara-light
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
@@ -868,6 +873,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSP019BZ
     deviceProfileName: basic-switch
+  - id: Third Reality/3RSP02028BZ
+    deviceLabel: ThirdReality Plug
+    manufacturer: Third Reality, Inc
+    model: 3RSP02028BZ
+    deviceProfileName: switch-power-energy
   - id: "DAWON_DNS/PM-S140-ZB"
     deviceLabel: Dawon Switch
     manufacturer: DAWON_DNS
@@ -927,7 +937,7 @@ zigbeeManufacturer:
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-002
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: Juno/ABL-LIGHT-Z-201
     deviceLabel: Juno Connect
     manufacturer: Juno
@@ -1222,12 +1232,12 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb-2700K-5000K
+    deviceProfileName: abl-light-z-001-bulb
   - id: Juno/ABL-LIGHT-Z-001
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb-2700K-5000K
+    deviceProfileName: abl-light-z-001-bulb
   - id: Samsung/SAMSUNG-ITM-Z-001
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -2013,6 +2023,22 @@ zigbeeManufacturer:
     manufacturer: GE
     model: Daylight
     deviceProfileName: ge-link-bulb
+  #ROBB (Sunricher)
+  - id: "ROBB smarrt/ROB_200-004-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-004-0
+    deviceLabel: ROBB SMARRT Zigbee dimmer 3-wire
+    deviceProfileName: on-off-level
+  - id: "ROBB smarrt/ROB_200-014-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-014-0
+    deviceLabel: ROBB SMARRT Zigbee rotary dimmer 2-wire
+    deviceProfileName: light-level-power-energy
+  - id: "ROBB smarrt/ROB_200-011-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-011-0
+    deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
+    deviceProfileName: light-level-power-energy
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

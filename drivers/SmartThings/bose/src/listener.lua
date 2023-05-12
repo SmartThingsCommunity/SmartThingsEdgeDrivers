@@ -62,28 +62,10 @@ function Listener:now_playing_update(info)
     trackdata.album = bose_utils.sanitize_field(info.album)
     trackdata.albumArtUrl = bose_utils.sanitize_field(info.art_url)
     trackdata.mediaSource = bose_utils.sanitize_field(info.source)
-    if trackdata.mediaSource ~= nil then
-      local cached_track_control_cmds = self.device:get_latest_state(
-        "main", capabilities.mediaTrackControl.ID,
-        capabilities.mediaTrackControl.supportedTrackControlCommands.NAME
-      )
-      -- Note changing supportedTrackControlCommands after join does not seem to take effect in the app immediately.
-      -- This indicates a bug in the mobile app.
-      if trackdata.mediaSource == "TUNEIN" and
-        (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) > 0) then
-        -- Switching to radio source which disables track controls
-        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
-      elseif trackdata.mediaSource ~= "TUNEIN" and
-        (cached_track_control_cmds == nil or utils.table_size(cached_track_control_cmds) == 0) then
-        self.device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-          capabilities.mediaTrackControl.commands.nextTrack.NAME,
-          capabilities.mediaTrackControl.commands.previousTrack.NAME,
-        }))
-      end
-    end
     trackdata.title = bose_utils.sanitize_field(info.track) or
       bose_utils.sanitize_field(info.station) or
-      (info.source == "AUX" and "Auxiliary input") or nil
+      (info.source == "AUX" and "Auxiliary input") or
+      trackdata.mediaSource or "No title"
     self.device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
   end
 end
@@ -151,14 +133,16 @@ function Listener:handle_xml_event(xml)
       local result = {}
       if not updates.presetsUpdated.presets.preset._attr then -- it is a list of presets rather than just one preset
         for _, preset in ipairs(updates.presetsUpdated.presets.preset) do
-          table.insert(result, {
-            id = preset._attr.id, --always exists
-            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
-            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
-            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
-          })
+          if preset._attr and preset._attr.id then
+            table.insert(result, {
+              id = preset._attr.id, --must exist for valid preset
+              name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+              mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+              imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
+            })
+          end
         end
-      else
+      elseif updates.presetsUpdated.presets.preset._attr and updates.presetsUpdated.presets.preset._attr.id then
         table.insert(result, {
           id = updates.presetsUpdated.presets.preset._attr.id,
           name = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.itemName,
@@ -166,6 +150,8 @@ function Listener:handle_xml_event(xml)
           mediaSource = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem._attr.source),
           imageUrl = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.containerArt),
         })
+      else
+        log.warn("received invalid presets from device")
       end
       self:presets_update(result)
     else

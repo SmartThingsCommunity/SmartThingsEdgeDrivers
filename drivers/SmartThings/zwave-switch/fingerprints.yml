@@ -611,6 +611,12 @@ zwaveManufacturer:
     productId: 0x0001
     productType: 0x3201
     deviceProfileName: switch-level
+  - id: 001D/3601/0001
+    deviceLabel: Leviton Plug-in Outlet
+    manufacturerId: 0x001D
+    productId: 0x0001
+    productType: 0x3601
+    deviceProfileName: smartplug-binary
   - id: 001D/1B03/0334
     deviceLabel: Leviton Dimmer Switch
     manufacturerId: 0x001D
