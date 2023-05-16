@@ -41,25 +41,19 @@ local function can_handle_fibaro_single_switch(opts, driver, device, ...)
 end
 
 local function central_scene_notification_handler(self, device, cmd)
-  if cmd.src_channel == nil or cmd.src_channel == 0 then
-    ButtonDefaults.zwave_handlers[cc.CENTRAL_SCENE][CentralScene.NOTIFICATION](self, device, cmd)
-  end
+  ButtonDefaults.zwave_handlers[cc.CENTRAL_SCENE][CentralScene.NOTIFICATION](self, device, cmd)
 end
 
 local function meter_report_handler(self, device, cmd)
-  if cmd.src_channel == nil or cmd.src_channel == 0 then
-    if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
-      EnergyMeterDefaults.zwave_handlers[cc.METER][Meter.REPORT](self, device, cmd)
-    elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
-      PowerMeterDefaults.zwave_handlers[cc.METER][Meter.REPORT](self, device, cmd)
-    end
+  if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
+    EnergyMeterDefaults.zwave_handlers[cc.METER][Meter.REPORT](self, device, cmd)
+  elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
+    PowerMeterDefaults.zwave_handlers[cc.METER][Meter.REPORT](self, device, cmd)
   end
 end
 
 local function switch_binary_report_handler(self, device, cmd)
-  if cmd.src_channel == nil or cmd.src_channel == 0 then
-    SwitchDefaults.zwave_handlers[cc.SWITCH_BINARY][SwitchBinary.REPORT](self, device, cmd)
-  end
+  SwitchDefaults.zwave_handlers[cc.SWITCH_BINARY][SwitchBinary.REPORT](self, device, cmd)
 end
 
 local fibaro_single_switch = {
