@@ -213,6 +213,8 @@ local function temp_attr_handler(driver, device, ib, response)
   end
 end
 
+local color_utils = require "color_utils"
+
 local function x_attr_handler(driver, device, ib, response)
   local y = device:get_field(RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
@@ -221,7 +223,7 @@ local function x_attr_handler(driver, device, ib, response)
     device:set_field(RECEIVED_X, ib.data.value)
   else
     local x = ib.data.value
-    local h, s, _ = utils.safe_xy_to_hsv(x, y)
+    local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_Y, nil)
@@ -234,7 +236,7 @@ local function y_attr_handler(driver, device, ib, response)
     device:set_field(RECEIVED_Y, ib.data.value)
   else
     local y = ib.data.value
-    local h, s, _ = utils.safe_xy_to_hsv(x, y)
+    local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_X, nil)
