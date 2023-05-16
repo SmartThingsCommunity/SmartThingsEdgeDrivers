@@ -79,7 +79,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch Binary report ON_ENABLE from source channel 2 should be discarded",
+  "Switch Binary report ON_ENABLE from source channel 2 should be treated as from main",
   {
     {
       channel = "device_lifecycle",
@@ -104,6 +104,11 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
   }
 )
@@ -139,7 +144,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch Binary report OFF_DISABLE from source channel 2 should be discarded",
+  "Switch Binary report OFF_DISABLE from source channel 2 should be treated as from main",
   {
     {
       channel = "device_lifecycle",
@@ -164,6 +169,11 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
   }
 )
@@ -196,7 +206,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Central Scene notification KEY_PRESSED_1_TIME attribute from source channel 2 should be discared",
+  "Central Scene notification KEY_PRESSED_1_TIME attribute from source channel 2 should treated as from main",
   {
     {
       channel = "zwave",
@@ -217,6 +227,12 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.pushed({
+        state_change = true }))
     }
   }
 )
@@ -242,7 +258,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Central Scene notification KEY_RELEASED attribute from source channel 2 should be discared",
+  "Central Scene notification KEY_RELEASED attribute from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -263,6 +279,12 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.held({
+        state_change = true }))
     }
   }
 )
@@ -288,7 +310,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Central Scene notification KEY_HELD_DOWN attribute from source channel 2 should be discared",
+  "Central Scene notification KEY_HELD_DOWN attribute from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -309,6 +331,12 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({
+        state_change = true }))
     }
   }
 )
@@ -334,7 +362,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Central Scene notification KEY_PRESSED_2_TIMES attribute from source channel 2 should be discared",
+  "Central Scene notification KEY_PRESSED_2_TIMES attribute from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -355,6 +383,12 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.double({
+        state_change = true }))
     }
   }
 )
@@ -380,7 +414,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Central Scene notification KEY_PRESSED_3_TIMES attribute from source channel 2 should be discared",
+  "Central Scene notification KEY_PRESSED_3_TIMES attribute from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -401,6 +435,12 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.button.button.pushed_3x({
+        state_change = true }))
     }
   }
 )
@@ -425,7 +465,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Energy meter report  from source channel 2 should be discarded",
+  "Energy meter report  from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -447,6 +487,11 @@ test.register_message_test(
         )
       }
     },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+    }
   }
 )
 
@@ -470,7 +515,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Power meter report  from source channel 2 should be discarded",
+  "Power meter report  from source channel 2 should be treated as from main",
   {
     {
       channel = "zwave",
@@ -491,6 +536,11 @@ test.register_message_test(
           )
         )
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 5, unit = "W" }))
     }
   }
 )
