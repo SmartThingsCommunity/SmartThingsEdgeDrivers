@@ -301,10 +301,12 @@ test.register_coroutine_test(
   "Setting cooling setpoint should be handled",
   function()
 
+    test.timer.__create_and_queue_test_time_advance_timer(.5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(1.5, "oneshot")
     mock_device:set_field("temperature_scale", 0, {persist = true})
 
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatCoolingSetpoint", command = "setCoolingSetpoint", args = { 25 } } })
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 25 } } })
 
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
@@ -317,14 +319,16 @@ test.register_coroutine_test(
         })
       )
     )
-
-    test.mock_time.advance_time(1)
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
         ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
       )
     )
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
@@ -333,7 +337,8 @@ test.register_coroutine_test(
         })
       )
     )
-
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
@@ -347,10 +352,16 @@ test.register_coroutine_test(
   "Setting heating setpoint should be handled",
   function()
     mock_device:set_field("_temperature_scale", 1, {persist = true})
+    test.timer.__create_and_queue_test_time_advance_timer(.5, "oneshot")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(1.5, "oneshot")
 
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = "thermostatHeatingSetpoint", command = "setHeatingSetpoint", args = { 92 } } })
-
+    test.socket.capability:__queue_receive({ mock_device.id, {
+      capability = "thermostatHeatingSetpoint",
+      component = "main",
+      command = "setHeatingSetpoint",
+      args = { 92 }
+    } })
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
           mock_device,
@@ -363,13 +374,16 @@ test.register_coroutine_test(
       )
     )
 
-    test.mock_time.advance_time(1)
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
         ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
       )
     )
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
@@ -378,7 +392,8 @@ test.register_coroutine_test(
         })
       )
     )
-
+    test.wait_for_events()
+    test.mock_time.advance_time(.5)
     test.socket.zwave:__expect_send(
       zw_test_utilities.zwave_test_build_send_command(
         mock_device,
