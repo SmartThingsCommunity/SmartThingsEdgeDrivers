@@ -1,0 +1,24 @@
+name: switch-2-level
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+- id: switch2
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch

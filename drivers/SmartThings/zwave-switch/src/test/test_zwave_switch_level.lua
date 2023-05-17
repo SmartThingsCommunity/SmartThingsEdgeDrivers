@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4, strict=true })

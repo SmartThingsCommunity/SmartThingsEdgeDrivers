@@ -6,6 +6,24 @@ def getEnvName() {
   else if (branch == "origin/production") {return "PROD"}
 }
 
+def getChangedDrivers() {
+  def drivers = [].toSet()
+  def driver_prefix = "drivers/"
+  for (changeLogSet in currentBuild.changeSets) {
+    for (entry in changeLogSet.items) {
+      for (file in entry.affectedFiles) {
+        if (file.path.startsWith(driver_prefix) && !file.path.contains("test")) {
+          def short_path = file.path.substring(driver_prefix.length())
+          def first_slash = short_path.indexOf('/') + 1
+          def driver_name = short_path.substring(first_slash, short_path.indexOf('/', first_slash))
+          drivers.add(driver_name)
+        }
+      }
+    }
+  }
+  return drivers
+}
+
 pipeline {
   agent {
     docker {
@@ -16,13 +34,13 @@ pipeline {
   }
   environment {
     BRANCH = getEnvName()
+    CHANGED_DRIVERS = getChangedDrivers()
   }
   stages {
     stage('requirements') {
       steps {
-        script {
-          sh 'pip3 install -r tools/requirements.txt'
-        }
+        sh 'git clean -xfd'
+        sh 'pip3 install -r tools/requirements.txt'
       }
     }
     stage('update') {

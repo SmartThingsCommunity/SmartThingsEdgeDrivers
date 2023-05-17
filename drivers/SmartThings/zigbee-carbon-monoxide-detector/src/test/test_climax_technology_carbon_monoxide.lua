@@ -14,7 +14,7 @@
 
 -- Mock out globals
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
+-- local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
@@ -47,11 +47,11 @@ test.register_message_test(
         direction = "receive",
         message = { mock_device.id, "added"}
       },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
-      }
+      -- {
+      --   channel = "capability",
+      --   direction = "send",
+      --   message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
+      -- }
     },
     {
       inner_block_ordering = "relaxed"

@@ -1,0 +1,5 @@
+name: 'Philips Hue'
+packageKey: 'philips-hue'
+permissions:
+  lan: {}
+  discovery: {}

@@ -21,8 +21,12 @@ local ZwaveDriver = require "st.zwave.driver"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.DoorLock
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+--- @type st.zwave.CommandClass.UserCode
+local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+--- @type st.zwave.CommandClass.Time
+local Time = (require "st.zwave.CommandClass.Time")({ version = 1 })
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 local json = require "st.json"
@@ -92,13 +96,64 @@ local function added_handler(self, device)
   end
   device:send(DoorLock:OperationGet({}))
   device:send(Battery:Get({}))
-  if (device:supports_capability(capabilities.tamperAlert)) then
-    device:emit_event(capabilities.tamperAlert.tamper.clear())
-  end
+  -- if (device:supports_capability(capabilities.tamperAlert)) then
+  --   device:emit_event(capabilities.tamperAlert.tamper.clear())
+  -- end
 end
 
 local init_handler = function(driver, device, event)
   populate_state_from_data(device)
+end
+
+local do_refresh = function(self, device)
+  device:send(DoorLock:OperationGet({}))
+  device:send(Battery:Get({}))
+end
+
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param cmd table
+local function update_codes(driver, device, cmd)
+  local delay = 0
+  -- args.codes is json
+  for name, code in pairs(cmd.args.codes) do
+    -- these seem to come in the format "code[slot#]: code"
+    local code_slot = tonumber(string.gsub(name, "code", ""), 10)
+    if (code_slot ~= nil) then
+      if (code ~= nil and (code ~= "0" and code ~= "")) then
+        -- code changed
+        device.thread:call_with_delay(delay, function ()
+          device:send(UserCode:Set({
+            user_identifier = code_slot,
+            user_code = code,
+            user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}))
+        end)
+        delay = delay + 2.2
+      else
+        -- code deleted
+        device.thread:call_with_delay(delay, function ()
+          device:send(UserCode:Set({user_identifier = code_slot, user_id_status = UserCode.user_id_status.AVAILABLE}))
+        end)
+        delay = delay + 2.2
+        device.thread:call_with_delay(delay, function ()
+          device:send(UserCode:Get({user_identifier = code_slot}))
+        end)
+        delay = delay + 2.2
+      end
+    end
+  end
+end
+
+local function time_get_handler(driver, device, cmd)
+  local time = os.date("*t")
+  device:send_to_component(
+    Time:Report({
+      hour_local_time = time.hour,
+      minute_local_time = time.min,
+      second_local_time = time.sec
+    }),
+    device:endpoint_to_component(cmd.src_channel)
+  )
 end
 
 local driver_template = {
@@ -111,6 +166,19 @@ local driver_template = {
   lifecycle_handlers = {
     added = added_handler,
     init = init_handler,
+  },
+  capability_handlers = {
+    [capabilities.lockCodes.ID] = {
+      [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    }
+  },
+  zwave_handlers = {
+    [cc.TIME] = {
+      [Time.GET] = time_get_handler -- used by DanaLock
+    }
   },
   sub_drivers = {
     require("zwave-alarm-v1-lock"),

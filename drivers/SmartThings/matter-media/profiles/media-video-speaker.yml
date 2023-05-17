@@ -1,0 +1,29 @@
+name: media-video-speaker
+components:
+- id: main
+  capabilities:
+  - id: mediaPlayback
+    version: 1
+  - id: mediaTrackControl
+    version: 1
+  - id: keypadInput
+    version: 1
+  - id: switch
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Television
+- id: speaker
+  capabilities:
+  - id: audioVolume
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Speaker
+  

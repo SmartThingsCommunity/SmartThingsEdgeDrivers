@@ -1,0 +1,49 @@
+name: sonos-player
+components:
+- id: main
+  capabilities:
+  - id: mediaPlayback
+    version: 1
+    config:
+      values:
+        - key: "playbackStatus.value"
+          enabledValues:
+            - 'playing'
+            - 'paused'
+            - 'stopped'
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'play'
+            - 'pause'
+            - 'stop'
+  - id: mediaGroup
+    version: 1
+  - id: mediaPresets
+    version: 1
+  - id: mediaTrackControl
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: audioNotification
+    version: 1
+  - id: audioTrackData
+    version: 1
+  - id: audioVolume
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Speaker
+preferences:
+- name: "queueAction"
+  title: "\"Load Favorites\" Queuing Action"
+  description: Determines the playback behavior when a Favorite is loaded while content is already queued on the speaker.
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      Append: "Add to End of Queue"
+      Insert: "Play Now"
+      Insert_Next: "Play Next"
+      Replace: "Replace Queue"
+    default: Append

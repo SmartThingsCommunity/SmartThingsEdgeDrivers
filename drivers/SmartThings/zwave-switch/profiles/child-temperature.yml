@@ -1,0 +1,10 @@
+name: child-temperature
+components:
+  - id: main
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Thermostat

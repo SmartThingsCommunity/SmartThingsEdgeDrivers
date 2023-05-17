@@ -20,6 +20,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version = 5})
 
 local sensor_endpoints = {
   {
@@ -123,7 +124,38 @@ test.register_coroutine_test(
         mock_sensor,
         Battery:Get({})
       ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_sensor,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels={3}})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_sensor,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels={2}})
+      ))
     end
 )
-
+test.register_coroutine_test(
+    "Receiving wakeup notification should generate proper messages",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.zwave:__queue_receive(
+        {
+          mock_sensor.id,
+          WakeUp:Notification({})
+        }
+      )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_sensor,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels={3}})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_sensor,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels={2}})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_sensor,
+        Battery:Get({})
+      ))
+    end
+)
 test.run_registered_tests()

@@ -10,6 +10,10 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-20, 100]
   - id: refresh
     version: 1
   categories:
@@ -20,7 +24,7 @@ preferences:
     description: "Time period by which a Flood Sensor will retain the flood state after the flooding itself has ceased. 0-3600 in seconds"
     required: false
     preferenceType: number
-    definition: 
+    definition:
       minimum: 0
       maximum: 3600
       default: 0
@@ -29,7 +33,7 @@ preferences:
     description: "Acoustic and visual signals on / off in case of flooding."
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         0: "acoustic and visual alarms inactive"
         1: "acoustic inactive, visual active"
@@ -41,7 +45,7 @@ preferences:
     description: "How often the temperature will be measured (1-65535 in seconds)"
     required: false
     preferenceType: number
-    definition: 
+    definition:
       minimum: 1
       maximum: 65535
       default: 300
@@ -50,7 +54,7 @@ preferences:
     description: "Allows to turn off the internal flood sensor. Tamper and built in temperature sensor will remain active."
     required: false
     preferenceType: enumeration
-    definition: 
+    definition:
       options:
         0: "on"
         1: "off"

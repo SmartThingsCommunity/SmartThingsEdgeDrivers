@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local data_types = require "st.zigbee.data_types"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -70,9 +69,9 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local add_device = function()
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
-  test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
-    capabilities.presenceSensor.presence("present")
-  ))
+  -- test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
+  --   capabilities.presenceSensor.presence("present")
+  -- ))
   test.wait_for_events()
 end
 

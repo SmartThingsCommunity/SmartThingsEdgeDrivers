@@ -24,7 +24,7 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({v
 local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
 
--- supported comand classes
+-- supported command classes
 local thermostat_endpoints = {
   {
     command_classes = {
@@ -363,7 +363,9 @@ test.register_coroutine_test(
               mock_device,
               ThermostatSetpoint:Set({
                                        setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-                                       value = 21.5
+                                       value = 21.5,
+                                       precision = 1,
+                                       size = 2
                                      })
           )
       )

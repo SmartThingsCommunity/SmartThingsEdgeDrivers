@@ -12,20 +12,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local log = require "log"
 local capabilities = require "st.capabilities"
---- @type st.utils
-local utils = require "st.utils"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
---- @type st.zwave.CommandClass.ThermostatSetpoint
-local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
-
-local THERMOSTAT_MIN_HEATING_SETPOINT = 5.0
-local THERMOSTAT_MAX_HEATING_SETPOINT = 30.0
+--- @type st.zwave.CommandClass.ThermostatMode
+local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 
 local STELPRO_KI_THERMOSTAT_FINGERPRINTS = {
   { manufacturerId = 0x0239, productType = 0x0001, productId = 0x0001 } -- Stelpro Ki Thermostat
@@ -39,35 +33,6 @@ local function can_handle_stelpro_ki_thermostat(opts, driver, device, cmd, ...)
   end
 
   return false
-end
-
-local function set_heating_setpoint(driver, device, command)
-  local value = command.args.setpoint
-  if (value >= 40) then -- assume this is a fahrenheit value
-    value = utils.f_to_c(value)
-  end
-  if THERMOSTAT_MIN_HEATING_SETPOINT <= value and THERMOSTAT_MAX_HEATING_SETPOINT >= value then
-    local scale = device:get_field(constants.TEMPERATURE_SCALE)
-    if (scale == ThermostatSetpoint.scale.FAHRENHEIT) then
-      value = utils.c_to_f(value) -- the device has reported using F, so set using F
-    end
-
-    local set = ThermostatSetpoint:Set({
-      setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-      scale = scale,
-      value = value
-    })
-    device:send_to_component(set, command.component)
-
-    local follow_up_poll = function()
-      device:send_to_component(
-        ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}),
-        command.component
-      )
-    end
-
-    device.thread:call_with_delay(1, follow_up_poll)
-  end
 end
 
 local function sensor_multilevel_report_handler(self, device, cmd)
@@ -97,8 +62,61 @@ local function sensor_multilevel_report_handler(self, device, cmd)
   end
 end
 
+local function thermostat_mode_report_handler(self, device, cmd)
+  local event = nil
+  if (cmd.args.mode == ThermostatMode.mode.HEAT) then
+    event = capabilities.thermostatMode.thermostatMode.heat()
+  elseif (cmd.args.mode == ThermostatMode.mode.ENERGY_SAVE_HEAT) then
+    event = capabilities.thermostatMode.thermostatMode.eco()
+  else
+    log.error("Received an unexpected mode report")
+  end
+
+  if (event ~= nil) then
+    device:emit_event_for_endpoint(cmd.src_channel, event)
+  end
+end
+
+local function set_thermostat_mode(driver, device, command)
+  local modes = capabilities.thermostatMode.thermostatMode
+  local mode = command.args.mode
+  local modeValue = nil
+
+  if (mode == modes.heat.NAME) then
+    modeValue = ThermostatMode.mode.HEAT
+  elseif (mode == modes.eco.NAME) then
+    modeValue = ThermostatMode.mode.ENERGY_SAVE_HEAT
+  else
+    log.error("Received unexpected setThermostatMode command")
+  end
+
+  if (modeValue ~= nil) then
+    device:send_to_component(ThermostatMode:Set({mode = modeValue}), command.component)
+
+    local follow_up_poll = function()
+      device:send_to_component(ThermostatMode:Get({}), command.component)
+    end
+
+    device.thread:call_with_delay(1, follow_up_poll)
+  end
+
+end
+
 local function device_added(self, device)
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+
+  -- The DTH for this device supported heat and eco, so we've mirrored that here, despite
+  -- the existing, more accurate "energy save heat" mode
+  local supported_modes = {}
+  table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
+  table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.eco.NAME)
+
+  device:emit_event(
+    capabilities.thermostatMode.supportedThermostatModes(
+      supported_modes,
+      { visibility = { displayed = false }}
+    )
+  )
 end
 
 local stelpro_ki_thermostat = {
@@ -106,11 +124,15 @@ local stelpro_ki_thermostat = {
   zwave_handlers = {
     [cc.SENSOR_MULTILEVEL] = {
       [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
+    },
+    [cc.THERMOSTAT_MODE] = {
+      [ThermostatMode.REPORT] = thermostat_mode_report_handler,
+      [ThermostatMode.SUPPORTED_REPORT] = function(driver, device, cmd) end
     }
   },
   capability_handlers = {
-    [capabilities.thermostatHeatingSetpoint.ID] = {
-      [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_heating_setpoint
+    [capabilities.thermostatMode.ID] = {
+      [capabilities.thermostatMode.commands.setThermostatMode.NAME] = set_thermostat_mode
     }
   },
   lifecycle_handlers = {

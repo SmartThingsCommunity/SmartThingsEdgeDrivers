@@ -1,9 +1,11 @@
-import os, subprocess, requests, json, time, yaml, hashlib
+import os, subprocess, requests, json, time, yaml
 
 BRANCH = os.environ.get('BRANCH')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
+CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 print(BRANCH)
 print(ENVIRONMENT)
+print(CHANGED_DRIVERS)
 branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
 ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
@@ -16,17 +18,13 @@ UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
 TOKEN = os.environ.get(ENVIRONMENT+'_TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
-ARCHIVEHASH = "archiveHash"
 PACKAGEKEY = "packageKey"
+
+BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
+SONOS_API_KEY = os.environ.get("SONOS_API_KEY")
 
 print(ENVIRONMENT_URL)
 
-# Make sure we're running in the root of the git directory
-a = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True)
-os.chdir(a.stdout.decode().strip()+"/drivers/SmartThings/")
-
-# Get list of all SmartThings driver folders
-drivers = [driver.name for driver in os.scandir('.') if driver.is_dir()]
 driver_updates = []
 drivers_updated = []
 uploaded_drivers = {}
@@ -62,56 +60,76 @@ else:
     )
     driver_info_response_json = json.loads(driver_info_response.text)["items"][0]
     if PACKAGEKEY in driver_info_response_json:
-      archiveHash = driver_info_response_json[ARCHIVEHASH]
       packageKey = driver_info_response_json[PACKAGEKEY]
       if VERSION in driver.keys() and DRIVERID in driver.keys():
-        uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION], ARCHIVEHASH: archiveHash}
+        uploaded_drivers[packageKey] = {DRIVERID: driver[DRIVERID], VERSION: driver[VERSION]}
 
-# For each driver, first package the driver locally, then upload it
-# after it's been uploaded, hold on to the driver id and version
-for driver in drivers:
-  subprocess.run(["rm", "edge.zip"], capture_output=True)
-  package_key = ""
-  with open(driver+"/config.yml", 'r') as config_file:
-    package_key = yaml.safe_load(config_file)["packageKey"]
-    print(package_key)
-  subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True,  capture_output=True)
-  with open("edge.zip", 'rb') as driver_package:
-    data = driver_package.read()
-    # TODO: This does not yet work, hash returned by server does not match
-    hash = hashlib.sha256(data).hexdigest()
-    response = None
-    retries = 0
-    if package_key not in uploaded_drivers or hash != uploaded_drivers[package_key][ARCHIVEHASH]:
-      while response == None or (response.status_code == 500 or response.status_code == 429):
-        response = requests.post(
-          UPLOAD_URL,
-          headers={
-            "Content-Type": "application/zip",
-            "Accept": "application/vnd.smartthings+json;v=20200810",
-            "Authorization": "Bearer "+TOKEN,
-            "X-ST-LOG-LEVEL": "TRACE"},
-          data=data)
-        if response.status_code != 200:
-          print("Failed to upload driver "+driver)
-          print("Error code: "+str(response.status_code))
-          print("Error response: "+response.text)
-          if response.status_code == 500 or response.status_code == 429:
-            retries = retries + 1
-            if retries > 3:
-              break # give up
-            if response.status_code == 429:
-              time.sleep(10)
-        else:
-          print("Uploaded package successfully: "+driver)
-          drivers_updated.append(driver)
-          response_json = json.loads(response.text)
-          uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION], ARCHIVEHASH: hash}
-    elif hash == uploaded_drivers[package_key][ARCHIVEHASH]:
-      print("Hash matched existing driver for "+package_key)
-      print(hash)
-      print(uploaded_drivers[package_key][ARCHIVEHASH])
-      # hash matched, use the currently uploaded version of the driver to "update" the channel
+# Make sure we're running in the root of the drivers directory
+a = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True)
+os.chdir(a.stdout.decode().strip()+"/drivers/")
+
+# Get list of all partner folders
+partners = [partner.name for partner in os.scandir('.') if partner.is_dir()]
+for partner in partners:
+  os.chdir(os.getcwd()+'/'+partner)
+  # get a list of all drivers from this partner
+  drivers = [driver.name for driver in os.scandir('.') if driver.is_dir()]
+
+  # For each driver, first package the driver locally, then upload it
+  # after it's been uploaded, hold on to the driver id and version
+  for driver in drivers:
+    if driver in CHANGED_DRIVERS:
+      subprocess.run(["rm", "edge.zip"], capture_output=True)
+      package_key = ""
+      with open(driver+"/config.yml", 'r') as config_file:
+        package_key = yaml.safe_load(config_file)["packageKey"]
+        print(package_key)
+      if package_key == "bose" and BOSE_APPKEY:
+        # write the app key into a app_key.lua (overwrite if exists already)
+        subprocess.run(["touch -a ./src/app_key.lua && echo \'return \"" + BOSE_APPKEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
+      if package_key == "sonos" and SONOS_API_KEY:
+        subprocess.run(["echo \'return \"" + SONOS_API_KEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
+      retries = 0
+      while not os.path.exists("edge.zip") or retries >= 5:
+        try:
+          subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True, check=True)
+        except subprocess.CalledProcessError as error:
+          print(error.stderr)
+        retries += 1
+      if retries >= 5:
+        print("5 zip failires, skipping "+package_key+" and continuing.")
+        continue
+      with open("edge.zip", 'rb') as driver_package:
+        data = driver_package.read()
+        response = None
+        retries = 0
+        while response == None or (response.status_code == 500 or response.status_code == 429):
+          response = requests.post(
+            UPLOAD_URL,
+            headers={
+              "Content-Type": "application/zip",
+              "Accept": "application/vnd.smartthings+json;v=20200810",
+              "Authorization": "Bearer "+TOKEN,
+              "X-ST-LOG-LEVEL": "TRACE"},
+            data=data)
+          if response.status_code != 200:
+            print("Failed to upload driver "+driver)
+            print("Error code: "+str(response.status_code))
+            print("Error response: "+response.text)
+            if response.status_code == 500 or response.status_code == 429:
+              retries = retries + 1
+              if retries > 3:
+                break # give up
+              if response.status_code == 429:
+                time.sleep(10)
+          else:
+            print("Uploaded package successfully: "+driver)
+            drivers_updated.append(driver)
+            response_json = json.loads(response.text)
+            uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]}
+
+  # go back up to the root 'drivers' directory after completing each partner's drivers uploads
+  os.chdir("..")
 
 for package_key, driver_info in uploaded_drivers.items():
   print("Uploading package: {} driver id: {} version: {}".format(package_key, driver_info[DRIVERID], driver_info[VERSION]))
@@ -133,7 +151,7 @@ if response.status_code != 204:
   print("Error response: "+response.text)
   exit(1)
 
-print("Successfully bulk-updated channel: ")
+print("Update drivers: ")
 print(drivers_updated)
 print("\nDrivers currently deplpyed: ")
 print(uploaded_drivers.keys())

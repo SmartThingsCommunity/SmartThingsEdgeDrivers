@@ -1,6 +1,5 @@
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
-local capabilities = require "st.capabilities"
 
 local PowerConfiguration = clusters.PowerConfiguration
 
@@ -40,9 +39,9 @@ local function device_init(driver, device)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" }))
-  device:emit_event(capabilities.relativeHumidityMeasurement.humidity(0))
-  device:emit_event(capabilities.battery.battery(100))
+  -- device:emit_event(capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" }))
+  -- device:emit_event(capabilities.relativeHumidityMeasurement.humidity(0))
+  -- device:emit_event(capabilities.battery.battery(100))
 end
 
 local aqara_humidity_handler = {

@@ -1,0 +1,48 @@
+name: switch-7
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch2
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch3
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch4
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch5
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch6
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch7
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch

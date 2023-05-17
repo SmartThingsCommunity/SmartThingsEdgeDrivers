@@ -1,0 +1,17 @@
+matterGeneric:
+  - id: "matter/media/speaker"
+    deviceLabel: Matter Speaker
+    deviceTypes:
+      - id: 0x0022 # Speaker
+    deviceProfileName: media-speaker
+  - id: "matter/media/video-player"
+    deviceLabel: Matter Video Player
+    deviceTypes:
+      - id: 0x0028 # Basic Video Player
+    deviceProfileName: media-video-player
+  - id: "matter/media/video-speaker-player"
+    deviceLabel: Matter Video Player with Speaker
+    deviceTypes:
+      - id: 0x0022 # Speaker
+      - id: 0x0028 # Basic Video Player
+    deviceProfileName: media-video-speaker

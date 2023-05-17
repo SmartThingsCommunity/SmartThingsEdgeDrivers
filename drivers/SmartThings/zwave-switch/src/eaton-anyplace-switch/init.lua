@@ -15,8 +15,6 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 
@@ -47,7 +45,7 @@ local function basic_get_handler(self, device, cmd)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switch.switch.off())
+  -- device:emit_event(capabilities.switch.switch.off())
 end
 
 local function switch_on_handler(driver, device)

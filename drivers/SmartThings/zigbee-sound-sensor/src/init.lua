@@ -15,7 +15,6 @@
 local device_management = require "st.zigbee.device_management"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
-local constants = require "st.zigbee.constants"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -67,7 +66,7 @@ local do_configure = function(self, device)
 end
 
 local added_handler = function(self, device)
-  device:emit_event(capabilities.soundSensor.sound.not_detected())
+  -- device:emit_event(capabilities.soundSensor.sound.not_detected())
 end
 
 local zigbee_sound_sensor_driver_template = {

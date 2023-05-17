@@ -13,8 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4,strict=true})
 --- @type st.zwave.constants
@@ -40,7 +38,7 @@ function capability_handlers.fan_speed_set(driver, device, command, map_fan_spee
   local query_level = function()
     device:send(SwitchMultilevel:Get({}))
   end
-  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + duration, query_level)
+  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_level)
 end
 
 local zwave_handlers = {}

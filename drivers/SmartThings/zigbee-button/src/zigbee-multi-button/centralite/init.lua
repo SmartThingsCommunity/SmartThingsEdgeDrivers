@@ -12,10 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
-local log = require "log"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local button_utils = require "button_utils"
@@ -24,9 +22,6 @@ local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 
 local CENTRALITE_NUM_ENDPOINT = 0x04
-local HELD_THRESHOLD_TIMEOUT = 10000
-local HOLD_TIME = 1000
-local PRESS_TIME_EVENT = "press_time_event"
 
 local EP_BUTTON_COMPONENT_MAP = {
   [0x01] = 4,
@@ -53,13 +48,13 @@ local do_configuration = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
   for endpoint = 1,CENTRALITE_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
   end
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 
 local function attr_on_handler(driver, device, zb_rx)
-  button_utils.init_button_press(device)
+  button_utils.init_button_press(device, EP_BUTTON_COMPONENT_MAP[zb_rx.address_header.src_endpoint.value])
 end
 
 local function attr_off_handler(driver, device, zb_rx)

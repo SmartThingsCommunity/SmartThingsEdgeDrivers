@@ -18,13 +18,10 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 --- @type st.zwave.CommandClass.DoorLock
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+--- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
---- @type st.zwave.CommandClass.Alarm
-local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local t_utils = require "integration_test.utils"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local utils = require "st.utils"
@@ -37,7 +34,7 @@ local zwave_lock_endpoints = {
   {
     command_classes = {
       { value = zw.BATTERY },
-      { value = DoorLock },
+      { value = zw.DOOR_LOCK },
       { value = zw.USER_CODE },
       { value = zw.NOTIFICATION }
     }
@@ -92,7 +89,7 @@ test.register_coroutine_test(
               Battery:Get({})
           )
       )
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device.id, "_lock_codes", { ["1"] = "Zach", ["2"] = "Steven" })
@@ -121,7 +118,7 @@ test.register_coroutine_test(
               Battery:Get({})
           )
       )
-      test.socket.capability:__expect_send(mock_device_no_data:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      -- test.socket.capability:__expect_send(mock_device_no_data:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "_lock_codes", nil)
@@ -149,7 +146,7 @@ test.register_coroutine_test(
               Battery:Get({})
           )
       )
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device.id, "_lock_codes", { ["1"] = "Zach", ["2"] = "Steven" })
@@ -187,7 +184,7 @@ test.register_coroutine_test(
               Battery:Get({})
           )
       )
-      test.socket.capability:__expect_send(mock_device_no_data:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      -- test.socket.capability:__expect_send(mock_device_no_data:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "_lock_codes", nil)
@@ -232,7 +229,7 @@ test.register_coroutine_test(
               Battery:Get({})
           )
       )
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device.id, "_lock_codes", { ["1"] = "Zach", ["2"] = "Steven" })
