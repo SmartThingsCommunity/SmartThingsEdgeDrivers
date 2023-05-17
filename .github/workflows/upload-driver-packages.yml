@@ -20,7 +20,7 @@ jobs:
           files: "drivers"
           json: true
       - id: set-outputs
-        run: echo "matrix=${{ steps.changed-drivers.outputs.all_modified_files }}" >> "$GITHUB_OUTPUT"
+        run: echo "matrix=${{ steps.changed-drivers.outputs.all_modified_files }}" >> $GITHUB_OUTPUT
       - run: echo ${{ steps.changed-drivers.outputs.all_modified_files }}
 
   upload-driver:
