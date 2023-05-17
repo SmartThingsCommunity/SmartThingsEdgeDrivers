@@ -1,4 +1,4 @@
-name: switch-color-temp
+name: switch-color-temp-2700K-5000K
 components:
 - id: main
   capabilities:
