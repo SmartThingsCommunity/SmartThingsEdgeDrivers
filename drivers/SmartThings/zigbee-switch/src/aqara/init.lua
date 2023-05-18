@@ -34,6 +34,7 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
+  { mfr = "LUMI", model = "lumi.switch.b2laus01" }
 }
 
 local preference_map = {
@@ -110,8 +111,12 @@ local function private_mode_handler(driver, device, value, zb_rx)
 end
 
 local function wireless_switch_handler(driver, device, value, zb_rx)
+  local ep_id = zb_rx.address_header.src_endpoint.value
+  if ep_id >= 0x29 then
+    ep_id = ep_id - 0x28
+  end
   if value.value == 1 then
-    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
+    device:emit_event_for_endpoint(ep_id,
       capabilities.button.button.pushed({ state_change = true }))
   end
 end
