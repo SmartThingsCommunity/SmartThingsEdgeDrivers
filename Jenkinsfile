@@ -39,8 +39,10 @@ pipeline {
   stages {
     stage('requirements') {
       steps {
-        currentBuild.displayName = "#" + currentBuild.number + " " + env.BRANCH
-        currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+        script {
+          currentBuild.displayName = "#" + currentBuild.number + " " + env.BRANCH
+          currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+        }
         sh 'git clean -xfd'
         sh 'pip3 install -r tools/requirements.txt'
       }
