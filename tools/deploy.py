@@ -21,6 +21,7 @@ VERSION = "version"
 PACKAGEKEY = "packageKey"
 
 BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
+SONOS_API_KEY = os.environ.get("SONOS_API_KEY")
 
 print(ENVIRONMENT_URL)
 
