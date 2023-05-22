@@ -28,7 +28,7 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
       [1] = {
         id = 1,
         manufacturer = "Winners",
-        model = "HS2-P2Z3-6",
+        model = "LSS1-206",
         server_clusters = { 0x0006 }
       }
     },
