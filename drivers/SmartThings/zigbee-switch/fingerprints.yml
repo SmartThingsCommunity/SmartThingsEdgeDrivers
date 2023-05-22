@@ -1,34 +1,34 @@
 zigbeeManufacturer:
   #HANSSEM SMART SWITCH
-  - id: "Winners/HS2-P1Z3-1"
+  - id: "Winners/LSS1-101"
     deviceLabel: HS Switch 1(1 way)
     manufacturer: Winners
-    model: HS2-P1Z3-1
+    model: LSS1-101
     deviceProfileName: basic-switch-no-firmware-update
-  - id: "Winners/HS2-P1Z3-2"
+  - id: "Winners/LSS1-102"
     deviceLabel: HS Switch 1(2 way)
     manufacturer: Winners
-    model: HS2-P1Z3-2
+    model: LSS1-102
     deviceProfileName: basic-switch-no-firmware-update
-  - id: "Winners/HS2-P1Z3-3"
+  - id: "Winners/LSS1-103"
     deviceLabel: HS Switch 1(3 way)
     manufacturer: Winners
-    model: HS2-P1Z3-3
+    model: LSS1-103
     deviceProfileName: basic-switch-no-firmware-update
-  - id: "Winners/HS2-P2Z3-4"
+  - id: "Winners/LSS1-204"
     deviceLabel: HS Switch 1(4 way)
     manufacturer: Winners
-    model: HS2-P2Z3-4
+    model: LSS1-204
     deviceProfileName: basic-switch-no-firmware-update
-  - id: "Winners/HS2-P2Z3-5"
+  - id: "Winners/LSS1-205"
     deviceLabel: HS Switch 1(5 way)
     manufacturer: Winners
-    model: HS2-P2Z3-5
+    model: LSS1-205
     deviceProfileName: basic-switch-no-firmware-update
-  - id: "Winners/HS2-P2Z3-6"
+  - id: "Winners/LSS1-206"
     deviceLabel: HS Switch 1(6 way)
     manufacturer: Winners
-    model: HS2-P2Z3-6
+    model: LSS1-206
     deviceProfileName: basic-switch-no-firmware-update
   - id: "LUMI/lumi.plug.maeu01"
     deviceLabel: Aqara Smart Plug
