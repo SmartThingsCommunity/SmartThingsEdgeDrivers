@@ -24,6 +24,14 @@ local profile_def = t_utils.get_profile_definition("basic-switch-no-firmware-upd
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
   {
     profile = profile_def,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "Winners",
+        model = "HS2-P2Z3-6",
+        server_clusters = { 0x0006 }
+      }
+    },
     fingerprinted_endpoint_id = 0x01
   }
 )
@@ -31,6 +39,7 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
 local mock_first_child = test.mock_device.build_test_child_device(
   {
     profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 2),
     parent_device_id = mock_parent_device.id,
     parent_assigned_child_key = string.format("%02X", 2)
   }
@@ -39,6 +48,7 @@ local mock_first_child = test.mock_device.build_test_child_device(
 local mock_second_child = test.mock_device.build_test_child_device(
   {
     profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 3),
     parent_device_id = mock_parent_device.id,
     parent_assigned_child_key = string.format("%02X", 3)
   }
@@ -47,6 +57,7 @@ local mock_second_child = test.mock_device.build_test_child_device(
 local mock_third_child = test.mock_device.build_test_child_device(
   {
     profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 4),
     parent_device_id = mock_parent_device.id,
     parent_assigned_child_key = string.format("%02X", 4)
   }
@@ -55,6 +66,7 @@ local mock_third_child = test.mock_device.build_test_child_device(
 local mock_fourth_child = test.mock_device.build_test_child_device(
   {
     profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 5),
     parent_device_id = mock_parent_device.id,
     parent_assigned_child_key = string.format("%02X", 5)
   }
@@ -63,6 +75,7 @@ local mock_fourth_child = test.mock_device.build_test_child_device(
 local mock_fifth_child = test.mock_device.build_test_child_device(
   {
     profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 6),
     parent_device_id = mock_parent_device.id,
     parent_assigned_child_key = string.format("%02X", 6)
   }
@@ -77,7 +90,6 @@ local function test_init()
   test.mock_device.add_test_device(mock_third_child)
   test.mock_device.add_test_device(mock_fourth_child)
   test.mock_device.add_test_device(mock_fifth_child)
-
   zigbee_test_utils.init_noop_health_check_timer()
 end
 
@@ -86,13 +98,6 @@ test.set_test_init_function(test_init)
 test.register_message_test(
     "Reported on off status should be handled by parent device: on",
     {
-      --[[
-      {
-        channel = "device_lifecycle",
-        direction = "receive",
-        message = { mock_parent_device.id, "init" }
-      },
-      ]]
       {
         channel = "zigbee",
         direction = "receive",
@@ -302,7 +307,6 @@ test.register_message_test(
         direction = "receive",
         message = { mock_parent_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
       },
-     
       {
         channel = "zigbee",
         direction = "send",
