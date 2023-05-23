@@ -30,7 +30,6 @@ local socket = require "cosock.socket"
 local log = require "log"
 local utils = require "st.utils"
 
-
 -- maps model name to profile name
 local profiles = {
   ["Insight"] = "wemo.mini-smart-plug.v1",

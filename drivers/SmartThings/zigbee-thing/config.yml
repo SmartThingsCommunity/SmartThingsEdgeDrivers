@@ -1,0 +1,4 @@
+name: 'Zigbee Thing'
+packageKey: 'zigbee-thing'
+permissions:
+  zigbee: {}
