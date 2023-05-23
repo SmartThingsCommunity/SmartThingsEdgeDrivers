@@ -14,7 +14,6 @@ local SonosRestApi = require "api.rest"
 local SonosState = require "types".SonosState
 local SSDP = require "ssdp"
 
-
 --- @param driver SonosDriver
 --- @param device SonosDevice
 --- @param should_continue function|nil

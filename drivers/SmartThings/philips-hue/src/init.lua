@@ -33,7 +33,6 @@ local Driver = require "st.driver"
 local json = require "st.json"
 local st_utils = require "st.utils"
 
-
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
 
