@@ -27,7 +27,7 @@ local function find_player_for_device(driver, device, should_continue)
     local attempts = 0
     should_continue = function()
       attempts = attempts + 1
-      return attempts <= 20
+      return attempts <= 10
     end
   end
 
@@ -63,10 +63,12 @@ local function _initialize_device(driver, device)
       log.debug("Rescanning for player with DNI " .. device.device_network_id)
       local success = find_player_for_device(driver, device)
       if not success then
-        error(string.format(
-          "Received event for device DNI [%s] but could not find matching player on local network",
-          device.device_network_id
+        device:offline()
+        log.error(string.format(
+          "Could not initialize Sonos Player [%s], it does not appear to be on the network",
+          device.label
         ))
+        return
       end
     end
 
@@ -209,28 +211,41 @@ local driver = Driver("Sonos", {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
-    [capabilities.mediaPlayback.ID] = {
-      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
-      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
-      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
-    },
-    [capabilities.mediaTrackControl.ID] = {
-      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
-      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
-    },
     [capabilities.audioMute.ID] = {
       [capabilities.audioMute.commands.mute.NAME] = CmdHandlers.handle_mute,
       [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
       [capabilities.audioMute.commands.setMute.NAME] = CmdHandlers.handle_set_mute,
+    },
+    [capabilities.audioNotification.ID] = {
+      [capabilities.audioNotification.commands.playTrack.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndResume.NAME] = CmdHandlers.handle_audio_notification,
+      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = CmdHandlers.handle_audio_notification,
     },
     [capabilities.audioVolume.ID] = {
       [capabilities.audioVolume.commands.volumeUp.NAME] = CmdHandlers.handle_volume_up,
       [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,
       [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
     },
+    [capabilities.mediaGroup.ID] = {
+      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_group_volume_up,
+      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_group_volume_down,
+      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_group_set_volume,
+      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_group_mute,
+      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_group_unmute,
+      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_group_set_mute,
+    },
+    [capabilities.mediaPlayback.ID] = {
+      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
+      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
+      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
+    },
     [capabilities.mediaPresets.ID] = {
       [capabilities.mediaPresets.commands.playPreset.NAME] = CmdHandlers.handle_play_preset,
     },
+    [capabilities.mediaTrackControl.ID] = {
+      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
+      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
+    }
   },
   sonos = SonosState.new(),
   update_group_state = update_group_state,

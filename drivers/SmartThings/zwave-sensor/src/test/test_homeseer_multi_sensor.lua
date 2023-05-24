@@ -119,19 +119,19 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_sensor,
         WakeUp:IntervalSet({node_id = 0x00, seconds = 10 * 60})
-      )) 
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_sensor,
         Battery:Get({})
       ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_sensor, 
+        mock_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels={3}})
-      )) 
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_sensor, 
+        mock_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels={2}})
-      )) 
+      ))
     end
 )
 test.register_coroutine_test(
@@ -143,15 +143,15 @@ test.register_coroutine_test(
           mock_sensor.id,
           WakeUp:Notification({})
         }
-      ) 
+      )
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_sensor, 
+        mock_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}, {dst_channels={3}})
-      )) 
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-        mock_sensor, 
+        mock_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels={2}})
-      ))       
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_sensor,
         Battery:Get({})

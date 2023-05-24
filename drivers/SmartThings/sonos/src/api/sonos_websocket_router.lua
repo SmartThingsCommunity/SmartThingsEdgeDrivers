@@ -19,7 +19,6 @@ local SonosWebSocketRouter = {}
 local control_tx, control_rx = channel.new()
 control_rx:settimeout(0.5)
 
----@alias PlayerId string
 ---@alias WsId string|number
 ---@alias chan_tx table
 ---@alias chan_rx table
@@ -40,8 +39,7 @@ cosock.spawn(function()
     for _, player_id in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
       local wss = websockets[player_id]
       if wss ~= nil then
-        local _, _err = wss:close(CloseCode.normal(),
-          "Shutdown requested by client")
+        wss:close(CloseCode.normal(), "Shutdown requested by client")
       end
       websockets[player_id] = nil
     end
@@ -52,7 +50,7 @@ cosock.spawn(function()
       table.insert(socks, wss)
     end
     local receivers, _, err = socket.select(socks, nil, 10)
-    local msg = {}
+    local msg
 
     if err ~= nil then
       if err ~= "timeout" then
@@ -80,6 +78,14 @@ cosock.spawn(function()
             end
           end
         elseif err == "closed" and recv.id then -- closed websocket
+          log.trace(string.format("Websocket %s closed", tostring(recv.id)))
+          local still_open_sockets = {}
+          for player_id, wss in pairs(websockets) do
+            if wss.id ~= recv.id then
+              still_open_sockets[player_id] = wss
+            end
+          end
+          websockets = still_open_sockets
           for _, uuid in ipairs(listener_ids_for_socket[recv.id]) do
             local listener = listeners[uuid]
 
@@ -115,36 +121,35 @@ cosock.spawn(function()
   end
 end)
 
---- @param player_id PlayerId
 --- @param url_table table
 --- @return WebSocket|nil
 --- @return nil|string error
 local function _make_websocket(url_table)
   local sock, err = socket.tcp()
+  if not sock or err ~= nil then return nil, "Could not open TCP socket: " .. err end
+  local _, err = sock:settimeout(3)
+  if err ~= nil then return nil, "Could not set TCP socket timeout: " .. err end
 
-  if sock then
-    sock:settimeout(3)
-    log.trace(string.format(
-      "Opening up websocket connection for host/port %s %s",
-      url_table.host, url_table.port))
-    _, err = sock:connect(url_table.host, url_table.port)
-    if not err then
-      sock:setoption("keepalive", true)
+  log.trace(string.format(
+    "Opening up websocket connection for host/port %s %s",
+    url_table.host, url_table.port))
 
-      sock, err = ssl.wrap(sock, {
-        mode = "client",
-        protocol = "any",
-        verify = "none",
-        options = "all"
-      })
+  _, err = sock:connect(url_table.host, url_table.port)
+  if err ~= nil then return nil, "Socket connect error: " .. err end
 
-      if err then return nil, "SSL Wrap error: " .. err end
+  _, err = sock:setoption("keepalive", true)
+  if err ~= nil then return nil, "Socket set keepalive error: " .. err end
 
-      sock:dohandshake()
-    end
-  else
-    return nil, "Could not open TCP socket: " .. err
-  end
+  sock, err = ssl.wrap(sock, {
+    mode = "client",
+    protocol = "any",
+    verify = "none",
+    options = "all"
+  })
+  if err ~= nil then return nil, "SSL Wrap error: " .. err end
+
+  _, err = sock:dohandshake()
+  if err ~= nil then return nil, "SSL Handhsake error: " .. err end
 
   --- SONOS_API_KEY is a Global added to the environment in the root init.lua.
   --- This API key is injected in to the driver at deploy time for production.
@@ -154,23 +159,21 @@ local function _make_websocket(url_table)
                                        :protocol("v1.api.smartspeaker.audio")
 
   local wss = WebSocket.client(sock, url_table.path, config)
-
   _, err = wss:client_handshake_and_start(url_table.host, url_table.port)
-
-  if err ~= nil then
-    return nil, "Error starting websocket: " .. err
-  end
+  if err ~= nil then return nil, "Error starting websocket: " .. err end
 
   return wss
 end
 
 function SonosWebSocketRouter.is_connected(player_id)
-  return websockets[player_id] ~= nil
+  local wss = websockets[player_id]
+  return wss ~= nil and wss.state ~= nil and wss.state == "Active"
 end
 
 function SonosWebSocketRouter.register_listener_for_socket(listener,
                                                            player_id_for_socket)
   local ws = websockets[player_id_for_socket]
+  ws._player_id = player_id_for_socket
 
   if ws ~= nil then
     local uuid = st_utils.generate_uuid_v4()

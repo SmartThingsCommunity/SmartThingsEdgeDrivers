@@ -15,14 +15,12 @@
 -- Mock out globals
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local data_types = require "st.zigbee.data_types"
 local clusters = require "st.zigbee.zcl.clusters"
 local IASZone = clusters.IASZone
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.types.EnrollResponseCode"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus

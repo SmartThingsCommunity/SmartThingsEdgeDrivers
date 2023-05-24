@@ -16,12 +16,20 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local im = require "st.matter.interaction_model"
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("lock-without-codes.yml"),
   manufacturer_info = {vendor_id = 0x101D, product_id = 0x1},
   endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
     {
       endpoint_id = 1,
       clusters = {

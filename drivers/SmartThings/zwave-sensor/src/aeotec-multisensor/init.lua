@@ -40,6 +40,13 @@ local function notification_report_handler(self, device, cmd)
     elseif cmd.args.event == Notification.event.power_management.AC_MAINS_RE_CONNECTED then
       event = capabilities.powerSource.powerSource.dc()
     end
+  elseif cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
+    if cmd.args.event == Notification.event.home_security.STATE_IDLE then
+      device:emit_event(capabilities.motionSensor.motion.inactive())
+      event = capabilities.tamperAlert.tamper.clear()
+    elseif cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
+      event = capabilities.motionSensor.motion.active()
+    end
   end
 
   if event ~= nil then

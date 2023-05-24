@@ -40,13 +40,13 @@ zwaveManufacturer:
     manufacturerId: 0x0098
     productType: 0x6401
     productId: 0x0107
-    deviceProfileName: base-thermostat
+    deviceProfileName: base-thermostat-ct100
   - id: "0098/6501/000C"
     deviceLabel: Iris Thermostat
     manufacturerId: 0x0098
     productType: 0x6501
     productId: 0x000C
-    deviceProfileName: base-thermostat
+    deviceProfileName: base-thermostat-ct100
   - id: "0098/6501/000B"
     deviceLabel: Iris Thermostat
     manufacturerId: 0x0098
@@ -75,7 +75,7 @@ zwaveManufacturer:
     manufacturerId: 0x0039
     productType: 0x0011
     productId: 0x0001
-    deviceProfileName: thermostat-no-battery
+    deviceProfileName: base-thermostat-without-battery
   - id: "008B/5452"
     deviceLabel: Trane Thermostat
     manufacturerId: 0x008B

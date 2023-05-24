@@ -15,18 +15,8 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
---- @type st.zwave.CommandClass.SensorBinary
-local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
---- @type st.zwave.CommandClass.WakeUp
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS = {
   { manufacturerId = 0x0371, productType = 0x0002, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro EU
@@ -48,8 +38,6 @@ local function can_handle_zwave_water_temp_humidity_sensor(opts, driver, device,
   return false
 end
 
-local zwave_handlers = {}
-
 --- Default handler for notification command class reports
 ---
 --- @param self st.zwave.Driver
@@ -70,11 +58,6 @@ local function notification_report_handler(self, device, cmd)
   if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
     if cmd.args.event == Notification.event.home_security.STATE_IDLE then
       event = capabilities.tamperAlert.tamper.clear()
-    elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
-      event = capabilities.tamperAlert.tamper.detected()
-      device.thread:call_with_delay(10, function(d)
-        device:emit_event(capabilities.tamperAlert.tamper.clear())
-      end)
     end
   end
   if (event ~= nil) then device:emit_event(event) end

@@ -9,6 +9,31 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  - id: "LUMI/lumi.switch.n1acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.n1acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n2acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n2acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n3acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n3acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n0agl1"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0agl1
+    deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.light.acn004"
+    deviceLabel: Aqara Smart Dimmer Controller T1 Pro
+    manufacturer: LUMI
+    model: lumi.light.acn004
+    deviceProfileName: aqara-light
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
@@ -21,7 +46,7 @@ zigbeeManufacturer:
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
     model: "DimmerSwitch_v1.0"
-    deviceProfileName: on-off-level-no-firmware-update 
+    deviceProfileName: on-off-level-no-firmware-update
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
     model: "Mains_Power_Outlet_v1.0"
@@ -218,6 +243,11 @@ zigbeeManufacturer:
     deviceLabel: "RM3250ZB Sinope Load Controller"
     manufacturer: Sinope Technologies
     model: RM3250ZB
+    deviceProfileName: switch-power-smartplug
+  - id: "Sinope Switch/RM3500ZB"
+    deviceLabel: "RM3500ZB Sinope Load Controller"
+    manufacturer: Sinope Technologies
+    model: RM3500ZB
     deviceProfileName: switch-power-smartplug
   - id: "Sinope Dimmer Switch/DM2500ZB"
     deviceLabel: "DM2500ZB Sinope Dimmer"
@@ -813,6 +843,11 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: 01MINIZB
     deviceProfileName: basic-switch
+  - id: SONOFF/ZBMINIL2
+    deviceLabel: SONOFF Switch
+    manufacturer: SONOFF
+    model: ZBMINIL2
+    deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
     manufacturer:
@@ -838,6 +873,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSP019BZ
     deviceProfileName: basic-switch
+  - id: Third Reality/3RSP02028BZ
+    deviceLabel: ThirdReality Plug
+    manufacturer: Third Reality, Inc
+    model: 3RSP02028BZ
+    deviceProfileName: switch-power-energy
   - id: "DAWON_DNS/PM-S140-ZB"
     deviceLabel: Dawon Switch
     manufacturer: DAWON_DNS
@@ -897,12 +937,12 @@ zigbeeManufacturer:
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-002
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: Juno/ABL-LIGHT-Z-201
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -1192,12 +1232,12 @@ zigbeeManufacturer:
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: abl-light-z-001-bulb
   - id: Juno/ABL-LIGHT-Z-001
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-001
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: abl-light-z-001-bulb
   - id: Samsung/SAMSUNG-ITM-Z-001
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -1567,7 +1607,7 @@ zigbeeManufacturer:
     deviceLabel: Eria Switch
     manufacturer: AduroSmart Eria
     model: BDP3001
-    deviceProfileName: switch-power
+    deviceProfileName: switch-level
   - id: "AduroSmart Eria/ZLL-DimmableLight"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -1983,6 +2023,22 @@ zigbeeManufacturer:
     manufacturer: GE
     model: Daylight
     deviceProfileName: ge-link-bulb
+  #ROBB (Sunricher)
+  - id: "ROBB smarrt/ROB_200-004-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-004-0
+    deviceLabel: ROBB SMARRT Zigbee dimmer 3-wire
+    deviceProfileName: on-off-level
+  - id: "ROBB smarrt/ROB_200-014-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-014-0
+    deviceLabel: ROBB SMARRT Zigbee rotary dimmer 2-wire
+    deviceProfileName: light-level-power-energy
+  - id: "ROBB smarrt/ROB_200-011-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-011-0
+    deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
+    deviceProfileName: light-level-power-energy
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

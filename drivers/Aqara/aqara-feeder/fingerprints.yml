@@ -1,0 +1,5 @@
+zigbeeManufacturer:
+  - id: "Lumi/aqara.feeder.acn001"
+    deviceLabel: Aqara Smart Pet Feeder C1
+    model: aqara.feeder.acn001
+    deviceProfileName: aqara-pet-feeder

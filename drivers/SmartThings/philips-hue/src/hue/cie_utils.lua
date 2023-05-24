@@ -75,26 +75,26 @@ local function _distance_between_points(a, b)
 end
 
 local function _closest_point_in_gamut_triangle(xy, gamut)
-  local redGreenCorner = _closest_point_on_line(xy, gamut.red, gamut.green)
-  local blueRedCorner = _closest_point_on_line(xy, gamut.blue, gamut.red)
-  local greenBlueCorner = _closest_point_on_line(xy, gamut.green, gamut.blue)
+  local red_green_corner = _closest_point_on_line(xy, gamut.red, gamut.green)
+  local blue_red_corner = _closest_point_on_line(xy, gamut.blue, gamut.red)
+  local green_blue_corner = _closest_point_on_line(xy, gamut.green, gamut.blue)
 
-  local distanceToRedGreen = _distance_between_points(xy, redGreenCorner)
-  local distanceToBlueRed = _distance_between_points(xy, blueRedCorner)
-  local distanceToGreenBlue = _distance_between_points(xy, greenBlueCorner)
+  local distance_to_red_green = _distance_between_points(xy, red_green_corner)
+  local distance_to_blue_red = _distance_between_points(xy, blue_red_corner)
+  local distance_to_green_blue = _distance_between_points(xy, green_blue_corner)
 
-  local smallestDistance = distanceToRedGreen
-  local closestPoint = redGreenCorner
-  if distanceToBlueRed < smallestDistance then
-    smallestDistance = distanceToBlueRed
-    closestPoint = blueRedCorner
+  local smallest_distance = distance_to_red_green
+  local closest_point = red_green_corner
+  if distance_to_blue_red < smallest_distance then
+    smallest_distance = distance_to_blue_red
+    closest_point = blue_red_corner
   end
 
-  if distanceToGreenBlue < smallestDistance then
-    closestPoint = greenBlueCorner
+  if distance_to_green_blue < smallest_distance then
+    closest_point = green_blue_corner
   end
 
-  return closestPoint
+  return closest_point
 end
 
 function CieUtils.safe_rgb_to_xy(red, green, blue, gamut)

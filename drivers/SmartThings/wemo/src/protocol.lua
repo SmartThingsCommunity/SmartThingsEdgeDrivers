@@ -6,12 +6,7 @@ local socket = require "cosock.socket"
 local http = cosock.asyncify "socket.http"
 local ltn12 = require "ltn12"
 
-local utils = require "st.utils"
-
 local protocol = {}
-
--- map subscription IDs to device handles
-local subscriptions = {}
 
 local request_wrapper = [[<?xml version="1.0" encoding="utf-8"?>
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
