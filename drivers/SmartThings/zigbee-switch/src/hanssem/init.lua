@@ -15,8 +15,6 @@
 local stDevice = require "st.device"
 local capabilities = require "st.capabilities"
 local zclClusters = require "st.zigbee.zcl.clusters"
-local zclGlobalCommands = require "st.zigbee.zcl.global_commands"
-local Status = require "st.zigbee.generated.types.ZclStatus"
 local OnOff = zclClusters.OnOff
 
 local FINGERPRINTS = {
@@ -68,32 +66,17 @@ local function create_child_devices(driver, device)
   device:refresh()
 end
 
---Handler Send Command 
 local function send_on_handle(driver, device)
-  if device.network_type ~= stDevice.NETWORK_TYPE_CHILD then
-    device:send(OnOff.server.commands.On(device):to_endpoint(device.fingerprinted_endpoint_id))
-  else
-    device:send(OnOff.server.commands.On(device):to_endpoint(tonumber(device.parent_assigned_child_key)))
-  end
+  device:send_to_component(command.component, zclClusters.OnOff.server.commands.On(device))
 end
 
 local function send_off_handle(driver, device)
-  if device.network_type ~= stDevice.NETWORK_TYPE_CHILD then
-    device:send(OnOff.server.commands.Off(device):to_endpoint(device.fingerprinted_endpoint_id))
-  else
-    device:send(OnOff.server.commands.Off(device):to_endpoint(tonumber(device.parent_assigned_child_key)))
-  end
+  device:send_to_component(command.component, zclClusters.OnOff.server.commands.Off(device))
 end
 
---Handler Attribute
 local function attribute_handle(driver, device, value, zb_rx)
   local attr = capabilities.switch.switch
   device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, value.value and attr.on() or attr.off())
-end
-
---LifeCycle
-local function device_info_changed(driver, device, event, args)
-  device:send(OnOff.attributes.OnOff:read(device):to_endpoint(device.fingerprinted_endpoint_id))
 end
 
 local function device_added(driver, device)
@@ -125,7 +108,6 @@ local HanssemSwitch = {
   lifecycle_handlers = {
     added = device_added,
     init = device_init,
-    infoChanged = device_info_changed
   },
   can_handle = can_handle_hanssem_switch
 }
