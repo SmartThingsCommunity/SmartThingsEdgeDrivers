@@ -28,10 +28,26 @@ local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
 end
 
+--- component_to_endpoint helper function to handle situations where
+--- device does not have endpoint ids in sequential order from 1
+--- In this case the function returns the lowest endpoint value that isn't 0
+local function find_default_endpoint(device, component)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(nil)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      res = v
+      break
+    end
+  end
+  return res
+end
+
 local function component_to_endpoint(device, component_id)
   -- Assumes matter endpoint layout is sequentional starting at 1.
   local ep_num = component_id:match("switch(%d)")
-  return ep_num and tonumber(ep_num) or device.MATTER_DEFAULT_ENDPOINT
+  return ep_num and tonumber(ep_num) or find_default_endpoint(device, component_id)
 end
 
 local function endpoint_to_component(device, ep)
@@ -213,6 +229,8 @@ local function temp_attr_handler(driver, device, ib, response)
   end
 end
 
+local color_utils = require "color_utils"
+
 local function x_attr_handler(driver, device, ib, response)
   local y = device:get_field(RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
@@ -221,7 +239,7 @@ local function x_attr_handler(driver, device, ib, response)
     device:set_field(RECEIVED_X, ib.data.value)
   else
     local x = ib.data.value
-    local h, s, _ = utils.safe_xy_to_hsv(x, y)
+    local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_Y, nil)
@@ -234,7 +252,7 @@ local function y_attr_handler(driver, device, ib, response)
     device:set_field(RECEIVED_Y, ib.data.value)
   else
     local y = ib.data.value
-    local h, s, _ = utils.safe_xy_to_hsv(x, y)
+    local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_X, nil)

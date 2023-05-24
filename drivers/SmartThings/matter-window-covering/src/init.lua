@@ -184,7 +184,7 @@ local matter_driver_template = {
   supported_capabilities = {
     capabilities.windowShadeLevel,
     capabilities.windowShade,
-    capabilities.windowshadePreset,
+    capabilities.windowShadePreset,
     capabilities.battery,
   },
 }

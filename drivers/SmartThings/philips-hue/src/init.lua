@@ -268,12 +268,6 @@ bridge_added = function(driver, device)
   device:set_field(Fields.API_KEY, Discovery.api_keys[device_bridge_id], { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
   driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
-
-  driver.stray_bulb_tx:send({
-    type = StrayDeviceMessageTypes.FoundBridge,
-    driver = driver,
-    device = device
-  })
 end
 
 ---@param driver HueDriver
@@ -380,7 +374,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
   if not Discovery.light_state_disco_cache[device_light_resource_id] then
     local parent_bridge = driver:get_device_info(parent_device_id or device.parent_device_id or
-    device:get_field(Fields.PARENT_DEVICE_ID))
+      device:get_field(Fields.PARENT_DEVICE_ID))
     if not parent_bridge then
       log.error(string.format(
         "Device added with parent UUID of %s but could not find a device with that UUID in the driver"
@@ -558,6 +552,11 @@ local function init_bridge(driver, device)
   for _, id in ipairs(ids_to_remove) do
     driver._lights_pending_refresh[id] = nil
   end
+  driver.stray_bulb_tx:send({
+    type = StrayDeviceMessageTypes.FoundBridge,
+    driver = driver,
+    device = device
+  })
 end
 
 ---@param driver HueDriver
@@ -631,7 +630,34 @@ end
 
 local stray_bulb_tx, stray_bulb_rx = cosock.channel.new()
 cosock.spawn(function()
+  local function process_strays(driver, api_instance, strays, bridge_device_id)
+    local dnis_to_remove = {}
+
+    Discovery.search_bridge_for_supported_devices(driver, api_instance, function(hue_driver, svc_info, device_data)
+      if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
+
+      for light_dni, light_device in pairs(strays) do
+        local matching_v1_id = light_device.data and light_device.data.bulbId and
+            light_device.data.bulbId == device_data.id_v1:gsub("/lights/", "")
+        local matching_uuid = light_device.device_network_id == svc_info.rid or
+            light_device.device_network_id == svc_info.rid
+
+        if matching_v1_id or matching_uuid then
+          log.trace("Found Bridge for stray light ", light_device.label, ", re-adding")
+          table.insert(dnis_to_remove, light_dni)
+          _initialize(hue_driver, light_device, nil, nil, bridge_device_id)
+        end
+      end
+    end)
+
+    for _, dni in ipairs(dnis_to_remove) do
+      strays[dni] = nil
+    end
+  end
+
   local stray_lights = {}
+  local found_bridges = {}
+
   while true do
     local msg, err = stray_bulb_rx:receive()
     if err then
@@ -641,31 +667,27 @@ cosock.spawn(function()
 
     local msg_device, driver = msg.device, msg.driver
     if msg.type == StrayDeviceMessageTypes.FoundBridge then
-      local dnis_to_remove = {}
       local bridge_ip = msg_device:get_field(Fields.IPV4)
-      local api_instance = HueApi.new_bridge_manager("https://" .. bridge_ip, msg_device:get_field(Fields.API_KEY))
-      Discovery.search_bridge_for_supported_devices(driver, api_instance, function(hue_driver, svc_info, device_data)
-        if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
+      local api_instance =
+          msg_device:get_field(Fields.BRIDGE_API) or
+          HueApi.new_bridge_manager("https://" .. bridge_ip, msg_device:get_field(Fields.API_KEY))
 
-        for light_dni, light_device in pairs(stray_lights) do
-          local matching_v1_id = light_device.data and light_device.data.bulbId and
-              light_device.data.bulbId == device_data.id_v1:gsub("/lights/", "")
-          local matching_uuid = light_device.device_network_id == svc_info.rid or
-              light_device.device_network_id == svc_info.rid
-
-          if matching_v1_id or matching_uuid then
-            log.trace("Found Bridge for stray light ", light_device.label, ", re-adding")
-            table.insert(dnis_to_remove, light_dni)
-            _initialize(hue_driver, light_device, nil, nil, msg_device.id)
-          end
-        end
-      end)
-
-      for _, dni in ipairs(dnis_to_remove) do
-        stray_lights[dni] = nil
-      end
+      found_bridges[msg_device.id] = msg.device
+      process_strays(driver, api_instance, stray_lights, msg_device.id)
     elseif msg.type == StrayDeviceMessageTypes.NewStrayLight then
       stray_lights[msg_device.device_network_id] = msg_device
+
+      local maybe_bridge_id =
+          msg_device.parent_device_id or msg_device:get_field(Fields.PARENT_DEVICE_ID)
+      local maybe_bridge = found_bridges[maybe_bridge_id]
+
+      if maybe_bridge ~= nil then
+        local bridge_ip = maybe_bridge:get_field(Fields.IPV4)
+        local api_instance =
+            maybe_bridge:get_field(Fields.BRIDGE_API) or
+            HueApi.new_bridge_manager("https://" .. bridge_ip, msg_device:get_field(Fields.API_KEY))
+        process_strays(driver, api_instance, stray_lights, maybe_bridge.id)
+      end
     end
     ::continue::
   end

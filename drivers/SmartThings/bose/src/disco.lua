@@ -45,10 +45,19 @@ local function send_disco_request()
     },
     "\r\n"
   )
-  local sock = assert(socket.udp(), "create discovery socket")
-  assert(sock:setsockname(listen_ip, listen_port), "disco| socket setsockname")
+  local sock, err = socket.udp()
+  if sock == nil then
+    return nil, "create udp socket failure, " .. (err or "")
+  end
+  local res, err = sock:setsockname(listen_ip, listen_port)
+  if res == nil then
+    return nil, "udp setsockname failure, " .. (err or "")
+  end
   local timeouttime = socket.gettime() + 3 -- 3 second timeout, `MX` + 1 for network delay
-  assert(sock:sendto(multicast_msg, multicast_ip, multicast_port))
+  local res, err = sock:sendto(multicast_msg, multicast_ip, multicast_port)
+  if res == nil then
+    return nil, "udp sendto failure, " .. (err or "")
+  end
   return sock, timeouttime
 end
 
@@ -78,6 +87,10 @@ function Discovery.run_discovery_task()
         log.trace("disco| done waiting for search ids, sending ssdp discovery message")
         if sock == nil and #search_ids > 0 then
           sock, timeout_epoch = send_disco_request()
+          if sock == nil then
+            log.error_with({hub_logs = true}, string.format("disco| ending due to socket error: %s", timeout_epoch))
+            break
+          end
           timeout = math.max(0, timeout_epoch - socket.gettime())
         else
           log.warn("disco| ending without sending request because no search ids requested")

@@ -64,13 +64,9 @@ local function set_setpoint_factory(setpoint_type)
     })
     device:send_to_component(set, command.component)
 
-    local follow_up_poll = function()
-      device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component)
-      device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}}))
-      device:send(ThermostatOperatingState:Get({}))
-    end
-
-    device.thread:call_with_delay(1, follow_up_poll)
+    device.thread:call_with_delay(.5, function() device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component) end)
+    device.thread:call_with_delay(1, function() device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}})) end)
+    device.thread:call_with_delay(1.5, function() device:send(ThermostatOperatingState:Get({})) end)
   end
 end
 
