@@ -564,6 +564,7 @@ local matter_lock_driver = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
+    capabilities.battery,
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }

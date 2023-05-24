@@ -20,7 +20,7 @@ jobs:
           files: "drivers"
           json: true
       - id: set-outputs
-        run: echo "matrix=${{ steps.changed-drivers.outputs.all_modified_files }}" >> "$GITHUB_OUTPUT"
+        run: echo "matrix=${{ steps.changed-drivers.outputs.all_modified_files }}" >> $GITHUB_OUTPUT
       - run: echo ${{ steps.changed-drivers.outputs.all_modified_files }}
 
   upload-driver:
@@ -49,14 +49,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo ${{ github.event.number }} > pr_number.txt
-      - name: Upload packaged driver artifact
+      - name: Upload pr number artifact
         uses: actions/upload-artifact@v3
         with:
           name: pr_number
           path: |
             pr_number.txt
       - run: echo ${{ github.head_ref }} > head_ref.txt
-      - name: Upload packaged driver artifact
+      - name: Upload head ref artifact
         uses: actions/upload-artifact@v3
         with:
           name: head_ref

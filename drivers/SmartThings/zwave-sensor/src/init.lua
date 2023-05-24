@@ -125,7 +125,8 @@ local driver_template = {
     require("ezmultipli-multipurpose-sensor"),
     require("fibaro-motion-sensor"),
     require("v1-contact-event"),
-    require("timed-tamper-clear")
+    require("timed-tamper-clear"),
+    require("wakeup-no-poll")
   },
   lifecycle_handlers = {
     added = added_handler,
