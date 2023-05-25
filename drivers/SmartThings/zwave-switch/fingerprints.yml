@@ -176,37 +176,37 @@ zwaveManufacturer:
     manufacturerId: 0x018C
     productType: 0x0061
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-1
+    deviceProfileName: dawon-wall-smart-switch
   - id: 018C/0062/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0062
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-2
+    deviceProfileName: dawon-wall-smart-switch
   - id: 018C/0063/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0063
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-3
+    deviceProfileName: dawon-wall-smart-switch
   - id: 018C/0064/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0064
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-1
+    deviceProfileName: dawon-wall-smart-switch
   - id: 018C/0065/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0065
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-2
+    deviceProfileName: dawon-wall-smart-switch
   - id: 018C/0066/0001
     deviceLabel: Dawon Wall Smart Switchs
     manufacturerId: 0x018C
     productType: 0x0066
     productId: 0x0001
-    deviceProfileName: multipurpose-switch-3
+    deviceProfileName: dawon-wall-smart-switch
   - id: 010F/1B01/1000
     deviceLabel: Fibaro Walli Double Switch
     manufacturerId: 0x010F

@@ -16,6 +16,7 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local test_utils = require "integration_test.utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4})
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
@@ -25,41 +26,41 @@ local t_utils = require "integration_test.utils"
 local multi_switch_endpoints = {
   {
     command_classes = {
-      {value = zw.NOTIFICATION},
       {value = zw.SENSOR_MULTILEVEL},
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.NOTIFICATION},
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.NOTIFICATION},
-      {value = zw.SWITCH_BINARY}
-    }
-  },
-  {
-    command_classes = {
-      {value = zw.NOTIFICATION},
-      {value = zw.SWITCH_BINARY}
     }
   }
 }
 
-local mock_multi_switch = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("multipurpose-switch-3.yml"),
+local parent_profile = test_utils.get_profile_definition("dawon-wall-smart-switch.yml")
+local child_profile = test_utils.get_profile_definition("child-switch.yml")
+
+local base_parent = test.mock_device.build_test_zwave_device({
+  label = "Dawon Wall Smart Switch",
+  profile = parent_profile,
   zwave_endpoints = multi_switch_endpoints,
   zwave_manufacturer_id = 0x018C,
-  zwave_product_type = 0x0066,
+  zwave_product_type = 0x0061,
   zwave_product_id = 0x0001
 })
 
+local mock_multi_switch = test.mock_device.build_test_zwave_device({
+  profile = parent_profile,
+  zwave_endpoints = multi_switch_endpoints,
+  zwave_manufacturer_id = 0x018C,
+  zwave_product_type = 0x0061,
+  zwave_product_id = 0x0001
+})
+
+local mock_child = test.mock_device.build_test_child_device({
+  profile = child_profile,
+  parent_device_id = mock_multi_switch.id,
+  parent_assigned_child_key = string.format("%02X", 2)
+})
+
 local function test_init()
+  test.mock_device.add_test_device(base_parent)
   test.mock_device.add_test_device(mock_multi_switch)
+  test.mock_device.add_test_device(mock_child)  
 end
 test.set_test_init_function(test_init)
 
@@ -122,7 +123,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "receive",
       message = {
-        mock_multi_switch.id,
+        mock_child.id,
         zw_test_utils.zwave_test_build_receive_command(
           Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
@@ -139,7 +140,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_multi_switch:generate_test_message("switch1", capabilities.switch.switch.on())
+      message = mock_child:generate_test_message("main", capabilities.switch.switch.on())
     }
   }
 )
@@ -151,7 +152,7 @@ test.register_message_test(
       channel = "zwave",
       direction = "receive",
       message = {
-        mock_multi_switch.id,
+        mock_child.id,
         zw_test_utils.zwave_test_build_receive_command(
           Notification:Report({
             notification_type = Notification.notification_type.POWER_MANAGEMENT,
@@ -168,123 +169,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_multi_switch:generate_test_message("switch1", capabilities.switch.switch.off())
-    }
-  }
-)
-
-test.register_message_test(
-  "Notification report should generate switch capability on to proper component (switch2)",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_multi_switch.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({
-            notification_type = Notification.notification_type.POWER_MANAGEMENT,
-            event = Notification.event.power_management.AC_MAINS_RE_CONNECTED
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 2,
-            dst_channels = { 0 }
-          })
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_multi_switch:generate_test_message("switch2", capabilities.switch.switch.on())
-    }
-  }
-)
-
-test.register_message_test(
-  "Notification report should generate switch capability off to proper component (switch2)",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_multi_switch.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({
-            notification_type = Notification.notification_type.POWER_MANAGEMENT,
-            event = Notification.event.power_management.AC_MAINS_DISCONNECTED
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 2,
-            dst_channels = { 0 }
-          })
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_multi_switch:generate_test_message("switch2", capabilities.switch.switch.off())
-    }
-  }
-)
-
-test.register_message_test(
-  "Notification report should generate switch capability on to proper component (switch3)",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_multi_switch.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({
-            notification_type = Notification.notification_type.POWER_MANAGEMENT,
-            event = Notification.event.power_management.AC_MAINS_RE_CONNECTED
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 3,
-            dst_channels = { 0 }
-          })
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_multi_switch:generate_test_message("switch3", capabilities.switch.switch.on())
-    }
-  }
-)
-
-test.register_message_test(
-  "Notification report should generate switch capability off to proper component (switch3)",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = {
-        mock_multi_switch.id,
-        zw_test_utils.zwave_test_build_receive_command(
-          Notification:Report({
-            notification_type = Notification.notification_type.POWER_MANAGEMENT,
-            event = Notification.event.power_management.AC_MAINS_DISCONNECTED
-          },
-          {
-            encap = zw.ENCAP.AUTO,
-            src_channel = 3,
-            dst_channels = { 0 }
-          })
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_multi_switch:generate_test_message("switch3", capabilities.switch.switch.off())
+      message = mock_child:generate_test_message("main", capabilities.switch.switch.off())
     }
   }
 )
@@ -309,67 +194,37 @@ test.register_coroutine_test(
     end
 )
 
-test.register_message_test(
-  "Generate proper zwave commands when added the device",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_multi_switch.id, "added" },
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_multi_switch,
-        Basic:Set(
-          { value=0x00 },
-          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {1}}
+test.register_coroutine_test(
+    "added lifecycle event should create children in parent device",
+    function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ base_parent.id, "added" })
+      base_parent:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "Dawon Wall Smart Switch",
+        profile = "child-switch",
+        parent_device_id = base_parent.id,
+        parent_assigned_child_key = "01"
+      })
+
+      test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+              base_parent,
+              SensorMultilevel:Get(
+                {sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}
         )
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_multi_switch,
-        Basic:Set(
-          { value=0x00 },
-          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {2}}
+        )
+
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+            base_parent,
+            SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY}
+      )
         )
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_multi_switch,
-        Basic:Set(
-          { value=0x00 },
-          {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {3}}
-        )
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_multi_switch,
-        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_multi_switch,
-        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY})
-      )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+  
+    end
 )
 
 test.run_registered_tests()
