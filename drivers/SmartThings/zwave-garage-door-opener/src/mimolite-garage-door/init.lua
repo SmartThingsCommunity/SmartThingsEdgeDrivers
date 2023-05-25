@@ -79,7 +79,10 @@ local function open(driver, device, command)
 end
 
 local function close(driver, device, command)
-  device:send(Basic:Set({ value = 0x00 }))
+  --Changed from 0x00 to 0xFF
+  --0xFF - Turn on (mimolite garage door would likely be a momentary switch that must be turned on to open/close
+  --0x00 - Turn off (a momentary switch would likely already be off)
+  device:send(Basic:Set({ value = 0xFF }))
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, function(d)
     device:send(Basic:Get({}))
   end)
