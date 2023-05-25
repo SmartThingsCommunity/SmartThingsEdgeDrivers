@@ -2,3 +2,5 @@ name: 'Z-Wave Smoke Alarm'
 packageKey: 'zwave-smoke-alarm'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave smoke alarm devices"
+vendorSupportInformation: "https://support.smartthings.com"

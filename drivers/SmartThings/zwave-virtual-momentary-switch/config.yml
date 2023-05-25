@@ -2,3 +2,5 @@ name: 'Z-Wave Virtual Momentary Switch'
 packageKey: 'zwave-virtual-momentary-switch'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave virtualized momentary switch devices"
+vendorSupportInformation: "https://support.smartthings.com"
