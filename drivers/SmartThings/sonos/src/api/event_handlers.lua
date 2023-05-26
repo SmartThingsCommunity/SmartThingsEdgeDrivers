@@ -50,10 +50,14 @@ end
 function CapEventHandlers.handle_playback_status(device, playback_state)
   if playback_state == CapEventHandlers.PlaybackStatus.Playing then
     device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
-  elseif playback_state == CapEventHandlers.PlaybackStatus.Buffering then
+  elseif playback_state == CapEventHandlers.PlaybackStatus.Idle then
     device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
-  else
+  elseif playback_state == CapEventHandlers.PlaybackStatus.Paused then
     device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
+  elseif playback_state == CapEventHandlers.PlaybackStatus.Buffering then
+    -- TODO the DTH doesn't currently do anything w/ buffering;
+    -- might be worth figuring out what to do with this in the future.
+    log.debug(string.format("Player [%s] buffering", device.label))
   end
 end
 

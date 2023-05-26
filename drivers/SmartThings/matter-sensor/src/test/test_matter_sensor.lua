@@ -18,14 +18,37 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
+--Note all endpoints are being mapped to the main component
+-- in the matter-sensor driver. If any devices require invoke/write
+-- requests to support the capabilities/preferences, custom mappings
+-- will need to be setup.
 local matter_endpoints = {
+  {
+    endpoint_id = 0,
+    clusters = {
+      {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+    },
+    device_types = {
+      device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+    }
+  },
   {
     endpoint_id = 1,
     clusters = {
       {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+    }
+  },
+  {
+    endpoint_id = 2,
+    clusters = {
       {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER"},
+    }
+  },
+  {
+    endpoint_id = 3,
+    clusters = {
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER"},
     }
@@ -138,6 +161,19 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.BooleanState.server.attributes.StateValue:build_test_report_data(mock_device, 1, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
   }
 )

@@ -18,9 +18,6 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
-local TIMER = "timed_clear"
-local TAMPER_CLEAR_TIME = 10
-
 local AEOTEC_MULTISENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0086, productId = 0x0064 }, -- MultiSensor 6
   { manufacturerId = 0x0371, productId = 0x0018 }, -- MultiSensor 7
@@ -44,19 +41,7 @@ local function notification_report_handler(self, device, cmd)
       event = capabilities.powerSource.powerSource.dc()
     end
   elseif cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
-    if cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED or
-      cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED then
-      event = capabilities.tamperAlert.tamper.detected()
-      local timer = device:get_field(TIMER)
-      if timer ~= nil then --received a new event before the clear fired
-        device.thread:cancel_timer(timer)
-      end
-      timer = device.thread:call_with_delay(TAMPER_CLEAR_TIME, function(d)
-        device:emit_event(capabilities.tamperAlert.tamper.clear())
-        device:set_field(TIMER, nil)
-      end)
-      device:set_field(TIMER, timer)
-    elseif cmd.args.event == Notification.event.home_security.STATE_IDLE then
+    if cmd.args.event == Notification.event.home_security.STATE_IDLE then
       device:emit_event(capabilities.motionSensor.motion.inactive())
       event = capabilities.tamperAlert.tamper.clear()
     elseif cmd.args.event == Notification.event.home_security.MOTION_DETECTION then

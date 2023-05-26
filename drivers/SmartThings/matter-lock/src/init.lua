@@ -124,7 +124,7 @@ end
 
 local function clear_credential_response_handler(driver, device, ib, response)
   local deleted_code_slot = device:get_field(lock_utils.DELETING_CODE)
-  if deleted_code_slot == nil then
+  if deleted_code_slot == nil and ib.status == im.InteractionResponse.Status.SUCCESS then
     device.log.debug("Cleared space in lock credential db for COTA credential")
     return
   end
@@ -479,6 +479,8 @@ end
 local function device_init(driver, device) device:subscribe() end
 
 local function device_added(driver, device)
+  --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
+  --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
@@ -562,6 +564,7 @@ local matter_lock_driver = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
+    capabilities.battery,
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }

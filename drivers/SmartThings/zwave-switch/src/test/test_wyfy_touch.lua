@@ -27,11 +27,6 @@ local WYFY_PRODUCT_ID = 0x5102
 local profile = t_utils.get_profile_definition("switch-binary.yml")
 
 local WYFY_multicomponent_endpoints = {
-  { -- ep 0
-    command_classes = {
-      { value = zw.SWITCH_BINARY }
-    }
-  },
   { -- ep 1
     command_classes = {
       { value = zw.SWITCH_BINARY }
