@@ -124,7 +124,9 @@ local driver_template = {
     require("everspring-motion-light-sensor"),
     require("ezmultipli-multipurpose-sensor"),
     require("fibaro-motion-sensor"),
-    require("v1-contact-event")
+    require("v1-contact-event"),
+    require("timed-tamper-clear"),
+    require("wakeup-no-poll")
   },
   lifecycle_handlers = {
     added = added_handler,
