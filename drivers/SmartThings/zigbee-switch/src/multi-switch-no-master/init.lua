@@ -38,7 +38,9 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
   { model = "E220-KR5N0Z0-HA", children = 4 },
-  { model = "E220-KR6N0Z0-HA", children = 5 }
+  { model = "E220-KR6N0Z0-HA", children = 5 },
+  { mfr = "NodOn", model = "SIN-4-2-20-PRO", children = 1 },
+  { mfr = "NodOn", model = "SIN-4-2-20", children = 1 },
 }
 
 local function is_multi_switch_no_master(opts, driver, device)
