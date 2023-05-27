@@ -21,6 +21,22 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local profile_def = t_utils.get_profile_definition("basic-switch-no-firmware-update.yml")
 
+local mock_base_device = test.mock_device.build_test_zigbee_device(
+    {
+      label = "HS Switch 1",
+      profile = profile_def,
+      zigbee_endpoints = {
+        [1] = {
+          id = 1,
+          manufacturer = "Winners",
+          model = "LSS1-206",
+          server_clusters = { 0x0006 }
+        }
+      },
+      fingerprinted_endpoint_id = 0x01
+    }
+)
+
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
   {
     profile = profile_def,
@@ -84,6 +100,7 @@ local mock_fifth_child = test.mock_device.build_test_child_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
+  test.mock_device.add_test_device(mock_base_device)
   test.mock_device.add_test_device(mock_parent_device)
   test.mock_device.add_test_device(mock_first_child)
   test.mock_device.add_test_device(mock_second_child)
@@ -98,6 +115,11 @@ test.set_test_init_function(test_init)
 test.register_message_test(
     "Reported on off status should be handled by parent device: on",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -116,6 +138,11 @@ test.register_message_test(
     "Reported on off status should be handled by first child device: on",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_first_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -132,6 +159,11 @@ test.register_message_test(
 test.register_message_test(
     "Reported on off status should be handled by Second child device: on",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -150,6 +182,11 @@ test.register_message_test(
     "Reported on off status should be handled by third child device: on",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_third_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -166,6 +203,11 @@ test.register_message_test(
 test.register_message_test(
     "Reported on off status should be handled by fourth child device: on",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -184,6 +226,11 @@ test.register_message_test(
     "Reported on off status should be handled by fifth child device: on",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_fifth_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -200,6 +247,11 @@ test.register_message_test(
 test.register_message_test(
     "reported on off status should be handled by parent device: off",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -218,6 +270,11 @@ test.register_message_test(
     "Reported on off status should be handled by first child device: off",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_first_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -234,6 +291,11 @@ test.register_message_test(
 test.register_message_test(
     "Reported on off status should be handled by Second child device: off",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -252,6 +314,11 @@ test.register_message_test(
     "Reported on off status should be handled by third child device: off",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_third_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -268,6 +335,11 @@ test.register_message_test(
 test.register_message_test(
     "Reported on off status should be handled by fourth child device: off",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "zigbee",
         direction = "receive",
@@ -286,6 +358,11 @@ test.register_message_test(
     "Reported on off status should be handled by fifth child device: off",
     {
       {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
+      {
         channel = "zigbee",
         direction = "receive",
         message = { mock_fifth_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
@@ -302,6 +379,11 @@ test.register_message_test(
 test.register_message_test(
     "Capability on command switch on should be handled : parent device",
     {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_parent_device.id, "init" }
+      },
       {
         channel = "capability",
         direction = "receive",
@@ -489,6 +571,53 @@ test.register_message_test(
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x06) }
       }
     }
+)
+
+test.register_coroutine_test(
+    "added lifecycle event should create children in parent device",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
+      mock_base_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "HS Switch 2",
+        profile = "basic-switch-no-firmware-update",
+        parent_device_id = mock_base_device.id,
+        parent_assigned_child_key = "02"
+      })
+      mock_base_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "HS Switch 3",
+        profile = "basic-switch-no-firmware-update",
+        parent_device_id = mock_base_device.id,
+        parent_assigned_child_key = "03"
+      })
+      mock_base_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "HS Switch 4",
+        profile = "basic-switch-no-firmware-update",
+        parent_device_id = mock_base_device.id,
+        parent_assigned_child_key = "04"
+      })
+      mock_base_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "HS Switch 5",
+        profile = "basic-switch-no-firmware-update",
+        parent_device_id = mock_base_device.id,
+        parent_assigned_child_key = "05"
+      })
+      mock_base_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "HS Switch 6",
+        profile = "basic-switch-no-firmware-update",
+        parent_device_id = mock_base_device.id,
+        parent_assigned_child_key = "06"
+      })
+      test.socket.zigbee:__expect_send({
+        mock_base_device.id,
+        OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(0x01)
+      })
+    end
 )
 
 test.run_registered_tests()
