@@ -1,4 +1,7 @@
 -- Copyright 2023 SmartThings
+-- 
+-- Based on https://github.com/iquix/ST-Edge-Driver/blob/master/tuya-window-shade/src/init.lua
+-- Copyright 2021-2022 Jaewon Park (iquix)
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
