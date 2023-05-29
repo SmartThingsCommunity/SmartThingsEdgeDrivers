@@ -8,16 +8,20 @@ jobs:
   find-changed-drivers:
     runs-on: ubuntu-latest
     outputs:
-      changed-drivers: ${{ steps.set-outputs.outputs.changed-drivers }}
+      changed-drivers: ${{ steps.set-outputs.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
-      - name: shallow fetch base revision
-        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+      - uses: actions/checkout@v3
       - name: get changed drivers
-        id: set-outputs
-        run: |
-          echo "::set-output name=changed-drivers::$(git diff --dirstat=files,0 --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oE 'drivers/[^/]+/[^/]+/' | sort -u | jq -Rrsc 'split("\n")[:-1]')"
-      - run: echo ${{ steps.set-outputs.outputs.changed-drivers }}
+        id: changed-drivers
+        uses: tj-actions/changed-files@v35
+        with:
+          dir_names: true
+          dir_names_max_depth: 3
+          files: "drivers"
+          json: true
+      - id: set-outputs
+        run: echo "matrix=${{ steps.changed-drivers.outputs.all_modified_files }}" >> $GITHUB_OUTPUT
+      - run: echo ${{ steps.changed-drivers.outputs.all_modified_files }}
 
   upload-driver:
     runs-on: ubuntu-latest
@@ -27,7 +31,7 @@ jobs:
       matrix:
         driver: ${{ fromJSON(needs.find-changed-drivers.outputs.changed-drivers) }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: echo "package_key=$(basename $(pwd))" >> $GITHUB_ENV
         working-directory: ${{ matrix.driver }}
       - name: Package the driver
@@ -39,29 +43,22 @@ jobs:
         with:
           name: ${{ env.package_key }}
           path: |
-            ${{ matrix.driver }}*.zip
+            ${{ matrix.driver }}/*.zip
 
   save-pr-info:
     runs-on: ubuntu-latest
     steps:
       - run: echo ${{ github.event.number }} > pr_number.txt
-      - name: Upload packaged driver artifact
+      - name: Upload pr number artifact
         uses: actions/upload-artifact@v3
         with:
           name: pr_number
           path: |
             pr_number.txt
       - run: echo ${{ github.head_ref }} > head_ref.txt
-      - name: Upload packaged driver artifact
+      - name: Upload head ref artifact
         uses: actions/upload-artifact@v3
         with:
           name: head_ref
           path: |
             head_ref.txt
-      - run: echo ${{ github.event.pull_request.head.sha }} > sha.txt
-      - name: Upload packaged driver artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: sha
-          path: |
-            sha.txt

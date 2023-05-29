@@ -150,8 +150,8 @@ local device_init = function(self, device)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.alarm.alarm.off())
-  device:emit_event(capabilities.switch.switch.off())
+  -- device:emit_event(capabilities.alarm.alarm.off())
+  -- device:emit_event(capabilities.switch.switch.off())
 end
 
 local zigbee_siren_driver_template = {

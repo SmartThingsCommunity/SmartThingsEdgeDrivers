@@ -18,7 +18,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
@@ -146,10 +145,10 @@ test.register_coroutine_test(
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.presenceSensor.presence.not_present()))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.presenceSensor.presence.not_present()))
+      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })

@@ -51,13 +51,16 @@ local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
     if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, {visibility = { displayed = false }}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, { visibility = { displayed = false } }))
     else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } }))
     end
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
+    device:emit_component_event(component,
+      capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {

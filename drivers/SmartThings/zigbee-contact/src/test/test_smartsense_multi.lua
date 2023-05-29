@@ -33,6 +33,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     zigbee_endpoints = {
       [1] = {
         id = 1,
+        manufacturer = "SmartThings",
+        model = "PGC313",
         server_clusters = {SMARTSENSE_MULTI_CLUSTER}
       }
     }
@@ -128,7 +130,7 @@ test.register_coroutine_test(
     function()
       test.socket.zigbee:__queue_receive({
         mock_device.id,
-        build_multi_status_message(mock_device, "\xFF\x4B")
+        build_multi_status_message(mock_device, "\xFF\x00\x4B")
       })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -143,7 +145,7 @@ test.register_coroutine_test(
     function()
       test.socket.zigbee:__queue_receive({
         mock_device.id,
-        build_multi_status_message(mock_device, "\xFF\x4A")
+        build_multi_status_message(mock_device, "\xFF\x00\x4A")
       })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -158,7 +160,7 @@ test.register_coroutine_test(
     function()
       test.socket.zigbee:__queue_receive({
         mock_device.id,
-        build_multi_status_message(mock_device, "\xFF\x49")
+        build_multi_status_message(mock_device, "\xFF\x00\x49")
       })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -173,7 +175,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_multi_status_message(mock_device, "\xFF\x48")
+      build_multi_status_message(mock_device, "\xFF\x00\x48")
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -184,11 +186,26 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Report from cluster 0xFC03, command 0x00 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - open, battery(60%)",
+  "Report from cluster 0xFC03, command 0x07 should be handled as: Temperature (26.0 C), Acceleration - inactive, Contact - closed, battery(60%)",
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_multi_status_report_message(mock_device, "\xFF\x03\x48")
+      build_multi_status_message(mock_device, "\x04\x01\x48")
+    })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 26.0, unit = "C" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(60)))
+  end
+)
+
+test.register_coroutine_test(
+  "Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - open, battery(60%)",
+  function()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_multi_status_report_message(mock_device, "\xFF\x00\x03\x48")
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -199,11 +216,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Report from cluster 0xFC03, command 0x00 should be handled as: Temperature (25.5 C), Acceleration - inactive, Contact - open, battery(60%)",
+  "Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (25.5 C), Acceleration - inactive, Contact - open, battery(60%)",
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_multi_status_report_message(mock_device, "\xFF\x02\x48")
+      build_multi_status_report_message(mock_device, "\xFF\x00\x02\x48")
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -214,11 +231,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Report from cluster 0xFC03, command 0x00 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(60%)",
+  "Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(60%)",
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_multi_status_report_message(mock_device, "\xFF\x01\x48")
+      build_multi_status_report_message(mock_device, "\xFF\x00\x01\x48")
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
@@ -229,11 +246,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "KK - Report from cluster 0xFC03, command 0x00 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(97%)",
+    "KK - Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(97%)",
     function()
       test.socket.zigbee:__queue_receive({
         mock_device.id,
-        build_multi_status_report_message(mock_device, "\x88\x00\x74")
+        build_multi_status_report_message(mock_device, "\x88\x00\x00\x74")
       })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 13.60, unit = "C" })))
@@ -244,14 +261,29 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Report from cluster 0xFC03, command 0x00 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(60%)",
+    "Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (25.5 C), Acceleration - active, Contact - closed, battery(60%)",
     function()
       test.socket.zigbee:__queue_receive({
         mock_device.id,
-        build_multi_status_report_message(mock_device, "\xFF\x00\x48")
+        build_multi_status_report_message(mock_device, "\xFF\x00\x00\x48")
       })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.5, unit = "C" })))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(60)))
+    end
+)
+
+test.register_coroutine_test(
+    "Report from cluster 0xFC03, command 0x09 should be handled as: Temperature (26.0 C), Acceleration - active, Contact - closed, battery(60%)",
+    function()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        build_multi_status_report_message(mock_device, "\x04\x01\x00\x48")
+      })
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 26.0, unit = "C" })))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(60)))

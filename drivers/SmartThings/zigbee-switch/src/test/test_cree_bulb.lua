@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local t_utils = require "integration_test.utils"
-local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
@@ -82,7 +81,7 @@ test.register_coroutine_test(
   "Device added lifecycle event should be handled",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",capabilities.switchLevel.level(100)))
+    -- test.socket.capability:__expect_send(mock_device:generate_test_message("main",capabilities.switchLevel.level(100)))
   end
 )
 

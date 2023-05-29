@@ -26,12 +26,9 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Clock = (require "st.zwave.CommandClass.Clock")({version=1})
 --- @type st.zwave.CommandClass.Protection
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local log = require "log"
 
 local constants = (require "st.zwave.constants")
-local DEVICE_WAKEUP_INTERVAL = 5 * 60
 local LATEST_BATTERY_REPORT_TIMESTAMP = "latest_battery_report_timestamp"
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 local CACHED_SETPOINT = "cached_setpoint"
@@ -236,8 +233,8 @@ end
 
 local function added_handler(self, device)
     -- initial capability value
-    device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
-    device:emit_event(capabilities.battery.battery(100))
+    -- device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
+    -- device:emit_event(capabilities.battery.battery(100))
 
     local interval_min = 5
     if device.preferences.reportingInterval ~= nil then

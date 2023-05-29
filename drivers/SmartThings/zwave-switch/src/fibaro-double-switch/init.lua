@@ -17,14 +17,17 @@ local capabilities = require "st.capabilities"
 local switch_defaults = require "st.zwave.defaults.switch"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.CommandClass.CentralScene
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1, strict = true})
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1, strict = true })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2, strict = true })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
+local utils = require "st.utils"
+local constants = require "st.zwave.constants"
+
+local ON = 0xFF
+local OFF = 0x00
 
 local ENDPOINTS = {
   parent = 1,
@@ -46,31 +49,6 @@ local function can_handle_fibaro_double_switch(opts, driver, device, ...)
   return false
 end
 
-local function central_scene_notification_handler(self, device, cmd)
-  local map_key_attribute_to_capability = {
-    [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
-    [CentralScene.key_attributes.KEY_RELEASED] = capabilities.button.button.held,
-    [CentralScene.key_attributes.KEY_HELD_DOWN] = capabilities.button.button.down_hold,
-    [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = capabilities.button.button.double,
-    [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = capabilities.button.button.pushed_3x
-  }
-  
-  local event = map_key_attribute_to_capability[cmd.args.key_attributes]
-  local button_number = 0
-  if cmd.args.key_attributes == 0 or cmd.args.key_attributes == 1 or cmd.args.key_attributes == 2 then
-    button_number = cmd.args.scene_number
-  elseif cmd.args.key_attributes == 3 then
-    button_number = cmd.args.scene_number + 2
-  elseif cmd.args.key_attributes == 4 then
-    button_number = cmd.args.scene_number + 4
-  end
-  local component = device.profile.components["button" .. button_number]
-  
-  if component ~= nil then
-    device:emit_component_event(component, event({state_change = true}))
-  end
-end
-
 local function do_refresh(driver, device, command)
   local component = command and command.component and command.component or "main"
   device:send_to_component(SwitchBinary:Get({}), component)
@@ -89,6 +67,7 @@ end
 
 local function device_added(driver, device, event)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE and
+    not (device.child_ids and utils.table_size(device.child_ids) ~= 0) and
     find_child(device, ENDPOINTS.child) == nil then
 
     local name = string.format("%s %s", device.label, "(CH2)")
@@ -118,18 +97,28 @@ end
 
 local function switch_report(driver, device, cmd)
   switch_defaults.zwave_handlers[cc.SWITCH_BINARY][SwitchBinary.REPORT](driver, device, cmd)
-  
+
   if device:supports_capability_by_id(capabilities.powerMeter.ID) then
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }, { dst_channels = { cmd.src_channel } }))
+  end
+end
+
+local function set_switch(value)
+  return function(driver, device, cmd)
+    local delay = constants.MIN_DIMMING_GET_STATUS_DELAY
+    local query_device = function()
+      local component = cmd and cmd.component and cmd.component or "main"
+      device:send_to_component(SwitchBinary:Get({}), component)
+    end
+
+    device:send_to_component(Basic:Set({ value = value }), cmd.component)
+    device.thread:call_with_delay(delay, query_device)
   end
 end
 
 local fibaro_double_switch = {
   NAME = "fibaro double switch",
   zwave_handlers = {
-    [cc.CENTRAL_SCENE] = {
-      [CentralScene.NOTIFICATION] = central_scene_notification_handler
-    },
     [cc.BASIC] = {
       [Basic.REPORT] = switch_report
     },
@@ -138,6 +127,10 @@ local fibaro_double_switch = {
     }
   },
   capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = set_switch(ON),
+      [capabilities.switch.commands.off.NAME] = set_switch(OFF)
+    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }

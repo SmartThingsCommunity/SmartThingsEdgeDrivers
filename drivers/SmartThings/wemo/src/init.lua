@@ -21,80 +21,47 @@ local capabilities = require "st.capabilities"
 local command_handlers = require "command_handlers"
 local discovery = require "discovery"
 local protocol = require "protocol"
+local SubscriptionServer = require "subscription_server"
+local cosock = require "cosock"
 
 local Driver = require "st.driver"
 
 local socket = require "cosock.socket"
-local json = require "dkjson"
 local log = require "log"
-
--- internal API, TODO: use public API when merged
-local devices = _envlibrequire "devices"
+local utils = require "st.utils"
 
 -- maps model name to profile name
 local profiles = {
-  ["Insight"] = "wemo.insight-smart-plug.v1",
+  ["Insight"] = "wemo.mini-smart-plug.v1",
   ["Socket"] = "wemo.mini-smart-plug.v1",
   ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
   ["Lightswitch"] = "wemo.light-switch.v1",
 }
 
-local server = {}
-
-local function start_server(driver)
-  log.info("starting server")
-  server.listen_sock = socket.tcp()
-
-  -- create server on IP_ANY and os-assigned port
-  assert(server.listen_sock:bind("*", 0))
-  assert(server.listen_sock:listen(1))
-  local ip, port, _ = server.listen_sock:getsockname()
-
-  if ip ~= nil and port ~= nil then
-    log.info("listening on: " .. ip .. ":" .. port)
-    server.listen_port = port
-    server.listen_ip = ip;
-    driver:register_channel_handler(server.listen_sock, protocol.accept_handler)
-  else
-    log.error("could not get IP/port from TCP getsockname(), not listening for device status")
-    server.listen_sock:close()
-    server.listen_sock = nil
-  end
+local function device_removed(driver, device)
+  driver.server:prune()
 end
 
-local function stop_server()
-  log.info(string.format("shutting down server @ %s:%s", server.listen_ip, server.listen_port))
-
-  if server.listen_sock ~= nil then
-    server.listen_sock:close()
-  end
-
-  server = {}
-end
-
--- build a exponential backoff time value generator
---
--- max: the maximum wait interval (not including `rand factor`)
--- inc: the rate at which to exponentially back off
--- rand: a randomization range of (-rand, rand) to be added to each interval
+--TODO remove function in favor of "st.utils" function once
+--all hubs have 0.46 firmware
 local function backoff_builder(max, inc, rand)
   local count = 0
   inc = inc or 1
   return function()
     local randval = 0
     if rand then
-      -- random value in range (-rand, rand)
+      --- We use this pattern because the version of math.random()
+      --- that takes a range only works for integer values and we
+      --- want floating point.
       randval = math.random() * rand * 2 - rand
     end
 
-    local base = inc * (2^count - 1)
+    local base = inc * (2 ^ count - 1)
     count = count + 1
 
     -- ensure base backoff (not including random factor) is less than max
-    if max then
-      base = math.min(base, max)
-    end
+    if max then base = math.min(base, max) end
 
     -- ensure total backoff is >= 0
     return math.max(base + randval, 0)
@@ -102,92 +69,129 @@ local function backoff_builder(max, inc, rand)
 end
 
 local function device_init(driver, device)
-  log.info("[" .. device.id .. "] initializing Wemo device")
-
-  local backoff = backoff_builder(60, 1, 0.25)
-  local info
-  while true do
-    discovery.find(device.device_network_id, function(found) info = found end)
-    if info then break end
-    socket.sleep(backoff())
-  end
-
-  if not info then
-    log.warn("[" .. device.id .. "] device not found on network")
-    device:offline() -- Mark device as being unavailable/offline
+  -- at the time of authoring, there is a bug with LAN Edge Drivers where `init`
+  -- may not be called on every device that gets added to the driver
+  if device:get_field("init_started") then
     return
   end
-
-  log.info("[" .. device.id .. "] device found at:",
-  info.ip, info.port, info.id, info.raw.Location)
-
-  device:online() -- Mark device as being online
- 
-  device:set_field("ip", info.ip)
-  device:set_field("port", info.port)
-
-  protocol.subscribe(server, device)
-end
-
-local function device_removed(_, device)
-  log.info("[" .. device.id .. "] device removed")
-  protocol.unsubscribe(device)
-end
-
-local function poll(driver)
-  
-  local device_list = driver:get_devices()
-  for _, device in ipairs(device_list) do
-      protocol.poll(driver, device)
+  device:set_field("init_started", true)
+  device.log.info_with({ hub_logs = true }, "initializing device")
+  local ip = device:get_field("ip")
+  local port = device:get_field("port")
+  -- Carry over DTH discovered ip/port during migration, since wemo devices often
+  -- stop responding to SSDP requests after being on the network for a long time.
+  if not (ip and port) and device.data and device.data.ip and device.data.port then
+    local nu = require "st.net_utils"
+    ip = nu.convert_ipv4_hex_to_dotted_decimal(device.data.ip)
+    port = tonumber(device.data.port, 16)
+    device:set_field("ip", ip, { persist = true })
+    device:set_field("port", port, { persist = true })
+    --try to get the metadata for this device so scan nearby doesn't create a device
+    --for a migrated device that has yet to be rediscovered on the lan
+    local meta = discovery.fetch_device_metadata(string.format("http://%s:%s/setup.xml", ip, port))
+    if meta then
+      device:set_field("serial_num", meta.serial_num, { persist = true })
+    else
+      device.log.warn_with({ hub_logs = true },
+        "Unable to fetch migrated device serial number, driver discovery may recreate the device.")
+    end
   end
 
+  -- Setup the polling and subscription
+  local jitter = 2 * math.random()
+  if driver.server and ip and port then
+    device.thread:call_with_delay(jitter, function() driver.server:subscribe(device) end)
+  end
+  device.thread:call_on_schedule(
+    3600 + jitter,
+    function() driver.server:subscribe(device) end,
+    device.id .. "subcribe"
+  )
+  device.thread:call_on_schedule(
+    60 + jitter,
+    function() protocol.poll(device) end,
+    device.id .. "poll"
+  )
+
+  --Rediscovery task. Needs task because if device init doesn't return, no events are handled
+  -- on the device thread.
+  cosock.spawn(function()
+    local backoff = backoff_builder(300, 1, 0.25)
+    local info
+    while true do
+      discovery.find(device.device_network_id, function(found) info = found end)
+      if info then break end
+      local tm = backoff()
+      device.log.info_with({ hub_logs = true }, string.format("Failed to initialize device, retrying after delay: %.1f", tm))
+      socket.sleep(tm)
+    end
+
+    if not info or not info.ip or not info.serial_num then
+      device.log.error_with({ hub_logs = true }, "device not found on network")
+      device:offline()
+      return
+    end
+    device.log.info_with({ hub_logs = true },"Device init re-discovered device on the lan")
+    device:online()
+
+    --Sometimes wemos just stop responding to ssdp even though they are connected to the network.
+    --Persist to avoid issues with driver restart
+    device:set_field("ip", info.ip, { persist = true })
+    device:set_field("port", info.port, { persist = true })
+    device:set_field("serial_num", info.serial_num, { persist = true })
+    if driver.server and (ip ~= info.ip or port ~= info.port) then
+      device.log.debug("Resubscribe because ip/port has changed since last discovery")
+      driver.server:subscribe(device)
+    end
+  end, device.id.." discovery")
+end
+
+local function device_added(driver, device)
+  device_init(driver, device)
 end
 
 local function resubscribe_all(driver)
-  local device_list = driver.device_cache
-  for _, device_uuid in ipairs(device_list) do
-    local device = driver:get_device_info(device_uuid, true)
-
-    log.info("[" .. device_uuid .. "] resubscribing Wemo device")
-    protocol.unsubscribe(device)
-    protocol.subscribe(server, device)
+  local device_list = driver:get_devices()
+  for _, device in ipairs(device_list) do
+    driver.server:unsubscribe(device)
+    driver.server:subscribe(device)
   end
 end
 
-local function lan_info_changed_handler(self, hub_ipv4)
-  if self.listen_ip == nil or hub_ipv4 ~= self.listen_ip then
-    log.info("hub IPv4 address has changed, restarting listen server and resubscribing")
-    stop_server(self)
-    start_server(self)
-
-    resubscribe_all(self)
+local function lan_info_changed_handler(driver, hub_ipv4)
+  if driver.server.listen_ip == nil or hub_ipv4 ~= driver.server.listen_ip then
+    log.info_with({ hub_logs = true },
+      "hub IPv4 address has changed, restarting listen server and resubscribing")
+    driver.server:shutdown()
+    driver.server = SubscriptionServer:new_server()
+    resubscribe_all(driver)
   end
 end
 
 local function discovery_handler(driver, _, should_continue)
-  log.info("starting discovery")
 
   local known_devices = {}
   local found_devices = {}
 
-  local device_list = driver.device_cache
-  for _, device_uuid in ipairs(device_list) do
-    local device = driver:get_device_info(device_uuid)
-    local id = device.device_network_id
-    known_devices[id] = true
+  local device_list = driver:get_devices()
+  for _, device in ipairs(device_list) do
+    local serial_num = device:get_field("serial_num")
+    --Note MAC is not used due to MAC mismatch for migrated devices
+    if serial_num ~= nil then known_devices[serial_num] = true end
   end
 
+  log.info_with({ hub_logs = true }, "Starting discovery scanning")
   while should_continue() do
-    log.info("making discovery request")
     discovery.find(
       nil,
       function(device)
         local id = device.id
         local ip = device.ip
+        local serial_num = device.serial_num
 
-        if not known_devices[id] and not found_devices[id] then
-          found_devices[id] = true
-          local name = (device.name or "Unnamed Wemo")
+        if not known_devices[serial_num] and not found_devices[serial_num] then
+          found_devices[serial_num] = true
+          local name = device.name or "Unnamed Wemo"
           local profile_name = device.model
           if string.find(name, "Motion") then
             profile_name = "Motion"
@@ -196,32 +200,31 @@ local function discovery_handler(driver, _, should_continue)
 
           if profile then
             -- add device
-            log.info(string.format("adding %s at %s", name or id, ip))
-            local create_device_msg = json.encode({
-                type = "LAN",
-                deviceNetworkId = id,
-                label = name,
-                parentDeviceId = nil,
-                profileReference = profile,
-                manufacturer = "Belkin",
-                model = device.model,
-                vendorProvidedName = device.name,
-              })
-            log.trace("create device with:", create_device_msg)
+            log.info_with({ hub_logs = true }, string.format("creating %s device [%s] at %s", name, id, ip))
+            local create_device_msg = {
+              type = "LAN",
+              device_network_id = id,
+              label = name,
+              profile = profile,
+              manufacturer = "Belkin",
+              model = device.model,
+              vendor_provided_label = device.name,
+            }
+            log.trace("create device with:", utils.stringify_table(create_device_msg))
             assert(
-              devices.create_device(create_device_msg),
+              driver:try_create_device(create_device_msg),
               "failed to create device record"
             )
           else
             log.warn("discovered device is an unknown model:", tostring(device.model))
           end
         else
-          log.debug("already known")
+          log.debug("device already known by driver")
         end
       end
     )
   end
-  log.info("exiting discovery")
+  log.info_with({ hub_logs = true }, "Discovery scanning ended")
 end
 
 --------------------------------------------------------------------------------------------
@@ -231,7 +234,8 @@ local wemo = Driver("wemo", {
   discovery = discovery_handler,
   lifecycle_handlers = {
     init = device_init,
-    removed = device_removed
+    removed = device_removed,
+    added = device_added,
   },
   lan_info_changed_handler = lan_info_changed_handler,
   capability_handlers = {
@@ -248,17 +252,7 @@ local wemo = Driver("wemo", {
   }
 })
 
-log.info("script start")
-
--- BA: What should we do if we fail to create listen socket? Consider periodic check on listen port
--- and restart server when needed.
-start_server(wemo)
-
--- Subscription timeout is set to 5400 (1.5), resubscribe 3600 (1hr) to be safe? (currently done in
--- LAN Wemo * DTH)
--- TODO.pb: Do this on device thread.
-wemo:call_on_schedule(3600, resubscribe_all, "wemo resubscribe timer")
--- BA: Polling will be needed for device health
-wemo:call_on_schedule(60, poll, "wemo poll timer")
-
+log.info("Spinning up subscription server and running driver")
+-- TODO handle case where the subscription server is not started
+wemo.server = SubscriptionServer.new_server()
 wemo:run()

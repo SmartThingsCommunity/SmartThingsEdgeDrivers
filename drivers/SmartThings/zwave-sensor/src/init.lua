@@ -67,21 +67,21 @@ local function do_configure(driver, device)
   end
 end
 
-local initial_events_map = {
-  [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
-  [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
-  [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
-  [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
-  [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
-  [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
-}
+-- local initial_events_map = {
+--   [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
+--   [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
+--   [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
+--   [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
+--   [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
+--   [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
+-- }
 
 local function added_handler(self, device)
-  for id, event in pairs(initial_events_map) do
-    if device:supports_capability_by_id(id) then
-      device:emit_event(event)
-    end
-  end
+  -- for id, event in pairs(initial_events_map) do
+  --   if device:supports_capability_by_id(id) then
+  --     device:emit_event(event)
+  --   end
+  -- end
 end
 
 local driver_template = {
@@ -123,7 +123,10 @@ local driver_template = {
     require("zwave-water-leak-sensor"),
     require("everspring-motion-light-sensor"),
     require("ezmultipli-multipurpose-sensor"),
-    require("fibaro-motion-sensor")
+    require("fibaro-motion-sensor"),
+    require("v1-contact-event"),
+    require("timed-tamper-clear"),
+    require("wakeup-no-poll")
   },
   lifecycle_handlers = {
     added = added_handler,

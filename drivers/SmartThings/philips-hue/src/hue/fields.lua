@@ -20,12 +20,15 @@ local Fields = {
   BRIDGE_SW_VERSION = "swversion",
   DEVICE_TYPE = "devicetype",
   EVENT_SOURCE = "eventsource",
+  GAMUT = "gamut",
   HUE_DEVICE_ID = "hue_device_id",
   IPV4 = "ipv4",
   MIN_DIMMING = "mindim",
+  MIN_KELVIN = "mintemp",
   MODEL_ID = "modelid",
   PARENT_DEVICE_ID = "parent_device_id_local",
-  RESOURCE_ID = "rid"
+  RESOURCE_ID = "rid",
+  WRAPPED_HUE = "_wrapped_hue"
 }
 
 return Fields

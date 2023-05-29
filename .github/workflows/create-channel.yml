@@ -12,7 +12,6 @@ jobs:
       drivers: ${{ steps.set-output.outputs.drivers }}
       pr_number: ${{ steps.pr_number.outputs.pr_number }}
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
-      sha: ${{ steps.sha.outputs.sha }}
     steps:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -21,12 +20,10 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
       - run: echo "pr_number=$(cat pr_number/pr_number.txt)" >> $GITHUB_ENV
       - run: echo "head_ref=$(cat head_ref/head_ref.txt)" >> $GITHUB_ENV
-      - run: echo "sha=$(cat sha/sha.txt)" >> $GITHUB_ENV
       - run: rm -rf pr_number
       - run: rm -rf head_ref
-      - run: rm -rf sha
       - run: |
-          echo "::set-output name=drivers::$(ls | jq -Rrsc 'split("\n")[:-1]')"
+          echo "drivers=$(ls | jq -Rrsc 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         id: set-output
       - id: pr_number
         uses: actions/github-script@v5
@@ -36,10 +33,6 @@ jobs:
         uses: actions/github-script@v5
         with:
           script: core.setOutput('head_ref', '${{ env.head_ref }}')
-      - id: sha
-        uses: actions/github-script@v5
-        with:
-          script: core.setOutput('sha', '${{ env.sha }}')
 
   get-channel:
     runs-on: ubuntu-latest
@@ -104,16 +97,7 @@ jobs:
       - name: Upload the driver
         id: driver
         run: |
-          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)"
-      # TODO: Most actions on the market don't work on workflow_run events
-      # - name: Mark check as failed
-      #   if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
-      #   uses: Sibz/github-status-action@v1
-      #   with:
-      #     context: ${{ format('{0} driver upload', matrix.driver) }}
-      #     description: ${{ steps.driver.outputs.response }}
-      #     state: 'failure'
-      #     sha: ${{ needs.download-artifacts.outputs.sha }}
+          echo "response=$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)" >> $GITHUB_OUTPUT
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
         uses: actions/github-script@v3
@@ -145,7 +129,7 @@ jobs:
           method: GET
       - name: Count current channel invites
         id: count
-        run: echo "::set-output name=count::$(echo '${{ steps.current.outputs.response }}' | jq '.items | length')"
+        run: echo "count=$(echo '${{ steps.current.outputs.response }}' | jq '.items | length')" >> $GITHUB_OUTPUT
       - name: Create invite
         if: ${{ steps.count.outputs.count == 0 }}
         id: invite

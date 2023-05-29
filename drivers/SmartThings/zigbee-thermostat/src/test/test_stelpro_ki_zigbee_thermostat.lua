@@ -18,7 +18,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local Thermostat = clusters.Thermostat
@@ -30,7 +29,6 @@ local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState  = capabilities.thermostatOperatingState
 
 local RAW_TEMP = "raw_temp"
-local RAW_SETPOINT = "raw_setpoint"
 local STORED_SYSTEM_MODE = "stored_system_mode"
 
 local MFR_SETPOINT_MODE_ATTTRIBUTE = 0x401C
@@ -416,11 +414,11 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "eco" }, { visibility = { displayed = false } }))
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    -- },
     {
       channel = "capability",
       direction = "receive",

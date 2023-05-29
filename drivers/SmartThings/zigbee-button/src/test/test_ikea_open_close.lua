@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"
@@ -191,13 +190,13 @@ test.register_coroutine_test(
         })
       end
     end
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
+    -- test.socket.capability:__expect_send({
+    --   mock_device.id,
+    --   {
+    --     capability_id = "button", component_id = "main",
+    --     attribute_id = "button", state = { value = "pushed" }
+    --   }
+    -- })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({

@@ -51,8 +51,8 @@ end
 
 local device_added = function(self, device)
   lock_utils.populate_state_from_data(device)
-  device:emit_event(capabilities.lock.lock.unlocked())
-  device:emit_event(capabilities.battery.battery(100))
+  -- device:emit_event(capabilities.lock.lock.unlocked())
+  -- device:emit_event(capabilities.battery.battery(100))
 end
 
 local battery_init = battery_defaults.build_linear_voltage_init(4.0, 6.0)

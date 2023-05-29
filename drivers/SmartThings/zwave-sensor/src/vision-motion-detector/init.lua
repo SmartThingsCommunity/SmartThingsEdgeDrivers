@@ -51,7 +51,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
       event = capabilities.motionSensor.motion.active()
     elseif cmd.args.event == Notification.event.home_security.STATE_IDLE then
-      if not (cmd.args.event_parameter:byte(1) == 3) then
+      if cmd.args.event_parameter:byte(1) ~= 3 then
         event = capabilities.motionSensor.motion.inactive()
       end
     end

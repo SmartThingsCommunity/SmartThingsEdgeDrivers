@@ -20,7 +20,6 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local Clock = (require "st.zwave.CommandClass.Clock")({ version = 1 })
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local zw = require "st.zwave"
 local constants = require "st.zwave.constants"
 local t_utils = require "integration_test.utils"
@@ -60,16 +59,16 @@ local function do_initial_setup()
 
     test.socket.device_lifecycle():__queue_receive({mock_device.id, "added"})
 
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message(
-                "main",
-                capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})
-        ))
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message(
-                "main",
-                capabilities.battery.battery(100)
-        ))
+    -- test.socket.capability:__expect_send(
+    --     mock_device:generate_test_message(
+    --             "main",
+    --             capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})
+    --     ))
+    -- test.socket.capability:__expect_send(
+    --     mock_device:generate_test_message(
+    --             "main",
+    --             capabilities.battery.battery(100)
+    --     ))
 
     test.socket.zwave:__expect_send(
         zw_test_utilities.zwave_test_build_send_command(

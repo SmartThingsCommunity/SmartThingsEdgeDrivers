@@ -17,7 +17,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-local dkjson = require "dkjson"
 local constants = require "st.zwave.constants"
 local capabilities = require "st.capabilities"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })

@@ -43,7 +43,51 @@ local setpoint_limit_device_field = {
   MIN_DEADBAND = "MIN_DEADBAND",
 }
 
+local subscribed_attributes = {
+  [capabilities.temperatureMeasurement.ID] = {
+    clusters.Thermostat.attributes.LocalTemperature,
+    clusters.TemperatureMeasurement.attributes.MeasuredValue
+  },
+  [capabilities.relativeHumidityMeasurement.ID] = {
+    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+  },
+  [capabilities.thermostatMode.ID] = {
+    clusters.Thermostat.attributes.SystemMode,
+    clusters.Thermostat.attributes.ControlSequenceOfOperation
+  },
+  [capabilities.thermostatOperatingState.ID] = {
+    clusters.Thermostat.attributes.ThermostatRunningState
+  },
+  [capabilities.thermostatFanMode.ID] = {
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.FanMode
+  },
+  [capabilities.thermostatCoolingSetpoint.ID] = {
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint
+  },
+  [capabilities.thermostatHeatingSetpoint.ID] = {
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint
+  },
+  [capabilities.battery.ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining
+  }
+}
+
 local function device_init(driver, device)
+  device:subscribe()
+end
+
+local function info_changed(driver, device, event, args)
+  --Note this is needed because device:subscribe() does not recalculate
+  -- the subscribed attributes each time it is run, that only happens at init.
+  -- This will change in the 0.48.x release of the lua libs.
+  for cap_id, attributes in pairs(subscribed_attributes) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, attr in ipairs(attributes) do
+        device:add_subscribed_attribute(attr)
+      end
+    end
+  end
   device:subscribe()
 end
 
@@ -54,6 +98,7 @@ local function do_configure(driver, device)
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if #thermo_eps == 1 then
@@ -76,7 +121,12 @@ local function do_configure(driver, device)
 
     -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
     -- to determine support for ThermostatRunningState
+    -- Add nobattery profiles if updated
     profile_name = profile_name .. "-nostate"
+
+    if #battery_eps == 0 then
+      profile_name = profile_name .. "-nobattery"
+    end
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
@@ -172,9 +222,7 @@ local function fan_mode_handler(driver, device, ib, response)
   if ib.data.value == clusters.FanControl.attributes.FanMode.AUTO or
     ib.data.value == clusters.FanControl.attributes.FanMode.SMART then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.auto())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-    -- we don't have an "off" value
-  else
+  elseif ib.data.value ~= clusters.FanControl.attributes.FanMode.OFF then -- we don't have an "off" value
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.on())
   end
 end
@@ -331,6 +379,7 @@ local matter_driver_template = {
     init = device_init,
     added = device_added,
     doConfigure = do_configure,
+    infoChanged = info_changed,
   },
   matter_handlers = {
     attr = {
@@ -362,35 +411,7 @@ local matter_driver_template = {
       }
     }
   },
-  subscribed_attributes = {
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.Thermostat.attributes.LocalTemperature,
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.thermostatMode.ID] = {
-      clusters.Thermostat.attributes.SystemMode,
-      clusters.Thermostat.attributes.ControlSequenceOfOperation
-    },
-    [capabilities.thermostatOperatingState.ID] = {
-      clusters.Thermostat.attributes.ThermostatRunningState
-    },
-    [capabilities.thermostatFanMode.ID] = {
-      clusters.FanControl.attributes.FanModeSequence,
-      clusters.FanControl.attributes.FanMode
-    },
-    [capabilities.thermostatCoolingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedCoolingSetpoint
-    },
-    [capabilities.thermostatHeatingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedHeatingSetpoint
-    },
-    [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining
-    }
-  },
+  subscribed_attributes = subscribed_attributes,
   capability_handlers = {
     [capabilities.thermostatMode.ID] = {
       [capabilities.thermostatMode.commands.setThermostatMode.NAME] = set_thermostat_mode,

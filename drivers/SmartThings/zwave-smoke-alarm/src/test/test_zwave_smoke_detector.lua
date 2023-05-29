@@ -18,7 +18,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
@@ -204,11 +203,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-    },
+    -- {
+    --   channel = "capability",
+    --   direction = "send",
+    --   message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+    -- },
     {
       channel = "capability",
       direction = "receive",

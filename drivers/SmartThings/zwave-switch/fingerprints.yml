@@ -70,7 +70,7 @@ zwaveManufacturer:
     deviceLabel: Dawon Smart Plug
     manufacturerId: 0x018C
     productType: 0x0042
-    deviceProfileName: metering-switch
+    deviceProfileName: smartplug-switch-power-energy
   - id: "015D/0221/251C"
     deviceLabel: Show Home Outlet
     manufacturerId: 0x015D
@@ -117,43 +117,43 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productType: 0x0103
     productId: 0x008C
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0086/0003/008C
     deviceLabel: Aeotec Switch 1
     manufacturerId: 0x0086
     productType: 0x0003
     productId: 0x008C
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0258/0003/008B
     deviceLabel: NEO Coolcam Switch 1
     manufacturerId: 0x0258
     productType: 0x0003
     productId: 0x008B
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0258/0003/108B
     deviceLabel: NEO Coolcam Switch 1
     manufacturerId: 0x0258
     productType: 0x0003
     productId: 0x108B
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0312/C000/C004
     deviceLabel: EVA Switch 1
     manufacturerId: 0x0312
     productType: 0xC000
     productId: 0xC004
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0312/FF00/FF05
     deviceLabel: Minoston Switch 1
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF05
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 0312/C000/C007
     deviceLabel: Evalogik Switch 1
     manufacturerId: 0x0312
     productType: 0xC000
     productId: 0xC007
-    deviceProfileName: dual-switch
+    deviceProfileName: switch-binary
   - id: 001A/4243/0000
     deviceLabel: Eaton Anyplace Switch
     manufacturerId: 0x001A
@@ -176,37 +176,37 @@ zwaveManufacturer:
     manufacturerId: 0x018C
     productType: 0x0061
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-1
+    deviceProfileName: multipurpose-switch-1
   - id: 018C/0062/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0062
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-2
+    deviceProfileName: multipurpose-switch-2
   - id: 018C/0063/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0063
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-3
+    deviceProfileName: multipurpose-switch-3
   - id: 018C/0064/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0064
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-1
+    deviceProfileName: multipurpose-switch-1
   - id: 018C/0065/0001
     deviceLabel: Dawon Wall Smart Switch
     manufacturerId: 0x018C
     productType: 0x0065
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-2
+    deviceProfileName: multipurpose-switch-2
   - id: 018C/0066/0001
     deviceLabel: Dawon Wall Smart Switchs
     manufacturerId: 0x018C
     productType: 0x0066
     productId: 0x0001
-    deviceProfileName: multipurpse-switch-3
+    deviceProfileName: multipurpose-switch-3
   - id: 010F/1B01/1000
     deviceLabel: Fibaro Walli Double Switch
     manufacturerId: 0x010F
@@ -550,7 +550,7 @@ zwaveManufacturer:
     deviceLabel: Minoston Outlet
     manufacturerId: 0x0312
     productType: 0xFF00
-    productId: 0xFF07
+    productId: 0xFF06
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF01
     deviceLabel: Minoston Outlet
@@ -603,7 +603,20 @@ zwaveManufacturer:
     deviceLabel: Leviton Dimmer Switch
     manufacturerId: 0x001D
     productId: 0x0001
+    productType: 0x3301
     deviceProfileName: switch-level
+  - id: 001D/3201/0001
+    deviceLabel: Leviton Dimmer Switch
+    manufacturerId: 0x001D
+    productId: 0x0001
+    productType: 0x3201
+    deviceProfileName: switch-level
+  - id: 001D/3601/0001
+    deviceLabel: Leviton Plug-in Outlet
+    manufacturerId: 0x001D
+    productId: 0x0001
+    productType: 0x3601
+    deviceProfileName: smartplug-binary
   - id: 001D/1B03/0334
     deviceLabel: Leviton Dimmer Switch
     manufacturerId: 0x001D
