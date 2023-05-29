@@ -23,7 +23,7 @@ jobs:
       - run: rm -rf pr_number
       - run: rm -rf head_ref
       - run: |
-          echo "::set-output name=drivers::$(ls | jq -Rrsc 'split("\n")[:-1]')"
+          echo "drivers=$(ls | jq -Rrsc 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         id: set-output
       - id: pr_number
         uses: actions/github-script@v5
@@ -97,7 +97,7 @@ jobs:
       - name: Upload the driver
         id: driver
         run: |
-          echo "::set-output name=response::$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)"
+          echo "response=$(curl --location --request POST 'https://api.smartthings.com/drivers/package/' --header 'Authorization: Bearer ${{ secrets.TOKEN }}' --header 'Content-Type: application/zip' --data-binary @${{ matrix.driver }}.zip)" >> $GITHUB_OUTPUT
       - name: Driver upload failed
         if: ${{ !contains(steps.driver.outputs.response, 'driverId') }}
         uses: actions/github-script@v3
@@ -129,7 +129,7 @@ jobs:
           method: GET
       - name: Count current channel invites
         id: count
-        run: echo "::set-output name=count::$(echo '${{ steps.current.outputs.response }}' | jq '.items | length')"
+        run: echo "count=$(echo '${{ steps.current.outputs.response }}' | jq '.items | length')" >> $GITHUB_OUTPUT
       - name: Create invite
         if: ${{ steps.count.outputs.count == 0 }}
         id: invite

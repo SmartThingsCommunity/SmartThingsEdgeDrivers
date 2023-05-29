@@ -65,12 +65,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        ColorControl.commands.MoveToColorTemperature(mock_device, 200, 0)
-      }
-    )
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300, 1)
       }
     )
@@ -253,6 +247,19 @@ test.register_coroutine_test(
 
     test.mock_time.advance_time(1)
     test.socket.zigbee:__expect_send({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device)})
+  end
+)
+
+test.register_coroutine_test(
+  "Added lifecycle event should set color temperature",
+  function ()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.commands.MoveToColorTemperature(mock_device, 200, 0)
+      }
+    )
   end
 )
 

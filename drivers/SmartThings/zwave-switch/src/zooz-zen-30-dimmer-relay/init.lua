@@ -39,34 +39,34 @@ local ENDPOINTS = {
 
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = {
-    [0x01] = capabilities.button.button.up(),
-    [0x02] = capabilities.button.button.down(),
-    [0x03] = capabilities.button.button.pushed()
+    [0x01] = capabilities.button.button.up({state_change = true}),
+    [0x02] = capabilities.button.button.down({state_change = true}),
+    [0x03] = capabilities.button.button.pushed({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_2_TIMES] = {
-    [0x01] = capabilities.button.button.up_2x(),
-    [0x02] = capabilities.button.button.down_2x(),
-    [0x03] = capabilities.button.button.pushed_2x()
+    [0x01] = capabilities.button.button.up_2x({state_change = true}),
+    [0x02] = capabilities.button.button.down_2x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_2x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_3_TIMES] = {
-    [0x01] = capabilities.button.button.up_3x(),
-    [0x02] = capabilities.button.button.down_3x(),
-    [0x03] = capabilities.button.button.pushed_3x()
+    [0x01] = capabilities.button.button.up_3x({state_change = true}),
+    [0x02] = capabilities.button.button.down_3x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_3x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_4_TIMES] = {
-    [0x01] = capabilities.button.button.up_4x(),
-    [0x02] = capabilities.button.button.down_4x(),
-    [0x03] = capabilities.button.button.pushed_4x()
+    [0x01] = capabilities.button.button.up_4x({state_change = true}),
+    [0x02] = capabilities.button.button.down_4x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_4x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_PRESSED_5_TIMES] = {
-    [0x01] = capabilities.button.button.up_5x(),
-    [0x02] = capabilities.button.button.down_5x(),
-    [0x03] = capabilities.button.button.pushed_5x()
+    [0x01] = capabilities.button.button.up_5x({state_change = true}),
+    [0x02] = capabilities.button.button.down_5x({state_change = true}),
+    [0x03] = capabilities.button.button.pushed_5x({state_change = true})
   },
   [CentralScene.key_attributes.KEY_HELD_DOWN] = {
-    [0x01] = capabilities.button.button.up_hold(),
-    [0x02] = capabilities.button.button.down_hold(),
-    [0x03] = capabilities.button.button.held()
+    [0x01] = capabilities.button.button.up_hold({state_change = true}),
+    [0x02] = capabilities.button.button.down_hold({state_change = true}),
+    [0x03] = capabilities.button.button.held({state_change = true})
   }
 }
 

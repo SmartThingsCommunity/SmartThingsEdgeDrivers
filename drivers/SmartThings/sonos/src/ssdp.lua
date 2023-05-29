@@ -73,7 +73,19 @@ function SSDP.search(search_term, callback)
           log.debug(rip, "!=", ip)
         elseif ip and is_group_coordinator and group_id and
             group_name and household_id and wss_url then
-          callback(group_info)
+          if #group_id == 0 then
+            log.debug(string.format(
+            "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
+            st_utils.stringify_table(group_info, nil, false)))
+          elseif callback ~= nil then
+            if type(callback) == "function" then
+              callback(group_info)
+            else
+              log.warn(string.format(
+              "Expected a function in callback argument position for `SSDP.search`, found argument of type %s",
+              type(callback)))
+            end
+          end
         else
           log.warn(
             "Received incomplete Sonos SSDP M-SEARCH Reply, retrying search")

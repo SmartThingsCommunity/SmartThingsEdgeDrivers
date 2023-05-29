@@ -26,6 +26,8 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+--- @type st.zwave.CommandClass.MultiChannel
+local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 4 })
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
@@ -62,13 +64,9 @@ local function set_setpoint_factory(setpoint_type)
     })
     device:send_to_component(set, command.component)
 
-    local follow_up_poll = function()
-      device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component)
-      device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}}))
-      device:send(ThermostatOperatingState:Get({}))
-    end
-
-    device.thread:call_with_delay(1, follow_up_poll)
+    device.thread:call_with_delay(.5, function() device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component) end)
+    device.thread:call_with_delay(1, function() device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}})) end)
+    device.thread:call_with_delay(1.5, function() device:send(ThermostatOperatingState:Get({})) end)
   end
 end
 
@@ -117,6 +115,36 @@ local function thermostat_mode_report_handler(self, device, cmd)
   end
 end
 
+-- The context for this handler is that the ct100 has been observed to use the
+-- multiinstance command encap (0x06) and then pass in multi channel
+-- command encap arguments (i.e. including a destination endpoint).
+-- This causes everything to be off by 1 byte, and the dest endpoint to be
+-- parsed as the command class. Real nasty business. -sg
+
+-- e.g.:
+-- CC:Multi-Channel ID:0x06 Len:8 Payload:0x01 00 31 05 01 2A 02 58 Encap:None
+-- parsed as:
+-- (Thermostat)> received Z-Wave command: {args={command=49, command_class=0, instance=1, parameter="\x05\x01\x2A\x02\x58", res=false},
+-- cmd_class="MULTI_CHANNEL", cmd_id="MULTI_INSTANCE_CMD_ENCAP", dst_channels={}, encap="NONE", payload="\x01\x00\x31\x05\x01\x2A\x02\x58",
+-- src_channel=0, version=2}
+local function multi_instance_encap_handler(self, device, cmd)
+  if (cmd.args.command == cc.SENSOR_MULTILEVEL and
+    string.byte(cmd.args.parameter, 1, 2) == SensorMultilevel.REPORT) then
+    local size_scale_precision = string.byte(string.sub(cmd.args.parameter, 3, 4))
+    local precision = (size_scale_precision >> 5) & 0x7 -- last 3 bits
+    local sensor_value = utils.bit_list_to_int(utils.bitify(string.sub(cmd.args.parameter, 4))) / (10 ^ precision)
+
+    local repack = SensorMultilevel:Report({
+      sensor_type = string.byte(string.sub(cmd.args.parameter, 2, 3)),
+      size = size_scale_precision & 0x7, -- first three bits
+      scale = (size_scale_precision >> 3) & 0x3, -- next two bits
+      precision = precision,
+      sensor_value = sensor_value
+    })
+    device.thread:queue_event(self.zwave_dispatcher.dispatch, self.zwave_dispatcher, self, device, repack)
+  end
+end
+
 local function do_refresh(self, device)
   device:send(ThermostatFanMode:Get({}))
   device:send(ThermostatOperatingState:Get({}))
@@ -140,6 +168,9 @@ local ct100_thermostat = {
   zwave_handlers = {
     [cc.THERMOSTAT_MODE] = {
       [ThermostatMode.REPORT] = thermostat_mode_report_handler
+    },
+    [cc.MULTI_CHANNEL] = {
+      [MultiChannel.MULTI_INSTANCE_CMD_ENCAP] = multi_instance_encap_handler
     }
   },
   capability_handlers = {

@@ -75,7 +75,7 @@ zwaveManufacturer:
     manufacturerId: 0x0039
     productType: 0x0011
     productId: 0x0001
-    deviceProfileName: thermostat-no-battery
+    deviceProfileName: base-thermostat-without-battery
   - id: "008B/5452"
     deviceLabel: Trane Thermostat
     manufacturerId: 0x008B

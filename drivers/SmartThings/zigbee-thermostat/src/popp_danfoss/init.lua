@@ -1,9 +1,6 @@
 local clusters = require "st.zigbee.zcl.clusters"
-local capabilities = require "st.capabilities"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = clusters.PowerConfiguration
-local ThermostatMode = capabilities.thermostatMode
-local Thermostat = clusters.Thermostat
 
 local POPP_DANFOSS_THERMOSTAT_FINGERPRINTS = {
   { mfr = "D5X84YU", model = "eT093WRO" },
@@ -19,19 +16,12 @@ local is_popp_danfoss_thermostat = function(opts, driver, device)
   return false
 end
 
-local supported_thermostat_modes_handler = function(driver, device, supported_modes)
-  device:emit_event(ThermostatMode.supportedThermostatModes({"heat"}, { visibility = { displayed = false } }))
-end
-
 local popp_danfoss_thermostat = {
   NAME = "POPP Danfoss Thermostat Handler",
   zigbee_handlers = {
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_defaults.battery_volt_attr_handler
-      },
-      [Thermostat.ID] = {
-        [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler
       }
     }
   },

@@ -71,7 +71,12 @@ end
 function parser.parse_subscription_resp_xml(device, xml)
   local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
-  xml_parser:parse(xml)
+  local success, err = pcall(xml_parser.parse, xml_parser, xml)
+
+  if not handler.root or not success then
+    log.warn("parse| unable to parse subscription response xml: ", err)
+    return
+  end
 
   local parsed_xml = handler.root
 
