@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: plug-binary
+  - id: "GELightingSavant/FullColor/Bulb"
+    deviceLabel: GELighting Savant Full Color Bulb WiFi
+    vendorId: 0x1339
+    productId: 0x89
+    deviceProfileName: light-color-level-savant
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
