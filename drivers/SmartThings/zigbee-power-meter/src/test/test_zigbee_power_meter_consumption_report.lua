@@ -125,7 +125,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 500)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,

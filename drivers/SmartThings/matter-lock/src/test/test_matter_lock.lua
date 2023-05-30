@@ -22,6 +22,15 @@ local mock_device_record = {
   manufacturer_info = {vendor_id = 0x101D, product_id = 0x1},
   endpoints = {
     {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
       endpoint_id = 1,
       clusters = {
         {cluster_id = clusters.DoorLock.ID, cluster_type = "SERVER", feature_map = 0x0000},

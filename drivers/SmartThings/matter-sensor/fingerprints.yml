@@ -1,5 +1,10 @@
 matterManufacturer:
   #Eve
+  - id: "Eve Motion"
+    deviceLabel: Eve Motion
+    vendorId: 0x130a
+    productId: 0x0059
+    deviceProfileName: matter-motion-battery-illuminance
   - id: "Eve/DoorAndWindow"
     deviceLabel: Eve Door and Window
     vendorId: 0x130a

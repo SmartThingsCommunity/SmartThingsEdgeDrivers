@@ -48,13 +48,21 @@ local function connect(client)
     use_ssl = true
   end
 
-  client.socket = client.socket_builder(client.base_url.host, port, use_ssl)
+  local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
+
+  if sock == nil then
+    client.socket = nil
+    return false, err
+  end
+
+  client.socket = sock
+  return true
 end
 
 local function reconnect(client)
   client.socket:close()
   client.socket = nil
-  connect(client)
+  return connect(client)
 end
 
 local function send_request(client, request)
@@ -161,9 +169,16 @@ local function handle_response(sock)
 end
 
 local function execute_request(client, request, retry_fn)
-  if client.socket == nil then connect(client) end
+  if client.socket == nil then
+    local success, err = connect(client)
+    if not success then return nil, err end
+  end
 
-  local should_retry = retry_fn or function() return false end
+  local should_retry = retry_fn
+
+  if type(should_retry) ~= "function" then
+    should_retry = function() return false end
+  end
 
   -- send output
   local _bytes_sent, send_err, _idx = nil, nil, 0
@@ -176,13 +191,14 @@ local function execute_request(client, request, retry_fn)
   local current_state = RestCallStates.SEND
 
   repeat
+    local retry = should_retry()
     if current_state == RestCallStates.SEND then
-
+      backoff = backoff_builder(60, 1, 0.1)
       _bytes_sent, send_err, _idx = send_request(client, request)
 
       if not send_err then
         current_state = RestCallStates.RECEIVE
-      elseif should_retry() then
+      elseif retry then
         if string.lower(send_err) == "closed" or string.lower(send_err):match("broken pipe") then
           current_state = RestCallStates.RECONNECT
         else
@@ -200,7 +216,7 @@ local function execute_request(client, request, retry_fn)
         ret = response
         err = nil
         current_state = RestCallStates.COMPLETE
-      elseif should_retry() then
+      elseif retry then
         if string.lower(recv_err) == "closed" or string.lower(recv_err):match("broken pipe") then
           current_state = RestCallStates.RECONNECT
         else
@@ -212,9 +228,16 @@ local function execute_request(client, request, retry_fn)
         current_state = RestCallStates.COMPLETE
       end
     elseif current_state == RestCallStates.RECONNECT then
-
-      reconnect(client)
-      current_state = RestCallStates.RETRY
+      local success, reconn_err = reconnect(client)
+      if success then
+        current_state = RestCallStates.RETRY
+      elseif not retry then
+        ret = nil
+        err = reconn_err
+        current_state = RestCallStates.COMPLETE
+      else
+        socket.sleep(backoff())
+      end
     elseif current_state == RestCallStates.RETRY then
       bytes_sent, send_err, _idx = nil, nil, 0
       response, recv_err, partial = nil, nil, nil

@@ -134,13 +134,33 @@ jobs:
         run: python tools/run_driver_tests_p.py ${{ steps.changed-drivers.outputs.all_modified_files }}
         env:
           LUA_PATH: ${{ steps.lua_path.outputs.lua_path }}
-      - name: Check code coverage
-        uses: 5monkeys/cobertura-action@master
-        with:
-          path: tools/coverage_output/*_coverage.xml
-          minimum_coverage: 90
-      - name: Publish Test Results
+      - name: Upload test artifact
         if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: actions/upload-artifact@v3
         with:
-          junit_files: "tools/test_output/*.xml"
+          name: tests
+          path: |
+            tools/test_output/*.xml
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: |
+            tools/coverage_output/*_coverage.xml
+
+  event-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload event file artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: event-file
+          path: ${{ github.event_path }}
+      - run: echo ${{ github.event.number }} > pr_number.txt
+      - name: Upload pr number artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: |
+            pr_number.txt

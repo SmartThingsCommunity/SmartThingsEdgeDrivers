@@ -12,15 +12,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+--Note: Currently only support for window shades with the PositionallyAware Feature
+--Note: No support for setting device into calibration mode, it must be done manually
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 
--- Not sure if I need status yet
--- local global variables
 local DEFAULT_LEVEL = 0
-local OPERATIONAL_STATUS_MASK = 0x3 -- only check the last two bits
 
 local function device_init(driver, device)
   device:subscribe()
@@ -35,7 +34,6 @@ end
 local function device_removed(driver, device) log.info("device removed") end
 
 -- capability handlers
-
 local function handle_preset(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local lift_value = 100 - device.preferences.presetPosition
@@ -103,23 +101,19 @@ local function current_status_handler(driver, device, ib, response)
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
   end
-  local state = ib.data.value & OPERATIONAL_STATUS_MASK -- get last two bits
-
-  if ib.data.value ~= nil then
-    if state == 0 then -- not moving
-      if position == 100 then -- open
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
-      elseif position == 0 then -- closed
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
-      end
-    elseif state == 1 then -- opening
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-    elseif state == 2 then ---closing
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
+  local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
+  if state == 0 then -- not moving
+    if position == 100 then -- open
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
+    elseif position == 0 then -- closed
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
     end
-
+  elseif state == 1 then -- opening
+    device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
+  elseif state == 2 then -- closing
+    device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
   end
@@ -127,6 +121,7 @@ end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
+    --TODO should we invert this like we do for CurrentLiftPercentage100ths?
     local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
   end
@@ -143,6 +138,8 @@ local matter_driver_template = {
   lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added},
   matter_handlers = {
     attr = {
+      --TODO LevelControl may not be needed for certified devices since
+      -- certified should use CurrentPositionLiftPercent100ths attr
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
       },
@@ -187,7 +184,7 @@ local matter_driver_template = {
   supported_capabilities = {
     capabilities.windowShadeLevel,
     capabilities.windowShade,
-    capabilities.windowshadePreset,
+    capabilities.windowShadePreset,
     capabilities.battery,
   },
 }
