@@ -79,7 +79,6 @@ for partner in partners:
   # after it's been uploaded, hold on to the driver id and version
   for driver in drivers:
     if driver in CHANGED_DRIVERS:
-      subprocess.run(["rm", "edge.zip"], capture_output=True)
       package_key = ""
       with open(driver+"/config.yml", 'r') as config_file:
         package_key = yaml.safe_load(config_file)["packageKey"]
@@ -90,16 +89,16 @@ for partner in partners:
       if package_key == "sonos" and SONOS_API_KEY:
         subprocess.run(["echo \'return \"" + SONOS_API_KEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
       retries = 0
-      while not os.path.exists("edge.zip") or retries >= 5:
+      while not os.path.exists(driver+".zip") and retries < 5:
         try:
-          subprocess.run(["zip -r ../edge.zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True, check=True)
+          subprocess.run(["zip -r ../"+driver+".zip config.yml fingerprints.yml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True, check=True)
         except subprocess.CalledProcessError as error:
           print(error.stderr)
         retries += 1
       if retries >= 5:
         print("5 zip failires, skipping "+package_key+" and continuing.")
         continue
-      with open("edge.zip", 'rb') as driver_package:
+      with open(driver+".zip", 'rb') as driver_package:
         data = driver_package.read()
         response = None
         retries = 0
@@ -127,6 +126,8 @@ for partner in partners:
             drivers_updated.append(driver)
             response_json = json.loads(response.text)
             uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]}
+      subprocess.run(["rm", driver+".zip"], capture_output=True)
+
 
   # go back up to the root 'drivers' directory after completing each partner's drivers uploads
   os.chdir("..")
