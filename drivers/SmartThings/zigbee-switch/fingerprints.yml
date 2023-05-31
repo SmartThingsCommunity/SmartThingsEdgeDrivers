@@ -2009,7 +2009,7 @@ zigbeeManufacturer:
     model: E13-N11
     deviceProfileName: on-off-level-motion-sensor
   - id: "Third Reality/3RSNL02043Z"
-    deviceLabel: ThirdReality Smart Night Light
+    deviceLabel: ThirdReality Smart Nightlight
     manufacturer: Third Reality, Inc
     model: 3RSNL02043Z
     deviceProfileName: on-off-level-rgbw-motion-sensor
