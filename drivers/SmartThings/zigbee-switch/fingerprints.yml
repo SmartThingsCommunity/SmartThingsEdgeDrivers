@@ -2008,6 +2008,11 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E13-N11
     deviceProfileName: on-off-level-motion-sensor
+  - id: "Third Reality/3RSNL02043Z"
+    deviceLabel: ThirdReality Smart Night Light
+    manufacturer: Third Reality, Inc
+    model: 3RSNL02043Z
+    deviceProfileName: on-off-level-rgbw-motion-sensor
   - id: "GE_Appliances/ZLL Light"
     deviceLabel: GE Light
     manufacturer: GE_Appliances
