@@ -64,30 +64,51 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
-  "SimpleMetering event should be handled by powerConsumptionReport capability",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 1000) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.0, unit = "kWh"}))
-    },
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 1500) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
-    }
-  }
+test.register_coroutine_test(
+    "SimpleMetering event should be handled by powerConsumptionReport capability",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(15*60, "oneshot")
+      test.wait_for_events()
+      test.mock_time.advance_time(15*60)
+      test.socket.zigbee:__queue_receive({
+                                           mock_device.id,
+                                           SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device,1500)
+                                        })
+      local last_save_ticks = mock_device:get_field("LAST_SAVE_TICK")
+      if last_save_ticks == nil then last_save_ticks = 0 end
+      local delta_tick = os.time() - last_save_ticks
+      -- wwst energy certification : powerConsumptionReport capability values should be updated every 15 minutes.
+      -- Check if 15 minutes have passed since the reporting time of current_power_consumption.
+      if delta_tick >= 15*60 then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1500.0, deltaEnergy = 0.0 }))
+        )
+        mock_device:set_field("LAST_SAVE_TICK", curr_save_tick, {persist = false})
+      end
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(15*60)
+      test.socket.zigbee:__queue_receive({
+                                           mock_device.id,
+                                           SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device,2000)
+                                         })
+      last_save_ticks = mock_device:get_field("LAST_SAVE_TICK")
+      if last_save_ticks == nil then last_save_ticks = 0 end
+      delta_tick = os.time() - last_save_ticks
+      -- wwst energy certification : powerConsumptionReport capability values should be updated every 15 minutes.
+      -- Check if 15 minutes have passed since the reporting time of current_power_consumption.
+      if delta_tick >= 15*60 then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 2000.0, deltaEnergy = 500.0 }))
+        )
+        mock_device:set_field("LAST_SAVE_TICK", curr_save_tick, {persist = false})
+      end
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
+      )
+    end
 )
 
 test.register_coroutine_test(
