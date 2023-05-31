@@ -74,7 +74,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
     device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
   end
   raw_value_kilowatts = raw_value_kilowatts - offset
-  
+
   local raw_value_watts = raw_value_kilowatts*1000
   local delta_tick
   local last_save_ticks = device:get_field("LAST_SAVE_TICK")
