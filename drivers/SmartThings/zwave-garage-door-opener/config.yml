@@ -2,3 +2,5 @@ name: 'Z-Wave Garage Door Opener'
 packageKey: 'zwave-garage-door-opener'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave garage door opener devices"
+vendorSupportInformation: "https://support.smartthings.com"
