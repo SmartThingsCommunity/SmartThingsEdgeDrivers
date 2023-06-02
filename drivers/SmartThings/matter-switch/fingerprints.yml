@@ -128,6 +128,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0105 # Color Dimmer Switch
     deviceProfileName: switch-color-level
+  - id: "sengled/W41-N13"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: light-level-colorTemperature-color
 
 matterThing:
   - id: SmartThings/MatterThing
