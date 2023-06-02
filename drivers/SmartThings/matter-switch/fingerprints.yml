@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: plug-binary
+  - id: "Sengled/Light/Matter"
+    deviceLabel: Sengled Bulbs W41-N13
+    vendorId: 0x1160
+    productId: 0x9001
+    deviceProfileName: light-level-colorTemperature-color
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
@@ -128,7 +133,7 @@ matterGeneric:
     deviceTypes:
       - id: 0x0105 # Color Dimmer Switch
     deviceProfileName: switch-color-level
-  - id: "sengled/W41-N13"
+  - id: "matter/temp/color/light"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
       - id: 0x010D # Extended Color Light
