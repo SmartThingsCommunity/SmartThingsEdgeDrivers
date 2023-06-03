@@ -2,3 +2,5 @@ name: 'Zigbee Power/Meter'
 packageKey: 'zigbee-power-meter'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee power meter devices"
+vendorSupportInformation: "https://support.smartthings.com"

@@ -2,3 +2,5 @@ name: 'Z-Wave Thermostat'
 packageKey: 'zwave-thermostat'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave thermostat devices"
+vendorSupportInformation: "https://support.smartthings.com"
