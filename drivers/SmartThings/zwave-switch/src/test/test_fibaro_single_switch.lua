@@ -21,6 +21,7 @@ local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
+local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 
 -- supported comand classes
 local sensor_endpoints = {
@@ -47,6 +48,42 @@ local function  test_init()
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Device should use Basic SETs despite supporting Switch Multilevel (on)",
+  function ()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "switch", command = "on", args = {}}
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Basic:Set({
+          value = 0xFF
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Device should use Basic SETs despite supporting Switch Multilevel (off)",
+  function ()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "switch", command = "off", args = {}}
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Basic:Set({
+          value = 0x00
+        })
+      )
+    )
+  end
+)
 
 test.register_message_test(
   "Switch Binary report ON_ENABLE should be handled",
@@ -425,7 +462,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Energy meter report  from source channel 2 should be discarded",
+  "Energy meter report from source channel 2 should be discarded",
   {
     {
       channel = "zwave",
