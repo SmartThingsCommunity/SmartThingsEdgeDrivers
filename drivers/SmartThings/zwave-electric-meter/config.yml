@@ -2,3 +2,5 @@ name: 'Z-Wave Electric Meter'
 packageKey: 'zwave-electric-meter'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave electric meter devices"
+vendorSupportInformation: "https://support.smartthings.com"

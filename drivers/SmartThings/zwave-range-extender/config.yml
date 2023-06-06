@@ -2,3 +2,5 @@ name: 'Z-Wave Range Extender'
 packageKey: 'zwave-range-extender'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave range extender devices"
+vendorSupportInformation: "https://support.smartthings.com"

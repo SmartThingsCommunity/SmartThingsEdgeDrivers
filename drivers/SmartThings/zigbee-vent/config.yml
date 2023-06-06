@@ -2,3 +2,5 @@ name: 'Zigbee Vent'
 packageKey: 'zigbee-vent'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee vent devices"
+vendorSupportInformation: "https://support.smartthings.com"

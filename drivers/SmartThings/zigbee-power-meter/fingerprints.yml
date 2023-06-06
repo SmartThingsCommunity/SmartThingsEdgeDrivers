@@ -17,7 +17,17 @@ zigbeeManufacturer:
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
     model: "PMM-300Z1"
-    deviceProfileName: power-meter
+    deviceProfileName: power-meter-consumption-report-sihas
+  - id: "ShinaSystem/PMM-300Z2"
+    deviceLabel: SiHAS Energy Monitor
+    manufacturer: ShinaSystem
+    model: "PMM-300Z2"
+    deviceProfileName: power-meter-consumption-report-sihas
+  - id: "ShinaSystem/PMM-300Z3"
+    deviceLabel: SiHAS Energy Monitor
+    manufacturer: ShinaSystem
+    model: "PMM-300Z3"
+    deviceProfileName: power-meter-consumption-report-sihas
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter

@@ -2,3 +2,5 @@ name: 'Zigbee Valve'
 packageKey: 'zigbee-valve'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee valve devices"
+vendorSupportInformation: "https://support.smartthings.com"
