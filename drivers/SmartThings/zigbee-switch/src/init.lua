@@ -80,7 +80,8 @@ local zigbee_switch_driver_template = {
     capabilities.colorTemperature,
     capabilities.powerMeter,
     capabilities.energyMeter,
-    capabilities.motionSensor
+    capabilities.motionSensor,
+    capabilities.illuminanceMeasurement
   },
   sub_drivers = {
     require("aqara"),
