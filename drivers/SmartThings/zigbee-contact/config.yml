@@ -2,3 +2,5 @@ name: 'Zigbee Contact'
 packageKey: 'zigbee-contact'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee contact devices"
+vendorSupportInformation: "https://support.smartthings.com"

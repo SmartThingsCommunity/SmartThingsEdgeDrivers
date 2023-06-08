@@ -39,6 +39,10 @@ pipeline {
   stages {
     stage('requirements') {
       steps {
+        script {
+          currentBuild.displayName = "#" + currentBuild.number + " " + env.BRANCH
+          currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+        }
         sh 'git clean -xfd'
         sh 'pip3 install -r tools/requirements.txt'
       }
@@ -54,9 +58,7 @@ pipeline {
         stages {
           stage('environment_update') {
             steps {
-              script {
-                sh 'python3 tools/deploy.py'
-              }
+              sh 'python3 tools/deploy.py'
             }
           }
         }
