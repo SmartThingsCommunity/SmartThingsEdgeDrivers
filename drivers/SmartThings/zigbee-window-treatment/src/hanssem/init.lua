@@ -1,5 +1,4 @@
--- Copyright 2023 SmartThings
--- 
+--
 -- Based on https://github.com/iquix/ST-Edge-Driver/blob/master/tuya-window-shade/src/init.lua
 -- Copyright 2021-2022 Jaewon Park (iquix)
 --
@@ -9,11 +8,6 @@
 --
 --     http://www.apache.org/licenses/LICENSE-2.0
 --
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
 
 local capabilities = require "st.capabilities"
 
