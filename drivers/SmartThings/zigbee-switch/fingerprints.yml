@@ -9,6 +9,31 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  - id: "LUMI/lumi.switch.b2laus01"
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b2laus01
+    deviceProfileName: aqara-switch-child
+  - id: "LUMI/lumi.switch.n1acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.n1acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n2acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n2acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n3acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n3acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n0agl1"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0agl1
+    deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.light.acn004"
     deviceLabel: Aqara Smart Dimmer Controller T1 Pro
     manufacturer: LUMI
@@ -26,7 +51,7 @@ zigbeeManufacturer:
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
     model: "DimmerSwitch_v1.0"
-    deviceProfileName: on-off-level-no-firmware-update 
+    deviceProfileName: on-off-level-no-firmware-update
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
     model: "Mains_Power_Outlet_v1.0"

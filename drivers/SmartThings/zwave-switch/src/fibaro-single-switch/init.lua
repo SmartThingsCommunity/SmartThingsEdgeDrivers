@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local capabilities = require "st.capabilities"
 local ButtonDefaults = require "st.zwave.defaults.button"
 local EnergyMeterDefaults = require "st.zwave.defaults.energyMeter"
 local PowerMeterDefaults = require "st.zwave.defaults.powerMeter"
@@ -24,6 +25,8 @@ local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version=1 
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=3 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+--- @type st.zwave.CommandClass.Basic
+local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 
 local FIBARO_SINGLE_SWITCH_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x0403, model = 0x1000}, -- Fibaro Switch
@@ -43,6 +46,15 @@ end
 local function central_scene_notification_handler(self, device, cmd)
   if cmd.src_channel == nil or cmd.src_channel == 0 then
     ButtonDefaults.zwave_handlers[cc.CENTRAL_SCENE][CentralScene.NOTIFICATION](self, device, cmd)
+  end
+end
+
+-- Device appears to not handle SwitchMultilevel commands despite reporting that the CC
+-- is supported. DTH uses basic so that is replicated here. For similar behavior see the
+-- Aeotec Smart Switch driver
+local function switch_handler_factory(value)
+  return function(driver, device, cmd)
+    device:send(Basic:Set({value=value}))
   end
 end
 
@@ -73,6 +85,12 @@ local fibaro_single_switch = {
     },
     [cc.SWITCH_BINARY] = {
       [SwitchBinary.REPORT] = switch_binary_report_handler
+    }
+  },
+  capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = switch_handler_factory(0xFF),
+      [capabilities.switch.commands.off.NAME] = switch_handler_factory(0x00),
     }
   },
   can_handle = can_handle_fibaro_single_switch,

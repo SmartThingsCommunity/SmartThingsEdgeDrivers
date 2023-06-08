@@ -59,6 +59,12 @@ matterManufacturer:
     vendorId: 0x1397
     productId: 0x07E7
     deviceProfileName: matter-bridge
+  - id: "Nature/Bridge"
+    deviceLabel: Matter Bridge
+    vendorId: 0x138A
+    productId: 0x1392
+    deviceProfileName: matter-bridge
+
 
 matterGeneric:
   - id: "matter/bridge"

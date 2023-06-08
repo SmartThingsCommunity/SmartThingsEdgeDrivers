@@ -2,3 +2,5 @@ name: 'Zigbee Button'
 packageKey: 'zigbee-button'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee button devices"
+vendorSupportInformation: "https://support.smartthings.com"
