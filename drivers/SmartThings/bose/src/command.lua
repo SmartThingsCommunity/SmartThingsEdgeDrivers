@@ -17,6 +17,7 @@ local log = require "log"
 local ltn12 = require "ltn12"
 local xml2lua = require "xml2lua"
 local xml_handler = require "xmlhandler.tree"
+local bose_utils = require "utils"
 
 local SOUNDTOUCH_HTTP_PORT = 8090
 
@@ -25,11 +26,6 @@ local Command = {}
 
 local function format_url(ip, path)
   return string.format("http://%s:%d%s", ip, SOUNDTOUCH_HTTP_PORT, path)
-end
-
-local function is_empty(t)
-  -- empty tables should be nil instead
-  return not t or (type(t) == "table" and #t == 0)
 end
 
 local function handle_http_resp(r, c)
@@ -54,7 +50,7 @@ function Command.key_press(ip, key)
   local press = string.format("<key state=\"press\" sender=\"Gabbo\">%s</key>\n\r", key)
   local url = format_url(ip, "/key")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {
@@ -76,7 +72,7 @@ function Command.key_release(ip, key)
 
   local url = format_url(ip, "/key")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {
@@ -97,7 +93,7 @@ function Command.info(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/info")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -133,7 +129,7 @@ function Command.volume(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/volume")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -162,7 +158,7 @@ function Command.set_volume(ip, level)
 
   local url = format_url(ip, "/volume")
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #volume},
@@ -180,7 +176,7 @@ function Command.sources(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/sources")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -207,7 +203,7 @@ function Command.set_source(ip, source)
   local url = format_url(ip, "/select")
   local select = "<ContentItem source=\"AUX\" sourceAccount=\"AUX\"></ContentItem>"
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #select},
@@ -225,7 +221,7 @@ function Command.set_name(ip, name)
   local url = format_url(ip, "/name")
   local set_name = string.format("<name>%s</name>", name)
   local resp = {}
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {["content-length"] = #set_name},
@@ -291,7 +287,7 @@ function Command.now_playing(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/now_playing")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -301,20 +297,15 @@ function Command.now_playing(ip)
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(table.concat(resp))
   local res = {}
-  if handler.root.nowPlaying.art then res.art_url = handler.root.nowPlaying.art[1] end
-  if not is_empty(handler.root.nowPlaying.track) then res.track = handler.root.nowPlaying.track end
-  if not is_empty(handler.root.nowPlaying.artist) then res.artist = handler.root.nowPlaying.artist end
-  if not is_empty(handler.root.nowPlaying.album) then res.album = handler.root.nowPlaying.album end
-  if not is_empty(handler.root.nowPlaying.stationName) then
-    res.station = handler.root.nowPlaying.stationName
+  if handler.root.nowPlaying.art then
+    res.art_url = bose_utils.sanitize_field(handler.root.nowPlaying.art[1])
   end
-  if not is_empty(handler.root.nowPlaying.playStatus) then
-    res.play_state = handler.root.nowPlaying.playStatus
-  end
-  if not is_empty(handler.root.nowPlaying._attr.source) then
-    res.source = handler.root.nowPlaying._attr.source
-  end
-
+  res.track = bose_utils.sanitize_field(handler.root.nowPlaying.track)
+  res.artist = bose_utils.sanitize_field(handler.root.nowPlaying.artist)
+  res.album = bose_utils.sanitize_field(handler.root.nowPlaying.album)
+  res.station = bose_utils.sanitize_field(handler.root.nowPlaying.stationName)
+  res.play_state = bose_utils.sanitize_field(handler.root.nowPlaying.playStatus)
+  res.source = bose_utils.sanitize_field(handler.root.nowPlaying._attr.source)
   return res
 end
 
@@ -326,41 +317,38 @@ function Command.presets(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/presets")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
   end
-
   local handler = xml_handler:new()
   local xml_parser = xml2lua.parser(handler)
   xml_parser:parse(table.concat(resp))
 
   local result = {}
-
   if handler.root.presets.preset then
     if not handler.root.presets.preset._attr then -- it is a list of presets rather than just one preset
       for _, preset in ipairs(handler.root.presets.preset) do
-        if is_empty(preset.ContentItem.itemName) then
-          preset.ContentItem.itemName = preset._attr.id
+        if preset._attr and preset._attr.id then
+          table.insert(result, {
+            id = preset._attr.id, --must exist for a valid preset
+            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
+          })
         end
-        table.insert(result, {
-          id = preset._attr.id,
-          name = preset.ContentItem.itemName,
-          mediaSource = preset.ContentItem._attr.source,
-          imageUrl = preset.ContentItem.containerArt,
-        })
       end
-    else
-      if is_empty(handler.root.presets.preset.ContentItem.itemName) then
-        handler.root.presets.preset.ContentItem.itemName = handler.root.presets.preset._attr.id
-      end
+    elseif handler.root.presets.preset._attr and handler.root.presets.preset._attr.id then
       table.insert(result, {
         id = handler.root.presets.preset._attr.id,
-        name = handler.root.presets.preset.ContentItem.itemName,
-        mediaSource = handler.root.presets.preset.ContentItem._attr.source,
-        imageUrl = handler.root.presets.preset.ContentItem.containerArt,
+        name = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.itemName,
+          handler.root.presets.preset._attr.id),
+        mediaSource = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem._attr.source),
+        imageUrl = bose_utils.sanitize_field(handler.root.presets.preset.ContentItem.containerArt),
       })
+    else
+      log.warn("received invalid presets from device")
     end
   end
 
@@ -375,7 +363,7 @@ function Command.zone_info(ip)
   if not ip then return nil, "no device ip" end
   local url = format_url(ip, "/getZone")
   local resp = {}
-  local r, c, h = http.request {url = url, sink = ltn12.sink.table(resp)}
+  local r, c, _ = http.request {url = url, sink = ltn12.sink.table(resp)}
   local err = handle_http_resp(r, c)
   if err then
     return nil, err
@@ -419,7 +407,7 @@ function Command.play_streaming_uri(ip, uri, vol)
                 <volume>%d</volume> \
                 </play_info>", app_key, uri, vol)
 
-  local r, c, h = http.request {
+  local r, c, _ = http.request {
     url = url,
     method = "POST",
     headers = {

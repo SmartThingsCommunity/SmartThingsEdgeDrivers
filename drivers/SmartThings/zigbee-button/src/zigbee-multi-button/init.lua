@@ -34,7 +34,9 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "BSM-300Z" },
   { mfr = "ShinaSystem", model = "SBM300ZB1" },
   { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" }
+  { mfr = "ShinaSystem", model = "SBM300ZB3" },
+  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+  { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -51,11 +53,14 @@ local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
     if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, {visibility = { displayed = false }}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, { visibility = { displayed = false } }))
     else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } }))
     end
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
+    device:emit_component_event(component,
+      capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
   -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
@@ -73,7 +78,8 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.centralite"),
     require("zigbee-multi-button.adurosmart"),
     require("zigbee-multi-button.heiman"),
-    require("zigbee-multi-button.shinasystems")
+    require("zigbee-multi-button.shinasystems"),
+    require("zigbee-multi-button.robb")
   }
 }
 

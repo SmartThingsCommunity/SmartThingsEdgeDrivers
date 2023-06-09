@@ -49,8 +49,6 @@ local function can_handle_aeotec_nano_shutter(opts, driver, device, ...)
   return false
 end
 
-local zwave_handlers = {}
-
 --- Default handler for basic reports for the devices
 ---
 --- @param driver st.zwave.Driver

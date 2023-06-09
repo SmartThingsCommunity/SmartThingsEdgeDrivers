@@ -2,3 +2,5 @@ name: 'Z-Wave Bulb'
 packageKey: 'zwave-bulb'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave lightbulb devices"
+vendorSupportInformation: "https://support.smartthings.com"

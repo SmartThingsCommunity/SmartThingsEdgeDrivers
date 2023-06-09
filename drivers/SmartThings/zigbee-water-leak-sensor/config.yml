@@ -2,3 +2,5 @@ name: 'Zigbee Water Leak Sensor'
 packageKey: 'zigbee-water-leak-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee water leak sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

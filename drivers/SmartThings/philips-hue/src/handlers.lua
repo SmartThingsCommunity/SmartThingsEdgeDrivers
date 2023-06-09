@@ -1,6 +1,6 @@
-local cosock = require "cosock"
 local Fields = require "hue.fields"
 local HueApi = require "hue.api"
+local HueColorUtils = require "hue.cie_utils"
 local log = require "log"
 
 local capabilities = require "st.capabilities"
@@ -12,7 +12,7 @@ local handlers = {}
 ---@param device HueChildDevice
 local function do_switch_action(driver, device, args)
   local on = args.command == "on"
-  local id = device:get_field(Fields.PARENT_DEVICE_ID)
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
@@ -45,7 +45,8 @@ end
 ---@param device HueChildDevice
 local function do_switch_level_action(driver, device, args)
   local level = st_utils.clamp_value(args.args.level, 1, 100)
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
     log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
@@ -61,7 +62,7 @@ local function do_switch_level_action(driver, device, args)
   end
 
   local is_off = device:get_latest_state(
-    "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
+        "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
 
   if is_off then
     local resp, err = hue_api:set_light_on_state(light_id, true)
@@ -91,8 +92,13 @@ end
 ---@param driver HueDriver
 ---@param device HueChildDevice
 local function do_color_action(driver, device, args)
-  local hue, sat = args.args.color.hue, args.args.color.saturation
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local hue, sat = (args.args.color.hue / 100), (args.args.color.saturation / 100)
+  if hue == 1 then -- 0 and 360 degrees are equivalent in HSV, but not in our conversion function
+    hue = 0
+    device:set_field(Fields.WRAPPED_HUE, true)
+  end
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
     log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
@@ -107,13 +113,10 @@ local function do_color_action(driver, device, args)
     return
   end
 
-  local x, y, _ = st_utils.safe_hsv_to_xy(hue, sat)
+  local red, green, blue = st_utils.hsv_to_rgb(hue, sat)
+  local xy = HueColorUtils.safe_rgb_to_xy(red, green, blue, device:get_field(Fields.GAMUT))
 
-  x = x / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
-  y = y / 65536 -- safe_hsv_to_xy uses values from 0x0000 to 0xFFFF, Hue wants [0, 1]
-
-  local resp, err = hue_api:set_light_color_xy(light_id, { x = x, y = y })
-
+  local resp, err = hue_api:set_light_color_xy(light_id, xy)
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
       log.error("Error performing color action: " .. err)
@@ -133,7 +136,8 @@ function handlers.mirek_to_kelvin(mirek) return 1000000 / mirek end
 ---@param device HueChildDevice
 local function do_color_temp_action(driver, device, args)
   local kelvin = args.args.temperature
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
     log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
@@ -199,7 +203,8 @@ end
 ---@param light_device HueChildDevice
 local function do_refresh_light(driver, light_device)
   local light_resource_id = light_device:get_field(Fields.RESOURCE_ID)
-  local bridge_device = driver:get_device_info(light_device:get_field(Fields.PARENT_DEVICE_ID))
+  local bridge_id = light_device.parent_device_id or light_device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(bridge_id)
 
   if not bridge_device then
     log.warn("Couldn't get Hue bridge for light " .. light_device.label)
@@ -229,6 +234,9 @@ local function do_refresh_light(driver, light_device)
       else
         for _, light_info in ipairs(light_resp.data) do
           if light_info.id == light_resource_id then
+            if light_info.color ~= nil and light_info.color.gamut then
+              light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
+            end
             driver.emit_light_status_events(light_device, light_info)
             success = true
           end

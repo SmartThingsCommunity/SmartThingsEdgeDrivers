@@ -1,4 +1,77 @@
+matterManufacturer:
+#Eve
+  - id: "Eve/Energy/US"
+    deviceLabel: Eve Energy US
+    vendorId: 0x130A
+    productId: 0x53
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/Europe"
+    deviceLabel: Eve Energy Europe
+    vendorId: 0x130A
+    productId: 0x50
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/U.K."
+    deviceLabel: Eve Energy U.K.
+    vendorId: 0x130A
+    productId: 0x54
+    deviceProfileName: plug-binary
+  - id: "Eve/Energy/Australia"
+    deviceLabel: Eve Energy Australia
+    vendorId: 0x130A
+    productId: 0x5E
+    deviceProfileName: plug-binary
+
+#Bridge devices need manufacturer specific fingerprints until
+#bridge support is released to all hubs. This is because of the way generic
+#fingerprints work for bridges joined prior to hubs being able to support them
+  - id: "Aqara/m2/hub"
+    deviceLabel: Matter Bridge
+    vendorId: 0x115F
+    productId: 0x0802
+    deviceProfileName: matter-bridge
+  - id: "Ubisys/G1"
+    deviceLabel: Matter Bridge
+    vendorId: 0x10F2
+    productId: 0x6100
+    deviceProfileName: matter-bridge
+  - id: "Feibit/Matter/Gateway"
+    deviceLabel: Matter Bridge
+    vendorId: 0x117E
+    productId: 0xFB01
+    deviceProfileName: matter-bridge
+  - id: "Yeelight/Pro/Gateway"
+    deviceLabel: Matter Bridge
+    vendorId: 0x1312
+    productId: 0x0002
+    deviceProfileName: matter-bridge
+  - id: "QBEDFMB3/Gateway"
+    deviceLabel: Matter Bridge
+    vendorId: 0x131E
+    productId: 0x0001
+    deviceProfileName: matter-bridge
+  - id: "Philips/Hue/Bridge"
+    deviceLabel: Matter Bridge
+    vendorId: 0x100B
+    productId: 0x0002
+    deviceProfileName: matter-bridge
+  - id: "Switchbot/hub2"
+    deviceLabel: Matter Bridge
+    vendorId: 0x1397
+    productId: 0x07E7
+    deviceProfileName: matter-bridge
+  - id: "Nature/Bridge"
+    deviceLabel: Matter Bridge
+    vendorId: 0x138A
+    productId: 0x1392
+    deviceProfileName: matter-bridge
+
+
 matterGeneric:
+  - id: "matter/bridge"
+    deviceLabel: Matter Bridge
+    deviceTypes:
+      - id: 0x000E # Aggregator
+    deviceProfileName: matter-bridge
   - id: "matter/on-off/light"
     deviceLabel: Matter OnOff Light
     deviceTypes:
@@ -43,7 +116,12 @@ matterGeneric:
   - id: "matter/dimmable/switch"
     deviceLabel: Matter Dimmable Switch
     deviceTypes:
-      - id: 0x0104 # Dimmable Switch
+      - id: 0x0104 # Dimmer Switch
+    deviceProfileName: switch-level
+  - id: "matter/dimmable/inunitswitch"
+    deviceLabel: Matter Dimmable Switch
+    deviceTypes:
+      - id: 0x010B # Dimmable PlugIn Unit
     deviceProfileName: switch-level
   - id: "matter/color/switch"
     deviceLabel: Matter Color Switch

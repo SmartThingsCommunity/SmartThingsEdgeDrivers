@@ -27,7 +27,6 @@ local cosock = require "cosock"
 local Driver = require "st.driver"
 
 local socket = require "cosock.socket"
-local json = require "dkjson"
 local log = require "log"
 local utils = require "st.utils"
 
@@ -42,6 +41,31 @@ local profiles = {
 
 local function device_removed(driver, device)
   driver.server:prune()
+end
+
+--TODO remove function in favor of "st.utils" function once
+--all hubs have 0.46 firmware
+local function backoff_builder(max, inc, rand)
+  local count = 0
+  inc = inc or 1
+  return function()
+    local randval = 0
+    if rand then
+      --- We use this pattern because the version of math.random()
+      --- that takes a range only works for integer values and we
+      --- want floating point.
+      randval = math.random() * rand * 2 - rand
+    end
+
+    local base = inc * (2 ^ count - 1)
+    count = count + 1
+
+    -- ensure base backoff (not including random factor) is less than max
+    if max then base = math.min(base, max) end
+
+    -- ensure total backoff is >= 0
+    return math.max(base + randval, 0)
+  end
 end
 
 local function device_init(driver, device)
@@ -92,7 +116,7 @@ local function device_init(driver, device)
   --Rediscovery task. Needs task because if device init doesn't return, no events are handled
   -- on the device thread.
   cosock.spawn(function()
-    local backoff = utils.backoff_builder(300, 1, 0.25)
+    local backoff = backoff_builder(300, 1, 0.25)
     local info
     while true do
       discovery.find(device.device_network_id, function(found) info = found end)

@@ -15,10 +15,8 @@
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local utils = require "st.utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local t_utils = require "integration_test.utils"
-local dkjson = require 'dkjson'
 
 local FIBARO_WALLI_DIMMER_MANUFACTURER_ID = 0x010F
 local FIBARO_WALLI_DIMMER_PRODUCT_TYPE = 0x1C01

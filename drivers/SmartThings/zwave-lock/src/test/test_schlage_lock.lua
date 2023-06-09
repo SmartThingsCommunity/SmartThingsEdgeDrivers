@@ -19,7 +19,6 @@ local json = require "dkjson"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 
-local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })

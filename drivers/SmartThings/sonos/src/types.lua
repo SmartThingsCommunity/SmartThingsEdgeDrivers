@@ -1,5 +1,7 @@
+local handlers = require "api.event_handlers"
 local log = require "log"
 local PlayerFields = require "fields".SonosPlayerFields
+
 --- @module 'sonos.types'
 local Types = {}
 
@@ -111,7 +113,7 @@ Types.SonosCapabilities = {
 --- Sonos systems local state
 --- @class SonosState
 --- @field public get_household fun(self: SonosState, id: HouseholdId): SonosHousehold
---- @field public update_household_info fun(self: SonosState, id: HouseholdId, groups_event: SonosGroupsResponseBody)
+--- @field public update_household_info fun(self: SonosState, id: HouseholdId, groups_event: SonosGroupsResponseBody, device: SonosDevice|nil)
 --- @field public update_household_favorites fun(self: SonosState, id: HouseholdId, favorites: SonosFavorites)
 --- @field public get_group_for_player fun(self: SonosState, household_id: HouseholdId, player_id: PlayerId): GroupId
 --- @field public get_coordinator_for_player fun(self: SonosState, household_id: HouseholdId, player_id: PlayerId): PlayerId
@@ -160,7 +162,8 @@ function SonosState.new()
   --- @param self SonosState
   --- @param id HouseholdId
   --- @param groups_event SonosGroupsResponseBody
-  ret.update_household_info = function(self, id, groups_event)
+  --- @param device SonosDevice|nil
+  ret.update_household_info = function(self, id, groups_event, device)
     local household = private.households[id] or {}
     local groups, players = groups_event.groups, groups_event.players
 
@@ -192,6 +195,26 @@ function SonosState.new()
     end
 
     private.households[id] = household
+
+    -- emit group info update [groupId, groupRole, groupPrimaryDeviceId]
+    if device ~= nil then
+      local device_player_id = device:get_field(PlayerFields.PLAYER_ID)
+      local group_id = self:get_group_for_player(id, device_player_id)
+      local coordinator_id = self:get_coordinator_for_player(id, device_player_id)
+
+      local role
+      if device_player_id == coordinator_id then
+        if #household.groups[group_id].playerIds > 1 then
+          role = "primary"
+        else
+          role = "ungrouped"
+        end
+      else
+        role = "auxilary"
+      end
+
+      handlers.handle_group_update(device, {role, coordinator_id, group_id})
+    end
   end
 
   --- @param self SonosState
