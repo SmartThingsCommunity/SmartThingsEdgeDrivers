@@ -11,6 +11,7 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1", children = 1, child_profile = "" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.b2laus01", children = 2, child_profile = "aqara-switch-child" }
 }
 
 local function is_aqara_products(opts, driver, device)

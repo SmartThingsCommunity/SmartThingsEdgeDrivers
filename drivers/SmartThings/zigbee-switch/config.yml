@@ -2,3 +2,5 @@ name: 'Zigbee Switch'
 packageKey: 'zigbee-switch'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee switch devices"
+vendorSupportInformation: "https://support.smartthings.com"

@@ -2,3 +2,5 @@ name: 'Zigbee Presence Sensor'
 packageKey: 'zigbee-presence-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee presence sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

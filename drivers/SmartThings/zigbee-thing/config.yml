@@ -2,3 +2,5 @@ name: 'Zigbee Thing'
 packageKey: 'zigbee-thing'
 permissions:
   zigbee: {}
+description: "SmartThings driver that acts as a fallback for Zigbee devices"
+vendorSupportInformation: "https://support.smartthings.com"
