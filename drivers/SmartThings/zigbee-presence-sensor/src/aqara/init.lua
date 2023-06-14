@@ -56,8 +56,6 @@ local function device_added(driver, device)
     PRIVATE_CLUSTER_ID, MONITORING_MODE, MFG_CODE, data_types.Uint8, 0))
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, RESET_MODE, MFG_CODE, data_types.Uint8, 1))
-  device:emit_event(PresenceSensor.presence("not present"))
-  device:emit_event(MovementSensor.movement("noMovement"))
 end
 
 local function device_info_changed(driver, device, event, args)
