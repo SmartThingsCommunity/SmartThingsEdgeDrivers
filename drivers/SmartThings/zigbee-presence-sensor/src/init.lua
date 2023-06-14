@@ -159,7 +159,7 @@ local function all_zigbee_message_handler(self, message_channel)
   if zb_rx ~= nil then
     device.log.info(string.format("received Zigbee message: %s", zb_rx:pretty_print()))
     device:attribute_monitor(zb_rx)
-    poke(device)
+    if device:get_model() ~= "lumi.motion.ac01" then poke(device) end -- excluding Aqara PresenceSensor FP1
     device.thread:queue_event(self.zigbee_message_dispatcher.dispatch, self.zigbee_message_dispatcher, self, device, zb_rx)
   end
 end
@@ -199,6 +199,7 @@ local zigbee_presence_driver = {
   -- Custom handler for every Zigbee message
   zigbee_message_handler = all_zigbee_message_handler,
   sub_drivers = {
+    require("aqara"),
     require("arrival-sensor-v1")
   }
 }
