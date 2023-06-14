@@ -44,7 +44,7 @@ end
 
 local do_configure = function(self, device)
   device:configure()
-  device:send(multi_utils.custom_write_attribute(device, multi_utils.MOTION_THRESHOLD_MULTIPLIER_ATTR, data_types.Uint8, 0x20, CENTRALITE_MFG))
+  device:send(multi_utils.custom_write_attribute(device, multi_utils.MOTION_THRESHOLD_MULTIPLIER_ATTR, data_types.Uint8, 0x02, CENTRALITE_MFG))
   multi_utils.send_common_configuration(self, device, CENTRALITE_MFG)
 end
 
