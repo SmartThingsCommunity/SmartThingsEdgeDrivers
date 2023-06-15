@@ -37,6 +37,7 @@ local profiles = {
   ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
   ["Lightswitch"] = "wemo.light-switch.v1",
+  ["LightSwitch"] = "wemo.light-switch.v1",
 }
 
 local function device_removed(driver, device)
