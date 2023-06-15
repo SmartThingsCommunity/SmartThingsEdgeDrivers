@@ -265,7 +265,7 @@ local function make_socket(host, port, wrap_ssl)
     if sock ~= nil then
       _, err = sock:dohandshake()
     elseif err ~= nil then
-      log.error("Error setting up TLS: " .. err)
+      log.error_with({ hub_logs = true }, "Error setting up TLS: " .. err)
     end
   end
 
@@ -359,6 +359,18 @@ function RestClient.new(base_url, sock_builder)
 
   return
     setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil}, RestClient)
+end
+
+local utils = require "utils"
+local logged_funcs = {}
+for key, val in pairs(RestClient) do
+  if type(val) == "function" then
+    logged_funcs[key] = utils.log_func_wrapper(val, key)
+  end
+end
+
+for key, val in pairs(logged_funcs) do
+  RestClient[key] = val
 end
 
 return RestClient
