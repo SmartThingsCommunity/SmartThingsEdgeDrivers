@@ -79,6 +79,11 @@ zigbeeManufacturer:
     manufacturer: Sercomm Corp.
     model: SZ-WTD03
     deviceProfileName: water-temp-battery-tempOffset
+  - id: "Sercomm/Water Leak/SZ-WTD03N-CZ3"
+    deviceLabel: Sercomm Water Leak Sensor
+    manufacturer: Sercomm Corp.
+    model: SZ-WTD03N-CZ3
+    deviceProfileName: water-temp-battery-tempOffset
   - id: "frient/Water Leak/FLSZB-110"
     deviceLabel: frient Water Leak Sensor
     manufacturer: frient A/S
