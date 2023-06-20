@@ -81,7 +81,7 @@ local function send_stream_start_request(payload, sock)
   until (bytes == #payload) or (err ~= nil)
 
   if err then
-    log.error("send error: " .. err)
+    log.error_with({ hub_logs = true }, "send error: " .. err)
   end
 
   return bytes, err, idx
@@ -372,7 +372,7 @@ local function open_action(source)
     local recv_dbg = recv or "<NIL>"
     if #recv_dbg == 0 then recv_dbg = "<EMPTY>" end
     recv_dbg = recv_dbg:gsub("\r\n", "<CRLF>"):gsub("\n", "<LF>"):gsub("\r", "<CR>")
-    log.error(string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
+    log.error_with({ hub_logs = true }, string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
   end
 end
 
@@ -465,9 +465,9 @@ function EventSource.new(url, extra_headers, sock_builder)
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
-          log.error("Event Source Coroutine State Machine error: " .. action_err)
+          log.error_with({ hub_logs = true }, "Event Source Coroutine State Machine error: " .. action_err)
           if partial ~= nil and #partial > 0 then
-            log.error(st_utils.stringify_table(partial, "\tReceived Partial", true))
+            log.error_with({ hub_logs = true }, st_utils.stringify_table(partial, "\tReceived Partial", true))
           end
           source.ready_state = EventSource.ReadyStates.CLOSED
         end
@@ -495,6 +495,18 @@ function EventSource:add_event_listener(listener_type, listener)
   if list then
     table.insert(list, listener)
   end
+end
+
+local utils = require "utils"
+local logged_funcs = {}
+for key, val in pairs(EventSource) do
+  if type(val) == "function" then
+    logged_funcs[key] = utils.log_func_wrapper(val, key)
+  end
+end
+
+for key, val in pairs(logged_funcs) do
+  EventSource[key] = val
 end
 
 return EventSource

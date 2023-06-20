@@ -39,4 +39,25 @@ function utils.is_dth_light(device)
       and device.data.username ~= nil
 end
 
+function utils.log_func_wrapper(func, func_name, log_level)
+  local log = require "log"
+  local st_utils = require "st.utils"
+  log_level = log_level or log.LOG_LEVEL_INFO
+  local wrapped_f = function(...)
+    local args = {...}
+    local log_str = "call to " .. func_name .. ": "
+    for i, a in ipairs(args) do
+      local arg_string = st_utils.stringify_table(a)
+      -- Truncate extremely long args except for TRACE log level
+      if #arg_string > 25 and log_level ~= log.LOG_LEVEL_TRACE then
+        arg_string = string.sub(arg_string, 1, 26)
+      end
+      log_str = log_str .. arg_string
+    end
+    log.log({hub_logs = true}, log_level, log_str)
+    return func(table.unpack(args))
+  end
+  return wrapped_f
+end
+
 return utils

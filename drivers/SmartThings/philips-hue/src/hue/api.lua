@@ -55,6 +55,19 @@ local function retry_fn(retry_attempts)
 end
 
 local function process_rest_response(response, err, partial)
+  if err == nil and response == nil then
+    log.info_with({ hub_logs = true },
+    st_utils.stringify_table(
+      {
+        resp = response,
+        maybe_err = err,
+        maybe_partial = partial
+      },
+      "[PhilipsHueApi] Unexpected nil for both response and error processing REST reply",
+      false
+    )
+  )
+  end
   if err ~= nil then
     return response, err, partial
   elseif response ~= nil then
@@ -62,7 +75,15 @@ local function process_rest_response(response, err, partial)
     if not body then
       return nil, err
     end
-    return json.decode(body)
+    local json_result = table.pack(pcall(json.decode, body))
+    local success = table.remove(json_result, 1)
+
+    if not success then
+      log.error_with({ hub_logs = true }, "[PhilipsHueApi] Couldn't decode JSON in SSE callback: " .. st_utils.stringify_table(json_result))
+      return
+    end
+
+    return table.unpack(json_result)
   else
     return nil, "no response or error received"
   end
@@ -83,13 +104,13 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
     while true do
       local msg, err = control_rx:receive()
       if err then
-        log.error("Error receiving on control channel for REST API thread", err)
+        log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
         goto continue
       end
 
       if msg and msg._type then
         if msg._type == ControlMessageTypes.Shutdown then
-          log.trace("REST API Control Thread received shutdown message");
+          log.info_with({ hub_logs = true }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
           self._running = false
           return
         end
@@ -112,7 +133,8 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
           )
         end
       else
-        log.warn(st_utils.stringify_table(msg, "Unexpected Message on REST API Control Channel", false))
+        log.warn_with({ hub_logs = true },
+          st_utils.stringify_table(msg, "[PhilipsHueApi] Unexpected Message on REST API Control Channel", false))
       end
 
       ::continue::
@@ -220,6 +242,18 @@ function PhilipsHueApi:set_light_color_temp(id, mirek)
     return nil,
         string.format("Expected number for color temp mirek, received %s", st_utils.stringify_table(mirek, nil, false))
   end
+end
+
+local utils = require "utils"
+local logged_funcs = {}
+for key, val in pairs(PhilipsHueApi) do
+  if type(val) == "function" then
+    logged_funcs[key] = utils.log_func_wrapper(val, key)
+  end
+end
+
+for key, val in pairs(logged_funcs) do
+  PhilipsHueApi[key] = val
 end
 
 return PhilipsHueApi
