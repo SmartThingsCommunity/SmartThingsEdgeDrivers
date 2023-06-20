@@ -13,9 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local device_management = require "st.zigbee.device_management"
 
 local function present_value_attr_handler(driver, device, value, zb_rx)
   local event
