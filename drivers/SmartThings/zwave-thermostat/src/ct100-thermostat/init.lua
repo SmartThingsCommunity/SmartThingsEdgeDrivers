@@ -28,6 +28,8 @@ local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ 
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.MultiChannel
 local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 4 })
+local heating_setpoint_defaults = require "st.zwave.defaults.thermostatHeatingSetpoint"
+local cooling_setpoint_defaults = require "st.zwave.defaults.thermostatCoolingSetpoint"
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
@@ -40,6 +42,7 @@ local CT100_THERMOSTAT_FINGERPRINTS = {
 -- DTH actually uses the old mutliInstance encap, but multichannel should be back-compat
 local TEMPERATURE_ENDPOINT = 1
 local HUMIDITY_ENDPOINT = 2
+local SETPOINT_REPORT_QUEUE = "_setpoint_report_queue"
 
 --TODO: Update this once we've decided how to handle setpoint commands
 local function convert_to_device_temp(command_temp, device_scale)
@@ -65,8 +68,10 @@ local function set_setpoint_factory(setpoint_type)
     device:send_to_component(set, command.component)
 
     device.thread:call_with_delay(.5, function() device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component) end)
-    device.thread:call_with_delay(1, function() device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}})) end)
-    device.thread:call_with_delay(1.5, function() device:send(ThermostatOperatingState:Get({})) end)
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}}))
+      device:send(ThermostatOperatingState:Get({}))
+    end)
   end
 end
 
@@ -108,11 +113,29 @@ local function thermostat_mode_report_handler(self, device, cmd)
   if mode == ThermostatMode.mode.COOL or
     ((mode == ThermostatMode.mode.AUTO or mode == ThermostatMode.mode.OFF) and (current_temperature > (heating_setpoint + cooling_setpoint) / 2)) then
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
-    device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    end)
   else
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
-    device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    end)
   end
+end
+
+-- The CT100 fails to respond if it receives too many commands in a short timeframe
+-- Waiting for a setpoint report is the only way to guarantee that we get a response
+-- before we send the next command.
+local function setpoint_report_handler(self, device, cmd)
+  heating_setpoint_defaults.zwave_handlers[cc.THERMOSTAT_SETPOINT][ThermostatSetpoint.REPORT](self, device, cmd)
+  cooling_setpoint_defaults.zwave_handlers[cc.THERMOSTAT_SETPOINT][ThermostatSetpoint.REPORT](self, device, cmd)
+
+  local queued_commands = device:get_field(SETPOINT_REPORT_QUEUE)
+  if queued_commands then
+    queued_commands()
+  end
+  device:set_field(SETPOINT_REPORT_QUEUE, nil)
 end
 
 -- The context for this handler is that the ct100 has been observed to use the
@@ -171,6 +194,9 @@ local ct100_thermostat = {
     },
     [cc.MULTI_CHANNEL] = {
       [MultiChannel.MULTI_INSTANCE_CMD_ENCAP] = multi_instance_encap_handler
+    },
+    [cc.THERMOSTAT_SETPOINT] = {
+      [ThermostatSetpoint.REPORT] = setpoint_report_handler
     }
   },
   capability_handlers = {
