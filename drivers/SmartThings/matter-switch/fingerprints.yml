@@ -134,3 +134,10 @@ matterThing:
     deviceLabel: Matter Thing
     deviceProfileName: matter-thing
     isJoinable: true
+    
+matterManufacturer:
+  - id: "GELightingSavant/Onoff/Plug"
+    deviceLabel: GELighting Savant OnOff Plug WiFi
+    vendorId: 0x1339
+    productId: 0xAC
+    deviceProfileName: plug-binary
