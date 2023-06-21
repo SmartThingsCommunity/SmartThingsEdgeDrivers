@@ -250,27 +250,42 @@ local function execute_request(client, request, retry_fn)
 end
 
 local function make_socket(host, port, wrap_ssl)
+  log.info_with({hub_logs = true}, "Creating TCP socket for Hue REST Connection")
   local sock, err = socket.tcp()
 
   if err ~= nil or (not sock) then
     return nil, (err or "unknown error creating TCP socket")
   end
 
-  sock:setoption("keepalive", true)
+  log.info_with({hub_logs = true}, "Connecting TCP socket for Hue REST Connection")
   _, err = sock:connect(host, port)
+  if err ~= nil then
+    return nil, "Connect error: " .. err
+  end
 
+  log.info_with({hub_logs = true}, "Set Keepalive for TCP socket for Hue REST Connection")
+  _, err = sock:setoption("keepalive", true)
+  if err ~= nil then
+    return nil, "Setoption error: " .. err
+  end
+
+  log.info_with({hub_logs = true}, "Creating SSL wrapper for for Hue REST Connection")
   if wrap_ssl then
     sock, err =
       ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
-    if sock ~= nil then
+    if err ~= nil then
+       return nil, "SSL wrap error: " .. err
+    end
+    log.info_with({hub_logs = true}, "Performing SSL handshake for for Hue REST Connection")
       _, err = sock:dohandshake()
-    elseif err ~= nil then
-      log.error_with({ hub_logs = true }, "Error setting up TLS: " .. err)
+    if err ~= nil then
+      log.error_with({ hub_logs = true }, "Error with SSL handshake: " .. err)
     end
   end
 
   if err ~= nil then sock = nil end
 
+  log.info_with({hub_logs = true}, "Successfully created TCP connection for Hue")
   return sock, err
 end
 
