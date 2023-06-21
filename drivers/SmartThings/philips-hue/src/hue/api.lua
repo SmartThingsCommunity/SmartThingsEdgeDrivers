@@ -79,9 +79,8 @@ local function process_rest_response(response, err, partial)
     local success = table.remove(json_result, 1)
 
     if not success then
-      return nil, st_utils.stringify_table(
-        {response_body = body, json = json_result}, "Couldn't decode JSON in SSE callback", false
-      )
+      log.error_with({ hub_logs = true }, "[PhilipsHueApi] Couldn't decode JSON in SSE callback: " .. st_utils.stringify_table(json_result))
+      return
     end
 
     return table.unpack(json_result)
