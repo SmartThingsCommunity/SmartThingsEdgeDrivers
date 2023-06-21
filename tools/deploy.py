@@ -3,6 +3,8 @@ import os, subprocess, requests, json, time, yaml
 BRANCH = os.environ.get('BRANCH')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
+# configurable from Jenkins to override and manually set the drivers to be uploaded
+DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
@@ -78,7 +80,7 @@ for partner in partners:
   # For each driver, first package the driver locally, then upload it
   # after it's been uploaded, hold on to the driver id and version
   for driver in drivers:
-    if driver in CHANGED_DRIVERS:
+    if driver in CHANGED_DRIVERS or driver in DRIVERS_OVERRIDE:
       package_key = ""
       with open(driver+"/config.yml", 'r') as config_file:
         package_key = yaml.safe_load(config_file)["packageKey"]
