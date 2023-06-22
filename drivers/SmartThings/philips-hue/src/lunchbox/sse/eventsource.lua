@@ -248,6 +248,9 @@ local function connecting_action(source)
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
+      _, err = source._sock:settimeout(60)
+      if err ~= nil then return nil, err end
+
       _, err = source._sock:connect(source.url.host, source.url.port)
       if err ~= nil then return nil, err end
 

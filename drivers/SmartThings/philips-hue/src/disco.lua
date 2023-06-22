@@ -140,8 +140,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
     log.info_with({ hub_logs = true }, string.format("Scanning bridge %s for devices...", bridge_id))
 
     HueDiscovery.disco_api_instances[bridge_id] = HueDiscovery.disco_api_instances[bridge_id]
-        or
-        HueApi.new_bridge_manager("https://" .. bridge_ip, HueDiscovery.api_keys[bridge_id])
+      or HueApi.new_bridge_manager("https://" .. bridge_ip, HueDiscovery.api_keys[bridge_id])
 
     HueDiscovery.search_bridge_for_supported_devices(driver, HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
@@ -211,11 +210,12 @@ end
 ---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param callback fun(driver: HueDriver, svc_info: table, device_data: table)
-function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, callback)
+function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, callback, log_prefix)
   local devices, err, _ = api_instance:get_devices()
-
+  local prefix = ""
+  if type(log_prefix) == "string" then prefix = log_prefix end
   if err ~= nil or not devices then
-    log.error_with({ hub_logs = true }, "Error querying bridge for devices: ", err)
+    log.error_with({ hub_logs = true }, prefix .. " Error querying bridge for devices: " .. err)
     return
   end
 
