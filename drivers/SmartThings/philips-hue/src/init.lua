@@ -115,7 +115,7 @@ local function migrate_bridge(driver, device)
   local known_macs = {}
   known_macs[ipv4] = device_dni
 
-  log.info_with({ hub_logs = false },
+  log.debug_with({ hub_logs = false },
     string.format("Rediscovering bridge for migrated device %s", (device.label or device.id or "unknown device")))
   cosock.spawn(
     function()
@@ -377,17 +377,14 @@ local function migrate_light(driver, device, parent_device_id)
       local timeout_time = cosock.socket.gettime() + 30
       local time_remaining = timeout_time
       while time_remaining > 0 do
-        log.info_with({hub_logs = false}, "Time remaining: " .. time_remaining)
         Discovery.search_bridge_for_supported_devices(driver, api_instance,
           function(hue_driver, svc_info, device_data)
             if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
-            log.info_with({ hub_logs = false }, string.format(
+            log.trace_with({ hub_logs = false }, string.format(
               "Comparing DTH buldId [%s] to Hue CLIP id_v1 [%s] while migrating device [%s]",
               v1_id, device_data.id_v1, (device.label or device.id or "unknown device")
             ))
             if not device_data.id_v1 or device_data.id_v1:gsub("/lights/", "") ~= v1_id then
-              log.info_with({ hub_logs = false },
-                string.format("%s did not match with %s for migration, continuing", device_data.id_v1, v1_id))
               return
             else
               log.info_with({ hub_logs = false },
@@ -625,7 +622,7 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
         end
 
         for _, event in ipairs(events) do
-          log.info_with({ hub_logs = false },
+          log.trace_with({ hub_logs = false },
             string.format("Bridge %s processing event from SSE stream: %s",
               (device.label or device.id or "unknown device"), st_utils.stringify_table(event)))
           if event.type == "update" then
@@ -705,14 +702,14 @@ local function init_bridge(driver, device)
   local bridge_url = "https://" .. ip
 
   if not Discovery.api_keys[device_bridge_id] then
-    log.info_with({ hub_logs = false }, string.format(
+    log.debug_with({ hub_logs = false }, string.format(
       "init_bridge for %s, caching API key", (device.label or device.id or "unknown device")
     ))
     Discovery.api_keys[device_bridge_id] = api_key
   end
 
   if not bridge_manager then
-    log.info_with({ hub_logs = false }, string.format(
+    log.debug_with({ hub_logs = false }, string.format(
       "init_bridge for %s, creating bridge manager", (device.label or device.id or "unknown device")
     ))
     bridge_manager = HueApi.new_bridge_manager(bridge_url, api_key)
@@ -721,14 +718,14 @@ local function init_bridge(driver, device)
   device:set_field(Fields.BRIDGE_API, bridge_manager, { persist = false })
 
   if not driver.api_key_to_bridge_id[api_key] then
-    log.info_with({ hub_logs = false }, string.format(
+    log.debug_with({ hub_logs = false }, string.format(
       "init_bridge for %s, mapping API key to Bridge DNI", (device.label or device.id or "unknown device")
     ))
     driver.api_key_to_bridge_id[api_key] = device_bridge_id
   end
 
   if not driver.joined_bridges[device_bridge_id] then
-    log.info_with({ hub_logs = false }, string.format(
+    log.debug_with({ hub_logs = false }, string.format(
       "init_bridge for %s, cacheing bridge info", (device.label or device.id or "unknown device")
     ))
     cosock.spawn(
@@ -738,7 +735,6 @@ local function init_bridge(driver, device)
         local bridge_info, err
 
         while time_remaining > 0 do
-          log.info_with({hub_logs = false}, "time remaining bridge init " .. time_remaining)
           bridge_info, err = HueApi.get_bridge_info(ip)
 
           if err ~= nil or bridge_info == nil then
@@ -851,7 +847,7 @@ _initialize = function(driver, device, event, args, parent_device_id)
 
   if not device:get_field(Fields._INIT) then
     log.info_with({ hub_logs = false },
-      string.format("_INIT for device %s not set during %s, performing added flow",
+      string.format("_INIT for device %s not set during %s, performing init flow",
         (device.label or device.id or "unknown device"), event))
     device_init(driver, device)
   end

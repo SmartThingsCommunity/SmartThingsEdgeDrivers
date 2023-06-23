@@ -263,13 +263,7 @@ local function do_refresh_all_for_bridge(driver, bridge_device)
       num_devices_expected = num_devices_expected + 1
     end
   end
-  log.info_with({ hub_logs = false },
-    string.format(
-      "Child device list length: %s\nExpected number of devices: %s",
-      #child_devices,
-      num_devices_expected
-    )
-  )
+
   for _, device in ipairs(child_devices) do
     if device and device.datastore and device.datastore.__devices_store then
       log.trace_with({ hub_logs = false },

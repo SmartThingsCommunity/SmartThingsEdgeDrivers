@@ -57,7 +57,7 @@ end
 
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.info_with({ hub_logs = false },
+    log.error_with({ hub_logs = false },
     st_utils.stringify_table(
       {
         resp = response,
@@ -117,8 +117,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
         if err ~= "timeout" then
           log.error_with({ hub_logs = false }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
         else
-          -- TODO convert this to TRACE logs when debugging is over: dougstephen@smartthings.com
-          log.info_with({ hub_logs = false }, "Timeout on Hue API Control Channel, continuing")
+          log.trace_with({ hub_logs = false }, "Timeout on Hue API Control Channel, continuing")
         end
         goto continue
       end
