@@ -57,7 +57,7 @@ end
 
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.error_with({ hub_logs = false },
+    log.info_with({ hub_logs = true },
     st_utils.stringify_table(
       {
         resp = response,
@@ -115,16 +115,17 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
       local msg, err = control_rx:receive()
       if err then
         if err ~= "timeout" then
-          log.error_with({ hub_logs = false }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
+          log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
         else
-          log.trace_with({ hub_logs = false }, "Timeout on Hue API Control Channel, continuing")
+          -- TODO convert this to TRACE logs when debugging is over: dougstephen@smartthings.com
+          log.info_with({ hub_logs = true }, "Timeout on Hue API Control Channel, continuing")
         end
         goto continue
       end
 
       if msg and msg._type then
         if msg._type == ControlMessageTypes.Shutdown then
-          log.info_with({ hub_logs = false }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
+          log.info_with({ hub_logs = true }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
           self._running = false
           goto continue
         end
@@ -147,7 +148,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
           )
         end
       else
-        log.warn_with({ hub_logs = false },
+        log.warn_with({ hub_logs = true },
           st_utils.stringify_table(msg, "[PhilipsHueApi] Unexpected Message on REST API Control Channel", false))
       end
 
@@ -303,6 +304,18 @@ function PhilipsHueApi:set_light_color_temp(id, mirek)
     return nil,
         string.format("Expected number for color temp mirek, received %s", st_utils.stringify_table(mirek, nil, false))
   end
+end
+
+local utils = require "utils"
+local logged_funcs = {}
+for key, val in pairs(PhilipsHueApi) do
+  if type(val) == "function" then
+    logged_funcs[key] = utils.log_func_wrapper(val, key)
+  end
+end
+
+for key, val in pairs(logged_funcs) do
+  PhilipsHueApi[key] = val
 end
 
 return PhilipsHueApi
