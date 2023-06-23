@@ -68,10 +68,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, RESET_MODE, MFG_CODE,
         data_types.Uint8, 1) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      PresenceSensor.presence("not present")))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      MovementSensor.movement("noMovement")))
   end
 )
 
@@ -166,6 +162,21 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "presence monitor - not present",
+  function()
+    local attr_report_data = {
+      { 0x0142, data_types.Uint8.ID, 0 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      PresenceSensor.presence("not present")))
+  end
+)
+
+test.register_coroutine_test(
   "movement monitor - enter",
   function()
     local attr_report_data = {
@@ -177,6 +188,66 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       MovementSensor.movement("enter")))
+    local movement_timer = 1
+    test.timer.__create_and_queue_test_time_advance_timer(movement_timer, "oneshot")
+    test.mock_time.advance_time(movement_timer)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("noMovement")))
+  end
+)
+
+test.register_coroutine_test(
+  "movement monitor - leave",
+  function()
+    local attr_report_data = {
+      { 0x0143, data_types.Uint8.ID, 0x01 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("leave")))
+    local movement_timer = 1
+    test.timer.__create_and_queue_test_time_advance_timer(movement_timer, "oneshot")
+    test.mock_time.advance_time(movement_timer)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("noMovement")))
+  end
+)
+
+test.register_coroutine_test(
+  "movement monitor - approaching",
+  function()
+    local attr_report_data = {
+      { 0x0143, data_types.Uint8.ID, 0x06 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("approaching")))
+    local movement_timer = 1
+    test.timer.__create_and_queue_test_time_advance_timer(movement_timer, "oneshot")
+    test.mock_time.advance_time(movement_timer)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("noMovement")))
+  end
+)
+
+test.register_coroutine_test(
+  "movement monitor - goingAway",
+  function()
+    local attr_report_data = {
+      { 0x0143, data_types.Uint8.ID, 0x07 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      MovementSensor.movement("goingAway")))
     local movement_timer = 1
     test.timer.__create_and_queue_test_time_advance_timer(movement_timer, "oneshot")
     test.mock_time.advance_time(movement_timer)
