@@ -57,7 +57,7 @@ end
 
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.info_with({ hub_logs = true },
+    log.info_with({ hub_logs = false },
     st_utils.stringify_table(
       {
         resp = response,
@@ -115,17 +115,17 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
       local msg, err = control_rx:receive()
       if err then
         if err ~= "timeout" then
-          log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
+          log.error_with({ hub_logs = false }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
         else
           -- TODO convert this to TRACE logs when debugging is over: dougstephen@smartthings.com
-          log.info_with({ hub_logs = true }, "Timeout on Hue API Control Channel, continuing")
+          log.info_with({ hub_logs = false }, "Timeout on Hue API Control Channel, continuing")
         end
         goto continue
       end
 
       if msg and msg._type then
         if msg._type == ControlMessageTypes.Shutdown then
-          log.info_with({ hub_logs = true }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
+          log.info_with({ hub_logs = false }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
           self._running = false
           goto continue
         end
@@ -148,7 +148,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
           )
         end
       else
-        log.warn_with({ hub_logs = true },
+        log.warn_with({ hub_logs = false },
           st_utils.stringify_table(msg, "[PhilipsHueApi] Unexpected Message on REST API Control Channel", false))
       end
 
