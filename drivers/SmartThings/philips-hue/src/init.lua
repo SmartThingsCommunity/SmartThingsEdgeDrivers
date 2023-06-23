@@ -914,10 +914,6 @@ cosock.spawn(function()
   local driver = nil
 
   while true do
-    for dni, light in pairs(stray_lights) do
-      log.info_with({hub_logs = false}, string.format("stray_lights[%s] = %s", (dni or 'nil_dni'), ((light and light.label) or 'nil_light')))
-    end
-
     local msg, err = stray_bulb_rx:receive()
     if err and err ~= "timeout" then
       log.error_with({ hub_logs = false }, "Cosock Receive Error: ", err)
