@@ -500,16 +500,4 @@ function EventSource:add_event_listener(listener_type, listener)
   end
 end
 
-local utils = require "utils"
-local logged_funcs = {}
-for key, val in pairs(EventSource) do
-  if type(val) == "function" then
-    logged_funcs[key] = utils.log_func_wrapper(val, key)
-  end
-end
-
-for key, val in pairs(logged_funcs) do
-  EventSource[key] = val
-end
-
 return EventSource

@@ -36,24 +36,6 @@ local st_utils = require "st.utils"
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
 
-local Device = require "st.device".Device
-local old_get_field = Device.get_field
-Device.get_field = utils.log_func_wrapper(
-  function(device, field)
-    local ret = old_get_field(device, field)
-    if ret == nil then
-      log.info_with({ hub_logs = false }, string.format(
-        "Requested field %s from device %s but found nil. Device data store: %s",
-        field,
-        (device.label or device.id or "unknown device"),
-        st_utils.stringify_table({ device.transient_store, device.persistent_store })
-      ))
-    end
-    return ret
-  end,
-  "Device:get_field"
-)
-
 local StrayDeviceMessageTypes = {
   FoundBridge = "FOUND_BRIDGE",
   NewStrayLight = "NEW_STRAY_LIGHT",
@@ -63,7 +45,7 @@ local StrayDeviceMessageTypes = {
 local DEFAULT_MIREK = 153
 
 -- "forward declare" some functions
-local logged_light_added, logged_bridge_added, _initialize, bridge_added, light_added
+local _initialize, bridge_added, light_added
 
 ---@param light_device HueChildDevice
 ---@param light table
@@ -179,7 +161,7 @@ local function migrate_bridge(driver, device)
           device:try_update_metadata(new_metadata)
           log.info_with({ hub_logs = false },
             string.format("Bridge %s Migrated, re-adding", (device.label or device.id or "unknown device")))
-          logged_bridge_added(hue_driver, device)
+          bridge_added(hue_driver, device)
           bridge_found = true
         end)
       until bridge_found
@@ -192,7 +174,6 @@ end
 ---@param device HueBridgeDevice
 local function spawn_bridge_add_api_key_task(driver, device)
   local device_bridge_id = device.device_network_id
-  local logged_initialize = utils.log_func_wrapper(_initialize, "BridgeLinkRecoveryTask__Initialize")
   cosock.spawn(function()
     -- 30 seconds is the typical UX for waiting to hit the link button in the Hue ecosystem
     local timeout_time = cosock.socket.gettime() + 30
@@ -243,7 +224,7 @@ local function spawn_bridge_add_api_key_task(driver, device)
     end
 
     Discovery.api_keys[device_bridge_id] = api_key
-    logged_initialize(driver, device)
+    _initialize(driver, device)
   end, "Hue Bridge Background Join Task")
 end
 
@@ -467,7 +448,7 @@ local function migrate_light(driver, device, parent_device_id)
                 hue_device_id = light.owner.rid
               }
               light_migrated = true
-              logged_light_added(driver, device, updated_parent_id, resource_id)
+              light_added(driver, device, updated_parent_id, resource_id)
             end
           end, "[migrate_light]"
         )
@@ -818,13 +799,6 @@ local function init_light(driver, device)
   end
 end
 
-local logged_init_bridge = utils.log_func_wrapper(init_bridge, "init_bridge")
-local logged_init_light = utils.log_func_wrapper(init_light, "init_light")
-local logged_migrate_bridge = utils.log_func_wrapper(migrate_bridge, "migrate_bridge")
-local logged_migrate_light = utils.log_func_wrapper(migrate_light, "migrate_light")
-logged_light_added = utils.log_func_wrapper(light_added, "light_added")
-logged_bridge_added = utils.log_func_wrapper(bridge_added, "bridge_added")
-
 ---@param driver HueDriver
 ---@param device HueDevice
 local function device_init(driver, device)
@@ -833,9 +807,9 @@ local function device_init(driver, device)
     string.format("device_init for device %s, device_type: %s", (device.label or device.id or "unknown device"),
       device_type))
   if device_type == "bridge" then
-    logged_init_bridge(driver, device)
+    init_bridge(driver, device)
   elseif device_type == "light" then
-    logged_init_light(driver, device)
+    init_light(driver, device)
   end
 end
 
@@ -846,15 +820,15 @@ local function device_added(driver, device, _, _, parent_device_id)
   log.info_with({ hub_logs = false },
     string.format("device_added for device %s", (device.label or device.id or "unknown device")))
   if utils.is_dth_bridge(device) then
-    logged_migrate_bridge(driver, device)
+    migrate_bridge(driver, device)
   elseif utils.is_dth_light(device) then
-    logged_migrate_light(driver, device, parent_device_id)
+    migrate_light(driver, device, parent_device_id)
     -- Don't do a refresh if it's a migration
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   elseif utils.is_edge_bridge(device) then
-    logged_bridge_added(driver, device)
+    bridge_added(driver, device)
   elseif utils.is_edge_light(device) then
-    logged_light_added(driver, device, parent_device_id)
+    light_added(driver, device, parent_device_id)
   else
     log.warn_with({ hub_logs = false },
       st_utils.stringify_table(device,
@@ -863,10 +837,6 @@ local function device_added(driver, device, _, _, parent_device_id)
     )
   end
 end
-
-local logged_device_added = utils.log_func_wrapper(device_added, "device_added")
-local logged_device_init = utils.log_func_wrapper(device_init, "device_init")
-
 ---@param driver HueDriver
 ---@param device HueDevice
 _initialize = function(driver, device, event, args, parent_device_id)
@@ -876,14 +846,14 @@ _initialize = function(driver, device, event, args, parent_device_id)
     log.info_with({ hub_logs = false },
       string.format("_ADDED for device %s not set during %s, performing added flow",
         (device.label or device.id or "unknown device"), event))
-    logged_device_added(driver, device, event, args, parent_device_id)
+    device_added(driver, device, event, args, parent_device_id)
   end
 
   if not device:get_field(Fields._INIT) then
     log.info_with({ hub_logs = false },
       string.format("_INIT for device %s not set during %s, performing added flow",
         (device.label or device.id or "unknown device"), event))
-    logged_device_init(driver, device)
+    device_init(driver, device)
   end
 end
 
@@ -891,57 +861,53 @@ local stray_bulb_tx, stray_bulb_rx = cosock.channel.new()
 stray_bulb_rx:settimeout(30)
 
 cosock.spawn(function()
-  local logged_stray_init = utils.log_func_wrapper(_initialize, "StrayBulb__initialize")
-  local process_strays = utils.log_func_wrapper(
-    function(driver, api_instance, strays, bridge_device_uuid)
-      local dnis_to_remove = {}
+  local function process_strays(driver, api_instance, strays, bridge_device_uuid)
+    local dnis_to_remove = {}
 
-      log.info_with({hub_logs = false}, "Querying bridge for devices from stray light handler")
-      Discovery.search_bridge_for_supported_devices(driver, api_instance, function(hue_driver, svc_info, device_data)
-        if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
+    log.info_with({hub_logs = false}, "Querying bridge for devices from stray light handler")
+    Discovery.search_bridge_for_supported_devices(driver, api_instance, function(hue_driver, svc_info, device_data)
+      if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
 
-        for light_dni, light_device in pairs(strays) do
-          local matching_v1_id = light_device.data and light_device.data.bulbId and
-              light_device.data.bulbId == device_data.id_v1:gsub("/lights/", "")
-          local matching_uuid = light_device.device_network_id == svc_info.rid or
-              light_device.device_network_id == svc_info.rid
+      for light_dni, light_device in pairs(strays) do
+        local matching_v1_id = light_device.data and light_device.data.bulbId and
+            light_device.data.bulbId == device_data.id_v1:gsub("/lights/", "")
+        local matching_uuid = light_device.device_network_id == svc_info.rid or
+            light_device.device_network_id == svc_info.rid
 
-          if matching_v1_id or matching_uuid then
-            local api_key_extracted = api_instance.headers["hue-application-key"]
-            log.info_with({ hub_logs = false }, " ", light_device.label, ", re-adding")
-            log.info_with({ hub_logs = false }, string.format(
-              'Found Bridge for stray light %s, retrying onboarding flow.\n' ..
-              '\tMatching v1 id? %s\n' ..
-              '\tMatching uuid? %s\n' ..
-              '\tlight_device DNI: %s\n' ..
-              '\tlight_device Parent Assigned Key: %s\n' ..
-              '\tlight_device parent device id: %s\n' ..
-              '\tProvided bridge_device_id: %s\n' ..
-              '\tCached API key for given bridge_device_id: %s\n' ..
-              '\tCached bridge device for given API key: %s\n'
-              ,
-              light_device.label,
-              matching_v1_id,
-              matching_uuid,
-              light_device.device_network_id,
-              light_device.parent_assigned_child_key,
-              light_device.parent_device_id,
-              bridge_device_uuid,
-              Discovery.api_keys[driver:get_device_info(bridge_device_uuid).device_network_id],
-              driver.api_key_to_bridge_id[api_key_extracted]
-            ))
-            table.insert(dnis_to_remove, light_dni)
-            logged_stray_init(hue_driver, light_device, nil, nil, bridge_device_uuid)
-          end
+        if matching_v1_id or matching_uuid then
+          local api_key_extracted = api_instance.headers["hue-application-key"]
+          log.info_with({ hub_logs = false }, " ", light_device.label, ", re-adding")
+          log.info_with({ hub_logs = false }, string.format(
+            'Found Bridge for stray light %s, retrying onboarding flow.\n' ..
+            '\tMatching v1 id? %s\n' ..
+            '\tMatching uuid? %s\n' ..
+            '\tlight_device DNI: %s\n' ..
+            '\tlight_device Parent Assigned Key: %s\n' ..
+            '\tlight_device parent device id: %s\n' ..
+            '\tProvided bridge_device_id: %s\n' ..
+            '\tCached API key for given bridge_device_id: %s\n' ..
+            '\tCached bridge device for given API key: %s\n'
+            ,
+            light_device.label,
+            matching_v1_id,
+            matching_uuid,
+            light_device.device_network_id,
+            light_device.parent_assigned_child_key,
+            light_device.parent_device_id,
+            bridge_device_uuid,
+            Discovery.api_keys[driver:get_device_info(bridge_device_uuid).device_network_id],
+            driver.api_key_to_bridge_id[api_key_extracted]
+          ))
+          table.insert(dnis_to_remove, light_dni)
+          _initialize(hue_driver, light_device, "process_stray_bulb", nil, bridge_device_uuid)
         end
-      end, "[process_strays]")
-      log.info_with({hub_logs = false}, "Finished querying bridge for devices from stray light handler")
-      for _, dni in ipairs(dnis_to_remove) do
-        strays[dni] = nil
       end
-    end,
-    "process_strays"
-  )
+    end, "[process_strays]")
+    log.info_with({hub_logs = false}, "Finished querying bridge for devices from stray light handler")
+    for _, dni in ipairs(dnis_to_remove) do
+      strays[dni] = nil
+    end
+  end
 
   local stray_lights = {}
   local found_bridges = {}
@@ -1008,22 +974,15 @@ cosock.spawn(function()
   end
 end, "Stray Hue Bulb Resolution Task")
 
-local configure_device = utils.log_func_wrapper(
-  function(_, device)
-    log.info_with({ hub_logs = false },
-      string.format("Do Configure for device %s", (device.label or device.id or "unknown device")))
-  end, "ConfigureHandler")
+local disco = Discovery.discover
+local added = _initialize
+local init = _initialize
 
-local disco = utils.log_func_wrapper(Discovery.discover, "DiscoveryEventHandler")
-local added = utils.log_func_wrapper(_initialize, "AddedHandler__initialize")
-local init = utils.log_func_wrapper(_initialize, "InitHandler__initialize")
-local logged_emit_light_status_events = utils.log_func_wrapper(emit_light_status_events, "EmitLightStatusEvents")
-
-local refresh_handler = utils.log_func_wrapper(handlers.refresh_handler, "refreshHandler")
-local switch_on_handler = utils.log_func_wrapper(handlers.switch_on_handler, "switchOnHandler")
-local switch_off_handler = utils.log_func_wrapper(handlers.switch_off_handler, "switchOffHandler")
-local switch_level_handler = utils.log_func_wrapper(handlers.switch_level_handler, "switchLevelHandler")
-local set_color_temp_handler = utils.log_func_wrapper(handlers.set_color_temp_handler, "setColorTempHandler")
+local refresh_handler = handlers.refresh_handler
+local switch_on_handler = handlers.switch_on_handler
+local switch_off_handler = handlers.switch_off_handler
+local switch_level_handler = handlers.switch_level_handler
+local set_color_temp_handler = handlers.set_color_temp_handler
 
 local function remove(driver, device)
   if device:get_field(Fields.DEVICE_TYPE) == "bridge" then
@@ -1039,7 +998,7 @@ end
 local hue = Driver("hue",
   {
     discovery = disco,
-    lifecycle_handlers = { added = added, init = init, doConfigure = configure_device, removed = remove },
+    lifecycle_handlers = { added = added, init = init, removed = remove },
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = refresh_handler,
@@ -1068,7 +1027,7 @@ local hue = Driver("hue",
     api_key_to_bridge_id = {},
     stray_bulb_tx = stray_bulb_tx,
     _lights_pending_refresh = {},
-    emit_light_status_events = logged_emit_light_status_events
+    emit_light_status_events = emit_light_status_events
   }
 )
 

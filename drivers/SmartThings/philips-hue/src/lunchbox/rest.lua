@@ -403,16 +403,4 @@ function RestClient.new(base_url, sock_builder)
     setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true}, RestClient)
 end
 
-local utils = require "utils"
-local logged_funcs = {}
-for key, val in pairs(RestClient) do
-  if type(val) == "function" then
-    logged_funcs[key] = utils.log_func_wrapper(val, key)
-  end
-end
-
-for key, val in pairs(logged_funcs) do
-  RestClient[key] = val
-end
-
 return RestClient
