@@ -259,46 +259,46 @@ local function execute_request(client, request, retry_fn)
 end
 
 local function make_socket(host, port, wrap_ssl)
-  log.info_with({hub_logs = false}, "Creating TCP socket for Hue REST Connection")
+  log.info_with({hub_logs = true}, "Creating TCP socket for Hue REST Connection")
   local sock, err = socket.tcp()
 
   if err ~= nil or (not sock) then
     return nil, (err or "unknown error creating TCP socket")
   end
 
-  log.info_with({hub_logs = false}, "Setting TCP socket timeout for Hue REST Connection")
+  log.info_with({hub_logs = true}, "Setting TCP socket timeout for Hue REST Connection")
   _, err = sock:settimeout(60)
   if err ~= nil then
     return nil, "settimeout error: " .. err
   end
 
-  log.info_with({hub_logs = false}, "Connecting TCP socket for Hue REST Connection")
+  log.info_with({hub_logs = true}, "Connecting TCP socket for Hue REST Connection")
   _, err = sock:connect(host, port)
   if err ~= nil then
     return nil, "Connect error: " .. err
   end
 
-  log.info_with({hub_logs = false}, "Set Keepalive for TCP socket for Hue REST Connection")
+  log.info_with({hub_logs = true}, "Set Keepalive for TCP socket for Hue REST Connection")
   _, err = sock:setoption("keepalive", true)
   if err ~= nil then
     return nil, "Setoption error: " .. err
   end
 
   if wrap_ssl then
-    log.info_with({hub_logs = false}, "Creating SSL wrapper for for Hue REST Connection")
+    log.info_with({hub_logs = true}, "Creating SSL wrapper for for Hue REST Connection")
     sock, err =
       ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
     if err ~= nil then
        return nil, "SSL wrap error: " .. err
     end
-    log.info_with({hub_logs = false}, "Performing SSL handshake for for Hue REST Connection")
+    log.info_with({hub_logs = true}, "Performing SSL handshake for for Hue REST Connection")
       _, err = sock:dohandshake()
     if err ~= nil then
       return nil, "Error with SSL handshake: " .. err
     end
   end
 
-  log.info_with({hub_logs = false}, "Successfully created TCP connection for Hue")
+  log.info_with({hub_logs = true}, "Successfully created TCP connection for Hue")
   return sock, err
 end
 
@@ -401,6 +401,18 @@ function RestClient.new(base_url, sock_builder)
 
   return
     setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true}, RestClient)
+end
+
+local utils = require "utils"
+local logged_funcs = {}
+for key, val in pairs(RestClient) do
+  if type(val) == "function" then
+    logged_funcs[key] = utils.log_func_wrapper(val, key)
+  end
+end
+
+for key, val in pairs(logged_funcs) do
+  RestClient[key] = val
 end
 
 return RestClient
