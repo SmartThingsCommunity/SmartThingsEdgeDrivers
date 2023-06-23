@@ -16,7 +16,8 @@ local function do_switch_action(driver, device, args)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn_with({ hub_logs = false },
+      "Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
     return
   end
 
@@ -24,7 +25,7 @@ local function do_switch_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = false }, "Could not get a proper light resource ID or API instance for ", device.label)
     return
   end
 
@@ -32,10 +33,10 @@ local function do_switch_action(driver, device, args)
 
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
-      log.error("Error performing on/off action: " .. err)
+      log.error_with({ hub_logs = false }, "Error performing on/off action: " .. err)
     elseif resp and #resp.errors > 0 then
       for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
+        log.error_with({ hub_logs = false }, "Error returned in Hue response: " .. error.description)
       end
     end
   end
@@ -49,7 +50,8 @@ local function do_switch_level_action(driver, device, args)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn_with({ hub_logs = false },
+      "Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
     return
   end
 
@@ -57,21 +59,21 @@ local function do_switch_level_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = false }, "Could not get a proper light resource ID or API instance for ", device.label)
     return
   end
 
   local is_off = device:get_latest_state(
-        "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
+    "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
 
   if is_off then
     local resp, err = hue_api:set_light_on_state(light_id, true)
     if not resp or (resp.errors and #resp.errors == 0) then
       if err ~= nil then
-        log.error("Error performing on/off action: " .. err)
+        log.error_with({ hub_logs = false }, "Error performing on/off action: " .. err)
       elseif resp and #resp.errors > 0 then
         for _, error in ipairs(resp.errors) do
-          log.error("Error returned in Hue response: " .. error.description)
+          log.error_with({ hub_logs = false }, "Error returned in Hue response: " .. error.description)
         end
       end
     end
@@ -80,10 +82,10 @@ local function do_switch_level_action(driver, device, args)
   local resp, err = hue_api:set_light_level(light_id, level)
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
-      log.error("Error performing switch level action: " .. err)
+      log.error_with({ hub_logs = false }, "Error performing switch level action: " .. err)
     elseif resp and #resp.errors > 0 then
       for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
+        log.error_with({ hub_logs = false }, "Error returned in Hue response: " .. error.description)
       end
     end
   end
@@ -101,7 +103,8 @@ local function do_color_action(driver, device, args)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn_with({ hub_logs = false },
+      "Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
     return
   end
 
@@ -109,7 +112,7 @@ local function do_color_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = false }, "Could not get a proper light resource ID or API instance for ", device.label)
     return
   end
 
@@ -119,10 +122,10 @@ local function do_color_action(driver, device, args)
   local resp, err = hue_api:set_light_color_xy(light_id, xy)
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
-      log.error("Error performing color action: " .. err)
+      log.error_with({ hub_logs = false }, "Error performing color action: " .. err)
     elseif resp and #resp.errors > 0 then
       for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
+        log.error_with({ hub_logs = false }, "Error returned in Hue response: " .. error.description)
       end
     end
   end
@@ -140,7 +143,8 @@ local function do_color_temp_action(driver, device, args)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn_with({ hub_logs = false },
+      "Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
     return
   end
 
@@ -148,7 +152,7 @@ local function do_color_temp_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = false }, "Could not get a proper light resource ID or API instance for ", device.label)
     return
   end
 
@@ -160,10 +164,10 @@ local function do_color_temp_action(driver, device, args)
 
   if not resp or (resp.errors and #resp.errors == 0) then
     if err ~= nil then
-      log.error("Error performing color temp action: " .. err)
+      log.error_with({ hub_logs = false }, "Error performing color temp action: " .. err)
     elseif resp and #resp.errors > 0 then
       for _, error in ipairs(resp.errors) do
-        log.error("Error returned in Hue response: " .. error.description)
+        log.error_with({ hub_logs = false }, "Error returned in Hue response: " .. error.description)
       end
     end
   end
@@ -207,12 +211,12 @@ local function do_refresh_light(driver, light_device)
   local bridge_device = driver:get_device_info(bridge_id)
 
   if not bridge_device then
-    log.warn("Couldn't get Hue bridge for light " .. light_device.label)
+    log.warn_with({ hub_logs = false }, "Couldn't get Hue bridge for light " .. light_device.label)
     return
   end
 
   if not bridge_device:get_field(Fields._INIT) then
-    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    log.warn_with({ hub_logs = false }, "Bridge for light not yet initialized, can't refresh yet.")
     driver._lights_pending_refresh[light_device.id] = light_device
     return
   end
@@ -225,11 +229,11 @@ local function do_refresh_light(driver, light_device)
     local light_resp, err = hue_api:get_light_by_id(light_resource_id)
     count = count + 1
     if err ~= nil then
-      log.error(err)
+      log.error_with({ hub_logs = false }, err)
     elseif light_resp ~= nil then
       if #light_resp.errors > 0 then
         for _, err in ipairs(light_resp.errors) do
-          log.error("Error in Hue API response: " .. err.description)
+          log.error_with({ hub_logs = false }, "Error in Hue API response: " .. err.description)
         end
       else
         for _, light_info in ipairs(light_resp.data) do
@@ -250,7 +254,33 @@ end
 ---@param bridge_device HueBridgeDevice
 local function do_refresh_all_for_bridge(driver, bridge_device)
   local child_devices = bridge_device:get_child_list() --[=[@as HueChildDevice[]]=]
+  local num_devices_expected = 0
+  for _, device in ipairs(driver:get_devices()) do
+    if not device.parent_device_id then
+      log.warn_with({hub_logs = false}, string.format("Device %s does not have a parent_device_id",
+        (device.label or device.id or "unknown device")))
+    elseif device.parent_device_id == bridge_device.id then
+      num_devices_expected = num_devices_expected + 1
+    end
+  end
+
   for _, device in ipairs(child_devices) do
+    if device and device.datastore and device.datastore.__devices_store then
+      log.trace_with({ hub_logs = false },
+        st_utils.stringify_table(
+          (device.datastore.__devices_store[device.id] or { unknown = "no datastore entry" }),
+          string.format(
+            "%s device datastore", (device.label or string.format("unlabeled device with id %s", device.id))
+          ),
+          false
+        )
+      )
+    else
+      log.warn_with({ hub_logs = false },
+        string.format("Device %s does not have a proper datastore association",
+          (device.label or device.id or "unknown device"))
+      )
+    end
     local device_type = device:get_field(Fields.DEVICE_TYPE)
     if device_type == "light" then
       do_refresh_light(driver, device)

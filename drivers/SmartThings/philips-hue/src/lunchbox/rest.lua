@@ -60,12 +60,17 @@ local function connect(client)
 end
 
 local function reconnect(client)
-  client.socket:close()
-  client.socket = nil
+  if client.socket ~= nil then
+    client.socket:close()
+    client.socket = nil
+  end
   return connect(client)
 end
 
 local function send_request(client, request)
+  if client.socket == nil then
+    return nil, "no socket available"
+  end
   local payload = request:serialize()
 
   local bytes, err, idx = nil, nil, 0
@@ -169,6 +174,10 @@ local function handle_response(sock)
 end
 
 local function execute_request(client, request, retry_fn)
+  if not client._active then
+    return nil, "Called `execute request` on a terminated REST Client"
+  end
+
   if client.socket == nil then
     local success, err = connect(client)
     if not success then return nil, err end
@@ -250,27 +259,46 @@ local function execute_request(client, request, retry_fn)
 end
 
 local function make_socket(host, port, wrap_ssl)
+  log.info_with({hub_logs = false}, "Creating TCP socket for Hue REST Connection")
   local sock, err = socket.tcp()
 
   if err ~= nil or (not sock) then
     return nil, (err or "unknown error creating TCP socket")
   end
 
-  sock:setoption("keepalive", true)
+  log.info_with({hub_logs = false}, "Setting TCP socket timeout for Hue REST Connection")
+  _, err = sock:settimeout(60)
+  if err ~= nil then
+    return nil, "settimeout error: " .. err
+  end
+
+  log.info_with({hub_logs = false}, "Connecting TCP socket for Hue REST Connection")
   _, err = sock:connect(host, port)
+  if err ~= nil then
+    return nil, "Connect error: " .. err
+  end
+
+  log.info_with({hub_logs = false}, "Set Keepalive for TCP socket for Hue REST Connection")
+  _, err = sock:setoption("keepalive", true)
+  if err ~= nil then
+    return nil, "Setoption error: " .. err
+  end
 
   if wrap_ssl then
+    log.info_with({hub_logs = false}, "Creating SSL wrapper for for Hue REST Connection")
     sock, err =
       ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
-    if sock ~= nil then
+    if err ~= nil then
+       return nil, "SSL wrap error: " .. err
+    end
+    log.info_with({hub_logs = false}, "Performing SSL handshake for for Hue REST Connection")
       _, err = sock:dohandshake()
-    elseif err ~= nil then
-      log.error("Error setting up TLS: " .. err)
+    if err ~= nil then
+      return nil, "Error with SSL handshake: " .. err
     end
   end
 
-  if err ~= nil then sock = nil end
-
+  log.info_with({hub_logs = false}, "Successfully created TCP connection for Hue")
   return sock, err
 end
 
@@ -283,18 +311,32 @@ RestClient.__index = RestClient
 
 function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
   local url_table = utils.force_url_table(full_url)
-
-  return RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder):get(
-           url_table.path, additional_headers
-         )
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local ret, err = client:get(url_table.path, additional_headers)
+  client:shutdown()
+  client = nil
+  return ret, err
 end
 
 function RestClient.one_shot_post(full_url, body, additional_headers, socket_builder)
   local url_table = utils.force_url_table(full_url)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local ret, err = client:post(url_table.path, body, additional_headers)
+  client:shutdown()
+  client = nil
+  return ret, err
+end
 
-  return RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder):post(
-           url_table.path, body, additional_headers
-         )
+function RestClient:close_socket()
+  if self.socket ~= nil and self._active then
+    self.socket:close()
+    self.socket = nil
+  end
+end
+
+function RestClient:shutdown()
+  self:close_socket()
+  self._active = false
 end
 
 function RestClient:update_base_url(new_url)
@@ -358,7 +400,7 @@ function RestClient.new(base_url, sock_builder)
   if type(sock_builder) ~= "function" then sock_builder = make_socket end
 
   return
-    setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil}, RestClient)
+    setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true}, RestClient)
 end
 
 return RestClient

@@ -31,7 +31,7 @@ process_discovered_light
 ---@param _ table
 ---@param should_continue function
 function HueDiscovery.discover(driver, _, should_continue)
-  log.info("Starting Hue discovery")
+  log.info_with({ hub_logs = false }, "Starting Hue discovery")
   try_create_count = {}
 
   while should_continue() do
@@ -51,8 +51,8 @@ function HueDiscovery.discover(driver, _, should_continue)
       discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_dni_to_device_map)
     end)
   end
-  log.trace(st_utils.stringify_table(try_create_count, "Try-Create Count", true))
-  log.info("Ending Hue discovery")
+  log.info_with({ hub_logs = false }, st_utils.stringify_table(try_create_count, "Try-Create Count", true))
+  log.info_with({ hub_logs = false }, "Ending Hue discovery")
 end
 
 ---comment
@@ -63,26 +63,26 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
   local mdns_responses, err = mdns.discover(SERVICE_TYPE, DOMAIN)
 
   if err ~= nil then
-    log.error("Error during service discovery: ", err)
+    log.error_with({ hub_logs = false }, "Error during service discovery: ", err)
     return
   end
 
   if not (mdns_responses and mdns_responses.found and #mdns_responses.found > 0) then
-    log.debug("No mdns responses for Hue service this attempt, continuing...")
+    log.info_with({ hub_logs = false }, "No mdns responses for Hue service this attempt, continuing...")
     return
   end
 
   for _, info in ipairs(mdns_responses.found) do
     if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
-      log.debug("Invalid IPv4 address: " .. info.host_info.address)
+      log.info_with({ hub_logs = false }, "Invalid IPv4 address: " .. info.host_info.address)
       goto continue
     end
     if info.service_info.service_type ~= SERVICE_TYPE then -- response for a different service type. Shouldn't happen.
-      log.debug("Unexpected service type response: " .. info.service_info.service_type)
+      log.info_with({ hub_logs = false }, "Unexpected service type response: " .. info.service_info.service_type)
       goto continue
     end
     if info.service_info.domain ~= DOMAIN then -- response for a different domain. Shouldn't happen.
-      log.debug("Unexpected domain response: " .. info.service_info.domain)
+      log.info_with({ hub_logs = false }, "Unexpected domain response: " .. info.service_info.domain)
       goto continue
     end
 
@@ -96,7 +96,7 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
       -- formatting rules. We also prefer the MAC because it makes for a good Device Network ID.
       local bridge_info, rest_err, _ = HueApi.get_bridge_info(ip_addr)
       if rest_err ~= nil or not bridge_info then
-        log.error("Error querying bridge info: ", rest_err)
+        log.error_with({ hub_logs = false }, "Error querying bridge info: ", rest_err)
         goto continue
       end
 
@@ -111,7 +111,7 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
     if type(callback) == "function" then
       callback(driver, ip_addr, computed_mac_addresses[ip_addr])
     else
-      log.warn(
+      log.warn_with({ hub_logs = false },
         "Argument passed in `callback` position for "
         .. "`HueDiscovery.search_for_bridges` is not a function"
       )
@@ -137,11 +137,10 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
       and driver.joined_bridges[bridge_id]
       and HueDiscovery.api_keys[bridge_id]
       and known_bridge_device:get_field(Fields._INIT) then
-    log.trace(string.format("Scanning bridge %s for devices...", bridge_id))
+    log.info_with({ hub_logs = false }, string.format("Scanning bridge %s for devices...", bridge_id))
 
     HueDiscovery.disco_api_instances[bridge_id] = HueDiscovery.disco_api_instances[bridge_id]
-        or
-        HueApi.new_bridge_manager("https://" .. bridge_ip, HueDiscovery.api_keys[bridge_id])
+      or HueApi.new_bridge_manager("https://" .. bridge_ip, HueDiscovery.api_keys[bridge_id])
 
     HueDiscovery.search_bridge_for_supported_devices(driver, HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
@@ -154,15 +153,15 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
     local api_key_response, err, _ = HueApi.request_api_key(bridge_ip)
 
     if err ~= nil or not api_key_response then
-      log.warn("Error while trying to request Bridge API Key: ", err)
+      log.warn_with({ hub_logs = false }, "Error while trying to request Bridge API Key: ", err)
       return
     end
 
     for _, item in ipairs(api_key_response) do
       if item.error ~= nil then
-        log.warn("Error payload in bridge API key response: " .. item.error.description)
+        log.warn_with({ hub_logs = false }, "Error payload in bridge API key response: " .. item.error.description)
       elseif item.success and item.success.username then
-        log.debug("API key received for Hue Bridge")
+        log.info_with({ hub_logs = false }, "API key received for Hue Bridge")
 
         local api_key = item.success.username
         local bridge_base_url = "https://" .. bridge_ip
@@ -177,12 +176,12 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
   if HueDiscovery.api_keys[bridge_id] and not driver.joined_bridges[bridge_id] then
     local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip)
     if err ~= nil or not bridge_info then
-      log.error("Error querying bridge info: ", err)
+      log.error_with({ hub_logs = false }, "Error querying bridge info: ", err)
       return
     end
 
     if tonumber(bridge_info.swversion or "0", 10) < HueApi.MIN_CLIP_V2_SWVERSION then
-      log.warn("Found bridge that does not support CLIP v2 API, ignoring")
+      log.warn_with({ hub_logs = false }, "Found bridge that does not support CLIP v2 API, ignoring")
       driver.ignored_bridges[bridge_id] = true
       return
     end
@@ -211,18 +210,19 @@ end
 ---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param callback fun(driver: HueDriver, svc_info: table, device_data: table)
-function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, callback)
+function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, callback, log_prefix)
   local devices, err, _ = api_instance:get_devices()
-
+  local prefix = ""
+  if type(log_prefix) == "string" then prefix = log_prefix end
   if err ~= nil or not devices then
-    log.error("Error querying bridge for devices: ", err)
+    log.error_with({ hub_logs = false }, prefix .. " Error querying bridge for devices: " .. err)
     return
   end
 
   if devices.errors and #devices.errors > 0 then
-    log.error("Errors found in API response:")
+    log.error_with({ hub_logs = false }, "Errors found in API response:")
     for idx, err in ipairs(devices.errors) do
-      log.error(st_utils.stringify_table(err, "Error " .. idx, true))
+      log.error_with({ hub_logs = false }, st_utils.stringify_table(err, "Error " .. idx, true))
     end
     return
   end
@@ -230,10 +230,14 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, 
   for _, device_data in ipairs(devices.data or {}) do
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
+        log.info_with({hub_logs = false}, string.format(
+          "Processing supported svc [rid: %s | type: %s] for device data [v2_id: %s | v1_id: %s], supplied name: %s",
+          svc_info.rid, svc_info.rtype, device_data.id, device_data.id_v1, device_data.metadata.name
+        ))
         if type(callback) == "function" then
           callback(driver, svc_info, device_data)
         else
-          log.warn(
+          log.warn_with({ hub_logs = false },
             "Argument passed in `callback` position for "
             .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
           )
@@ -265,20 +269,20 @@ end
 process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_dni_to_device_map)
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then
-    log.warn("No API instance for bridge_id ", bridge_id)
+    log.warn_with({ hub_logs = false }, "No API instance for bridge_id ", bridge_id)
     return
   end
 
   local light_resource, err, _ = api_instance:get_light_by_id(resource_id)
   if err ~= nil or not light_resource then
-    log.error("Error getting light info: ", error)
+    log.error_with({ hub_logs = false }, "Error getting light info: ", error)
     return
   end
 
   if light_resource.errors and #light_resource.errors > 0 then
-    log.error("Errors found in API response:")
+    log.error_with({ hub_logs = false }, "Errors found in API response:")
     for idx, err in ipairs(light_resource.errors) do
-      log.error(st_utils.stringify_table(err, "Error " .. idx, true))
+      log.error_with({ hub_logs = false }, st_utils.stringify_table(err, "Error " .. idx, true))
     end
     return
   end
@@ -297,7 +301,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     elseif light.dimming then
       profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
     else
-      log.warn(
+      log.warn_with({ hub_logs = false },
         string.format(
           "Light resource [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance device, currently unsupported"
           ,
