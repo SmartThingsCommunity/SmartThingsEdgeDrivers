@@ -54,7 +54,7 @@ function utils.log_func_wrapper(func, func_name, log_level)
       end
       log_str = log_str .. arg_string
     end
-    log.log({hub_logs = true}, log_level, log_str)
+    log.log({hub_logs = false}, log_level, log_str)
     return func(table.unpack(args))
   end
   return wrapped_f
