@@ -42,7 +42,7 @@ local zigbee_motion_driver = {
     require("centralite"),
     require("smartthings"),
     require("smartsense"),
-	require("thirdreality"),
+    require("thirdreality"),
     require("sengled")
   },
   additional_zcl_profiles = {
