@@ -1,15 +1,3 @@
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy ofF the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -97,11 +85,6 @@ local function move_monitor_handler(driver, device, value, zb_rx)
     elseif val == 7 then
       device:emit_event(MovementSensor.movement("goingAway"))
     end
-    -- local movement_timer = device:get_field(MOVEMENT_TIMER)
-    -- if movement_timer then
-    --   device.thread:cancel_timer(movement_timer)
-    --   device:set_field(MOVEMENT_TIMER, nil, { persist = true })
-    -- end
   end
 end
 
