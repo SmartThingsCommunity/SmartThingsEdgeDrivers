@@ -45,14 +45,22 @@ function utils.log_func_wrapper(func, func_name, log_level)
   log_level = log_level or log.LOG_LEVEL_INFO
   local wrapped_f = function(...)
     local args = {...}
-    local log_str = "call to " .. func_name .. ": "
+    local log_str = "call to " .. func_name .. ": \n"
     for i, a in ipairs(args) do
-      local arg_string = st_utils.stringify_table(a)
-      -- Truncate extremely long args except for TRACE log level
-      if #arg_string > 25 and log_level ~= log.LOG_LEVEL_TRACE then
-        arg_string = string.sub(arg_string, 1, 26)
+      local arg_string = "    "
+      if type(a) == "table" and a.pretty_print ~= nil then
+        arg_string = arg_string .. a:pretty_print()
+      elseif type(a) == "table" and a.NAME then
+        arg_string = arg_string .. "table NAME: "..a.NAME
+      else
+        arg_string = arg_string .. st_utils.stringify_table(a)
       end
-      log_str = log_str .. arg_string
+
+      -- Truncate extremely long args except for TRACE log level
+      if #arg_string > 100 and log_level ~= log.LOG_LEVEL_TRACE then
+        arg_string = string.sub(arg_string, 1, 101)
+      end
+      log_str = log_str .. arg_string .. "\n"
     end
     log.log({hub_logs = true}, log_level, log_str)
     return func(table.unpack(args))

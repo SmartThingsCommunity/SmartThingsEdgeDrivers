@@ -36,24 +36,6 @@ local st_utils = require "st.utils"
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
 
-local Device = require "st.device".Device
-local old_get_field = Device.get_field
-Device.get_field = utils.log_func_wrapper(
-  function(device, field)
-    local ret = old_get_field(device, field)
-    if ret == nil then
-      log.info_with({ hub_logs = true }, string.format(
-        "Requested field %s from device %s but found nil. Device data store: %s",
-        field,
-        (device.label or device.id or "unknown device"),
-        st_utils.stringify_table({ device.transient_store, device.persistent_store })
-      ))
-    end
-    return ret
-  end,
-  "Device:get_field"
-)
-
 local StrayDeviceMessageTypes = {
   FoundBridge = "FOUND_BRIDGE",
   NewStrayLight = "NEW_STRAY_LIGHT",
