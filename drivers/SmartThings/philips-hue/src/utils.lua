@@ -39,6 +39,31 @@ function utils.is_dth_light(device)
       and device.data.username ~= nil
 end
 
+-- build a exponential backoff time value generator
+--
+-- max: the maximum wait interval (not including `rand factor`)
+-- inc: the rate at which to exponentially back off
+-- rand: a randomization range of (-rand, rand) to be added to each interval
+function utils.backoff_builder(max, inc, rand)
+  local count = 0
+  inc = inc or 1
+  return function()
+    local randval = 0
+    if rand then
+      randval = math.random() * rand * 2 - rand
+    end
+
+    local base = inc * (2 ^ count - 1)
+    count = count + 1
+
+    -- ensure base backoff (not including random factor) is less than max
+    if max then base = math.min(base, max) end
+
+    -- ensure total backoff is >= 0
+    return math.max(base + randval, 0)
+  end
+end
+
 function utils.log_func_wrapper(func, func_name, log_level)
   local log = require "log"
   local st_utils = require "st.utils"
