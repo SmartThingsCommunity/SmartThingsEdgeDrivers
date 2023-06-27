@@ -1,11 +1,11 @@
 local capabilities = require "st.capabilities"
 
-local THIRDREALITY_MOTIOM_CLUSTER = 0xFC00
+local THIRDREALITY_MOTION_CLUSTER = 0xFC00
 local ATTR_TR = 0x0002
 local MOTION_DETECT = 0x0001
 local MOTION_NO_DETECT = 0x0000
 
-local function present_value_attr_handler(driver, device, value, zb_rx)
+local function motion_sensor_attr_handler(driver, device, value, zb_rx)
     if value.value == MOTION_DETECT then
       device:emit_event(capabilities.motionSensor.motion.active())
     end
@@ -18,8 +18,8 @@ local thirdreality_device_handler = {
   NAME = "ThirdReality Multi-Function Night Light",
   zigbee_handlers = {
     attr = {
-      [THIRDREALITY_MOTIOM_CLUSTER] = {
-        [ATTR_TR] = present_value_attr_handler
+      [THIRDREALITY_MOTION_CLUSTER] = {
+        [ATTR_TR] = motion_sensor_attr_handler
       }
     }
   },
