@@ -45,7 +45,7 @@ local StrayDeviceMessageTypes = {
 local DEFAULT_MIREK = 153
 
 -- "forward declare" some functions
-local logged_light_added, logged_bridge_added, _initialize, bridge_added, light_added, init_light, logged_init_light
+local logged_light_added, logged_bridge_added, _initialize, bridge_added, light_added, init_light, logged_init_light, init_bridge, logged_init_bridge
 
 ---@param light_device HueChildDevice
 ---@param light table
@@ -165,7 +165,14 @@ local function migrate_bridge(driver, device)
           device:try_update_metadata(new_metadata)
           log.info_with({ hub_logs = true },
             string.format("Bridge %s Migrated, re-adding", (device.label or device.id or "unknown device")))
+          log.info_with({hub_logs = true}, string.format(
+            "Re-requesting added handler for %s after migrating", (device.label or device.id or "unknown device")
+          ))
           logged_bridge_added(hue_driver, device)
+          log.info_with({hub_logs = true}, string.format(
+              "Re-requesting init handler for %s after migrating", (device.label or device.id or "unknown device")
+          ))
+          logged_init_bridge(hue_driver, device)
           bridge_found = true
         end)
         if bridge_found then return end
@@ -693,7 +700,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
-local function init_bridge(driver, device)
+init_bridge = function (driver, device)
   log.info_with({ hub_logs = true },
     string.format("Init Bridge for device %s", (device.label or device.id or "unknown device")))
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
@@ -812,10 +819,10 @@ init_light = function(driver, device)
   end
 end
 
-local logged_init_bridge = utils.log_func_wrapper(init_bridge, "init_bridge")
 local logged_migrate_bridge = utils.log_func_wrapper(migrate_bridge, "migrate_bridge")
 local logged_migrate_light = utils.log_func_wrapper(migrate_light, "migrate_light")
 
+logged_init_bridge = utils.log_func_wrapper(init_bridge, "init_bridge")
 logged_init_light = utils.log_func_wrapper(init_light, "init_light")
 logged_light_added = utils.log_func_wrapper(light_added, "light_added")
 logged_bridge_added = utils.log_func_wrapper(bridge_added, "bridge_added")
