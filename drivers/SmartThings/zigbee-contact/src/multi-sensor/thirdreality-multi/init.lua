@@ -5,7 +5,7 @@ local THIRDREALITY_ACCELERATION_CLUSTER = 0xFFF1
 local X_ATTR = 0x0001
 local Y_ATTR = 0x0002
 local Z_ATTR = 0x0003
-local ACCE_ATTR = 0x0000
+local ACCEL_ATTR = 0x0000
 
 local function multi_sensor_report_handler(driver, device, zb_rx)
   local x, y, z
@@ -16,7 +16,7 @@ local function multi_sensor_report_handler(driver, device, zb_rx)
       y = v.data.value
     elseif (v.attr_id.value == Z_ATTR) then
       z = v.data.value
-    elseif (v.attr_id.value == ACCE_ATTR) then
+    elseif (v.attr_id.value == ACCEL_ATTR) then
       multi_utils.handle_acceleration_report(device, v.data.value)
     end
   end
