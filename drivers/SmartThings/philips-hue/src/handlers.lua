@@ -25,7 +25,16 @@ local function do_switch_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn_with({ hub_logs = true }, "Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = true },
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -59,7 +68,16 @@ local function do_switch_level_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn_with({ hub_logs = true }, "Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = true },
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -112,7 +130,16 @@ local function do_color_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn_with({ hub_logs = true }, "Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = true },
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -152,7 +179,16 @@ local function do_color_temp_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn_with({ hub_logs = true }, "Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn_with({ hub_logs = true },
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 

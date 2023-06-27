@@ -325,13 +325,15 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {
+      id = light.id,
       on = light.on,
       color = light.color,
       dimming = light.dimming,
       color_temp = light.color_temperature,
       mode = light.mode,
       parent_device_id = bridge_device.id,
-      hue_device_id = light.owner.rid
+      hue_device_id = light.owner.rid,
+      hue_device_data = device_info
     }
 
     local count = try_create_count[create_device_msg.label] or 0
