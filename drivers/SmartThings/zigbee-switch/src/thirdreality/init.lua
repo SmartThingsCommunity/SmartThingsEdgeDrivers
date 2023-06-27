@@ -1,7 +1,7 @@
 local capabilities = require "st.capabilities"
 
 local THIRDREALITY_MOTION_CLUSTER = 0xFC00
-local ATTR_TR = 0x0002
+local MOTION_SENSOR_VALUE = 0x0002
 local MOTION_DETECT = 0x0001
 local MOTION_NO_DETECT = 0x0000
 
@@ -19,7 +19,7 @@ local thirdreality_device_handler = {
   zigbee_handlers = {
     attr = {
       [THIRDREALITY_MOTION_CLUSTER] = {
-        [ATTR_TR] = motion_sensor_attr_handler
+        [MOTION_SENSOR_VALUE] = motion_sensor_attr_handler
       }
     }
   },
