@@ -1,6 +1,4 @@
 local socket = require "cosock.socket"
-local ssl = require "cosock.ssl"
-local log = require "log"
 
 local utils = require "utils"
 local lb_utils = require "lunchbox.util"
@@ -68,8 +66,8 @@ local function parse_chunked_response(original_response, sock)
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
   local original_body, err = original_response:get_body()
-  if not original_body or err ~= nil then
-    return nil, err
+  if type(original_body) ~= "string" or err ~= nil then
+    return original_body, (err or "unexpected nil in error position")
   end
   local next_chunk_bytes = tonumber(original_body, 16)
   local next_chunk_body = ""
@@ -234,50 +232,6 @@ local function execute_request(client, request, retry_fn)
   return ret, err
 end
 
-local function make_socket(host, port, wrap_ssl)
-  log.info_with({hub_logs = true}, "Creating TCP socket for Hue REST Connection")
-  local sock, err = socket.tcp()
-
-  if err ~= nil or (not sock) then
-    return nil, (err or "unknown error creating TCP socket")
-  end
-
-  log.info_with({hub_logs = true}, "Setting TCP socket timeout for Hue REST Connection")
-  _, err = sock:settimeout(60)
-  if err ~= nil then
-    return nil, "settimeout error: " .. err
-  end
-
-  log.info_with({hub_logs = true}, "Connecting TCP socket for Hue REST Connection")
-  _, err = sock:connect(host, port)
-  if err ~= nil then
-    return nil, "Connect error: " .. err
-  end
-
-  log.info_with({hub_logs = true}, "Set Keepalive for TCP socket for Hue REST Connection")
-  _, err = sock:setoption("keepalive", true)
-  if err ~= nil then
-    return nil, "Setoption error: " .. err
-  end
-
-  if wrap_ssl then
-    log.info_with({hub_logs = true}, "Creating SSL wrapper for for Hue REST Connection")
-    sock, err =
-      ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
-    if err ~= nil then
-       return nil, "SSL wrap error: " .. err
-    end
-    log.info_with({hub_logs = true}, "Performing SSL handshake for for Hue REST Connection")
-      _, err = sock:dohandshake()
-    if err ~= nil then
-      return nil, "Error with SSL handshake: " .. err
-    end
-  end
-
-  log.info_with({hub_logs = true}, "Successfully created TCP connection for Hue")
-  return sock, err
-end
-
 ---@class RestClient
 ---
 ---@field base_url table `net.url` URL table
@@ -373,22 +327,10 @@ end
 function RestClient.new(base_url, sock_builder)
   base_url = lb_utils.force_url_table(base_url)
 
-  if type(sock_builder) ~= "function" then sock_builder = make_socket end
+  if type(sock_builder) ~= "function" then sock_builder = utils.labeled_socket_builder() end
 
   return
     setmetatable({base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true}, RestClient)
-end
-
-local utils = require "utils"
-local logged_funcs = {}
-for key, val in pairs(RestClient) do
-  if type(val) == "function" then
-    logged_funcs[key] = utils.log_func_wrapper(val, key)
-  end
-end
-
-for key, val in pairs(logged_funcs) do
-  RestClient[key] = val
 end
 
 return RestClient
