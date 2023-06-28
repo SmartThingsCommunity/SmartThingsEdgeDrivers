@@ -81,7 +81,7 @@ local function send_stream_start_request(payload, sock)
   until (bytes == #payload) or (err ~= nil)
 
   if err then
-    log.error_with({ hub_logs = false }, "send error: " .. err)
+    log.error("send error: " .. err)
   end
 
   return bytes, err, idx
@@ -301,7 +301,7 @@ local function connecting_action(source)
   if err ~= nil then
     return nil, err
   end
-  local content_type = string.lower(headers:get_one('content-type'))
+  local content_type = string.lower((headers:get_one('content-type') or "none"))
   if not content_type:find("text/event-stream", 1, true) then
     local err_msg = "Expected content type of text/event-stream in response headers, received: " .. content_type
     return nil, err_msg
@@ -375,7 +375,7 @@ local function open_action(source)
     local recv_dbg = recv or "<NIL>"
     if #recv_dbg == 0 then recv_dbg = "<EMPTY>" end
     recv_dbg = recv_dbg:gsub("\r\n", "<CRLF>"):gsub("\n", "<LF>"):gsub("\r", "<CR>")
-    log.error_with({ hub_logs = false }, string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
+    log.error(string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
   end
 end
 
@@ -468,9 +468,9 @@ function EventSource.new(url, extra_headers, sock_builder)
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
-          log.error_with({ hub_logs = false }, "Event Source Coroutine State Machine error: " .. action_err)
+          log.error("Event Source Coroutine State Machine error: " .. action_err)
           if partial ~= nil and #partial > 0 then
-            log.error_with({ hub_logs = false }, st_utils.stringify_table(partial, "\tReceived Partial", true))
+            log.error(st_utils.stringify_table(partial, "\tReceived Partial", true))
           end
           source.ready_state = EventSource.ReadyStates.CLOSED
         end
