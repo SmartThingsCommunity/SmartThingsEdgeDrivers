@@ -64,33 +64,89 @@ function utils.backoff_builder(max, inc, rand)
   end
 end
 
-function utils.log_func_wrapper(func, func_name, log_level)
+function utils.labeled_socket_builder(label)
   local log = require "log"
-  local st_utils = require "st.utils"
-  log_level = log_level or log.LOG_LEVEL_INFO
-  local wrapped_f = function(...)
-    local args = {...}
-    local log_str = "call to " .. func_name .. ": \n"
-    for i, a in ipairs(args) do
-      local arg_string = "    "
-      if type(a) == "table" and a.pretty_print ~= nil then
-        arg_string = arg_string .. a:pretty_print()
-      elseif type(a) == "table" and a.NAME then
-        arg_string = arg_string .. "table NAME: "..a.NAME
-      else
-        arg_string = arg_string .. st_utils.stringify_table(a)
-      end
+  local socket = require "cosock.socket"
+  local ssl = require "cosock.ssl"
 
-      -- Truncate extremely long args except for TRACE log level
-      if #arg_string > 100 and log_level ~= log.LOG_LEVEL_TRACE then
-        arg_string = string.sub(arg_string, 1, 101)
-      end
-      log_str = log_str .. arg_string .. "\n"
-    end
-    log.log({hub_logs = true}, log_level, log_str)
-    return func(table.unpack(args))
+  label = (label or "")
+  if #label > 0 then
+    label = label .. " "
   end
-  return wrapped_f
+
+  local function make_socket(host, port, wrap_ssl)
+    log.info(
+      string.format(
+        "%sCreating TCP socket for Hue REST Connection", label
+      )
+    )
+    local _ = nil
+    local sock, err = socket.tcp()
+
+    if err ~= nil or (not sock) then
+      return nil, (err or "unknown error creating TCP socket")
+    end
+
+    log.info(
+      string.format(
+        "%sSetting TCP socket timeout for Hue REST Connection", label
+      )
+    )
+    _, err = sock:settimeout(60)
+    if err ~= nil then
+      return nil, "settimeout error: " .. err
+    end
+
+    log.info(
+      string.format(
+        "%sConnecting TCP socket for Hue REST Connection", label
+      )
+    )
+    _, err = sock:connect(host, port)
+    if err ~= nil then
+      return nil, "Connect error: " .. err
+    end
+
+    log.info(
+      string.format(
+        "%sSet Keepalive for TCP socket for Hue REST Connection", label
+      )
+    )
+    _, err = sock:setoption("keepalive", true)
+    if err ~= nil then
+      return nil, "Setoption error: " .. err
+    end
+
+    if wrap_ssl then
+      log.info(
+        string.format(
+          "%sCreating SSL wrapper for for Hue REST Connection", label
+        )
+      )
+      sock, err =
+        ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
+      if err ~= nil then
+         return nil, "SSL wrap error: " .. err
+      end
+      log.info(
+        string.format(
+          "%sPerforming SSL handshake for for Hue REST Connection", label
+        )
+      )
+        _, err = sock:dohandshake()
+      if err ~= nil then
+        return nil, "Error with SSL handshake: " .. err
+      end
+    end
+
+    log.info(
+      string.format(
+        "%sSuccessfully created TCP connection for Hue", label
+      )
+    )
+    return sock, err
+  end
+  return make_socket
 end
 
 return utils
