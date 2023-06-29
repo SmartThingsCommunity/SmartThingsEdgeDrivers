@@ -5,19 +5,9 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local cluster_base = require "st.zigbee.cluster_base"
-local write_attribute = require "st.zigbee.zcl.global_commands.write_attribute"
 local data_types = require "st.zigbee.data_types"
-local zcl_messages = require "st.zigbee.zcl"
-local messages = require "st.zigbee.messages"
-local zb_const = require "st.zigbee.constants"
 
 local IASZone = clusters.IASZone
-local PowerConfiguration = clusters.PowerConfiguration
-local TemperatureMeasurement = clusters.TemperatureMeasurement
-local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
-
-local IASCIEAddress = IASZone.attributes.IASCIEAddress
-local EnrollResponseCode = IASZone.types.EnrollResponseCode
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
