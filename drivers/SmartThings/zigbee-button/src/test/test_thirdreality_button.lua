@@ -1,10 +1,10 @@
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-
+local button_attr = capabilities.button.button
 local button = capabilities.button
+
 local MULTISTATE_INPUT_ATTR = 0x0012
 local TR_HELD = 0x0000
 local TR_PUSHED = 0x0001
@@ -32,13 +32,32 @@ end
 
 test.set_test_init_function(test_init)
 
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
+  end
+)
+
 test.register_message_test(
     "Reported button should be handled: pushed",
     {
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_PUSHED:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue:build_test_attr_report(mock_device, TR_PUSHED) }
       },
       {
         channel = "capability",
@@ -54,7 +73,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_DOUBLE:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue:build_test_attr_report(mock_device, TR_DOUBLE) }
       },
       {
         channel = "capability",
@@ -70,7 +89,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_HELD:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue:build_test_attr_report(mock_device, TR_HELD) }
       },
       {
         channel = "capability",
