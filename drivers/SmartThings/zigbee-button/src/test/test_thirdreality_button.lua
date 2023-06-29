@@ -28,44 +28,52 @@ end
 
 test.set_test_init_function(test_init)
 
-
-test.register_coroutine_test(
-  "0x0012 cluster 0x0000 value should result with sending held event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      0x0000.build_test_rx(mock_device)}
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.held({ state_change = true }))
-    )
-  end
+test.register_message_test(
+    "Reported button should be handled: pushed",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, 0x0001:build_test_attr_report(mock_device, true) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      }
+    }
 )
 
-test.register_coroutine_test(
-  "0x0012 cluster 0x0001 value should result with sending pushed event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      0x0001.build_test_rx(mock_device)}
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
-    )
-  end
+test.register_message_test(
+    "Reported button should be handled: double",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, 0x0002:build_test_attr_report(mock_device, true) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", button_attr.double({ state_change = true }))
+      }
+    }
 )
 
-test.register_coroutine_test(
-  "0x0012 cluster 0x0002 value should result with sending double event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      0x0002.build_test_rx(mock_device)}
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.double({ state_change = true }))
-    )
-  end
+test.register_message_test(
+    "Reported button should be handled: held",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, 0x0000:build_test_attr_report(mock_device, true) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
+      }
+    }
 )
 
 test.run_registered_tests()
