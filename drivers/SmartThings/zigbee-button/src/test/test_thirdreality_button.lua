@@ -34,8 +34,8 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      0x0000.build_test_rx(mock_device)
-    })
+      0x0000.build_test_rx(mock_device)}
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.held({ state_change = true }))
     )
@@ -47,8 +47,8 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      0x0001.build_test_rx(mock_device)
-    })
+      0x0001.build_test_rx(mock_device)}
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
     )
@@ -60,8 +60,8 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      0x0002.build_test_rx(mock_device)
-    })
+      0x0002.build_test_rx(mock_device)}
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.double({ state_change = true }))
     )
