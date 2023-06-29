@@ -248,6 +248,9 @@ local function connecting_action(source)
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
+      _, err = source._sock:settimeout(60)
+      if err ~= nil then return nil, err end
+
       _, err = source._sock:connect(source.url.host, source.url.port)
       if err ~= nil then return nil, err end
 
@@ -298,7 +301,7 @@ local function connecting_action(source)
   if err ~= nil then
     return nil, err
   end
-  local content_type = string.lower(headers:get_one('content-type'))
+  local content_type = string.lower((headers:get_one('content-type') or "none"))
   if not content_type:find("text/event-stream", 1, true) then
     local err_msg = "Expected content type of text/event-stream in response headers, received: " .. content_type
     return nil, err_msg

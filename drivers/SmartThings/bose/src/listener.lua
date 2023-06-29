@@ -21,7 +21,6 @@ local CloseCode = require"lustre.frame.close".CloseCode
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local bose_utils = require "utils"
-local MAX_RECONNECT_ATTEMPTS = 10
 local RECONNECT_PERIOD = 120 -- 2 min
 
 --- @field device table the device the listener is listening for events
@@ -172,7 +171,7 @@ function Listener:try_reconnect()
   end
   log.info(string.format("[%s](%s) Attempting to reconnect websocket for speaker at %s",
                          bose_utils.get_serial_number(self.device), self.device.label, ip))
-  while retries < MAX_RECONNECT_ATTEMPTS do
+  while true do
     if self:start() then
       self.driver:inject_capability_command(self.device,
                                             { capability = capabilities.refresh.ID,
@@ -182,11 +181,9 @@ function Listener:try_reconnect()
       return
     end
     retries = retries + 1
-    log.info(string.format("Retry reconnect in %s seconds", RECONNECT_PERIOD))
+    log.info(string.format("Reconnect attempt %s in %s seconds", retries, RECONNECT_PERIOD))
     socket.sleep(RECONNECT_PERIOD)
   end
-  log.warn(string.format("[%s](%s) failed to reconnect websocket for device events",
-                         bose_utils.get_serial_number(self.device), self.device.label))
 end
 
 --- @return success boolean
