@@ -6,11 +6,16 @@ components:
     version: 1
     config:
       values:
-        - key: "{{enumCommands}}"
+        - key: "playbackStatus.value"
           enabledValues:
             - 'playing'
             - 'paused'
             - 'stopped'
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'play'
+            - 'pause'
+            - 'stop'
   - id: mediaGroup
     version: 1
   - id: mediaPresets

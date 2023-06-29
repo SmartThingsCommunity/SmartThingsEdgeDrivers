@@ -260,7 +260,7 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      build_write_attr_msg(0xFC02, 0x0000, data_types.Uint8, 0x20, 0x104E)
+      build_write_attr_msg(0xFC02, 0x0000, data_types.Uint8, 0x02, 0x104E)
     })
     test.socket.zigbee:__expect_send({
       mock_device.id,

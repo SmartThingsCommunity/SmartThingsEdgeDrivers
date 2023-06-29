@@ -2,3 +2,5 @@ name: 'Zigbee Humidity Sensor'
 packageKey: 'zigbee-humidity-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee humidity sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

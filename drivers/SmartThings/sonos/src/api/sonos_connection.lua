@@ -225,7 +225,7 @@ function SonosConnection.new(driver, device)
         if body.version ~= favorites_version then
           favorites_version = body.version
 
-          local household = self.driver.sonos:get_household(header.householdId)
+          local household = self.driver.sonos:get_household(header.householdId) or { groups = {} }
 
           for group_id, group in pairs(household.groups) do
             local coordinator_id = self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)

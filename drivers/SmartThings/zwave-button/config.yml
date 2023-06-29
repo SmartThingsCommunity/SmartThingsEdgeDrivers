@@ -2,3 +2,5 @@ name: 'Z-Wave Button'
 packageKey: 'zwave-button'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave button and remote devices"
+vendorSupportInformation: "https://support.smartthings.com"

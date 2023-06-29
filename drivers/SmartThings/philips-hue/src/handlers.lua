@@ -12,11 +12,12 @@ local handlers = {}
 ---@param device HueChildDevice
 local function do_switch_action(driver, device, args)
   local on = args.command == "on"
-  local id = device:get_field(Fields.PARENT_DEVICE_ID)
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
   local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn(
+      "Couldn't get a bridge for light with Child Key " .. (device.parent_assigned_child_key or "unexpected nil parent_assigned_child_key"))
     return
   end
 
@@ -24,7 +25,16 @@ local function do_switch_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn(
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -45,10 +55,12 @@ end
 ---@param device HueChildDevice
 local function do_switch_level_action(driver, device, args)
   local level = st_utils.clamp_value(args.args.level, 1, 100)
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn(
+      "Couldn't get a bridge for light with Child Key " .. (device.parent_assigned_child_key or "unexpected nil parent_assigned_child_key"))
     return
   end
 
@@ -56,7 +68,16 @@ local function do_switch_level_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn(
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -96,10 +117,12 @@ local function do_color_action(driver, device, args)
     hue = 0
     device:set_field(Fields.WRAPPED_HUE, true)
   end
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn(
+      "Couldn't get a bridge for light with Child Key " .. (device.parent_assigned_child_key or "unexpected nil parent_assigned_child_key"))
     return
   end
 
@@ -107,7 +130,16 @@ local function do_color_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn(
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -134,10 +166,12 @@ function handlers.mirek_to_kelvin(mirek) return 1000000 / mirek end
 ---@param device HueChildDevice
 local function do_color_temp_action(driver, device, args)
   local kelvin = args.args.temperature
-  local bridge_device = driver:get_device_info(device:get_field(Fields.PARENT_DEVICE_ID))
+  local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(id)
 
   if not bridge_device then
-    log.warn("Couldn't get a bridge for light with Child Key " .. device.parent_assigned_child_key)
+    log.warn(
+      "Couldn't get a bridge for light with Child Key " .. (device.parent_assigned_child_key or "unexpected nil parent_assigned_child_key"))
     return
   end
 
@@ -145,7 +179,16 @@ local function do_color_temp_action(driver, device, args)
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
 
   if not (light_id or hue_api) then
-    log.warn("Could not get a proper light resource ID or API instance for ", device.label)
+    log.warn(
+      string.format(
+        "Could not get a proper light resource ID or API instance for %s" ..
+        "\n\tLight Resource ID: %s" ..
+        "\n\tHue API nil? %s",
+        (device.label or device.id or "unknown device"),
+        light_id,
+        (hue_api == nil)
+      )
+    )
     return
   end
 
@@ -200,10 +243,11 @@ end
 ---@param light_device HueChildDevice
 local function do_refresh_light(driver, light_device)
   local light_resource_id = light_device:get_field(Fields.RESOURCE_ID)
-  local bridge_device = driver:get_device_info(light_device:get_field(Fields.PARENT_DEVICE_ID))
+  local bridge_id = light_device.parent_device_id or light_device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(bridge_id)
 
   if not bridge_device then
-    log.warn("Couldn't get Hue bridge for light " .. light_device.label)
+    log.warn("Couldn't get Hue bridge for light " .. (light_device.label or light_device.id or "unknown device"))
     return
   end
 
@@ -246,7 +290,24 @@ end
 ---@param bridge_device HueBridgeDevice
 local function do_refresh_all_for_bridge(driver, bridge_device)
   local child_devices = bridge_device:get_child_list() --[=[@as HueChildDevice[]]=]
+
   for _, device in ipairs(child_devices) do
+    if device and device.datastore and device.datastore.__devices_store then
+      log.trace(
+        st_utils.stringify_table(
+          (device.datastore.__devices_store[device.id] or { unknown = "no datastore entry" }),
+          string.format(
+            "%s device datastore", (device.label or string.format("unlabeled device with id %s", device.id))
+          ),
+          false
+        )
+      )
+    else
+      log.warn(
+        string.format("Device %s does not have a proper datastore association",
+          (device.label or device.id or "unknown device"))
+      )
+    end
     local device_type = device:get_field(Fields.DEVICE_TYPE)
     if device_type == "light" then
       do_refresh_light(driver, device)

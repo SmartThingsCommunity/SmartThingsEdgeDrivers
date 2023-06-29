@@ -16,17 +16,22 @@ local capabilities = require "st.capabilities"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version=1 })
 
-local AEOTEC_SWITCH_6 = {
-  mfr = 0x0086,
-  prodId = 0x0060
+local FINGERPRINTS = {
+  {mfr = 0x0086, prodId = 0x0060},
+  {mfr = 0x0371, prodId = 0x00AF},
+  {mfr = 0x0371, prodId = 0x0017}
 }
 
 local function can_handle(opts, driver, device, ...)
-  return device:id_match(AEOTEC_SWITCH_6.mfr, nil, AEOTEC_SWITCH_6.prodId)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then return true end
+  end
+  return false
 end
 
 -- Despite the NIF indicating that this device supports the Switch Multilevel
--- command class, the device will not respond to multilevel commands
+-- command class, the device will not respond to multilevel commands. Note that
+-- this applies at least to the Aeotec Smart Switch 6 and 7
 local function on_off_factory(onOff)
   return function(driver, device, cmd)
     device:send(Basic:Set({value=onOff}))
@@ -35,7 +40,7 @@ local function on_off_factory(onOff)
 end
 
 local aeotec_smart_switch = {
-  NAME = "Aeotec Smart Switch 6",
+  NAME = "Aeotec Smart Switch",
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = on_off_factory(0xFF),

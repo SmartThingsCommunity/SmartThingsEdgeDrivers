@@ -21,6 +21,7 @@ end
 function util.mac_equal(m1, m2)
   local v1 = tonumber(m1, 16)
   local v2 = tonumber(m2, 16)
+  if v1 == nil or v2 == nil then return false end
   return math.abs(v1 - v2) <= 1
 end
 

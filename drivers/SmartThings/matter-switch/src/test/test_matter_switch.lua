@@ -17,6 +17,10 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
+local TRANSITION_TIME = 0
+local OPTIONS_MASK = 0x01
+local OPTIONS_OVERRIDE = 0x01
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
   manufacturer_info = {
@@ -234,7 +238,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, 0, 0, 0)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
     {
@@ -301,7 +305,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, 0, 0, 0)
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
     {
@@ -357,7 +361,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, 0, 0, 0)
+        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
   }
@@ -379,7 +383,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, 0, 0, 0, 0)
+        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
   }
@@ -401,7 +405,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, 0, 0, 0)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
     {
@@ -459,6 +463,39 @@ test.register_message_test(
     }
   }
 )
+
+test.register_message_test(
+  "X and Y color values have 0 value",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(33))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
+    }
+  }
+)
+
 
 test.register_message_test(
   "Y and X color values should report hue and saturation once both have been received",
