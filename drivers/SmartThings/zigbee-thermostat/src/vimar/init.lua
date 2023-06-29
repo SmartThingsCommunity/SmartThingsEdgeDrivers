@@ -20,8 +20,6 @@ local ThermostatControlSequence = Thermostat.attributes.ControlSequenceOfOperati
 local ThermostatSystemMode = Thermostat.attributes.SystemMode
 local capabilities = require "st.capabilities"
 local ThermostatMode = capabilities.thermostatMode
-local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
-local ThermostatCoolingSetpoint = capabilities.thermostatCoolingSetpoint
 
 local VIMAR_SUPPORTED_THERMOSTAT_MODES = {
   [ThermostatControlSequence.COOLING_ONLY] = {
@@ -149,27 +147,6 @@ local vimar_set_thermostat_mode = function(driver, device, command)
   end
 end
 
-
-local function vimar_thermostat_heating_setpoint_handler(driver, device, value, zb_rx)
-  local setpoint = value.value / 100.0
-  local unit_type = "C"
-  if (setpoint >= 41.0) then
-    setpoint = utils.c_to_f(setpoint)
-    unit_type = "F"
-  end
-  device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({ value = setpoint, unit = unit_type }))
-end
-
-local function vimar_thermostat_cooling_setpoint_handler(driver, device, value, zb_rx)
-  local setpoint = value.value / 100.0
-  local unit_type = "C"
-  if (setpoint >= 41.0) then
-    setpoint = utils.c_to_f(setpoint)
-    unit_type = "F"
-  end
-  device:emit_event(ThermostatCoolingSetpoint.coolingSetpoint({ value = setpoint, unit = unit_type }))
-end
-
 -- NOTE: unused binds are not required in the configuration procedure
 local vimar_thermostat_do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, Thermostat.ID, self.environment_info.hub_zigbee_eui))
@@ -187,8 +164,6 @@ local vimar_thermostat_subdriver = {
       [Thermostat.ID] = {
         [Thermostat.attributes.SystemMode.ID] = vimar_thermostat_mode_handler,
         [Thermostat.attributes.ControlSequenceOfOperation.ID] = vimar_thermostat_supported_modes_handler,
-        [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = vimar_thermostat_heating_setpoint_handler,
-        [Thermostat.attributes.OccupiedCoolingSetpoint.ID] = vimar_thermostat_cooling_setpoint_handler
       }
     }
   },
