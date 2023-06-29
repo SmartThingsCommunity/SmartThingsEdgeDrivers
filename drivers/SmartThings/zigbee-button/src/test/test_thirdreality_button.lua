@@ -5,6 +5,10 @@ local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local button = capabilities.button
+local MULTISTATE_INPUT_ATTR = 0x0012
+local TR_HELD = 0x0000
+local TR_PUSHED = 0x0001
+local TR_DOUBLE = 0x0002
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -34,7 +38,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, 0x0001:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_PUSHED:build_test_attr_report(mock_device, true) }
       },
       {
         channel = "capability",
@@ -50,7 +54,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, 0x0002:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_DOUBLE:build_test_attr_report(mock_device, true) }
       },
       {
         channel = "capability",
@@ -66,7 +70,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device.id, 0x0000:build_test_attr_report(mock_device, true) }
+        message = { mock_device.id, MULTISTATE_INPUT_ATTR.attributes.PresentValue.TR_HELD:build_test_attr_report(mock_device, true) }
       },
       {
         channel = "capability",
