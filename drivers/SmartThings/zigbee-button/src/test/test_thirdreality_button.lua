@@ -3,7 +3,6 @@ local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local button_attr = capabilities.button.button
-local button = capabilities.button
 
 local MULTISTATE_INPUT_ATTR = 0x0012
 local TR_HELD = 0x0000
