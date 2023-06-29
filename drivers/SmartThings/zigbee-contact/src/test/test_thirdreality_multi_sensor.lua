@@ -14,7 +14,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "Third Reality, Inc",
         model = "3RVS01031Z",
-        server_clusters = { 0x0000, 0x0001, 0x0500, 0xFFF1 }
+        server_clusters = { 0x0000, 0x0001, 0xFFF1 }
       }
     }
   }
