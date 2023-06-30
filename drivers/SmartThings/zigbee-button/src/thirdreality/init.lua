@@ -27,8 +27,8 @@ local function present_value_attr_handler(driver, device, value, zb_rx)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.button.supportedButtonValues({ "pushed", "double", "held" }))
-  device:emit_event(capabilities.button.numberOfButtons({value = 1}))
+  device:emit_event(capabilities.button.supportedButtonValues({ "pushed", "double", "held" }, {visibility = { displayed = false }}))
+  device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
 end
 
 local thirdreality_device_handler = {
