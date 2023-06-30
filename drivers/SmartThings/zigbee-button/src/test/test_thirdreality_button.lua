@@ -1,5 +1,6 @@
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local data_types = require "st.zigbee.data_types"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
