@@ -4,12 +4,6 @@ local data_types = require "st.zigbee.data_types"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
-local MULTISTATE_INPUT_CLUSTER = 0x0012
-local ATTR_ID = 0x0055
-local TR_HELD = 0
-local TR_PUSHED = 1
-local TR_DOUBLE = 2
-local MFG_CODE = 0x110A
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -25,45 +19,53 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
+zigbee_test_utils.prepare_zigbee_env_info()
+
+local function test_init()
+    test.mock_device.add_test_device(mock_device)
+end
+
+test.set_test_init_function(test_init)
+
 test.register_coroutine_test(
   "Reported button should be handled: pushed",
   function()
+    local attr_report_data = {
+      { 0x0055, data_types.Int16.ID, 0x0001}
+    } 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, MULTISTATE_INPUT_CLUSTER, {
-        { ATTR_ID, data_types.Uint16.ID, TR_PUSHED }
-      }, MFG_CODE)
+      zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.button.button.pushed({ state_change = true })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true })))
   end
 )
 
 test.register_coroutine_test(
   "Reported button should be handled: double",
   function()
+    local attr_report_data = {
+      { 0x0055, data_types.Int16.ID, 0x0002}
+    } 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, MULTISTATE_INPUT_CLUSTER, {
-        { ATTR_ID, data_types.Uint16.ID, TR_DOUBLE }
-      }, MFG_CODE)
+      zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.button.button.double({ state_change = true })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.double({ state_change = true })))
   end
 )
 
 test.register_coroutine_test(
   "Reported button should be handled: held",
   function()
+    local attr_report_data = {
+      { 0x0055, data_types.Int16.ID, 0x0000}
+    } 
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, MULTISTATE_INPUT_CLUSTER, {
-        { ATTR_ID, data_types.Uint16.ID, TR_HELD }
-      }, MFG_CODE)
+      zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.button.button.held({ state_change = true })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.held({ state_change = true })))
   end
 )
 
