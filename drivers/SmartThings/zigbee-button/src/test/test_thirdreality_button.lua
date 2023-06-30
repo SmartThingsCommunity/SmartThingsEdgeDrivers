@@ -28,6 +28,25 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
   "Reported button should be handled: pushed",
   function()
     local attr_report_data = {
