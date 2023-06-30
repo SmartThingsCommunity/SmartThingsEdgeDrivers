@@ -9,7 +9,7 @@ local ATTR_ID = 0x0055
 local TR_HELD = 0x0000
 local TR_PUSHED = 0x0001
 local TR_DOUBLE = 0x0002
-local MFG_CODE = 0x115F
+local MFG_CODE = 0x110A
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
