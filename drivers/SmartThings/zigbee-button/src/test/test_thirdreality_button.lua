@@ -6,9 +6,9 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local MULTISTATE_INPUT_CLUSTER = 0x0012
 local ATTR_ID = 0x0055
-local TR_HELD = 0x0000
-local TR_PUSHED = 0x0001
-local TR_DOUBLE = 0x0002
+local TR_HELD = 0
+local TR_PUSHED = 1
+local TR_DOUBLE = 2
 local MFG_CODE = 0x110A
 
 local mock_device = test.mock_device.build_test_zigbee_device(
