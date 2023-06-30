@@ -28,11 +28,30 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
   "Reported button should be handled: pushed",
   function()
     local attr_report_data = {
       { 0x0055, data_types.Int16.ID, 0x0001}
-    } 
+    }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
@@ -46,7 +65,7 @@ test.register_coroutine_test(
   function()
     local attr_report_data = {
       { 0x0055, data_types.Int16.ID, 0x0002}
-    } 
+    }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
@@ -60,7 +79,7 @@ test.register_coroutine_test(
   function()
     local attr_report_data = {
       { 0x0055, data_types.Int16.ID, 0x0000}
-    } 
+    }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, 0x0012, attr_report_data, 0x110A)
