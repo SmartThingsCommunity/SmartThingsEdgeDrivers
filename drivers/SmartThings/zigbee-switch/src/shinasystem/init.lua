@@ -75,7 +75,7 @@ local function do_configuration(driver, device)
   local attrCfg = device_management.attr_config(device, switch_defaults.default_on_off_configuration)
   local attrRead = zcl_clusters.OnOff.attributes.OnOff:read(device)
   local children_amount = get_children_amount(device)
-  
+
   for _, ep in pairs(device.zigbee_endpoints) do
       if children_amount+1 >= ep.id then
         local bindReq = device_management.build_bind_request(device, zcl_clusters.OnOff.ID, device.driver.environment_info.hub_zigbee_eui, ep.id)
