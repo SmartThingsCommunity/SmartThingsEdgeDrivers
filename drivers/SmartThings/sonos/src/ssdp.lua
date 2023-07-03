@@ -17,6 +17,7 @@ local function process_response(val)
 end
 
 function SSDP.search(search_term, callback)
+  log.debug(string.format("Beginning SSDP search for search term %s", search_term))
   local s = assert(socket.udp(), "create discovery socket")
 
   local listen_ip = "0.0.0.0"
@@ -24,16 +25,20 @@ function SSDP.search(search_term, callback)
 
   local multicast_ip = "239.255.255.250"
   local multicast_port = 1900
+  local mx = 5
   local multicast_msg = table.concat({
-    "M-SEARCH * HTTP/1.1", "HOST: 239.255.255.250:1900",
-    "MAN: \"ssdp:discover\"", -- yes, there are really supposed to be quotes in this one
-    "MX: 2", "ST: " .. search_term, "\r\n"
+    "M-SEARCH * HTTP/1.1",
+    "HOST: 239.255.255.250:1900",
+    'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
+    string.format("MX: %s", mx),
+    string.format("ST: %s",search_term),
+    "\r\n"
   }, "\r\n")
 
   -- bind local ip and port
   -- device will unicast back to this ip and port
   assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
-  local timeouttime = socket.gettime() + 3 -- 3 second timeout, `MX` + 1 for network delay
+  local timeouttime = socket.gettime() + (mx + 1) -- `MX` + 1 for network delay
 
   -- local deviceid = "placeholder"
 
@@ -48,6 +53,7 @@ function SSDP.search(search_term, callback)
       local headers = process_response(val)
 
       if headers["st"] == search_term and headers["server"]:find("Sonos") then
+        log.debug(string.format("Received response for Sonos search with headers [%s], processing details", st_utils.stringify_table(headers)))
         local ip =
         headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
 
@@ -94,6 +100,7 @@ function SSDP.search(search_term, callback)
         end
       end
     elseif rip == "timeout" then
+      log.warn("SSDP Search Timeout")
       break
     else
       error(string.format(
