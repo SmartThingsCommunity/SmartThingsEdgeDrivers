@@ -1,8 +1,32 @@
 SONOS_API_KEY = require 'app_key'
+local old_log = require "log"
+
+-- Forward all debug logs to hubcore info logs.
+old_log.debug = function(...)
+  old_log.info_with({hub_logs = true}, table.concat({"[DEBUG->INFO] ", ...}))
+end
+
+-- Print all errors to hubcore for now
+old_log.error = function(...)
+  old_log.error_with({hub_logs = true}, ...)
+end
+
+-- Print all warnings to hubcore for now
+old_log.warn = function(...)
+  old_log.warn_with({hub_logs = true}, ...)
+end
+
+local log = {}
+log.warn = old_log.warn
+log.error = old_log.error
+log.debug = old_log.debug
+log.trace = old_log.trace
+log.info = function(...)
+  old_log.info_with({hub_logs = true}, ...)
+end
 
 local Driver = require "st.driver"
 
-local log = require "log"
 local capabilities = require "st.capabilities"
 local st_utils = require "st.utils"
 

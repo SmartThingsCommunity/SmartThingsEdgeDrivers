@@ -136,10 +136,12 @@ function SonosState.new()
   }
 
   ret.mark_player_as_joined = function(self, player_id)
+    log.debug(string.format("Marking Player ID %s as joined", player_id))
     private.joined_players[player_id] = true
   end
 
   ret.mark_player_as_removed = function(self, player_id)
+    log.debug(string.format("Marking Player ID %s as removed", player_id))
     private.joined_players[player_id] = false
   end
 
@@ -164,6 +166,10 @@ function SonosState.new()
   --- @param groups_event SonosGroupsResponseBody
   --- @param device SonosDevice|nil
   ret.update_household_info = function(self, id, groups_event, device)
+    log.debug(string.format("Update household info for household %s", id))
+    if device and device.label then
+      log.debug(string.format("Household update triggered by device %s to update capabilities", device.label))
+    end
     local household = private.households[id] or {}
     local groups, players = groups_event.groups, groups_event.players
 
@@ -198,6 +204,7 @@ function SonosState.new()
 
     -- emit group info update [groupId, groupRole, groupPrimaryDeviceId]
     if device ~= nil then
+      log.debug(string.format("Emitting group info update for Device %s", device.label))
       local device_player_id = device:get_field(PlayerFields.PLAYER_ID)
       local group_id = self:get_group_for_player(id, device_player_id)
       local coordinator_id = self:get_coordinator_for_player(id, device_player_id)
