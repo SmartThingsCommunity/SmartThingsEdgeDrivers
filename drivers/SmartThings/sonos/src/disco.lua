@@ -1,4 +1,5 @@
 local log = require "log"
+local cosock = require "cosock"
 local ssdp = require "ssdp"
 
 --- @module 'sonos.Discovery'
@@ -50,6 +51,7 @@ function Discovery.discover(driver, _, should_continue)
     ssdp.search(SONOS_SSDP_SEARCH_TERM, function(group_info)
       ssdp_discovery_callback(driver, group_info, known_devices_dnis, driver.found_ips)
     end)
+  cosock.socket.sleep(0.1)
   end
   log.info("Ending Sonos discovery")
 end

@@ -1,6 +1,7 @@
 local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
+local st_utils = require "st.utils"
 
 local lb_utils = require "lunchbox.util"
 
@@ -160,7 +161,15 @@ function SonosConnection.new(driver, device)
 
   self.on_message = function(uuid, msg)
     if msg.data then
-      local header, body = table.unpack(json.decode(msg.data))
+      local json_result = table.pack(pcall(json.decode, msg.data))
+      local success = table.remove(json_result, 1)
+      if not success then
+        log.error(st_utils.stringify_table(
+          {response_body = msg.data, json = json_result}, "Couldn't decode JSON in WebSocket callback:", false
+        ))
+        return
+      end
+      local header, body = table.unpack(table.unpack(json_result))
       if header.type == "groups" then
         local household_id, current_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
