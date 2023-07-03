@@ -106,7 +106,7 @@ end
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
 local function migrate_bridge(driver, device)
-  log.info(
+  log.info_with({ hub_logs = true },
     string.format("Migrate Bridge for device %s", (device.label or device.id or "unknown device")))
   local api_key = device.data.username
   local ipv4 = device.data.ip
@@ -145,10 +145,10 @@ local function migrate_bridge(driver, device)
             )
           )
           if err ~= nil or not bridge_info then
-            log.error(string.format("Error querying bridge info for %s: %s",
-                (device.label or bridge_id or device.id or "unknown bridge"),
-                (err or "unexpected nil in error position")
-              )
+            log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
+              (device.label or bridge_id or device.id or "unknown bridge"),
+              (err or "unexpected nil in error position")
+            )
             )
             return
           end
@@ -172,14 +172,14 @@ local function migrate_bridge(driver, device)
           }
 
           device:try_update_metadata(new_metadata)
-          log.info(
+          log.info_with({ hub_logs = true },
             string.format("Bridge %s Migrated, re-adding", (device.label or device.id or "unknown device")))
           log.debug(string.format(
             "Re-requesting added handler for %s after migrating", (device.label or device.id or "unknown device")
           ))
           bridge_added(hue_driver, device)
           log.debug(string.format(
-              "Re-requesting init handler for %s after migrating", (device.label or device.id or "unknown device")
+            "Re-requesting init handler for %s after migrating", (device.label or device.id or "unknown device")
           ))
           init_bridge(hue_driver, device)
           bridge_found = true
@@ -192,8 +192,8 @@ local function migrate_bridge(driver, device)
         log.warn(
           string.format(
             "[MigrateBridge] Failed to find bridge info for device %s, waiting %s seconds then trying again",
-             (device.label or device.id or "unknown device"),
-             sleep_time
+            (device.label or device.id or "unknown device"),
+            sleep_time
           )
         )
         cosock.socket.sleep(sleep_time)
@@ -219,7 +219,7 @@ local function spawn_bridge_add_api_key_task(driver, device)
     repeat
       local time_remaining = math.max(0, timeout_time - cosock.socket.gettime())
       if time_remaining == 0 then
-        log.error(
+        log.error_with({ hub_logs = true },
           string.format(
             "Link button not pressed or API key not received for bridge \"%s\" after 30 seconds, sleeping then trying again in a few minutes.",
             device.label
@@ -255,7 +255,8 @@ local function spawn_bridge_add_api_key_task(driver, device)
     until api_key ~= nil
 
     if not api_key then
-      log.error("Link button not pressed or API key not received for bridge " .. (device.label or device.device_network_id or device.id or "unknown"))
+      log.error_with({ hub_logs = true }, "Link button not pressed or API key not received for bridge " ..
+        (device.label or device.device_network_id or device.id or "unknown"))
       return
     end
 
@@ -285,7 +286,7 @@ end
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
 bridge_added = function(driver, device)
-  log.info(
+  log.info_with({ hub_logs = true },
     string.format("Bridge Added for device %s", (device.label or device.id or "unknown device")))
   local device_bridge_id = device.device_network_id
   local bridge_info = driver.joined_bridges[device_bridge_id]
@@ -309,9 +310,9 @@ bridge_added = function(driver, device)
             if bridge_id ~= device_bridge_id then return end
 
             log.info(string.format(
-                "[BridgeAdded] Found Hue Bridge on the network for %s, querying configuration values",
-                (device.label or device.id or "unknown device")
-              )
+              "[BridgeAdded] Found Hue Bridge on the network for %s, querying configuration values",
+              (device.label or device.id or "unknown device")
+            )
             )
             local bridge_info, err, _ = HueApi.get_bridge_info(
               bridge_ip,
@@ -320,10 +321,10 @@ bridge_added = function(driver, device)
               )
             )
             if err ~= nil or not bridge_info then
-              log.error(string.format("Error querying bridge info for %s: %s",
-                  (device.label or bridge_id or device.id or "unknown bridge"),
-                  (err or "unexpected nil in error position")
-                )
+              log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
+                (device.label or bridge_id or device.id or "unknown bridge"),
+                (err or "unexpected nil in error position")
+              )
               )
               return
             end
@@ -347,8 +348,8 @@ bridge_added = function(driver, device)
           log.warn(
             string.format(
               "[BridgeAdded] Failed to find bridge info for device %s, waiting %s seconds then trying again",
-               (device.label or device.id or "unknown device"),
-               sleep_time
+              (device.label or device.id or "unknown device"),
+              sleep_time
             )
           )
           cosock.socket.sleep(sleep_time)
@@ -361,7 +362,7 @@ bridge_added = function(driver, device)
   end
 
   if not Discovery.api_keys[device_bridge_id] then
-    log.error(
+    log.error_with({ hub_logs = true },
       string.format(
         "Received `added` lifecycle event for bridge %s with unknown API key, " ..
         "please press the Link Button on your Hue Bridge(s).",
@@ -385,7 +386,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
   local v1_id = device.data.bulbId
   local bridge_id = driver.api_key_to_bridge_id[api_key]
 
-  log.info(
+  log.info_with({ hub_logs = true },
     string.format("Migrate Light for device %s with v1_id %s and bridge_id %s",
       (device.label or device.id or "unknown device"), v1_id, (bridge_id or "<not yet known>")
     )
@@ -400,7 +401,8 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
   local bridge_device = known_dni_to_device_map[bridge_id or ""]
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
-  local light_resource = hue_light_description or Discovery.light_state_disco_cache[(device:get_field(Fields.RESOURCE_ID))]
+  local light_resource = hue_light_description or
+      Discovery.light_state_disco_cache[(device:get_field(Fields.RESOURCE_ID))]
 
   if not (api_instance and bridge_device and bridge_device:get_field(Fields._INIT)
         and driver.joined_bridges[bridge_id] and light_resource) then
@@ -437,9 +439,9 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
   end
 
   log.info(
-  string.format("Found parent bridge %s for migrated light %s, beginning update and onboard"
-    ,(bridge_device.label or bridge_device.device_network_id or bridge_device.id or "unknown bridge device")
-    ,(device.label or device.id or "unknown light device")
+    string.format("Found parent bridge %s for migrated light %s, beginning update and onboard"
+    , (bridge_device.label or bridge_device.device_network_id or bridge_device.id or "unknown bridge device")
+    , (device.label or device.id or "unknown light device")
     )
   )
 
@@ -449,7 +451,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
       "Migrating Color Ambiance light %s", (device.label or device.id or "unknown_device")
     ))
     profile_ref =
-    "white-and-color-ambiance"     -- all color light_resource products support `white` (dimming) and `ambiance` (color temp)
+    "white-and-color-ambiance" -- all color light_resource products support `white` (dimming) and `ambiance` (color temp)
   elseif light_resource.color_temperature then
     log.debug(string.format(
       "Migrating White Ambiance light %s", (device.label or device.id or "unknown_device")
@@ -459,7 +461,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     log.debug(string.format(
       "Migrating White light %s", (device.label or device.id or "unknown_device")
     ))
-    profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
+    profile_ref = "white" -- `white` refers to dimmable and includes filament bulbs
   else
     log.warn(
       string.format(
@@ -479,7 +481,8 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
   device:try_update_metadata(new_metadata)
 
   log.info(string.format(
-    "Migration to CLIPV2 for %s complete, going through onboarding flow again", (device.label or device.id or "unknown device")
+    "Migration to CLIPV2 for %s complete, going through onboarding flow again",
+    (device.label or device.id or "unknown device")
   ))
   log.debug(string.format(
     "Re-requesting added handler for %s after migrating", (device.label or device.id or "unknown device")
@@ -508,9 +511,10 @@ light_added = function(driver, device, parent_device_id, resource_id)
     local parent_bridge = driver:get_device_info(parent_device_id or device.parent_device_id or
       device:get_field(Fields.PARENT_DEVICE_ID))
     if not parent_bridge then
-      log.error(string.format(
-        "Device %s added with parent UUID of %s but could not find a device with that UUID in the driver"
-        , (device.label or device.id or "unknown device"), (device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))))
+      log.error_with({ hub_logs = true }, string.format(
+        "Device %s added with parent UUID of %s but could not find a device with that UUID in the driver",
+        (device.label or device.id or "unknown device"),
+        (device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))))
       return
     end
 
@@ -552,14 +556,14 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
     local light_resource, err, _ = api_instance:get_light_by_id(device_light_resource_id)
     if err ~= nil or not light_resource then
-      log.error("Error getting light info: ", error)
+      log.error_with({ hub_logs = true }, "Error getting light info: ", error)
       return
     end
 
     if light_resource.errors and #light_resource.errors > 0 then
-      log.error("Errors found in API response:")
+      log.error_with({ hub_logs = true }, "Errors found in API response:")
       for idx, err in ipairs(light_resource.errors) do
-        log.error(st_utils.stringify_table(err, "Error " .. idx, true))
+        log.error_with({ hub_logs = true }, st_utils.stringify_table(err, "Error " .. idx, true))
       end
       return
     end
@@ -625,7 +629,8 @@ end
 
 local function do_bridge_network_init(driver, device, bridge_url, api_key)
   if not device:get_field(Fields.EVENT_SOURCE) then
-    log.info("Creating SSE EventSource for bridge " .. (device.label or device.device_network_id or device.id or "unknown bridge"))
+    log.info_with({ hub_logs = true }, "Creating SSE EventSource for bridge " ..
+      (device.label or device.device_network_id or device.id or "unknown bridge"))
     device:offline()
     local url_table = lunchbox_util.force_url_table(bridge_url .. "/eventstream/clip/v2")
     local eventsource = EventSource.new(
@@ -635,13 +640,13 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
     )
 
     eventsource.onopen = function(msg)
-      log.debug(
+      log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
     end
 
     eventsource.onerror = function()
-      log.error(string.format("Hue Bridge \"%s\" Event Source Error", device.label))
+      log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", device.label))
       device:offline()
     end
 
@@ -652,12 +657,13 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
         local events, err = table.unpack(json_result)
 
         if not success then
-          log.error("Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
+          log.error_with({ hub_logs = true },
+            "Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
           return
         end
 
         if err ~= nil then
-          log.error("JSON Parsing Error: " .. err)
+          log.error_with({ hub_logs = true }, "JSON Parsing Error: " .. err)
           return
         end
 
@@ -737,7 +743,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
-init_bridge = function (driver, device)
+init_bridge = function(driver, device)
   log.info(
     string.format("Init Bridge for device %s", (device.label or device.id or "unknown device")))
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
@@ -788,21 +794,22 @@ init_bridge = function (driver, device)
           log.info(
             string.format(
               "[BridgeInit] Querying bridge %s for configuration values",
-               (device.label or device.id or "unknown device")
+              (device.label or device.id or "unknown device")
             )
           )
           bridge_info, err = HueApi.get_bridge_info(
             ip,
             utils.labeled_socket_builder(
-              "[BridgeInit: " .. (device.label or device.device_network_id or device.id or "unknown bridge") .. " Bridge Info Request"
+              "[BridgeInit: " ..
+              (device.label or device.device_network_id or device.id or "unknown bridge") .. " Bridge Info Request"
             )
           )
 
           if err ~= nil or bridge_info == nil then
-            log.error(string.format("Error querying bridge info for %s: %s",
-                (device.label or device.device_network_id or device.id or "unknown bridge"),
-                (err or "unexpected nil in error position")
-              )
+            log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
+              (device.label or device.device_network_id or device.id or "unknown bridge"),
+              (err or "unexpected nil in error position")
+            )
             )
             goto continue
           end
@@ -826,8 +833,8 @@ init_bridge = function (driver, device)
           log.warn(
             string.format(
               "[BridgeInit] Failed to find bridge info for device %s, waiting %s seconds then trying again",
-               (device.label or device.id or "unknown device"),
-               sleep_time
+              (device.label or device.id or "unknown device"),
+              sleep_time
             )
           )
           cosock.socket.sleep(sleep_time)
@@ -915,14 +922,16 @@ _initialize = function(driver, device, event, args, parent_device_id)
     string.format("_initialize handling event %s for device %s", event, (device.label or device.id or "unknown device")))
   if not device:get_field(Fields._ADDED) then
     log.debug(
-      string.format("_ADDED for device %s not set while _initialize is handling %s, performing added lifecycle operations",
+      string.format(
+        "_ADDED for device %s not set while _initialize is handling %s, performing added lifecycle operations",
         (device.label or device.id or "unknown device"), event))
     device_added(driver, device, event, args, parent_device_id)
   end
 
   if not device:get_field(Fields._INIT) then
     log.debug(
-      string.format("_INIT for device %s not set while _initialize is handling %s, performing device init lifecycle operations",
+      string.format(
+        "_INIT for device %s not set while _initialize is handling %s, performing device init lifecycle operations",
         (device.label or device.id or "unknown device"), event))
     device_init(driver, device)
   end
@@ -957,13 +966,14 @@ cosock.spawn(function()
   while true do
     local msg, err = stray_bulb_rx:receive()
     if err and err ~= "timeout" then
-      log.error("Cosock Receive Error: ", err)
+      log.error_with({ hub_logs = true }, "Cosock Receive Error: ", err)
       goto continue
     end
 
     if err == "timeout" then
       if next(stray_lights) ~= nil and next(found_bridges) ~= nil and thread_local_driver ~= nil then
-        log.info("No new stray lights received but some remain in queue, attempting to resolve remaining stray lights")
+        log.info_with({ hub_logs = true },
+          "No new stray lights received but some remain in queue, attempting to resolve remaining stray lights")
         for _, bridge in pairs(found_bridges) do
           stray_bulb_tx:send({
             type = StrayDeviceMessageTypes.FoundBridge,
@@ -1013,7 +1023,7 @@ cosock.spawn(function()
             local device_light_resource_id = svc_info.rid
             local light_resource, rest_err, _ = api_instance:get_light_by_id(device_light_resource_id)
             if rest_err ~= nil or not light_resource then
-              log.error(string.format(
+              log.error_with({ hub_logs = true }, string.format(
                 "Error getting light info while processing new bridge %s",
                 (msg_device.label or msg_device.id or "unknown device"), rest_err
               ))
@@ -1021,13 +1031,13 @@ cosock.spawn(function()
             end
 
             if light_resource.errors and #light_resource.errors > 0 then
-              log.error("Errors found in API response:")
+              log.error_with({ hub_logs = true }, "Errors found in API response:")
               for idx, resource_err in ipairs(light_resource.errors) do
-                log.error(string.format(
-                  "Error Number %s in get_light_by_id response while onboarding bridge %s: %s"
-                  , idx
-                  , (msg_device.label or msg_device.id or "unknown device")
-                  , st_utils.stringify_table(resource_err)
+                log.error_with({ hub_logs = true }, string.format(
+                  "Error Number %s in get_light_by_id response while onboarding bridge %s: %s",
+                  idx,
+                  (msg_device.label or msg_device.id or "unknown device"),
+                  st_utils.stringify_table(resource_err)
                 ))
               end
               return
@@ -1046,21 +1056,23 @@ cosock.spawn(function()
                 hue_device_data = device_data
               }
               if not Discovery.light_state_disco_cache[light.id] then
-                log.info(string.format("Caching previously unknown light service description for %s", device_data.metadata.name))
+                log.info(string.format("Caching previously unknown light service description for %s",
+                  device_data.metadata.name))
                 Discovery.light_state_disco_cache[light.id] = light_resource_description
               end
             end
 
             for stray_dni, stray_light in pairs(stray_lights) do
               local matching_v1_id = stray_light.data and stray_light.data.bulbId and
-                stray_light.data.bulbId == device_data.id_v1:gsub("/lights/", "")
+                  stray_light.data.bulbId == device_data.id_v1:gsub("/lights/", "")
               local matching_uuid = stray_light.device_network_id == svc_info.rid or
-                stray_light.device_network_id == svc_info.rid
+                  stray_light.device_network_id == svc_info.rid
 
               if matching_v1_id or matching_uuid then
                 local api_key_extracted = api_instance.headers["hue-application-key"]
-                log.info(" ", (stray_light.label or stray_light.id or "unknown light"), ", re-adding")
-                log.debug(string.format(
+                log.info_with({ hub_logs = true }, " ", (stray_light.label or stray_light.id or "unknown light"),
+                  ", re-adding")
+                log.info_with({ hub_logs = true }, string.format(
                   'Found Bridge for stray light %s, retrying onboarding flow.\n' ..
                   '\tMatching v1 id? %s\n' ..
                   '\tMatching uuid? %s\n' ..
@@ -1089,9 +1101,9 @@ cosock.spawn(function()
           "[process_strays]"
         )
         log.info(string.format(
-            "Finished querying bridge %s for devices from stray light handler",
-            (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
-          )
+          "Finished querying bridge %s for devices from stray light handler",
+          (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
+        )
         )
         process_strays(thread_local_driver, stray_lights, msg_device.id)
       elseif msg.type == StrayDeviceMessageTypes.NewStrayLight then
@@ -1125,16 +1137,17 @@ cosock.spawn(function()
       local stray_lights_pseudo_json = "{\"stray_bulbs\":["
       for dni, light in pairs(stray_lights) do
         stray_lights_pseudo_json = stray_lights_pseudo_json ..
-          string.format(
-            [[{"label":"%s","dni":"%s","device_id":"%s"},]],
-            (light.label or light.id or "unknown light"),
-            dni,
-            light.id
-          )
+            string.format(
+              [[{"label":"%s","dni":"%s","device_id":"%s"},]],
+              (light.label or light.id or "unknown light"),
+              dni,
+              light.id
+            )
       end
       -- strip trailing comma and close array/root object
       stray_lights_pseudo_json = stray_lights_pseudo_json:sub(1, -2) .. "]}"
-      log.info(string.format("Stray light loop end, unprocessed lights: %s", stray_lights_pseudo_json))
+      log.info_with({ hub_logs = true },
+        string.format("Stray light loop end, unprocessed lights: %s", stray_lights_pseudo_json))
     end
   end
 end, "Stray Hue Bulb Resolution Task")

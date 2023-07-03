@@ -1,4 +1,4 @@
-local log = require "log"
+local old_log = require "log"
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local channel = require "cosock.channel"
@@ -9,6 +9,15 @@ local Message = require "lustre".Message
 local CloseCode = require "lustre.frame.close".CloseCode
 local lb_utils = require "lunchbox.util"
 local st_utils = require "st.utils"
+
+local log = {}
+log.info = old_log.info
+log.warn = old_log.warn
+log.error = old_log.error
+log.debug = old_log.debug
+log.trace = function(...)
+  old_log.info_with({hub_logs = true}, table.concat({"[TRACE->INFO] ", ...}))
+end
 
 --- A "singleton" module that maintains all of the websockets for a
 --- home's Sonos players. A player as modeled in the driver will have
@@ -39,6 +48,7 @@ cosock.spawn(function()
     for _, player_id in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
       local wss = websockets[player_id]
       if wss ~= nil then
+        log.trace(string.format("Closing websocket for player_id %s", player_id))
         wss:close(CloseCode.normal(), "Shutdown requested by client")
       end
       websockets[player_id] = nil
@@ -60,7 +70,6 @@ cosock.spawn(function()
       for _, recv in ipairs(receivers) do
         if recv.link and recv.link.queue and #recv.link.queue == 0 then -- workaround a bug in receiving
           log.warn("attempting to receive on empty channel")
-          control_tx:send("STOP IT")
           goto continue
         end
 
@@ -101,13 +110,18 @@ cosock.spawn(function()
               local target = msg.header.target
               local wss = websockets[target]
 
+              log.trace(string.format("Sending message over websocket for target %s", target))
               wss:send(Message.new(Message.TEXT, msg.body))
             end
           elseif msg.type and msg.data and recv.id then -- websocket message received
+            log.trace(string.format("Received WebSocket message, fanning out to listeners"))
             for _, uuid in ipairs(listener_ids_for_socket[recv.id]) do
               local listener = listeners[uuid]
 
               if listener ~= nil then
+                if listener.device and listener.device.label then
+                  log.debug(string.format("SonosConnection for device %s handling websocket message", listener.device.label))
+                end
                 listener.on_message(uuid, msg)
               end
             end
@@ -172,6 +186,9 @@ end
 
 function SonosWebSocketRouter.register_listener_for_socket(listener,
                                                            player_id_for_socket)
+  if listener and listener.device and listener.device.label then
+    log.debug("Registering SonosConnection for device %s as listener for player_id's %s websocket", listener.device.label, player_id_for_socket)
+  end
   local ws = websockets[player_id_for_socket]
   ws._player_id = player_id_for_socket
 
@@ -198,6 +215,7 @@ end
 --- @return nil|string error the error message in the failure case
 function SonosWebSocketRouter.open_socket_for_player(player_id, wss_url)
   if not websockets[player_id] then
+    log.debug("Opening websocket for player id " .. player_id)
     local url_table = lb_utils.force_url_table(wss_url)
     local wss, err = _make_websocket(url_table)
 
