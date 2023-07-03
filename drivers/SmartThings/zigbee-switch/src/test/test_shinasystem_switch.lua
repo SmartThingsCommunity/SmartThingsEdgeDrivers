@@ -578,7 +578,7 @@ test.register_coroutine_test(
     function()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
-      for ep_id = 2, 6, 1 do 
+      for ep_id = 2, 6, 1 do
         local device_label = string.format("SiHAS Switch %d", ep_id)
         mock_base_device:expect_device_create({
           type = "EDGE_CHILD",
@@ -588,7 +588,7 @@ test.register_coroutine_test(
           parent_assigned_child_key = string.format("%02X", ep_id)
         })
       end
-      for ep_id = 1, 6, 1 do   
+      for ep_id = 1, 6, 1 do
         test.socket.zigbee:__expect_send({
           mock_base_device.id,
           OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(ep_id)
@@ -602,7 +602,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "doConfigure" })
-    for ep_id = 1, 6, 1 do 
+    for ep_id = 1, 6, 1 do
       test.socket.zigbee:__expect_send({
         mock_base_device.id,
         zigbee_test_utils.build_bind_request(mock_base_device,
