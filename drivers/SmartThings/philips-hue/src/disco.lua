@@ -31,7 +31,7 @@ process_discovered_light
 ---@param _ table
 ---@param should_continue function
 function HueDiscovery.discover(driver, _, should_continue)
-  log.info("Starting Hue discovery")
+  log.info_with({ hub_logs = true }, "Starting Hue discovery")
 
   while should_continue() do
     local known_dni_to_device_map = {}
@@ -50,7 +50,7 @@ function HueDiscovery.discover(driver, _, should_continue)
       discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_dni_to_device_map)
     end)
   end
-  log.info("Ending Hue discovery")
+  log.info_with({ hub_logs = true }, "Ending Hue discovery")
 end
 
 ---comment
@@ -61,7 +61,7 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
   local mdns_responses, err = mdns.discover(SERVICE_TYPE, DOMAIN)
 
   if err ~= nil then
-    log.error("Error during service discovery: ", err)
+    log.error_with({ hub_logs = true }, "Error during service discovery: ", err)
     return
   end
 
@@ -97,9 +97,11 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
         utils.labeled_socket_builder("[Discovery: " .. ip_addr .. " Bridge Info Request]")
       )
       if rest_err ~= nil or not bridge_info then
-        log.error(string.format("Error querying bridge info for discovered IP address %s: %s"),
+        log.error_with({ hub_logs = true }, string.format(
+          "Error querying bridge info for discovered IP address %s: %s",
           ip_addr,
           (rest_err or "unexpected nil in error position")
+        )
         )
         goto continue
       end
@@ -141,20 +143,21 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
       and driver.joined_bridges[bridge_id]
       and HueDiscovery.api_keys[bridge_id]
       and known_bridge_device:get_field(Fields._INIT) then
-    log.info(string.format("Scanning bridge %s for devices...", bridge_id))
+    log.info_with({ hub_logs = true }, string.format("Scanning bridge %s for devices...", bridge_id))
 
     HueDiscovery.disco_api_instances[bridge_id] = HueDiscovery.disco_api_instances[bridge_id]
-      or HueApi.new_bridge_manager(
-        "https://" .. bridge_ip,
-        HueDiscovery.api_keys[bridge_id],
-        utils.labeled_socket_builder((known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge"))
-      )
+        or HueApi.new_bridge_manager(
+          "https://" .. bridge_ip,
+          HueDiscovery.api_keys[bridge_id],
+          utils.labeled_socket_builder((known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge"))
+        )
 
     HueDiscovery.search_bridge_for_supported_devices(driver, HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
         discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_dni_to_device_map)
       end,
-      "[Discovery: " .. (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge scan]"
+      "[Discovery: " ..
+      (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge scan]"
     )
     return
   end
@@ -165,10 +168,10 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
 
     if err ~= nil or not api_key_response then
       log.warn(string.format(
-          "Error while trying to request Bridge API Key for %s: %s",
-          bridge_id,
-          err
-        )
+        "Error while trying to request Bridge API Key for %s: %s",
+        bridge_id,
+        err
+      )
       )
       return
     end
@@ -192,7 +195,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
   if HueDiscovery.api_keys[bridge_id] and not driver.joined_bridges[bridge_id] then
     local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip, socket_builder)
     if err ~= nil or not bridge_info then
-      log.error(string.format("Error querying bridge info for %s: %s", bridge_id, (err or "unexpected nil in error position")))
+      log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s", bridge_id,
+        (err or "unexpected nil in error position")))
       return
     end
 
@@ -230,14 +234,15 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, 
 
   local devices, err, _ = api_instance:get_devices()
   if err ~= nil or not devices then
-    log.error(prefix .. "Error querying bridge for devices: " .. (err or "unexpected nil in error position"))
+    log.error_with({ hub_logs = true },
+      prefix .. "Error querying bridge for devices: " .. (err or "unexpected nil in error position"))
     return
   end
 
   if devices.errors and #devices.errors > 0 then
-    log.error(prefix .. "Errors found in API response:")
+    log.error_with({ hub_logs = true }, prefix .. "Errors found in API response:")
     for idx, err in ipairs(devices.errors) do
-      log.error(st_utils.stringify_table(err, "Error number " .. idx, true))
+      log.error_with({ hub_logs = true }, st_utils.stringify_table(err, "Error number " .. idx, true))
     end
     return
   end
@@ -245,8 +250,9 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, 
   for _, device_data in ipairs(devices.data or {}) do
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
-        log.trace(string.format(
-          prefix .. "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
+        log.info_with({ hub_logs = true }, string.format(
+          prefix ..
+          "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
           svc_info.rid, svc_info.rtype, device_data.id, device_data.id_v1, device_data.metadata.name
         ))
         if type(callback) == "function" then
@@ -290,14 +296,16 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
 
   local light_resource, err, _ = api_instance:get_light_by_id(resource_id)
   if err ~= nil or not light_resource then
-    log.error(string.format("Error getting light info for %s: %s", device_info.product_data.product_name, (err or "unexpected nil in error position")))
+    log.error_with({ hub_logs = true },
+      string.format("Error getting light info for %s: %s", device_info.product_data.product_name,
+        (err or "unexpected nil in error position")))
     return
   end
 
   if light_resource.errors and #light_resource.errors > 0 then
-    log.error("Errors found in API response:")
+    log.error_with({ hub_logs = true }, "Errors found in API response:")
     for idx, err in ipairs(light_resource.errors) do
-      log.error(st_utils.stringify_table(err, "Error " .. idx, true))
+      log.error_with({ hub_logs = true }, st_utils.stringify_table(err, "Error " .. idx, true))
     end
     return
   end
