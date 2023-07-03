@@ -578,46 +578,49 @@ test.register_coroutine_test(
     function()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "SiHAS Switch 2",
-        profile = "basic-switch",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "02"
-      })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "SiHAS Switch 3",
-        profile = "basic-switch",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "03"
-      })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "SiHAS Switch 4",
-        profile = "basic-switch",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "04"
-      })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "SiHAS Switch 5",
-        profile = "basic-switch",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "05"
-      })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "SiHAS Switch 6",
-        profile = "basic-switch",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "06"
+      for ep_id = 2, 6, 1 do 
+        local device_label = string.format("SiHAS Switch %d", ep_id)
+        mock_base_device:expect_device_create({
+          type = "EDGE_CHILD",
+          label = device_label,
+          profile = "basic-switch",
+          parent_device_id = mock_base_device.id,
+          parent_assigned_child_key = string.format("%02X", ep_id)
+        })
+      end
+      for ep_id = 1, 6, 1 do   
+        test.socket.zigbee:__expect_send({
+          mock_base_device.id,
+          OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(ep_id)
+        })
+      end
+    end
+)
+
+test.register_coroutine_test(
+  "lifecycle configure event should configure device",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "doConfigure" })
+    for ep_id = 1, 6, 1 do 
+      test.socket.zigbee:__expect_send({
+        mock_base_device.id,
+        zigbee_test_utils.build_bind_request(mock_base_device,
+                                             zigbee_test_utils.mock_hub_eui,
+                                             OnOff.ID,
+                                             ep_id)
       })
       test.socket.zigbee:__expect_send({
         mock_base_device.id,
-        OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(0x01)
+        OnOff.attributes.OnOff:configure_reporting(mock_base_device, 0, 300):to_endpoint(ep_id)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_base_device.id,
+        OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(ep_id)
       })
     end
+    mock_base_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.run_registered_tests()

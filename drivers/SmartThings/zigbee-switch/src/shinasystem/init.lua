@@ -76,13 +76,10 @@ local function do_configuration(driver, device)
   local attrRead = zcl_clusters.OnOff.attributes.OnOff:read(device)
   local children_amount = get_children_amount(device)
 
-  for _, ep in pairs(device.zigbee_endpoints) do
-      if children_amount+1 >= ep.id then
-        local bindReq = device_management.build_bind_request(device, zcl_clusters.OnOff.ID, device.driver.environment_info.hub_zigbee_eui, ep.id)
-        device:send(bindReq:to_endpoint(ep.id))
-        device:send(attrCfg:to_endpoint(ep.id))
-        device:send(attrRead:to_endpoint(ep.id))
-      end
+  for ep_id = 1, children_amount+1 , 1 do
+    device:send(device_management.build_bind_request(device, zcl_clusters.OnOff.ID, device.driver.environment_info.hub_zigbee_eui, ep_id))
+    device:send(attrCfg:to_endpoint(ep_id))
+    device:send(attrRead:to_endpoint(ep_id))
   end
 end
 
