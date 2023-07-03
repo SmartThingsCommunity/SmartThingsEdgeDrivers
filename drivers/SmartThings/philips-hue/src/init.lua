@@ -563,7 +563,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
     if light_resource.errors and #light_resource.errors > 0 then
       log.error_with({ hub_logs = true }, "Errors found in API response:")
       for idx, err in ipairs(light_resource.errors) do
-        log.erro_with({ hub_logs = true }, st_utils.stringify_table(err, "Error " .. idx, true))
+        log.error_with({ hub_logs = true }, st_utils.stringify_table(err, "Error " .. idx, true))
       end
       return
     end
