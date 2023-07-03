@@ -28,14 +28,14 @@ local EATON_ACCESSORY_DIMMER_FINGERPRINTS = {
   {mfr = 0x001A, prod = 0x4441, model = 0x0000} -- Eaton Dimmer Switch
 }
 
-local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EATON_ACCESSORY_DIMMER_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
+-- local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
+--   for _, fingerprint in ipairs(EATON_ACCESSORY_DIMMER_FINGERPRINTS) do
+--     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+--       return true
+--     end
+--   end
+--   return false
+-- end
 
 local function dimmer_event(driver, device, cmd)
   local level = cmd.args.value and cmd.args.value or cmd.args.target_value
@@ -109,7 +109,7 @@ local eaton_accessory_dimmer = {
       [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_set
     }
   },
-  can_handle = can_handle_eaton_accessory_dimmer,
+  -- can_handle = can_handle_eaton_accessory_dimmer,
 }
 
 return eaton_accessory_dimmer
