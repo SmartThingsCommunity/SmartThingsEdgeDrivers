@@ -2,8 +2,9 @@ SONOS_API_KEY = require 'app_key'
 
 local Driver = require "st.driver"
 
-local capabilities = require "st.capabilities"
 local log = require "log"
+local capabilities = require "st.capabilities"
+local st_utils = require "st.utils"
 
 local CmdHandlers = require "api.cmd_handlers"
 local PlayerFields = require "fields".SonosPlayerFields
@@ -18,6 +19,7 @@ local SSDP = require "ssdp"
 --- @param device SonosDevice
 --- @param should_continue function|nil
 local function find_player_for_device(driver, device, should_continue)
+  log.info(string.format("Looking for Sonos Player on network for device (%s:%s)", device.label, device.device_network_id))
   local player_found = false
 
   -- Because SSDP is UDP/unreliable, sometimes we can miss a broadcast.
@@ -36,7 +38,13 @@ local function find_player_for_device(driver, device, should_continue)
     --- @param ssdp_group_info SonosSSDPInfo
     SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
       driver:handle_ssdp_discovery(ssdp_group_info, function(dni, _, _, _)
+        log.info(string.format(
+            "Found device for Sonos search query with MAC addr %s, comparing to %s",
+            dni, device.device_network_id
+          )
+        )
         if dni_equal(dni, device.device_network_id) then
+          log.info(string.format("Found Sonos Player match for %s", device.label))
           player_found = true
         end
       end)
@@ -163,11 +171,13 @@ end
 --- @param ssdp_group_info SonosSSDPInfo
 --- @param callback? fun(dni: string, ssdp_group_info: SonosSSDPInfo, player_info: SonosDiscoveryInfo, group_info: SonosGroupsResponseBody)
 local function handle_ssdp_discovery(self, ssdp_group_info, callback)
+  log.debug(string.format("Looking for player info for SSDP search results %s", st_utils.stringify_table(ssdp_group_info)))
   local player_info, err = SonosRestApi.get_player_info(ssdp_group_info.ip, SonosApi.DEFAULT_SONOS_PORT)
 
   if err then
     log.error("Error querying player info: " .. err)
   elseif player_info and player_info.playerId and player_info.householdId then
+    log.debug(string.format("Looking for group info for player info %s", st_utils.stringify_table(player_info)))
     local group_info, err = SonosRestApi.get_groups_info(
       ssdp_group_info.ip,
       SonosApi.DEFAULT_SONOS_PORT,
@@ -179,9 +189,11 @@ local function handle_ssdp_discovery(self, ssdp_group_info, callback)
       return
     end
 
+    log.trace(string.format("Device %s serial number: %s", player_info.device.name, player_info.device.serialNumber))
     -- Extract the MAC Address from the serial number
     local mac_addr, _ = player_info.device.serialNumber:match("(.*):.*"):gsub("-", "")
     local dni = mac_addr
+    log.trace(string.format("MAC of %s computed from serial number: %s", player_info.device.name, mac_addr))
 
     local field_cache = {
       household_id = ssdp_group_info.household_id,
