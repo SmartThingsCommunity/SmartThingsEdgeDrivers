@@ -15,6 +15,8 @@ local SonosRestApi = require "api.rest"
 local SonosState = require "types".SonosState
 local SSDP = require "ssdp"
 
+local DEFAULT_SSDP_RETRY_ATTEMPTS = 20
+
 --- @param driver SonosDriver
 --- @param device SonosDevice
 --- @param should_continue function|nil
@@ -29,7 +31,7 @@ local function find_player_for_device(driver, device, should_continue)
     local attempts = 0
     should_continue = function()
       attempts = attempts + 1
-      return attempts <= 10
+      return attempts <= DEFAULT_SSDP_RETRY_ATTEMPTS
     end
   end
 
