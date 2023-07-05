@@ -31,8 +31,6 @@ local Thermostat = clusters.Thermostat
 local TemperatureMeasurement = capabilities.temperatureMeasurement
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode = capabilities.thermostatMode
-local ThermostatOperatingState = capabilities.thermostatOperatingState
-local Battery = capabilities.battery
 local TemperatureAlarm = capabilities.temperatureAlarm
 local Switch = capabilities.switch
 
@@ -182,7 +180,6 @@ local setpoint_cmd_handler = function(driver, device, cmd)
 		last_setpointTemp = math.floor(last_setpointTemp * 100)
 
 		-- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
-		local s = string.format("%04X", tostring(last_setpointTemp))
 		local p2 = last_setpointTemp & 0xFF
 		local p3 = last_setpointTemp >> 8
 		local type = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.heat.NAME) or 'eco'
