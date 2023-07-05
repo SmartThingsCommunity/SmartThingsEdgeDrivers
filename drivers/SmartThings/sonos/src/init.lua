@@ -39,7 +39,7 @@ local SonosRestApi = require "api.rest"
 local SonosState = require "types".SonosState
 local SSDP = require "ssdp"
 
-local DEFAULT_SSDP_RETRY_ATTEMPTS = 30
+local DEFAULT_SSDP_RETRY_ATTEMPTS = 20
 
 --- @param driver SonosDriver
 --- @param device SonosDevice

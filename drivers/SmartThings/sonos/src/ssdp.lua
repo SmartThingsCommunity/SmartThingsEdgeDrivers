@@ -38,7 +38,7 @@ function SSDP.search(search_term, callback)
   -- bind local ip and port
   -- device will unicast back to this ip and port
   assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
-  local timeouttime = socket.gettime() + (mx + 1) -- `MX` + 1 for network delay
+  local timeouttime = socket.gettime() + (mx + 1) -- 3 second timeout, `MX` + 1 for network delay
 
   -- local deviceid = "placeholder"
 
