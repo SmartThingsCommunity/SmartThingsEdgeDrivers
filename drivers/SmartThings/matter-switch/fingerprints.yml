@@ -21,6 +21,12 @@ matterManufacturer:
     productId: 0x5E
     deviceProfileName: plug-binary
 
+  - id: "GELightingSavant/Onoff/Plug"
+    deviceLabel: GELighting Savant OnOff Plug WiFi
+    vendorId: 0x1339
+    productId: 0xAC
+    deviceProfileName: plug-binary
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
@@ -135,9 +141,3 @@ matterThing:
     deviceProfileName: matter-thing
     isJoinable: true
     
-matterManufacturer:
-  - id: "GELightingSavant/Onoff/Plug"
-    deviceLabel: GELighting Savant OnOff Plug WiFi
-    vendorId: 0x1339
-    productId: 0xAC
-    deviceProfileName: plug-binary
