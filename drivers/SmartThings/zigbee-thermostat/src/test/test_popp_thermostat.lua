@@ -63,7 +63,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
+        capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
     }
   }
 )
@@ -99,21 +99,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1) })
 
     test.socket.zigbee:__expect_send({ mock_device.id,
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Thermostat.ID) })
     test.socket.zigbee:__expect_send({ mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
-
-    test.socket.zigbee:__expect_send({ mock_device.id,
       Thermostat.attributes.LocalTemperature:configure_reporting(mock_device, 5, 300, 10) })
     test.socket.zigbee:__expect_send({ mock_device.id,
       Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(mock_device, 5, 300, 50) })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -183,7 +181,8 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, ETRV_WINDOW_OPEN_DETECTION_ATTR_ID, MFG_CODE)
+        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, ETRV_WINDOW_OPEN_DETECTION_ATTR_ID,
+          MFG_CODE)
       }
     },
     {
@@ -191,7 +190,8 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, EXTERNAL_WINDOW_OPEN_DETECTION, MFG_CODE)
+        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, EXTERNAL_WINDOW_OPEN_DETECTION,
+          MFG_CODE)
       }
     }
   }
@@ -203,7 +203,7 @@ test.register_coroutine_test(
     local updates = {
       preferences = {
         tempOffset = -5, -- temparature offset of -5
-        keypadLock = 1 --Lock
+        keypadLock = 1   --Lock
       }
     }
     test.socket.zigbee:__set_channel_ordering("relaxed")
