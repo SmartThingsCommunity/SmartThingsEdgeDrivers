@@ -1,6 +1,5 @@
 local socket = require "cosock.socket"
-local ssl = require "cosock.ssl"
-local log = require "log"
+local st_utils = require "st.utils"
 
 local lb_utils = require "lunchbox.util"
 local utils = require "utils"
@@ -139,11 +138,25 @@ local function handle_response(sock)
   if initial_recv ~= nil then
     local headers = initial_recv:get_headers()
 
-    if headers:get_one("Transfer-Encoding") == "chunked" then
+    if headers and headers:get_one("Transfer-Encoding") == "chunked" then
       full_response = parse_chunked_response(initial_recv, sock)
     else
-      if headers:get_one("Content-length") then
-        body = sock:receive(tonumber(headers:get_one("Content-length")))
+      local content_length_header = (headers and headers:get_one("Content-length")) or nil
+      if content_length_header then
+        local content_length = tonumber(content_length_header)
+        if type(content_length) ~= "number" then
+          return nil, string.format("content_length is not a number: %s", st_utils.stringify_table(content_length_header))
+        end
+
+        body, err, partial = sock:receive(content_length)
+        if err ~= nil then
+          return nil, err, partial
+        end
+
+        if body == nil then
+          return nil, string.format("Unexpected nil body response, partial response receive: %s", partial)
+        end
+
         initial_recv:append_body(body)
         initial_recv._received_body = true
       end
