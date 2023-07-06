@@ -65,36 +65,32 @@ test.register_message_test(
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Reported motion should be handled: active",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, THIRDREALITY_MOTION_CLUSTER.attributes.PresentValue:build_test_attr_report(mock_device, MOTION_DETECT) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+  function()
+    local attr_report_data = {
+      { 0x0002, data_types.Int16.ID, 0x0001}
     }
-  }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFC00, attr_report_data, 0x110A)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+  end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Reported motion should be handled: inactive",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, THIRDREALITY_MOTION_CLUSTER.attributes.PresentValue:build_test_attr_report(mock_device, MOTION_NO_DETECT) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+  function()
+    local attr_report_data = {
+      { 0x0002, data_types.Int16.ID, 0x0000}
     }
-  }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFC00, attr_report_data, 0x110A)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+  end
 )
 
 test.register_message_test(
