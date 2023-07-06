@@ -22,8 +22,7 @@ local MOTION_NO_DETECT = 0x0000
 local function motion_sensor_attr_handler(driver, device, value, zb_rx)
     if value.value == MOTION_DETECT then
       device:emit_event(capabilities.motionSensor.motion.active())
-    end
-    if value.value == MOTION_NO_DETECT then
+    elseif value.value == MOTION_NO_DETECT then
       device:emit_event(capabilities.motionSensor.motion.inactive())
     end
   end
