@@ -595,10 +595,18 @@ function WebSocket:_handle_send_ready()
     local closed = err:match("close")
     if closed and self.state == "Active" then
       log.debug("closed error", err)
-      reply:send({err = err})
+      if reply and reply.send then
+        reply:send({err = err})
+      else
+        log.error("No reply channel in event for progating error")
+      end
     end
     if not closed then
-      reply:send({err = err})
+      if reply and reply.send then
+        reply:send({err = err})
+      else
+        log.error("No reply channel in event for progating error")
+      end
     end
     return
   end
