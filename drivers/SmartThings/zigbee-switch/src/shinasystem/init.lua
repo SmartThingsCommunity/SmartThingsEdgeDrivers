@@ -21,13 +21,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local OnOff = zcl_clusters.OnOff
 
 local SHINASYSTEM_FINGERPRINTS = {
-  { mfr = "ShinaSystem", model = "SBM300Z1", children = 0 },
-  { mfr = "ShinaSystem", model = "SBM300Z2", children = 1 },
-  { mfr = "ShinaSystem", model = "SBM300Z3", children = 2 },
-  { mfr = "ShinaSystem", model = "SBM300Z4", children = 3 },
-  { mfr = "ShinaSystem", model = "SBM300Z5", children = 4 },
-  { mfr = "ShinaSystem", model = "SBM300Z6", children = 5 },
-  { mfr = "ShinaSystem", model = "ISM300Z3", children = 2 }
+  { mfr = "ShinaSystem", model = "SBM300Z6", children = 5 }
 }
 
 local function is_handle_shinasystem_switch(opts, driver, device)
