@@ -71,15 +71,16 @@ local do_switch_off = function(self, device)
 end
 
 local function do_configuration(driver, device)
-  if device.network_type == st_device.NETWORK_TYPE_CHILD then return end
-  local attrCfg = device_management.attr_config(device, switch_defaults.default_on_off_configuration)
-  local attrRead = zcl_clusters.OnOff.attributes.OnOff:read(device)
-  local children_amount = get_children_amount(device)
+  if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
+    local attrCfg = device_management.attr_config(device, switch_defaults.default_on_off_configuration)
+    local attrRead = zcl_clusters.OnOff.attributes.OnOff:read(device)
+    local children_amount = get_children_amount(device)
 
-  for ep_id = 1, children_amount+1 , 1 do
-    device:send(device_management.build_bind_request(device, zcl_clusters.OnOff.ID, device.driver.environment_info.hub_zigbee_eui, ep_id))
-    device:send(attrCfg:to_endpoint(ep_id))
-    device:send(attrRead:to_endpoint(ep_id))
+    for ep_id = 1, children_amount+1 , 1 do
+      device:send(device_management.build_bind_request(device, zcl_clusters.OnOff.ID, device.driver.environment_info.hub_zigbee_eui, ep_id))
+      device:send(attrCfg:to_endpoint(ep_id))
+      device:send(attrRead:to_endpoint(ep_id))
+    end
   end
 end
 
