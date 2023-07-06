@@ -15,12 +15,10 @@ local function present_value_attr_handler(driver, device, value, zb_rx)
   if value.value == PUSHED then
     event = capabilities.button.button.pushed(additional_fields)
     device:emit_event(event)
-  end
-  if value.value == DOUBLE then
+  elseif value.value == DOUBLE then
     event = capabilities.button.button.double(additional_fields)
     device:emit_event(event)
-  end
-  if value.value == HELD then
+  elseif value.value == HELD then
     event = capabilities.button.button.held(additional_fields)
     device:emit_event(event)
   end
