@@ -16,6 +16,17 @@ local function process_response(val)
   return info
 end
 
+function SSDP.check_headers_contain(response, ...)
+  if not (response and next(response) ~= nil) then return false end
+  local header_vals = table.pack(...)
+  for _, header in ipairs(header_vals) do
+    if header ~= nil then
+      if not response[header] then return false end
+    end
+  end
+  return true
+end
+
 function SSDP.search(search_term, callback)
   log.debug(string.format("Beginning SSDP search for search term %s", search_term))
   local s = assert(socket.udp(), "create discovery socket")
@@ -31,7 +42,7 @@ function SSDP.search(search_term, callback)
     "HOST: 239.255.255.250:1900",
     'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
     string.format("MX: %s", mx),
-    string.format("ST: %s",search_term),
+    string.format("ST: %s", search_term),
     "\r\n"
   }, "\r\n")
 
@@ -52,13 +63,25 @@ function SSDP.search(search_term, callback)
     if val then
       local headers = process_response(val)
 
-      if headers["st"] == search_term and headers["server"]:find("Sonos") then
-        log.debug(string.format("Received response for Sonos search with headers [%s], processing details", st_utils.stringify_table(headers)))
+      if
+          -- we don't explicitly check "st" because we don't index in to the contained
+          -- value so the equality check suffices as a nil check as well.
+          SSDP.check_headers_contain(
+            headers,
+            "server",
+            "location",
+            "groupinfo.smartspeaker.audio",
+            "websock.smartspeaker.audio",
+            "household.smartspeaker.audio") and
+          headers["st"] == search_term and headers["server"]:find("Sonos")
+      then
+        log.debug(string.format("Received response for Sonos search with headers [%s], processing details",
+          st_utils.stringify_table(headers)))
         local ip =
-        headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
+            headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
 
         local is_group_coordinator, group_id, group_name =
-        headers["groupinfo.smartspeaker.audio"]:match("gc=(.*); gid=(.*); gname=\"(.*)\"")
+            headers["groupinfo.smartspeaker.audio"]:match("gc=(.*); gid=(.*); gname=\"(.*)\"")
 
         local household_id = headers["household.smartspeaker.audio"]
         local wss_url = headers["websock.smartspeaker.audio"]
@@ -81,15 +104,15 @@ function SSDP.search(search_term, callback)
             group_name and household_id and wss_url then
           if #group_id == 0 then
             log.debug(string.format(
-            "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
-            st_utils.stringify_table(group_info, nil, false)))
+              "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
+              st_utils.stringify_table(group_info, nil, false)))
           elseif callback ~= nil then
             if type(callback) == "function" then
               callback(group_info)
             else
               log.warn(string.format(
-              "Expected a function in callback argument position for `SSDP.search`, found argument of type %s",
-              type(callback)))
+                "Expected a function in callback argument position for `SSDP.search`, found argument of type %s",
+                type(callback)))
             end
           end
         else
