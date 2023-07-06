@@ -41,8 +41,6 @@ local SonosState = require "types".SonosState
 local SSDP = require "ssdp"
 local utils = require "utils"
 
-local DEFAULT_SSDP_RETRY_ATTEMPTS = 20
-
 --- @param driver SonosDriver
 --- @param device SonosDevice
 --- @param should_continue function|nil
@@ -54,11 +52,7 @@ local function find_player_for_device(driver, device, should_continue)
   -- If the user doesn't provide a should_continue condition then we
   -- make one that just attempts it a handful of times.
   if type(should_continue) ~= "function" then
-    local attempts = 0
-    should_continue = function()
-      attempts = attempts + 1
-      return attempts <= DEFAULT_SSDP_RETRY_ATTEMPTS
-    end
+    should_continue = function() return false end
   end
 
   local dni_equal = driver.is_same_mac_address
