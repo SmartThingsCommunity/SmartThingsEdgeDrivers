@@ -37,6 +37,64 @@ local devices = {
         return clusters.Level.attributes.OffTransitionTime:write(device, raw_value)
       end
     }
+  },
+  AEOTEC_PICO_SWITCH = {
+    MATCHING_MATRIX = { mfr = "AEOTEC", model = "ZGA002" },
+    PARAMETERS = {
+      ["s1LocalControlMode"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0011, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x02) -- value = 0/1
+      end,
+      ["s2LocalControlMode"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0011, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1
+      end,
+      ["s1Actions"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0010, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x02) -- value = 0/1/2
+      end,
+      ["s2Actions"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0010, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1/2
+      end,
+      ["s1ExternalSwitchConfig"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0000, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x02) -- value = 0/1/4
+      end,
+      ["s2ExternalSwitchConfig"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0000, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1/4
+      end
+    }
+  },
+  AEOTEC_PICO_DUO_SWITCH = {
+    MATCHING_MATRIX = { mfr = "AEOTEC", model = "ZGA003" },
+    PARAMETERS = {
+      ["s1LocalControlMode"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0011, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1
+      end,
+      ["s2LocalControlMode"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0011, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x04) -- value = 0/1
+      end,
+      ["s1Actions"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0010, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1/2
+      end,
+      ["s2Actions"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0010, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x04) -- value = 0/1/2
+      end,
+      ["s1ExternalSwitchConfig"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0000, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x03) -- value = 0/1/4
+      end,
+      ["s2ExternalSwitchConfig"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFD00, 0x0000, 0x1310, data_types.Enum8,
+          tonumber(value)):to_endpoint(0x04) -- value = 0/1/4
+      end
+    }
   }
 }
 local preferences = {}

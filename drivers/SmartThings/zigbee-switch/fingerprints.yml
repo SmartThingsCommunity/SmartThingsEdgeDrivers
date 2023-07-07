@@ -2075,6 +2075,17 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  #AEOTEC
+  - id: "AEOTEC/ZGA002"
+    manufacturer: AEOTEC
+    model: "ZGA002"
+    deviceLabel: Aeotec Pico Switch
+    deviceProfileName: aeotec-pico-switch
+  - id: "AEOTEC/ZGA003"
+    manufacturer: AEOTEC
+    model: "ZGA003"
+    deviceLabel: Aeotec Pico Duo Switch
+    deviceProfileName: aeotec-pico-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

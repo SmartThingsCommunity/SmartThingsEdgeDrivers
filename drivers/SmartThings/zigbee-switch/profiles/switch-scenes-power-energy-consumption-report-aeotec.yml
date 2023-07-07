@@ -1,0 +1,26 @@
+name: switch-scenes-power-energy-consumption-report-aeotec
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: button
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: voltageMeasurement
+    version: 1
+  - id: currentMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch
