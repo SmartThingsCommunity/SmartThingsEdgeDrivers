@@ -1,0 +1,201 @@
+name: window-treatment-aeotec-pico-venetian
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: windowShadeLevel
+    version: 1
+  - id: windowShadePreset
+    version: 1
+  - id: temperatureAlarm
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+    - name: Blind
+- id: venetianBlind
+  label: Slats Control
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: windowShadeLevel
+    version: 1
+  - id: windowShadePreset
+    version: 1
+  categories:
+  - name: Blind
+- id: button1
+  label: Switch 1
+  capabilities:
+    - id: button
+      version: 1
+  categories:
+    - name: RemoteController
+- id: button2
+  label: Switch 2
+  capabilities:
+    - id: button
+      version: 1
+  categories:
+    - name: RemoteController
+preferences:
+- name: "operatingMode"
+  title: "Operating Mode"
+  description: "Set roller shade operating mode."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Roll Shade mode"
+      1: "Shutter mode"
+    default: 0
+- name: "presetLiftPosition"
+  title: "Shade Position Preset"
+  description: "Set a preset for the shade position."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 0
+    maximum: 100
+    default: 50
+- name: "presetTiltPosition"
+  title: "Slat Position Preset"
+  description: "Set a preset for the slats position."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 0
+    maximum: 100
+    default: 50
+- name: "timeSlatsTilting"
+  title: "Slats Tilting Time"
+  description: "Set the time for slats to make a full turn (180 degrees). The unit is 0.01 second. NOTE: If the time is too long and a full turn was already performed, the device will start to move up or down for the remaining time."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 0
+    maximum: 65535
+    default: 300
+- name: "slatsPosition"
+  title: "Slats Position"
+  description: "Set how slats should behave when the shade is moving up or down. NOTE: Not valid for open/close limit positions. Not valid when operating modes is 'Roll Shade mode'"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "No position return"
+      1: "Return position only via gateway cmd"
+      2: "Allways return to position"
+    default: 1
+- name: "timeShadeOpenClose"
+  title: "Time of moving up/down"
+  description: "The time when the motor moves from the open limit to the close limit. The unit is 0.01 second."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 500
+    maximum: 60000
+    default: 6000
+- name: "timeMomentaryMovement"
+  title: "Time of momentary movement"
+  description: "The time of motor action during momentary movement. The unit is 0.001 second."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 1
+    maximum: 65535
+    default: 500
+- name: "shadeMovementMode"
+  title: "Shade Movement Mode"
+  description: "Change the shade movement mode. NOTE: Press and hold two external switch at the same time for 5 seconds, change between 2 modes. Indicator Light will blink quickly."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Momentary movement"
+      1: "Continous movement"
+    default: 1
+- name: "timeMotorResponse"
+  title: "Time of motor response"
+  description: "The time of motor response. The unit is 0.01 second."
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 0
+    maximum: 255
+    default: 30
+- name: "autoOpenClosePosition"
+  title: "Verify Automatic Open/Close Position"
+  description: "The travel limit switch is used to determine whether the limit point (shades are fully open/closed) has been reached. If reached, it will immediately stop. If not, the timeout for running is 5 seconds."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Disabled"
+      1: "Enabled"
+    default: 1
+- name: "s1LocalControlMode"
+  title: "S1 Local Control Mode"
+  description: "Enable/Disable local control mode of S1."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Disabled"
+      1: "Enabled"
+    default: 1
+- name: "s2LocalControlMode"
+  title: "S2 Local Control Mode"
+  description: "Enable/Disable local control mode of S2."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "Disabled"
+      1: "Enabled"
+    default: 1
+- name: "s1ExternalSwitchConfig"
+  title: "S1 External Switch Configuration"
+  description: "Change switch configuration of S1."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "2-State Toggle Switch"
+      1: "Momentary Switch"
+      4: "Auto Detect"
+    default: 0
+- name: "s2ExternalSwitchConfig"
+  title: "S2 External Switch Configuration"
+  description: "Change switch configuration of S2."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "2-State Toggle Switch"
+      1: "Momentary Switch"
+      4: "Auto Detect"
+    default: 0
+- name: "s1Actions"
+  title: "S1 External Switch Actions"
+  description: "Adjust S1 External Switch Actions."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "State 2: UP | State 1: DOWN"
+      1: "State 2: DOWN | State 1: UP"
+      2: "Toggle"
+    default: 2
+- name: "s2Actions"
+  title: "S2 External Switch Actions"
+  description: "Adjust S2 External Switch Actions."
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      0: "State 2: UP | State 1: DOWN"
+      1: "State 2: DOWN | State 1: UP"
+      2: "Toggle"
+    default: 2

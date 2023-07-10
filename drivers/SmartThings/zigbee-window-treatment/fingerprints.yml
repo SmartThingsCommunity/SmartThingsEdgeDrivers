@@ -93,6 +93,11 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+  - id: "AEOTEC/ZGA004"
+    deviceLabel: Aeotec Pico Shutter
+    manufacturer: AEOTEC
+    model: ZGA004
+    deviceProfileName: window-treatment-aeotec-pico
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
