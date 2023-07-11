@@ -34,6 +34,7 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "eWeLink", model = "ZB-SW02", children = 1 },
   { mfr = "eWeLink", model = "ZB-SW03", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW04", children = 3 },
+  { mfr = "ShinaSystem", model = "SBM300Z6", children = 5 },
   { model = "E220-KR2N0Z0-HA", children = 1 },
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
