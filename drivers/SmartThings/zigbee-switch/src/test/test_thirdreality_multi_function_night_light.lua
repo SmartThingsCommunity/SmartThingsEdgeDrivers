@@ -6,7 +6,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("on-off-level-rgbw-motion-sensor"),
+    profile = t_utils.get_profile_definition("on-off-level-rgbw-motion-illuminance-sensor"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
