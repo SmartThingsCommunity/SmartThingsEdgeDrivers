@@ -109,6 +109,11 @@ cosock.spawn(function()
             if msg.header.type and msg.header.type == "WebSocket" then
               local target = msg.header.target
               local wss = websockets[target]
+              if wss == nil then
+                --TODO is this silencing a crash that is an indication of a state management bug in the run loop?
+                log.error(st_utils.stringify_table({msg = msg}, "Coordinator doesn't exist for player", false))
+                goto continue
+              end
 
               log.trace(string.format("Sending message over websocket for target %s", target))
               wss:send(Message.new(Message.TEXT, msg.body))
