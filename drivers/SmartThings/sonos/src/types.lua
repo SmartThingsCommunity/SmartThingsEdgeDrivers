@@ -251,7 +251,13 @@ function SonosState.new()
   --- @param group_id GroupId
   --- @return PlayerId
   ret.get_coordinator_for_group = function(self, household_id, group_id)
-    return private.households[household_id].group_to_coordinator_map[group_id]
+    local household = private.households[household_id]
+    if household == nil then
+      local ut = require "st.utils"
+      log.error(ut.stringify_table({household = household}, "Get coordinator for invalid household", false))
+      return
+    end
+    return household.group_to_coordinator_map[group_id]
   end
 
   --- @param self SonosState
