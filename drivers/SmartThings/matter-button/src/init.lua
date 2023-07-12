@@ -139,6 +139,7 @@ local function device_added(driver, device)
 
   device:emit_event(capabilities.button.numberOfButtons({value=1}, {visibility = {displayed = false}})) --number of buttons
 
+  device:refresh()
 end
 
 --end of lifecyle handlers

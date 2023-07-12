@@ -507,6 +507,8 @@ local function device_added(driver, device)
     end
     device:send(req)
   end
+
+  handle_refresh()
 end
 
 local matter_lock_driver = {

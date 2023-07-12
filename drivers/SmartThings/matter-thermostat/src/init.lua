@@ -159,6 +159,8 @@ end
 local function device_added(driver, device)
   device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   device:send(clusters.FanControl.attributes.FanModeSequence:read(device))
+
+  device:refresh()
 end
 
 local function temp_event_handler(attribute)

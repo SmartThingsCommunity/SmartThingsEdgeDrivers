@@ -29,6 +29,8 @@ local function device_added(driver, device)
   device:emit_event(
     capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"})
   )
+
+  device:refresh()
 end
 
 local function device_removed(driver, device) log.info("device removed") end
