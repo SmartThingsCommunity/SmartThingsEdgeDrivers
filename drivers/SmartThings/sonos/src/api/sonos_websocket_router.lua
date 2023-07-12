@@ -1,4 +1,4 @@
-local old_log = require "log"
+local log = require "log"
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local channel = require "cosock.channel"
@@ -9,15 +9,6 @@ local Message = require "lustre".Message
 local CloseCode = require "lustre.frame.close".CloseCode
 local lb_utils = require "lunchbox.util"
 local st_utils = require "st.utils"
-
-local log = {}
-log.info = old_log.info
-log.warn = old_log.warn
-log.error = old_log.error
-log.debug = old_log.debug
-log.trace = function(...)
-  old_log.info_with({hub_logs = true}, table.concat({"[TRACE->INFO] ", ...}))
-end
 
 --- A "singleton" module that maintains all of the websockets for a
 --- home's Sonos players. A player as modeled in the driver will have
