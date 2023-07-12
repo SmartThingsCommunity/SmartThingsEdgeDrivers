@@ -190,9 +190,9 @@ function SonosWebSocketRouter.register_listener_for_socket(listener,
     log.debug("Registering SonosConnection for device %s as listener for player_id's %s websocket", listener.device.label, player_id_for_socket)
   end
   local ws = websockets[player_id_for_socket]
-  ws._player_id = player_id_for_socket
 
   if ws ~= nil then
+    ws._player_id = player_id_for_socket
     local uuid = st_utils.generate_uuid_v4()
     local listener_ids = listener_ids_for_socket[ws.id] or {}
 

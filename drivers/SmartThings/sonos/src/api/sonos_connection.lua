@@ -200,6 +200,7 @@ function SonosConnection.new(driver, device)
         Router.cleanup_unused_sockets(self.driver)
 
         if not self:coordinator_running() then
+          --TODO this is not infallible
           _open_coordinator_socket(self, household_id, player_id)
         end
 
@@ -414,6 +415,7 @@ function SonosConnection:start()
   end
 
   if not self:coordinator_running() then
+    --TODO this is not infallible
     _open_coordinator_socket(self, household_id, player_id)
   end
 
