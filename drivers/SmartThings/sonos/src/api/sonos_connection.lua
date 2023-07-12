@@ -108,13 +108,13 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
     end
 
     _, err = Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
-
     if err ~= nil then
       log.error(
         string.format(
           "Couldn't open connection to coordinator for %s: %s", sonos_conn.device.label, err
         )
       )
+      return
     end
 
     local listener_id
