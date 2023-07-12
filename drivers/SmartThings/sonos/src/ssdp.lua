@@ -29,7 +29,11 @@ end
 
 function SSDP.search(search_term, callback)
   log.debug(string.format("Beginning SSDP search for search term %s", search_term))
-  local s = assert(socket.udp(), "create discovery socket")
+  local s, err = socket.udp()
+  if err then
+    log.error(string.format("udp socket creation failure: %s", err))
+    return
+  end
 
   local listen_ip = "0.0.0.0"
   local listen_port = 0
@@ -48,13 +52,22 @@ function SSDP.search(search_term, callback)
 
   -- bind local ip and port
   -- device will unicast back to this ip and port
-  assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
+  local _, err = s:setsockname(listen_ip, listen_port)
+  if err then
+    log.error(string.format("udp socket failure setsockname: %s", err))
+    return
+  end
   local timeouttime = socket.gettime() + (mx + 1) -- 3 second timeout, `MX` + 1 for network delay
 
   -- local deviceid = "placeholder"
 
   log.debug("sending discovery multicast request")
-  assert(s:sendto(multicast_msg, multicast_ip, multicast_port))
+  local _, err = s:sendto(multicast_msg, multicast_ip, multicast_port)
+  if err then
+    log.error(string.format("udp socket failure sendto: %s", err))
+    return
+  end
+
   while true do
     local time_remaining = math.max(0, timeouttime - socket.gettime())
     s:settimeout(time_remaining)
