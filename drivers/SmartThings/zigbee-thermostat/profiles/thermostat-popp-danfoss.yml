@@ -1,4 +1,4 @@
-name: thermostat-danfoss
+name: thermostat-popp-danfoss
 components:
 - id: main
   capabilities:

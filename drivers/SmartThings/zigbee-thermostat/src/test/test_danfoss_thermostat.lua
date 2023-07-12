@@ -8,7 +8,7 @@ local Thermostat = clusters.Thermostat
 
 local mock_device_danfoss = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("thermostat-danfoss.yml"),
+    profile = t_utils.get_profile_definition("thermostat-popp-danfoss.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
