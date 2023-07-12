@@ -93,7 +93,16 @@ local function emit_light_status_events(light_device, light)
       local kelvin = math.floor(
         st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
       )
-      light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+      if utils.is_nan(kelvin) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorTemperature Attribute Event, ignoring.",
+            kelvin
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+      end
     end
 
     if light.color then
@@ -106,8 +115,30 @@ local function emit_light_status_events(light_device, light)
         light_device:set_field(Fields.WRAPPED_HUE, false)
       end
 
-      light_device:emit_event(capabilities.colorControl.hue(st_utils.clamp_value(st_utils.round(hue * 100), 0, 100)))
-      light_device:emit_event(capabilities.colorControl.saturation(st_utils.clamp_value(st_utils.round(sat * 100), 0, 100)))
+      local adjusted_hue = st_utils.clamp_value(st_utils.round(hue * 100), 0, 100)
+      local adjusted_sat = st_utils.clamp_value(st_utils.round(sat * 100), 0, 100)
+
+      if utils.is_nan(adjusted_hue) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorControl.hue Attribute Event, ignoring.",
+            adjusted_hue
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+      end
+
+      if utils.is_nan(adjusted_sat) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorControl.saturation Attribute Event, ignoring.",
+            adjusted_sat
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorControl.hue(adjusted_sat))
+      end
     end
   end
 end

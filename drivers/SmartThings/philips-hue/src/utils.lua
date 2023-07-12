@@ -1,3 +1,4 @@
+local log = require "log"
 ---@module 'utils'
 local utils = {}
 
@@ -5,6 +6,24 @@ local MAC_ADDRESS_STR_LEN = 12
 
 function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
+end
+function utils.is_nan(number)
+  -- IEEE 754 dictates that NaN compares falsey to everything, including itself.
+  if number ~= number then
+    return true
+  end
+
+  -- If someone passes in something that isn't a Number type, it'll pass the above check.
+  -- Philosophical question: Something that isn't a number can't technicaly have the value
+  -- of "nan" but "nan" stands for "not a number", so what do we do here?
+  if type(number) ~= "number" then
+    log.warn(string.format("utils.is_nan received value of type %s as argument, returning true", type(number)))
+    return true
+  end
+
+  -- In the event that something goes wrong with the above two things,
+  -- we simply compare the tostring against a known NaN value.
+  return tostring(number) == tostring(0/0)
 end
 
 --- Only checked during `added` callback
