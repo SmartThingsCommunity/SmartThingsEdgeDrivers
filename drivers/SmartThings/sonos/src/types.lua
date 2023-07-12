@@ -220,6 +220,14 @@ function SonosState.new()
         role = "auxilary"
       end
 
+      if type(coordinator_id) == "table" then
+        --info gather since post migration we have seen once that coordinator_id is sometimes a table,
+        -- which causes a crash when emitting the mediaGroup.groupPrimaryDeviceId capability event
+        local ut = require "st.utils"
+        log.warn(ut.stringify_table({household = household, coordinator_id = coordinator_id},
+          "Household update with invalid coordinator_id data:", false
+        ))
+      end
       handlers.handle_group_update(device, {role, coordinator_id, group_id})
     end
   end
