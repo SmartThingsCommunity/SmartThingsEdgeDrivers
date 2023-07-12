@@ -184,6 +184,10 @@ end
 local function do_refresh(driver, device, cmd)
   log.trace("Refreshing " .. device.label)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
+  if sonos_conn == nil then
+    log.error(string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label))
+    return
+  end
 
   if not sonos_conn:is_running() then
     sonos_conn:start()
