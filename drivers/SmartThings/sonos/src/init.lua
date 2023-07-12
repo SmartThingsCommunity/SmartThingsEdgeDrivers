@@ -1,29 +1,26 @@
 SONOS_API_KEY = require 'app_key'
 local old_log = require "log"
 
--- Forward all debug logs to hubcore info logs.
-old_log.debug = function(...)
-  old_log.info_with({hub_logs = true}, table.concat({"[DEBUG->INFO] ", ...}))
-end
-
--- Print all errors to hubcore for now
+-- Print all errors, warnings, and info to hubcore for now
 old_log.error = function(...)
   old_log.error_with({hub_logs = true}, ...)
 end
 
--- Print all warnings to hubcore for now
 old_log.warn = function(...)
   old_log.warn_with({hub_logs = true}, ...)
 end
 
+old_log.info = function(...)
+  old_log.info_with({hub_logs = true}, ...)
+end
+
 local log = {}
+
 log.warn = old_log.warn
 log.error = old_log.error
 log.debug = old_log.debug
 log.trace = old_log.trace
-log.info = function(...)
-  old_log.info_with({hub_logs = true}, ...)
-end
+log.info = old_log.info
 
 local Driver = require "st.driver"
 
@@ -45,7 +42,7 @@ local utils = require "utils"
 --- @param device SonosDevice
 --- @param should_continue function|nil
 local function find_player_for_device(driver, device, should_continue)
-  log.info(string.format("Looking for Sonos Player on network for device (%s:%s)", device.label, device.device_network_id))
+  device.log.info(string.format("Looking for Sonos Player on network for device (%s)", device.device_network_id))
   local player_found = false
 
   -- Because SSDP is UDP/unreliable, sometimes we can miss a broadcast.
@@ -60,13 +57,13 @@ local function find_player_for_device(driver, device, should_continue)
     --- @param ssdp_group_info SonosSSDPInfo
     SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
       driver:handle_ssdp_discovery(ssdp_group_info, function(dni, _, _, _)
-        log.info(string.format(
+        device.log.info(string.format(
             "Found device for Sonos search query with MAC addr %s, comparing to %s",
             dni, device.device_network_id
           )
         )
         if dni_equal(dni, device.device_network_id) then
-          log.info(string.format("Found Sonos Player match for %s", device.label))
+          device.log.info(string.format("Found Sonos Player match for device"))
           player_found = true
         end
       end)
