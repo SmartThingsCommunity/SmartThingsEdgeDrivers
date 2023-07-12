@@ -237,7 +237,13 @@ function SonosState.new()
   --- @param player_id PlayerId
   --- @return GroupId
   ret.get_group_for_player = function(self, household_id, player_id)
-    return private.households[household_id].player_to_group_map[player_id]
+    local household = private.households[household_id]
+    if household == nil then
+      local ut = require "st.utils"
+      log.error(ut.stringify_table({household = household}, "Get group for invalid household", false))
+      return
+    end
+    return household.player_to_group_map[player_id]
   end
 
   --- @param self SonosState
