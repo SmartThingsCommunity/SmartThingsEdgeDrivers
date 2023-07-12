@@ -126,6 +126,30 @@ local devices = {
       reportInterval = {parameter_number = 111, size = 2}
     }
   },
+  AEOTEC_TRISENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = { 0x0002, 0x0102, 0x0202 },
+      product_ids = 0x002D
+    },
+    PARAMETERS = {
+      motionDelayTime = { parameter_number = 3, size = 2 },
+      motionSensitivity = { parameter_number = 4, size = 1 },
+      motionReportType = { parameter_number = 5, size = 1 },
+      lowBatteryThreshold = { parameter_number = 14, size = 1 },
+      toggleThresholdReports = { parameter_number = 15, size = 1 },
+      tempThreshold = { parameter_number = 16, size = 1 },
+      luxThreshold = { parameter_number = 17, size = 2 },
+      checkTimeThreshold = { parameter_number = 18, size = 2 },
+      sensorLimitControl = { parameter_number = 19, size = 1 },
+      tempUpperLimit = { parameter_number = 20, size = 2 },
+      tempLowerLimit = { parameter_number = 21, size = 2 },
+      luxUpperLimit = { parameter_number = 22, size = 2 },
+      luxLowerLimit = { parameter_number = 23, size = 2 },
+      tempScale = { parameter_number = 24, size = 1 },
+      automaticIntervalTime = { parameter_number = 25, size = 2 }
+    }
+  },
   FIBARO_MOTION_SENSOR = {
     MATCHING_MATRIX = {
       mfrs = 0x010F,

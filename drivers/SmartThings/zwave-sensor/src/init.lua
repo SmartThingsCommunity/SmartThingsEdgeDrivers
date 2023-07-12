@@ -126,7 +126,8 @@ local driver_template = {
     require("fibaro-motion-sensor"),
     require("v1-contact-event"),
     require("timed-tamper-clear"),
-    require("wakeup-no-poll")
+    require("wakeup-no-poll"),
+    require("aeotec-trisensor")
   },
   lifecycle_handlers = {
     added = added_handler,

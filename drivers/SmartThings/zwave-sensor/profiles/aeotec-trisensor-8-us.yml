@@ -1,0 +1,194 @@
+name: aeotec-trisensor-8-us
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-14, 122]
+  - id: illuminanceMeasurement
+    version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 22595]
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MotionSensor
+preferences:
+  - name: "motionDelayTime"
+    title: "#3 Motion Sensor Delay Time"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        30: "30 seconds"
+        45: "45 seconds"
+        60: "1 minute"
+        120: "2 minutes"
+        180: "3 minutes"
+        240: "4 minutes"
+        300: "5 minutes"
+        600: "10 minutes"
+        900: "15 minutes"
+        1800: "30 minutes"
+        2700: "45 minutes"
+        2600: "1 hour"
+      default: 240
+  - name: "motionSensitivity"
+    title: "#4 Motion Sensor Sensitivity"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        3: "maximum"
+        2: "normal"
+        1: "minimum"
+        0: "disabled"
+      default: 3
+  - name: "motionReportType"
+    title: "#5 Type of Motion Report"
+    description: "Set wether Motion Report should send as 'notification' or 'sensor binary' report."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Notification Report"
+        1: "Sensor Binary Report"
+      default: 0
+  - name: "lowBatteryThreshold"
+    title: "#14 Low Battery Threshold"
+    description: "Sends low battery report via notification and battery report when battery level
+drops under setting. Unit %."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 10
+      maximum: 50
+      default: 20
+  - name: "toggleThresholdReports"
+    title: "#15 Enable Threshold Reports"
+    description: "Enabled, it will allow you to configure reports by threshold."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled"
+      default: 0
+  - name: "tempThreshold"
+    title: "#16 Temperature Threshold"
+    description: "Set temperature threshold in percent. It is calculated as follows: VALUE * 0.1. #15 needs to be 'Enabled'"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 30
+  - name: "luxThreshold"
+    title: "#17 Lux Threshold"
+    description: "Set lux threshold. #15 needs to be 'Enabled'"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 10000
+      default: 250
+  - name: "checkTimeThreshold"
+    title: "#18 Threshold Check Time"
+    description: "Set threshold check time in seconds."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 60
+      maximum: 65535
+      default: 900
+  - name: "sensorLimitControl"
+    title: "#19 Sensor Limit Control"
+    description: "Used to enable/disable measurement reports for various sensors that is morethan the upper limit
+value or less than the lower limit value."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "TU - Temperature upper level"
+        2: "LU - Lux upper level"
+        4: "TL - Temperature lower level"
+        8: "LL - Lux lower level"
+        3: "LU|TU"
+        5: "TL|TU"
+        6: "TL|LU"
+        7: "TL|LU|TU"
+        9: "LL|TU"
+        10: "LL|LU"
+        11: "LL|LU|TU"
+        12: "LL|TL"
+        13: "LL|TL|TU"
+        14: "LL|TL|LU"
+        15: "LL|TL|LU|TU"
+      default: 0
+  - name: "tempUpperLimit"
+    title: "#20 Temperature Upper Limit"
+    description: "Set upper limit level for temperature set in scale of 0.1. Scale is determined by #24. If (Current measurement) >
+(Upper Limit), then report sensor."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 824
+      maximum: 2120
+      default: 824
+  - name: "tempLowerLimit"
+    title: "#21 Temperature Lower Limit"
+    description: "Set lower limit level for temperature set in scale of 0.1. Scale is determined by #24. If (Current measurement) >
+(Upper Limit), then report sensor."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -400
+      maximum: 320
+      default: 320
+  - name: "luxUpperLimit"
+    title: "#22 Lux Upper Limit"
+    description: "Set lux upper limit level. If (Current measurement) > (Upper Limit), then report sensor."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 30000
+      default: 1000
+  - name: "luxLowerLimit"
+    title: "#23 Lux Lower Limit"
+    description: "Set lux upper limit level. If (Current measurement) > (Upper Limit), then report sensor."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 30000
+      default: 100
+  - name: "tempScale"
+    title: "#24 Temperature Scale"
+    description: "Set the scale for temperature when reports."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Celsius"
+        1: "Fahrenheit"
+      default: 1
+  - name: "automaticIntervalTime"
+    title: "#25 Automatic Interval Time"
+    description: "Interval time set in seconds to check the sensor report. Multilevel Sensor Report will be sent when timeout."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 30
+      maximum: 65535
+      default: 3600
