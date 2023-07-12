@@ -291,6 +291,12 @@ function SonosConnection.new(driver, device)
           for group_id, group in pairs(household.groups) do
             local coordinator_id = self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)
             local coordinator_player = household.players[coordinator_id]
+            if coordinator_player == nil then
+              log.error(st_utils.stringify_table(
+                {household = household, coordinator_id = coordinator_id}, "Received message for non-existent coordinator player", false
+              ))
+              return
+            end
 
             local url_ip = lb_utils.force_url_table(coordinator_player.websocketUrl).host
 
