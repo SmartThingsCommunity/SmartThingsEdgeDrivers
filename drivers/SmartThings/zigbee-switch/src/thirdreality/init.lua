@@ -20,12 +20,12 @@ local MOTION_DETECT = 0x0001
 local MOTION_NO_DETECT = 0x0000
 
 local function motion_sensor_attr_handler(driver, device, value, zb_rx)
-    if value.value == MOTION_DETECT then
-      device:emit_event(capabilities.motionSensor.motion.active())
-    elseif value.value == MOTION_NO_DETECT then
-      device:emit_event(capabilities.motionSensor.motion.inactive())
-    end
+  if value.value == MOTION_DETECT then
+    device:emit_event(capabilities.motionSensor.motion.active())
+  elseif value.value == MOTION_NO_DETECT then
+    device:emit_event(capabilities.motionSensor.motion.inactive())
   end
+end
 
 local thirdreality_device_handler = {
   NAME = "ThirdReality Multi-Function Night Light",
