@@ -943,6 +943,22 @@ zwaveGeneric:
         - 0x60 # multi channel
         - 0x26
     deviceProfileName: multichannel-switch-level
+  - id: "GenericMeteringSwitch"
+    deviceLabel: Metering Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+        - 0x32 # meter
+    deviceProfileName: metering-switch
+  - id: "GenericMeteringDimmerSwitch"
+    deviceLabel: Metering Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+        - 0x26 # switch multilevel
+        - 0x32 # meter
+    deviceProfileName: metering-dimmer
+
 zwaveThing :
   - id: SmartThings/Z-WaveThing
     deviceLabel: Z-Wave Device

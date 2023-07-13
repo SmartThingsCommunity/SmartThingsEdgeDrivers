@@ -1,32 +1,30 @@
 SONOS_API_KEY = require 'app_key'
 local old_log = require "log"
 
--- Forward all debug logs to hubcore info logs.
-old_log.debug = function(...)
-  old_log.info_with({hub_logs = true}, table.concat({"[DEBUG->INFO] ", ...}))
-end
-
--- Print all errors to hubcore for now
+-- Print all errors, warnings, and info to hubcore for now
 old_log.error = function(...)
   old_log.error_with({hub_logs = true}, ...)
 end
 
--- Print all warnings to hubcore for now
 old_log.warn = function(...)
   old_log.warn_with({hub_logs = true}, ...)
 end
 
+old_log.info = function(...)
+  old_log.info_with({hub_logs = true}, ...)
+end
+
 local log = {}
+
 log.warn = old_log.warn
 log.error = old_log.error
 log.debug = old_log.debug
 log.trace = old_log.trace
-log.info = function(...)
-  old_log.info_with({hub_logs = true}, ...)
-end
+log.info = old_log.info
 
 local Driver = require "st.driver"
 
+local cosock = require "cosock"
 local capabilities = require "st.capabilities"
 local st_utils = require "st.utils"
 
@@ -38,25 +36,20 @@ local SonosDisco = require "disco"
 local SonosRestApi = require "api.rest"
 local SonosState = require "types".SonosState
 local SSDP = require "ssdp"
-
-local DEFAULT_SSDP_RETRY_ATTEMPTS = 20
+local utils = require "utils"
 
 --- @param driver SonosDriver
 --- @param device SonosDevice
 --- @param should_continue function|nil
 local function find_player_for_device(driver, device, should_continue)
-  log.info(string.format("Looking for Sonos Player on network for device (%s:%s)", device.label, device.device_network_id))
+  device.log.info(string.format("Looking for Sonos Player on network for device (%s)", device.device_network_id))
   local player_found = false
 
   -- Because SSDP is UDP/unreliable, sometimes we can miss a broadcast.
   -- If the user doesn't provide a should_continue condition then we
   -- make one that just attempts it a handful of times.
   if type(should_continue) ~= "function" then
-    local attempts = 0
-    should_continue = function()
-      attempts = attempts + 1
-      return attempts <= DEFAULT_SSDP_RETRY_ATTEMPTS
-    end
+    should_continue = function() return false end
   end
 
   local dni_equal = driver.is_same_mac_address
@@ -64,13 +57,13 @@ local function find_player_for_device(driver, device, should_continue)
     --- @param ssdp_group_info SonosSSDPInfo
     SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
       driver:handle_ssdp_discovery(ssdp_group_info, function(dni, _, _, _)
-        log.info(string.format(
+        device.log.info(string.format(
             "Found device for Sonos search query with MAC addr %s, comparing to %s",
             dni, device.device_network_id
           )
         )
         if dni_equal(dni, device.device_network_id) then
-          log.info(string.format("Found Sonos Player match for %s", device.label))
+          device.log.info(string.format("Found Sonos Player match for device"))
           player_found = true
         end
       end)
@@ -86,54 +79,66 @@ end
 -- a device is fully initialized whether we come from fresh join or restart.
 -- See: https://smartthings.atlassian.net/browse/CHAD-9683
 local function _initialize_device(driver, device)
-  if not device:get_field(PlayerFields._IS_INIT) then
-    log.trace(string.format("%s setting up device", device.label))
-    local is_already_found =
-    ((driver.found_ips and driver.found_ips[device.device_network_id])
-        or driver.sonos:is_player_joined(device.device_network_id)) and
-        driver._field_cache[device.device_network_id]
+  if not device:get_field(PlayerFields._IS_SCANNING) then
+    device:set_field(PlayerFields._IS_SCANNING, true)
+    cosock.spawn(
+      function()
+        if not device:get_field(PlayerFields._IS_INIT) then
+          log.trace(string.format("%s setting up device", device.label))
+          local is_already_found =
+          ((driver.found_ips and driver.found_ips[device.device_network_id])
+              or driver.sonos:is_player_joined(device.device_network_id)) and
+              driver._field_cache[device.device_network_id]
 
-    if not is_already_found then
-      log.debug("Rescanning for player with DNI " .. device.device_network_id)
-      local success = find_player_for_device(driver, device)
-      if not success then
-        device:offline()
-        log.error(string.format(
-          "Could not initialize Sonos Player [%s], it does not appear to be on the network",
-          device.label
-        ))
-        return
-      end
-    end
+          if not is_already_found then
+            log.debug("Rescanning for player with DNI " .. device.device_network_id)
+            device:offline()
+            local success = false
 
-    local fields = driver._field_cache[device.device_network_id]
-    driver._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
-    driver.sonos:mark_player_as_joined(fields.player_id)
+            local backoff = utils.backoff_builder(360, 1)
+            while not success do
+              success = find_player_for_device(driver, device)
+              if not success then
+                device.log.warn_with({hub_logs = true}, string.format(
+                  "Couldn't find Sonos Player [%s] during SSDP scan, trying again shortly",
+                  device.label
+                ))
+                cosock.socket.sleep(backoff())
+              end
+            end
+          end
 
-    log.trace("Setting persistent fields")
-    device:set_field(PlayerFields.WSS_URL, fields.wss_url, { persist = true })
-    device:set_field(PlayerFields.HOUSEHOULD_ID, fields.household_id, { persist = true })
-    device:set_field(PlayerFields.PLAYER_ID, fields.player_id, { persist = true })
+          local fields = driver._field_cache[device.device_network_id]
+          driver._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
+          driver.sonos:mark_player_as_joined(fields.player_id)
 
-    device:set_field(PlayerFields._IS_INIT, true)
-  end
+          log.trace("Setting persistent fields")
+          device:set_field(PlayerFields.WSS_URL, fields.wss_url, { persist = true })
+          device:set_field(PlayerFields.HOUSEHOULD_ID, fields.household_id, { persist = true })
+          device:set_field(PlayerFields.PLAYER_ID, fields.player_id, { persist = true })
 
-  local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection
+          device:set_field(PlayerFields._IS_INIT, true)
+        end
 
-  if not sonos_conn then
-    log.trace("Setting transient fields")
-    -- device is offline until the websocket connection is established
-    device:offline()
-    sonos_conn = SonosConnection.new(driver, device)
-    device:set_field(PlayerFields.CONNECTION, sonos_conn)
-  end
+        local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection
 
-  if not sonos_conn:is_running() then
-    -- device is offline until the websocket connection is established
-    device:offline()
-    sonos_conn:start()
-  else
-    sonos_conn:refresh_subscriptions()
+        if not sonos_conn then
+          log.trace("Setting transient fields")
+          -- device is offline until the websocket connection is established
+          device:offline()
+          sonos_conn = SonosConnection.new(driver, device)
+          device:set_field(PlayerFields.CONNECTION, sonos_conn)
+        end
+
+        if not sonos_conn:is_running() then
+          -- device is offline until the websocket connection is established
+          device:offline()
+          sonos_conn:start()
+        else
+          sonos_conn:refresh_subscriptions()
+        end
+      end,
+      string.format("%s device init and SSDP scan", device.label))
   end
 end
 
@@ -176,6 +181,10 @@ end
 local function do_refresh(driver, device, cmd)
   log.trace("Refreshing " .. device.label)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
+  if sonos_conn == nil then
+    log.error(string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label))
+    return
+  end
 
   if not sonos_conn:is_running() then
     sonos_conn:start()
