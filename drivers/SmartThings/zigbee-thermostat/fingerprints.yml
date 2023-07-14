@@ -14,12 +14,12 @@ zigbeeManufacturer:
     manufacturer: Danfoss
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
-  - id: "POPP/eT093WRO"
+  - id: "D5X84YU/eT093WRO"
     deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
     model: eT093WRO
     deviceProfileName: thermostat-popp
-  - id: "POPP/eT093WRG"
+  - id: "D5X84YU/eT093WRG"
     deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
     model: eT093WRG
