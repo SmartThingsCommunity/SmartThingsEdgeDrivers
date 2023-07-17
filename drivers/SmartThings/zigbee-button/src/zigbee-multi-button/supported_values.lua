@@ -72,6 +72,13 @@ local devices = {
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 12
   },
+  BUTTON_PUSH_30 = {
+    MATCHING_MATRIX = {
+      { mfr = "WALL HERO", model = "A4" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed" },
+    NUMBER_OF_BUTTONS = 30
+  },
   BUTTON_PUSH_HELD_DOUBLE_1 = {
     MATCHING_MATRIX = {
       { mfr = "ShinaSystem", model = "BSM-300Z" },
