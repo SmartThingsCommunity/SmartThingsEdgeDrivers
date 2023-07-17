@@ -34,7 +34,7 @@ end
 local function configuration_report_handler(self, device, cmd)
   local power_source
   if cmd.args.parameter_number == PREFERENCE_NUM then
-    if cmd.args.configuration_value == 0 then
+    if cmd.args.configuration_value & 0x100 == 0 then
       power_source = capabilities.powerSource.powerSource.dc()
     else
       power_source = capabilities.powerSource.powerSource.battery()
