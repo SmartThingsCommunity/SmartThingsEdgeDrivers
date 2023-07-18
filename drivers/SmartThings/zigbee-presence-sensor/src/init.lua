@@ -146,6 +146,7 @@ local function added_handler(self, device)
 end
 
 local function poke(device)
+  if device:get_model() == "lumi.motion.ac01" then return end -- excluding Aqara PresenceSensor FP1
   -- If we receive any message from the device, we should mark it present and start the timeout to mark it offline
   device:emit_event(PresenceSensor.presence("present"))
   presence_utils.create_presence_timeout(device)
@@ -199,6 +200,7 @@ local zigbee_presence_driver = {
   -- Custom handler for every Zigbee message
   zigbee_message_handler = all_zigbee_message_handler,
   sub_drivers = {
+    require("aqara"),
     require("arrival-sensor-v1")
   }
 }
