@@ -213,6 +213,10 @@ test.register_coroutine_test(
       )
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_fibaro_door_window_sensor,
+          WakeUp:IntervalGet({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_fibaro_door_window_sensor,
           Configuration:Set({parameter_number = 1, size = 1, configuration_value = 1})
       ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
@@ -313,6 +317,10 @@ test.register_coroutine_test(
           WakeUp:Notification({})
         }
       )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_door_window_sensor,
+        WakeUp:IntervalGet({})
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_door_window_sensor,
         WakeUp:IntervalSet({node_id = 0x00, seconds = 10 * 3600})
