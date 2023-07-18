@@ -1,4 +1,4 @@
-local old_log = require "log"
+local log = require "log"
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local channel = require "cosock.channel"
@@ -9,15 +9,6 @@ local Message = require "lustre".Message
 local CloseCode = require "lustre.frame.close".CloseCode
 local lb_utils = require "lunchbox.util"
 local st_utils = require "st.utils"
-
-local log = {}
-log.info = old_log.info
-log.warn = old_log.warn
-log.error = old_log.error
-log.debug = old_log.debug
-log.trace = function(...)
-  old_log.info_with({hub_logs = true}, table.concat({"[TRACE->INFO] ", ...}))
-end
 
 --- A "singleton" module that maintains all of the websockets for a
 --- home's Sonos players. A player as modeled in the driver will have
@@ -109,6 +100,11 @@ cosock.spawn(function()
             if msg.header.type and msg.header.type == "WebSocket" then
               local target = msg.header.target
               local wss = websockets[target]
+              if wss == nil then
+                --TODO is this silencing a crash that is an indication of a state management bug in the run loop?
+                log.error(st_utils.stringify_table({msg = msg}, "Coordinator doesn't exist for player", false))
+                goto continue
+              end
 
               log.trace(string.format("Sending message over websocket for target %s", target))
               wss:send(Message.new(Message.TEXT, msg.body))
@@ -190,9 +186,9 @@ function SonosWebSocketRouter.register_listener_for_socket(listener,
     log.debug("Registering SonosConnection for device %s as listener for player_id's %s websocket", listener.device.label, player_id_for_socket)
   end
   local ws = websockets[player_id_for_socket]
-  ws._player_id = player_id_for_socket
 
   if ws ~= nil then
+    ws._player_id = player_id_for_socket
     local uuid = st_utils.generate_uuid_v4()
     local listener_ids = listener_ids_for_socket[ws.id] or {}
 

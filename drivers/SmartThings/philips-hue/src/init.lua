@@ -71,8 +71,17 @@ local function emit_light_status_events(light_device, light)
     end
 
     if light.dimming then
-      local adjusted_level = st_utils.clamp_value(light.dimming.brightness, 1, 100)
-      light_device:emit_event(capabilities.switchLevel.level(st_utils.round(adjusted_level)))
+      local adjusted_level = st_utils.round(st_utils.clamp_value(light.dimming.brightness, 1, 100))
+      if utils.is_nan(adjusted_level) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for switchLevel Attribute Event, ignoring.",
+            adjusted_level
+          )
+        )
+      else
+        light_device:emit_event(capabilities.switchLevel.level(adjusted_level))
+      end
     end
 
     if light.color_temperature then
@@ -84,7 +93,16 @@ local function emit_light_status_events(light_device, light)
       local kelvin = math.floor(
         st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
       )
-      light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+      if utils.is_nan(kelvin) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorTemperature Attribute Event, ignoring.",
+            kelvin
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
+      end
     end
 
     if light.color then
@@ -97,8 +115,30 @@ local function emit_light_status_events(light_device, light)
         light_device:set_field(Fields.WRAPPED_HUE, false)
       end
 
-      light_device:emit_event(capabilities.colorControl.hue(st_utils.clamp_value(st_utils.round(hue * 100), 0, 100)))
-      light_device:emit_event(capabilities.colorControl.saturation(st_utils.clamp_value(st_utils.round(sat * 100), 0, 100)))
+      local adjusted_hue = st_utils.clamp_value(st_utils.round(hue * 100), 0, 100)
+      local adjusted_sat = st_utils.clamp_value(st_utils.round(sat * 100), 0, 100)
+
+      if utils.is_nan(adjusted_hue) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorControl.hue Attribute Event, ignoring.",
+            adjusted_hue
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+      end
+
+      if utils.is_nan(adjusted_sat) then
+        light_device.log.warn(
+          string.format(
+            "Non numeric value %s computed for colorControl.saturation Attribute Event, ignoring.",
+            adjusted_sat
+          )
+        )
+      else
+        light_device:emit_event(capabilities.colorControl.hue(adjusted_sat))
+      end
     end
   end
 end
@@ -445,35 +485,57 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     )
   )
 
-  local profile_ref = "white"
-  if light_resource.color then
-    log.debug(string.format(
-      "Migrating Color Ambiance light %s", (device.label or device.id or "unknown_device")
-    ))
-    profile_ref =
-    "white-and-color-ambiance" -- all color light_resource products support `white` (dimming) and `ambiance` (color temp)
-  elseif light_resource.color_temperature then
-    log.debug(string.format(
-      "Migrating White Ambiance light %s", (device.label or device.id or "unknown_device")
-    ))
-    profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
-  elseif light_resource.dimming then
-    log.debug(string.format(
-      "Migrating White light %s", (device.label or device.id or "unknown_device")
-    ))
-    profile_ref = "white" -- `white` refers to dimmable and includes filament bulbs
-  else
-    log.warn(
-      string.format(
-        "light_resource [%s] with Hue resource ID [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance device, assigning to `white` as fallback"
-        , (device.label or device.id or "unknown device")
-        , light_resource.id
-      )
-    )
+  local mismatches = {}
+  local bridge_support = {}
+  local profile_support = {}
+  for _, cap in ipairs({
+    capabilities.switch,
+    capabilities.switchLevel,
+    capabilities.colorTemperature,
+    capabilities.colorControl
+  }) do
+    local payload = {}
+    if cap.ID == capabilities.switch.ID then
+      payload = light_resource.on
+    elseif cap.ID == capabilities.switchLevel.ID then
+      payload = light_resource.dimming
+    elseif cap.ID == capabilities.colorControl.ID then
+      payload = light_resource.color
+    elseif cap.ID == capabilities.colorTemperature.ID then
+      payload = light_resource.color_temperature
+    end
+
+    local profile_supports = device:supports_capability_by_id(cap.ID, nil)
+    local bridge_supports = driver.check_hue_repr_for_capability_support(light_resource, cap.ID)
+
+    bridge_support[cap.NAME] = {
+      supports = bridge_supports,
+      payload = payload
+    }
+    profile_support[cap.NAME] = profile_supports
+
+    if bridge_supports ~= profile_supports then
+      table.insert(mismatches, cap.NAME)
+    end
   end
 
+  local dbg_table = {
+    _mismatches = mismatches,
+    _name = {
+      device_label = (device.label or device.id or "unknown label"),
+      hue_name = (light_resource.hue_provided_name or "no name given")
+    },
+    bridge_supports = bridge_support,
+    profile_supports = profile_support
+  }
+
+  device.log.info_with({hub_logs = true}, st_utils.stringify_table(
+    dbg_table,
+    "Comparing profile-reported capabilities to bridge reported representation",
+    false
+  ))
+
   local new_metadata = {
-    profile = profile_ref,
     manufacturer = light_resource.hue_device_data.product_data.manufacturer_name,
     model = light_resource.hue_device_data.product_data.model_id,
     vendor_provided_label = light_resource.hue_device_data.product_data.product_name,
@@ -571,11 +633,12 @@ light_added = function(driver, device, parent_device_id, resource_id)
     for _, light in ipairs(light_resource.data or {}) do
       if device_light_resource_id == light.id then
         Discovery.light_state_disco_cache[light.id] = {
+          hue_provided_name = light.metadata.name,
           id = light.id,
           on = light.on,
           color = light.color,
           dimming = light.dimming,
-          color_temp = light.color_temperature,
+          color_temperature = light.color_temperature,
           mode = light.mode,
           parent_device_id = parent_bridge.id,
           hue_device_id = light.owner.rid,
@@ -1045,11 +1108,12 @@ cosock.spawn(function()
 
             for _, light in ipairs(light_resource.data or {}) do
               local light_resource_description = {
+                hue_provided_name = device_data.metadata.name,
                 id = light.id,
                 on = light.on,
                 color = light.color,
                 dimming = light.dimming,
-                color_temp = light.color_temperature,
+                color_temperature = light.color_temperature,
                 mode = light.mode,
                 parent_device_id = bridge_device_uuid,
                 hue_device_id = light.owner.rid,
@@ -1172,6 +1236,42 @@ local function remove(driver, device)
   end
 end
 
+local function supports_switch(hue_repr)
+  return
+    hue_repr.on ~= nil
+      and type(hue_repr.on) == "table"
+      and type(hue_repr.on.on) == "boolean"
+end
+
+local function supports_switch_level(hue_repr)
+  return
+    hue_repr.dimming ~= nil
+      and type(hue_repr.dimming) == "table"
+      and type(hue_repr.dimming.brightness) == "number"
+end
+
+local function supports_color_temp(hue_repr)
+  return
+    hue_repr.color_temperature ~= nil
+      and type(hue_repr.color_temperature) == "table"
+      and next(hue_repr.color_temperature) ~= nil
+end
+
+local function supports_color_control(hue_repr)
+  return
+  hue_repr.color ~= nil
+    and type(hue_repr.color) == "table"
+    and type(hue_repr.color.xy) == "table"
+    and type(hue_repr.color.gamut) == "table"
+end
+
+local support_check_handlers = {
+  [capabilities.switch.ID] = supports_switch,
+  [capabilities.switchLevel.ID] = supports_switch_level,
+  [capabilities.colorControl.ID] = supports_color_control,
+  [capabilities.colorTemperature.ID] = supports_color_temp
+}
+
 --- @type HueDriver
 local hue = Driver("hue",
   {
@@ -1205,7 +1305,15 @@ local hue = Driver("hue",
     api_key_to_bridge_id = {},
     stray_bulb_tx = stray_bulb_tx,
     _lights_pending_refresh = {},
-    emit_light_status_events = emit_light_status_events
+    emit_light_status_events = emit_light_status_events,
+    check_hue_repr_for_capability_support = function(hue_repr, capability_id)
+      local handler = support_check_handlers[capability_id]
+      if type(handler) == "function" then
+        return handler(hue_repr)
+      else
+        return false
+      end
+    end
   }
 )
 
