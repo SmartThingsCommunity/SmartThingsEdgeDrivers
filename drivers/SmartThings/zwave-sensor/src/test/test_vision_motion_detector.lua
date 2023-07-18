@@ -147,9 +147,20 @@ test.register_message_test(
         direction = "send",
         message = zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
+          WakeUp:IntervalGet({})
+        )
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
         )
       }
+    },
+    {
+      inner_block_ordering = "relaxed"
     }
 )
 

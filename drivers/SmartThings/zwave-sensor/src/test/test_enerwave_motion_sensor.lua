@@ -65,7 +65,12 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "At a WakeUp, Assocation:Set should be sent when there wasn't a motion status event",
     function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({}) })
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Association:Set({grouping_identifier = 1, node_ids = {}})
@@ -80,12 +85,18 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "At a WakeUp, Assocation:Set shouldn't be sent when there was a motion status event",
     function()
+      test.socket.zwave:__set_channel_ordering("relaxed")
       mock_sensor.wrapped_device.state_cache = {["main"] = {["motionSensor"] = {["motion"] = {["value"] = "inactive"}}}}
       test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({}) })
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Battery:Get({})
       ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
+
     end
 )
 
