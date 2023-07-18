@@ -83,10 +83,15 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Wakeup Notification should prompt a configuration get until a report is received",
   function ()
+    test.socket.zwave:__set_channel_ordering("relaxed")
     test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({})})
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
       mock_sensor,
       Configuration:Get({ parameter_number = 12})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_sensor,
+      WakeUp:IntervalGet({})
     ))
     test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
     mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
