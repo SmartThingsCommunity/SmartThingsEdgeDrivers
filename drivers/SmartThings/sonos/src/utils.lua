@@ -36,7 +36,7 @@ function utils.labeled_socket_builder(label)
   end
 
   local function make_socket(host, port, wrap_ssl)
-    log.info(
+    log.trace(
       string.format(
         "%sCreating TCP socket for REST Connection", label
       )
@@ -47,7 +47,7 @@ function utils.labeled_socket_builder(label)
       return nil, (err or "unknown error creating TCP socket")
     end
 
-    log.info(
+    log.trace(
       string.format(
         "%sSetting TCP socket timeout for REST Connection", label
       )
@@ -57,7 +57,7 @@ function utils.labeled_socket_builder(label)
       return nil, "settimeout error: " .. err
     end
 
-    log.info(
+    log.trace(
       string.format(
         "%sConnecting TCP socket for REST Connection", label
       )
@@ -67,7 +67,7 @@ function utils.labeled_socket_builder(label)
     if err then return nil, err end
 
     if wrap_ssl then
-      log.info(
+      log.trace(
         string.format(
           "%sCreating SSL wrapper for for REST Connection", label
         )
@@ -77,7 +77,7 @@ function utils.labeled_socket_builder(label)
       if err ~= nil then
          return nil, "SSL wrap error: " .. err
       end
-      log.info(
+      log.trace(
         string.format(
           "%sPerforming SSL handshake for for REST Connection", label
         )

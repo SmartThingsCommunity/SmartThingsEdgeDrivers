@@ -348,11 +348,12 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {
+      hue_provided_name = light.metadata.name,
       id = light.id,
       on = light.on,
       color = light.color,
       dimming = light.dimming,
-      color_temp = light.color_temperature,
+      color_temperature = light.color_temperature,
       mode = light.mode,
       parent_device_id = bridge_device.id,
       hue_device_id = light.owner.rid,
