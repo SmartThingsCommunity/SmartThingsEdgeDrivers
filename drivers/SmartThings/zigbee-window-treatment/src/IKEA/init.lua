@@ -23,7 +23,7 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   local level = 100 - value.value
   local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
   local windowShade = capabilities.windowShade.windowShade
-  if level == -155 then-- unknown position 
+  if level == -155 then -- unknown position
     device:emit_event(windowShade.unknown())
     device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
   elseif level == 0 then
