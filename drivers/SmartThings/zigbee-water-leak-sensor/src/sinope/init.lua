@@ -23,54 +23,54 @@ local log = require "log"
 local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
-    local dry_probe = 0x0030
-    local wet_probe = 0x0031
-    local dry_probe_disconnected = 0x0032
-    local wet_probe_disconnected = 0x0033
-    local event
+  local dry_probe = 0x0030
+  local wet_probe = 0x0031
+  local dry_probe_disconnected = 0x0032
+  local wet_probe_disconnected = 0x0033
+  local event
 
-    if zone_status.value == wet_probe or zone_status.value == wet_probe_disconnected then
-        event = capabilities.waterSensor.water.wet()
-    else 
-        event = capabilities.waterSensor.water.dry()
-    end
+  if zone_status.value == wet_probe or zone_status.value == wet_probe_disconnected then
+      event = capabilities.waterSensor.water.wet()
+  else 
+      event = capabilities.waterSensor.water.dry()
+  end
 
-    if event ~= nil then
-        device:emit_event(event)
-    end
+  if event ~= nil then
+      device:emit_event(event)
+  end
 end
 
 local ias_zone_status_attr_handler = function(driver, device, zone_status, zb_rx)
-    generate_event_from_zone_status(driver, device, zone_status, zb_rx)
+  generate_event_from_zone_status(driver, device, zone_status, zb_rx)
 end
   
 local ias_zone_status_change_handler = function(driver, device, zb_rx)
-    generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
+  generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
 local is_sinope_water_sensor = function(opts, driver, device)
-    if device:get_manufacturer() == SINOPE_TECHNOLOGIES_MFR_STRING then
-      return true
-    else
-      return false
-    end
+  if device:get_manufacturer() == SINOPE_TECHNOLOGIES_MFR_STRING then
+    return true
+  else
+    return false
+  end
 end
 
 local sinope_water_sensor = {
-    NAME = "Sinope Water Leak Sensor",
-    zigbee_handlers = {
-        attr = {
-            [IASZone.ID] = {
-                [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
-            }
-        },
-        cluster = {
-            [IASZone.ID] = {
-                [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
-            }
-        }
-    },
-    can_handle = is_sinope_water_sensor
+  NAME = "Sinope Water Leak Sensor",
+  zigbee_handlers = {
+      attr = {
+          [IASZone.ID] = {
+              [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
+          }
+      },
+      cluster = {
+          [IASZone.ID] = {
+              [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
+          }
+      }
+  },
+  can_handle = is_sinope_water_sensor
 }
 
 return sinope_water_sensor
