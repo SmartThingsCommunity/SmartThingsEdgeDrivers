@@ -13,12 +13,8 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
-local ApplianceEventsAlerts = clusters.ApplianceEventsAlerts
-local PowerConfiguration = clusters.PowerConfiguration
 local IASZone = zcl_clusters.IASZone
-local log = require "log"
 
 local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 
