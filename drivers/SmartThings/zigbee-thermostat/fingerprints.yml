@@ -34,6 +34,11 @@ zigbeeManufacturer:
     manufacturer: Sinope Technologies
     model: TH1123ZB
     deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1123ZB-G2"
+    deviceLabel: TH1123ZB-G2 Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1123ZB-G2
+    deviceProfileName: thermostat-sinope
   - id: "Sinope Technologies/TH1124ZB"
     deviceLabel: TH1124ZB Sinope Thermostat
     manufacturer: Sinope Technologies
