@@ -1804,6 +1804,11 @@ zigbeeManufacturer:
     manufacturer: GLEDOPTO
     model: GL-C-008
     deviceProfileName: rgbw-bulb
+  - id: GLEDOPTO/GL-C-007
+    deviceLabel: Gledopto Switch
+    manufacturer: GLEDOPTO
+    model: GL-C-007
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: Megaman/ZLL-ExtendedColor
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
