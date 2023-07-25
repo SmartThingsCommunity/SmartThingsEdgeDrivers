@@ -246,7 +246,7 @@ zwaveManufacturer:
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3111
-    productId: 0x3111
+    productId: 0x5102
     deviceProfileName: switch-binary
   - id: 015F/3121/5102
     deviceLabel: WYFY Switch 1
