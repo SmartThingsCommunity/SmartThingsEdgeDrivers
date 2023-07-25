@@ -57,6 +57,14 @@ local refresh = function(driver, device, cmd)
   device:refresh()
   device:send(LockCluster.attributes.LockState:read(device))
   device:send(Alarm.attributes.AlarmCount:read(device))
+  -- we can't determine from fingerprints if devices support lock codes, so
+  -- here in the driver we'll do a check once to see if the device responds here
+  -- and if it does, we'll switch it to a profile with lock codes
+  if not device:supports_capability_by_id(LockCodes.ID) and not device:get_field(lock_utils.CHECKED_CODE_SUPPORT) then
+    device:send(LockCluster.attributes.NumberOfPINUsersSupported:read(device))
+    -- we won't make this value persist because it's not that important
+    device:set_field(lock_utils.CHECKED_CODE_SUPPORT, true)
+  end
 end
 
 local do_configure = function(self, device)
@@ -171,7 +179,23 @@ local programming_event_handler = function(driver, device, zb_mess)
 end
 
 local handle_max_codes = function(driver, device, value)
-  device:emit_event(LockCodes.maxCodes(value.value, { visibility = { displayed = false } }))
+  if value.value ~= 0 then
+    -- Here's where we'll end up if we queried a lock whose profile does not have lock codes,
+    -- but it gave us a non-zero number of pin users, so we want to switch the profile
+    if not device:supports_capability_by_id(LockCodes.ID) then
+      device:try_update_metadata({profile = "base-lock"}) -- switch to a lock with codes
+      lock_utils.populate_state_from_data(device) -- if this was a migrated device, try to migrate the lock codes
+      if not device:get_field(lock_utils.MIGRATION_COMPLETE) then -- this means we didn't find any pre-migration lock codes
+        -- so we'll load them manually
+        driver:inject_capability_command(device, {
+          capability = capabilities.lockCodes.ID,
+          command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+          args = {}
+        })
+      end
+    end
+    device:emit_event(LockCodes.maxCodes(value.value, { visibility = { displayed = false } }))
+  end
 end
 
 local handle_max_code_length = function(driver, device, value)
