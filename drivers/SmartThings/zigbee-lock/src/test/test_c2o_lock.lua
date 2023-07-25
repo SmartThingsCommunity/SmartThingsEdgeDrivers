@@ -138,4 +138,11 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "PinUsersSupported report should be a no-op",
+  function ()
+    test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 8)})
+  end
+)
+
 test.run_registered_tests()
