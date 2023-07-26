@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/smoke-co-alarm"
+    deviceLabel: Smoke/CO Alarm
+    vendorId: 0x10e1
+    productId: 0x1207
+    deviceProfileName: smoke-co-alarm
