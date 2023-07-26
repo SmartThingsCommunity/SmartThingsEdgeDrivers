@@ -124,8 +124,14 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function smoke_state_event_handler(driver, device, ib, response)
-  local humidity = 10
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+  local state = ib.data.value
+  if state == 0 then -- normal
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
+  elseif state == 1 or state == 2 then -- warning or critical
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.detected())
+  else -- unknown
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.smoke.tested())
+  end
 end
 
 local matter_driver_template = {
