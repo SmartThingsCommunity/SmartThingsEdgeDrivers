@@ -113,12 +113,6 @@ local function device_init(driver, device)
     function() protocol.poll(device) end,
     device.id .. "poll"
   )
-  if device:supports_capability_by_id("energyMeter") then
-    local f = function(dev) dev:set_field("DAILY_ENERGY_REPORT", true) end
-    f(device)
-    device.thread:call_on_schedule(86400, f, device.id .. "energyreport")
-  end
-
 
   --Rediscovery task. Needs task because if device init doesn't return, no events are handled
   -- on the device thread.

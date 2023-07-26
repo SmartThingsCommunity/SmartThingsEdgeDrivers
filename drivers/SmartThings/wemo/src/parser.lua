@@ -74,10 +74,11 @@ local function handle_binary_state(device, value)
   if result.current_power_mW ~= nil and result.energy_today_Wh ~= nil and
     device:supports_capability_by_id("powerMeter") and device:supports_capability_by_id("energyMeter") then
     device:emit_event(capabilities.powerMeter.power(result.current_power_mW / 1000)) --ST uses watts by default
-    --Report energy
-    if device:get_field("DAILY_ENERGY_REPORT") then
+    --Sometimes total energy reported is way off, in that case use the daily energy reported
+    if result.energy_today_Wh > result.energy_total_Wh then
       device:emit_event(capabilities.energyMeter.energy({value = result.energy_today_Wh, unit = "Wh"}))
-      device:set_field("DAILY_ENERGY_REPORT", false)
+    else
+      device:emit_event(capabilities.energyMeter.energy({value = result.energy_total_Wh, unit = "Wh"}))
     end
   end
 end
