@@ -32,7 +32,7 @@ local utils = require "st.utils"
 
 -- maps model name to profile name
 local profiles = {
-  ["Insight"] = "wemo.mini-smart-plug.v1",
+  ["Insight"] = "wemo.insight-smart-plug.v1",
   ["Socket"] = "wemo.mini-smart-plug.v1",
   ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
@@ -113,6 +113,12 @@ local function device_init(driver, device)
     function() protocol.poll(device) end,
     device.id .. "poll"
   )
+  if device:supports_capability_by_id("energyMeter") then
+    local f = function(dev) dev:set_field("DAILY_ENERGY_REPORT", true) end
+    f(device)
+    device.thread:call_on_schedule(86400, f, device.id .. "energyreport")
+  end
+
 
   --Rediscovery task. Needs task because if device init doesn't return, no events are handled
   -- on the device thread.
@@ -249,7 +255,10 @@ local wemo = Driver("wemo", {
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = command_handlers.handle_refresh,
-    }
+    },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = command_handlers.handle_reset_energy_meter,
+    },
   }
 })
 
