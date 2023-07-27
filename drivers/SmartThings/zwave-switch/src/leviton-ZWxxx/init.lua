@@ -17,8 +17,6 @@ local cc = require "st.zwave.CommandClass"
 -- local sceneActivation = require "st.zwave.CommandClass.SceneActivation"
 local preferencesMap = require "preferences"
 local log = require "log"
-local inspect = require "inspect"
-
 
 local LEVITON_FINGERPRINTS = {
 	{ mfr = 0x001D, prod = 0x0002, model = 0x0041 }, -- ZW6HD US In-wall Dimmer
@@ -32,53 +30,6 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
 		end
 	end
 	return false
-end
-
-local function parameterNumberToParameterName(preferences, parameterNumber)
-	for id, parameter in pairs(preferences) do
-		if parameter.parameter_number == parameterNumber then
-			return id
-		end
-	end
-end
-
---Verify if the preference were set in the device
-local function configuration_get(driver, device, cmd)
-	print("configuration_get()")
-	for id, value in pairs(preferencesMap.get_device_parameters()) do
-		if preferencesMap[id] then
-			device:send(Configuration():Get({ parameter_number = preferencesMap[id].parameter_number }))
-			-- device:set_field(id, false, { persist = true })
-		end
-	end
-end
-
-local function configuration_set(driver, device, cmd)
-	print("configuration_set()")
-	for id, value in pairs(preferencesMap.get_device_parameters()) do
-		if preferencesMap[id] then
-			local newParameterValue = tonumber(preferencesMap.get_device_parameters()[id])
-			device:send(Configuration():Set({
-				parameter_number = preferencesMap[id].parameter_number,
-				size = preferencesMap[id].size,
-				configuration_value = newParameterValue
-			}))
-			device:set_field(id, newParameterValue, { persist = true })
-		end
-	end
-end
-
-local function configuration_report(driver, device, cmd)
-	print("configuration_report()")
-	if preferencesMap then
-		local parameterName = parameterNumberToParameterName(preferencesMap.get_device_parameters(device),
-			cmd.args.parameter_number)
-		local configValueSetByUser = device.preferences[parameterName]
-		local configValueReportedByDevice = cmd.args.configuration_value
-		if (parameterName and configValueSetByUser == configValueReportedByDevice) then
-			device:set_field(parameterName, configValueReportedByDevice, { persist = true })
-		end
-	end
 end
 
 local update_preferences = function(driver, device, args)
@@ -132,17 +83,14 @@ end
 --- @param event table
 --- @param args
 local function info_changed(driver, device, event, args)
-	print("info_changed()")
+	print("info_changed() v3")
 	local preferences = preferencesMap.get_device_parameters(device)
-	print("device.preferences: ", inspect(device.preferences))
-	print("preferences: ", inspect(preferences))
 	for id, value in pairs(preferences) do
 		print("value: ", value)
 		local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
 		-- if args.old_st_store.preferences[id] ~= value and preferences then
 		if new_parameter_value ~= value and preferences then
 			local pref = preferences[id]
-			print("pref: ", inspect(pref))
 			print("info_changed(): id: ", id)
 			local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
 			print("Z-WAVE SEND CONFIG SET")
@@ -159,13 +107,6 @@ local function info_changed(driver, device, event, args)
 end
 
 local driver_template = {
-	zwave_handlers = {
-		[cc.CONFIGURATION] = {
-			[Configuration.REPORT] = configuration_report,
-			[Configuration.GET] = configuration_get,
-			[Configuration.SET] = configuration_set
-		},
-	},
 	supported_capabilities = {
 		capabilities.switch,
 		capabilities.switchLevel,
