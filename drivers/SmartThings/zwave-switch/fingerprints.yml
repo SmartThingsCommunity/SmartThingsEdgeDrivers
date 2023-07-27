@@ -898,6 +898,18 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: 001D/0041/0002
+    deviceLabel: Leviton ZW6HD In-wall Dimmer
+    manufacturerId: 0x001D
+    productType: 0x0041
+    productId: 0x0002
+    deviceProfileName: Leviton-ZW6HD
+  - id: 001D/0042/0002
+    deviceLabel: Leviton ZW15S In-wall Switch
+    manufacturerId: 0x001D
+    productType: 0x0042
+    productId: 0x0002
+    deviceProfileName: Leviton-ZW15S    
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

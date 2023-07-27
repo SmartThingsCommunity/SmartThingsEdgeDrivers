@@ -148,7 +148,8 @@ local driver_template = {
     require("multi-metering-switch"),
     require("zooz-zen-30-dimmer-relay"),
     require("multichannel-device"),
-    require("aeotec-smart-switch")
+    require("aeotec-smart-switch"),
+    require("leviton-ZWxxx")
   },
   lifecycle_handlers = {
     init = device_init,
