@@ -48,6 +48,7 @@ end
 function discovery.device_added(driver, device)
   log.info("device_added : dni = " .. tostring(device.device_network_id))
   set_device_field(driver, device)
+  device_discovery_cache[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
 end
 
@@ -79,10 +80,6 @@ local function discovery_device(driver)
 
   for dni, ip in pairs(known_discovered_devices) do
     log.trace("known dni=" .. tostring(dni) .. ", ip=" .. tostring(ip))
-    if not device_discovery_cache[dni] then
-      update_device_discovery_cache(driver, dni, ip)
-      set_device_field(driver, known_devices[dni])
-    end
   end
 
   for dni, ip in pairs(unknown_discovered_devices) do
