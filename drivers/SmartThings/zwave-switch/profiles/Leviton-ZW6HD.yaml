@@ -1,5 +1,5 @@
 # in-wall-dimmer-profile
-name: Leviton-ZW6HD
+name: leviton-ZW6HD
 components:
 - id: main
   capabilities:

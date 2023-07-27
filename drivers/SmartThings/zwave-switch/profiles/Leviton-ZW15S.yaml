@@ -1,5 +1,5 @@
 # in-wall-switch-profile
-name: Leviton-ZW15S
+name: leviton-ZW15S
 components:
 - id: main
   capabilities:
