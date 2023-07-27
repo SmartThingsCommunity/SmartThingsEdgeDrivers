@@ -1,12 +1,7 @@
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
---- @type st.zwave.CommandClass.SwitchMultilevel
-local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
 local capabilities = require "st.capabilities"
---- @type st.Device
-local st_device = require "st.device"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
@@ -16,7 +11,6 @@ local cc = require "st.zwave.CommandClass"
 -- local sceneActuatorConf = require "st.zwave.CommandClass.SceneActuatorConf"
 -- local sceneActivation = require "st.zwave.CommandClass.SceneActivation"
 local preferencesMap = require "preferences"
-local log = require "log"
 
 local LEVITON_FINGERPRINTS = {
 	{ mfr = 0x001D, prod = 0x0002, model = 0x0041 }, -- ZW6HD US In-wall Dimmer
@@ -66,14 +60,19 @@ local function init_dev(self, device, event, args)
 			print("init_dev(): preferences is nil!")
 			return
 		end
-		for id, pref in pairs(preferences) do
-			device:set_field(id, pref.parameter_number, { persist = true })
-			device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
-		end
 	else
 		print("preferencesMap is nil!")
 	end
 	print("init_dev() END")
+end
+
+local function device_added(self, device, event, args)
+	print("device_added(*)")
+	local preferences = preferencesMap.get_device_parameters(device)
+	for id, pref in pairs(preferences) do
+		device:set_field(id, pref.parameter_number, { persist = true })
+		device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
+	end
 end
 
 --- Handle preference changes
@@ -112,18 +111,10 @@ local driver_template = {
 		capabilities.switchLevel,
 		capabilities.firmwareUpdate,
 		capabilities.configuration,
-		-- capabilities.zwMultichannel,
-		-- capabilities.healthCheck,
 		-- capabilities.refresh,
-		-- capabilities.sceneActivation,
-		-- capabilities.SceneActuatorConf,
+		capabilities.sceneActivation,
+		capabilities.SceneActuatorConf,
 	},
-	-- capability_handlers = {
-	-- 	[capabilities.switch.commands.on] = on_handler,
-	-- 	[capabilities.switch.commands.off] = off_handler,
-	-- 	[capabilities.switchLevel.commands.on] = on_handler,
-	-- 	[capabilities.switchLevel.commands.off] = off_handler,
-	-- },
 	lifecycle_handlers = {
 		-- This device init function will be called any time a device object needs to be instantiated
 		-- within the driver. There are 2 main cases where this happens: 1) the driver just started up
@@ -132,15 +123,10 @@ local driver_template = {
 		-- This represents a change that has happened in the data representing the device on the
 		-- SmartThings platform. An example could be a change to the name of the device.
 		infoChanged = info_changed,
-		-- This is an event that will be sent when the platform believes the device needs to go through
-		-- provisioning for it to work as expected. The most common situation for this is when the device
-		-- is first added to the platform, but there are other protocol specific cases that this may be
-		-- triggered as well.
-		-- doConfigure = do_configure,
 		-- A device was newly added to this driver. This represents when the device is, for the first time,
 		-- assigned to run with this driver. For example, when it is first joined to the network and
 		-- fingerprinted to this driver.
-		-- added = device_added,
+		added = device_added,
 		-- This represents a device being switched from using a different driver, to using the current
 		-- driver. This will be sent after an added event and it can be used to determine if this device
 		-- can properly be supported by the driver or not. See Driver.default_capability_match_driverSwitched_handler
@@ -148,8 +134,6 @@ local driver_template = {
 		-- PROVISIONED can be used to indicate that the driver won’t or will, respectively, function within
 		-- this driver.
 		-- driverSwitched =
-		-- This represents a device being removed from this driver.
-		-- removed =
 	},
 	NAME = "zwave leviton in-wall dimmer",
 	can_handle = can_handle_leviton_zwxxx,
