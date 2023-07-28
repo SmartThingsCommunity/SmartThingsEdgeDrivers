@@ -1,15 +1,5 @@
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
-
-local capabilities = require "st.capabilities"
---- @type st.zwave.Driver
-local ZwaveDriver = require "st.zwave.driver"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
--- local sceneActuatorConf = require "st.zwave.CommandClass.SceneActuatorConf"
--- local sceneActivation = require "st.zwave.CommandClass.SceneActivation"
 local preferencesMap = require "preferences"
 
 local LEVITON_FINGERPRINTS = {
@@ -27,7 +17,6 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
 end
 
 local update_preferences = function(driver, device, args)
-	print("update_preferences()")
 	local prefs = preferences.get_device_parameters(device)
 	if prefs ~= nil then
 		for id, value in pairs(device.preferences) do
@@ -47,12 +36,6 @@ local update_preferences = function(driver, device, args)
 end
 
 local function init_dev(self, device, event, args)
-	print("init_dev()")
-	print(device:debug_pretty_print())
-	print("")
-	print(device:pretty_print())
-	print("")
-
 	if preferencesMap ~= nil then
 		device:set_update_preferences_fn(update_preferences)
 		local preferences = preferencesMap.get_device_parameters(device)
@@ -63,11 +46,9 @@ local function init_dev(self, device, event, args)
 	else
 		print("preferencesMap is nil!")
 	end
-	print("init_dev() END")
 end
 
 local function device_added(self, device, event, args)
-	print("device_added(*)")
 	local preferences = preferencesMap.get_device_parameters(device)
 	for id, pref in pairs(preferences) do
 		device:set_field(id, pref.parameter_number, { persist = true })
@@ -82,20 +63,12 @@ end
 --- @param event table
 --- @param args
 local function info_changed(driver, device, event, args)
-	print("info_changed() v3")
 	local preferences = preferencesMap.get_device_parameters(device)
 	for id, value in pairs(preferences) do
-		print("value: ", value)
 		local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-		-- if args.old_st_store.preferences[id] ~= value and preferences then
 		if new_parameter_value ~= value and preferences then
 			local pref = preferences[id]
-			print("info_changed(): id: ", id)
 			local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-			print("Z-WAVE SEND CONFIG SET")
-			print("preferences[id].parameter_number: ", pref.parameter_number)
-			print("configuration_value: ", new_parameter_value)
-			print("size: ", pref.size)
 			device:send(Configuration:Set({
 				parameter_number = pref.parameter_number,
 				size = pref.size,
@@ -105,46 +78,14 @@ local function info_changed(driver, device, event, args)
 	end
 end
 
-local driver_template = {
-	supported_capabilities = {
-		capabilities.switch,
-		capabilities.switchLevel,
-		capabilities.firmwareUpdate,
-		capabilities.configuration,
-		-- capabilities.refresh,
-		capabilities.sceneActivation,
-		capabilities.SceneActuatorConf,
-	},
+local leviton_zwxxx = {
 	lifecycle_handlers = {
-		-- This device init function will be called any time a device object needs to be instantiated
-		-- within the driver. There are 2 main cases where this happens: 1) the driver just started up
-		-- and needs to create the objects for existing devices and 2) a device was newly added to the driver.
 		init = init_dev,
-		-- This represents a change that has happened in the data representing the device on the
-		-- SmartThings platform. An example could be a change to the name of the device.
 		infoChanged = info_changed,
-		-- A device was newly added to this driver. This represents when the device is, for the first time,
-		-- assigned to run with this driver. For example, when it is first joined to the network and
-		-- fingerprinted to this driver.
 		added = device_added,
-		-- This represents a device being switched from using a different driver, to using the current
-		-- driver. This will be sent after an added event and it can be used to determine if this device
-		-- can properly be supported by the driver or not. See Driver.default_capability_match_driverSwitched_handler
-		-- as an example. Updating the devices metadata field provisioning_state to either NONFUNCTIONAL or
-		-- PROVISIONED can be used to indicate that the driver won’t or will, respectively, function within
-		-- this driver.
-		-- driverSwitched =
 	},
-	NAME = "zwave leviton in-wall dimmer",
+	NAME = "Leviton Z-Wave in-wall device",
 	can_handle = can_handle_leviton_zwxxx,
 }
 
---[[
-	The default handlers take care of the Command Classes and the translation to capability events
-	for most devices, but you can still define custom handlers to override them.
-]]
-   --
-
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
-local device = ZwaveDriver("zwave-leviton", driver_template)
-device:run()
+return leviton_zwxxx
