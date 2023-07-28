@@ -90,8 +90,6 @@ local matter_driver_template = {
         [clusters.SmokeCoAlarm.attributes.COState.ID] = co_state_event_handler,
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
         [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_event_handler,
-        [clusters.SmokeCoAlarm.attributes.InterconnectSmokeAlarm.ID] = smoke_state_event_handler,
-        [clusters.SmokeCoAlarm.attributes.InterconnectCOAlarm.ID] = co_state_event_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
@@ -105,12 +103,10 @@ local matter_driver_template = {
     [capabilities.smokeDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.SmokeState,
       clusters.SmokeCoAlarm.attributes.TestInProgress,
-      clusters.SmokeCoAlarm.attributes.InterconnectSmokeAlarm,
     },
     [capabilities.carbonMonoxideDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.COState,
       clusters.SmokeCoAlarm.attributes.TestInProgress, -- is it possible?
-      clusters.SmokeCoAlarm.attributes.InterconnectCOAlarm,
     },
     [capabilities.tamperAlert.ID] = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
