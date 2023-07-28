@@ -129,8 +129,6 @@ local function smoke_state_event_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
   elseif state == 1 or state == 2 then -- warning or critical
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.detected())
-  else -- unknown
-    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.smoke.tested())
   end
 end
 
@@ -140,8 +138,6 @@ local function co_state_event_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.clear())
   elseif state == 1 or state == 2 then -- warning or critical
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.detected())
-  else -- unknown
-    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.carbonMonoxideDetector.tested())
   end
 end
 
@@ -153,6 +149,16 @@ local function hardware_fault_alert_event_handler(driver, device, ib, response)
   end
 end
 
+local function test_in_progress_event_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.smoke.tested())
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.carbonMonoxideDetector.tested())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.smoke.clear())
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.carbonMonoxideDetector.clear())
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -161,9 +167,10 @@ local matter_driver_template = {
   matter_handlers = {
     attr = {
       [clusters.SmokeCoAlarm.ID] = {
-        [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = smoke_state_event_handler
-        [clusters.SmokeCoAlarm.attributes.COState.ID] = co_state_event_handler
-        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_event_handler
+        [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = smoke_state_event_handler,
+        [clusters.SmokeCoAlarm.attributes.COState.ID] = co_state_event_handler,
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_event_handler,
+        [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
@@ -175,10 +182,12 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [capabilities.smokeDetector.ID] = {
-      clusters.SmokeCoAlarm.attributes.SmokeState
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [capabilities.carbonMonoxideDetector.ID] = {
-      clusters.SmokeCoAlarm.attributes.COState
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress, -- is it possible?
     },
     [capabilities.tamperAlert.ID] = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
