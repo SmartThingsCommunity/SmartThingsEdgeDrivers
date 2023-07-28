@@ -134,6 +134,17 @@ local function smoke_state_event_handler(driver, device, ib, response)
   end
 end
 
+local function co_state_event_handler(driver, device, ib, response)
+  local state = ib.data.value
+  if state == 0 then -- normal
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.clear())
+  elseif state == 1 or state == 2 then -- warning or critical
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.detected())
+  else -- unknown
+    device:emit_event_for_endpoint(ib.endpoint_id, ccapabilities.smokeDetector.carbonMonoxideDetector.tested())
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -143,6 +154,7 @@ local matter_driver_template = {
     attr = {
       [clusters.SmokeCoAlarm.ID] = {
         [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = smoke_state_event_handler
+        [clusters.SmokeCoAlarm.attributes.COState.ID] = co_state_event_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
@@ -155,6 +167,9 @@ local matter_driver_template = {
   subscribed_attributes = {
     [capabilities.smokeDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.SmokeState
+    },
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.Thermostat.attributes.LocalTemperature,
