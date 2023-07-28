@@ -145,6 +145,14 @@ local function co_state_event_handler(driver, device, ib, response)
   end
 end
 
+local function hardware_fault_alert_event_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.tamperAlert.tamper.detected())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.tamperAlert.tamper.clear())
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -155,6 +163,7 @@ local matter_driver_template = {
       [clusters.SmokeCoAlarm.ID] = {
         [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = smoke_state_event_handler
         [clusters.SmokeCoAlarm.attributes.COState.ID] = co_state_event_handler
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_event_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
@@ -170,6 +179,9 @@ local matter_driver_template = {
     },
     [capabilities.carbonMonoxideDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.COState
+    },
+    [capabilities.tamperAlert.ID] = {
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.Thermostat.attributes.LocalTemperature,
