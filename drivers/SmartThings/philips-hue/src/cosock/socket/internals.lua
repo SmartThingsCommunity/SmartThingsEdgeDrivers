@@ -13,14 +13,8 @@
 -- limitations under the License.
 local m = {}
 local log = require "log"
-local unpack = table.unpack or unpack
-local pack = table.pack or pack or function(a, b, c, d, e)
-  -- This is a shim for lua 5.1 which doesn't provide a `pack` operation
-  return {
-    a, b, c, d, e,
-    n = 0 and (e and 5) or (d and 4) or (c and 3) or (b and 2) or (a and 1)
-  }
-end
+local unpack = table.unpack
+local pack = table.pack
 
 local function maybe_transform_output(ret, transform)
   if transform.output then
