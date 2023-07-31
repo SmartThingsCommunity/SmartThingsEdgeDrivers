@@ -1,26 +1,47 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
-local preferencesMap = require "preferences"
+local preferences = require "preferences"
 
-local LEVITON_FINGERPRINTS = {
-	{ mfr = 0x001D, prod = 0x0002, model = 0x0041 }, -- ZW6HD US In-wall Dimmer
-	{ mfr = 0x001D, prod = 0x0002, model = 0x0042 } -- ZW15S US In-wall Switch
-}
+local LEVITON_MANUFACTURER_ID = 0x001D
+local LEVITON_PRODUCT_TYPE_ZWXXX = 0x0002
+local LEVITON_PRODUCT_ID_ZW6HD = 0x0041
+local LEVITON_PRODUCT_ID_ZW15S = 0x0042
 
 local function can_handle_leviton_zwxxx(opts, driver, device, ...)
-	for _, fingerprint in ipairs(LEVITON_FINGERPRINTS) do
-		if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-			return true
-		end
-	end
-	return false
+  local is_match = device:id_match(
+    LEVITON_MANUFACTURER_ID,
+    LEVITON_PRODUCT_TYPE_ZWXXX,
+    {LEVITON_PRODUCT_ID_ZW6HD, LEVITON_PRODUCT_ID_ZW15S}
+  );
+
+  print("can_handle_leviton_zwxxx", is_match);
+
+  if is_match then
+    return true
+  end
+    return false
 end
 
 local function device_added(self, device, event, args)
-	local preferences = preferencesMap.get_device_parameters(device)
-	for id, pref in pairs(preferences) do
-		device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
-	end
+  local preferences = preferences.get_device_parameters(device)
+
+  for id, pref in pairs(preferences) do
+    device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
+  end
 end
 
 --- Handle preference changes
@@ -30,28 +51,31 @@ end
 --- @param event table
 --- @param args
 local function info_changed(driver, device, event, args)
-	local parameters = preferencesMap.get_device_parameters(device)
-	for id, value in pairs(parameters) do
-		local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-		if new_parameter_value ~= value and parameters then
-			local pref = parameters[id]
-			local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-			device:send(Configuration:Set({
-				parameter_number = pref.parameter_number,
-				size = pref.size,
-				configuration_value = new_parameter_value
-			}))
-		end
-	end
+  local parameters = preferences.get_device_parameters(device)
+
+  for id, value in pairs(parameters) do
+    local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
+
+    if new_parameter_value ~= value and parameters then
+      local pref = parameters[id]
+      local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
+
+      device:send(Configuration:Set({
+        parameter_number = pref.parameter_number,
+        size = pref.size,
+        configuration_value = new_parameter_value
+      }))
+    end
+  end
 end
 
 local leviton_zwxxx = {
-	lifecycle_handlers = {
-		infoChanged = info_changed,
-		added = device_added,
-	},
-	NAME = "Leviton Z-Wave in-wall device",
-	can_handle = can_handle_leviton_zwxxx,
+  NAME = "Leviton Z-Wave in-wall device",
+  can_handle = can_handle_leviton_zwxxx,
+  lifecycle_handlers = {
+    infoChanged = info_changed,
+    added = device_added,
+  }
 }
 
 return leviton_zwxxx
