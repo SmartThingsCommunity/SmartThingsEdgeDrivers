@@ -1,6 +1,11 @@
 matterManufacturer:
-  - id: "matter/smoke-co-alarm"
+  - id: "matter/smoke-co-alarm-custom"
     deviceLabel: Smoke/CO Alarm
     vendorId: 0x10e1
     productId: 0x1207
+    deviceProfileName: smoke-co-alarm-custom
+  - id: "matter/smoke-co-alarm"
+    deviceLabel: Smoke/CO Alarm
+    vendorId: 0x10e1
+    productId: 0x1208
     deviceProfileName: smoke-co-alarm
