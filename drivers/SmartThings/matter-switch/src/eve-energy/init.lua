@@ -6,9 +6,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
-local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
-local data_types = require "st.matter.data_types"
 
 local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
