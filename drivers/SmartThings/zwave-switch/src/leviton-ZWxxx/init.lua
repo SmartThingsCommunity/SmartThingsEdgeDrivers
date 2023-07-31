@@ -33,14 +33,18 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
   if is_match then
     return true
   end
-    return false
+
+  return false
 end
 
 local function device_added(self, device, event, args)
-  local preferences = preferences.get_device_parameters(device)
+  local parameters = preferences.get_device_parameters(device)
 
-  for id, pref in pairs(preferences) do
-    device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
+  if parameters then
+    for id, pref in pairs(parameters) do
+      print("leviton_zwxxx get configuration", pref.parameter_number)
+      device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
+    end
   end
 end
 
@@ -53,18 +57,24 @@ end
 local function info_changed(driver, device, event, args)
   local parameters = preferences.get_device_parameters(device)
 
-  for id, value in pairs(parameters) do
-    local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
+  if parameters then
+    for id, pref in pairs(parameters) do
 
-    if new_parameter_value ~= value and parameters then
-      local pref = parameters[id]
       local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
+      local old_parameter_value = new_parameter_value
 
-      device:send(Configuration:Set({
-        parameter_number = pref.parameter_number,
-        size = pref.size,
-        configuration_value = new_parameter_value
-      }))
+      if args and args.old_st_store and args.old_st_store.preferences then
+        old_parameter_value = preferences.to_numeric_value(args.old_st_store.preferences[id])
+      end
+
+      if new_parameter_value ~= old_parameter_value then
+        print("leviton_zwxxx info_changed", pref.parameter_number, old_parameter_value, new_parameter_value)
+        device:send(Configuration:Set({
+          parameter_number = pref.parameter_number,
+          size = pref.size,
+          configuration_value = new_parameter_value
+        }))
+      end
     end
   end
 end
