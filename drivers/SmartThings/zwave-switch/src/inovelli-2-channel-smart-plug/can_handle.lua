@@ -47,8 +47,7 @@ end
 
 local inovelli_2_channel_smart_plug = {
   NAME = "Inovelli 2 channel smart plug",
-  can_handle = can_handle_inovelli_2_channel_smart_plug,
-  lazy_load = true
+  can_handle = can_handle_inovelli_2_channel_smart_plug
 }
 
 return inovelli_2_channel_smart_plug

@@ -29,8 +29,7 @@ end
 
 local fibaro_wall_plug = {
   NAME = "fibaro wall plug us",
-  can_handle = can_handle_fibaro_wall_plug,
-  lazy_load = true
+  can_handle = can_handle_fibaro_wall_plug
 }
 
 return fibaro_wall_plug

@@ -28,8 +28,7 @@ end
 
 local eaton_5_scene_keypad = {
   NAME = "Eaton 5-Scene Keypad",
-  can_handle = can_handle_eaton_5_scene_keypad,
-  lazy_load = true
+  can_handle = can_handle_eaton_5_scene_keypad
 }
 
 return eaton_5_scene_keypad

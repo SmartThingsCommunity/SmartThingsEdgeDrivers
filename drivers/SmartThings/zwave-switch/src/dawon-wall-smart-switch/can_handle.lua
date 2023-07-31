@@ -50,8 +50,7 @@ end
 
 local dawon_wall_smart_switch = {
   NAME = "Dawon Wall Smart Switch",
-  can_handle = can_handle_dawon_wall_smart_switch,
-  lazy_load = true
+  can_handle = can_handle_dawon_wall_smart_switch
 }
 
 return dawon_wall_smart_switch

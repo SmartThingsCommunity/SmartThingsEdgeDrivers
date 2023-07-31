@@ -33,8 +33,7 @@ end
 
 local subdriver = {
   NAME = "Aeon smart strip",
-  can_handle = can_handle_aeon_smart_strip,
-  lazy_load = true
+  can_handle = can_handle_aeon_smart_strip
 }
 
 return subdriver

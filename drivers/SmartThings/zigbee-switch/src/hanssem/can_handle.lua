@@ -33,8 +33,7 @@ end
 
 local HanssemSwitch = {
   NAME = "Zigbee Hanssem Switch",
-  can_handle = can_handle_hanssem_switch,
-  lazy_load = true
+  can_handle = can_handle_hanssem_switch
 }
 
 return HanssemSwitch

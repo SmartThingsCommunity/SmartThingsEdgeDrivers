@@ -31,8 +31,7 @@ end
 
 local fibaro_single_switch = {
   NAME = "fibaro single switch",
-  can_handle = can_handle_fibaro_single_switch,
-  lazy_load = true
+  can_handle = can_handle_fibaro_single_switch
 }
 
 return fibaro_single_switch

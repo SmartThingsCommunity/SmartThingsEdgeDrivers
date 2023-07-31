@@ -44,8 +44,7 @@ local inovelli_led = {
   can_handle = can_handle_inovelli_led,
   sub_drivers = {
     require("inovelli-LED/inovelli-lzw31sn")
-  },
-  lazy_load = true
+  }
 }
 
 return inovelli_led

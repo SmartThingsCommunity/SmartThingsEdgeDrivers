@@ -37,8 +37,7 @@ end
 
 local multi_metering_switch = {
   NAME = "multi metering switch",
-  can_handle = can_handle_multi_metering_switch,
-  lazy_load = true
+  can_handle = can_handle_multi_metering_switch
 }
 
 return multi_metering_switch

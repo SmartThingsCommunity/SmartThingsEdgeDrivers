@@ -23,9 +23,7 @@ local subdriver = {
   sub_drivers = {
     require("aqara.version"),
     require("aqara.multi-switch")
-  },
-  -- TODO: The concept of lazy loading might be something that shoould be abstracted from the driver?
-  lazy_load = true
+  }
 }
 
 return subdriver

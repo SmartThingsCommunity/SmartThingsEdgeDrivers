@@ -28,9 +28,7 @@ end
 
 local multichannel_device = {
   NAME = "Z-Wave Device Multichannel",
-  can_handle = can_handle_multichannel_device,
-  -- TODO: could just use the absense of other handlers as evidence that this should be lazy loaded rather than using a flag?
-  lazy_load = true
+  can_handle = can_handle_multichannel_device
 }
 
 return multichannel_device

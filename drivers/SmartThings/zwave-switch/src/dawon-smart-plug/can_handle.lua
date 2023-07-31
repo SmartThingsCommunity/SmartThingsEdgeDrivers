@@ -34,8 +34,7 @@ end
 
 local dawon_smart_plug = {
   NAME = "Dawon smart plug",
-  can_handle = can_handle_dawon_smart_plug,
-  lazy_load = true
+  can_handle = can_handle_dawon_smart_plug
 }
 
 return dawon_smart_plug

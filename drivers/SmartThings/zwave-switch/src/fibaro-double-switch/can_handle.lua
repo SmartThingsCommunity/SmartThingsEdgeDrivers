@@ -30,8 +30,7 @@ end
 
 local fibaro_double_switch = {
   NAME = "fibaro double switch",
-  can_handle = can_handle_fibaro_double_switch,
-  lazy_load = true
+  can_handle = can_handle_fibaro_double_switch
 }
 
 return fibaro_double_switch

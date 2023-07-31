@@ -31,8 +31,7 @@ end
 
 local ecolink_switch = {
   NAME = "Ecolink Switch",
-  can_handle = can_handle_ecolink,
-  lazy_load = true
+  can_handle = can_handle_ecolink
 }
 
 return ecolink_switch

@@ -29,9 +29,7 @@ end
 
 local subdriver = {
   NAME = "Aeotec Smart Switch",
-  can_handle = can_handle,
-  -- TODO: The concept of lazy loading might be something that shoould be abstracted from the driver? (i.e. not lazy_load flag should be here?)
-  lazy_load = true
+  can_handle = can_handle
 }
 
 return subdriver

@@ -28,9 +28,7 @@ end
 
 local subdriver = {
   NAME = "eaton accessory dimmer",
-  can_handle = can_handle_eaton_accessory_dimmer,
-  -- TODO: The concept of lazy loading might be something that shoould be abstracted from the driver? (i.e. not lazy_load flag should be here?)
-  lazy_load = true
+  can_handle = can_handle_eaton_accessory_dimmer
 }
 
 return subdriver
