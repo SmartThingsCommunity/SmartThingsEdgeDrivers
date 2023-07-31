@@ -726,7 +726,7 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
-        local events, err = table.unpack(json_result)
+        local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
           log.error_with({ hub_logs = true },
