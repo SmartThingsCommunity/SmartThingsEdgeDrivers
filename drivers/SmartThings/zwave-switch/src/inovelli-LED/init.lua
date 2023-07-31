@@ -24,10 +24,6 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 
 local LED_COLOR_CONTROL_PARAMETER_NUMBER = 13
 local LED_GENERIC_SATURATION = 100
-local INOVELLI_MANUFACTURER_ID = 0x031E
-local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
-local INOVELLI_LZW31_PRODUCT_TYPE = 0x0003
-local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
 local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function huePercentToZwaveValue(value)
@@ -78,17 +74,6 @@ local function set_color(driver, device, cmd)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_configuration)
 end
 
-local function can_handle_inovelli_led(opts, driver, device, ...)
-  if device:id_match(
-    INOVELLI_MANUFACTURER_ID,
-    {INOVELLI_LZW31SN_PRODUCT_TYPE, INOVELLI_LZW31_PRODUCT_TYPE},
-    INOVELLI_DIMMER_PRODUCT_ID
-  ) then
-    return true
-  end
-  return false
-end
-
 local inovelli_led = {
   NAME = "Inovelli LED",
   zwave_handlers = {
@@ -101,7 +86,6 @@ local inovelli_led = {
       [capabilities.colorControl.commands.setColor.NAME] = set_color
     }
   },
-  can_handle = can_handle_inovelli_led,
   sub_drivers = {
     require("inovelli-LED/inovelli-lzw31sn")
   }

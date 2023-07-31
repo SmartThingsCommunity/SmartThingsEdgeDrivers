@@ -86,14 +86,14 @@ local preference_map = {
   },
 }
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
+-- local function is_aqara_products(opts, driver, device)
+--   for _, fingerprint in ipairs(FINGERPRINTS) do
+--     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+--       return true
+--     end
+--   end
+--   return false
+-- end
 
 local function private_mode_handler(driver, device, value, zb_rx)
   device:set_field(PRIVATE_MODE, value.value, { persist = true })
@@ -218,7 +218,7 @@ local aqara_switch_handler = {
     require("aqara.version"),
     require("aqara.multi-switch")
   },
-  can_handle = is_aqara_products
+  -- can_handle = is_aqara_products
 }
 
 return aqara_switch_handler

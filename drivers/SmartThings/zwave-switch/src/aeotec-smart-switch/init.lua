@@ -22,13 +22,6 @@ local FINGERPRINTS = {
   {mfr = 0x0371, prodId = 0x0017}
 }
 
-local function can_handle(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then return true end
-  end
-  return false
-end
-
 -- Despite the NIF indicating that this device supports the Switch Multilevel
 -- command class, the device will not respond to multilevel commands. Note that
 -- this applies at least to the Aeotec Smart Switch 6 and 7
@@ -47,7 +40,6 @@ local aeotec_smart_switch = {
       [capabilities.switch.commands.off.NAME] = on_off_factory(0x00)
     }
   },
-  can_handle = can_handle
 }
 
 return aeotec_smart_switch

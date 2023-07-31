@@ -12,33 +12,25 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local function component_to_endpoint(device, component_id)
-  if component_id == "main" then
-    return {1}
-  else
-    return {2}
-  end
-end
+local FIBARO_WALL_PLUG_FINGERPRINTS = {
+  {mfr = 0x010F, prod = 0x1401, model = 0x1001}, -- Fibaro Outlet
+  {mfr = 0x010F, prod = 0x1401, model = 0x2000}, -- Fibaro Outlet
+}
 
-local function endpoint_to_component(device, ep)
-  local switch_comp = string.format("smartplug%d", ep - 1)
-  if device.profile.components[switch_comp] ~= nil then
-    return switch_comp
-  else
-    return "main"
+local function can_handle_fibaro_wall_plug(opts, driver, device, ...)
+  for _, fingerprint in ipairs(FIBARO_WALL_PLUG_FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+      local subdriver = require("fibaro-wall-plug-us")
+      return true, subdriver
+    end
   end
-end
-
-local function device_init(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+  return false
 end
 
 local fibaro_wall_plug = {
   NAME = "fibaro wall plug us",
-  lifecycle_handlers = {
-    init = device_init
-  },
+  can_handle = can_handle_fibaro_wall_plug,
+  lazy_load = true
 }
 
 return fibaro_wall_plug

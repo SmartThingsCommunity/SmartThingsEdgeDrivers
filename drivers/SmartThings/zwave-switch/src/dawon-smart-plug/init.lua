@@ -18,25 +18,6 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
-local DAWON_SMART_PLUG_FINGERPRINTS = {
-  {mfr = 0x018C, prod = 0x0042, model = 0x0005}, -- Dawon Smart Plug
-  {mfr = 0x018C, prod = 0x0042, model = 0x0008} -- Dawon Smart Multitab
-}
-
---- Determine whether the passed device is Dawon smart plug
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
-local function can_handle_dawon_smart_plug(opts, driver, device, ...)
-  for _, fingerprint in ipairs(DAWON_SMART_PLUG_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
-
 --- Default handler for notification reports
 ---
 --- @param self st.zwave.Driver
@@ -59,7 +40,6 @@ local dawon_smart_plug = {
       [Notification.REPORT] = notification_report_handler
     }
   },
-  can_handle = can_handle_dawon_smart_plug
 }
 
 return dawon_smart_plug

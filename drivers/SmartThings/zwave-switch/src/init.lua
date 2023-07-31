@@ -130,25 +130,30 @@ local driver_template = {
     }
   },
   sub_drivers = {
-    require("multichannel-device"),
     require("eaton-accessory-dimmer.can_handle"),
-    -- require("inovelli-LED"),
-    -- require("dawon-smart-plug"),
-    -- require("inovelli-2-channel-smart-plug"),
+    require("aeotec-smart-switch.can_handle"),
+    require("aeon-smart-strip.can_handle"),
+    require("dawon-smart-plug.can_handle"),
+    require("dawon-wall-smart-switch.can_handle"),
+    require("eaton-5-scene-keypad.can_handle"),
+    require("ecolink-switch.can_handle"),
+    require("fibaro-double-switch.can_handle"),
+    require("fibaro-single-switch.can_handle"),
+    require("fibaro-wall-plug-us.can_handle"),
+    require("inovelli-2-channel-smart-plug.can_handle"),
+    require("inovelli-LED.can_handle"),
+    require("multi-metering-switch.can_handle"),
+    require("multichannel-device.can_handle"),
+
+
+
+
     -- require("zwave-dual-switch"),
     -- require("eaton-anyplace-switch"),
-    -- require("fibaro-wall-plug-us"),
-    -- require("dawon-wall-smart-switch"),
     -- require("zooz-power-strip"),
-    -- require("aeon-smart-strip"),
     -- require("qubino-switches"),
-    -- require("fibaro-double-switch"),
-    -- require("fibaro-single-switch"),
-    -- require("eaton-5-scene-keypad"),
-    -- require("ecolink-switch"),
-    -- require("multi-metering-switch"),
     -- require("zooz-zen-30-dimmer-relay"),
-    -- require("aeotec-smart-switch")
+
   },
   lifecycle_handlers = {
     init = device_init,
