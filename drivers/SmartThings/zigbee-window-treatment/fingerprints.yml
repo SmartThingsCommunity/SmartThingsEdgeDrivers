@@ -98,6 +98,11 @@ zigbeeManufacturer:
     manufacturer: _TZE204_fzbskaga
     model: TS0601
     deviceProfileName: window-treatment-hanssem
+  - id: "_TZE204_xznyn2od/TS0601"
+    deviceLabel: Cheil Autotech
+    manufacturer: _TZE204_xznyn2od
+    model: TS0601
+    deviceProfileName: window-treatment-hanssem
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
