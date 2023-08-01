@@ -94,9 +94,9 @@ end
 local function co_state_event_handler(driver, device, ib, response)
   local state = ib.data.value
   if state == 0 then -- Normal
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.clear())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
   elseif state == 1 or state == 2 then -- Warning or Critical
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.detected())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
   end
 end
 
@@ -123,10 +123,10 @@ end
 local function test_in_progress_event_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.tested())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.tested())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.carbonMonoxideDetector.clear())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
   end
 end
 
