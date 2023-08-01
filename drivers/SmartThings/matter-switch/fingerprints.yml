@@ -33,6 +33,13 @@ matterManufacturer:
     productId: 0xAC
     deviceProfileName: plug-binary
 
+#Uascent
+  - id: "Uascent/UA-SmartSwitch"
+    deviceLabel: UA-SmartSwitch
+    vendorId: 0x1400
+    productId: 0x042E
+    deviceProfileName: switch-4
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
