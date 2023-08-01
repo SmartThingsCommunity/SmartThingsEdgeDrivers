@@ -19,8 +19,17 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local airQualityID = "spacewonder52282.airQuality"
+local nitrogenDioxideMeasurementID = "spacewonder52282.nitrogenDioxideMeasurement"
+local ozoneMeasurementID = "spacewonder52282.ozoneMeasurement"
+local airQuality = capabilities[airQualityID]
+local nitrogenDioxideMeasurement = capabilities[nitrogenDioxideMeasurementID]
+local ozoneMeasurement = capabilities[ozoneMeasurementID]
+
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement.MeasurementUnit"
 local CARBON_DIOXIDE_MEASUREMENT_UNIT = "CarbonDioxideConcentrationMeasurement.MeasurementUnit"
+local NITROGEN_DIOXIDE_MEASUREMENT_UNIT = "NitrogenDioxideConcentrationMeasurement.MeasurementUnit"
+local OZONE_MEASUREMENT_UNIT = "OzoneConcentrationMeasurement.MeasurementUnit"
 local FORMALDEHYDE_MEASUREMENT_UNIT = "FormaldehydeConcentrationMeasurement.MeasurementUnit"
 local PM1_MEASUREMENT_UNIT = "Pm1ConcentrationMeasurement.MeasurementUnit"
 local PM25_MEASUREMENT_UNIT = "Pm25ConcentrationMeasurement.MeasurementUnit"
@@ -33,12 +42,17 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
+  device:send(clusters.AirQuality.attributes.AirQuality:read(device))
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredUnit:read(device))
   device:send(clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredUnit:read(device))
+  device:send(clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredUnit:read(device))
+  device:send(clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.OzoneConcentrationMeasurement.attributes.MeasuredUnit:read(device))
   device:send(clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredUnit:read(device))
   device:send(clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue:read(device))
@@ -54,6 +68,25 @@ local function device_added(driver, device)
 end
 
 -- Matter Handlers --
+local function air_quality_attr_handler(driver, device, ib, response)
+  local state = ib.data.value
+  if state == 0 then -- Unknown
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.unknown())
+  elseif state == 1 then -- Good
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.good())
+  elseif state == 2 then -- Fair
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.fair())
+  elseif state == 3 then -- Moderate
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.moderate())
+  elseif state == 4 then -- Poor
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.poor())
+  elseif state == 5 then -- VeryPoor
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.veryPoor())
+  elseif state == 6 then -- ExtremelyPoor
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.extremelyPoor())
+  end
+end
+
 local function temp_event_handler(attribute)
   return function(driver, device, ib, response)
     local temp = ib.data.value / 100.0
@@ -99,6 +132,40 @@ end
 local function carbon_dioxide_unit_attr_handler(driver, device, ib, response)
   local unit = ib.data.value
   device:set_field(CARBON_DIOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
+end
+
+local function nitrogen_dioxide_attr_handler(driver, device, ib, response)
+  local value = ib.data.value
+  local unit = device:get_field(NITROGEN_DIOXIDE_MEASUREMENT_UNIT)
+  if unit == clusters.clusters.types.MeasurementUnitEnum.PPB then
+    value = value / 1000
+  elseif unit == clusters.clusters.types.MeasurementUnitEnum.PPT then
+    value = value / 1000000
+  end
+  value = math.floor(value)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.nitrogenDioxideMeasurement.nitrogenDioxideLevel({value = value, unit = "ppm"}))
+end
+
+local function nitrogen_dioxide_unit_attr_handler(driver, device, ib, response)
+  local unit = ib.data.value
+  device:set_field(NITROGEN_DIOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
+end
+
+local function ozone_attr_handler(driver, device, ib, response)
+  local value = ib.data.value
+  local unit = device:get_field(OZONE_MEASUREMENT_UNIT)
+  if unit == clusters.clusters.types.MeasurementUnitEnum.PPB then
+    value = value / 1000
+  elseif unit == clusters.clusters.types.MeasurementUnitEnum.PPT then
+    value = value / 1000000
+  end
+  value = math.floor(value)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.ozoneMeasurement.ozoneLevel({value = value, unit = "ppm"}))
+end
+
+local function ozone_dioxide_unit_attr_handler(driver, device, ib, response)
+  local unit = ib.data.value
+  device:set_field(OZONE_MEASUREMENT_UNIT, unit, { persist = true })
 end
 
 local function formaldehyde_attr_handler(driver, device, ib, response)
@@ -204,6 +271,9 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
+      [clusters.AirQuality.ID] = {
+        [clusters.AirQuality.attributes.AirQuality.ID] = air_quality_attr_handler,
+      },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
       },
@@ -217,6 +287,14 @@ local matter_driver_template = {
       [clusters.CarbonDioxideConcentrationMeasurement.ID] = {
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_dioxide_attr_handler
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_dioxide_unit_attr_handler
+      },
+      [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = nitrogen_dioxide_attr_handler
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = nitrogen_dioxide_unit_attr_handler
+      },
+      [clusters.OzoneConcentrationMeasurement.ID] = {
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = ozone_attr_handler
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = ozone_unit_attr_handler
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {
         [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = formaldehyde_attr_handler
@@ -245,6 +323,9 @@ local matter_driver_template = {
     }
   },
   subscribed_attributes = {
+    [airQualityID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
@@ -258,6 +339,14 @@ local matter_driver_template = {
     [capabilities.carbonDioxideMeasurement.ID] = {
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [nitrogenDioxideMeasurementID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [ozoneMeasurementID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
     },
     [capabilities.formaldehydeMeasurement.ID] = {
       clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
