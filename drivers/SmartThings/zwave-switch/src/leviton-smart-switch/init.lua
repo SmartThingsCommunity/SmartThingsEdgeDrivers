@@ -29,36 +29,46 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
   );
 end
 
-local function parameter_number_to_parameter_name(parameters, parameterNumber)
+local function handle_configuration_update(self, device, cmd)
+
+  local parameters = preferences.get_device_parameters(device)
+  local target_parameter_number = cmd.args.parameter_number
+  local reported_value = cmd.args.configuration_value
+  local target_parameter_name = nil
+  local target_parameter = nil
+
+  if not parameters then
+    return
+  end
+
   for id, parameter in pairs(parameters) do
-    if parameter.parameter_number == parameterNumber then
-      return id
+    if parameter.parameter_number == target_parameter_number then
+      target_parameter_name = id
+      target_parameter = parameter
+      break
     end
   end
-end
 
-local function handle_configuration_update(self, device, cmd)
-  local parameters = preferences.get_device_parameters(device)
-  if parameters then
-    local parameter_name = parameter_number_to_parameter_name(parameters, cmd.args.parameter_number)
-    local reported_value = cmd.args.configuration_value
-    print("leviton_zwxxx handle_configuration_update", parameter_name, reported_value)
-    device:set_field(parameter_name, reported_value)
-    device:set_field(parameter_name, reported_value, {persist = true})
+  if target_parameter_name == nil or target_parameter == nil then
+    return
   end
+
+  -- print("leviton_zwxxx handle_configuration_update", target_parameter_name, reported_value)
+  device:set_field(target_parameter_name, reported_value)
+  device:set_field(target_parameter_name, reported_value, {persist = true})
+  device:refresh()
+
+  -- TODO: may need to send some type of event here to make mobile app reflect state correctly
+
 end
 
-local function load_device_configuration(device)
+local function device_init(self, device)
   local parameters = preferences.get_device_parameters(device)
   if parameters then
     for id, pref in pairs(parameters) do
       device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
     end
   end
-end
-
-local function device_init(self, device)
-  load_device_configuration(device)
 end
 
 local function info_changed(driver, device, event, args)
