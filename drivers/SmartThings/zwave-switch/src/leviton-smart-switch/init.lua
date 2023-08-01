@@ -29,7 +29,7 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
   );
 end
 
-local function parameterNumberToParameterName(parameters, parameterNumber)
+local function parameter_number_to_parameter_name(parameters, parameterNumber)
   for id, parameter in pairs(parameters) do
     if parameter.parameter_number == parameterNumber then
       return id
@@ -40,7 +40,7 @@ end
 local function handle_configuration_update(self, device, cmd)
   local parameters = preferences.get_device_parameters(device)
   if parameters then
-    local parameter_name = parameterNumberToParameterName(parameters, cmd.args.parameter_number)
+    local parameter_name = parameter_number_to_parameter_name(parameters, cmd.args.parameter_number)
     local reported_value = cmd.args.configuration_value
     print("leviton_zwxxx handle_configuration_update", parameter_name, reported_value)
     device:set_field(parameter_name, reported_value)
@@ -61,12 +61,6 @@ local function device_init(self, device)
   load_device_configuration(device)
 end
 
---- Handle preference changes
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param event table
---- @param args
 local function info_changed(driver, device, event, args)
   local parameters = preferences.get_device_parameters(device)
 
