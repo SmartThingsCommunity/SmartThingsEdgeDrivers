@@ -62,7 +62,7 @@ end
 local function expressed_state_event_handler(driver, device, ib, response)
   local state = ib.data.value
   if state == 0 then -- Normal
-    device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedState.normal())
+    device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedStat.normal())
   elseif state == 1 then -- SmokeAlarm
     device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedState.smokeAlarm())
   elseif state == 2 then -- COAlarm
@@ -174,7 +174,7 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [expressedStateID] = {
-      clusters.SmokeCoAlarm.attributes.ExpressedState.ID
+      clusters.SmokeCoAlarm.attributes.ExpressedState
     },
     [capabilities.smokeDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.SmokeState,
@@ -185,16 +185,16 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.TestInProgress, -- is it possible?
     },
     [batteryAlertID] = {
-      clusters.SmokeCoAlarm.attributes.BatteryAlert.ID
+      clusters.SmokeCoAlarm.attributes.BatteryAlert
     },
     [deviceMutedID] = {
-      clusters.SmokeCoAlarm.attributes.DeviceMuted.ID
+      clusters.SmokeCoAlarm.attributes.DeviceMuted
     },
     [capabilities.tamperAlert.ID] = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
     },
     [endOfServiceAlertID] = {
-      clusters.SmokeCoAlarm.attributes.EndOfServiceAlert.ID
+      clusters.SmokeCoAlarm.attributes.EndOfServiceAlert
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.Thermostat.attributes.LocalTemperature,
