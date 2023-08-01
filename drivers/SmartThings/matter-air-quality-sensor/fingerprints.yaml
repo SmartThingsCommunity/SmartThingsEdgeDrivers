@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/air-quality-sensor"
+    deviceLabel: Air Quality Sensor
+    vendorId: 0x10e1
+    productId: 0x1209
+    deviceProfileName: air-quality-sensor
