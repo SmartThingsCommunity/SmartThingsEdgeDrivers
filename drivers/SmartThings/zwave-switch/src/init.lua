@@ -149,7 +149,7 @@ local driver_template = {
     require("zooz-zen-30-dimmer-relay"),
     require("multichannel-device"),
     require("aeotec-smart-switch"),
-    require("leviton-ZWxxx")
+    require("leviton-smart-switch")
   },
   lifecycle_handlers = {
     init = device_init,
