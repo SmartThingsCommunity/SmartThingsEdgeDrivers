@@ -250,9 +250,18 @@ local function spawn_bridge_add_api_key_task(driver, device)
   cosock.spawn(function()
     -- 30 seconds is the typical UX for waiting to hit the link button in the Hue ecosystem
     local timeout_time = cosock.socket.gettime() + 30
-    local bridge_info = driver.joined_bridges[device_bridge_id]
-    local bridge_ip = bridge_info.ip
 
+    local bridge_info = driver.joined_bridges[device_bridge_id]
+    if not bridge_info then
+      device.log.error_with(
+        { hub_logs = true },
+        "Missing bridge info/ip address as well as application key " ..
+        "for LAN Hue Bridge, cannot proceed."
+      )
+      return
+    end
+
+    local bridge_ip = bridge_info.ip
     -- we pre-declare these variables in the outer scope so that our gotos work.
     -- a sad day that we need these gotos.
     local api_key_response, err, api_key, _
@@ -529,7 +538,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     profile_supports = profile_support
   }
 
-  device.log.info_with({hub_logs = true}, st_utils.stringify_table(
+  device.log.info_with({ hub_logs = true }, st_utils.stringify_table(
     dbg_table,
     "Comparing profile-reported capabilities to bridge reported representation",
     false
@@ -1238,31 +1247,31 @@ end
 
 local function supports_switch(hue_repr)
   return
-    hue_repr.on ~= nil
+      hue_repr.on ~= nil
       and type(hue_repr.on) == "table"
       and type(hue_repr.on.on) == "boolean"
 end
 
 local function supports_switch_level(hue_repr)
   return
-    hue_repr.dimming ~= nil
+      hue_repr.dimming ~= nil
       and type(hue_repr.dimming) == "table"
       and type(hue_repr.dimming.brightness) == "number"
 end
 
 local function supports_color_temp(hue_repr)
   return
-    hue_repr.color_temperature ~= nil
+      hue_repr.color_temperature ~= nil
       and type(hue_repr.color_temperature) == "table"
       and next(hue_repr.color_temperature) ~= nil
 end
 
 local function supports_color_control(hue_repr)
   return
-  hue_repr.color ~= nil
-    and type(hue_repr.color) == "table"
-    and type(hue_repr.color.xy) == "table"
-    and type(hue_repr.color.gamut) == "table"
+      hue_repr.color ~= nil
+      and type(hue_repr.color) == "table"
+      and type(hue_repr.color.xy) == "table"
+      and type(hue_repr.color.gamut) == "table"
 end
 
 local support_check_handlers = {
