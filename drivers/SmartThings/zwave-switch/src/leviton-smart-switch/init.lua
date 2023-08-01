@@ -12,9 +12,9 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
---- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local preferences = require "preferences"
+local cc = require "st.zwave.CommandClass"
 
 local LEVITON_MANUFACTURER_ID = 0x001D
 local LEVITON_PRODUCT_TYPE_ZWXXX = 0x0002
@@ -29,15 +29,36 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
   );
 end
 
-local function device_added(self, device, event, args)
-  local parameters = preferences.get_device_parameters(device)
+local function parameterNumberToParameterName(parameters, parameterNumber)
+  for id, parameter in pairs(parameters) do
+    if parameter.parameter_number == parameterNumber then
+      return id
+    end
+  end
+end
 
+local function handle_configuration_update(self, device, cmd)
+  local parameters = preferences.get_device_parameters(device)
+  if parameters then
+    local parameter_name = parameterNumberToParameterName(parameters, cmd.args.parameter_number)
+    local reported_value = cmd.args.configuration_value
+    print("leviton_zwxxx handle_configuration_update", parameter_name, reported_value)
+    device:set_field(parameter_name, reported_value)
+    device:set_field(parameter_name, reported_value, {persist = true})
+  end
+end
+
+local function load_device_configuration(device)
+  local parameters = preferences.get_device_parameters(device)
   if parameters then
     for id, pref in pairs(parameters) do
-      print("leviton_zwxxx get configuration", pref.parameter_number)
       device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
     end
   end
+end
+
+local function device_init(self, device)
+  load_device_configuration(device)
 end
 
 --- Handle preference changes
@@ -60,7 +81,6 @@ local function info_changed(driver, device, event, args)
       end
 
       if new_parameter_value ~= old_parameter_value then
-        print("leviton_zwxxx info_changed", pref.parameter_number, old_parameter_value, new_parameter_value)
         device:send(Configuration:Set({
           parameter_number = pref.parameter_number,
           size = pref.size,
@@ -75,9 +95,15 @@ local leviton_zwxxx = {
   NAME = "Leviton Z-Wave in-wall device",
   can_handle = can_handle_leviton_zwxxx,
   lifecycle_handlers = {
-    infoChanged = info_changed,
-    added = device_added,
-  }
+    init = device_init,
+    infoChanged = info_changed
+  },
+  zwave_handlers = {
+    [cc.CONFIGURATION] = {
+      [Configuration.GET] = handle_configuration_update,
+      [Configuration.REPORT] = handle_configuration_update
+    }
+  },
 }
 
 return leviton_zwxxx
