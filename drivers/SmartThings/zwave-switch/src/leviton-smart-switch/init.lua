@@ -58,12 +58,9 @@ local function handle_configuration_update(self, device, cmd)
     return
   end
 
-  -- print("leviton_zwxxx handle_configuration_update", target_parameter_name, reported_value)
   device:set_field(target_parameter_name, reported_value)
   device:set_field(target_parameter_name, reported_value, {persist = true})
   device:refresh()
-
-  -- TODO: may need to send some type of event here to make mobile app reflect state correctly
 
 end
 
