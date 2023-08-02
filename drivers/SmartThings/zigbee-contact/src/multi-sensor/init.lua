@@ -16,6 +16,7 @@ local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local contactSensor_defaults = require "st.zigbee.defaults.contactSensor_defaults"
+local capabilities = require "st.capabilities"
 
 local MULTI_SENSOR_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3320" },

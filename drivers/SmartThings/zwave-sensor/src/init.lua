@@ -79,14 +79,14 @@ local function do_configure(driver, device)
   end
 end
 
--- local initial_events_map = {
---   [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
---   [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
---   [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
---   [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
---   [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
---   [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
--- }
+local initial_events_map = {
+  [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
+  [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
+  [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
+  [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
+  [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
+  [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
+}
 
 local function added_handler(self, device)
   for id, event in pairs(initial_events_map) do

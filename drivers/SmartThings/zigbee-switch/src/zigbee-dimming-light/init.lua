@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local clusters = require "st.zigbee.zcl.clusters"
+local capabilities = require "st.capabilities"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level

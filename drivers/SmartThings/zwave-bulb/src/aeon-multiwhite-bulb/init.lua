@@ -35,6 +35,7 @@ local AEON_MULTIWHITE_BULB_FINGERPRINTS = {
 local WARM_WHITE_CONFIG = 0x51
 local COLD_WHITE_CONFIG = 0x52
 local SWITCH_COLOR_QUERY_DELAY = 2
+local DEFAULT_COLOR_TEMPERATURE = 2700
 
 local function can_handle_aeon_multiwhite_bulb(opts, driver, device, ...)
   for _, fingerprint in ipairs(AEON_MULTIWHITE_BULB_FINGERPRINTS) do
