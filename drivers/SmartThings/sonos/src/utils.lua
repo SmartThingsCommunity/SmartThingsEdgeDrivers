@@ -73,16 +73,16 @@ function utils.labeled_socket_builder(label)
         )
       )
       sock, err =
-        ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"})
+          ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if err ~= nil then
-         return nil, "SSL wrap error: " .. err
+        return nil, "SSL wrap error: " .. err
       end
       log.trace(
         string.format(
           "%sPerforming SSL handshake for for REST Connection", label
         )
       )
-        _, err = sock:dohandshake()
+      _, err = sock:dohandshake()
       if err ~= nil then
         return nil, "Error with SSL handshake: " .. err
       end

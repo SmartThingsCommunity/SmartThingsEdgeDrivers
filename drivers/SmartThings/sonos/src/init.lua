@@ -58,9 +58,9 @@ local function find_player_for_device(driver, device, should_continue)
     SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
       driver:handle_ssdp_discovery(ssdp_group_info, function(dni, inner_ssdp_group_info, player_info, group_info)
         device.log.info(string.format(
-            "Found device for Sonos search query with MAC addr %s, comparing to %s",
-            dni, device.device_network_id
-          )
+          "Found device for Sonos search query with MAC addr %s, comparing to %s",
+          dni, device.device_network_id
+        )
         )
         if dni_equal(dni, device.device_network_id) then
           device.log.info(string.format("Found Sonos Player match for device"))
@@ -87,7 +87,7 @@ local function update_fields_from_ssdp_scan(driver, device, fields)
   local current_player_id = device:get_field(PlayerFields.PLAYER_ID)
   local current_url = device:get_field(PlayerFields.WSS_URL)
   local current_household_id = device:get_field(PlayerFields.HOUSEHOULD_ID)
-  local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection
+  local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection|nil
 
   local already_connected = sonos_conn ~= nil
   local refresh = false
@@ -113,6 +113,7 @@ local function update_fields_from_ssdp_scan(driver, device, fields)
   if current_url ~= fields.wss_url then
     if current_url ~= nil and sonos_conn ~= nil then
       sonos_conn:stop()
+      sonos_conn = nil
       device:set_field(PlayerFields.CONNECTION, nil)
       refresh = true
     end
@@ -175,8 +176,8 @@ local function _initialize_device(driver, device)
         if not device:get_field(PlayerFields._IS_INIT) then
           log.trace(string.format("%s setting up device", device.label))
           local is_already_found =
-          ((driver.found_ips and driver.found_ips[device.device_network_id])
-              or driver.sonos:is_player_joined(device.device_network_id)) and
+              ((driver.found_ips and driver.found_ips[device.device_network_id])
+                or driver.sonos:is_player_joined(device.device_network_id)) and
               driver._field_cache[device.device_network_id]
 
           if not is_already_found then
