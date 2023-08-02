@@ -19,6 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement.MeasurementUnit"
+
 local batteryAlertID = "spacewonder52282.batteryAlert"
 local deviceMutedID = "spacewonder52282.deviceMuted"
 local endOfServiceAlertID = "spacewonder52282.endOfServiceAlert"
@@ -44,6 +46,7 @@ local function device_added(driver, device)
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read(device))
   device:send(clusters.PowerSource.attributes.BatPercentRemaining:read(device))
 end
 
@@ -150,8 +153,20 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function carbon_monoxide_attr_handler(driver, device, ib, response)
-  local carbonMonoxide = math.floor(ib.data.value)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = carbonMonoxide, unit = "ppm"}))
+  local value = ib.data.value
+  local unit = device:get_field(CARBON_MONOXIDE_MEASUREMENT_UNIT)
+  if unit == clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPB then
+    value = value / 1000
+  elseif unit == clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPT then
+    value = value / 1000000
+  end
+  value = math.floor(value)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = value, unit = "ppm"}))
+end
+
+local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
+  local unit = ib.data.value
+  device:set_field(CARBON_MONOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
 end
 
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
@@ -184,7 +199,8 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
-        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
@@ -223,7 +239,8 @@ local matter_driver_template = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.carbonMonoxideMeasurement.ID] = {
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
