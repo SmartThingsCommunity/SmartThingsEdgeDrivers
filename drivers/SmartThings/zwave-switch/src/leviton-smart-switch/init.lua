@@ -16,7 +16,6 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local preferences = require "preferences"
 local cc = require "st.zwave.CommandClass"
 
-local SYNC_PREFS_FROM_DEVICE = false
 local LEVITON_MANUFACTURER_ID = 0x001D
 local LEVITON_PRODUCT_TYPE_ZWXXX = 0x0002
 local LEVITON_PRODUCT_ID_ZW6HD = 0x0041
@@ -32,15 +31,10 @@ end
 
 local function handle_configuration_update(self, device, cmd)
 
-  if not SYNC_PREFS_FROM_DEVICE then
-    return
-  end
-
   local parameters = preferences.get_device_parameters(device)
   local target_parameter_number = cmd.args.parameter_number
   local reported_value = cmd.args.configuration_value
   local target_parameter_name = nil
-  local target_parameter = nil
 
   if not parameters then
     return
@@ -49,32 +43,31 @@ local function handle_configuration_update(self, device, cmd)
   for id, parameter in pairs(parameters) do
     if parameter.parameter_number == target_parameter_number then
       target_parameter_name = id
-      target_parameter = parameter
       break
     end
   end
 
-  if target_parameter_name == nil or target_parameter == nil then
+  if target_parameter_name == nil then
     return
   end
 
   device:set_field(target_parameter_name, reported_value)
   device:set_field(target_parameter_name, reported_value, {persist = true})
-  device:refresh()
+
+  -- FIXME: SmartThings Mobile App UI does not sync with the updated value
+  -- https://community.smartthings.com/t/st-edge-driver-for-leviton-z-wave-plus-dimmers-dz6hd-dz1kd/257938/4
 
 end
 
 local function device_init(self, device)
 
-  if not SYNC_PREFS_FROM_DEVICE then
-    return
-  end
-
   local parameters = preferences.get_device_parameters(device)
 
   if parameters then
     for id, pref in pairs(parameters) do
-      device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
+      device:send(Configuration:Get({
+        parameter_number = pref.parameter_number
+      }))
     end
   end
 end
@@ -86,7 +79,7 @@ local function info_changed(driver, device, event, args)
     for id, pref in pairs(parameters) do
 
       local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
-      local old_parameter_value = new_parameter_value
+      local old_parameter_value = nil
 
       if args and args.old_st_store and args.old_st_store.preferences then
         old_parameter_value = preferences.to_numeric_value(args.old_st_store.preferences[id])
