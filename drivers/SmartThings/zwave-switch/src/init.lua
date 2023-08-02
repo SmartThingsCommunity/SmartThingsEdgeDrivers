@@ -27,6 +27,8 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
+local log = require "log"
+
 
 --- Map component to end_points(channels)
 ---
@@ -57,6 +59,7 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
+  log.info_with({hub_logs = true}, "lazy load: zwave-switch init called")
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
@@ -130,6 +133,7 @@ local driver_template = {
     }
   },
   sub_drivers = {
+    -- ZwaveDriver.lazy_load_subdriver(require("eaton-accessory-dimmer")),
     require("eaton-accessory-dimmer.can_handle"),
     require("aeotec-smart-switch.can_handle"),
     require("aeon-smart-strip.can_handle"),
@@ -144,16 +148,11 @@ local driver_template = {
     require("inovelli-LED.can_handle"),
     require("multi-metering-switch.can_handle"),
     require("multichannel-device.can_handle"),
-
-
-
-
-    -- require("zwave-dual-switch"),
-    -- require("eaton-anyplace-switch"),
-    -- require("zooz-power-strip"),
-    -- require("qubino-switches"),
-    -- require("zooz-zen-30-dimmer-relay"),
-
+    require("qubino-switches.can_handle"),
+    require("zwave-dual-switch.can_handle"),
+    require("zooz-power-strip.can_handle"),
+    require("eaton-anyplace-switch.can_handle"),
+    require("zooz-zen-30-dimmer-relay.can_handle"),
   },
   lifecycle_handlers = {
     init = device_init,

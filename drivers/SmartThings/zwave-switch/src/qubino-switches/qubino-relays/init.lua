@@ -42,7 +42,7 @@ local qubino_relays = {
   NAME = "Qubino Relays",
   can_handle = can_handle_qubino_flush_relay,
   sub_drivers = {
-    require("qubino-switches/qubino-relays/qubino-flush-2-relay"),
+    require("qubino-switches/qubino-relays/qubino-flush-2-relay.can_handle"),
     require("qubino-switches/qubino-relays/qubino-flush-1-relay"),
     require("qubino-switches/qubino-relays/qubino-flush-1d-relay")
   },

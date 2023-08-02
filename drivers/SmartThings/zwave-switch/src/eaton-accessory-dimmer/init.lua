@@ -79,6 +79,20 @@ local function switch_level_set(driver, device, cmd)
   device.thread:call_with_delay(delay, query_level)
 end
 
+local EATON_ACCESSORY_DIMMER_FINGERPRINTS = {
+  {mfr = 0x001A, prod = 0x4441, model = 0x0000} -- Eaton Dimmer Switch
+}
+
+local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
+  for _, fingerprint in ipairs(EATON_ACCESSORY_DIMMER_FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+      local subdriver = require("eaton-accessory-dimmer")
+      return true, subdriver
+    end
+  end
+  return false
+end
+
 local eaton_accessory_dimmer = {
   NAME = "eaton accessory dimmer",
   zwave_handlers = {
@@ -100,6 +114,7 @@ local eaton_accessory_dimmer = {
       [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_set
     }
   },
+  can_handle = can_handle_eaton_accessory_dimmer
 }
 
 return eaton_accessory_dimmer

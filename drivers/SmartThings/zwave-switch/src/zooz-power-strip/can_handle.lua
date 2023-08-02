@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -11,28 +11,24 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local log = require "log"
 
-local FINGERPRINTS = {
-  {mfr = 0x0086, prodId = 0x0060},
-  {mfr = 0x0371, prodId = 0x00AF},
-  {mfr = 0x0371, prodId = 0x0017}
+local ZOOZ_POWER_STRIP_FINGERPRINTS = {
+  {mfr = 0x015D, prod = 0x0651, model = 0xF51C} -- Zooz ZEN 20 Power Strip
 }
 
-local function can_handle(opts, driver, device, ...)
-  log.info_with({hub_logs=true}, "lazy load: aeotec-smart-switch can handle called")
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then
-      local subdriver = require("aeotec-smart-switch")
+local function can_handle_zooz_power_strip(opts, driver, device, ...)
+  for _, fingerprint in ipairs(ZOOZ_POWER_STRIP_FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+      local subdriver = require("zooz-power-strip")
       return true, subdriver
     end
   end
   return false
 end
 
-local subdriver = {
-  NAME = "Aeotec Smart Switch",
-  can_handle = can_handle
+local zooz_power_strip = {
+  NAME = "zooz power strip",
+  can_handle = can_handle_zooz_power_strip,
 }
 
-return subdriver
+return zooz_power_strip
