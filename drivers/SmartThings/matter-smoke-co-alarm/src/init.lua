@@ -44,6 +44,7 @@ local function device_added(driver, device)
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.PowerSource.attributes.BatPercentRemaining:read(device))
 end
 
 -- Matter Handlers --
@@ -153,6 +154,12 @@ local function carbon_monoxide_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = carbonMonoxide, unit = "ppm"}))
 end
 
+local function battery_percent_remaining_attr_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -178,6 +185,9 @@ local matter_driver_template = {
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler
+      },
+      [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
       }
     }
   },
@@ -191,7 +201,7 @@ local matter_driver_template = {
     },
     [capabilities.carbonMonoxideDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.COState,
-      clusters.SmokeCoAlarm.attributes.TestInProgress, -- is it possible?
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [batteryAlertID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert
@@ -214,6 +224,9 @@ local matter_driver_template = {
     },
     [capabilities.carbonMonoxideMeasurement.ID] = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining
     }
   },
   capability_handlers = {
