@@ -16,6 +16,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local preferences = require "preferences"
 local cc = require "st.zwave.CommandClass"
 
+local SYNC_PREFS_FROM_DEVICE = false
 local LEVITON_MANUFACTURER_ID = 0x001D
 local LEVITON_PRODUCT_TYPE_ZWXXX = 0x0002
 local LEVITON_PRODUCT_ID_ZW6HD = 0x0041
@@ -30,6 +31,10 @@ local function can_handle_leviton_zwxxx(opts, driver, device, ...)
 end
 
 local function handle_configuration_update(self, device, cmd)
+
+  if not SYNC_PREFS_FROM_DEVICE then
+    return
+  end
 
   local parameters = preferences.get_device_parameters(device)
   local target_parameter_number = cmd.args.parameter_number
@@ -63,7 +68,13 @@ local function handle_configuration_update(self, device, cmd)
 end
 
 local function device_init(self, device)
+
+  if not SYNC_PREFS_FROM_DEVICE then
+    return
+  end
+
   local parameters = preferences.get_device_parameters(device)
+
   if parameters then
     for id, pref in pairs(parameters) do
       device:send(Configuration:Get({ parameter_number = pref.parameter_number }))
