@@ -64,7 +64,7 @@ local function added_handler(self, device)
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
     end
   end
-  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {
