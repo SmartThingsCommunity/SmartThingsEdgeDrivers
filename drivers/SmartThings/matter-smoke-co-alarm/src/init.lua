@@ -43,26 +43,14 @@ local function device_added(driver, device)
   device:send(clusters.SmokeCoAlarm.attributes.EndOfServiceAlert:read(device))
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:read(device))
 end
 
 -- Matter Handlers --
-local function temp_event_handler(attribute)
-  return function(driver, device, ib, response)
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
-  end
-end
-
-local function humidity_attr_handler(driver, device, ib, response)
-  local humidity = math.floor(ib.data.value / 100.0)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
-end
-
 local function expressed_state_event_handler(driver, device, ib, response)
   local state = ib.data.value
   if state == 0 then -- Normal
-    device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedStat.normal())
+    device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedState.normal())
   elseif state == 1 then -- SmokeAlarm
     device:emit_event_for_endpoint(ib.endpoint_id, expressedState.expressedState.smokeAlarm())
   elseif state == 2 then -- COAlarm
@@ -147,6 +135,24 @@ local function end_of_service_alert_event_handler(driver, device, ib, response)
   end
 end
 
+local function temp_event_handler(attribute)
+  return function(driver, device, ib, response)
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
+  end
+end
+
+local function humidity_attr_handler(driver, device, ib, response)
+  local humidity = math.floor(ib.data.value / 100.0)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+end
+
+local function carbon_monoxide_attr_handler(driver, device, ib, response)
+  local carbonMonoxide = math.floor(ib.data.value)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = carbonMonoxide, unit = "ppm"}))
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -169,6 +175,9 @@ local matter_driver_template = {
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      },
+      [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler
       }
     }
   },
@@ -202,6 +211,9 @@ local matter_driver_template = {
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue
     }
   },
   capability_handlers = {
