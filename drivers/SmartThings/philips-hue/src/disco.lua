@@ -390,9 +390,16 @@ function HueDiscovery.do_mdns_scan(driver)
       end
     end
 
+    local update_needed = false
     if not utils.deep_table_eq((bridge_netinfo[bridge_id] or {}), bridge_info) then
       bridge_netinfo[bridge_id] = bridge_info
+      update_needed = true
+    end
+
       if driver.joined_bridges[bridge_id] and not driver.ignored_bridges[bridge_id] then
+      local bridge_device = driver:get_device_by_dni(bridge_id, true)
+      update_needed = update_needed or (bridge_device:get_field(Fields.IPV4) ~= bridge_info.ip)
+      if update_needed then
         driver:update_bridge_netinfo(bridge_id, bridge_info)
       end
     end
