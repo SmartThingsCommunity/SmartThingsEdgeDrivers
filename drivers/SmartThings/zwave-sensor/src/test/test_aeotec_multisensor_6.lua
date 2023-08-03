@@ -295,7 +295,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_sensor.id,
-        Configuration:Report({parameter_number = 9, configuration_value = 0})
+        Configuration:Report({parameter_number = 9, configuration_value = 2}) -- device docs report this should be zero, but actual devices report 2
       }
     },
     {
