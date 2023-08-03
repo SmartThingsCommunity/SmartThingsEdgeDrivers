@@ -424,13 +424,15 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     )
   )
 
-  local known_identifier_to_device_map = {}
-  for _, known_device in ipairs(driver:get_devices()) do
-    local dni = known_device.device_network_id or known_device.parent_assigned_child_key
-    known_identifier_to_device_map[dni] = known_device
+  local bridge_device = nil
+  if parent_device_id ~= nil then
+    bridge_device = driver:get_device_info(parent_device_id, false)
   end
 
-  local bridge_device = known_identifier_to_device_map[bridge_id or ""]
+  if not bridge_device then
+    bridge_device = driver:get_device_by_dni(bridge_id)
+  end
+
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
@@ -962,9 +964,10 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 _initialize = function(driver, device, event, args, parent_device_id)
+  local maybe_device = driver:get_device_by_dni(device.device_network_id)
   if not (
-        driver:get_device_by_dni(device.device_network_id)
-        and driver:get_device_by_dni(device.device_network_id).id == device.id
+        maybe_device
+        and maybe_device.id == device.id
       )
   then
     driver.datastore.dni_to_device_id[device.device_network_id] = device.id
@@ -1344,10 +1347,10 @@ local hue = Driver("hue",
         end
       end
     end,
-    get_device_by_dni = function(self, dni)
+    get_device_by_dni = function(self, dni, force_refresh)
       local device_uuid = self.datastore.dni_to_device_id[dni]
       if not device_uuid then return nil end
-      return self:get_device_info(device_uuid)
+      return self:get_device_info(device_uuid, force_refresh)
     end
   }
 )
