@@ -19,11 +19,8 @@ local IASZone = zcl_clusters.IASZone
 local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
-  local wet_probe = 0x0031
-  local wet_probe_disconnected = 0x0033
   local event
-
-  if zone_status.value == wet_probe or zone_status.value == wet_probe_disconnected then
+  if zone_status.value & 1 == 1 then
       event = capabilities.waterSensor.water.wet()
   else
       event = capabilities.waterSensor.water.dry()
@@ -48,6 +45,20 @@ local is_sinope_water_sensor = function(opts, driver, device)
   else
     return false
   end
+end
+
+local bit_and = function(a,b)
+  local result = 0
+    local bitval = 1
+    while a > 0 and b > 0 do
+      if a % 2 == 1 and b % 2 == 1 then 
+          result = result + bitval
+      end
+      bitval = bitval * 2
+      a = math.floor(a/2)
+      b = math.floor(b/2)
+    end
+    return result
 end
 
 local sinope_water_sensor = {
