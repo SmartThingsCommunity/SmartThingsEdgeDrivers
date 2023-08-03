@@ -334,17 +334,17 @@ function HueDiscovery.do_mdns_scan(driver)
   end
 
   for _, info in ipairs(mdns_responses.found) do
-    if not net_utils.validate_ipv4_string(info.host_info.address) then   -- we only care about the ipV4 types here.
+    if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
       log.trace("Invalid IPv4 address: " .. info.host_info.address)
       return
     end
 
-    if info.service_info.service_type ~= HueDiscovery.ServiceType then   -- response for a different service type. Shouldn't happen.
+    if info.service_info.service_type ~= HueDiscovery.ServiceType then -- response for a different service type. Shouldn't happen.
       log.warn("Unexpected service type response: " .. info.service_info.service_type)
       return
     end
 
-    if info.service_info.domain ~= HueDiscovery.Domain then   -- response for a different domain. Shouldn't happen.
+    if info.service_info.domain ~= HueDiscovery.Domain then -- response for a different domain. Shouldn't happen.
       log.warn("Unexpected domain response: " .. info.service_info.domain)
       return
     end
@@ -396,7 +396,7 @@ function HueDiscovery.do_mdns_scan(driver)
       update_needed = true
     end
 
-      if driver.joined_bridges[bridge_id] and not driver.ignored_bridges[bridge_id] then
+    if driver.joined_bridges[bridge_id] and not driver.ignored_bridges[bridge_id] then
       local bridge_device = driver:get_device_by_dni(bridge_id, true)
       update_needed = update_needed or (bridge_device:get_field(Fields.IPV4) ~= bridge_info.ip)
       if update_needed then
