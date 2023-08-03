@@ -26,7 +26,7 @@ local t_utils = require "integration_test.utils"
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    { 
+    {
       profile = t_utils.get_profile_definition("water-temp-battery.yml"),
       zigbee_endpoints = {
         [1] = {

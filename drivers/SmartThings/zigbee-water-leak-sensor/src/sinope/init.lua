@@ -21,13 +21,13 @@ local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
   local event
   if zone_status.value & 1 == 1 then
-      event = capabilities.waterSensor.water.wet()
+    event = capabilities.waterSensor.water.wet()
   else
-      event = capabilities.waterSensor.water.dry()
+    event = capabilities.waterSensor.water.dry()
   end
 
   if event ~= nil then
-      device:emit_event(event)
+    device:emit_event(event)
   end
 end
 
@@ -47,33 +47,19 @@ local is_sinope_water_sensor = function(opts, driver, device)
   end
 end
 
-local bit_and = function(a,b)
-  local result = 0
-    local bitval = 1
-    while a > 0 and b > 0 do
-      if a % 2 == 1 and b % 2 == 1 then 
-          result = result + bitval
-      end
-      bitval = bitval * 2
-      a = math.floor(a/2)
-      b = math.floor(b/2)
-    end
-    return result
-end
-
 local sinope_water_sensor = {
   NAME = "Sinope Water Leak Sensor",
   zigbee_handlers = {
-      attr = {
-          [IASZone.ID] = {
-              [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
-          }
-      },
-      cluster = {
-          [IASZone.ID] = {
-              [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
-          }
+    attr = {
+      [IASZone.ID] = {
+        [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
       }
+    },
+    cluster = {
+      [IASZone.ID] = {
+        [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
+      }
+    }
   },
   can_handle = is_sinope_water_sensor
 }
