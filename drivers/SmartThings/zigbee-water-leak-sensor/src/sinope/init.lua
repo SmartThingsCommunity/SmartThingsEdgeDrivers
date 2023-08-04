@@ -20,7 +20,7 @@ local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
   local event
-  if zone_status.value & 1 == 1 then
+  if zone_status:is_alarm1_set() then
     event = capabilities.waterSensor.water.wet()
   else
     event = capabilities.waterSensor.water.dry()

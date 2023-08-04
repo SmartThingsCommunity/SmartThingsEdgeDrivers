@@ -78,6 +78,22 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Reported water should be handled: dry",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0002) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+      }
+    }
+)
+
+test.register_message_test(
     "ZoneStatusChangeNotification should be handled: wet",
     {
       {
