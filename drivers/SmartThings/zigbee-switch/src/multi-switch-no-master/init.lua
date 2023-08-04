@@ -31,6 +31,8 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "REX", model = "HY0097", children = 2 },
   { mfr = "HEIMAN", model = "HS2SW2L-EFR-3.0", children = 1 },
   { mfr = "HEIMAN", model = "HS2SW3L-EFR-3.0", children = 2 },
+  { mfr = "HEIMAN", model = "HS6SW2A-W-EF-3.0", children = 1 },
+  { mfr = "HEIMAN", model = "HS6SW3A-W-EF-3.0", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW02", children = 1 },
   { mfr = "eWeLink", model = "ZB-SW03", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW04", children = 3 },
@@ -104,3 +106,4 @@ local multi_switch_no_master = {
 }
 
 return multi_switch_no_master
+
