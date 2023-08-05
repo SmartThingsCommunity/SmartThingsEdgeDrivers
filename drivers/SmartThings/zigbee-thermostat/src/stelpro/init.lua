@@ -38,7 +38,7 @@ local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
   { mfr = "Stelpro", model = "SORB" },
   { mfr = "Stelpro", model = "SonomaStyle" },
-  { mfr = "Stelpro", model = "SMT402AD" } -- added M.Colmenarejo
+  { mfr = "Stelpro", model = "SMT402AD" }
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
