@@ -43,9 +43,9 @@ local STELPRO_THERMOSTAT_FINGERPRINTS = {
 
 local is_stelpro_thermostat = function(opts, driver, device)
   for _, fingerprint in ipairs(STELPRO_THERMOSTAT_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+        return true
+    end
   end
   return false
 end
