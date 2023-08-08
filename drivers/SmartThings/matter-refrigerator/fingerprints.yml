@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/refrigerator"
+    deviceLabel: Matter Refrigerator
+    vendorId: 0x10e1
+    productId: 0x1021
+    deviceProfileName: refrigerator
