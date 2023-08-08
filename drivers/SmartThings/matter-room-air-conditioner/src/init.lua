@@ -46,7 +46,7 @@ local function device_added(driver, device)
   device:send(clusters.FanControl.attributes.FanModeSequence:read(device))
 end
 
--- Capability Handlers -- 
+-- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
@@ -114,7 +114,7 @@ local function set_setpoint(setpoint)
   end
 end
 
--- Matter Handlers -- 
+-- Matter Handlers --
 local function on_off_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
@@ -178,17 +178,18 @@ end
 local function fan_mode_handler(driver, device, ib, response)
   log.info(string.format("fan_mode_handler %d", ib.data.value))
   if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.off())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.low())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.medium())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.high())
-  elseif ib.data.value == clusters.FanControl.attributes.FanMode.AUTO then
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.auto())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
   else
-    device:emit_event_for_endpoint(ib.endpoint_id, fanControl.fanMode.off())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
+    if ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.low())
+    elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.medium())
+    elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.high())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.auto())
+    end
   end
 end
 
