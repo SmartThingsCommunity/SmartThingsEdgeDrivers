@@ -103,7 +103,7 @@ local function set_thermostat_mode(driver, device, command)
 end
 
 local function device_added(self, device)
-  -- device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 
   -- The DTH for this device supported heat and eco, so we've mirrored that here, despite
   -- the existing, more accurate "energy save heat" mode
