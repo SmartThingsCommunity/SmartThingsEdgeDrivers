@@ -1,0 +1,4 @@
+name: 'Matter Refrigerator'
+packageKey: 'matter-refrigerator'
+permissions:
+  matter: {}
