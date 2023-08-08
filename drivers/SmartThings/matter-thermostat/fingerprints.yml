@@ -47,3 +47,8 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
     deviceProfileName: thermostat-humidity-fan
+  - id: "matter/roomAC"
+    deviceLabel: Matter Room Air Conditioner
+    deviceTypes:
+      - id: 0x0072
+    deviceProfileName: thermostat
