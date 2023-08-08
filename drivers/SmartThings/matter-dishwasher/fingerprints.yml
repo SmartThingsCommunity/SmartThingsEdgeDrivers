@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/dishwasher"
+    deviceLabel: Matter Dishwasher
+    vendorId: 0x10e1
+    productId: 0x1026
+    deviceProfileName: dishwasher

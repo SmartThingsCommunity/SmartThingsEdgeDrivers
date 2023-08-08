@@ -1,0 +1,4 @@
+name: 'Matter Dishwasher'
+packageKey: 'matter-dishwasher'
+permissions:
+  matter: {}
