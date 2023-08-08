@@ -1,0 +1,4 @@
+name: 'Matter Laundry Washer'
+packageKey: 'matter-laundry-washer'
+permissions:
+  matter: {}

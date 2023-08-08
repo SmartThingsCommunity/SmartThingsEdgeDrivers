@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/laundry-washer"
+    deviceLabel: Matter Laundry Washer
+    vendorId: 0x10e1
+    productId: 0x1024
+    deviceProfileName: laundry-washer
