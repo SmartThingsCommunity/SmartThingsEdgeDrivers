@@ -1,0 +1,30 @@
+name: smoke-co-alarm-custom
+components:
+- id: main
+  capabilities:
+  - id: spacewonder52282.expressedState
+    version: 1
+  - id: smokeDetector
+    version: 1
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: spacewonder52282.batteryAlert
+    version: 1
+  - id: spacewonder52282.deviceMuted
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: spacewonder52282.endOfServiceAlert
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: carbonMonoxideMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  - id: battery
+    version: 1
+  categories:
+  - name: SmokeDetector

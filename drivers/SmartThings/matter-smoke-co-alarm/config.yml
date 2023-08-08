@@ -1,0 +1,4 @@
+name: 'Matter Smoke/CO Alarm'
+packageKey: 'matter-smoke-co-alarm'
+permissions:
+  matter: {}
