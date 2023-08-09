@@ -10,7 +10,9 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
-  - id: carbonMonoxideMeasurement
+  - id: audioMute
+    version: 1
+  - id: filterStatus
     version: 1
   - id: tamperAlert
     version: 1
@@ -20,3 +22,6 @@ components:
     version: 1
   categories:
   - name: SmokeDetector
+preferences:
+  - preferenceId: certifiedpreferences.smokeSensorSensitivity
+    explicit: true
