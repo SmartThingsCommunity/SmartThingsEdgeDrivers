@@ -1,0 +1,8 @@
+name: air-purifier
+components:
+- id: main
+  capabilities:
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
