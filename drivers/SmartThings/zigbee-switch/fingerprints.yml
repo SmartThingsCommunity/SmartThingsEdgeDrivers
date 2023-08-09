@@ -2111,11 +2111,6 @@ zigbeeManufacturer:
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
   # Wall Hero
-  - id: "WALL HERO/M4T2804A-ZB"
-    deviceLabel: 四键开关 1 (普通开关)
-    manufacturer: WALL HERO
-    model: M4T2804A-ZB
-    deviceProfileName: basic-switch
   - id: "WALL HERO/M4T2828A-ZB"
     deviceLabel: 八键开关 1 (普通开关)
     manufacturer: WALL HERO

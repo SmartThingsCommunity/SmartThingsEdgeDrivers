@@ -20,7 +20,6 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Scenes = zcl_clusters.Scenes
 
 local FINGERPRINTS = {
-  { mfr = "WALL HERO", model = "M4T2804A-ZB", switches = 4, buttons = 0 },
   { mfr = "WALL HERO", model = "M4T2828A-ZB", switches = 4, buttons = 4 }
 }
 
