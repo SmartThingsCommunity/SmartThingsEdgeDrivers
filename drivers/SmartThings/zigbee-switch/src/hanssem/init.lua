@@ -23,15 +23,6 @@ local FINGERPRINTS = {
   { mfr = "Winners", model = "LSS1-206", children = 5 }
 }
 
-local function can_handle_hanssem_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function get_children_amount(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
@@ -79,7 +70,6 @@ local HanssemSwitch = {
     added = device_added,
     init = device_init
   },
-  can_handle = can_handle_hanssem_switch
 }
 
 return HanssemSwitch
