@@ -33,6 +33,13 @@ matterManufacturer:
     productId: 0xAC
     deviceProfileName: plug-binary
 
+#Yeelight
+  - id: "Yeelight Smart Lamp"
+    deviceLabel: Yeelight Smart Lamp
+    vendorId: 0x1312
+    productId: 0x1
+    deviceProfileName: light-level-colorTemperature-2700k-6500k
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
