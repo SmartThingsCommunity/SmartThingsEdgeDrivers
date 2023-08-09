@@ -59,6 +59,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: SceneSwitch-EM-3.0
     deviceProfileName: four-buttons-battery
+  - id: "HEIMAN/HS6SSA-W-EF-3.0"
+    deviceLabel: HEIMAN Scene Panel
+    manufacturer: HEIMAN
+    model: HS6SSA-W-EF-3.0
+    deviceProfileName: four-buttons
   - id: "HEIMAN/HS6SSB-W-EF-3.0"
     deviceLabel: HEIMAN Scene Panel
     manufacturer: HEIMAN
