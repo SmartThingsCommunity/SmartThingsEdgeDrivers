@@ -1,0 +1,6 @@
+matterManufacturer:
+  - id: "matter/air-purifier"
+    deviceLabel: Matter Air Purifier
+    vendorId: 0x10e1
+    productId: 0x1028
+    deviceProfileName: air-purifier
