@@ -15,6 +15,7 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local utils = require "st.utils"
 
 local log = require "log"
 
@@ -77,15 +78,37 @@ local subscribed_attributes = {
   }
 }
 
+local units_required = {
+  clusters.CarbonMonoxideConcentrationMeasurement,
+  clusters.CarbonDioxideConcentrationMeasurement,
+  clusters.NitrogenDioxideConcentrationMeasurement,
+  clusters.OzoneConcentrationMeasurement,
+  clusters.FormaldehydeConcentrationMeasurement,
+  clusters.Pm1ConcentrationMeasurement,
+  clusters.Pm25ConcentrationMeasurement,
+  clusters.Pm10ConcentrationMeasurement,
+  clusters.RadonConcentrationMeasurement,
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement
+}
+
 local function device_init(driver, device)
   device:subscribe()
 end
 
+local function configure(driver, device)
+  -- we have to read the unit before reports of values will do anything
+  for _, cluster in ipairs(units_required) do
+    device:send(cluster.attributes.MeasurementUnit:read(device))
+  end
+end
+
 local function device_added(driver, device)
-  for _, attributes in pairs(subscribed_attributes) do
-    for _, attribute in ipairs(attributes) do
-      device:send(attribute:read(device))
-    end
+  device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.AirQuality.attributes.MeasuredValue:read(device))
+  -- we _should_ have a unit by now
+  for _, cluster in ipairs(units_required) do
+    device:send(cluster.attributes.MeasuredValue:read(device))
   end
 end
 
@@ -120,22 +143,22 @@ local unit_strings = {
 
 local conversion_tables = {
   [units.PPM] = {
-    [units.PPM] = function(value) return value end
+    [units.PPM] = function(value) return utils.round(value) end
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return math.floor(value/1000) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end
   },
   [units.PPT] = {
-    [units.PPM] = function(value) return math.floor(value/1000000) end
+    [units.PPM] = function(value) return utils.round(value/(10^6)) end
   },
   [units.MGM3] = {
-    [units.UGM3] = function(value) return math.floor(value * 1000) end
+    [units.UGM3] = function(value) return utils.round(value * (10^3)) end
   },
   [units.NGM3] = {
-    [units.UGM3] = function(value) return math.floor(value/1000) end
+    [units.UGM3] = function(value) return utils.round(value/(10^3)) end
   },
   [units.BQM3] = {
-    [units.PCIL] = function(value) return math.floor(value/37) end
+    [units.PCIL] = function(value) return utils.round(value/37) end
   }
 }
 
@@ -181,7 +204,7 @@ local function temp_event_handler(driver, device, ib, response)
 end
 
 local function humidity_attr_handler(driver, device, ib, response)
-  local humidity = math.floor(ib.data.value / 100.0)
+  local humidity = utils.round(ib.data.value / 100.0)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
 end
 
@@ -189,6 +212,7 @@ local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added,
+    doConfigure = configure
   },
   matter_handlers = {
     attr = {
@@ -196,7 +220,7 @@ local matter_driver_template = {
         [clusters.AirQuality.attributes.AirQuality.ID] = air_quality_attr_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
@@ -215,7 +239,7 @@ local matter_driver_template = {
       },
       [clusters.OzoneConcentrationMeasurement.ID] = {
         [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(ozoneMeasurementID, ozoneMeasurement.OzoneConcentrationMeasurement, units.PPM),
-        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.ozoneMeasurement.NAME)
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(ozoneMeasurementID)
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {
         [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, units.PPM),
