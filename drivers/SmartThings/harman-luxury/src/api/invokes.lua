@@ -9,33 +9,25 @@ Invokes = {}
 --- set value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, boolean|number|string|table|ErrMsg
 function Invokes.Activate(ip, path)
-	local ret = nsdk.Invoke {
+	return nsdk.Invoke {
 		ip = ip,
 		path = path
 	}
-	if ret then
-		return ret
-	else
-		return false
-	end
 end
 
 --- set value from path in ip
 ---@param ip string
 ---@param path string
 ---@param value table
+---@return boolean, boolean|number|string|table|ErrMsg
 function Invokes.ActivateValue(ip, path, value)
-	local ret = nsdk.Invoke {
+	return nsdk.Invoke {
 		ip = ip,
 		path = path,
 		value = value
 	}
-	if ret then
-		return ret
-	else
-		return false
-	end
 end
 
 return Invokes

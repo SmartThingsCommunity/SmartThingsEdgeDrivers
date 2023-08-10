@@ -1,8 +1,6 @@
 local log = require "log"
 local net_utils = require "st.net_utils"
 
-local api = require "api.apis"
-
 Disco_Helper = {}
 
 local function byte_array_to_plain_text(byte_array)
@@ -75,15 +73,14 @@ local function get_parameters(driver, ip, discovery_responses)
         for key, value in string.gmatch(text, "(%S+)=(%S+)") do
             if key == "mac" then
                 local dni = value:gsub("-", ""):gsub(":", ""):lower()
-                log.info("get_parameters : use mac as dni. mac = " .. value .. " | dni = " .. dni)
+                log.info(string.format("get_parameters : use mac as dni. mac = %s | dni = %s" , value, dni))
                 params["dni"] = dni
             end
             if key == "mnid" then
-                log.info("get_parameters : mnid = " .. value)
+                log.info(string.format("get_parameters : mnid = %s", value))
                 params["mnid"] = value
-            end
-            if key == "setupid" then
-                log.info("get_parameters : setupid = " .. value)
+            elseif key == "setupid" then
+                log.info(string.format("get_parameters : setupid = %s", value))
                 params["setupid"] = value
             end
         end
@@ -109,7 +106,7 @@ local function insert_dni_ip_from_answers(driver, filtered_responses, target_tab
             local params = get_parameters(driver, ip, filtered_responses)
 
             if params ~= nil then
-                log.info("answer_name, arecod = " .. tostring(answer.name) .. ", " .. tostring(answer.kind.ARecord))
+                log.info(string.format("answer_name, arecod = %s, %s", answer.name, answer.kind.ARecord))
                 local dni = params["dni"]
                 local mnid = params["mnid"]
                 local setupid = params["setupid"]
@@ -123,7 +120,7 @@ local function insert_dni_ip_from_answers(driver, filtered_responses, target_tab
     end
 end
 
-local function filter_response_by_servie_name(service_type, discovery_responses)
+local function filter_response_by_service_name(service_type, discovery_responses)
     local filtered_responses = {
         answers = {},
         found = {}
@@ -157,7 +154,7 @@ local function insert_dni_ip_from_found(driver, filtered_responses, target_table
             local params = get_parameters(driver, ip, filtered_responses)
 
             if params ~= nil then
-                log.info("ip = " .. ip)
+                log.info(string.format("ip = %s", ip))
                 local dni = params["dni"]
                 local mnid = params["mnid"]
                 local setupid = params["setupid"]
@@ -174,7 +171,7 @@ end
 function Disco_Helper.get_dni_ip_table_from_mdns_responses(driver, service_type, domain, discovery_responses)
     local dni_ip_table = {}
 
-    local filtered_responses = filter_response_by_servie_name(service_type, discovery_responses)
+    local filtered_responses = filter_response_by_service_name(service_type, discovery_responses)
 
     insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
     insert_dni_ip_from_found(driver, filtered_responses, dni_ip_table)

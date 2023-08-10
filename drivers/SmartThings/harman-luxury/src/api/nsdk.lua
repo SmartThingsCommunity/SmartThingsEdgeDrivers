@@ -25,21 +25,35 @@ NSDK = {}
 --- Helpers ----------------------------------------------
 
 --- formats a list of roles into a formatted string suitable for the HTTP API
----@param rolesList table
+---@param rolesList table<string>|nil
+---@return string
 local function format_roles(rolesList)
     if rolesList == nil then
         return "value"
     else
-        local roles = ""
+        local t = {}
         for i, role in rolesList do
-            if roles == "all" then
+            if role == "all" then
                 return "@all"
             else
-                roles = roles .. role .. ","
+                table.insert(t, role)
             end
         end
-        return roles:sub(1, -2)
+        return table.concat(t, ",")
     end
+end
+
+--- creates a JSON error mesage from a string
+---@class ErrMsg
+---@field error table<string>
+---@param msg string
+---@return ErrMsg
+local function error_msg(msg)
+    return {
+        error = {
+            message = msg
+        }
+    }
 end
 
 --- Actual Functions -------------------------------------
@@ -47,11 +61,12 @@ end
 --- API to send a GetData request to nSDK
 ---@param ip string
 ---@param path string
----@param roles string
+---@param roles string|table
+---@return boolean, boolean|number|string|table|ErrMsg
 local function _NsdkGetData(ip, path, roles)
     log.debug(string.format("Nsdk GetData: ip:%s path:%s", ip, path))
-    local u = url.parse(HTTP .. ip .. GET_DATA)
-    u:setQuery {
+    local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_DATA))
+    u:setQuery{
         path = path,
         roles = roles
     }
@@ -62,14 +77,20 @@ local function _NsdkGetData(ip, path, roles)
         method = "GET",
         sink = ltn12.sink.table(sink)
     }
-    if code == 200 then     -- OK
-        return json.decode(sink[1])[1]
+    if code == 200 then -- OK
+        local ret, val = pcall(json.decode, table.concat(sink, ""))
+        val = val[1]
+        log.debug(string.format("Nsdk GetData: received value:%s", st_utils.stringify_table(val)))
+        return ret, val
     elseif code == 500 then -- ERROR
-        log.warn(string.format("Error in GetData: %s. Error: \"%s\"", u, json.decode(sink[result])["error"]["message"]))
-        return false
+        local ret, err = pcall(json.decode, sink[result])
+        log.warn(string.format("Error in GetData: %s. Error: \"%s\"", u, err["error"]["message"]))
+        return false, err
     else -- UNKNOWN VALUE
-        log.error(string.format("Error in GetData: Unknown return value: %s - %s", code, st_utils.stringify_table(sink)))
-        return false
+        local err = error_msg(string.format("Error in GetData: Unknown return value: %s - %s", code,
+            st_utils.stringify_table(sink)))
+        log.error(err["error"]["message"])
+        return false, err
     end
 end
 
@@ -79,10 +100,11 @@ end
 ---@param roles string
 ---@param from number
 ---@param to number
+---@return boolean, boolean|number|string|table|ErrMsg
 local function _NsdkGetRows(ip, path, roles, from, to)
     log.debug(string.format("Nsdk GetRows: ip:%s path:%s", ip, path))
-    local u = url.parse(HTTP .. ip .. GET_ROWS)
-    u:setQuery {
+    local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_ROWS))
+    u:setQuery{
         path = path,
         roles = roles,
         from = from,
@@ -95,15 +117,20 @@ local function _NsdkGetRows(ip, path, roles, from, to)
         method = "GET",
         sink = ltn12.sink.table(sink)
     }
-    if code == 200 then     -- OK
-        return json.decode(sink[1])[1]["rows"]
+    if code == 200 then -- OK
+        local ret, val = pcall(json.decode, table.concat(sink, ""))
+        val = val[1]["rows"]
+        log.debug(string.format("Nsdk GetRows: received value:%s", st_utils.stringify_table(val)))
+        return ret, val
     elseif code == 500 then -- ERROR
-        log.warn(string.format("Error in GetRows: URL: %s. Error: \"%s\"", u,
-            json.decode(sink[result])["error"]["message"]))
-        return false
+        local ret, err = pcall(json.decode, sink[result])
+        log.warn(string.format("Error in GetRows: URL: %s. Error: \"%s\"", u, err["error"]["message"]))
+        return false, err
     else -- UNKNOWN VALUE
-        log.error(string.format("Error in GetRows: Unknown return value: %s - %s", code, st_utils.stringify_table(sink)))
-        return false
+        local err = error_msg(string.format("Error in GetRows: Unknown return value: %s - %s", code,
+            st_utils.stringify_table(sink)))
+        log.error(err["error"]["message"])
+        return false, err
     end
 end
 
@@ -112,10 +139,11 @@ end
 ---@param path string
 ---@param role string
 ---@param value string
+---@return boolean, boolean|number|string|table|ErrMsg
 local function _NsdkSetData(ip, path, role, value)
     log.debug(string.format("Nsdk SetData: ip:%s path:%s", ip, path))
-    local u = url.parse(HTTP .. ip .. SET_DATA)
-    u:setQuery {
+    local u = url.parse(string.format("%s%s%s", HTTP, ip, SET_DATA))
+    u:setQuery{
         path = path,
         role = role,
         value = value
@@ -127,33 +155,41 @@ local function _NsdkSetData(ip, path, role, value)
         method = "GET",
         sink = ltn12.sink.table(sink)
     }
-    if code == 200 then     -- OK
-        return json.decode(sink[1])
+    if code == 200 then -- OK
+        local ret, val = pcall(json.decode, table.concat(sink, ""))
+        log.debug(string.format("Nsdk SetData: received value:%s", st_utils.stringify_table(val)))
+        return ret, val
     elseif code == 500 then -- ERROR
-        log.warn(string.format("Error in SetData: URL: %s. Error: \"%s\"", u,
-            json.decode(sink[result])["error"]["message"]))
-        return false
+        local ret, err = pcall(json.decode, sink[result])
+        log.warn(string.format("Error in SetData: URL: %s. Error: \"%s\"", u, err["error"]["message"]))
+        return false, err
     else -- UNKNOWN VALUE
-        log.error(string.format("Error in SetData: Unknown return value: %s - %s", code, st_utils.stringify_table(sink)))
-        return false
+        local err = error_msg(string.format("Error in SetData: Unknown return value: %s - %s", code,
+            st_utils.stringify_table(sink)))
+        log.error(err["error"]["message"])
+        return false, err
     end
 end
 
 --- Wrappers ----------------------------------------------------------
 
 --- API to send a GetData request to nSDK
----@param arg table
----@param arg.ip string
----@param arg.path string
----@param arg.rolesList string|table [optional]
+---@class GetInput
+---@field ip string
+---@field path string
+---@field rolesList table<string>|nil
+---@param arg GetInput
+---@return boolean, boolean|number|string|table|ErrMsg
 function NSDK.GetData(arg)
     if not net_utils.validate_ipv4_string(arg.ip) then
-        log.error(string.format("Error in GetData: Invalid IP! Given IP: ", arg.ip))
-        return false
+        local err = error_msg(string.format("Error in GetData: Invalid IP! Given IP: ", arg.ip))
+        log.error(err["error"]["message"])
+        return false, err
     end
     if type(arg.path) ~= "string" then
-        log.error(string.format("Error in GetData: Invalid Path! Given path: ", arg.path))
-        return false
+        local err = error_msg(string.format("Error in GetData: Invalid Path! Given path: ", arg.path))
+        log.error(err["error"]["message"])
+        return false, err
     end
     local roles = format_roles(arg.rolesList)
 
@@ -161,31 +197,35 @@ function NSDK.GetData(arg)
 end
 
 --- API to send a GetRows request to nSDK
----@param arg table
----@param arg.ip string
----@param arg.path string
----@param arg.rolesList string|table [optional]
----@param arg.from number [optional]
----@param arg.to number [optional]
+---@class GetRowsInput
+---@field ip string
+---@field path string
+---@field rolesList table<string>|nil
+---@field from number|nil
+---@field to number|nil
+---@param arg GetRowsInput
+---@return boolean, boolean|number|string|table|ErrMsg
 function NSDK.GetRows(arg)
     if not net_utils.validate_ipv4_string(arg.ip) then
-        log.error(string.format("Error in GetRows: Invalid IP! Given IP: ", arg.ip))
-        return false
+        local err = error_msg(string.format("Error in GetRows: Invalid IP! Given IP: ", arg.ip))
+        log.error(err["error"]["message"])
+        return false, err
     end
     if type(arg.path) ~= "string" then
-        log.error(string.format("Error in GetRows: Invalid Path! Given path: ", arg.path))
-        return false
+        local err = error_msg(string.format("Error in GetRows: Invalid Path! Given path: ", arg.path))
+        log.error(err["error"]["message"])
+        return false, err
     end
     local from, to
-    if arg.from == nil then
-        from = 0
-    else
+    if type(arg.from) == "number" then
         from = arg.from
-    end
-    if arg.to == nil then
-        to = 10
     else
+        from = 0
+    end
+    if type(arg.to) == "number" then
         to = arg.to
+    else
+        to = 10
     end
     local roles = format_roles(arg.rolesList)
 
@@ -193,23 +233,28 @@ function NSDK.GetRows(arg)
 end
 
 --- API to send a SetData request to nSDK
----@param arg table
----@param arg.ip string
----@param arg.path string
----@param arg.value table
+---@class SetInput
+---@field ip string
+---@field path string
+---@field value table
+---@param arg SetInput
+---@return boolean, boolean|number|string|table|ErrMsg
 function NSDK.SetData(arg)
     if not net_utils.validate_ipv4_string(arg.ip) then
-        log.error(string.format("Error in SetData: Invalid IP! Given IP: ", arg.ip))
-        return false
+        local err = error_msg(string.format("Error in SetData: Invalid IP! Given IP: ", arg.ip))
+        log.error(err["error"]["message"])
+        return false, err
     end
     if type(arg.path) ~= "string" then
-        log.error(string.format("Error in SetData: Invalid Path! Given path: ", arg.path))
-        return false
+        local err = error_msg(string.format("Error in SetData: Invalid Path! Given path: ", arg.path))
+        log.error(err["error"]["message"])
+        return false, err
     end
     local value
     if type(arg.value) ~= "table" then
-        log.error("Error in SetData: Invalid value. Value needs to be given as a table!")
-        return false
+        local err = error_msg("Error in SetData: Invalid value. Value needs to be given as a table!")
+        log.error(err["error"]["message"])
+        return false, err
     else
         value = json.encode(arg.value)
     end
@@ -218,18 +263,22 @@ function NSDK.SetData(arg)
 end
 
 --- API to send an Invoke request to nSDK
----@param arg table
----@param arg.ip string
----@param arg.path string
----@param arg.value table|nil
+---@class InvokeInput
+---@field ip string
+---@field path string
+---@field value table|nil
+---@param arg InvokeInput
+---@return boolean, boolean|number|string|table|ErrMsg
 function NSDK.Invoke(arg)
     if not net_utils.validate_ipv4_string(arg.ip) then
-        log.error(string.format("Error in Invoke: Invalid IP! Given IP: ", arg.ip))
-        return false
+        local err = error_msg(string.format("Error in Invoke: Invalid IP! Given IP: ", arg.ip))
+        log.error(err["error"]["message"])
+        return false, err
     end
     if type(arg.path) ~= "string" then
-        log.error(string.format("Error in Invoke: Invalid Path! Given path: ", arg.path))
-        return false
+        local err = error_msg(string.format("Error in Invoke: Invalid Path! Given path: ", arg.path))
+        log.error(err["error"]["message"])
+        return false, err
     end
     local value
     if type(arg.value) == "table" then
@@ -237,8 +286,9 @@ function NSDK.Invoke(arg)
     elseif arg.value == nil then
         value = "{}"
     else
-        log.error("Error in Invoke: Invalid value. If Value given, it needs to be given as a table!")
-        return false
+        local err = error_msg("Error in Invoke: Invalid value. If Value given, it needs to be given as a table!")
+        log.error(err["error"]["message"])
+        return false, err
     end
     return _NsdkSetData(arg.ip, arg.path, "activate", value)
 end

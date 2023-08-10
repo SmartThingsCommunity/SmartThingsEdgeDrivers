@@ -14,23 +14,14 @@ components:
     version: 1
   - id: mediaPlayback
     version: 1
-    config:
-      values:
-        - key: "playbackStatus.value"
-          enabledValues:
-            - 'playing'
-            - 'paused'
-            - 'stopped'
-        - key: "{{enumCommands}}"
-          enabledValues:
-            - 'play'
-            - 'pause'
-            - 'stop'
   - id: mediaTrackControl
     version: 1
-  # - id: keypadInput
-  #   version: 1
+  - id: audioNotification 
+    version: 1
+  - id: keypadInput
+    version: 1
   - id: refresh
     version: 1
   categories:
   - name: Speaker
+  

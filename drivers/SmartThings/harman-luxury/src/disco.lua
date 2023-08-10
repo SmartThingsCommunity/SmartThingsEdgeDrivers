@@ -4,14 +4,12 @@ local log = require "log"
 
 local disco_helper = require "disco_helper"
 local devices = require "devices"
-
-local SERVICE_TYPE = "_sue-st._tcp"
-local DOMAIN = "local"
+local const = require "constants"
 
 local Discovery = {}
 
 local function update_device_discovery_cache(driver, dni, params)
-    log.info("update_device_discovery_cache for device dni: " .. tostring(dni) .. ", " .. tostring(params.ip))
+    log.info(string.format("update_device_discovery_cache for device dni: dni=%s, ip=%s", dni, params.ip))
     local device_info = devices.get_device_info(dni, params)
     driver.registered_devices[dni] = {
         ip = params.ip,
@@ -20,14 +18,14 @@ local function update_device_discovery_cache(driver, dni, params)
 end
 
 local function try_add_device(driver, device_dni, device_params)
-    log.trace("try_add_device : dni=" .. tostring(device_dni) .. ", ip=" .. tostring(device_params.ip))
+    log.trace(string.format("try_add_device : dni=%s, ip=%s", device_dni, device_params.ip))
 
     update_device_discovery_cache(driver, device_dni, device_params)
 
     local device_info = devices.get_device_info(device_dni, device_params)
 
     if not device_info then
-        log.error("failed to create device create msg. device_info is nil. dni = " .. device_dni)
+        log.error(string.format("failed to create device create msg. device_info is nil. dni=%s", device_dni))
         return nil
     end
 
@@ -35,14 +33,14 @@ local function try_add_device(driver, device_dni, device_params)
 end
 
 function Discovery.set_device_field(driver, device)
-    log.info("set_device_field : dni = " .. tostring(device.device_network_id))
+    log.info(string.format("set_device_field : dni=%s", device.device_network_id))
     local device_cache_value = driver.registered_devices[device.device_network_id]
 
     -- persistent fields
-    device:set_field("device_ipv4", device_cache_value.ip, {
+    device:set_field(const.IP, device_cache_value.ip, {
         persist = true
     })
-    device:set_field("device_info", device_cache_value.device_info, {
+    device:set_field(const.DEVICE_INFO, device_cache_value.device_info, {
         persist = true
     })
 end
@@ -50,12 +48,12 @@ end
 local function find_params_table(driver)
     log.info("Discovery.find_params_table")
 
-    local discovery_responses = mdns.discover(SERVICE_TYPE, DOMAIN) or {
+    local discovery_responses = mdns.discover(const.SERVICE_TYPE, const.DOMAIN) or {
         answers = {},
         additional = {}
     }
 
-    local dni_params_table = disco_helper.get_dni_ip_table_from_mdns_responses(driver, SERVICE_TYPE, DOMAIN,
+    local dni_params_table = disco_helper.get_dni_ip_table_from_mdns_responses(driver, const.SERVICE_TYPE, const.DOMAIN,
         discovery_responses)
 
     return dni_params_table
@@ -76,7 +74,7 @@ local function discovery_device(driver)
 
     log.debug("\n\n--- Checking if devices are known or not ---\n")
     for dni, params in pairs(params_table) do
-        log.info("discovery_device dni = " .. tostring(dni) .. ", ip = " .. tostring(params.ip))
+        log.info(string.format("discovery_device dni=%s, ip=%s", dni, params.ip))
         if not known_devices or not known_devices[dni] then
             unknown_discovered_devices[dni] = params
         else
@@ -86,7 +84,7 @@ local function discovery_device(driver)
 
     log.debug("\n\n--- Update devices cache ---\n")
     for dni, params in pairs(known_discovered_devices) do
-        log.trace("known dni=" .. tostring(dni) .. ", ip=" .. tostring(params.ip))
+        log.trace(string.format("known dni=%s, ip=%s", dni, params.ip))
         if driver.registered_devices[dni] then
             update_device_discovery_cache(driver, dni, params)
             Discovery.set_device_field(driver, known_devices[dni])
@@ -96,7 +94,7 @@ local function discovery_device(driver)
     if unknown_discovered_devices then
         log.debug("\n\n--- Try to create unkown devices ---\n")
         for dni, ip in pairs(unknown_discovered_devices) do
-            log.trace("unknown dni=" .. tostring(dni) .. ", ip=" .. tostring(ip))
+            log.trace(string.format("unknown dni=%s, ip=%s", dni, ip))
             if not driver.registered_devices[dni] then
                 try_add_device(driver, dni, params_table[dni])
             end

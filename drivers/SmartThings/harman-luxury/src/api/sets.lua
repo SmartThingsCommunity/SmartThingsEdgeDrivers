@@ -11,21 +11,17 @@ Sets = {}
 ---@param path string
 ---@param type string
 ---@param value boolean|number|string
+---@return boolean, boolean|number|string|table|ErrMsg
 local function SetValue(ip, path, type, value)
 	local table_value = {
 		type = type,
 		[type] = value
 	}
-	local ret = nsdk.SetData {
+	return nsdk.SetData {
 		ip = ip,
 		path = path,
 		value = table_value
 	}
-	if ret then
-		return ret
-	else
-		return false
-	end
 end
 
 ----------------------------------------------------------
@@ -36,6 +32,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value boolean
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Bool(ip, path, value)
 	return SetValue(ip, path, "bool_", value)
 end
@@ -44,6 +41,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Byte(ip, path, value)
 	return SetValue(ip, path, "byte_", value)
 end
@@ -52,6 +50,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I16(ip, path, value)
 	return SetValue(ip, path, "i16_", value)
 end
@@ -60,6 +59,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I32(ip, path, value)
 	return SetValue(ip, path, "i32_", value)
 end
@@ -68,6 +68,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I64(ip, path, value)
 	return SetValue(ip, path, "i64_", value)
 end
@@ -76,6 +77,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Double(ip, path, value)
 	return SetValue(ip, path, "double_", value)
 end
@@ -84,6 +86,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value string
+---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.String(ip, path, value)
 	return SetValue(ip, path, "string_", value)
 end

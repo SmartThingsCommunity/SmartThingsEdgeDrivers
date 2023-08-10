@@ -11,30 +11,16 @@ Gets = {}
 ---@param ip string
 ---@param path string
 ---@param type string
+---@return boolean, boolean|number|string|table|ErrMsg
 local function GetValue(ip, path, type)
-	local ret = nsdk.GetData {
+	local ret, val = nsdk.GetData {
 		ip = ip,
 		path = path
 	}
 	if ret then
-		return ret[type]
+		return true, val[type]
 	else
-		return false
-	end
-end
-
---- get value's type from path in ip
----@param ip string
----@param path string
-local function GetType(ip, path)
-	local ret = nsdk.GetData {
-		ip = ip,
-		path = path
-	}
-	if ret then
-		return ret["type"]
-	else
-		return false
+		return false, val
 	end
 end
 
@@ -45,6 +31,7 @@ end
 --- get bool value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, boolean|ErrMsg
 function Gets.Bool(ip, path)
 	return GetValue(ip, path, "bool_")
 end
@@ -52,6 +39,7 @@ end
 --- get byte value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, number|ErrMsg
 function Gets.Byte(ip, path)
 	return GetValue(ip, path, "byte_")
 end
@@ -59,6 +47,7 @@ end
 --- get i16 value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, number|ErrMsg
 function Gets.I16(ip, path)
 	return GetValue(ip, path, "i16_")
 end
@@ -66,6 +55,7 @@ end
 --- get i32 value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, number|ErrMsg
 function Gets.I32(ip, path)
 	return GetValue(ip, path, "i32_")
 end
@@ -73,6 +63,7 @@ end
 --- get i64 value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, number|ErrMsg
 function Gets.I64(ip, path)
 	return GetValue(ip, path, "i64_")
 end
@@ -80,6 +71,7 @@ end
 --- get double value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, number|ErrMsg
 function Gets.Double(ip, path)
 	return GetValue(ip, path, "double_")
 end
@@ -87,6 +79,7 @@ end
 --- get string value from path in ip
 ---@param ip string
 ---@param path string
+---@return boolean, string|ErrMsg
 function Gets.String(ip, path)
 	return GetValue(ip, path, "string_")
 end
