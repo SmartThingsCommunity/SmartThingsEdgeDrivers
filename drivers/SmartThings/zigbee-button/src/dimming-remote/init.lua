@@ -59,6 +59,8 @@ end
 
 local function do_configure(self, device)
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+  device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
+  device:send(Level.attributes.CurrentLevel:configure_reporting(device, 1, 3600, 1))
   device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
