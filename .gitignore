@@ -7,4 +7,3 @@ lua_libs-api_*
 tools/test_output/*
 tools/coverage_output/*
 .DS_Store
-*.code-workspace
