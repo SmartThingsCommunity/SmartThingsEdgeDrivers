@@ -70,66 +70,66 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local function test_init()
   local subscribed_attributes = {
-		[airQualityID] = {
-			clusters.AirQuality.attributes.AirQuality
-		},
-		[capabilities.temperatureMeasurement.ID] = {
-			clusters.TemperatureMeasurement.attributes.MeasuredValue
-		},
-		[capabilities.relativeHumidityMeasurement.ID] = {
-			clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-		},
-		[capabilities.carbonMonoxideMeasurement.ID] = {
-			clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.carbonDioxideMeasurement.ID] = {
-			clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[nitrogenDioxideMeasurementID] = {
-			clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
-		},
-		[ozoneMeasurementID] = {
-			clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
-		},
-		[capabilities.formaldehydeMeasurement.ID] = {
-			clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.veryFineDustSensor.ID] = {
-			clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.fineDustSensor.ID] = {
-			clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.dustSensor.ID] = {
-			clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.radonMeasurement.ID] = {
-			clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
-		},
-		[capabilities.tvocMeasurement.ID] = {
-			clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
-			clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
-		}
-	}
+    [airQualityID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [nitrogenDioxideMeasurementID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [ozoneMeasurementID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.formaldehydeMeasurement.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustSensor.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustSensor.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.radonMeasurement.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    }
+  }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = nil
   for _, attributes in pairs(subscribed_attributes) do
     for _, attribute in ipairs(attributes) do
-			if subscribe_request == nil then
-				subscribe_request = attribute:subscribe(mock_device)
-			else
-				subscribe_request:merge(attribute:subscribe(mock_device))
-			end
-		end
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device))
+      end
+    end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
@@ -176,51 +176,51 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-	"Measured value reports should not generate events if there is not a stored unit",
-	function()
-		test.socket.matter:__queue_receive({
-			mock_device.id,
-			clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-				mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-			)
-		})
-	end
+  "Measured value reports should not generate events if there is not a stored unit",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+  end
 )
 
 test.register_coroutine_test(
-	"Measured value reports should generate events if there is a stored unit",
-	function()
-		test.socket.matter:__queue_receive({
-			mock_device.id,
-			clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-				mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.PPM
-			)
-		})
-		test.socket.matter:__queue_receive({
-			mock_device.id,
-			clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-				mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-			)
-		})
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 18, unit = "ppm"}))
-		)
-	end
+  "Measured value reports should generate events if there is a stored unit",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.PPM
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 18, unit = "ppm"}))
+    )
+  end
 )
 
 test.register_coroutine_test(
-	"AQI reports should generate correct state",
-	function()
-		test.socket.matter:__queue_receive({
-			mock_device.id,
-			clusters.AirQuality.attributes.AirQuality:build_test_report_data(
-				mock_device, 1, 5
-			)
-		})
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", airQuality.airQuality.veryPoor())
-		)
-	end
+  "AQI reports should generate correct state",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.AirQuality.attributes.AirQuality:build_test_report_data(
+        mock_device, 1, 5
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", airQuality.airQuality.veryPoor())
+    )
+  end
 )
 
 test.run_registered_tests()
