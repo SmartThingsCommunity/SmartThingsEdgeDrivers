@@ -1,11 +1,13 @@
 matterManufacturer:
-  - id: "matter/smoke-co-alarm-custom"
-    deviceLabel: Smoke/CO Alarm
+  - id: "matter/samsung-smoke-co-alarm"
+    deviceLabel: Samsung Matter Smoke/CO Alarm
     vendorId: 0x10e1
-    productId: 0x1207
-    deviceProfileName: smoke-co-alarm-custom
+    productId: 0x1027
+    deviceProfileName: smoke-co-alarm
+
+matterGeneric:
   - id: "matter/smoke-co-alarm"
-    deviceLabel: Smoke/CO Alarm
-    vendorId: 0x10e1
-    productId: 0x1208
+    deviceLabel: Matter Smoke/CO Alarm
+    deviceTypes:
+      - id: 0x0076
     deviceProfileName: smoke-co-alarm
