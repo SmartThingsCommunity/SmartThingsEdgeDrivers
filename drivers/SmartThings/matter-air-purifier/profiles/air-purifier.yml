@@ -4,7 +4,7 @@ components:
   capabilities:
   - id: switch
     version: 1
-  - id: airPurifierFanMode
+  - id: spacewonder52282.airPurifierFanMode
     version: 1
   - id: spacewonder52282.hepaFilterStatus3
     version: 1
