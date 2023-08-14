@@ -16,11 +16,12 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
+local airPurifierFanMode = capabilities.airPurifierFanMode
 
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
+  profile = t_utils.get_profile_definition("room-air-conditioner.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -47,7 +48,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"}
       }
     }
   }
@@ -66,7 +67,6 @@ local function test_init()
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
     clusters.FanControl.attributes.FanMode,
     clusters.FanControl.attributes.FanModeSequence,
-    clusters.PowerSource.attributes.BatPercentRemaining,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -268,7 +268,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
     },
-		{
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"emergency heat"}))
@@ -338,7 +338,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}))
     },
-		{
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -346,12 +346,12 @@ test.register_message_test(
         clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, 5)
       }
     },
-		{
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
     },
-		{
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto", "emergency heat"}))
@@ -374,7 +374,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", airPurifierFanMode.airPurifierFanMode.auto())
     },
     {
       channel = "matter",
@@ -387,7 +392,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", airPurifierFanMode.airPurifierFanMode.auto())
     },
     {
       channel = "matter",
@@ -400,7 +410,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on())
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", airPurifierFanMode.airPurifierFanMode.medium())
     },
 
   }
@@ -421,7 +436,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({"on"}))
+      message = mock_device:generate_test_message("main", airPurifierFanMode.supportedAirPurifierFanModes({"high"}))
     },
     {
       channel = "matter",
@@ -434,124 +449,20 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({"auto", "on"}))
+      message = mock_device:generate_test_message("main", airPurifierFanMode.supportedAirPurifierFanModes({"low", "medium", "high", "auto"}))
     },
   }
 )
 
 test.register_message_test(
-	"Setting the heating setpoint should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 15 } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, 15*100)
-			}
-		}
-	}
-)
-
-test.register_message_test(
-	"Setting the cooling setpoint should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 25 } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 1, 25*100)
-			}
-		}
-	}
-)
-
-test.register_message_test(
-	"Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 64 } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, utils.round((64 - 32) * (5 / 9.0) * 100))
-			}
-		}
-	}
-)
-
-test.register_message_test(
-	"Setting the mode to cool should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatMode", component = "main", command = "setThermostatMode", args = { "cool" } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, 3)
-			}
-		}
-	}
-)
-
-test.register_message_test(
-	"Setting the fan mode to auto should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatFanMode", component = "main", command = "setThermostatFanMode", args = { "auto" } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				FanMode:write(mock_device, 1, FanMode.AUTO)
-			}
-		},
+  "Setting the heating setpoint should send the appropriate commands",
+  {
     {
       channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,
-        { capability = "thermostatFanMode", component = "main", command = "setThermostatFanMode", args = { "on" } }
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 15 } }
       }
     },
     {
@@ -559,50 +470,115 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        FanMode:write(mock_device, 1, FanMode.ON)
+        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, 15*100)
       }
-    },
-	}
+    }
+  }
 )
 
 test.register_message_test(
-	"Setting the fan mode to auto should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatFanMode", component = "main", command = "fanAuto", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, 5)
-			}
-		}
-	}
+  "Setting the cooling setpoint should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 25 } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 1, 25*100)
+      }
+    }
+  }
 )
 
-test.register_coroutine_test("Battery percent reports should generate correct messages", function()
-  test.socket.matter:__queue_receive(
+test.register_message_test(
+  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
+  {
     {
-      mock_device.id,
-      clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-        mock_device, 1, 150
-      ),
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 64 } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, utils.round((64 - 32) * (5 / 9.0) * 100))
+      }
     }
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message(
-      "main", capabilities.battery.battery(math.floor(150/2.0+0.5))
-    )
-  )
-  test.wait_for_events()
-end)
+  }
+)
+
+test.register_message_test(
+  "Setting the mode to cool should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "setThermostatMode", args = { "cool" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, 3)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Setting the fan mode to auto should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "low" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        FanMode:write(mock_device, 1, FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "high" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        FanMode:write(mock_device, 1, FanMode.HIGH)
+      }
+    },
+  }
+)
 
 local refresh_request = nil
 local attribute_refresh_list = {
@@ -617,38 +593,37 @@ local attribute_refresh_list = {
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,
-  clusters.PowerSource.attributes.BatPercentRemaining,
 }
 for _, cluster in ipairs(attribute_refresh_list) do
-	local req = cluster:read(mock_device)
-	if refresh_request == nil then
-		refresh_request = req
-	else
-		refresh_request:merge(req)
-	end
+  local req = cluster:read(mock_device)
+  if refresh_request == nil then
+    refresh_request = req
+  else
+    refresh_request:merge(req)
+  end
 end
 print("build refresh req", refresh_request)
 
 test.register_message_test(
-	"Default refresh should be handled",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "refresh", component = "main", command = "refresh", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				refresh_request
-			}
-		}
-	}
+  "Default refresh should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "refresh", component = "main", command = "refresh", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        refresh_request
+      }
+    }
+  }
 )
 
 test.run_registered_tests()
