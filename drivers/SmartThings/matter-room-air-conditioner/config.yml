@@ -1,4 +1,0 @@
-name: 'Matter Room Air Conditioner'
-packageKey: 'matter-room-air-conditioner'
-permissions:
-  matter: {}
