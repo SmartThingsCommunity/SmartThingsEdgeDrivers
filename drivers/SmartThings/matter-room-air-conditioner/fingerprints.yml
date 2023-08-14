@@ -1,6 +1,0 @@
-matterManufacturer:
-  - id: "matter/samsung-room-air-conditioner"
-    deviceLabel: Samsung Room Air Conditioner
-    vendorId: 0x10e1
-    productId: 0x1201 # TBD
-    deviceProfileName: samsung-room-air-conditioner
