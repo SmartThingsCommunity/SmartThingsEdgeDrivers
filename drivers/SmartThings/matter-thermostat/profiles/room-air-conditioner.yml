@@ -1,4 +1,4 @@
-name: samsung-room-air-conditioner
+name: room-air-conditioner
 components:
 - id: main
   capabilities:
@@ -8,7 +8,7 @@ components:
     version: 1
   - id: thermostatMode
     version: 1
-  - id: insideimage13541.fanControl3
+  - id: airPurifierFanMode
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
