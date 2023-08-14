@@ -154,3 +154,9 @@ zigbeeManufacturer:
     model: ROB_200-008-0
     deviceLabel: ROBB 4x Wireless Smarrt Switch
     deviceProfileName: four-buttons-battery
+  # # Wall Hero
+  - id: "WALL HERO/A4"
+    deviceLabel: 4寸屏
+    manufacturer: WALL HERO
+    model: A4
+    deviceProfileName: thirty-buttons
