@@ -1,11 +1,13 @@
 matterManufacturer:
-  - id: "matter/air-quality-sensor"
-    deviceLabel: Air Quality Sensor
-    vendorId: 0x10e1
-    productId: 0x102A
-    deviceProfileName: air-quality-sensor
-  - id: "matter/air-quality-sensor-custom"
-    deviceLabel: Air Quality Sensor
+  - id: "matter/samsung-air-quality-sensor"
+    deviceLabel: Samsung Matter Air Quality Sensor
     vendorId: 0x10e1
     productId: 0x1029
-    deviceProfileName: air-quality-sensor-custom
+    deviceProfileName: air-quality-sensor
+
+matterGeneric:
+  - id: "matter/air-quality-sensor"
+    deviceLabel: Matter Air Quality Sensor
+    deviceTypes:
+      - id: 0x002C
+    deviceProfileName: air-quality-sensor
