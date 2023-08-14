@@ -154,6 +154,9 @@ local conversion_tables = {
   [units.MGM3] = {
     [units.UGM3] = function(value) return utils.round(value * (10^3)) end
   },
+  [units.UGM3] = {
+    [units.UGM3] = function(value) return utils.round(value) end
+  },
   [units.NGM3] = {
     [units.UGM3] = function(value) return utils.round(value/(10^3)) end
   },
@@ -230,7 +233,7 @@ local matter_driver_template = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonMonoxideMeasurement.NAME)
       },
       [clusters.CarbonDioxideConcentrationMeasurement.ID] = {
-        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonMonoxideLevel, units.PPM),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonDioxide, units.PPM),
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonDioxideMeasurement.NAME)
       },
       [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
@@ -238,7 +241,7 @@ local matter_driver_template = {
         [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(nitrogenDioxideMeasurementID)
       },
       [clusters.OzoneConcentrationMeasurement.ID] = {
-        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(ozoneMeasurementID, ozoneMeasurement.OzoneConcentrationMeasurement, units.PPM),
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(ozoneMeasurementID, ozoneMeasurement.ozoneLevel, units.PPM),
         [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(ozoneMeasurementID)
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {

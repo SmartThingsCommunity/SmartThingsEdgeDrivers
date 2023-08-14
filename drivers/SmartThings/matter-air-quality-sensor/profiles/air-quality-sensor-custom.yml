@@ -1,4 +1,4 @@
-name: air-quality-sensor
+name: air-quality-sensor-custom
 components:
   - id: main
     capabilities:
@@ -28,9 +28,7 @@ components:
         version: 1
       - id: tvocMeasurement
         version: 1
-      - id: battery
-        version: 1
       - id: refresh
         version: 1
     categories:
-    - name: GenericSensor
+    - name: AirQualityDetector
