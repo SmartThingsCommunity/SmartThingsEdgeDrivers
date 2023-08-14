@@ -1,3 +1,10 @@
+matterManufacturer:
+  - id: "matter/samsung-room-air-conditioner"
+    deviceLabel: Samsung Room Air Conditioner
+    vendorId: 0x10e1
+    productId: 0x1023 # TBD
+    deviceProfileName: room-air-conditioner
+
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
@@ -47,8 +54,8 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
     deviceProfileName: thermostat-humidity-fan
-  - id: "matter/roomAC"
+  - id: "matter/room-air-conditioner"
     deviceLabel: Matter Room Air Conditioner
     deviceTypes:
       - id: 0x0072
-    deviceProfileName: thermostat
+    deviceProfileName: room-air-conditioner
