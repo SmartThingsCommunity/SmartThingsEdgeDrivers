@@ -10,6 +10,8 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+  - id: carbonMonoxideMeasurement
+    version: 1
   - id: audioMute
     version: 1
   - id: filterStatus

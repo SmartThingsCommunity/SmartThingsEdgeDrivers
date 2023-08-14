@@ -18,66 +18,47 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
+local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
+
 local function device_init(driver, device)
   device:subscribe()
-end
-
-local function device_added(driver, device)
-  device:send(clusters.SmokeCoAlarm.attributes.ExpressedState:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.SmokeState:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.COState:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.BatteryAlert:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.DeviceMuted:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.TestInProgress:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.HardwareFaultAlert:read(device))
-  device:send(clusters.SmokeCoAlarm.attributes.EndOfServiceAlert:read(device))
-  device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.PowerSource.attributes.BatPercentRemaining:read(device))
 end
 
 local function info_changed(self, device, event, args)
   if device.preferences then
     if device.preferences["certifiedpreferences.smokeSensorSensitivity"] ~= args.old_st_store.preferences["certifiedpreferences.smokeSensorSensitivity"] then
-      -- something like: device:send(smokeSensorSensitivity:write(valueConversionTable[newValue]))
+      local eps = device:get_endpoints(clusters.SmokeCoAlarm.ID)
+      if #eps > 0 then
+        local smokeSensorSensitivity = device.preferences["certifiedpreferences.smokeSensorSensitivity"]
+        if smokeSensorSensitivity == 0 then -- High
+          device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.HIGH))
+        elseif smokeSensorSensitivity == 1 then -- Medium
+          device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.STANDARD))
+        elseif smokeSensorSensitivity == 2 then -- Low
+          device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.LOW))
+        end
+      end
     end
   end
 end
 
 -- Matter Handlers --
-local function expressed_state_event_handler(driver, device, ib, response)
-  local state = ib.data.value
-  if state == 0 then -- Normal
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.tamperAlert.tamper.clear())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.filterStatus.filterStatus.normal())
-  elseif state == 1 then -- SmokeAlarm
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.detected())
-  elseif state == 2 then -- COAlarm
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
-  elseif state == 3 then -- BatteryAlert
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.battery.battery(0))
-  elseif state == 4 then -- Testing
-		device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.tested())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
-  elseif state == 5 then -- HardwareFault
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.tamperAlert.tamper.detected())
-  elseif state == 6 then -- EndOfService
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.filterStatus.filterStatus.replace())
-  elseif state == 7 then -- InterconnectSmoke
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.detected())
-  elseif state == 8 then -- InterconnectCO
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
-  end
-end
-
 local function binary_state_handler_factory(zeroEvent, nonZeroEvent)
   return function(driver, device, ib, response)
-    if ib.data.value == 0  and zeroEvent ~= nil then
+    if ib.data.value == 0 and zeroEvent ~= nil then
       device:emit_event_for_endpoint(ib.endpoint_id, zeroEvent)
     elseif nonZeroEvent ~= nil then
       device:emit_event_for_endpoint(ib.endpoint_id, nonZeroEvent)
+    end
+  end
+end
+
+local function bool_handler_factory(trueEvent, falseEvent)
+  return function(driver, device, ib, response)
+    if ib.data.value and trueEvent ~= nil then
+      device:emit_event_for_endpoint(ib.endpoint_id, trueEvent)
+    elseif falseEvent ~= nil then
+      device:emit_event_for_endpoint(ib.endpoint_id, falseEvent)
     end
   end
 end
@@ -103,6 +84,23 @@ local function humidity_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
 end
 
+local function carbon_monoxide_attr_handler(driver, device, ib, response)
+  local value = ib.data.value
+  local unit = device:get_field(CARBON_MONOXIDE_MEASUREMENT_UNIT)
+  if unit == clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPB then
+    value = value / 1000
+  elseif unit == clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPT then
+    value = value / 1000000
+  end
+  value = math.floor(value)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = value, unit = "ppm"}))
+end
+
+local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
+  local unit = ib.data.value
+  device:set_field(CARBON_MONOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
+end
+
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
@@ -118,13 +116,12 @@ local matter_driver_template = {
   matter_handlers = {
     attr = {
       [clusters.SmokeCoAlarm.ID] = {
-        [clusters.SmokeCoAlarm.attributes.ExpressedState.ID] = expressed_state_event_handler,
         [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = binary_state_handler_factory(capabilities.smokeDetector.smoke.clear(), capabilities.smokeDetector.smoke.detected()),
         [clusters.SmokeCoAlarm.attributes.COState.ID] = binary_state_handler_factory(capabilities.carbonMonoxideDetector.carbonMonoxide.clear(), capabilities.carbonMonoxideDetector.carbonMonoxide.detected()),
         [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = binary_state_handler_factory(nil, capabilities.battery.battery(0)),
         [clusters.SmokeCoAlarm.attributes.DeviceMuted.ID] = binary_state_handler_factory(capabilities.audioMute.mute.unmuted(), capabilities.audioMute.mute.muted()),
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
-        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = binary_state_handler_factory(capabilities.tamperAlert.tamper.clear(), capabilities.tamperAlert.tamper.detected()),
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.tamperAlert.tamper.detected(), capabilities.tamperAlert.tamper.clear()),
         [clusters.SmokeCoAlarm.attributes.EndOfServiceAlert.ID] = binary_state_handler_factory(capabilities.filterStatus.filterStatus.normal(), capabilities.filterStatus.filterStatus.replace()),
       },
       [clusters.TemperatureMeasurement.ID] = {
@@ -132,6 +129,10 @@ local matter_driver_template = {
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      },
+      [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
@@ -143,7 +144,21 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [capabilities.smokeDetector.ID] = {
-      clusters.SmokeCoAlarm.attributes.ExpressedState,
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.audioMute.ID] = {
+      clusters.SmokeCoAlarm.attributes.DeviceMuted
+    },
+    [capabilities.filterStatus.ID] = {
+      clusters.SmokeCoAlarm.attributes.EndOfServiceAlert
+    },
+    [capabilities.tamperAlert.ID] = {
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
@@ -151,8 +166,13 @@ local matter_driver_template = {
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
     [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining
+      clusters.PowerSource.attributes.BatPercentRemaining,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
   },
   capability_handlers = {
