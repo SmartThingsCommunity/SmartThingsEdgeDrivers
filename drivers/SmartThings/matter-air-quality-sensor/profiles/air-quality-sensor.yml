@@ -2,6 +2,8 @@ name: air-quality-sensor
 components:
   - id: main
     capabilities:
+      - id: spacewonder52282.airQuality
+        version: 1
       - id: temperatureMeasurement
         version: 1
       - id: relativeHumidityMeasurement
@@ -9,6 +11,10 @@ components:
       - id: carbonMonoxideMeasurement
         version: 1
       - id: carbonDioxideMeasurement
+        version: 1
+      - id: spacewonder52282.nitrogenDioxideMeasurement
+        version: 1
+      - id: spacewonder52282.ozoneMeasurement
         version: 1
       - id: formaldehydeMeasurement
         version: 1
