@@ -2,10 +2,10 @@ matterManufacturer:
   - id: "matter/air-quality-sensor"
     deviceLabel: Air Quality Sensor
     vendorId: 0x10e1
-    productId: 0x1209
+    productId: 0x102A
     deviceProfileName: air-quality-sensor
   - id: "matter/air-quality-sensor-custom"
     deviceLabel: Air Quality Sensor
     vendorId: 0x10e1
-    productId: 0x120A
+    productId: 0x1029
     deviceProfileName: air-quality-sensor-custom
