@@ -8,7 +8,7 @@ components:
     version: 1
   - id: thermostatMode
     version: 1
-  - id: airPurifierFanMode
+  - id: spacewonder52282.airPurifierFanMode
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
