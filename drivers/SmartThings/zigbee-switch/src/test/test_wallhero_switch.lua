@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ local OnOff = clusters.OnOff
 local Scenes = clusters.Scenes
 
 local common_switch_profile_def = t_utils.get_profile_definition("basic-switch.yml")
-local scene_switch_profile_def = t_utils.get_profile_definition("wallhero-scene-switch.yml")
+local scene_switch_profile_def = t_utils.get_profile_definition("button.yml")
 
 local mock_base_device = test.mock_device.build_test_zigbee_device(
     {
@@ -537,28 +537,28 @@ test.register_coroutine_test(
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
         label = "八键开关 5 (场景开关)",
-        profile = "wallhero-scene-switch",
+        profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "05"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
         label = "八键开关 6 (场景开关)",
-        profile = "wallhero-scene-switch",
+        profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "06"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
         label = "八键开关 7 (场景开关)",
-        profile = "wallhero-scene-switch",
+        profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "07"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
         label = "八键开关 8 (场景开关)",
-        profile = "wallhero-scene-switch",
+        profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "08"
       })

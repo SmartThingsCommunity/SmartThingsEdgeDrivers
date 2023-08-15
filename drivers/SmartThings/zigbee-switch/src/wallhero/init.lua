@@ -68,7 +68,7 @@ local function create_child_devices(driver, device)
         type = "EDGE_CHILD",
         parent_assigned_child_key = string.format("%02X", i),
         label = base_name .. i .. " (场景开关)",
-        profile = "wallhero-scene-switch",
+        profile = "button",
         parent_device_id = device.id,
         vendor_provided_label = base_name .. i .. " (场景开关)",
       }
@@ -82,8 +82,11 @@ local function device_added(driver, device)
   if device.network_type ~= stDevice.NETWORK_TYPE_CHILD then
     create_child_devices(driver, device)
   end
-  device:emit_event(capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.supportedButtonValues({ "pushed" }, {visibility = {displayed = false } }))
+  -- Set Button Capabilities for scene switches
+  if device:supports_capability_by_id(capabilities.button.ID) then
+    device:emit_event(capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.supportedButtonValues({ "pushed" }, {visibility = {displayed = false } }))
+  end
 end
 
 local function device_init(driver, device, event)
@@ -92,18 +95,8 @@ end
 
 local function scenes_cluster_handler(driver, device, zb_rx)
   log.info("Enter scenes_cluster_handler")
-  local additional_fields = {
-    state_change = true
-  }
-  local ep = zb_rx.address_header.src_endpoint.value
-  local child_device = device:get_child_by_parent_assigned_key(string.format("%02X", ep))
-  if child_device ~= nil then
-    local event = capabilities.button.button.pushed(additional_fields)
-    child_device:emit_event(event)
-  else
-    log.warn("Attempted to emit button event for unknown ep: " .. ep)
-  end
-  log.info("Exit scenes_cluster_handler")
+  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
+    capabilities.button.button.pushed({ state_change = true }))
 end
 
 local wallheroswitch = {
