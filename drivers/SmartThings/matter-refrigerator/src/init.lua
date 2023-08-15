@@ -19,8 +19,38 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component"
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
+  if map[ep] and device.profile.components[map[ep]] then
+    return map[ep]
+  end
+  return "main"
+end
+
+local function component_to_endpoint(device, component_name)
+  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
+  for ep, component in pairs(map) do
+    if component == component_name then return ep end
+  end
+end
+
 local function device_init(driver, device)
   device:subscribe()
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+end
+
+local function device_added(driver, device)
+  local cabinet_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  if #cabinet_eps > 1 then
+    local endpoint_to_component_map = { -- This is just a guess for now
+      [cabinet_eps[1]] = "refrigerator",
+      [cabinet_eps[2]] = "freezer"
+    }
+    device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_to_component_map, {persist = true})
+  end
 end
 
 -- Matter Handlers --
@@ -32,20 +62,33 @@ local function refrigerator_alarm_attr_handler(driver, device, ib, response)
   end
 end
 
+local function temp_event_handler(driver, device, ib, response)
+  local temp = ib.data.value / 100.0
+  local unit = "C"
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
   },
   matter_handlers = {
     attr = {
       [clusters.RefrigeratorAlarm.ID] = {
         [clusters.RefrigeratorAlarm.attributes.State.ID] = refrigerator_alarm_attr_handler
       },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
+      },
     }
   },
   subscribed_attributes = {
     [capabilities.contactSensor.ID] = {
       clusters.RefrigeratorAlarm.attributes.State
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
   },
   capability_handlers = {
