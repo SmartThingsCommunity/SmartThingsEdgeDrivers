@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- local capabilities = require "st.capabilities"
+local capabilities = require "st.capabilities"
 
 local CLIMAX_TECHNOLOGY_CARBON_MONOXIDE_FINGERPRINTS = {
     { mfr = "ClimaxTechnology", model = "CO_00.00.00.22TC" },
@@ -30,7 +30,7 @@ local is_climax_technology_carbon_monoxide = function(opts, driver, device)
 end
 
 local device_added = function(self, device)
-  -- device:emit_event(capabilities.battery.battery(100))
+  device:emit_event(capabilities.battery.battery(100))
 end
 
 local climax_technology_carbon_monoxide = {

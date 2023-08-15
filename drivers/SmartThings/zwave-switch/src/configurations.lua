@@ -135,7 +135,7 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x015F,
       product_types = {0x3102, 0x3111, 0x3121, 0x3141},
-      product_ids = {0x0201, 0x0202, 0x0204, 0x3111, 0x5102}
+      product_ids = {0x0201, 0x0202, 0x0204, 0x5102}
     },
     CONFIGURATION = {
       {parameter_number = 2, size = 1, configuration_value = 1}
