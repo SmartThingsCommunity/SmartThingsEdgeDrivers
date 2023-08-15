@@ -4,3 +4,10 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1021
     deviceProfileName: refrigerator
+
+matterGeneric:
+  - id: "refrigerator"
+    deviceLabel: Matter Refrigerator
+    deviceTypes:
+      - id: 0x0070
+    deviceProfileName: refrigerator-freezer
