@@ -77,11 +77,12 @@ function SSDP.search(search_term, callback)
       local headers = process_response(val)
 
       -- log all SSDP responses, even if they don't have proper headers
-      log.debug_with({hub_logs = true}, string.format("Received response for Sonos search with headers [%s], processing details",
+      log.debug_with({ hub_logs = true },
+        string.format("Received response for Sonos search with headers [%s], processing details",
           st_utils.stringify_table(headers)))
       if
-          -- we don't explicitly check "st" because we don't index in to the contained
-          -- value so the equality check suffices as a nil check as well.
+      -- we don't explicitly check "st" because we don't index in to the contained
+      -- value so the equality check suffices as a nil check as well.
           SSDP.check_headers_contain(
             headers,
             "server",
@@ -117,7 +118,7 @@ function SSDP.search(search_term, callback)
         elseif ip and is_group_coordinator and group_id and
             group_name and household_id and wss_url then
           if #group_id == 0 then
-            log.debug_with({hub_logs = true}, string.format(
+            log.debug_with({ hub_logs = true }, string.format(
               "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
               st_utils.stringify_table(group_info, nil, false)))
           elseif callback ~= nil then
