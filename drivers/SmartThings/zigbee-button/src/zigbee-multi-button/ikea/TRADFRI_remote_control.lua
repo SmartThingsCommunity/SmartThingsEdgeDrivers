@@ -58,7 +58,7 @@ local function added_handler(self, device)
     end
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local remote_control = {

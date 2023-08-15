@@ -1121,7 +1121,7 @@ cosock.spawn(function()
             for stray_dni, stray_light in pairs(stray_lights) do
               local matching_v1_id = stray_light.data and stray_light.data.bulbId and
                   stray_light.data.bulbId == device_data.id_v1:gsub("/lights/", "")
-              local matching_uuid = stray_light.device_network_id == svc_info.rid or
+              local matching_uuid = stray_light.parent_assigned_child_key == svc_info.rid or
                   stray_light.device_network_id == svc_info.rid
 
               if matching_v1_id or matching_uuid then

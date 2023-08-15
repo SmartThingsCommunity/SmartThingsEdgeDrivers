@@ -80,6 +80,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
         "heat", "eco"
       }, {visibility={displayed=false}}))
@@ -91,11 +96,6 @@ test.register_message_test(
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.CELSIUS,
         sensor_value = 33 })) }
-    },
-		{
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -116,6 +116,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({
         "heat", "eco"
       }, {visibility={displayed=false}}))
@@ -127,11 +132,6 @@ test.register_message_test(
         sensor_type = SensorMultilevel.sensor_type.TEMPERATURE,
         scale = SensorMultilevel.scale.temperature.FAHRENHEIT,
         sensor_value = 55 })) }
-    },
-		{
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     },
     {
       channel = "capability",
@@ -149,11 +149,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    -- {
-    --   channel = "capability",
-    --   direction = "send",
-    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
     {
       channel = "capability",
       direction = "send",
@@ -190,11 +190,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    -- {
-    --   channel = "capability",
-    --   direction = "send",
-    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
     {
       channel = "capability",
       direction = "send",
@@ -231,11 +231,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    -- {
-    --   channel = "capability",
-    --   direction = "send",
-    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
     {
       channel = "capability",
       direction = "send",
@@ -267,11 +267,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" }
     },
-    -- {
-    --   channel = "capability",
-    --   direction = "send",
-    --   message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    },
     {
       channel = "capability",
       direction = "send",

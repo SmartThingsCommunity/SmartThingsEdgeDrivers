@@ -52,9 +52,9 @@ local function can_handle(opts, driver, device, ...)
 end
 
 local function device_added(driver, device)
-  -- device:emit_event(motion.inactive())
-  -- device:emit_event(signalStrength.lqi(0))
-  -- device:emit_event(signalStrength.rssi({ value = -100, unit = 'dBm' }))
+  device:emit_event(motion.inactive())
+  device:emit_event(signalStrength.lqi(0))
+  device:emit_event(signalStrength.rssi({ value = -100, unit = 'dBm' }))
 end
 
 local function handle_battery(device, value, zb_rx)
