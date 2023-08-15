@@ -92,6 +92,13 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
+        WakeUp:IntervalGet({})
+      )
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
         Configuration:Set({parameter_number=1, size=1, configuration_value=0})
       )
     )
@@ -164,15 +171,15 @@ test.register_coroutine_test(
       mock_device,
       WakeUp:IntervalSet({node_id = 0x00, seconds = 21600})
     ))
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-    -- )
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    -- )
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,

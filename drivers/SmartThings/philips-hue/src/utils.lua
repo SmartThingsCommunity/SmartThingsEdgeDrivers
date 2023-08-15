@@ -1,3 +1,4 @@
+local log = require "log"
 ---@module 'utils'
 local utils = {}
 
@@ -7,12 +8,31 @@ function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
 end
 
+function utils.is_nan(number)
+  -- IEEE 754 dictates that NaN compares falsey to everything, including itself.
+  if number ~= number then
+    return true
+  end
+
+  -- If someone passes in something that isn't a Number type, it'll pass the above check.
+  -- Philosophical question: Something that isn't a number can't technicaly have the value
+  -- of "nan" but "nan" stands for "not a number", so what do we do here?
+  if type(number) ~= "number" then
+    log.warn(string.format("utils.is_nan received value of type %s as argument, returning true", type(number)))
+    return true
+  end
+
+  -- In the event that something goes wrong with the above two things,
+  -- we simply compare the tostring against a known NaN value.
+  return tostring(number) == tostring(0 / 0)
+end
+
 --- Only checked during `added` callback
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_bridge(device)
   return device.device_network_id and #device.device_network_id == MAC_ADDRESS_STR_LEN and
-  not (device.data and device.data.username)
+      not (device.data and device.data.username)
 end
 
 --- Only checked during `added` callback
@@ -20,7 +40,7 @@ end
 ---@return boolean
 function utils.is_edge_light(device)
   return device.parent_assigned_child_key and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and
-  not (device.data and device.data.username and device.data.bulbId)
+      not (device.data and device.data.username and device.data.bulbId)
 end
 
 --- Only checked during `added` callback
@@ -149,6 +169,42 @@ function utils.labeled_socket_builder(label)
     return sock, err
   end
   return make_socket
+end
+
+--- From https://gist.github.com/sapphyrus/fd9aeb871e3ce966cc4b0b969f62f539
+--- MIT licensed
+function utils.deep_table_eq(tbl1, tbl2)
+  if tbl1 == tbl2 then
+    return true
+  elseif type(tbl1) == "table" and type(tbl2) == "table" then
+    for key1, value1 in pairs(tbl1) do
+      local value2 = tbl2[key1]
+
+      if value2 == nil then
+        -- avoid the type call for missing keys in tbl2 by directly comparing with nil
+        return false
+      elseif value1 ~= value2 then
+        if type(value1) == "table" and type(value2) == "table" then
+          if not utils.deep_table_eq(value1, value2) then
+            return false
+          end
+        else
+          return false
+        end
+      end
+    end
+
+    -- check for missing keys in tbl1
+    for key2, _ in pairs(tbl2) do
+      if tbl1[key2] == nil then
+        return false
+      end
+    end
+
+    return true
+  end
+
+  return false
 end
 
 return utils

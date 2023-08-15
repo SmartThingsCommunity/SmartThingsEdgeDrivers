@@ -27,6 +27,12 @@ local function can_handle_multisensor_6(opts, self, device, ...)
 end
 
 local function wakeup_notification(driver, device, cmd)
+  --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+  --This is done to help the hub correctly set the checkInterval for migrated devices.
+  if not device:get_field("__wakeup_interval_get_sent") then
+    device:send(WakeUp:IntervalGetV1({}))
+    device:set_field("__wakeup_interval_get_sent", true)
+  end
   device:send(Configuration:Get({parameter_number = PREFERENCE_NUM}))
   device:refresh()
 end
@@ -34,7 +40,7 @@ end
 local function configuration_report_handler(self, device, cmd)
   local power_source
   if cmd.args.parameter_number == PREFERENCE_NUM then
-    if cmd.args.configuration_value == 0 then
+    if cmd.args.configuration_value & 0x100 == 0 then
       power_source = capabilities.powerSource.powerSource.dc()
     else
       power_source = capabilities.powerSource.powerSource.battery()
