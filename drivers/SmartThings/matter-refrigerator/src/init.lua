@@ -21,6 +21,11 @@ local utils = require "st.utils"
 
 local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component"
 
+local setpoint_limit_device_field = {
+  MIN_COOL = "MIN_COOL",
+  MAX_COOL = "MAX_COOL",
+}
+
 local function endpoint_to_component(device, ep)
   local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
   if map[ep] and device.profile.components[map[ep]] then
@@ -43,11 +48,10 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-  local cabinet_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local cabinet_eps = device:get_endpoints(clusters.TemperatureControl.ID)
   if #cabinet_eps > 1 then
     local endpoint_to_component_map = { -- This is just a guess for now
-      [cabinet_eps[1]] = "refrigerator",
-      [cabinet_eps[2]] = "freezer"
+      [cabinet_eps[1]] = "refrigerator"
     }
     device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_to_component_map, {persist = true})
   end
@@ -68,6 +72,51 @@ local function temp_event_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
 end
 
+local function temp_setpoint_handler(driver, device, ib, response)
+  local temp = ib.data.value
+  local unit = "C"
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = temp, unit = unit}))
+
+end
+
+local function set_setpoint()
+  return function(driver, device, cmd)
+    local value = cmd.args.setpoint
+    if (value >= 40) then -- assume this is a fahrenheit value
+      value = utils.f_to_c(value)
+    end
+
+    -- Gather cached setpoint values when considering setpoint limits
+    -- Note: cached values should always exist, but defaults are chosen just in case to prevent
+    -- nil operation errors, and deadband logic from triggering.
+    local cached_cooling_val, cooling_setpoint = device:get_latest_state(
+            cmd.component, capabilities.thermostatCoolingSetpoint.ID,
+            capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME,
+            100, { value = 100, unit = "C" }
+    )
+    if cooling_setpoint and cooling_setpoint.unit == "F" then
+      cached_cooling_val = utils.f_to_c(cached_cooling_val)
+    end
+
+    local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or 0
+    local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or 100
+    if value < min or value > max then
+      log.warn(string.format(
+              "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
+              value, min, max
+      ))
+      device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
+      return
+    end
+    local req = clusters.TemperatureControl.server.commands.SetTemperature(
+            device,
+            device:component_to_endpoint(cmd.component),
+            value)
+    device:send(req)
+  end
+end
+
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -81,6 +130,9 @@ local matter_driver_template = {
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
       },
+      [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temp_setpoint_handler,
+      },
     }
   },
   subscribed_attributes = {
@@ -90,8 +142,14 @@ local matter_driver_template = {
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      clusters.TemperatureControl.attributes.TemperatureSetpoint
+    },
   },
   capability_handlers = {
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint()
+    },
   },
 }
 

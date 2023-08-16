@@ -12,16 +12,6 @@ components:
   - name: Refrigerator
 - id: refrigerator
   capabilities:
-  - id: temperatureMeasurement
-    version: 1
-  - id: thermostatCoolingSetpoint # todo: replace with Refrigeration Setpoint?
-    version: 1
-  categories:
-  - name: Refrigerator
-- id: freezer
-  capabilties:
-  - id: temperatureMeasurement
-    version: 1
   - id: thermostatCoolingSetpoint # todo: replace with Refrigeration Setpoint?
     version: 1
   categories:
