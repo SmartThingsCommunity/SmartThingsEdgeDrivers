@@ -34,7 +34,6 @@ local function update_connection(driver, device, device_dni, device_ip)
             if current_dni == device_dni then
                 log.trace(string.format("update_connection for %s: IP haven't changed", device_dni))
                 device:online()
-                device:emit_event(capabilities.switch.switch.on())
                 return
             end
         else
@@ -53,7 +52,6 @@ local function update_connection(driver, device, device_dni, device_ip)
             local current_ip = devices_ip_table[device_dni]
             if (current_ip == nil) then
                 log.info("Couldn't find device during refresh, hence setting device to offline")
-                device:emit_event(capabilities.switch.switch.off())
                 device:offline()
                 return
             else
@@ -61,7 +59,6 @@ local function update_connection(driver, device, device_dni, device_ip)
                     persist = true
                 })
                 device:online()
-                device:emit_event(capabilities.switch.switch.on())
             end
         end
     end
