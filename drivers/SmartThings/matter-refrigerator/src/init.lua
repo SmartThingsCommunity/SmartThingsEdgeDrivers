@@ -31,11 +31,17 @@ local function endpoint_to_component(device, ep)
   if map[ep] and device.profile.components[map[ep]] then
     return map[ep]
   end
+  if ep == 3 then
+    return "refrigerator"
+  end
   return "main"
 end
 
 local function component_to_endpoint(device, component_name)
   local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
+  if component_name == "refrigerator" then
+    return 3
+  end
   for ep, component in pairs(map) do
     if component == component_name then return ep end
   end
@@ -82,9 +88,9 @@ end
 local function set_setpoint()
   return function(driver, device, cmd)
     local value = cmd.args.setpoint
-    if (value >= 40) then -- assume this is a fahrenheit value
+    --if (value >= 40) then -- assume this is a fahrenheit value
       value = utils.f_to_c(value)
-    end
+    --end
 
     -- Gather cached setpoint values when considering setpoint limits
     -- Note: cached values should always exist, but defaults are chosen just in case to prevent
