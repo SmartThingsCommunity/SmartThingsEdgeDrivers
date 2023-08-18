@@ -148,8 +148,8 @@ end
 ---@param func_name string
 local function set_playback_status(device, status, func_name)
     local invokeFunc = {
-        pause = api.InvokePlayPause,
-        play = api.InvokePlayPause,
+        pause = api.InvokePause,
+        play = api.InvokePlay,
         stop = api.InvokeStop
     }
     if invokeFunc[status] == nil then

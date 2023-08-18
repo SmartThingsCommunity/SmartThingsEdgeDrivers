@@ -199,11 +199,18 @@ function APIs.GetInputSource(ip)
     return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "getInputSource")
 end
 
---- invoke smartthings:media/setPlayPause on ip
+--- invoke smartthings:media/setPlay on ip
 ---@param ip string
 ---@return boolean, string|table
-function APIs.InvokePlayPause(ip)
-    return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "setPlayPause")
+function APIs.InvokePlay(ip)
+    return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "setPlay")
+end
+
+--- invoke smartthings:media/setPause on ip
+---@param ip string
+---@return boolean, string|table
+function APIs.InvokePause(ip)
+    return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "setPause")
 end
 
 --- invoke smartthings:media/setNextTrack on ip
