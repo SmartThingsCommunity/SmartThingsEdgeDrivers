@@ -171,7 +171,7 @@ end
 ---@return boolean, string|table
 function APIs.SendAudioNotification(ip, uri, level)
     local value = {
-        SmartThingsAudioNotification = {
+        smartthingsAudioNotification = {
             uri = uri,
             level = level
         }
