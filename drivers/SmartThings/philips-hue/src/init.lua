@@ -701,6 +701,8 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
+      --TODO should we do a refresh of all child devices when we first connect?
+      --handlers.refresh_handlers(driver, device)
     end
 
     eventsource.onerror = function()
