@@ -10,9 +10,13 @@ Constants = {
     UPDATE_INTERVAL = 1,
     HEALTH_CHEACK_INTERVAL = 10,
 
-    -- mDNS consts
+    -- discovery constants
     SERVICE_TYPE = "_sue-st._tcp",
     DOMAIN = "local",
+    MAC = "mac",
+    DNI = "dni",
+    MNID = "mnid",
+    SETUP_ID = "setupid",
 
     -- device setup constants
     DEFAULT_DEVICE_NAME = "HarmanLuxury",

@@ -1,5 +1,6 @@
 local log = require "log"
 local net_utils = require "st.net_utils"
+local const = require "constants"
 
 Disco_Helper = {}
 
@@ -64,29 +65,29 @@ end
 
 local function get_parameters(driver, ip, discovery_responses)
     local params = {
-        dni = "",
-        mnid = "",
-        setupid = ""
+        [const.DNI] = "",
+        [const.MNID] = "",
+        [const.SETUP_ID] = ""
     }
     local text_list = find_text_list_in_mdns_response(driver, ip, discovery_responses)
     for _, text in ipairs(text_list) do
         for key, value in string.gmatch(text, "(%S+)=(%S+)") do
-            if key == "mac" then
+            if key == const.MAC then
                 local dni = value:gsub("-", ""):gsub(":", ""):lower()
-                log.info(string.format("get_parameters : use mac as dni. mac = %s | dni = %s" , value, dni))
-                params["dni"] = dni
+                log.info(string.format("get_parameters : use mac as dni. mac = %s | dni = %s", value, dni))
+                params[const.DNI] = dni
             end
-            if key == "mnid" then
+            if key == const.MNID then
                 log.info(string.format("get_parameters : mnid = %s", value))
-                params["mnid"] = value
-            elseif key == "setupid" then
+                params[const.MNID] = value
+            elseif key == const.SETUP_ID then
                 log.info(string.format("get_parameters : setupid = %s", value))
-                params["setupid"] = value
+                params[const.SETUP_ID] = value
             end
         end
     end
 
-    if params["dni"] == nil then
+    if params[const.DNI] == nil then
         log.error("get_parameters : failed to find dni")
         return nil
     else
@@ -107,9 +108,9 @@ local function insert_dni_ip_from_answers(driver, filtered_responses, target_tab
 
             if params ~= nil then
                 log.info(string.format("answer_name, arecod = %s, %s", answer.name, answer.kind.ARecord))
-                local dni = params["dni"]
-                local mnid = params["mnid"]
-                local setupid = params["setupid"]
+                local dni = params[const.DNI]
+                local mnid = params[const.MNID]
+                local setupid = params[const.SETUP_ID]
                 target_table[dni] = {
                     ip = ip,
                     mnid = mnid,
@@ -122,22 +123,22 @@ end
 
 local function filter_response_by_service_name(service_type, discovery_responses)
     local filtered_responses = {
-        answers = {},
-        found = {}
+        found = {},
+        answers = {}
     }
+
+    for _, found in pairs(discovery_responses.found or {}) do
+        if found.service_info.service_type == service_type then
+            table.insert(filtered_responses.found, found)
+        end
+    end
 
     for _, answer in pairs(discovery_responses.answers or {}) do
         table.insert(filtered_responses.answers, answer)
     end
 
     for _, additional in pairs(discovery_responses.additional or {}) do
-        table.insert(filtered_responses.additional, additional)
-    end
-
-    for _, found in pairs(discovery_responses.found or {}) do
-        if found.service_info.service_type == service_type then
-            table.insert(filtered_responses.found, found)
-        end
+        table.insert(filtered_responses.answers, additional)
     end
 
     return filtered_responses
@@ -146,18 +147,19 @@ end
 local function insert_dni_ip_from_found(driver, filtered_responses, target_table)
     for _, found in pairs(filtered_responses.found) do
         local ip
+        log.info(string.format("found_name = %s", tostring(found.service_info.service_type)))
         if found.host_info.address ~= nil and net_utils.validate_ipv4_string(found.host_info.address) then
             ip = found.host_info.address
+            log.info(string.format("ip = %s", ip))
         end
 
         if ip ~= nil then
             local params = get_parameters(driver, ip, filtered_responses)
 
             if params ~= nil then
-                log.info(string.format("ip = %s", ip))
-                local dni = params["dni"]
-                local mnid = params["mnid"]
-                local setupid = params["setupid"]
+                local dni = params[const.DNI]
+                local mnid = params[const.MNID]
+                local setupid = params[const.SETUP_ID]
                 target_table[dni] = {
                     ip = ip,
                     mnid = mnid,
@@ -173,8 +175,8 @@ function Disco_Helper.get_dni_ip_table_from_mdns_responses(driver, service_type,
 
     local filtered_responses = filter_response_by_service_name(service_type, discovery_responses)
 
-    insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
     insert_dni_ip_from_found(driver, filtered_responses, dni_ip_table)
+    insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
 
     return dni_ip_table
 end

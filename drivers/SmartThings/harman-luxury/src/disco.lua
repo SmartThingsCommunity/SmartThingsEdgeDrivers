@@ -48,10 +48,7 @@ end
 local function find_params_table(driver)
     log.info("Discovery.find_params_table")
 
-    local discovery_responses = mdns.discover(const.SERVICE_TYPE, const.DOMAIN) or {
-        answers = {},
-        additional = {}
-    }
+    local discovery_responses = mdns.discover(const.SERVICE_TYPE, const.DOMAIN) or {}
 
     local dni_params_table = disco_helper.get_dni_ip_table_from_mdns_responses(driver, const.SERVICE_TYPE, const.DOMAIN,
         discovery_responses)
