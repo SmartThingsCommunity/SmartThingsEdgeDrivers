@@ -54,8 +54,10 @@ local function emit_light_status_events(light_device, light)
   if light_device ~= nil then
     if light.status then
       if light.status == "connected" then
+        light_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
         light_device:online()
       elseif light.status == "connectivity_issue" then
+        light_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
         light_device:offline()
         return
       end
@@ -690,7 +692,6 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
   if not device:get_field(Fields.EVENT_SOURCE) then
     log.info_with({ hub_logs = true }, "Creating SSE EventSource for bridge " ..
       (device.label or device.device_network_id or device.id or "unknown bridge"))
-    device:offline()
     local url_table = lunchbox_util.force_url_table(bridge_url .. "/eventstream/clip/v2")
     local eventsource = EventSource.new(
       url_table,
