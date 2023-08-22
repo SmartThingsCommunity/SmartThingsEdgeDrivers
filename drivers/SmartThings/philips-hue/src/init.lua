@@ -704,49 +704,62 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       device:online()
 
       local bridge_api = device:get_field(Fields.BRIDGE_API)
-      local child_device_map = {}
-      for _, device_record in ipairs(device:get_child_list()) do
-        local hue_device_id = device_record:get_field(Fields.HUE_DEVICE_ID)
-        if hue_device_id ~= nil then
-          child_device_map[hue_device_id] = device_record
-        end
-      end
-
-      local connectivity_status, rest_err = bridge_api:get_connectivity_status()
-      if rest_err ~= nil then
-        log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
-          device.label, rest_err))
-        return
-      end
-
-      if connectivity_status.errors and #connectivity_status.errors > 0 then
-        log.error(
-          string.format(
-            "Hue Bridge %s replied with the following error message(s) " ..
-            "when querying child device connectivity status:",
-            device.label
-          )
-        )
-        for _, err in ipairs(connectivity_status.errors) do
-          log.error(string.format("--- %s", err))
-        end
-        return
-      end
-
-      for _, status in ipairs(connectivity_status.data) do
-        local hue_device_id = (status.owner and status.owner.rid) or ""
-        log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
-        local child_device = child_device_map[hue_device_id]
-        if child_device then
-          if status.status == "connected" then
-            child_device.log.trace("Marking Online after SSE Reconnect")
-            child_device:online()
-          elseif status.status == "connectivity_issue" then
-            child_device.log.trace("Marking Offline after SSE Reconnect")
-            child_device:offline()
+      cosock.spawn(function()
+        local child_device_map = {}
+        for _, device_record in ipairs(device:get_child_list()) do
+          local hue_device_id = device_record:get_field(Fields.HUE_DEVICE_ID)
+          if hue_device_id ~= nil then
+            child_device_map[hue_device_id] = device_record
           end
         end
-      end
+
+        local scanned = false
+        local connectivity_status, rest_err
+
+        while true do
+          if scanned then break end
+          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          if rest_err ~= nil then
+            log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
+              device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
+            goto continue
+          end
+
+          if connectivity_status.errors and #connectivity_status.errors > 0 then
+            log.error(
+              string.format(
+                "Hue Bridge %s replied with the following error message(s) " ..
+                "when querying child device connectivity status:",
+                device.label
+              )
+            )
+            for idx, err in ipairs(connectivity_status.errors) do
+              log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
+            end
+            goto continue
+          end
+
+          if connectivity_status.data and #connectivity_status.data > 0 then
+            scanned = true
+          end
+
+          for _, status in ipairs(connectivity_status.data) do
+            local hue_device_id = (status.owner and status.owner.rid) or ""
+            log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
+            local child_device = child_device_map[hue_device_id]
+            if child_device then
+              if status.status == "connected" then
+                child_device.log.trace("Marking Online after SSE Reconnect")
+                child_device:online()
+              elseif status.status == "connectivity_issue" then
+                child_device.log.trace("Marking Offline after SSE Reconnect")
+                child_device:offline()
+              end
+            end
+          end
+          ::continue::
+        end
+      end, string.format("Hue Bridge %s Zigbee Scan Task", device.label))
     end
 
     eventsource.onerror = function()
