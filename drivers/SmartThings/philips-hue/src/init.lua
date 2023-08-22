@@ -701,7 +701,9 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
-      --We do a refresh of all child devices when we first connect, to determine which are still online.
+      --We do a refresh of all child devices when we first connect to emit events for all child devices
+      -- after the bridge is online, this will cause ST to mark the children online.
+      --TODO use the actual zigbee service to get the actual child device connectivity
       handlers.refresh_handler(driver, device)
     end
 
