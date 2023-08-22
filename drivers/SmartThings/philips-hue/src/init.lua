@@ -920,6 +920,7 @@ init_light = function(driver, device)
     handlers.refresh_handler(driver, device)
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
+  device:online()
 end
 
 ---@param driver HueDriver
