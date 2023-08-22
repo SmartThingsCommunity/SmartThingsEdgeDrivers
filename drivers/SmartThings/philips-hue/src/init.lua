@@ -680,10 +680,10 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
+  device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
 
-  device:online()
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   handlers.refresh_handler(driver, device)
 end
