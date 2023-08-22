@@ -1,6 +1,6 @@
 local nsdk = require "api.nsdk"
 
-Invokes = {}
+local Invokes = {}
 
 ----------------------------------------------------------
 --- Functions

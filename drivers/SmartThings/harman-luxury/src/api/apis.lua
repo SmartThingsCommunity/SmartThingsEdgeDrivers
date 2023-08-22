@@ -25,7 +25,7 @@ local SMARTTHINGS_MEDIA_PATH = "smartthings:media/"
 --- APIs
 ----------------------------------------------------------
 
-APIs = {}
+local APIs = {}
 
 --- system APIs ------------------------------------------
 

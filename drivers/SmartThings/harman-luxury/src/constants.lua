@@ -1,4 +1,4 @@
-Constants = {
+local Constants = {
     -- device constants
     IP = "device_ipv4",
     DEVICE_INFO = "device_info",

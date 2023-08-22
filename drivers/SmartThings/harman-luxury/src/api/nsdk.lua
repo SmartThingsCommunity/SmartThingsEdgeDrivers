@@ -20,7 +20,7 @@ local SET_DATA = "/api/setData"
 --- Functions
 ----------------------------------------------------------
 
-NSDK = {}
+local NSDK = {}
 
 --- Helpers ----------------------------------------------
 
@@ -32,7 +32,7 @@ local function format_roles(rolesList)
         return "value"
     else
         local t = {}
-        for i, role in rolesList do
+        for _, role in rolesList do
             if role == "all" then
                 return "@all"
             else
@@ -72,7 +72,7 @@ local function _NsdkGetData(ip, path, roles)
     }
     u = u:build()
     local sink = {}
-    local result, code, headers = http.request {
+    local result, code, _ = http.request {
         url = u,
         method = "GET",
         sink = ltn12.sink.table(sink)
@@ -84,7 +84,8 @@ local function _NsdkGetData(ip, path, roles)
         return ret, val
     elseif code == 500 then -- ERROR
         local ret, err = pcall(json.decode, sink[result])
-        log.warn(string.format("Error in GetData: %s. Error: \"%s\"", u, err["error"]["message"]))
+        log.warn(string.format("Error in GetData: %s. Error: \"%s\"", u,
+            (ret and "json.decode() failed" or err["error"]["message"])))
         return false, err
     else -- UNKNOWN VALUE
         local err = error_msg(string.format("Error in GetData: Unknown return value: %s - %s", code,
@@ -112,7 +113,7 @@ local function _NsdkGetRows(ip, path, roles, from, to)
     }
     u = u:build()
     local sink = {}
-    local result, code, headers = http.request {
+    local result, code, _ = http.request {
         url = u,
         method = "GET",
         sink = ltn12.sink.table(sink)
@@ -124,7 +125,8 @@ local function _NsdkGetRows(ip, path, roles, from, to)
         return ret, val
     elseif code == 500 then -- ERROR
         local ret, err = pcall(json.decode, sink[result])
-        log.warn(string.format("Error in GetRows: URL: %s. Error: \"%s\"", u, err["error"]["message"]))
+        log.warn(string.format("Error in GetRows: URL: %s. Error: \"%s\"", u,
+            (ret and "json.decode() failed" or err["error"]["message"])))
         return false, err
     else -- UNKNOWN VALUE
         local err = error_msg(string.format("Error in GetRows: Unknown return value: %s - %s", code,
@@ -150,7 +152,7 @@ local function _NsdkSetData(ip, path, role, value)
     }
     u = u:build()
     local sink = {}
-    local result, code, headers = http.request {
+    local result, code, _ = http.request {
         url = u,
         method = "GET",
         sink = ltn12.sink.table(sink)
@@ -161,7 +163,8 @@ local function _NsdkSetData(ip, path, role, value)
         return ret, val
     elseif code == 500 then -- ERROR
         local ret, err = pcall(json.decode, sink[result])
-        log.warn(string.format("Error in SetData: URL: %s. Error: \"%s\"", u, err["error"]["message"]))
+        log.warn(string.format("Error in SetData: URL: %s. Error: \"%s\"", u,
+            (ret and "json.decode() failed" or err["error"]["message"])))
         return false, err
     else -- UNKNOWN VALUE
         local err = error_msg(string.format("Error in SetData: Unknown return value: %s - %s", code,

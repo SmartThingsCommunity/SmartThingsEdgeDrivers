@@ -1,7 +1,6 @@
 local nsdk = require "api.nsdk"
-local log = require "log"
 
-Gets = {}
+local Gets = {}
 
 ----------------------------------------------------------
 --- Helper Functions

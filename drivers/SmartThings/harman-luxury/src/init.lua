@@ -24,7 +24,7 @@ local function device_removed(driver, device)
     driver.registered_devices[id] = nil
 end
 
-local function update_connection(driver, device, device_dni, device_ip)
+local function update_connection(device, device_dni, device_ip)
     log.debug("Entered update_connection()...")
     -- test if IP works by reading the UUID in the device if ip was provided
     if device_ip then
@@ -42,8 +42,8 @@ local function update_connection(driver, device, device_dni, device_ip)
 
             -- look for device's new IP if it's still on network
             local devices_ip_table = nil
-            for i = 1, 10 do
-                devices_ip_table = discovery.find_ip_table(driver)
+            for _ = 1, 10 do
+                devices_ip_table = discovery.find_ip_table()
                 if (devices_ip_table[device_dni]) then
                     break
                 end
@@ -64,18 +64,18 @@ local function update_connection(driver, device, device_dni, device_ip)
     end
 end
 
-local function refresh(driver, device)
-    local dni = device.device_network_id
+local function refresh(_, device)
     local ip = device:get_field(const.IP)
 
     -- check and update device status
-    local ret, power_state = api.GetPowerState(ip)
+    local ret, power_state, player_state
+    ret, power_state = api.GetPowerState(ip)
     if ret then
         log.debug(string.format("Current power state: %s", power_state))
 
         if power_state == "online" then
             device:emit_event(capabilities.switch.switch.on())
-            local ret, player_state = api.GetPlayerState(ip)
+            ret, player_state = api.GetPlayerState(ip)
             if ret then
                 if player_state == "playing" then
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
@@ -104,11 +104,12 @@ local function refresh(driver, device)
     end
 
     -- check and update device volume and mute status
-    local ret, vol = api.GetVol(ip)
+    local vol, mute
+    ret, vol = api.GetVol(ip)
     if ret then
         device:emit_event(capabilities.audioVolume.volume(vol))
     end
-    local ret, mute = api.GetMute(ip)
+    ret, mute = api.GetMute(ip)
     if ret then
         if mute then
             device:emit_event(capabilities.audioMute.mute.muted())
@@ -118,13 +119,14 @@ local function refresh(driver, device)
     end
 
     -- check and update device media input source
-    local ret, inputSource = api.GetInputSource(ip)
+    local inputSource
+    ret, inputSource = api.GetInputSource(ip)
     if ret then
         device:emit_event(capabilities.mediaInputSource.inputSource(inputSource))
     end
 end
 
-local function check_for_updates(driver, device)
+local function check_for_updates(device)
     log.trace(string.format("%s, checking if device values changed", device.device_network_id))
     local ip = device:get_field(const.IP)
     local ret, changes = api.InvokeGetUpdates(ip)
@@ -161,7 +163,7 @@ local function check_for_updates(driver, device)
             -- check for a audio track data change
             if changes["audioTrackData"] then
                 local audioTrackData = changes["audioTrackData"]
-                local trackdata
+                local trackdata = {}
                 if type(audioTrackData.title) == "string" then
                     trackdata.title = audioTrackData.title
                 end
@@ -205,7 +207,7 @@ local function check_for_updates(driver, device)
     end
 end
 
-local function create_check_for_updates_thread(driver, device)
+local function create_check_for_updates_thread(device)
     local old_timer = device:get_field(const.UPDATE_TIMER)
     if old_timer ~= nil then
         log.info(string.format("create_check_for_updates_thread: dni=%s, remove old timer", device.device_network_id))
@@ -214,12 +216,12 @@ local function create_check_for_updates_thread(driver, device)
 
     log.info(string.format("create_check_for_updates_thread: dni=%s", device.device_network_id))
     local new_timer = device.thread:call_on_schedule(const.UPDATE_INTERVAL, function()
-        check_for_updates(driver, device)
+        check_for_updates(device)
     end, "value_updates_timer")
     device:set_field(const.UPDATE_TIMER, new_timer)
 end
 
-local function create_check_health_thread(driver, device)
+local function create_check_health_thread(device)
     local device_dni = device.device_network_id
     local device_ip = device:get_field(const.IP)
     local old_timer = device:get_field(const.HEALTH_TIMER)
@@ -230,7 +232,7 @@ local function create_check_health_thread(driver, device)
 
     log.info(string.format("create_check_health_thread: dni=%s", device_dni))
     local new_timer = device.thread:call_on_schedule(const.HEALTH_CHEACK_INTERVAL, function()
-        update_connection(driver, device, device_dni, device_ip)
+        update_connection(device, device_dni, device_ip)
     end, "value_health_timer")
     device:set_field(const.HEALTH_TIMER, new_timer)
 end
@@ -266,10 +268,10 @@ local function device_init(driver, device)
     end
     log.trace(string.format("device IP: %s", device_ip))
 
-    create_check_health_thread(driver, device)
-    create_check_for_updates_thread(driver, device)
+    create_check_health_thread(device)
+    create_check_for_updates_thread(device)
 
-    update_connection(driver, device, device_dni, device_ip)
+    update_connection(device, device_dni, device_ip)
     refresh(driver, device)
 end
 
@@ -280,27 +282,28 @@ local function device_added(driver, device)
     device_init(driver, device)
 end
 
-local function device_changeInfo(driver, device, event, args)
+local function device_changeInfo(_, device, _, _)
     log.info(string.format("Device added: %s", device.label))
     local ip = device:get_field(const.IP)
     if not ip then
         log.warn("Failed to get device ip during device_changeInfo()")
-        update_connection(driver, device, device.device_network_id, nil)
+        update_connection(device, device.device_network_id, nil)
     else
         local ret, val = api.SetDeviceName(ip, device.label)
         if not ret then
-            log.info("device_changeInfo: Error occured during attempt to change device name")
+            log.info(string.format(
+                "device_changeInfo: Error occured during attempt to change device name. Error message: %s", val))
         end
     end
 end
 
-local function do_refresh(driver, device, cmd)
+local function do_refresh(driver, device, _)
     log.info(string.format("Starting do_refresh: %s", device.label))
 
     -- check and update device IP
     local dni = device.device_network_id
     local ip = device:get_field(const.IP)
-    update_connection(driver, device, dni, ip)
+    update_connection(device, dni, ip)
 
     -- check and update device values
     refresh(driver, device)

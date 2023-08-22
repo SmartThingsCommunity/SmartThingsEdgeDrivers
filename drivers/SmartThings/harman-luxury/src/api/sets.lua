@@ -1,6 +1,6 @@
 local nsdk = require "api.nsdk"
 
-Sets = {}
+local Sets = {}
 
 ----------------------------------------------------------
 --- Helper Functions

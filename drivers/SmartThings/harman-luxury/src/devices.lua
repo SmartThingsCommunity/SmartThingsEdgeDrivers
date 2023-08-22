@@ -4,7 +4,7 @@ local st_utils = require "st.utils"
 local api = require "api.apis"
 local const = require "constants"
 
-Devices = {}
+local Devices = {}
 
 local supported_devices = { "L75ms", "L42ms", "AVR5" }
 
@@ -39,22 +39,23 @@ function Devices.GetSupportedDevices()
 end
 
 local function GetDefaultDeviceInfo(dni, ip)
-    local ret, label = api.GetDeviceName(ip)
+    local ret, label, manufacturer, model, vendor
+    ret, label = api.GetDeviceName(ip)
     if not ret or type(label) ~= "string" then
         log.warn(string.format("Failed to get Device Name from device with IP: %s", ip))
         label = const.DEFAULT_DEVICE_NAME
     end
-    local ret, manufacturer = api.GetManufactureName(ip)
+    ret, manufacturer = api.GetManufactureName(ip)
     if not ret or type(manufacturer) ~= "string" then
         log.warn(string.format("Failed to get Manufacture Name from device with IP: %s", ip))
         manufacturer = const.DEFAULT_MANUFACTURE_NAME
     end
-    local ret, model = api.GetModelName(ip)
+    ret, model = api.GetModelName(ip)
     if not ret or type(model) ~= "string" then
         log.warn(string.format("Failed to get Device Name from device with IP: %s", ip))
         model = const.DEFAULT_MODEL_NAME
     end
-    local ret, vendor = api.GetProductName(ip)
+    ret, vendor = api.GetProductName(ip)
     if not ret or type(vendor) ~= "string" then
         log.warn(string.format("Failed to get Product Name from device with IP: %s", ip))
         vendor = const.DEFAULT_PRODUCT_NAME

@@ -2,7 +2,7 @@ local log = require "log"
 local net_utils = require "st.net_utils"
 local const = require "constants"
 
-Disco_Helper = {}
+local Disco_Helper = {}
 
 local function byte_array_to_plain_text(byte_array)
     local str = ""
@@ -44,7 +44,7 @@ local function find_text_in_answers_by_ip(ip, discovery_responses)
     return text
 end
 
-local function find_text_list_in_mdns_response(driver, ip, discovery_responses)
+local function find_text_list_in_mdns_response(ip, discovery_responses)
     local text_list = {}
 
     for _, found_item in pairs(discovery_responses.found or {}) do
@@ -63,13 +63,13 @@ local function find_text_list_in_mdns_response(driver, ip, discovery_responses)
     return text_list
 end
 
-local function get_parameters(driver, ip, discovery_responses)
+local function get_parameters(ip, discovery_responses)
     local params = {
         [const.DNI] = "",
         [const.MNID] = "",
         [const.SETUP_ID] = ""
     }
-    local text_list = find_text_list_in_mdns_response(driver, ip, discovery_responses)
+    local text_list = find_text_list_in_mdns_response(ip, discovery_responses)
     for _, text in ipairs(text_list) do
         for key, value in string.gmatch(text, "(%S+)=(%S+)") do
             if key == const.MAC then
@@ -95,7 +95,7 @@ local function get_parameters(driver, ip, discovery_responses)
     end
 end
 
-local function insert_dni_ip_from_answers(driver, filtered_responses, target_table)
+local function insert_dni_ip_from_answers(filtered_responses, target_table)
     for _, answer in pairs(filtered_responses.answers) do
         local ip
 
@@ -104,7 +104,7 @@ local function insert_dni_ip_from_answers(driver, filtered_responses, target_tab
         end
 
         if ip ~= nil then
-            local params = get_parameters(driver, ip, filtered_responses)
+            local params = get_parameters(ip, filtered_responses)
 
             if params ~= nil then
                 log.info(string.format("answer_name, arecod = %s, %s", answer.name, answer.kind.ARecord))
@@ -144,7 +144,7 @@ local function filter_response_by_service_name(service_type, discovery_responses
     return filtered_responses
 end
 
-local function insert_dni_ip_from_found(driver, filtered_responses, target_table)
+local function insert_dni_ip_from_found(filtered_responses, target_table)
     for _, found in pairs(filtered_responses.found) do
         local ip
         log.info(string.format("found_name = %s", tostring(found.service_info.service_type)))
@@ -154,7 +154,7 @@ local function insert_dni_ip_from_found(driver, filtered_responses, target_table
         end
 
         if ip ~= nil then
-            local params = get_parameters(driver, ip, filtered_responses)
+            local params = get_parameters(ip, filtered_responses)
 
             if params ~= nil then
                 local dni = params[const.DNI]
@@ -170,13 +170,13 @@ local function insert_dni_ip_from_found(driver, filtered_responses, target_table
     end
 end
 
-function Disco_Helper.get_dni_ip_table_from_mdns_responses(driver, service_type, domain, discovery_responses)
+function Disco_Helper.get_dni_ip_table_from_mdns_responses(service_type, discovery_responses)
     local dni_ip_table = {}
 
     local filtered_responses = filter_response_by_service_name(service_type, discovery_responses)
 
-    insert_dni_ip_from_found(driver, filtered_responses, dni_ip_table)
-    insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
+    insert_dni_ip_from_found(filtered_responses, dni_ip_table)
+    insert_dni_ip_from_answers(filtered_responses, dni_ip_table)
 
     return dni_ip_table
 end

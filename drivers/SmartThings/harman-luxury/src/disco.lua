@@ -45,13 +45,12 @@ function Discovery.set_device_field(driver, device)
     })
 end
 
-local function find_params_table(driver)
+local function find_params_table()
     log.info("Discovery.find_params_table")
 
     local discovery_responses = mdns.discover(const.SERVICE_TYPE, const.DOMAIN) or {}
 
-    local dni_params_table = disco_helper.get_dni_ip_table_from_mdns_responses(driver, const.SERVICE_TYPE, const.DOMAIN,
-        discovery_responses)
+    local dni_params_table = disco_helper.get_dni_ip_table_from_mdns_responses(const.SERVICE_TYPE, discovery_responses)
 
     return dni_params_table
 end
@@ -67,7 +66,7 @@ local function discovery_device(driver)
     end
 
     log.debug("\n\n--- Creating the parameters table ---\n")
-    local params_table = find_params_table(driver)
+    local params_table = find_params_table()
 
     log.debug("\n\n--- Checking if devices are known or not ---\n")
     for dni, params in pairs(params_table) do
@@ -99,10 +98,10 @@ local function discovery_device(driver)
     end
 end
 
-function Discovery.find_ip_table(driver)
+function Discovery.find_ip_table()
     log.info("Discovery.find_ip_table")
 
-    local dni_params_table = find_params_table(driver)
+    local dni_params_table = find_params_table()
 
     local dni_ip_table = {}
     for dni, params in pairs(dni_params_table) do
