@@ -250,6 +250,8 @@ function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light
 
 function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
 
+function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
+
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 
 function PhilipsHueApi:get_light_by_id(id)
