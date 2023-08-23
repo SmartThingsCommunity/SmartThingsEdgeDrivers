@@ -56,11 +56,17 @@ local function emit_light_status_events(light_device, light)
       if light.status == "connected" then
         light_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
         light_device:online()
+        light_device:set_field(Fields.IS_ONLINE, true)
       elseif light.status == "connectivity_issue" then
         light_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
+        light_device:set_field(Fields.IS_ONLINE, false)
         light_device:offline()
         return
       end
+    end
+
+    if light_device:get_field(Fields.IS_ONLINE) ~= true then
+      return
     end
 
     if light.mode then
@@ -752,8 +758,10 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
               if status.status == "connected" then
                 child_device.log.trace("Marking Online after SSE Reconnect")
                 child_device:online()
+                child_device:set_field(Fields.IS_ONLINE, true)
               elseif status.status == "connectivity_issue" then
                 child_device.log.trace("Marking Offline after SSE Reconnect")
+                child_device:set_field(Fields.IS_ONLINE, false)
                 child_device:offline()
               end
             end
@@ -767,6 +775,7 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", device.label))
 
       for _, device_record in ipairs(device:get_child_list()) do
+        device_record:set_field(Fields.IS_ONLINE, false)
         device_record:offline()
       end
 
@@ -822,6 +831,7 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
                       (device.label or device.device_network_id or device.id or "unknown bridge")
                     )
                   )
+                  light_device:set_field(Fields.IS_ONLINE, false)
                   light_device:offline()
                 end
               end
