@@ -90,6 +90,7 @@ local zigbee_button_driver_template = {
     }
   },
   sub_drivers = {
+    require("aqara"),
     require("pushButton"),
     require("frient"),
     require("zigbee-multi-button"),
