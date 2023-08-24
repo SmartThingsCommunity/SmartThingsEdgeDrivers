@@ -20,8 +20,8 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Scenes = zcl_clusters.Scenes
 
 local FINGERPRINTS = {
-  { mfr = "WALL HERO", model = "M4T2804A-ZB", switches = 4, buttons = 0 },
-  { mfr = "WALL HERO", model = "M4T2828A-ZB", switches = 4, buttons = 4 }
+  { mfr = "WALL HERO", model = "ACL-401S4I", switches = 4, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401S8I", switches = 4, buttons = 4 }
 }
 
 local function can_handle_wallhero_switch(opts, driver, device, ...)
@@ -54,10 +54,10 @@ local function create_child_devices(driver, device)
       local metadata = {
         type = "EDGE_CHILD",
         parent_assigned_child_key = string.format("%02X", i),
-        label = base_name .. i .. " (普通开关)",
+        label = base_name .. i,
         profile = "basic-switch",
         parent_device_id = device.id,
-        vendor_provided_label = base_name .. i .. " (普通开关)",
+        vendor_provided_label = base_name .. i,
       }
       driver:try_create_device(metadata)
     end
@@ -68,10 +68,10 @@ local function create_child_devices(driver, device)
       local metadata = {
         type = "EDGE_CHILD",
         parent_assigned_child_key = string.format("%02X", i),
-        label = base_name .. i .. " (场景开关)",
+        label = base_name .. i,
         profile = "button",
         parent_device_id = device.id,
-        vendor_provided_label = base_name .. i .. " (场景开关)",
+        vendor_provided_label = base_name .. i,
       }
       driver:try_create_device(metadata)
     end

@@ -28,13 +28,13 @@ local scene_switch_profile_def = t_utils.get_profile_definition("button.yml")
 
 local mock_base_device = test.mock_device.build_test_zigbee_device(
     {
-      label = "八键开关 1 (普通开关)",
+      label = "八位智能开关/场景面板 1",
       profile = common_switch_profile_def,
       zigbee_endpoints = {
         [1] = {
           id = 1,
           manufacturer = "WALL HERO",
-          model = "M4T2828A-ZB",
+          model = "ACL-401S8I",
           server_clusters = { 0003,0004,0005,0006 }
         }
       },
@@ -49,7 +49,7 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
       [1] = {
         id = 1,
         manufacturer = "WALL HERO",
-        model = "M4T2828A-ZB",
+        model = "ACL-401S8I",
         server_clusters = { 0003,0004,0005,0006 }
       }
     },
@@ -515,49 +515,49 @@ test.register_coroutine_test(
       test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 2 (普通开关)",
+        label = "八位智能开关/场景面板 2",
         profile = "basic-switch",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "02"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 3 (普通开关)",
+        label = "八位智能开关/场景面板 3",
         profile = "basic-switch",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "03"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 4 (普通开关)",
+        label = "八位智能开关/场景面板 4",
         profile = "basic-switch",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "04"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 5 (场景开关)",
+        label = "八位智能开关/场景面板 5",
         profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "05"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 6 (场景开关)",
+        label = "八位智能开关/场景面板 6",
         profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "06"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 7 (场景开关)",
+        label = "八位智能开关/场景面板 7",
         profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "07"
       })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "八键开关 8 (场景开关)",
+        label = "八位智能开关/场景面板 8",
         profile = "button",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "08"
