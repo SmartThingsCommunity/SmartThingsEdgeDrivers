@@ -2,7 +2,6 @@ local Constants = {
     -- device constants
     IP = "device_ipv4",
     DEVICE_INFO = "device_info",
-    TRACK_DATA = "currentTrackdata",
     HEALTH_TIMER = "value_health_timer",
     UPDATE_TIMER = "value_updates_timer",
 

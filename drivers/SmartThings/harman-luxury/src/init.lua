@@ -68,9 +68,10 @@ local function refresh(_, device)
     local ip = device:get_field(const.IP)
 
     -- check and update device status
-    local ret, power_state, player_state
+    local ret, power_state
     ret, power_state = api.GetPowerState(ip)
     if ret then
+        local player_state, trackdata, totalTime
         log.debug(string.format("Current power state: %s", power_state))
 
         if power_state == "online" then
@@ -87,13 +88,10 @@ local function refresh(_, device)
             end
 
             -- get audio track data
-            local trackdata, totalTime, elapsedTime = api.getAudioTrackData(ip)
-            local lastTrackData = device:get_field(const.TRACK_DATA)
-            if table.concat(lastTrackData) ~= table.concat(trackdata) and trackdata ~= nil then
+            ret, trackdata, totalTime = api.getAudioTrackData(ip)
+            if ret then
                 device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
                 device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
-                device:emit_event(capabilities.audioTrackData.elapsedTime(elapsedTime or 0))
-                device:set_field(const.TRACK_DATA, trackdata)
             end
 
             device:emit_event(capabilities.switch.switch.on())
@@ -180,12 +178,8 @@ local function check_for_updates(device)
                     trackdata.mediaSource = audioTrackData.mediaSource
                 end
                 -- if track changed
-                local lastTrackData = device:get_field(const.TRACK_DATA)
-                if table.concat(lastTrackData) ~= table.concat(trackdata) then
-                    device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
-                    device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
-                    device:set_field(const.TRACK_DATA, trackdata)
-                end
+                device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+                device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
             end
             -- check for a media input source change
             if changes["mediaInputSource"] then
@@ -256,9 +250,6 @@ local function device_init(driver, device)
     device:emit_event(capabilities.keypadInput.supportedKeyCodes(
         {"UP", "DOWN", "LEFT", "RIGHT", "SELECT", "BACK", "EXIT", "MENU", "SETTINGS", "HOME", "NUMBER0", "NUMBER1",
          "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8", "NUMBER9"}))
-
-    -- initialise audion track data
-    device:set_field(const.TRACK_DATA, {})
 
     local device_dni = device.device_network_id
 

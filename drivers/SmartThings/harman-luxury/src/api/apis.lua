@@ -143,7 +143,7 @@ end
 
 --- invoke smartthings:audio/getAudioTrackData on ip
 ---@param ip string
----@return table|nil, number|nil, number|nil
+---@return boolean, table|nil, number|nil
 function APIs.getAudioTrackData(ip)
     local ret, val = invoke.Activate(ip, SMARTTHINGS_AUDIO_PATH .. "getAudioTrackData")
     if ret then
@@ -155,10 +155,9 @@ function APIs.getAudioTrackData(ip)
             mediaSource = val.mediaSource
         }
         local totalTime = val.totalTime
-        local elapsedTime = val.elapsedTime
-        return trackdata, totalTime, elapsedTime
+        return ret, trackdata, totalTime
     else
-        return nil, nil, nil
+        return ret, nil, nil
     end
 end
 
