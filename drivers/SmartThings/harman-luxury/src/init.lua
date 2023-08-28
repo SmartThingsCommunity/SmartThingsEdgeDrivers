@@ -82,7 +82,7 @@ local function refresh(_, device)
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
                 elseif player_state == "paused" then
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
-                elseif player_state == "stopped" then
+                else
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
                 end
             end
@@ -152,7 +152,7 @@ local function check_for_updates(device)
                 elseif playerState == "paused" then
                     log.debug("playerState - changed to paused")
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
-                elseif playerState == "stopped" then
+                else
                     device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
                 end
             end

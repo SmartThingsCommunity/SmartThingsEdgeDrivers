@@ -26,6 +26,7 @@ function Handler.handle_off(_, device, _)
     local ret, val = api.SetOff(ip)
     if ret then
         device:emit_event(capabilities.switch.switch.off())
+        device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
     else
         log.warn(string.format("Error during handle_off(): %s", val["error"]["message"]))
     end
@@ -171,6 +172,7 @@ local function set_playback_status(device, status, func_name)
                     elseif val == "stopped" then
                         device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
                     else
+                        device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
                         log.warn(string.format("Error during %s(): unsupported status read - %s", func_name, val))
                     end
                 else
