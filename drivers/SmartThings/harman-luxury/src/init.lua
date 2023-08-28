@@ -93,8 +93,6 @@ local function refresh(_, device)
                 device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
                 device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
             end
-
-            device:emit_event(capabilities.switch.switch.on())
         else
             device:emit_event(capabilities.switch.switch.off())
             device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
