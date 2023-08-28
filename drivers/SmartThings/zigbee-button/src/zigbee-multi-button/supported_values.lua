@@ -59,6 +59,7 @@ local devices = {
       { mfr = "ADUROLIGHT", model = "ADUROLIGHT_CSC" },
       { mfr = "AduroSmart Eria", model = "Adurolight_NCC" },
       { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
+      { mfr = "HEIMAN", model = "E-SceneSwitch-EM-3.0" },
       { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
       { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
     },

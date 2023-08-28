@@ -26,6 +26,7 @@ local HEIMAN_GROUP_CONFIGURE = "is_group_configured"
 
 local HEIMAN_BUTTON_FINGERPRINTS = {
   { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0", endpoint_num = 0x04 },
+  { mfr = "HEIMAN", model = "E-SceneSwitch-EM-3.0", endpoint_num = 0x04 },
   { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0", endpoint_num = 0x04 },
   { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0", endpoint_num = 0x03 },
 }
@@ -72,6 +73,12 @@ local do_configure = function(self, device)
 end
 
 local scene_group_button_mapping = {
+  ["E-SceneSwitch-EM-3.0"] = {
+    [1] = "button2",
+    [2] = "button1",
+    [3] = "button3",
+    [5] = "button4"
+  },
   ["HS6SSA-W-EF-3.0"] = {
     [1] = "button3",
     [2] = "button2",
