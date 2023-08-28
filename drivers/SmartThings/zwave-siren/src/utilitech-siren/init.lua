@@ -16,6 +16,7 @@ local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1,strict=true})
 local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local BatteryDefaults = require "st.zwave.defaults.battery"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local UTILITECH_MFR = 0x0060
 local UTILITECH_SIREN_PRODUCT_ID = 0x0001
@@ -37,13 +38,23 @@ local function battery_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local utilitech_siren = {
   NAME = "utilitech-siren",
   can_handle = can_handle_utilitech_siren,
   zwave_handlers = {
     [cc.BATTERY] = {
       [Battery.REPORT] = battery_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     added = device_added

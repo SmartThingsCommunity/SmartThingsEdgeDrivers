@@ -17,6 +17,7 @@ local cc  = require "st.zwave.CommandClass"
 local AlarmDefaults = require "st.zwave.defaults.alarm"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ZIPATO_MFR = 0x0131
 local BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT = 33
@@ -62,6 +63,13 @@ local function device_added(self, device)
   device:send(Battery:Get({}))
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local zipato_siren = {
   NAME = "zipato-siren",
   can_handle = can_handle_zipato_siren,
@@ -75,6 +83,9 @@ local zipato_siren = {
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.REPORT] = basic_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     },
   },
   lifecycle_handlers = {

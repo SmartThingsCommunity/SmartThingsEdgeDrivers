@@ -14,6 +14,8 @@
 
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
+local cc = require "st.zwave.CommandClass"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local AEON_MFR = 0x0086
 local AEON_SIREN_PRODUCT_ID = 0x0050
@@ -62,9 +64,21 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local aeon_siren = {
   NAME = "aeon-siren",
   can_handle = can_handle_aeon_siren,
+  zwave_handlers = {
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
+  },
   lifecycle_handlers = {
     doConfigure = do_configure,
     infoChanged = info_changed

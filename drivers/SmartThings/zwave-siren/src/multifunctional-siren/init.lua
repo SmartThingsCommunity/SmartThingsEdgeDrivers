@@ -19,6 +19,7 @@ local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 --- @type st.zwave.CommandClass.Battery
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local MULTIFUNCTIONAL_SIREN_FINGERPRINTS = {
   { manufacturerId = 0x027A, productType = 0x000C, productId = 0x0003 }, -- Zooz S2 Multisiren ZSE19
@@ -58,6 +59,13 @@ local function notification_handler(self, device, cmd)
   device:emit_event(event)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local do_configure = function(self, device)
   device:refresh()
   device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY}))
@@ -68,7 +76,10 @@ local multifunctional_siren = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     doConfigure = do_configure

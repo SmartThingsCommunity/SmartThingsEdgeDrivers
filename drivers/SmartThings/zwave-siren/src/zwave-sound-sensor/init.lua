@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Alarm
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ZWAVE_SOUND_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x014A, productType = 0x0005, productId = 0x000F } --Ecolink Firefighter
@@ -63,11 +64,21 @@ local function added_handler(self, device)
   device:emit_event(capabilities.soundSensor.sound.not_detected())
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local zwave_sound_sensor = {
   zwave_handlers = {
     [cc.ALARM] = {
       [Alarm.REPORT] = alarm_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     added = added_handler,

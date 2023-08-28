@@ -18,6 +18,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({version =1})
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({version=2})
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local preferencesMap = require "preferences"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local PHILIO_SOUND_SIREN = {
   { manufacturerId = 0x013C, productType = 0x0004, productId = 0x000A }
@@ -155,6 +156,13 @@ local function sensor_binary_report_handler(driver, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local philio_sound_siren = {
   NAME = "Philio sound siren",
   can_handle = can_handle_philio_sound_siren,
@@ -167,7 +175,10 @@ local philio_sound_siren = {
     },
     [cc.SENSOR_BINARY] = {
       [SensorBinary.REPORT] = sensor_binary_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.alarm.ID] = {

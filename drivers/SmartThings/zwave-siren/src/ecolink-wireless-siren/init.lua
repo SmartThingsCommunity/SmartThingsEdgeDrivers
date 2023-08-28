@@ -19,6 +19,7 @@ local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ECOLINK_WIRELESS_SIREN_FINGERPRINTS = {
   { manufacturerId = 0x014A, productType = 0x0005, productId = 0x000A }, -- Ecolink Siren
@@ -37,6 +38,13 @@ local function basic_set_handler(driver, device, cmd)
   local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
   local alarm_event = value == 0x00 and capabilities.alarm.alarm.off() or capabilities.alarm.alarm.both()
   device:emit_event_for_endpoint(cmd.src_channel, alarm_event)
+end
+
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
 end
 
 local function component_to_endpoint(device, component_id)
@@ -89,6 +97,9 @@ local ecolink_wireless_siren = {
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     },
   },
   capability_handlers = {

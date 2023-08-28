@@ -18,6 +18,7 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local preferencesMap = require "preferences"
 
 local YALE_MFR = 0x0129
@@ -92,6 +93,13 @@ local function configuration_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local function device_added(driver, device)
   do_refresh(driver, device)
 end
@@ -113,7 +121,10 @@ local yale_siren = {
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     infoChanged = info_changed,

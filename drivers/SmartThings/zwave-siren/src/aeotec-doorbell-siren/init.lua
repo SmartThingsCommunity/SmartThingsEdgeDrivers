@@ -18,6 +18,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local preferencesMap = require "preferences"
 
 local AEOTEC_DOORBELL_SIREN_FINGERPRINTS = {
@@ -295,6 +296,13 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local function alarmChimeOnOff(device, command, newValue)
   if (device and command and newValue) then
     local endpoint = component_to_endpoint(device, command.component)
@@ -330,7 +338,10 @@ local aeotec_doorbell_siren = {
     },
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capabilities_handlers = {
     [capabilities.refresh.ID] = {
