@@ -27,6 +27,7 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 --- @type st.zwave.CommandClass.ApplicationStatus
 local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local utils = require "st.utils"
 
@@ -163,6 +164,13 @@ local function device_added(self, device)
   do_refresh(self, device)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local fibaro_heat_controller = {
   NAME = "fibaro heat controller",
   zwave_handlers = {
@@ -174,7 +182,10 @@ local fibaro_heat_controller = {
     },
     [cc.APPLICATION_STATUS] = {
       [ApplicationStatus.APPLICATION_BUSY] = application_busy_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.thermostatMode.ID] = {

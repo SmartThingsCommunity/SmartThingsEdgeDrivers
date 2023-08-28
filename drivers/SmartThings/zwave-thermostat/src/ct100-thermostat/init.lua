@@ -28,6 +28,7 @@ local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ 
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.MultiChannel
 local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 4 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local heating_setpoint_defaults = require "st.zwave.defaults.thermostatHeatingSetpoint"
 local cooling_setpoint_defaults = require "st.zwave.defaults.thermostatCoolingSetpoint"
 local constants = require "st.zwave.constants"
@@ -183,6 +184,13 @@ local function added_handler(self, device)
   do_refresh(self, device)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local ct100_thermostat = {
   NAME = "CT100 thermostat",
   lifecycle_handlers = {
@@ -197,7 +205,10 @@ local ct100_thermostat = {
     },
     [cc.THERMOSTAT_SETPOINT] = {
       [ThermostatSetpoint.REPORT] = setpoint_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.thermostatCoolingSetpoint.ID] = {

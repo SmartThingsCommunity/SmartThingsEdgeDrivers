@@ -23,6 +23,7 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version=2})
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local AEOTEC_THERMOSTAT_FINGERPRINT = {mfr = 0x0371, prod = 0x0002, model = 0x0015}
 
@@ -74,6 +75,13 @@ local set_emergency_heat_mode = function()
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local function do_refresh(self, device)
   device:send(ThermostatMode:Get({}))
   device:send(SensorMultilevel:Get({}))
@@ -102,7 +110,10 @@ local aeotec_radiator_thermostat = {
   zwave_handlers = {
     [cc.THERMOSTAT_MODE] = {
       [ThermostatMode.REPORT] = thermostat_mode_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.thermostatMode.ID] = {
