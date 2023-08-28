@@ -17,6 +17,7 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 4 })
 local capabilities = require "st.capabilities"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local TAMPER_TIMER = "_tamper_timer"
 local TAMPER_CLEAR = 10
@@ -49,11 +50,21 @@ local function handle_tamper_event(driver, device, cmd)
   end))
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local timed_tamper_clear = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = handle_tamper_event
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   NAME = "timed tamper clear",
   can_handle = can_handle_tamper_event

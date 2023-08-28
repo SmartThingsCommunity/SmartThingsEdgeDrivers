@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS = {
   { manufacturerId = 0x0371, productType = 0x0002, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro EU
@@ -63,10 +64,20 @@ local function notification_report_handler(self, device, cmd)
   if (event ~= nil) then device:emit_event(event) end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local zwave_water_temp_humidity_sensor = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     },
   },
   NAME = "zwave water temp humidity sensor",

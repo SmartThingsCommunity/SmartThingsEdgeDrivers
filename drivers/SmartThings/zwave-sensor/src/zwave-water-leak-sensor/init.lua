@@ -15,7 +15,7 @@
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
-
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
 local WATER_LEAK_SENSOR_FINGERPRINTS = {
   {mfr = 0x0084, prod = 0x0063, model = 0x010C},  -- SmartThings Water Leak Sensor
@@ -46,12 +46,22 @@ local function basic_set_handler(driver, device, cmd)
   device:emit_event(value == 0xFF and capabilities.waterSensor.water.wet() or capabilities.waterSensor.water.dry())
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local water_leak_sensor = {
   NAME = "Water Leak Sensor",
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   can_handle = can_handle_water_leak_sensor
 }

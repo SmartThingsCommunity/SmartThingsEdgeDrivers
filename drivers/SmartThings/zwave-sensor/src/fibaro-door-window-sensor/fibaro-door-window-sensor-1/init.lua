@@ -19,6 +19,7 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=2 })
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 1 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local configurationsMap = require "configurations"
 
 local FIBARO_DOOR_WINDOW_SENSOR_1_FINGERPRINTS = {
@@ -72,6 +73,12 @@ local function device_added(driver, device)
   device:emit_event(capabilities.contactSensor.contact.open())
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
 
 local fibaro_door_window_sensor_1 = {
   NAME = "fibaro door window sensor 1",
@@ -82,7 +89,10 @@ local fibaro_door_window_sensor_1 = {
   zwave_handlers = {
     [cc.SENSOR_ALARM ] = {
       [SensorAlarm.REPORT] = sensor_alarm_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   [capabilities.refresh.ID] = {
     [capabilities.refresh.commands.refresh.NAME] = do_refresh

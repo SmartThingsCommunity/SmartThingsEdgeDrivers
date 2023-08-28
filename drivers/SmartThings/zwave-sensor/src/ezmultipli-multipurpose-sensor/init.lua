@@ -25,6 +25,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({version=1})
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
 
@@ -92,11 +93,21 @@ local function set_color(driver, device, command)
   device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_color)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local ezmultipli_multipurpose_sensor = {
   NAME = "EZmultiPli Multipurpose Sensor",
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.REPORT] = basic_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     },
   },
   capability_handlers = {

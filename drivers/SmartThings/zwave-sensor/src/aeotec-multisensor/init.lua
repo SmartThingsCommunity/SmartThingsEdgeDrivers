@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local AEOTEC_MULTISENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0086, productId = 0x0064 }, -- MultiSensor 6
@@ -54,11 +55,21 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local aeotec_multisensor = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   sub_drivers = {
     require("aeotec-multisensor/multisensor-6"),
