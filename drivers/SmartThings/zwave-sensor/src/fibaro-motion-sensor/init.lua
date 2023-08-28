@@ -17,6 +17,7 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.SensorAlarm
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local capabilities = require "st.capabilities"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local FIBARO_MOTION_MFR = 0x010F
 local FIBARO_MOTION_PROD = 0x0800
@@ -33,11 +34,21 @@ local function sensor_alarm_report(driver, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local fibaro_motion_sensor = {
   NAME = "Fibaro Motion Sensor",
   zwave_handlers = {
     [cc.SENSOR_ALARM] = {
       [SensorAlarm.REPORT] = sensor_alarm_report
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
   can_handle = can_handle_fibaro_motion_sensor

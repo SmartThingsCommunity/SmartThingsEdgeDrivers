@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local t_utils = require "integration_test.utils"
 

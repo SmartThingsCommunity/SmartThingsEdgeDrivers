@@ -156,6 +156,17 @@ test.register_coroutine_test(
           Battery:Get({})
         )
       },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+          mock,
+          WakeUp:IntervalGet({})
+        )
+      },
+    },
+    {
+      inner_block_ordering = "relaxed"
     }
 )
 

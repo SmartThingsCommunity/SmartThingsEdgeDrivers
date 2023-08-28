@@ -21,6 +21,7 @@ local t_utils = require "integration_test.utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version=5 })
+local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version=1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version=4 })
 
@@ -86,6 +87,20 @@ test.register_coroutine_test(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
+      )
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        SensorBinary:Get({sensor_type = SensorBinary.sensor_type.FREEZE})
+      )
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        SensorBinary:Get({sensor_type = SensorBinary.sensor_type.SMOKE})
       )
     )
 

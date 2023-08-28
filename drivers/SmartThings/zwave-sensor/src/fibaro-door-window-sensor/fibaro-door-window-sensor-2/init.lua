@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Alarm
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 2 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
 local FIBARO_DOOR_WINDOW_SENSOR_2_FINGERPRINTS = {
   { manufacturerId = 0x010F, productType = 0x0702, productId = 0x1000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / Europe
@@ -67,11 +68,21 @@ local function alarm_report_handler(self, device, cmd)
   if event ~= nil then device:emit_event(event) end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local fibaro_door_window_sensor_2 = {
   NAME = "fibaro door window sensor 2",
   zwave_handlers = {
     [cc.ALARM] = {
       [Alarm.REPORT] = alarm_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
   lifecycle_handlers = {

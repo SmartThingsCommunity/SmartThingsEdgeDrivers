@@ -15,7 +15,8 @@
 local capabilities = require "st.capabilities"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2,strict=true})
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({version=2})
-
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
+local cc = require "st.zwave.CommandClass"
 local EVERSPRING_MOTION_LIGHT_FINGERPRINT = { mfr = 0x0060, prod = 0x0012, model = 0x0001 }
 
 local function can_handle_everspring_motion_light(opts, driver, device, ...)
@@ -32,10 +33,22 @@ local function device_added(driver, device)
   device:send(SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.MOTION }))
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local everspring_motion_light = {
   NAME = "Everspring Motion Light",
   lifecycle_handlers = {
     added = device_added
+  },
+  zwave_handler = {
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   can_handle = can_handle_everspring_motion_light
 }

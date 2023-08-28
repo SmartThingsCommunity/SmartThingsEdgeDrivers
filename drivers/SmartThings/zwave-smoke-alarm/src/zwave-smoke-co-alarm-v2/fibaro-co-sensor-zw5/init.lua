@@ -14,6 +14,7 @@
 
 local cc = require "st.zwave.CommandClass"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local preferencesMap = require "preferences"
 
 local NOTIFICATIONS = 2
@@ -75,6 +76,13 @@ local function configuration_report(driver, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local do_configure = function(self, device)
   device:send(Configuration:Set({parameter_number = NOTIFICATIONS, configuration_value = TAMPERING_AND_EXCEEDING_THE_TEMPERATURE}))
   device:send(Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE}))
@@ -101,7 +109,10 @@ local fibaro_co_sensor = {
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     doConfigure = do_configure,

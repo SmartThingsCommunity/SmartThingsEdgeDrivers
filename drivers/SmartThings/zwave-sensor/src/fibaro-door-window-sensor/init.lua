@@ -132,6 +132,13 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local fibaro_door_window_sensor = {
   NAME = "fibaro door window sensor",
   zwave_handlers = {
@@ -140,6 +147,9 @@ local fibaro_door_window_sensor = {
     },
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
   lifecycle_handlers = {

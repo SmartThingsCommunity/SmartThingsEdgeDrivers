@@ -19,6 +19,7 @@ local cc = require "st.zwave.CommandClass"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 --- @type st.utils
 local utils = require "st.utils"
 
@@ -102,6 +103,13 @@ local function sensor_multilevel_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local zooz_4_in_1_sensor = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
@@ -109,6 +117,9 @@ local zooz_4_in_1_sensor = {
     },
     [cc.SENSOR_MULTILEVEL] = {
       [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
   NAME = "zooz 4 in 1 sensor",

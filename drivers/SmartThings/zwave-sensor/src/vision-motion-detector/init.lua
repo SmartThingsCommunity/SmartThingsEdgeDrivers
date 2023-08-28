@@ -21,6 +21,8 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+--- @type st.zwave.CommandClass.WakeUp
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local VISION_MOTION_DETECTOR_FINGERPRINTS = {
   { manufacturerId = 0x0109, productType = 0x2002, productId = 0x0205 } -- Vision Motion Detector ZP3102
@@ -77,11 +79,21 @@ local function do_configure(self, device)
   device:send(Configuration:Set({ configuration_value = 1, parameter_number = 1, size = 1 }))
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local vision_motion_detector = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
     },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = {wakeup_notification}
+    }
   },
   lifecycle_handlers = {
     doConfigure = do_configure,
