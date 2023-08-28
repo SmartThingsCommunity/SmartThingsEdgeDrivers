@@ -16,6 +16,7 @@
 local cc = (require "st.zwave.CommandClass")
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local FIBARO_ROLLER_SHUTTER_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x1D01, model = 0x1000}, -- Fibaro Walli Roller Shutter
@@ -72,11 +73,21 @@ local function device_added(self, device)
   device:do_refresh()
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local fibaro_roller_shutter = {
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   NAME = "fibaro roller shutter",
   can_handle = can_handle_fibaro_roller_shutter,

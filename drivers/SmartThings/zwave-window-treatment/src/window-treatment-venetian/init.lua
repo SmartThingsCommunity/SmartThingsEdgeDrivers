@@ -15,6 +15,7 @@
 local cc = (require "st.zwave.CommandClass")
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=3})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local WindowShadeDefaults = require "st.zwave.defaults.windowShade"
 local WindowShadeLevelDefaults = require "st.zwave.defaults.windowShadeLevel"
@@ -60,6 +61,13 @@ local function map_components(self, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local window_treatment_venetian = {
   NAME = "window treatment venetian",
   zwave_handlers = {
@@ -68,7 +76,10 @@ local window_treatment_venetian = {
     },
     [cc.SWITCH_MULTILEVEL] = {
       [SwitchMultilevel.REPORT] = shade_event_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   can_handle = can_handle_window_treatment_venetian,
   lifecycle_handlers = {

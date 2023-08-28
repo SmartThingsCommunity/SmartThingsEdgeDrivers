@@ -23,6 +23,7 @@ local Association = (require "st.zwave.CommandClass.Association")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=3})
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local preferencesMap = require "preferences"
 
@@ -168,6 +169,13 @@ local function device_added(self, device)
   device:refresh()
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local qubino_flush_shutter = {
   NAME = "qubino flush shutter",
   zwave_handlers = {
@@ -179,7 +187,10 @@ local qubino_flush_shutter = {
     },
     [cc.METER] = {
       [Meter.REPORT] = meter_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.windowShadeLevel.ID] = {

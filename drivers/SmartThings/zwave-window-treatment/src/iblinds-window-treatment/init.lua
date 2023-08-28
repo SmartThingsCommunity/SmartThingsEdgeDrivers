@@ -15,6 +15,8 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=3 })
+local cc = require "st.zwave.CommandClass"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local IBLINDS_WINDOW_TREATMENT_FINGERPRINTS = {
   {mfr = 0x0287, prod = 0x0003, model = 0x000D}, -- iBlinds Window Treatment v1 / v2
@@ -74,6 +76,13 @@ function capability_handlers.preset_position(driver, device)
   set_shade_level_helper(driver, device, device.preferences.presetPosition or 50)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local iblinds_window_treatment = {
   capability_handlers = {
     [capabilities.windowShade.ID] = {
@@ -86,6 +95,11 @@ local iblinds_window_treatment = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = capability_handlers.preset_position
     }
+  },
+  zwave_handlers = {
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   sub_drivers = {
     require("iblinds-window-treatment.v3")

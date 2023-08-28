@@ -17,6 +17,8 @@ local capabilities = require "st.capabilities"
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
+local cc = require "st.zwave.CommandClass"
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local SPRINGS_WINDOW_FINGERPRINTS = {
   {mfr = 0x026E, prod = 0x4353, model = 0x5A31}, -- Springs Window Shade
@@ -57,11 +59,23 @@ function capability_handlers.preset_position(driver, device)
   device.thread:call_with_delay(constants.MIN_DIMMING_GET_STATUS_DELAY, query_device)
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local springs_window_fashion_shade = {
   capability_handlers = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = capability_handlers.preset_position
     }
+  },
+  zwave_handlers = {
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   NAME = "Springs window fashion shade",
   can_handle = can_handle_springs_window_fashion_shade,

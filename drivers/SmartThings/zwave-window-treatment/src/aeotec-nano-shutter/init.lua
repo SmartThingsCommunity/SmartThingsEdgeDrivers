@@ -19,6 +19,7 @@ local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local SHADE_STATE_OPENING = "opening"
 local SHADE_STATE_CLOSING = "closing"
@@ -104,11 +105,21 @@ local function do_configure(driver, device)
   device:send(Configuration:Set({parameter_number = 85, size = 1, configuration_value = 1}))
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local aeotec_nano_shutter = {
   zwave_handlers = {
     [cc.BASIC] = {
         [Basic.REPORT] = basic_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   capability_handlers = {
     [capabilities.statelessCurtainPowerButton.ID] = {
