@@ -24,6 +24,7 @@ local access_control_event = Notification.event.access_control
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2})
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
@@ -164,6 +165,13 @@ local function user_code_report_handler(self, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local schlage_lock = {
   capability_handlers = {
     [capabilities.lockCodes.ID] = {
@@ -181,7 +189,10 @@ local schlage_lock = {
     },
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   lifecycle_handlers = {
     doConfigure = do_configure,

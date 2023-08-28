@@ -20,6 +20,7 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.defaults.lockCodes
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local lock_code_defaults = require "st.zwave.defaults.lockCodes"
 local json = require "dkjson"
 
@@ -152,11 +153,21 @@ local function alarm_report_handler(driver, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local zwave_lock = {
   zwave_handlers = {
     [cc.ALARM] = {
       [Alarm.REPORT] = alarm_report_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   NAME = "Z-Wave lock alarm V1",
   can_handle = can_handle_v1_alarm,
