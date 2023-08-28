@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local ECOLINK_FINGERPRINTS = {
   {mfr = 0x014A, prod = 0x0006, model = 0x0002},
@@ -41,12 +42,22 @@ local function basic_set_handler(driver, device, cmd)
   end
 end
 
+local wakeup_notification = nil
+local version = require "version"
+if version.api == 6 then
+  --TODO remove once this happens properly for subdrivers that dont override the default
+  wakeup_notification = function(driver, device, cmd) device:refresh() end
+end
+
 local ecolink_switch = {
   NAME = "Ecolink Switch",
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
-    }
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
+    },
   },
   can_handle = can_handle_ecolink
 }
