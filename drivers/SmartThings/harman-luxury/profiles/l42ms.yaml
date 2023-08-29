@@ -12,6 +12,8 @@ components:
     version: 1
   - id: mediaInputSource
     version: 1
+  - id: mediaPresets
+    version: 1
   - id: mediaPlayback
     version: 1
   - id: mediaTrackControl

@@ -198,6 +198,29 @@ function APIs.GetInputSource(ip)
     return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "getInputSource")
 end
 
+--- play Media Preset with given id value on Harman Luxury on ip
+---@param ip string
+---@param id integer
+---@return boolean, boolean|table
+function APIs.PlayMediaPreset(ip, id)
+    local value = {
+        i32_ = id
+    }
+    return invoke.ActivateValue(ip, SMARTTHINGS_MEDIA_PATH .. "playMediaPreset", value)
+end
+
+--- get Media Preset list of Harman Luxury on ip
+---@param ip string
+---@return boolean, table
+function APIs.GetMediaPresets(ip)
+    local ret, val = invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "getMediaPresets")
+    if ret then
+        return ret, val.presets
+    else
+        return ret, val
+    end
+end
+
 --- invoke smartthings:media/setPlay on ip
 ---@param ip string
 ---@return boolean, string|table

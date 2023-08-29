@@ -131,6 +131,18 @@ function Handler.handle_setInputSource(_, device, cmd)
     end
 end
 
+--- handler of mediaPresets.playPreset
+function Handler.handle_play_preset(_, device, cmd)
+    log.info("Starting handle_play_preset")
+    -- send API to play media preset
+    local ip = device:get_field(const.IP)
+    local id = cmd.args.presetId
+    local ret, val = api.PlayMediaPreset(ip, id)
+    if not ret then
+        log.warn(string.format("Error during handle_play_preset(): %s", val["error"]["message"]))
+    end
+end
+
 --- handler of audioNotification.playTrack, audioNotification.playTrackAndResume,
 --- and audioNotification.playTrackAndRestore
 function Handler.handle_audio_notification(_, device, cmd)

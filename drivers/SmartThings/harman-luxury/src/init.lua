@@ -99,6 +99,13 @@ local function refresh(_, device)
         end
     end
 
+    -- get media presets list
+    local presets
+    ret, presets = api.GetMediaPresets(ip)
+    if ret then
+        device:emit_event(capabilities.mediaPresets.presets(presets))
+    end
+
     -- check and update device volume and mute status
     local vol, mute
     ret, vol = api.GetVol(ip)
@@ -178,6 +185,10 @@ local function check_for_updates(device)
                 -- if track changed
                 device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
                 device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
+            end
+            -- check for a media presets change
+            if changes["mediaPresets"] and type(changes["mediaPresets"]) == "table" then
+                device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"]))
             end
             -- check for a media input source change
             if changes["mediaInputSource"] then
@@ -332,6 +343,9 @@ local driver = Driver("Harman Luxury", {
         [capabilities.mediaInputSource.ID] = {
             [capabilities.mediaInputSource.commands.setInputSource.NAME] = handlers.handle_setInputSource
         },
+        [capabilities.mediaPresets.ID] = {
+            [capabilities.mediaPresets.commands.playPreset.NAME] = handlers.handle_play_preset
+        },
         [capabilities.audioNotification.ID] = {
             [capabilities.audioNotification.commands.playTrack.NAME] = handlers.handle_audio_notification,
             [capabilities.audioNotification.commands.playTrackAndResume.NAME] = handlers.handle_audio_notification,
@@ -351,7 +365,8 @@ local driver = Driver("Harman Luxury", {
         }
     },
     supported_capabilities = {capabilities.switch, capabilities.audioMute, capabilities.audioVolume,
-                              capabilities.mediaPlayback, capabilities.mediaTrackControl, capabilities.keypadInput},
+                              capabilities.mediaPlayback, capabilities.mediaTrackControl, capabilities.keypadInput,
+                              capabilities.mediaPresets},
     registered_devices = {}
 })
 
