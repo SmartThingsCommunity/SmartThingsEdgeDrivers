@@ -119,8 +119,7 @@ local driver_template = {
     require("fibaro-heat-controller"),
     require("stelpro-ki-thermostat"),
     require("qubino-flush-thermostat"),
-    require("thermostat-heating-battery"),
-    require("apiv6_bugfix"),
+    require("thermostat-heating-battery")
   }
 }
 

@@ -86,8 +86,7 @@ local driver_template = {
   sub_drivers = {
     require("zwave-smoke-co-alarm-v1"),
     require("zwave-smoke-co-alarm-v2"),
-    require("fibaro-smoke-sensor"),
-    require("apiv6_bugfix"),
+    require("fibaro-smoke-sensor")
   },
   lifecycle_handlers = {
     init = device_init,

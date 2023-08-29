@@ -184,8 +184,7 @@ local driver_template = {
     require("zwave-alarm-v1-lock"),
     require("schlage-lock"),
     require("samsung-lock"),
-    require("keywe-lock"),
-    require("apiv6_bugfix"),
+    require("keywe-lock")
   }
 }
 
