@@ -146,7 +146,7 @@ end
 ---@return boolean, table|nil, number|nil
 function APIs.getAudioTrackData(ip)
     local ret, val = invoke.Activate(ip, SMARTTHINGS_AUDIO_PATH .. "getAudioTrackData")
-    if ret then
+    if ret and next(val) ~= nil then
         local trackdata = {
             title = val.title,
             artist = val.artist,
@@ -157,7 +157,7 @@ function APIs.getAudioTrackData(ip)
         local totalTime = val.totalTime
         return ret, trackdata, totalTime
     else
-        return ret, nil, nil
+        return false, nil, nil
     end
 end
 

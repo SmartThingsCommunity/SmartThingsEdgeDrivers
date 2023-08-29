@@ -71,11 +71,13 @@ local function refresh(_, device)
     local ret, power_state
     ret, power_state = api.GetPowerState(ip)
     if ret then
-        local player_state, trackdata, totalTime
         log.debug(string.format("Current power state: %s", power_state))
 
         if power_state == "online" then
             device:emit_event(capabilities.switch.switch.on())
+            local player_state, trackdata, totalTime
+
+            -- get player state
             ret, player_state = api.GetPlayerState(ip)
             if ret then
                 if player_state == "playing" then
@@ -88,11 +90,14 @@ local function refresh(_, device)
             end
 
             -- get audio track data
-            ret, trackdata, totalTime = api.getAudioTrackData(ip)
-            if ret then
-                device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
-                device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
+            if player_state and player_state ~= "stopped" then
+                ret, trackdata, totalTime = api.getAudioTrackData(ip)
+                if ret then
+                    device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+                    device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
+                end
             end
+
         else
             device:emit_event(capabilities.switch.switch.off())
             device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
