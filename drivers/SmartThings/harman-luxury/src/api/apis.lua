@@ -182,7 +182,7 @@ end
 
 --- set Input Source value of Harman Luxury on ip
 ---@param ip string
----@param value integer
+---@param source string
 ---@return boolean, string|table
 function APIs.SetInputSource(ip, source)
     local value = {
