@@ -1,7 +1,6 @@
 local cc = require "st.zwave.CommandClass"
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
--- doing refresh would cause incorrect state for device, see comments in wakeup-no-poll
 local DANFOSS_LC13_THERMOSTAT_FPS = {
     { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0003 }, -- Danfoss LC13 Thermostat
     { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0004 } -- Danfoss LC13 Thermostat
