@@ -176,14 +176,6 @@ local function matter_handler(driver, device, response_block)
   log.info(string.format("Fallback handler for %s", response_block))
 end
 
-local function on_off_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
-  end
-end
-
 local function watt_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local wattValue = ib.data.value
@@ -208,9 +200,6 @@ local eve_energy_handler = {
   },
   matter_handlers = {
     attr = {
-      [clusters.OnOff.ID] = {
-        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
-      },
       [PRIVATE_CLUSTER_ID] = {
         [PRIVATE_ATTR_ID_WATT] = watt_attr_handler,
         [PRIVATE_ATTR_ID_WATT_ACCUMULATED] = watt_accumulated_attr_handler
