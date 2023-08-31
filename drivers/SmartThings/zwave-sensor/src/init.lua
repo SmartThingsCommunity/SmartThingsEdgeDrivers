@@ -139,7 +139,8 @@ local driver_template = {
     require("v1-contact-event"),
     require("timed-tamper-clear"),
     require("wakeup-no-poll"),
-    require("aeotec-trisensor")
+    require("aeotec-trisensor"),
+    require("apiv6_bugfix")
   },
   lifecycle_handlers = {
     added = added_handler,
