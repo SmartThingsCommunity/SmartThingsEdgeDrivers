@@ -186,10 +186,6 @@ end
 -- Eve Energy Handler
 -------------------------------------------------------------------------------------
 
-local function matter_handler(driver, device, response_block)
-  log.info(string.format("Fallback handler for %s", response_block))
-end
-
 local function watt_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local wattValue = ib.data.value
@@ -219,7 +215,6 @@ local eve_energy_handler = {
         [PRIVATE_ATTR_ID_WATT_ACCUMULATED] = watt_accumulated_attr_handler
       }
     },
-    fallback = matter_handler,
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
