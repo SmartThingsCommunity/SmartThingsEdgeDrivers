@@ -30,7 +30,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 
 -- Ecolink garage door operator
 local ECOLINK_GARAGE_DOOR_FINGERPRINTS = {
-  { manufacturerId = 0x014A, productType = 0x0007, productId = 0x4731 }
+  manufacturerId = 0x014A, productType = 0x0007, productId = 0x4731
 }
 
 local GDO_ENDPOINT_NAME = "main"
