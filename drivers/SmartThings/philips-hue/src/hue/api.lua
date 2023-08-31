@@ -26,6 +26,13 @@ local ControlMessageBuilders = {
   end
 }
 
+local function do_shutdown(instance)
+  if instance._running then
+    instance._ctrl_tx:send(ControlMessageBuilders.Shutdown())
+    instance._running = false
+  end
+end
+
 --- Phillips Hue REST API Module
 --- @class PhilipsHueApi
 --- @field private client RestClient
@@ -33,12 +40,6 @@ local ControlMessageBuilders = {
 --- @field private _ctrl_tx table
 local PhilipsHueApi = {}
 PhilipsHueApi.__index = PhilipsHueApi
-PhilipsHueApi.__gc = function(self)
-  if self._running then
-    self._ctrl_tx:send(ControlMessageBuilders.Shutdown())
-    self._running = false
-  end
-end
 
 PhilipsHueApi.MIN_CLIP_V2_SWVERSION = 1948086000
 PhilipsHueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE = 2000
@@ -54,21 +55,22 @@ local function retry_fn(retry_attempts)
   end
 end
 
-local function process_rest_response(response, err, partial)
+local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.info_with({ hub_logs = true },
-    st_utils.stringify_table(
-      {
-        resp = response,
-        maybe_err = err,
-        maybe_partial = partial
-      },
-      "[PhilipsHueApi] Unexpected nil for both response and error processing REST reply",
-      false
+    log.error_with({ hub_logs = true },
+      st_utils.stringify_table(
+        {
+          resp = response,
+          maybe_err = err,
+          maybe_partial = partial
+        },
+        "[PhilipsHueApi] Unexpected nil for both response and error processing REST reply",
+        false
+      )
     )
-  )
   end
   if err ~= nil then
+    if type(err_callback) == "function" then err_callback(err) end
     return response, err, partial
   elseif response ~= nil then
     local body, err = response:get_body()
@@ -79,18 +81,25 @@ local function process_rest_response(response, err, partial)
     local success = table.remove(json_result, 1)
 
     if not success then
-      log.error_with({ hub_logs = true }, "[PhilipsHueApi] Couldn't decode JSON in SSE callback: " .. st_utils.stringify_table(json_result))
-      return
+      return nil, st_utils.stringify_table(
+        { response_body = body, json = json_result }, "Couldn't decode JSON in SSE callback", false
+      )
     end
 
-    return table.unpack(json_result)
+    return table.unpack(json_result, 1, json_result.n)
   else
     return nil, "no response or error received"
   end
 end
 
 function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
+  log.debug(st_utils.stringify_table(
+    { base_url, api_key },
+    "Creating new Bridge Manager:",
+    true
+  ))
   local control_tx, control_rx = channel.new()
+  control_rx:settimeout(30)
   local self = setmetatable(
     {
       headers = { [APPLICATION_KEY_HEADER] = api_key or "" },
@@ -101,10 +110,16 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
   )
 
   cosock.spawn(function()
-    while true do
+    local rest_err_callback = function(_err) self.client:close_socket() end
+    while self._running == true do
       local msg, err = control_rx:receive()
       if err then
-        log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
+        if err ~= "timeout" then
+          log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread",
+            err)
+        else
+          log.info_with({ hub_logs = true }, "Timeout on Hue API Control Channel, continuing")
+        end
         goto continue
       end
 
@@ -112,7 +127,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
         if msg._type == ControlMessageTypes.Shutdown then
           log.info_with({ hub_logs = true }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
           self._running = false
-          return
+          goto continue
         end
 
         if msg._type == ControlMessageTypes.Update then
@@ -124,24 +139,35 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
         local path, reply_tx = msg.path, msg.reply_tx
         if msg._type == ControlMessageTypes.Get then
           reply_tx:send(
-            table.pack(process_rest_response(self.client:get(path, self.headers, retry_fn(5))))
+            table.pack(process_rest_response(self.client:get(path, self.headers, retry_fn(5), rest_err_callback)))
           )
         elseif msg._type == ControlMessageTypes.Put then
           local payload = msg.payload
           reply_tx:send(
-            table.pack(process_rest_response(self.client:put(path, payload, self.headers, retry_fn(5))))
+            table.pack(process_rest_response(self.client:put(path, payload, self.headers, retry_fn(5), rest_err_callback)))
           )
         end
       else
-        log.warn_with({ hub_logs = true },
+        log.warn(
           st_utils.stringify_table(msg, "[PhilipsHueApi] Unexpected Message on REST API Control Channel", false))
       end
 
       ::continue::
     end
+    if self._ctrl_tx then
+      self._ctrl_tx = nil
+    end
+    if self.client then
+      self.client:shutdown()
+      self.client = nil
+    end
   end, string.format("Hue API Thread for %s", base_url))
 
   return self
+end
+
+function PhilipsHueApi:shutdown()
+  do_shutdown(self)
 end
 
 function PhilipsHueApi:update_connection(hub_base_url, api_key)
@@ -151,34 +177,80 @@ end
 
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
+  reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Get(path, reply_tx);
   instance._ctrl_tx:send(msg)
-  return table.unpack(reply_rx:receive())
+  local recv, err = reply_rx:receive()
+  if err ~= nil then
+    instance.client:close_socket()
+    return nil, "cosock error: " .. err
+  end
+  return table.unpack(recv, 1, recv.n)
 end
 
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
+  reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Put(path, payload, reply_tx);
   instance._ctrl_tx:send(msg)
-  return table.unpack(reply_rx:receive())
+  local recv, err = reply_rx:receive()
+  if err ~= nil then
+    instance.client:close_socket()
+    return nil, "cosock error: " .. err
+  end
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
+---@param socket_builder nil|function optional an override to the default socket factory callback
 ---@return HueBridgeInfo|nil bridge_info nil on err
 ---@return nil|string error nil on success
 ---@return nil|string partial partial response if available, nil otherwise
-function PhilipsHueApi.get_bridge_info(bridge_ip)
-  return process_rest_response(RestClient.one_shot_get("https://" .. bridge_ip .. "/api/config", nil, nil))
+function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
+  local tx, rx = channel.new()
+  rx:settimeout(10)
+  cosock.spawn(
+    function()
+      tx:send(table.pack(process_rest_response(RestClient.one_shot_get("https://" .. bridge_ip .. "/api/config", nil,
+        socket_builder))))
+    end,
+    string.format("%s get_bridge_info", bridge_ip)
+  )
+  local recv, err = rx:receive()
+  if err ~= nil then
+    return nil, "cosock error: " .. err
+  end
+  return table.unpack(recv, 1, recv.n)
 end
 
-function PhilipsHueApi.request_api_key(bridge_ip)
-  local body = json.encode { devicetype = "smartthings_edge_driver#" .. bridge_ip, generateclientkey = true }
-  return process_rest_response(RestClient.one_shot_post("https://" .. bridge_ip .. "/api", body, nil, nil))
+---@param bridge_ip string
+---@param socket_builder nil|function optional an override to the default socket factory callback
+---@return table|nil api_key_response nil on err
+---@return nil|string error nil on success
+---@return nil|string partial partial response if available, nil otherwise
+function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
+  local tx, rx = channel.new()
+  rx:settimeout(10)
+  cosock.spawn(
+    function()
+      local body = json.encode { devicetype = "smartthings_edge_driver#" .. bridge_ip, generateclientkey = true }
+      tx:send(table.pack(process_rest_response(RestClient.one_shot_post("https://" .. bridge_ip .. "/api", body, nil,
+        socket_builder))))
+    end,
+    string.format("%s request_api_key", bridge_ip)
+  )
+  local recv, err = rx:receive()
+  if err ~= nil then
+    return nil, "cosock error: " .. err
+  end
+  return table.unpack(recv, 1, recv.n)
 end
 
 function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
 
 function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
+
+function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
 
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 
@@ -242,18 +314,6 @@ function PhilipsHueApi:set_light_color_temp(id, mirek)
     return nil,
         string.format("Expected number for color temp mirek, received %s", st_utils.stringify_table(mirek, nil, false))
   end
-end
-
-local utils = require "utils"
-local logged_funcs = {}
-for key, val in pairs(PhilipsHueApi) do
-  if type(val) == "function" then
-    logged_funcs[key] = utils.log_func_wrapper(val, key)
-  end
-end
-
-for key, val in pairs(logged_funcs) do
-  PhilipsHueApi[key] = val
 end
 
 return PhilipsHueApi

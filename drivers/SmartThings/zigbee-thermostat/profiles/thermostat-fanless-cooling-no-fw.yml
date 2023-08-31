@@ -1,0 +1,27 @@
+name: thermostat-fanless-cooling-no-fw
+components:
+  - id: main
+    categories:
+      - name: Thermostat
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+      - id: thermostatCoolingSetpoint
+        version: 1
+        config:
+          values:
+            - key: "coolingSetpoint.value"
+              range: [6, 40]
+              step: 0.1
+      - id: thermostatOperatingState
+        version: 1
+        config:
+          values:
+            - key: "thermostatOperatingState.value"
+              enabledValues:
+                - cooling
+                - idle
+      - id: thermostatMode
+        version: 1
+      - id: refresh
+        version: 1

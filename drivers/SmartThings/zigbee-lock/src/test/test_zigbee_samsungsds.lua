@@ -49,6 +49,34 @@ end
 
 test.set_test_init_function(test_init)
 
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+    test.wait_for_events()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, DoorLock.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.attributes.LockState:configure_reporting(mock_device, 0, 3600, 0)
+      }
+    )
+
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
 test.register_message_test(
     "Lock status reporting should be handled",
     {
@@ -1326,8 +1354,8 @@ test.register_coroutine_test(
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
-      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
       test.wait_for_events()
     end
 )

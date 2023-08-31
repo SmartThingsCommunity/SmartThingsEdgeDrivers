@@ -21,6 +21,7 @@ local t_utils = require "integration_test.utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version=5 })
+local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version=1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version=4 })
 
@@ -92,6 +93,13 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
+        WakeUp:IntervalGet({})
+      )
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
         Configuration:Set({parameter_number=1, size=1, configuration_value=0})
       )
     )
@@ -151,6 +159,18 @@ test.register_coroutine_test(
         Configuration:Set({parameter_number=32, size=2, configuration_value=4320})
       )
     )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        SensorBinary:Get({sensor_type = SensorBinary.sensor_type.FREEZE})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        SensorBinary:Get({sensor_type = SensorBinary.sensor_type.SMOKE})
+      )
+    )
 
   end
 )
@@ -164,15 +184,15 @@ test.register_coroutine_test(
       mock_device,
       WakeUp:IntervalSet({node_id = 0x00, seconds = 21600})
     ))
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-    -- )
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    -- )
-    -- test.socket.capability:__expect_send(
-    --   mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
-    -- )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,

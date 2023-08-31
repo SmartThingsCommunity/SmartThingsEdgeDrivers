@@ -37,7 +37,7 @@ jobs:
       - name: Package the driver
         working-directory: ${{ matrix.driver }}
         run: |
-          zip -v ${{env.package_key}}.zip config.yml fingerprints.yml $(find profiles -name "*.y*ml") $(find . -name "*.lua") -x "*test*"
+          zip -v ${{env.package_key}}.zip config.yml fingerprints.yml search-parameters.y*ml $(find profiles -name "*.y*ml") $(find . -name "*.lua") -x "*test*"
       - name: Upload packaged driver artifact
         uses: actions/upload-artifact@v3
         with:

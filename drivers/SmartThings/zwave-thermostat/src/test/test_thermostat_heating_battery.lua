@@ -59,16 +59,16 @@ local function do_initial_setup()
 
     test.socket.device_lifecycle():__queue_receive({mock_device.id, "added"})
 
-    -- test.socket.capability:__expect_send(
-    --     mock_device:generate_test_message(
-    --             "main",
-    --             capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})
-    --     ))
-    -- test.socket.capability:__expect_send(
-    --     mock_device:generate_test_message(
-    --             "main",
-    --             capabilities.battery.battery(100)
-    --     ))
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+                "main",
+                capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})
+        ))
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+                "main",
+                capabilities.battery.battery(100)
+        ))
 
     test.socket.zwave:__expect_send(
         zw_test_utilities.zwave_test_build_send_command(
@@ -142,6 +142,11 @@ test.register_coroutine_test(
                 zw_test_utilities.zwave_test_build_receive_command(
                         WakeUp:Notification({}))
             })
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
         end
 )
 
@@ -173,6 +178,11 @@ test.register_coroutine_test(
                 zw_test_utilities.zwave_test_build_receive_command(
                         WakeUp:Notification({}))
             })
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
             -- expect nothing since time is not exceed 24 hours
 
             test.wait_for_events()
@@ -370,6 +380,13 @@ test.register_coroutine_test(
             test.socket.zwave:__queue_receive({
                 mock_device.id, zw_test_utilities.zwave_test_build_receive_command(WakeUp:Notification({}))
             })
+
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
+
             -- Celsius 25 should be converted to Fahrenheit 77, since devices use Fahrenheit scale.
             test.socket.zwave:__expect_send(
                     zw_test_utilities.zwave_test_build_send_command(
@@ -457,6 +474,12 @@ test.register_coroutine_test(
                 mock_device.id, zw_test_utilities.zwave_test_build_receive_command(WakeUp:Notification({}))
             })
 
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
+
             -- Celsius 25
             test.socket.zwave:__expect_send(
                     zw_test_utilities.zwave_test_build_send_command(
@@ -528,6 +551,12 @@ test.register_coroutine_test(
             test.socket.zwave:__queue_receive(
                     {mock_device.id, zw_test_utilities.zwave_test_build_receive_command(WakeUp:Notification({}))}
             )
+
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
 
             test.socket.zwave:__expect_send(
                     zw_test_utilities.zwave_test_build_send_command(
@@ -621,6 +650,12 @@ test.register_coroutine_test(
             )
 
             test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
+
+            test.socket.zwave:__expect_send(
                     zw_test_utilities.zwave_test_build_send_command(
                             mock_device,
                             ThermostatSetpoint:Set({
@@ -692,6 +727,11 @@ test.register_coroutine_test(
                             seconds = new_reportingInterval*60
                         })
                 ))
+        test.socket.zwave:__expect_send(
+            zw_test_utilities.zwave_test_build_send_command(
+              mock_device,
+              WakeUp:IntervalGet({})
+        ))
     end
 )
 
@@ -723,6 +763,12 @@ test.register_coroutine_test(
                                 local_protection_state = Protection.protection_state.NO_OPERATION_POSSIBLE,
                             })
                     ))
+            test.socket.zwave:__expect_send(
+                zw_test_utilities.zwave_test_build_send_command(
+                  mock_device,
+                  WakeUp:IntervalGet({})
+            ))
+
         end
 )
 

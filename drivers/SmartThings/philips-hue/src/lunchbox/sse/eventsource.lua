@@ -248,6 +248,9 @@ local function connecting_action(source)
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
+      _, err = source._sock:settimeout(60)
+      if err ~= nil then return nil, err end
+
       _, err = source._sock:connect(source.url.host, source.url.port)
       if err ~= nil then return nil, err end
 
@@ -298,7 +301,7 @@ local function connecting_action(source)
   if err ~= nil then
     return nil, err
   end
-  local content_type = string.lower(headers:get_one('content-type'))
+  local content_type = string.lower((headers:get_one('content-type') or "none"))
   if not content_type:find("text/event-stream", 1, true) then
     local err_msg = "Expected content type of text/event-stream in response headers, received: " .. content_type
     return nil, err_msg
@@ -372,7 +375,8 @@ local function open_action(source)
     local recv_dbg = recv or "<NIL>"
     if #recv_dbg == 0 then recv_dbg = "<EMPTY>" end
     recv_dbg = recv_dbg:gsub("\r\n", "<CRLF>"):gsub("\n", "<LF>"):gsub("\r", "<CR>")
-    log.error_with({ hub_logs = true }, string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
+    log.error_with({ hub_logs = true },
+      string.format("Received %s while expecting a chunked encoding payload length (hex number)\n", recv_dbg))
   end
 end
 
@@ -462,6 +466,11 @@ function EventSource.new(url, extra_headers, sock_builder)
   cosock.spawn(function()
     local st_utils = require "st.utils"
     while true do
+      if source.ready_state == EventSource.ReadyStates.CLOSED and
+          not source._reconnect
+      then
+        return
+      end
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
@@ -481,7 +490,9 @@ end
 --- Close the event source, signalling that a reconnect is not desired
 function EventSource:close()
   self._reconnect = false
-  self._sock:close()
+  if self._sock ~= nil then
+    self._sock:close()
+  end
   self._sock = nil
   self.ready_state = EventSource.ReadyStates.CLOSED
 end
@@ -495,18 +506,6 @@ function EventSource:add_event_listener(listener_type, listener)
   if list then
     table.insert(list, listener)
   end
-end
-
-local utils = require "utils"
-local logged_funcs = {}
-for key, val in pairs(EventSource) do
-  if type(val) == "function" then
-    logged_funcs[key] = utils.log_func_wrapper(val, key)
-  end
-end
-
-for key, val in pairs(logged_funcs) do
-  EventSource[key] = val
 end
 
 return EventSource
