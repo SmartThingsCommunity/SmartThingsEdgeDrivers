@@ -135,7 +135,6 @@ local devices = {
     PARAMETERS = {
       motionDelayTime = { parameter_number = 3, size = 2 },
       motionSensitivity = { parameter_number = 4, size = 1 },
-      motionReportType = { parameter_number = 5, size = 1 },
       lowBatteryThreshold = { parameter_number = 14, size = 1 },
       toggleThresholdReports = { parameter_number = 15, size = 1 },
       tempThreshold = { parameter_number = 16, size = 1 },

@@ -38,7 +38,6 @@ local sensor_endpoints = {
 local PARAMETERS = {
   { name = 'motionDelayTime',        parameter_number = 3,  size = 2, configuration_value = 120 },
   { name = 'motionSensitivity',      parameter_number = 4,  size = 1, configuration_value = 2 },
-  { name = 'motionReportType',       parameter_number = 5,  size = 1, configuration_value = 1 },
   { name = 'lowBatteryThreshold',    parameter_number = 14, size = 1, configuration_value = 10 },
   { name = 'toggleThresholdReports', parameter_number = 15, size = 1, configuration_value = 1 },
   { name = 'tempThreshold',          parameter_number = 16, size = 1, configuration_value = 20 },
@@ -56,7 +55,6 @@ local PARAMETERS = {
 local PARAMETERS_US = {
   { name = 'motionDelayTime',        parameter_number = 3,  size = 2, configuration_value = 120 },
   { name = 'motionSensitivity',      parameter_number = 4,  size = 1, configuration_value = 2 },
-  { name = 'motionReportType',       parameter_number = 5,  size = 1, configuration_value = 1 },
   { name = 'lowBatteryThreshold',    parameter_number = 14, size = 1, configuration_value = 10 },
   { name = 'toggleThresholdReports', parameter_number = 15, size = 1, configuration_value = 1 },
   { name = 'tempThreshold',          parameter_number = 16, size = 1, configuration_value = 20 },

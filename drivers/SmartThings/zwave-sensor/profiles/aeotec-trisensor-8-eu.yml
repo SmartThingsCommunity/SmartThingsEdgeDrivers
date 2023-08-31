@@ -53,16 +53,6 @@ preferences:
         1: "minimum"
         0: "disabled"
       default: 3
-  - name: "motionReportType"
-    title: "#5 Type of Motion Report"
-    description: "Set wether Motion Report should send as 'notification' or 'sensor binary' report."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        0: "Notification Report"
-        1: "Sensor Binary Report"
-      default: 0
   - name: "lowBatteryThreshold"
     title: "#14 Low Battery Threshold"
     description: "Sends low battery report via notification and battery report when battery level
