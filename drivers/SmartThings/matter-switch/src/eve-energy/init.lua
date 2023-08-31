@@ -15,6 +15,7 @@ local PRIVATE_ATTR_ID_WATT = 0x130A000A
 local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
+local RECURRING_POLL_TIMER = "RECURRING_POLL_TIMER"
 local TIMER_REPEAT = (1 * 60)    -- Run the timer each minute
 local REPORT_TIMEOUT = (10 * 60) -- Report the value each 10 minutes
 
@@ -88,13 +89,14 @@ local function requestData(device)
   device:send(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
 end
 
-local timer = nil
 local function create_poll_schedule(device)
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
   -- Eve Energy generally report changes every 10 or 17 minutes
-  timer = device.thread:call_on_schedule(TIMER_REPEAT, function()
+  local timer = device.thread:call_on_schedule(TIMER_REPEAT, function()
     requestData(device)
   end, "polling_schedule_timer")
+
+  device:set_field(RECURRING_POLL_TIMER, timer)
 end
 
 
@@ -154,8 +156,10 @@ local function device_added(driver, device)
 end
 
 local function device_removed(driver, device)
-  if timer ~= nil then
-    device.thread:cancel_timer(timer)
+  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
+  if poll_timer ~= nil then
+    device.thread:cancel_timer(poll_timer)
+    device:set_field(RECURRING_POLL_TIMER, nil)
   end
 end
 
