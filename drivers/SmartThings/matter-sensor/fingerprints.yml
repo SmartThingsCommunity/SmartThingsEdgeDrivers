@@ -16,6 +16,11 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x004D
     deviceProfileName: contact-battery
+  - id: "TUO/ContactDoorAndWindow"
+   deviceLabel: TUO Contact Sensor
+   vendorId: 0x141E
+   productId: 0x0002
+   deviceProfileName: contact-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
