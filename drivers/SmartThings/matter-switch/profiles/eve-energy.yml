@@ -1,4 +1,4 @@
-name: eve-energy
+name: power-energy-powerConsumption
 components:
 - id: main
   capabilities:
