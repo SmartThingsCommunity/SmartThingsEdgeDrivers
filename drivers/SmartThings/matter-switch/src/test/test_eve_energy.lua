@@ -238,4 +238,41 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Report with the custom Watt accumulated attribute after 10 minutes", function()
+    local currentTime = 60000
+    test.mock_time.advance_time(currentTime)
+
+    local data = data_types.validate_or_build_type(50, data_types.Uint16, "watt accumulated")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        cluster_base.build_test_report_data(
+          mock_device,
+          0x01,
+          PRIVATE_CLUSTER_ID,
+          PRIVATE_ATTR_ID_WATT_ACCUMULATED,
+          data
+        )
+      }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50000, unit = "Wh" }))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.powerConsumptionReport.powerConsumption({
+          energy = 50000,
+          deltaEnergy = 0.0,
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T16:39:59Z"
+        }))
+    )
+
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
