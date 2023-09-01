@@ -171,4 +171,22 @@ test.register_coroutine_test(
   }
 )
 
+test.register_coroutine_test(
+  "Check the refresh command", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = capabilities.refresh.ID, command = capabilities.refresh.commands.refresh.NAME, args = {} },
+      }
+    )
+
+    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.matter:__expect_send({ mock_device.id,
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
+    test.socket.matter:__expect_send({ mock_device.id,
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
