@@ -84,6 +84,7 @@ local zigbee_switch_driver_template = {
     capabilities.illuminanceMeasurement
   },
   sub_drivers = {
+    require("hanssem"),
     require("aqara"),
     require("aqara-light"),
     require("ezex"),
@@ -104,7 +105,8 @@ local zigbee_switch_driver_template = {
     require("ge-link-bulb"),
     require("bad_on_off_data_type"),
     require("robb"),
-    require("thirdreality")
+    require("thirdreality"),
+    require("wallhero")
   },
   lifecycle_handlers = {
     init = device_init,

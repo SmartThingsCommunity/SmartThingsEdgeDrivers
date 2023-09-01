@@ -246,7 +246,7 @@ zwaveManufacturer:
     deviceLabel: WYFY Switch 1
     manufacturerId: 0x015F
     productType: 0x3111
-    productId: 0x3111
+    productId: 0x5102
     deviceProfileName: switch-binary
   - id: 015F/3121/5102
     deviceLabel: WYFY Switch 1
@@ -923,6 +923,13 @@ zwaveGeneric:
     deviceLabel: Dimmer Switch
     genericType: 0x11 # GENERIC_TYPE_SWITCH_MULTILEVEL
     deviceProfileName: switch-level
+  - id: "GenericDimmerSwitch/3"
+    deviceLabel: Dimmer Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+        - 0x26 # switch multilevel
+    deviceProfileName: switch-level
   - id: "GenericMultiChannelDevice/1"
     deviceLabel: Z-Wave Device Multichannel
     commandClasses:
@@ -943,6 +950,22 @@ zwaveGeneric:
         - 0x60 # multi channel
         - 0x26
     deviceProfileName: multichannel-switch-level
+  - id: "GenericMeteringSwitch"
+    deviceLabel: Metering Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+        - 0x32 # meter
+    deviceProfileName: metering-switch
+  - id: "GenericMeteringDimmerSwitch"
+    deviceLabel: Metering Switch
+    commandClasses:
+      supported:
+        - 0x25 # binary switch
+        - 0x26 # switch multilevel
+        - 0x32 # meter
+    deviceProfileName: metering-dimmer
+
 zwaveThing :
   - id: SmartThings/Z-WaveThing
     deviceLabel: Z-Wave Device

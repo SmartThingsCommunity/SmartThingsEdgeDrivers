@@ -247,7 +247,15 @@ test.register_message_test(
           mock_device,
           SensorBinary:Get({ sensor_type = SensorBinary.sensor_type.MOTION })
         )
-      }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+          mock_device,
+          WakeUp:IntervalGet({})
+        )
+      },
     },
     {
       inner_block_ordering = "relaxed"

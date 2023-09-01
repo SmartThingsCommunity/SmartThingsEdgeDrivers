@@ -22,6 +22,6 @@ preferences:
   - preferenceId: stse.restorePowerState
     explicit: true
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: 0f305a94-72e1-3fb8-af85-24eedff49d19
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Smart_Plug
   
