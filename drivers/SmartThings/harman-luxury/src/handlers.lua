@@ -61,7 +61,7 @@ end
 function Handler.handle_unmute(_, device, _)
     log.info("Starting handle_unmute")
     -- send API mute off message
-    set_mute(device, true, "handle_unmute")
+    set_mute(device, false, "handle_unmute")
 end
 
 --- handler of audioMute.setMute
