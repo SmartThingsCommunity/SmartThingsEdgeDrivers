@@ -31,7 +31,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
       },
       device_types = {
         device_type_id = 0x0016, device_type_revision = 1, -- RootNode
@@ -62,32 +62,31 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
-
 end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-	"On command should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "switch", component = "main", command = "on", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.OnOff.server.commands.On(mock_device, 1)
-			}
-		}
-	}
+  "On command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switch", component = "main", command = "on", args = {} }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, 1)
+      }
+    }
+  }
 )
 
 test.register_message_test(
@@ -98,7 +97,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        { capability = "switch", component = "main", command = "off", args = { } }
+        { capability = "switch", component = "main", command = "off", args = {} }
       }
     },
     {
