@@ -7,6 +7,8 @@ local capabilities = require "st.capabilities"
 local SEQ_NUM = "SeqNumber"
 local FEED_SOURCE = "FeedingSource"
 local BTN_LOCK = "stse.buttonLock"
+local FEED_TIMER = "FeedingTimer"
+local FEED_TIME = 1
 
 local OP_WRITE = 0x02
 local OP_REPORT = 0x05
@@ -15,6 +17,19 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTR_ID = 0xFFF1
 local MFG_CODE = 0x115F
 
+local callback_timer = function(driver, device, cmd)
+  return function()
+    device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
+  end
+end
+
+local function delete_timer(device)
+  local timer = device:get_field(FEED_TIMER)
+  if timer then
+    device.thread:cancel_timer(timer)
+    device:set_field(FEED_TIMER, nil, { persist = true })
+  end
+end
 
 local function conv_data(param)
   -- convert param to data length & value
@@ -50,7 +65,7 @@ end
 local function do_refresh(driver, device)
   -- refresh
   local lastPortion = device:get_latest_state("main", capabilities.feederPortion.ID,
-        capabilities.feederPortion.feedPortion.NAME) or 0
+    capabilities.feederPortion.feedPortion.NAME) or 0
   device:emit_event(capabilities.feederPortion.feedPortion({ value = lastPortion, unit = "servings" },
     { state_change = true }))
   do_payload(device, 8, 0, 2001, OP_REPORT, 1, 0)
@@ -91,16 +106,12 @@ local function petFeeder_handler(driver, device, value, zb_rx)
     device:emit_event(capabilities.feederPortion.feedPortion({ value = conv_data(param), unit = "servings" }))
   elseif funcID == "13.104.85" then
     local feed_source = device:get_field(FEED_SOURCE)
-    if feed_source == 1 then
-      device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
-    else
-      local reset_status = function()
-        device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
-      end
-      device.thread:call_with_delay(1, reset_status)
+    if feed_source == 0 then
       device:emit_event(capabilities.feederOperatingState.feederOperatingState("feeding"))
     end
     device:set_field(FEED_SOURCE, 0, { persist = true })
+    delete_timer(device)
+    device:set_field(FEED_TIMER, device.thread:call_with_delay(FEED_TIME, callback_timer(driver, device)))
   end
 end
 
@@ -110,6 +121,7 @@ local function device_added(driver, device)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE, data_types.Uint8, 1))
   -- init
+  do_payload(device, 4, 24, 85, OP_WRITE, 1, 0)
   device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
   device:emit_event(capabilities.feederPortion.feedPortion({ value = 1, unit = "servings" }))
   device:emit_event(capabilities.powerSource.powerSource("dc"))

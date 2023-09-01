@@ -59,6 +59,16 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: SceneSwitch-EM-3.0
     deviceProfileName: four-buttons-battery
+  - id: "HEIMAN/HS6SSA-W-EF-3.0"
+    deviceLabel: HEIMAN Scene Panel
+    manufacturer: HEIMAN
+    model: HS6SSA-W-EF-3.0
+    deviceProfileName: four-buttons
+  - id: "HEIMAN/HS6SSB-W-EF-3.0"
+    deviceLabel: HEIMAN Scene Panel
+    manufacturer: HEIMAN
+    model: HS6SSB-W-EF-3.0
+    deviceProfileName: three-buttons
   - id: "AduroSmart Eria/Adurolight_NCC"
     deviceLabel: Eria Remote Control
     manufacturer: AduroSmart Eria
@@ -139,3 +149,19 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-01P
     deviceProfileName: one-button-battery
+  - id: "ROBB smarrt/ROB_200-007-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-007-0
+    deviceLabel: ROBB 8x Wireless Smarrt Switch
+    deviceProfileName: eight-buttons-battery
+  - id: "ROBB smarrt/ROB_200-008-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-008-0
+    deviceLabel: ROBB 4x Wireless Smarrt Switch
+    deviceProfileName: four-buttons-battery
+  # # Wall Hero
+  - id: "WALL HERO/A4"
+    deviceLabel: 4寸屏
+    manufacturer: WALL HERO
+    model: A4
+    deviceProfileName: thirty-buttons

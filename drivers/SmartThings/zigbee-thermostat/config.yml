@@ -3,3 +3,5 @@ defaultProfile: 'thermostat-battery-powerSource'
 packageKey: 'zigbee-thermostat'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee thermostat devices"
+vendorSupportInformation: "https://support.smartthings.com"

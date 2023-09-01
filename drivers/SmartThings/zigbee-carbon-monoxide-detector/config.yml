@@ -2,3 +2,5 @@ name: 'Zigbee Carbon Monoxide Detector'
 packageKey: 'zigbee-carborn-monoxide-detector'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee carbon monoxide detector devices"
+vendorSupportInformation: "https://support.smartthings.com"

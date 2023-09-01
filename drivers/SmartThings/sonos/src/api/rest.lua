@@ -1,3 +1,5 @@
+local log = require "log"
+local st_utils = require "st.utils"
 local json = require 'st.json'
 
 local RestClient = require 'lunchbox.rest'
@@ -16,11 +18,43 @@ local HEADERS = {
 --- @return any|nil response the processed JSON as a table, nil on error
 --- @return string|nil error an error message
 --- @return string|nil partial contents of partial read if successful
-local function process_rest_response(response, err, partial)
+local function process_rest_response(response, err, partial, err_callback)
+  if err == nil and response == nil then
+    log.error(
+      st_utils.stringify_table(
+        {
+          resp = response,
+          maybe_err = err,
+          maybe_partial = partial
+        },
+        "[SonosRestApi] Unexpected nil for both response and error processing REST reply",
+        false
+      )
+    )
+  end
   if err ~= nil then
+    if type(err_callback) == "function" then err_callback(err) end
     return response, err, partial
-  elseif response ~= nil and response:get_headers():get_one("content-type") == 'application/json' then
-    return json.decode(response:get_body())
+  elseif response ~= nil then
+    local headers = response:get_headers()
+    if not (headers and headers:get_one("content-type") == 'application/json') then
+      return nil, string.format("Received non-JSON content-type header [%s] when JSON response was expected", ((headers and headers:get_one("content-type")) or "no headers"))
+    else
+      local body, err = response:get_body()
+      if not body then
+        return nil, err
+      end
+      local json_result = table.pack(pcall(json.decode, body))
+      local success = table.remove(json_result, 1)
+
+      if not success then
+        return nil, st_utils.stringify_table(
+          {response_body = body, json = json_result}, "Couldn't decode JSON in SSE callback", false
+        )
+      end
+
+      return table.unpack(json_result)
+    end
   else
     return nil, "no response or error received"
   end

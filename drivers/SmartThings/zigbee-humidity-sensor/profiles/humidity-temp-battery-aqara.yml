@@ -20,5 +20,5 @@ preferences:
   - preferenceId: humidityOffset
     explicit: true
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: 642c4a5e-afa7-38a0-863d-c3f4ed9b4aa3
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Humidity_Temperature
