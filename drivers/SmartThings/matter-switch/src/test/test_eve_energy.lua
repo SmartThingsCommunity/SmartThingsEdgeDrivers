@@ -111,4 +111,19 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "Check the power and energy meter when the device is added", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    )
+  end
+)
+
 test.run_registered_tests()
