@@ -15,6 +15,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local data_types = require "st.matter.data_types"
 
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
@@ -185,6 +186,30 @@ test.register_coroutine_test(
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Report with the custom Watt attribute", function()
+    local data = data_types.validate_or_build_type(50, data_types.Uint16, "watt")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        cluster_base.build_test_report_data(
+          mock_device,
+          0x01,
+          PRIVATE_CLUSTER_ID,
+          PRIVATE_ATTR_ID_WATT,
+          data
+        )
+      }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
+    )
+
     test.wait_for_events()
   end
 )
