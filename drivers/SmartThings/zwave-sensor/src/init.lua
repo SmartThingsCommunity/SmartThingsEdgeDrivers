@@ -138,7 +138,8 @@ local driver_template = {
     require("fibaro-motion-sensor"),
     require("v1-contact-event"),
     require("timed-tamper-clear"),
-    require("wakeup-no-poll")
+    require("wakeup-no-poll"),
+    require("apiv6_bugfix")
   },
   lifecycle_handlers = {
     added = added_handler,
