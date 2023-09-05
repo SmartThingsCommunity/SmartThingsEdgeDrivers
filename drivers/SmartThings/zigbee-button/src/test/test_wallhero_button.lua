@@ -29,7 +29,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
       [1] = {
         id = 1,
         manufacturer = "WALL HERO",
-        model = "A4",
+        model = "ACL-401SCA4",
         server_clusters = {0x0000 , 0x0003 , 0x0004 , 0x0005 , 0x0006}
       }
     }

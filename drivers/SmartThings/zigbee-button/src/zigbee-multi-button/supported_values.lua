@@ -74,7 +74,7 @@ local devices = {
   },
   BUTTON_PUSH_30 = {
     MATCHING_MATRIX = {
-      { mfr = "WALL HERO", model = "A4" }
+      { mfr = "WALL HERO", model = "ACL-401SCA4" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 30
