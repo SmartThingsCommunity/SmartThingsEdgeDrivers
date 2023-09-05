@@ -143,7 +143,7 @@ end
 
 --- invoke smartthings:audio/getAudioTrackData on ip
 ---@param ip string
----@return boolean, table|nil, number|nil
+---@return boolean, table|nil, table|nil, table|nil, number|nil
 function APIs.getAudioTrackData(ip)
     local ret, val = invoke.Activate(ip, SMARTTHINGS_AUDIO_PATH .. "getAudioTrackData")
     if ret and type(val.title) == "string" then
@@ -154,10 +154,12 @@ function APIs.getAudioTrackData(ip)
             albumArtUrl = val.albumArtUrl or nil,
             mediaSource = val.mediaSource or nil
         }
+        local supportedPlaybackCommands = val.supportedPlaybackCommands
+        local supportedTrackControlCommands = val.supportedTrackControlCommands
         local totalTime = val.totalTime
-        return ret, trackdata, totalTime
+        return ret, trackdata, supportedPlaybackCommands, supportedTrackControlCommands, totalTime
     else
-        return false, nil, nil
+        return false, nil, nil, nil, nil
     end
 end
 

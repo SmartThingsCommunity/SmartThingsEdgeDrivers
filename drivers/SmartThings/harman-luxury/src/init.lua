@@ -90,9 +90,13 @@ local function refresh(_, device)
             end
 
             -- get audio track data
-            ret, trackdata, totalTime = api.getAudioTrackData(ip)
+            ret, trackdata, supportedPlaybackCommands, supportedTrackControlCommands, totalTime = api.getAudioTrackData(
+                ip)
             if ret then
                 device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+                device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(supportedPlaybackCommands))
+                device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands(
+                    supportedTrackControlCommands))
                 device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
             end
 
@@ -187,6 +191,11 @@ local function check_for_updates(device)
                 end
                 -- if track changed
                 device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+
+                device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
+                    audioTrackData.supportedPlaybackCommands) or {"play", "stop", "pause"})
+                device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands(
+                    audioTrackData.supportedTrackControlCommands) or {"nextTrack", "previousTrack"})
                 device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
             end
             -- check for a media presets change
@@ -246,7 +255,7 @@ end
 local function device_init(driver, device)
     log.info(string.format("Initiating device: %s", device.label))
 
-    -- set supported media playback commands
+    -- set supported default media playback commands
     device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
         {capabilities.mediaPlayback.commands.play.NAME, capabilities.mediaPlayback.commands.pause.NAME,
          capabilities.mediaPlayback.commands.stop.NAME}))
