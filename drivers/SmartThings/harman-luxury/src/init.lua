@@ -90,12 +90,10 @@ local function refresh(_, device)
             end
 
             -- get audio track data
-            if player_state and player_state ~= "stopped" then
-                ret, trackdata, totalTime = api.getAudioTrackData(ip)
-                if ret then
-                    device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
-                    device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
-                end
+            ret, trackdata, totalTime = api.getAudioTrackData(ip)
+            if ret then
+                device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
+                device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
             end
 
         else

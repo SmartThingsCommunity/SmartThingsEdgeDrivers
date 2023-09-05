@@ -146,13 +146,13 @@ end
 ---@return boolean, table|nil, number|nil
 function APIs.getAudioTrackData(ip)
     local ret, val = invoke.Activate(ip, SMARTTHINGS_AUDIO_PATH .. "getAudioTrackData")
-    if ret and next(val) ~= nil then
+    if ret and type(val.title) == "string" then
         local trackdata = {
             title = val.title,
-            artist = val.artist,
-            album = val.album,
-            albumArtUrl = val.albumArtUrl,
-            mediaSource = val.mediaSource
+            artist = val.artist or nil,
+            album = val.album or nil,
+            albumArtUrl = val.albumArtUrl or nil,
+            mediaSource = val.mediaSource or nil
         }
         local totalTime = val.totalTime
         return ret, trackdata, totalTime
