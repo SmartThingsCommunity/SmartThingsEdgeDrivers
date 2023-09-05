@@ -20,7 +20,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Scenes = zcl_clusters.Scenes
 
 local FINGERPRINTS = {
-  { mfr = "WALL HERO", model = "A4" }
+  { mfr = "WALL HERO", model = "ACL-401SCA4" }
 }
 
 local function can_handle_wallhero_button(opts, driver, device, ...)
