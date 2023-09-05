@@ -181,11 +181,11 @@ local function set_playback_status(device, status, func_name)
                         device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
                     elseif val == "paused" then
                         device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
-                    elseif val == "stopped" then
-                        device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
                     else
                         device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
-                        log.warn(string.format("Error during %s(): unsupported status read - %s", func_name, val))
+                        if val == "stopped" then
+                            log.warn(string.format("Error during %s(): unsupported status read - %s", func_name, val))
+                        end
                     end
                 else
                     log.warn(string.format("Error getting new player state during %s(): %s", func_name,
