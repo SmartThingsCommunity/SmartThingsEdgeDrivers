@@ -355,8 +355,8 @@ local driver = Driver("Harman Luxury", {
             [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = handlers.handle_audio_notification
         },
         [capabilities.mediaPlayback.ID] = {
-            [capabilities.mediaPlayback.commands.pause.NAME] = handlers.handle_play,
-            [capabilities.mediaPlayback.commands.play.NAME] = handlers.handle_pause,
+            [capabilities.mediaPlayback.commands.pause.NAME] = handlers.handle_pause,
+            [capabilities.mediaPlayback.commands.play.NAME] = handlers.handle_play,
             [capabilities.mediaPlayback.commands.stop.NAME] = handlers.handle_stop
         },
         [capabilities.mediaTrackControl.ID] = {
