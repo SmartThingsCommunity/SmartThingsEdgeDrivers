@@ -174,7 +174,7 @@ local function set_playback_status(device, status, func_name)
         local ret, val = invokeFunc[status](ip)
         if ret then
             -- verify change and update app
-            device.thread:call_with_delay(1.5, function()
+            device.thread:call_with_delay(1, function()
                 ret, val = api.GetPlayerState(ip)
                 if ret then
                     if val == "playing" then
