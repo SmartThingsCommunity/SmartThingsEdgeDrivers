@@ -56,6 +56,46 @@ local function error_msg(msg)
   }
 end
 
+--- send HTTP request
+---@param u string
+---@return table, boolean, integer
+local function sendRequest(u)
+  local sink = {}
+  local result, code, _ = http.request {
+    url = u,
+    method = "GET",
+    sink = ltn12.sink.table(sink)
+  }
+  return sink, result, code
+end
+
+--- handle HTTP request reply according to returned code
+---@param func_name string
+---@param u string
+---@param sink table
+---@param result boolean
+---@param code integer
+---@param valLocationFunc function
+---@return boolean, boolean|number|string|table|ErrMsg
+local function handleReply(func_name, u, sink, result, code, valLocationFunc)
+  if code == 200 then -- OK
+    local ret, val = pcall(json.decode, table.concat(sink, ""))
+    val = valLocationFunc(val)
+    log.debug(string.format("Nsdk %s: received value:%s", func_name, st_utils.stringify_table(val)))
+    return ret, val
+  elseif code == 500 then -- ERROR
+    local ret, err = pcall(json.decode, sink[result])
+    log.warn(string.format("Error in %s: %s. Error: \"%s\"", func_name, u,
+      (ret and "json.decode() failed" or err["error"]["message"])))
+    return false, err
+  else -- UNKNOWN VALUE
+    local err = error_msg(string.format("Error in %s: Unknown return value: %s - %s", func_name, code,
+      st_utils.stringify_table(sink)))
+    log.error(err["error"]["message"])
+    return false, err
+  end
+end
+
 --- Actual Functions -------------------------------------
 
 --- API to send a GetData request to nSDK
@@ -66,33 +106,15 @@ end
 local function _NsdkGetData(ip, path, roles)
   log.debug(string.format("Nsdk GetData: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_DATA))
-  u:setQuery {
+  u:setQuery{
     path = path,
     roles = roles
   }
   u = u:build()
-  local sink = {}
-  local result, code, _ = http.request {
-    url = u,
-    method = "GET",
-    sink = ltn12.sink.table(sink)
-  }
-  if code == 200 then -- OK
-    local ret, val = pcall(json.decode, table.concat(sink, ""))
-    val = val[1]
-    log.debug(string.format("Nsdk GetData: received value:%s", st_utils.stringify_table(val)))
-    return ret, val
-  elseif code == 500 then -- ERROR
-    local ret, err = pcall(json.decode, sink[result])
-    log.warn(string.format("Error in GetData: %s. Error: \"%s\"", u,
-      (ret and "json.decode() failed" or err["error"]["message"])))
-    return false, err
-  else -- UNKNOWN VALUE
-    local err = error_msg(string.format("Error in GetData: Unknown return value: %s - %s", code,
-      st_utils.stringify_table(sink)))
-    log.error(err["error"]["message"])
-    return false, err
-  end
+  local sink, result, code = sendRequest(u)
+  return handleReply("GetData", u, sink, result, code, function(v)
+    return v[1]
+  end)
 end
 
 --- API to send a GetRows request to nSDK
@@ -105,35 +127,17 @@ end
 local function _NsdkGetRows(ip, path, roles, from, to)
   log.debug(string.format("Nsdk GetRows: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_ROWS))
-  u:setQuery {
+  u:setQuery{
     path = path,
     roles = roles,
     from = from,
     to = to
   }
   u = u:build()
-  local sink = {}
-  local result, code, _ = http.request {
-    url = u,
-    method = "GET",
-    sink = ltn12.sink.table(sink)
-  }
-  if code == 200 then -- OK
-    local ret, val = pcall(json.decode, table.concat(sink, ""))
-    val = val[1]["rows"]
-    log.debug(string.format("Nsdk GetRows: received value:%s", st_utils.stringify_table(val)))
-    return ret, val
-  elseif code == 500 then -- ERROR
-    local ret, err = pcall(json.decode, sink[result])
-    log.warn(string.format("Error in GetRows: URL: %s. Error: \"%s\"", u,
-      (ret and "json.decode() failed" or err["error"]["message"])))
-    return false, err
-  else -- UNKNOWN VALUE
-    local err = error_msg(string.format("Error in GetRows: Unknown return value: %s - %s", code,
-      st_utils.stringify_table(sink)))
-    log.error(err["error"]["message"])
-    return false, err
-  end
+  local sink, result, code = sendRequest(u)
+  return handleReply("GetRows", u, sink, result, code, function(v)
+    return v[1]["rows"]
+  end)
 end
 
 --- API to send a SetData request to nSDK
@@ -145,33 +149,16 @@ end
 local function _NsdkSetData(ip, path, role, value)
   log.debug(string.format("Nsdk SetData: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, SET_DATA))
-  u:setQuery {
+  u:setQuery{
     path = path,
     role = role,
     value = value
   }
   u = u:build()
-  local sink = {}
-  local result, code, _ = http.request {
-    url = u,
-    method = "GET",
-    sink = ltn12.sink.table(sink)
-  }
-  if code == 200 then -- OK
-    local ret, val = pcall(json.decode, table.concat(sink, ""))
-    log.debug(string.format("Nsdk SetData: received value:%s", st_utils.stringify_table(val)))
-    return ret, val
-  elseif code == 500 then -- ERROR
-    local ret, err = pcall(json.decode, sink[result])
-    log.warn(string.format("Error in SetData: URL: %s. Error: \"%s\"", u,
-      (ret and "json.decode() failed" or err["error"]["message"])))
-    return false, err
-  else -- UNKNOWN VALUE
-    local err = error_msg(string.format("Error in SetData: Unknown return value: %s - %s", code,
-      st_utils.stringify_table(sink)))
-    log.error(err["error"]["message"])
-    return false, err
-  end
+  local sink, result, code = sendRequest(u)
+  return handleReply("SetData", u, sink, result, code, function(v)
+    return v
+  end)
 end
 
 --- Wrappers ----------------------------------------------------------
