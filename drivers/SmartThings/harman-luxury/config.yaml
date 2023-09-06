@@ -1,5 +1,5 @@
-name: 'Harman-Luxury'
-packageKey: 'harman-luxury'
+name: "Harman-Luxury"
+packageKey: "harman-luxury"
 permissions:
   lan: {}
   discovery: {}

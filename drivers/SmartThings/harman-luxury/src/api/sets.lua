@@ -13,15 +13,15 @@ local Sets = {}
 ---@param value boolean|number|string
 ---@return boolean, boolean|number|string|table|ErrMsg
 local function SetValue(ip, path, type, value)
-	local table_value = {
-		type = type,
-		[type] = value
-	}
-	return nsdk.SetData {
-		ip = ip,
-		path = path,
-		value = table_value
-	}
+  local table_value = {
+    type = type,
+    [type] = value
+  }
+  return nsdk.SetData {
+    ip = ip,
+    path = path,
+    value = table_value
+  }
 end
 
 ----------------------------------------------------------
@@ -34,7 +34,7 @@ end
 ---@param value boolean
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Bool(ip, path, value)
-	return SetValue(ip, path, "bool_", value)
+  return SetValue(ip, path, "bool_", value)
 end
 
 --- set byte value from path in ip
@@ -43,7 +43,7 @@ end
 ---@param value number
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Byte(ip, path, value)
-	return SetValue(ip, path, "byte_", value)
+  return SetValue(ip, path, "byte_", value)
 end
 
 --- set i16 value from path in ip
@@ -52,7 +52,7 @@ end
 ---@param value number
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I16(ip, path, value)
-	return SetValue(ip, path, "i16_", value)
+  return SetValue(ip, path, "i16_", value)
 end
 
 --- set i32 value from path in ip
@@ -61,7 +61,7 @@ end
 ---@param value number
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I32(ip, path, value)
-	return SetValue(ip, path, "i32_", value)
+  return SetValue(ip, path, "i32_", value)
 end
 
 --- set i64 value from path in ip
@@ -70,7 +70,7 @@ end
 ---@param value number
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.I64(ip, path, value)
-	return SetValue(ip, path, "i64_", value)
+  return SetValue(ip, path, "i64_", value)
 end
 
 --- set double value from path in ip
@@ -79,7 +79,7 @@ end
 ---@param value number
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.Double(ip, path, value)
-	return SetValue(ip, path, "double_", value)
+  return SetValue(ip, path, "double_", value)
 end
 
 --- set string value from path in ip
@@ -88,7 +88,7 @@ end
 ---@param value string
 ---@return boolean, boolean|number|string|table|ErrMsg
 function Sets.String(ip, path, value)
-	return SetValue(ip, path, "string_", value)
+  return SetValue(ip, path, "string_", value)
 end
 
 return Sets
