@@ -2,7 +2,7 @@ local Constants = {
   -- device constants
   IP = "device_ipv4",
   DEVICE_INFO = "device_info",
-  HEALTH_TIMER = "value_health_timer",
+  HEALTH_TIMER = "health_timer",
   UPDATE_TIMER = "value_updates_timer",
 
   -- intervals constants (in seconds)

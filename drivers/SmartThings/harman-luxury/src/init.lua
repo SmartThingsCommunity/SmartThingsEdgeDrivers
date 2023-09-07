@@ -27,47 +27,42 @@ local function device_removed(driver, device)
   if update_timer ~= nil then
     device.thread:cancel_timer(update_timer)
   end
-  local health_timer = device:get_field(const.HEALTH_TIMER)
-  if health_timer ~= nil then
-    device.thread:cancel_timer(health_timer)
-  end
 end
 
-local function update_connection(device, device_dni, device_ip)
+local function update_connection(driver)
   log.debug("Entered update_connection()...")
-  -- test if IP works by reading the UUID in the device if ip was provided
-  if device_ip then
-    local mac, _ = api.GetMAC(device_ip)
-    if mac then
-      local current_dni = mac:gsub("-", ""):gsub(":", ""):lower()
-      if current_dni == device_dni then
-        log.trace(string.format("update_connection for %s: IP haven't changed", device_dni))
-        device:online()
-        return
-      end
-    else
-      log.trace(string.format(
-                  "update_connection for %s: IP changed or couldn't be reached. Trying to find the new IP", device_dni))
-
-      -- look for device's new IP if it's still on network
-      local devices_ip_table = nil
-      for _ = 1, 10 do
-        devices_ip_table = discovery.find_ip_table()
-        if (devices_ip_table[device_dni]) then
-          break
-        end
-        socket.sleep(1)
-      end
+  -- only test connections if there are registered devices
+    local devices = driver:get_devices()
+  if next(devices) ~= nil then
+    local registeredDevices = driver.registered_devices
+    local devices_ip_table = discovery.find_ip_table()
+    for _, device in ipairs(devices) do
+      local device_dni = device.device_network_id
+      local device_ip = device:get_field(const.IP)
       local current_ip = devices_ip_table[device_dni]
-      if (current_ip == nil) then
-        log.info("Couldn't find device during refresh, hence setting device to offline")
-        device:offline()
-        return
-      else
-        device.set_field(const.IP, current_ip, {
-          persist = true,
-        })
+      -- check if this device's dni appeared in the scan
+      if current_ip then
+        -- set device online and update device IP if it changed
         device:online()
+        if current_ip ~= device_ip then
+          -- update IP associated to this device
+          log.warn(string.format("Harman Luxury Driver updated %s IP to %s", device_dni, current_ip))
+          registeredDevices[device_dni].ip = current_ip
+          device:set_field(const.IP, current_ip, {
+            persist = true,
+          })
+        end
+      else
+        -- set device offline if not detected
+        log.warn(string.format(
+                   "Harman Luxury Driver set %s offline as it didn't appear on latest update connections scan",
+                   device_dni))
+        device:emit_event(capabilities.switch.switch.off())
+        device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
+        device:emit_event(capabilities.audioTrackData.audioTrackData({
+          title = "",
+        }))
+        device:offline()
       end
     end
   end
@@ -246,22 +241,6 @@ local function create_check_for_updates_thread(device)
   device:set_field(const.UPDATE_TIMER, new_timer)
 end
 
-local function create_check_health_thread(device)
-  local device_dni = device.device_network_id
-  local device_ip = device:get_field(const.IP)
-  local old_timer = device:get_field(const.HEALTH_TIMER)
-  if old_timer ~= nil then
-    log.info(string.format("create_check_health_thread: dni=%s, remove old timer", device_dni))
-    device.thread:cancel_timer(old_timer)
-  end
-
-  log.info(string.format("create_check_health_thread: dni=%s", device_dni))
-  local new_timer = device.thread:call_on_schedule(const.HEALTH_CHEACK_INTERVAL, function()
-    update_connection(device, device_dni, device_ip)
-  end, "value_health_timer")
-  device:set_field(const.HEALTH_TIMER, new_timer)
-end
-
 local function device_init(driver, device)
   log.info(string.format("Initiating device: %s", device.label))
 
@@ -291,10 +270,8 @@ local function device_init(driver, device)
   end
   log.trace(string.format("device IP: %s", device_ip))
 
-  create_check_health_thread(device)
   create_check_for_updates_thread(device)
 
-  update_connection(device, device_dni, device_ip)
   refresh(driver, device)
 end
 
@@ -308,25 +285,15 @@ end
 local function device_changeInfo(_, device, _, _)
   log.info(string.format("Device added: %s", device.label))
   local ip = device:get_field(const.IP)
-  if not ip then
-    log.warn("Failed to get device ip during device_changeInfo()")
-    update_connection(device, device.device_network_id, nil)
-  else
-    local _, err = api.SetDeviceName(ip, device.label)
-    if err then
-      log.info(string.format(
-                 "device_changeInfo: Error occured during attempt to change device name. Error message: %s", err))
-    end
+  local _, err = api.SetDeviceName(ip, device.label)
+  if err then
+    log.info(string.format("device_changeInfo: Error occured during attempt to change device name. Error message: %s",
+                           err))
   end
 end
 
 local function do_refresh(driver, device, _)
   log.info(string.format("Starting do_refresh: %s", device.label))
-
-  -- check and update device IP
-  local dni = device.device_network_id
-  local ip = device:get_field(const.IP)
-  update_connection(device, dni, ip)
 
   -- check and update device values
   refresh(driver, device)
@@ -392,6 +359,17 @@ local driver = Driver("Harman Luxury", {
                             capabilities.mediaPresets},
   registered_devices = {},
 })
+
+----------------------------------------------------------
+-- Driver Routines
+----------------------------------------------------------
+
+-- create driver IP update routine
+
+log.info("create health_check_timer for Harman Luxury devices")
+driver:call_on_schedule(const.HEALTH_CHEACK_INTERVAL, function()
+  update_connection(driver)
+end, const.HEALTH_TIMER)
 
 ----------------------------------------------------------
 -- main
