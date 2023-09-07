@@ -67,7 +67,7 @@ local function get_parameters(ip, discovery_responses)
   local params = {
     [const.DNI] = "",
     [const.MNID] = "",
-    [const.SETUP_ID] = ""
+    [const.SETUP_ID] = "",
   }
   local text_list = find_text_list_in_mdns_response(ip, discovery_responses)
   for _, text in ipairs(text_list) do
@@ -114,7 +114,7 @@ local function insert_dni_ip_from_answers(filtered_responses, target_table)
         target_table[dni] = {
           ip = ip,
           mnid = mnid,
-          setupid = setupid
+          setupid = setupid,
         }
       end
     end
@@ -124,7 +124,7 @@ end
 local function filter_response_by_service_name(service_type, discovery_responses)
   local filtered_responses = {
     found = {},
-    answers = {}
+    answers = {},
   }
 
   for _, found in pairs(discovery_responses.found or {}) do
@@ -163,7 +163,7 @@ local function insert_dni_ip_from_found(filtered_responses, target_table)
         target_table[dni] = {
           ip = ip,
           mnid = mnid,
-          setupid = setupid
+          setupid = setupid,
         }
       end
     end

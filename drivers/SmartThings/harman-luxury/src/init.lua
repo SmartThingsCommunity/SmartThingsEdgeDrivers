@@ -22,14 +22,23 @@ local function device_removed(driver, device)
   log.info("Device removed")
   local id = device.device_network_id
   driver.registered_devices[id] = nil
+  -- cancel timers
+  local update_timer = device:get_field(const.UPDATE_TIMER)
+  if update_timer ~= nil then
+    device.thread:cancel_timer(update_timer)
+  end
+  local health_timer = device:get_field(const.HEALTH_TIMER)
+  if health_timer ~= nil then
+    device.thread:cancel_timer(health_timer)
+  end
 end
 
 local function update_connection(device, device_dni, device_ip)
   log.debug("Entered update_connection()...")
   -- test if IP works by reading the UUID in the device if ip was provided
   if device_ip then
-    local ret, mac = api.GetMAC(device_ip)
-    if ret then
+    local mac, _ = api.GetMAC(device_ip)
+    if mac then
       local current_dni = mac:gsub("-", ""):gsub(":", ""):lower()
       if current_dni == device_dni then
         log.trace(string.format("update_connection for %s: IP haven't changed", device_dni))
@@ -38,7 +47,7 @@ local function update_connection(device, device_dni, device_ip)
       end
     else
       log.trace(string.format(
-        "update_connection for %s: IP changed or couldn't be reached. Trying to find the new IP", device_dni))
+                  "update_connection for %s: IP changed or couldn't be reached. Trying to find the new IP", device_dni))
 
       -- look for device's new IP if it's still on network
       local devices_ip_table = nil
@@ -56,7 +65,7 @@ local function update_connection(device, device_dni, device_ip)
         return
       else
         device.set_field(const.IP, current_ip, {
-          persist = true
+          persist = true,
         })
         device:online()
       end
@@ -68,18 +77,18 @@ local function refresh(_, device)
   local ip = device:get_field(const.IP)
 
   -- check and update device status
-  local ret, power_state
-  ret, power_state = api.GetPowerState(ip)
-  if ret then
+  local power_state
+  power_state, _ = api.GetPowerState(ip)
+  if power_state then
     log.debug(string.format("Current power state: %s", power_state))
 
     if power_state == "online" then
       device:emit_event(capabilities.switch.switch.on())
-      local player_state, trackdata, supportedPlaybackCommands, supportedTrackControlCommands, totalTime
+      local player_state, audioTrackData
 
       -- get player state
-      ret, player_state = api.GetPlayerState(ip)
-      if ret then
+      player_state, _ = api.GetPlayerState(ip)
+      if player_state then
         if player_state == "playing" then
           device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
         elseif player_state == "paused" then
@@ -90,14 +99,14 @@ local function refresh(_, device)
       end
 
       -- get audio track data
-      ret, trackdata, supportedPlaybackCommands, supportedTrackControlCommands, totalTime = api.getAudioTrackData(
-        ip)
-      if ret then
-        device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
-        device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(supportedPlaybackCommands))
+      audioTrackData, _ = api.getAudioTrackData(ip)
+      if audioTrackData then
+        device:emit_event(capabilities.audioTrackData.audioTrackData(audioTrackData.trackdata))
+        device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
+                            audioTrackData.supportedPlaybackCommands))
         device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands(
-          supportedTrackControlCommands))
-        device:emit_event(capabilities.audioTrackData.totalTime(totalTime or 0))
+                            audioTrackData.supportedTrackControlCommands))
+        device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
     else
       device:emit_event(capabilities.switch.switch.off())
@@ -107,19 +116,19 @@ local function refresh(_, device)
 
   -- get media presets list
   local presets
-  ret, presets = api.GetMediaPresets(ip)
-  if ret then
+  presets, _ = api.GetMediaPresets(ip)
+  if presets then
     device:emit_event(capabilities.mediaPresets.presets(presets))
   end
 
   -- check and update device volume and mute status
   local vol, mute
-  ret, vol = api.GetVol(ip)
-  if ret then
+  vol, _ = api.GetVol(ip)
+  if vol then
     device:emit_event(capabilities.audioVolume.volume(vol))
   end
-  ret, mute = api.GetMute(ip)
-  if ret then
+  mute, _ = api.GetMute(ip)
+  if type(mute) == "boolean" then
     if mute then
       device:emit_event(capabilities.audioMute.mute.muted())
     else
@@ -129,8 +138,8 @@ local function refresh(_, device)
 
   -- check and update device media input source
   local inputSource
-  ret, inputSource = api.GetInputSource(ip)
-  if ret then
+  inputSource, _ = api.GetInputSource(ip)
+  if inputSource then
     device:emit_event(capabilities.mediaInputSource.inputSource(inputSource))
   end
 end
@@ -138,8 +147,8 @@ end
 local function check_for_updates(device)
   log.trace(string.format("%s, checking if device values changed", device.device_network_id))
   local ip = device:get_field(const.IP)
-  local ret, changes = api.InvokeGetUpdates(ip)
-  if ret then
+  local changes, _ = api.InvokeGetUpdates(ip)
+  if changes then
     log.debug(string.format("changes: %s", st_utils.stringify_table(changes)))
     if type(changes) ~= "table" then
       log.warn("check_for_updates: Received value was not a table (JSON). Likely an error occured")
@@ -175,6 +184,8 @@ local function check_for_updates(device)
         local trackdata = {}
         if type(audioTrackData.title) == "string" then
           trackdata.title = audioTrackData.title
+        else
+          trackdata.title = ""
         end
         if type(audioTrackData.artist) == "string" then
           trackdata.artist = audioTrackData.artist
@@ -192,9 +203,9 @@ local function check_for_updates(device)
         device:emit_event(capabilities.audioTrackData.audioTrackData(trackdata))
 
         device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
-          audioTrackData.supportedPlaybackCommands) or { "play", "stop", "pause" })
+                            audioTrackData.supportedPlaybackCommands) or {"play", "stop", "pause"})
         device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands(
-          audioTrackData.supportedTrackControlCommands) or { "nextTrack", "previousTrack" })
+                            audioTrackData.supportedTrackControlCommands) or {"nextTrack", "previousTrack"})
         device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
       -- check for a media presets change
@@ -256,20 +267,21 @@ local function device_init(driver, device)
 
   -- set supported default media playback commands
   device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
-    { capabilities.mediaPlayback.commands.play.NAME, capabilities.mediaPlayback.commands.pause.NAME,
-      capabilities.mediaPlayback.commands.stop.NAME }))
+                      {capabilities.mediaPlayback.commands.play.NAME, capabilities.mediaPlayback.commands.pause.NAME,
+                       capabilities.mediaPlayback.commands.stop.NAME}))
   device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands(
-    { capabilities.mediaTrackControl.commands.nextTrack.NAME,
-      capabilities.mediaTrackControl.commands.previousTrack.NAME }))
+                      {capabilities.mediaTrackControl.commands.nextTrack.NAME,
+                       capabilities.mediaTrackControl.commands.previousTrack.NAME}))
 
   -- set supported input sources
   device:emit_event(capabilities.mediaInputSource.supportedInputSources(
-    { "HDMI", "aux", "bluetooth", "digital", "wifi" }))
+                      {"HDMI", "aux", "bluetooth", "digital", "wifi"}))
 
   -- set supported keypad inputs
   device:emit_event(capabilities.keypadInput.supportedKeyCodes(
-    { "UP", "DOWN", "LEFT", "RIGHT", "SELECT", "BACK", "EXIT", "MENU", "SETTINGS", "HOME", "NUMBER0", "NUMBER1",
-      "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8", "NUMBER9" }))
+                      {"UP", "DOWN", "LEFT", "RIGHT", "SELECT", "BACK", "EXIT", "MENU", "SETTINGS", "HOME", "NUMBER0",
+                       "NUMBER1", "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8",
+                       "NUMBER9"}))
 
   local device_dni = device.device_network_id
 
@@ -300,10 +312,10 @@ local function device_changeInfo(_, device, _, _)
     log.warn("Failed to get device ip during device_changeInfo()")
     update_connection(device, device.device_network_id, nil)
   else
-    local ret, val = api.SetDeviceName(ip, device.label)
-    if not ret then
+    local _, err = api.SetDeviceName(ip, device.label)
+    if err then
       log.info(string.format(
-        "device_changeInfo: Error occured during attempt to change device name. Error message: %s", val))
+                 "device_changeInfo: Error occured during attempt to change device name. Error message: %s", err))
     end
   end
 end
@@ -331,54 +343,54 @@ local driver = Driver("Harman Luxury", {
     init = device_init,
     added = device_added,
     removed = device_removed,
-    infoChanged = device_changeInfo
+    infoChanged = device_changeInfo,
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handlers.handle_on,
-      [capabilities.switch.commands.off.NAME] = handlers.handle_off
+      [capabilities.switch.commands.off.NAME] = handlers.handle_off,
     },
     [capabilities.audioMute.ID] = {
       [capabilities.audioMute.commands.mute.NAME] = handlers.handle_mute,
       [capabilities.audioMute.commands.unmute.NAME] = handlers.handle_unmute,
-      [capabilities.audioMute.commands.setMute.NAME] = handlers.handle_set_mute
+      [capabilities.audioMute.commands.setMute.NAME] = handlers.handle_set_mute,
     },
     [capabilities.audioVolume.ID] = {
       [capabilities.audioVolume.commands.volumeUp.NAME] = handlers.handle_volume_up,
       [capabilities.audioVolume.commands.volumeDown.NAME] = handlers.handle_volume_down,
-      [capabilities.audioVolume.commands.setVolume.NAME] = handlers.handle_set_volume
+      [capabilities.audioVolume.commands.setVolume.NAME] = handlers.handle_set_volume,
     },
     [capabilities.mediaInputSource.ID] = {
-      [capabilities.mediaInputSource.commands.setInputSource.NAME] = handlers.handle_setInputSource
+      [capabilities.mediaInputSource.commands.setInputSource.NAME] = handlers.handle_setInputSource,
     },
     [capabilities.mediaPresets.ID] = {
-      [capabilities.mediaPresets.commands.playPreset.NAME] = handlers.handle_play_preset
+      [capabilities.mediaPresets.commands.playPreset.NAME] = handlers.handle_play_preset,
     },
     [capabilities.audioNotification.ID] = {
       [capabilities.audioNotification.commands.playTrack.NAME] = handlers.handle_audio_notification,
       [capabilities.audioNotification.commands.playTrackAndResume.NAME] = handlers.handle_audio_notification,
-      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = handlers.handle_audio_notification
+      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = handlers.handle_audio_notification,
     },
     [capabilities.mediaPlayback.ID] = {
       [capabilities.mediaPlayback.commands.pause.NAME] = handlers.handle_pause,
       [capabilities.mediaPlayback.commands.play.NAME] = handlers.handle_play,
-      [capabilities.mediaPlayback.commands.stop.NAME] = handlers.handle_stop
+      [capabilities.mediaPlayback.commands.stop.NAME] = handlers.handle_stop,
     },
     [capabilities.mediaTrackControl.ID] = {
       [capabilities.mediaTrackControl.commands.nextTrack.NAME] = handlers.handle_next_track,
-      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = handlers.handle_previous_track
+      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = handlers.handle_previous_track,
     },
     [capabilities.keypadInput.ID] = {
-      [capabilities.keypadInput.commands.sendKey.NAME] = handlers.handle_send_key
-    }
+      [capabilities.keypadInput.commands.sendKey.NAME] = handlers.handle_send_key,
+    },
   },
-  supported_capabilities = { capabilities.switch, capabilities.audioMute, capabilities.audioVolume,
-    capabilities.mediaPlayback, capabilities.mediaTrackControl, capabilities.keypadInput,
-    capabilities.mediaPresets },
-  registered_devices = {}
+  supported_capabilities = {capabilities.switch, capabilities.audioMute, capabilities.audioVolume,
+                            capabilities.mediaPlayback, capabilities.mediaTrackControl, capabilities.keypadInput,
+                            capabilities.mediaPresets},
+  registered_devices = {},
 })
 
 ----------------------------------------------------------

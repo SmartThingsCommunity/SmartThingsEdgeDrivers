@@ -24,6 +24,6 @@ local Constants = {
   DEFAULT_PRODUCT_NAME = "Harman Luxury",
 
   -- general consts
-  VOL_STEP = 5
+  VOL_STEP = 5,
 }
 return Constants

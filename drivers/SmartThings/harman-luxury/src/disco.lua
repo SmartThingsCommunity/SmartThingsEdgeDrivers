@@ -13,7 +13,7 @@ local function update_device_discovery_cache(driver, dni, params)
   local device_info = devices.get_device_info(dni, params)
   driver.registered_devices[dni] = {
     ip = params.ip,
-    device_info = device_info
+    device_info = device_info,
   }
 end
 
@@ -38,10 +38,10 @@ function Discovery.set_device_field(driver, device)
 
   -- persistent fields
   device:set_field(const.IP, device_cache_value.ip, {
-    persist = true
+    persist = true,
   })
   device:set_field(const.DEVICE_INFO, device_cache_value.device_info, {
-    persist = true
+    persist = true,
   })
 end
 

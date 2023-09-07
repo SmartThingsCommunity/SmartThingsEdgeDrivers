@@ -43,56 +43,50 @@ local function format_roles(rolesList)
   end
 end
 
---- creates a JSON error mesage from a string
----@class ErrMsg
----@field error table<string>
----@param msg string
----@return ErrMsg
-local function error_msg(msg)
-  return {
-    error = {
-      message = msg
-    }
-  }
-end
-
 --- send HTTP request
 ---@param u string
----@return table, boolean, integer
+---@return string, integer
 local function sendRequest(u)
   local sink = {}
-  local result, code, _ = http.request {
+  local _, code, _ = http.request {
     url = u,
     method = "GET",
-    sink = ltn12.sink.table(sink)
+    sink = ltn12.sink.table(sink),
   }
-  return sink, result, code
+  return table.concat(sink, ""), code
 end
 
 --- handle HTTP request reply according to returned code
 ---@param func_name string
 ---@param u string
----@param sink table
----@param result boolean
+---@param sink string
 ---@param code integer
 ---@param valLocationFunc function
----@return boolean, boolean|number|string|table|ErrMsg
-local function handleReply(func_name, u, sink, result, code, valLocationFunc)
+---@return boolean|number|string|table|nil, nil|string
+local function handleReply(func_name, u, sink, code, valLocationFunc)
   if code == 200 then -- OK
-    local ret, val = pcall(json.decode, table.concat(sink, ""))
-    val = valLocationFunc(val)
-    log.debug(string.format("Nsdk %s: received value:%s", func_name, st_utils.stringify_table(val)))
-    return ret, val
+    local ret, val = pcall(json.decode, sink)
+    if ret then
+      val = valLocationFunc(val)
+      log.debug(string.format("Nsdk %s: received value:%s", func_name, st_utils.stringify_table(val)))
+      return val, nil
+    else
+      local err = string.format("Error in %s: %s. Error: \"json.decode() failed\"", func_name, u)
+      return nil, err
+    end
   elseif code == 500 then -- ERROR
-    local ret, err = pcall(json.decode, sink[result])
-    log.warn(string.format("Error in %s: %s. Error: \"%s\"", func_name, u,
-      (ret and "json.decode() failed" or err["error"]["message"])))
-    return false, err
+    local ret, err = pcall(json.decode, sink)
+    if ret then
+      log.warn(string.format("Error in %s: %s. Error: \"%s\"", func_name, u, err["error"]["message"]))
+    else
+      err = string.format("Error in %s: %s. Error: \"json.decode() failed\"", func_name, u)
+      log.error(err)
+    end
+    return nil, err
   else -- UNKNOWN VALUE
-    local err = error_msg(string.format("Error in %s: Unknown return value: %s - %s", func_name, code,
-      st_utils.stringify_table(sink)))
-    log.error(err["error"]["message"])
-    return false, err
+    local err = string.format("Error in %s: Unknown return value: %s - %s", func_name, code, sink)
+    log.error(err)
+    return nil, err
   end
 end
 
@@ -102,17 +96,17 @@ end
 ---@param ip string
 ---@param path string
 ---@param roles string|table
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 local function _NsdkGetData(ip, path, roles)
   log.debug(string.format("Nsdk GetData: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_DATA))
   u:setQuery{
     path = path,
-    roles = roles
+    roles = roles,
   }
   u = u:build()
-  local sink, result, code = sendRequest(u)
-  return handleReply("GetData", u, sink, result, code, function(v)
+  local sink, code = sendRequest(u)
+  return handleReply("GetData", u, sink, code, function(v)
     return v[1]
   end)
 end
@@ -123,7 +117,7 @@ end
 ---@param roles string
 ---@param from number
 ---@param to number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 local function _NsdkGetRows(ip, path, roles, from, to)
   log.debug(string.format("Nsdk GetRows: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, GET_ROWS))
@@ -131,11 +125,11 @@ local function _NsdkGetRows(ip, path, roles, from, to)
     path = path,
     roles = roles,
     from = from,
-    to = to
+    to = to,
   }
   u = u:build()
-  local sink, result, code = sendRequest(u)
-  return handleReply("GetRows", u, sink, result, code, function(v)
+  local sink, code = sendRequest(u)
+  return handleReply("GetRows", u, sink, code, function(v)
     return v[1]["rows"]
   end)
 end
@@ -145,18 +139,18 @@ end
 ---@param path string
 ---@param role string
 ---@param value string
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 local function _NsdkSetData(ip, path, role, value)
   log.debug(string.format("Nsdk SetData: ip:%s path:%s", ip, path))
   local u = url.parse(string.format("%s%s%s", HTTP, ip, SET_DATA))
   u:setQuery{
     path = path,
     role = role,
-    value = value
+    value = value,
   }
   u = u:build()
-  local sink, result, code = sendRequest(u)
-  return handleReply("SetData", u, sink, result, code, function(v)
+  local sink, code = sendRequest(u)
+  return handleReply("SetData", u, sink, code, function(v)
     return v
   end)
 end
@@ -169,16 +163,16 @@ end
 ---@field path string
 ---@field rolesList table<string>|nil
 ---@param arg GetInput
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function NSDK.GetData(arg)
   if not net_utils.validate_ipv4_string(arg.ip) then
-    local err = error_msg(string.format("Error in GetData: Invalid IP! Given IP: ", arg.ip))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in GetData: Invalid IP! Given IP: ", arg.ip)
+    log.error(err)
     return false, err
   end
   if type(arg.path) ~= "string" then
-    local err = error_msg(string.format("Error in GetData: Invalid Path! Given path: ", arg.path))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in GetData: Invalid Path! Given path: ", arg.path)
+    log.error(err)
     return false, err
   end
   local roles = format_roles(arg.rolesList)
@@ -194,16 +188,16 @@ end
 ---@field from number|nil
 ---@field to number|nil
 ---@param arg GetRowsInput
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function NSDK.GetRows(arg)
   if not net_utils.validate_ipv4_string(arg.ip) then
-    local err = error_msg(string.format("Error in GetRows: Invalid IP! Given IP: ", arg.ip))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in GetRows: Invalid IP! Given IP: ", arg.ip)
+    log.error(err)
     return false, err
   end
   if type(arg.path) ~= "string" then
-    local err = error_msg(string.format("Error in GetRows: Invalid Path! Given path: ", arg.path))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in GetRows: Invalid Path! Given path: ", arg.path)
+    log.error(err)
     return false, err
   end
   local from, to
@@ -228,22 +222,22 @@ end
 ---@field path string
 ---@field value table
 ---@param arg SetInput
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function NSDK.SetData(arg)
   if not net_utils.validate_ipv4_string(arg.ip) then
-    local err = error_msg(string.format("Error in SetData: Invalid IP! Given IP: ", arg.ip))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in SetData: Invalid IP! Given IP: ", arg.ip)
+    log.error(err)
     return false, err
   end
   if type(arg.path) ~= "string" then
-    local err = error_msg(string.format("Error in SetData: Invalid Path! Given path: ", arg.path))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in SetData: Invalid Path! Given path: ", arg.path)
+    log.error(err)
     return false, err
   end
   local value
   if type(arg.value) ~= "table" then
-    local err = error_msg("Error in SetData: Invalid value. Value needs to be given as a table!")
-    log.error(err["error"]["message"])
+    local err = "Error in SetData: Invalid value. Value needs to be given as a table!"
+    log.error(err)
     return false, err
   else
     value = json.encode(arg.value)
@@ -258,16 +252,16 @@ end
 ---@field path string
 ---@field value table|nil
 ---@param arg InvokeInput
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function NSDK.Invoke(arg)
   if not net_utils.validate_ipv4_string(arg.ip) then
-    local err = error_msg(string.format("Error in Invoke: Invalid IP! Given IP: ", arg.ip))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in Invoke: Invalid IP! Given IP: ", arg.ip)
+    log.error(err)
     return false, err
   end
   if type(arg.path) ~= "string" then
-    local err = error_msg(string.format("Error in Invoke: Invalid Path! Given path: ", arg.path))
-    log.error(err["error"]["message"])
+    local err = string.format("Error in Invoke: Invalid Path! Given path: ", arg.path)
+    log.error(err)
     return false, err
   end
   local value
@@ -276,8 +270,8 @@ function NSDK.Invoke(arg)
   elseif arg.value == nil then
     value = "{}"
   else
-    local err = error_msg("Error in Invoke: Invalid value. If Value given, it needs to be given as a table!")
-    log.error(err["error"]["message"])
+    local err = "Error in Invoke: Invalid value. If Value given, it needs to be given as a table!"
+    log.error(err)
     return false, err
   end
   return _NsdkSetData(arg.ip, arg.path, "activate", value)

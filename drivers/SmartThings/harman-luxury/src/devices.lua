@@ -6,31 +6,31 @@ local const = require "constants"
 
 local Devices = {}
 
-local supported_devices = { "L75ms", "L42ms", "AVR5" }
+local supported_devices = {"L75ms", "L42ms", "AVR5"}
 
 local MNID = "0BE8"
 local SetupID = {
   L75ms = "602",
   L42ms = "603",
-  AVR5 = "604"
+  AVR5 = "604",
 }
 
 local devices_model_info = {
   [SetupID.L75ms] = {
     profile = "l42ms",
     manufacturer = "JBL",
-    model = "L75ms"
+    model = "L75ms",
   },
   [SetupID.L42ms] = {
     profile = "l42ms",
     manufacturer = "JBL",
-    model = "L42ms"
+    model = "L42ms",
   },
   [SetupID.AVR5] = {
     profile = "harman-luxury",
     manufacturer = "ARCAM",
-    model = "AVR5"
-  }
+    model = "AVR5",
+  },
 }
 
 function Devices.GetSupportedDevices()
@@ -39,24 +39,24 @@ function Devices.GetSupportedDevices()
 end
 
 local function GetDefaultDeviceInfo(dni, ip)
-  local ret, label, manufacturer, model, vendor
-  ret, label = api.GetDeviceName(ip)
-  if not ret or type(label) ~= "string" then
+  local label, manufacturer, model, vendor, err
+  label, err = api.GetDeviceName(ip)
+  if err or type(label) ~= "string" then
     log.warn(string.format("Failed to get Device Name from device with IP: %s", ip))
     label = const.DEFAULT_DEVICE_NAME
   end
-  ret, manufacturer = api.GetManufactureName(ip)
-  if not ret or type(manufacturer) ~= "string" then
+  manufacturer, err = api.GetManufactureName(ip)
+  if err or type(manufacturer) ~= "string" then
     log.warn(string.format("Failed to get Manufacture Name from device with IP: %s", ip))
     manufacturer = const.DEFAULT_MANUFACTURE_NAME
   end
-  ret, model = api.GetModelName(ip)
-  if not ret or type(model) ~= "string" then
+  model, err = api.GetModelName(ip)
+  if err or type(model) ~= "string" then
     log.warn(string.format("Failed to get Device Name from device with IP: %s", ip))
     model = const.DEFAULT_MODEL_NAME
   end
-  ret, vendor = api.GetProductName(ip)
-  if not ret or type(vendor) ~= "string" then
+  vendor, err = api.GetProductName(ip)
+  if err or type(vendor) ~= "string" then
     log.warn(string.format("Failed to get Product Name from device with IP: %s", ip))
     vendor = const.DEFAULT_PRODUCT_NAME
   end
@@ -68,7 +68,7 @@ local function GetDefaultDeviceInfo(dni, ip)
     profile = "harman-luxury",
     manufacturer = manufacturer,
     model = model,
-    vendor_provided_label = vendor
+    vendor_provided_label = vendor,
   }
 
   return device_info
@@ -77,8 +77,8 @@ end
 function Devices.get_device_info(dni, params)
   if params.mnid == MNID then
     if devices_model_info[params.setupid] ~= nil then
-      local ret, label = api.GetDeviceName(params.ip)
-      if not ret or type(label) ~= "string" then
+      local label, err = api.GetDeviceName(params.ip)
+      if err or type(label) ~= "string" then
         log.warn(string.format("Failed to get Device Name from device with IP: %s", params.ip))
         label = const.DEFAULT_DEVICE_NAME
       end
@@ -90,7 +90,7 @@ function Devices.get_device_info(dni, params)
         profile = model_info.profile,
         manufacturer = model_info.manufacturer,
         model = model_info.model,
-        vendor_provided_label = label
+        vendor_provided_label = label,
       }
       return device_info
     end
@@ -98,7 +98,7 @@ function Devices.get_device_info(dni, params)
 
   -- if device lacks or have the wrong MNID or unsupported SetupID, grub info from device
   log.warn("Devices.get_device_info: Failed to get supported MNID or SetupID, using info from device with IP:" ..
-    params.ip)
+             params.ip)
   return GetDefaultDeviceInfo(dni, params.ip)
 end
 

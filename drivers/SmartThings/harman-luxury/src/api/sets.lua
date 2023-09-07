@@ -11,16 +11,16 @@ local Sets = {}
 ---@param path string
 ---@param type string
 ---@param value boolean|number|string
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 local function SetValue(ip, path, type, value)
   local table_value = {
     type = type,
-    [type] = value
+    [type] = value,
   }
   return nsdk.SetData {
     ip = ip,
     path = path,
-    value = table_value
+    value = table_value,
   }
 end
 
@@ -32,7 +32,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value boolean
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.Bool(ip, path, value)
   return SetValue(ip, path, "bool_", value)
 end
@@ -41,7 +41,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.Byte(ip, path, value)
   return SetValue(ip, path, "byte_", value)
 end
@@ -50,7 +50,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.I16(ip, path, value)
   return SetValue(ip, path, "i16_", value)
 end
@@ -59,7 +59,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.I32(ip, path, value)
   return SetValue(ip, path, "i32_", value)
 end
@@ -68,7 +68,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.I64(ip, path, value)
   return SetValue(ip, path, "i64_", value)
 end
@@ -77,7 +77,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value number
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.Double(ip, path, value)
   return SetValue(ip, path, "double_", value)
 end
@@ -86,7 +86,7 @@ end
 ---@param ip string
 ---@param path string
 ---@param value string
----@return boolean, boolean|number|string|table|ErrMsg
+---@return boolean|number|string|table|nil, nil|string
 function Sets.String(ip, path, value)
   return SetValue(ip, path, "string_", value)
 end

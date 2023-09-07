@@ -10,11 +10,11 @@ function Handler.handle_on(_, device, _)
   log.info("Starting handle_on")
   -- send API switch on message
   local ip = device:get_field(const.IP)
-  local ret, val = api.SetOn(ip)
-  if ret then
+  local val, err = api.SetOn(ip)
+  if val then
     device:emit_event(capabilities.switch.switch.on())
   else
-    log.warn(string.format("Error during handle_on(): %s", val["error"]["message"]))
+    log.warn(string.format("Error during handle_on(): %s", err))
   end
 end
 
@@ -23,12 +23,12 @@ function Handler.handle_off(_, device, _)
   log.info("Starting handle_off")
   -- send API switch off message
   local ip = device:get_field(const.IP)
-  local ret, val = api.SetOff(ip)
-  if ret then
+  local val, err = api.SetOff(ip)
+  if val then
     device:emit_event(capabilities.switch.switch.off())
     device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
   else
-    log.warn(string.format("Error during handle_off(): %s", val["error"]["message"]))
+    log.warn(string.format("Error during handle_off(): %s", err))
   end
 end
 
@@ -38,15 +38,15 @@ end
 ---@param func_name string
 local function set_mute(device, mute, func_name)
   local ip = device:get_field(const.IP)
-  local ret, val = api.SetMute(ip, mute)
-  if ret then
+  local val, err = api.SetMute(ip, mute)
+  if val then
     if mute then
       device:emit_event(capabilities.audioMute.mute.muted())
     else
       device:emit_event(capabilities.audioMute.mute.unmuted())
     end
   else
-    log.warn(string.format("Error during %s(): %s", func_name, val["error"]["message"]))
+    log.warn(string.format("Error during %s(): %s", func_name, err))
   end
 end
 
@@ -83,17 +83,17 @@ local function set_vol(device, vol, step, func_name)
   if vol then
     setVol = vol
   else
-    local ret, currVol = api.GetVol(ip)
-    if not ret or type(currVol) ~= "number" then
+    local currVol, err = api.GetVol(ip)
+    if err or type(currVol) ~= "number" then
       currVol = device:get_latest_state("main", capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME)
     end
     setVol = currVol + step
   end
-  local ret, val = api.SetVol(ip, setVol)
-  if ret then
+  local val, err = api.SetVol(ip, setVol)
+  if val then
     device:emit_event(capabilities.audioVolume.volume(setVol))
   else
-    log.warn(string.format("Error during %s(): %s", func_name, val["error"]["message"]))
+    log.warn(string.format("Error during %s(): %s", func_name, err))
   end
 end
 
@@ -123,11 +123,11 @@ function Handler.handle_setInputSource(_, device, cmd)
   log.info("Starting handle_setInputSource")
   -- send API input source set message
   local ip = device:get_field(const.IP)
-  local ret, val = api.SetInputSource(ip, cmd.args.mode)
-  if ret then
+  local val, err = api.SetInputSource(ip, cmd.args.mode)
+  if val then
     device:emit_event(capabilities.mediaInputSource.inputSource(cmd.args.mode))
   else
-    log.warn(string.format("Error during handle_setInputSource(): %s", val["error"]["message"]))
+    log.warn(string.format("Error during handle_setInputSource(): %s", err))
   end
 end
 
@@ -137,9 +137,9 @@ function Handler.handle_play_preset(_, device, cmd)
   -- send API to play media preset
   local ip = device:get_field(const.IP)
   local id = cmd.args.presetId
-  local ret, val = api.PlayMediaPreset(ip, id)
-  if not ret then
-    log.warn(string.format("Error during handle_play_preset(): %s", val["error"]["message"]))
+  local _, err = api.PlayMediaPreset(ip, id)
+  if err then
+    log.warn(string.format("Error during handle_play_preset(): %s", err))
   end
 end
 
@@ -150,9 +150,9 @@ function Handler.handle_audio_notification(_, device, cmd)
   -- send API to play audio notification
   local ip = device:get_field(const.IP)
   local uri, level = cmd.args.uri, cmd.args.level
-  local ret, val = api.SendAudioNotification(ip, uri, level)
-  if not ret then
-    log.warn(string.format("Error during handle_audio_notification(): %s", val["error"]["message"]))
+  local _, err = api.SendAudioNotification(ip, uri, level)
+  if err then
+    log.warn(string.format("Error during handle_audio_notification(): %s", err))
   end
 end
 
@@ -164,19 +164,19 @@ local function set_playback_status(device, status, func_name)
   local invokeFunc = {
     pause = api.InvokePause,
     play = api.InvokePlay,
-    stop = api.InvokeStop
+    stop = api.InvokeStop,
   }
   if invokeFunc[status] == nil then
     log.warn(string.format("Error during %s(): unsupported status given - %s", func_name, status))
     return
   else
     local ip = device:get_field(const.IP)
-    local ret, val = invokeFunc[status](ip)
-    if ret then
+    local val, err = invokeFunc[status](ip)
+    if val then
       -- verify change and update app
       device.thread:call_with_delay(1, function()
-        ret, val = api.GetPlayerState(ip)
-        if ret then
+        val, err = api.GetPlayerState(ip)
+        if val then
           if val == "playing" then
             device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
           elseif val == "paused" then
@@ -188,12 +188,11 @@ local function set_playback_status(device, status, func_name)
             end
           end
         else
-          log.warn(string.format("Error getting new player state during %s(): %s", func_name,
-            val["error"]["message"]))
+          log.warn(string.format("Error getting new player state during %s(): %s", func_name, err))
         end
       end)
     else
-      log.warn(string.format("Error during %s(): %s", func_name, val["error"]["message"]))
+      log.warn(string.format("Error during %s(): %s", func_name, err))
     end
   end
 end
@@ -220,9 +219,9 @@ end
 function Handler.handle_next_track(_, device, _)
   log.info("Starting handle_next_track")
   local ip = device:get_field(const.IP)
-  local ret, val = api.InvokeNext(ip)
-  if not ret then
-    log.warn(string.format("Error during handle_next_track(): %s", val["error"]["message"]))
+  local _, err = api.InvokeNext(ip)
+  if err then
+    log.warn(string.format("Error during handle_next_track(): %s", err))
   end
 end
 
@@ -230,9 +229,9 @@ end
 function Handler.handle_previous_track(_, device, _)
   log.info("Starting handle_previous_track")
   local ip = device:get_field(const.IP)
-  local ret, val = api.InvokePrevious(ip)
-  if not ret then
-    log.warn(string.format("Error during handle_previous_track(): %s", val["error"]["message"]))
+  local _, err = api.InvokePrevious(ip)
+  if err then
+    log.warn(string.format("Error during handle_previous_track(): %s", err))
   end
 end
 
@@ -240,9 +239,9 @@ end
 function Handler.handle_send_key(_, device, cmd)
   log.info(string.format("Starting handle_send_key. Input key is: %s", cmd.args.keyCode))
   local ip = device:get_field(const.IP)
-  local ret, val = api.InvokeSendKey(ip, cmd.args.keyCode)
-  if not ret then
-    log.warn(string.format("Error during handle_send_key(): %s", val["error"]["message"]))
+  local _, err = api.InvokeSendKey(ip, cmd.args.keyCode)
+  if err then
+    log.warn(string.format("Error during handle_send_key(): %s", err))
   end
 end
 
