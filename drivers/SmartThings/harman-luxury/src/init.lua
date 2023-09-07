@@ -4,7 +4,6 @@
 -- SmartThings inclusions
 local Driver = require "st.driver"
 local capabilities = require "st.capabilities"
-local socket = require "cosock.socket"
 local st_utils = require "st.utils"
 local log = require "log"
 
