@@ -75,7 +75,7 @@ local function refresh(_, device)
 
     if power_state == "online" then
       device:emit_event(capabilities.switch.switch.on())
-      local player_state, trackdata, totalTime
+      local player_state, trackdata, supportedPlaybackCommands, supportedTrackControlCommands, totalTime
 
       -- get player state
       ret, player_state = api.GetPlayerState(ip)
