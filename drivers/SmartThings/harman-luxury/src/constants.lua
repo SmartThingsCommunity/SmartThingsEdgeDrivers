@@ -6,7 +6,7 @@ local Constants = {
   UPDATE_TIMER = "value_updates_timer",
 
   -- intervals constants (in seconds)
-  UPDATE_INTERVAL = 2,
+  UPDATE_INTERVAL = 1,
   HEALTH_CHEACK_INTERVAL = 10,
 
   -- discovery constants
