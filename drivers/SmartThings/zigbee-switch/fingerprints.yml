@@ -989,6 +989,31 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300Z1
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z2
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z2
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z3
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z3
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z5
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z5
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -2115,6 +2140,17 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  # Wall Hero
+  - id: "WALL HERO/ACL-401S4I"
+    deviceLabel: 四位智能开关面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S4I
+    deviceProfileName: basic-switch
+  - id: "WALL HERO/ACL-401S8I"
+    deviceLabel: 八位智能开关/场景面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S8I
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

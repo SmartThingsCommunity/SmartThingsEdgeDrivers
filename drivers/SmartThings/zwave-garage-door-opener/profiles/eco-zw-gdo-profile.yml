@@ -1,0 +1,77 @@
+name: eco-zw-gdo-profile
+components:
+  - id: main
+    capabilities:
+    - id: doorControl
+      version: 1
+    - id: temperatureMeasurement
+      version: 1
+    - id: refresh
+      version: 1
+    categories:
+    - name: GarageDoor
+  - id: sensor
+    capabilities:
+    - id: contactSensor
+      version: 1
+    - id: battery
+      version: 1
+    - id: tamperAlert
+      version: 1
+    categories:
+    - name: ContactSensor
+preferences:
+  - name: "closeWaitPeriodSec"
+    title: "Unattended Close Warning Time"
+    description: "The number of seconds to wait and alarm before closing garage. If the garage door starts moving durring this time, the close operation will be canceled."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 60
+      default: 5
+  - name: "activationTimeMS"
+    title: "Relay Close & Transmit Time"
+    description: "The number of milliseconds to hold the relay closed and also to transmit redundant door activation transmissions."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 100
+      maximum: 5000
+      default: 1000
+  - name: "doorOpenTimeoutSec"
+    title: "Timeout for Door to Open"
+    description: "The maximum number of seconds to wait for a door to open. After timeout, the door will be considered offline and will not be allowed to move again until it is manually activated."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 60
+      default: 20
+  - name: "doorCloseTimeoutSec"
+    title: "Timeout for Door to Close"
+    description: "The maximum number of seconds to wait for a door to close. After timeout, the door will be considered offline and will not be allowed to move again until it is manually activated."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum: 60
+      default: 15
+  - name: "shakeSensitivity"
+    title: "Motor Vibration Sensitivity"
+    description: "This adjusts the sensitivity of the motor vibration detection from 1 (least sensitive) to 100 (most sensitive). If your operator is frequently canceling a close operation due to vibration, you can adjusting this setting down."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 96
+  - name: "applicationLevelRetries"
+    title: "Z-Wave Communication Retry Attempts"
+    description: "This adjusts the number of times the Garage Door Opener will try to communicate with the Smart Things Hub over the Z-Wave network before giving up. 0 means the device will try only one time. Note: The Z-Wave stack has some built-in retry mechanism, so this function is on top of that."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 3

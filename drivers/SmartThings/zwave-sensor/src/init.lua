@@ -125,7 +125,7 @@ local driver_template = {
     require("zooz-4-in-1-sensor"),
     require("vision-motion-detector"),
     require("fibaro-flood-sensor"),
-    require("zwave-water-temp-humidity-sensor"),
+    require("aeotec-water-sensor"),
     require("glentronics-water-leak-sensor"),
     require("homeseer-multi-sensor"),
     require("fibaro-door-window-sensor"),
@@ -138,7 +138,8 @@ local driver_template = {
     require("fibaro-motion-sensor"),
     require("v1-contact-event"),
     require("timed-tamper-clear"),
-    require("wakeup-no-poll")
+    require("wakeup-no-poll"),
+    require("apiv6_bugfix")
   },
   lifecycle_handlers = {
     added = added_handler,

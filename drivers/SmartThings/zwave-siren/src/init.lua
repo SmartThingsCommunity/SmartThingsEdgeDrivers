@@ -102,7 +102,8 @@ local driver_template = {
     require("yale-siren"),
     require("zipato-siren"),
     require("utilitech-siren"),
-    require("fortrezz")
+    require("fortrezz"),
+    require("apiv6_bugfix"),
   },
   lifecycle_handlers = {
     infoChanged = info_changed,

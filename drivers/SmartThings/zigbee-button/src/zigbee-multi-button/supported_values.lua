@@ -59,7 +59,8 @@ local devices = {
       { mfr = "ADUROLIGHT", model = "ADUROLIGHT_CSC" },
       { mfr = "AduroSmart Eria", model = "Adurolight_NCC" },
       { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
-      { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" }
+      { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
+      { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 4
@@ -73,7 +74,7 @@ local devices = {
   },
   BUTTON_PUSH_30 = {
     MATCHING_MATRIX = {
-      { mfr = "WALL HERO", model = "A4" }
+      { mfr = "WALL HERO", model = "ACL-401SCA4" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 30

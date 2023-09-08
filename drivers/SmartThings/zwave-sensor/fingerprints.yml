@@ -113,11 +113,16 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0B00
     deviceProfileName: water-temperature-battery-tamper
-  - id: "aeotec/water/7"
+  - id: "aeotec/water/7pro"
     deviceLabel: Aeotec Water Sensor 7 Pro
     manufacturerId: 0x0371
     productId: 0x0013
     deviceProfileName: water-temperature-humidity-tamper-battery
+  - id: "aeotec/water/7"
+    deviceLabel: Aeotec Water Sensor 7
+    manufacturerId: 0x0371
+    productId: 0x0012
+    deviceProfileName: water-battery-tamper
   - id: "everspring/multi/ST814"
     deviceLabel: Everspring ST814
     manufacturerId: 0x0060
