@@ -98,6 +98,12 @@ zigbeeManufacturer:
     manufacturer: _TZE204_fzbskaga
     model: TS0601
     deviceProfileName: window-treatment-hanssem
+  - id: "Smartwings/WM25/L-Z"
+    deviceLabel: Smartwings Window Treatment
+    manufacturer: Smartwings
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-battery
+
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
