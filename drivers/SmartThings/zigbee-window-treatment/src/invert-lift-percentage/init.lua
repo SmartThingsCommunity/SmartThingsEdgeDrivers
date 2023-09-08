@@ -77,7 +77,7 @@ local function window_shade_preset_cmd(driver, device, command)
 end
 
 local ikea_window_treatment = {
-  NAME = "ikea window treatment",
+  NAME = "inverted lift percentage",
   zigbee_handlers = {
     attr = {
       [WindowCovering.ID] = {
