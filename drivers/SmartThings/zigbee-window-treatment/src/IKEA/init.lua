@@ -94,7 +94,8 @@ local ikea_window_treatment = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "IKEA of Sweden"
+    return device:get_manufacturer() == "IKEA of Sweden" or
+      device:get_manufacturer() == "Smartwings"
   end
 }
 
