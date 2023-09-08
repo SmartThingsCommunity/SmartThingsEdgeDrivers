@@ -2,6 +2,35 @@ name: rvc
 components:
 - id: main
   capabilities:
+  # TODO: Add values for Common Mode Tags
+  - id: robotCleanerMovement
+    version: 1
+    config:
+      values:
+      - key: "robotCleanerMovement.value"
+        enabledValues:
+        - idle
+        - cleaning
+  # TODO: Add values for Common Mode Tags
+  - id: spacewonder52282.robotCleanerCleaningMode
+    version: 1
+    config:
+      values:
+      - key: "robotCleanerCleaningMode.value"
+        enabledValues:
+        - deepClean
+        - vaccum
+        - mop
+  # TODO: Add values for Common Mode Tags
+  - id: spacewonder52282.robotCleanerOperationalState
+    version: 1
+    config:
+      values:
+      - key: "robotCleanerOperationalState.value"
+        enabledValues:
+        - seekingcharger
+        - charging
+        - docked
   - id: refresh
     version: 1
   categories:

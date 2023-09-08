@@ -18,11 +18,85 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
+local robotCleanerCleaningModeId = "spacewonder52282.robotCleanerCleaningMode"
+local robotCleanerCleaningMode = capabilities[robotCleanerCleaningModeId]
+local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState"
+local robotCleanerOperationalState = capabilities[robotCleanerOperationalStateId]
+
+local rvc_run_mode_supported_mode = "RvcRunMode.SupportedMode"
+local rvc_clean_mode_supported_mode = "RvcCleanMode.SupportedMode"
+
+local RVC_RUN_MODE_MAP = {
+  [0x4000] = capabilities.robotCleanerMovement.robotCleanerMovement.idle,
+  [0x4001] = capabilities.robotCleanerMovement.robotCleanerMovement.cleaning,
+}
+
+local RVC_CLEAN_MODE_MAP = {
+  [0x4000] = robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean,
+  [0x4001] = robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum,
+  [0x4002] = robotCleanerCleaningMode.robotCleanerCleaningMode.mop,
+}
+
 local function device_init(driver, device)
   device:subscribe()
 end
 
 -- Matter Handlers --
+local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, response)
+  device:set_field(rvc_run_mode_supported_mode, ib.data.value, {persist = true})
+end
+
+local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
+  local supported_modes = device:get_field(rvc_run_mode_supported_mode)
+  for _, mode in ipairs(supported_modes) do
+    if mode.Mode == ib.data.value then
+      if RVC_RUN_MODE_MAP[mode.ModeTags[0].Value] then
+        device:emit_event_for_endpoint(ib.endpoint_id, RVC_RUN_MODE_MAP[mode.ModeTags[0].Value]())
+      end
+      return
+    end
+  end
+end
+
+local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
+  device:set_field(rvc_clean_mode_supported_mode, ib.data.value, {persist = true})
+end
+
+local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
+  local supported_modes = device:get_field(rvc_clean_mode_supported_mode)
+  for _, mode in ipairs(supported_modes) do
+    if mode.Mode == ib.data.value then
+      if RVC_CLEAN_MODE_MAP[mode.ModeTags[0].Value] then
+        device:emit_event_for_endpoint(ib.endpoint_id, RVC_CLEAN_MODE_MAP[mode.ModeTags[0].Value]())
+      end
+      return
+    end
+  end
+end
+
+local function rvc_operational_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.SEEKING_CHARGER then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.seekingcharger())
+  elseif ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.CHARGING then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
+  elseif ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.DOCKED then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.docked())
+  end
+end
+
+local function handle_robot_cleaner_movement(driver, device, cmd)
+  -- TODO: implement
+  -- local endpoint_id = device:component_to_endpoint(cmd.component)
+  -- local req = clusters.RvcRunMode.server.commands.ChangeToMode(device, endpoint_id)
+  -- device:send(req)
+end
+
+local function handle_robot_cleaner_cleaning_mode(driver, device, cmd)
+  -- TODO: implement
+  -- local endpoint_id = device:component_to_endpoint(cmd.component)
+  -- local req = clusters.RvcCleanMode.server.commands.ChangeToMode(device, endpoint_id)
+  -- device:send(req)
+end
 
 local matter_driver_template = {
   lifecycle_handlers = {
@@ -30,11 +104,39 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
+      [clusters.RvcRunMode.ID] = {
+        [clusters.RvcRunMode.attributes.SupportedModes.ID] = rvc_run_mode_supported_mode_attr_handler,
+        [clusters.RvcRunMode.attributes.CurrentMode.ID] = rvc_run_mode_current_mode_attr_handler,
+      },
+      [clusters.RvcCleanMode.ID] = {
+        [clusters.RvcCleanMode.attributes.SupportedModes.ID] = rvc_clean_mode_supported_mode_attr_handler,
+        [clusters.RvcCleanMode.attributes.CurrentMode.ID] = rvc_clean_mode_current_mode_attr_handler,
+      },
+      [clusters.RvcOperationalState.ID] = {
+        [clusters.RvcOperationalState.attributes.OperationalState.ID] = rvc_operational_state_attr_handler,
+      },
     }
   },
   subscribed_attributes = {
+    [capabilities.robotCleanerMovement.ID] = {
+      clusters.RvcRunMode.attributes.SupportedModes,
+      clusters.RvcRunMode.attributes.CurrentMode,
+    },
+    [robotCleanerCleaningModeId] = {
+      clusters.RvcCleanMode.attributes.SupportedModes,
+      clusters.RvcCleanMode.attributes.CurrentMode,
+    },
+    [robotCleanerOperationalStateId] = {
+      clusters.RvcOperationalState.attributes.OperationalState,
+    },
   },
   capability_handlers = {
+    [capabilities.robotCleanerMovement.ID] = {
+      [capabilities.robotCleanerMovement.commands.setRobotCleanerMovement.NAME] = handle_robot_cleaner_movement,
+    },
+    [robotCleanerCleaningModeId] = {
+      [robotCleanerCleaningMode.commands.setRobotCleanerCleaningMode.NAME] = handle_robot_cleaner_cleaning_mode,
+    },
   },
 }
 
