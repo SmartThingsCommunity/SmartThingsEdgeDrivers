@@ -86,7 +86,7 @@ local function process_rest_response(response, err, partial, err_callback)
       )
     end
 
-    return table.unpack(json_result)
+    return table.unpack(json_result, 1, json_result.n)
   else
     return nil, "no response or error received"
   end
@@ -185,7 +185,7 @@ local function do_get(instance, path)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 local function do_put(instance, path, payload)
@@ -198,7 +198,7 @@ local function do_put(instance, path, payload)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -220,7 +220,7 @@ function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -243,12 +243,14 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
 
 function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
+
+function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
 
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 

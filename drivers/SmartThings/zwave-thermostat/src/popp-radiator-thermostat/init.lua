@@ -58,7 +58,8 @@ end
 -- If device wakes up earlier, driver is convinenced that user performed manual action (like adjusting setpoint on device),
 -- and in that case, cached setpoint command is removed and not sent.
 local function wakeup_notification_handler(self, device, cmd)
-  device:send(WakeUp:IntervalGet({}))
+  local version = require "version"
+  if version.api < 6 then device:send(WakeUp:IntervalGet({})) end
   local setpoint = device:get_field(CACHED_SETPOINT)
   if setpoint ~= nil and seconds_since_latest_wakeup(device) > 0.90 * POPP_WAKEUP_INTERVAL then
     device:send(setpoint)

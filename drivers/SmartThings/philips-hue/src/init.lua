@@ -18,20 +18,21 @@
 --
 --  ===============================================================================================
 local cosock = require "cosock"
+local log = require "log"
+
+local capabilities = require "st.capabilities"
+local Driver = require "st.driver"
+local json = require "st.json"
+local st_utils = require "st.utils"
+
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "hue.fields"
 local handlers = require "handlers"
 local HueApi = require "hue.api"
 local HueColorUtils = require "hue.cie_utils"
-local log = require "log"
 local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
-
-local capabilities = require "st.capabilities"
-local Driver = require "st.driver"
-local json = require "st.json"
-local st_utils = require "st.utils"
 
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
@@ -178,18 +179,11 @@ local function migrate_bridge(driver, device)
               (device.label or device.id or "unknown device")
             )
           )
-          local bridge_info, err, _ = HueApi.get_bridge_info(
-            bridge_ip,
-            utils.labeled_socket_builder(
-              "[Migrate: " .. (device.label or bridge_id or device.id or "unknown bridge") .. " Bridge Info Request"
-            )
-          )
-          if err ~= nil or not bridge_info then
-            log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
-              (device.label or bridge_id or device.id or "unknown bridge"),
-              (err or "unexpected nil in error position")
-            )
-            )
+
+          local bridge_info = driver.datastore.bridge_netinfo[bridge_id]
+
+          if not bridge_info then
+            log.debug(string.format("Bridge info for %s not yet available", bridge_id))
             return
           end
 
@@ -199,9 +193,7 @@ local function migrate_bridge(driver, device)
             return
           end
 
-          bridge_info.ip = bridge_ip
-
-          hue_driver.joined_bridges[bridge_id] = bridge_info
+          hue_driver.joined_bridges[bridge_id] = true
           Discovery.api_keys[bridge_id] = api_key
 
           local new_metadata = {
@@ -250,16 +242,14 @@ local function spawn_bridge_add_api_key_task(driver, device)
   cosock.spawn(function()
     -- 30 seconds is the typical UX for waiting to hit the link button in the Hue ecosystem
     local timeout_time = cosock.socket.gettime() + 30
-    local bridge_info = driver.joined_bridges[device_bridge_id]
-    local bridge_ip = bridge_info.ip
 
     -- we pre-declare these variables in the outer scope so that our gotos work.
     -- a sad day that we need these gotos.
-    local api_key_response, err, api_key, _
+    local api_key_response, err, api_key, bridge_info, bridge_ip, _
     repeat
       local time_remaining = math.max(0, timeout_time - cosock.socket.gettime())
       if time_remaining == 0 then
-        log.error_with({ hub_logs = true },
+        device.log.error_with({ hub_logs = true },
           string.format(
             "Link button not pressed or API key not received for bridge \"%s\" after 30 seconds, sleeping then trying again in a few minutes.",
             device.label
@@ -269,6 +259,13 @@ local function spawn_bridge_add_api_key_task(driver, device)
         timeout_time = cosock.socket.gettime() + 30 -- refresh timeout time
         goto continue
       end
+
+      if not driver.datastore.bridge_netinfo[device_bridge_id] then
+        goto continue
+      end
+
+      bridge_info = driver.datastore.bridge_netinfo[device_bridge_id]
+      bridge_ip = bridge_info.ip
 
       api_key_response, err, _ = HueApi.request_api_key(
         bridge_ip,
@@ -314,13 +311,15 @@ local function update_bridge_fields_from_info(driver, bridge_info, bridge_device
   end
 
   bridge_device:set_field(Fields.DEVICE_TYPE, "bridge", { persist = true })
-  bridge_device:set_field(Fields.IPV4, bridge_ip, { persist = true })
   bridge_device:set_field(Fields.MODEL_ID, bridge_info.modelid, { persist = true })
   bridge_device:set_field(Fields.BRIDGE_ID, device_bridge_id, { persist = true })
   bridge_device:set_field(Fields.BRIDGE_SW_VERSION, tonumber(bridge_info.swversion or "0", 10), { persist = true })
-  bridge_device:set_field(Fields.API_KEY, Discovery.api_keys[device_bridge_id], { persist = true })
-  bridge_device:set_field(Fields._ADDED, true, { persist = true })
-  driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
+
+  if Discovery.api_keys[device_bridge_id] then
+    bridge_device:set_field(Fields.API_KEY, Discovery.api_keys[device_bridge_id], { persist = true })
+    driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
+  end
+  bridge_device:set_field(Fields.IPV4, bridge_ip, { persist = true })
 end
 
 ---@param driver HueDriver
@@ -329,7 +328,7 @@ bridge_added = function(driver, device)
   log.info_with({ hub_logs = true },
     string.format("Bridge Added for device %s", (device.label or device.id or "unknown device")))
   local device_bridge_id = device.device_network_id
-  local bridge_info = driver.joined_bridges[device_bridge_id]
+  local bridge_info = driver.datastore.bridge_netinfo[device_bridge_id]
 
   if not bridge_info then
     local known_macs = {}
@@ -354,18 +353,10 @@ bridge_added = function(driver, device)
               (device.label or device.id or "unknown device")
             )
             )
-            local bridge_info, err, _ = HueApi.get_bridge_info(
-              bridge_ip,
-              utils.labeled_socket_builder(
-                "[Added: " .. (device.label or bridge_id or device.id or "unknown bridge") .. " Bridge Info Request"
-              )
-            )
-            if err ~= nil or not bridge_info then
-              log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
-                (device.label or bridge_id or device.id or "unknown bridge"),
-                (err or "unexpected nil in error position")
-              )
-              )
+            local bridge_info = driver.datastore.bridge_netinfo[bridge_id]
+
+            if not bridge_info then
+              log.debug(string.format("Bridge info for %s not yet available", bridge_id))
               return
             end
 
@@ -375,9 +366,9 @@ bridge_added = function(driver, device)
               return
             end
 
-            bridge_info.ip = bridge_ip
-            driver.joined_bridges[bridge_id] = bridge_info
+            driver.joined_bridges[bridge_id] = true
             update_bridge_fields_from_info(driver, bridge_info, device)
+            device:set_field(Fields._ADDED, true, { persist = true })
             bridge_found = true
           end)
           if bridge_found then return end
@@ -399,6 +390,7 @@ bridge_added = function(driver, device)
     )
   else
     update_bridge_fields_from_info(driver, bridge_info, device)
+    device:set_field(Fields._ADDED, true, { persist = true })
   end
 
   if not Discovery.api_keys[device_bridge_id] then
@@ -432,13 +424,15 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     )
   )
 
-  local known_dni_to_device_map = {}
-  for _, known_device in ipairs(driver:get_devices()) do
-    local dni = known_device.device_network_id or known_device.parent_assigned_child_key
-    known_dni_to_device_map[dni] = known_device
+  local bridge_device = nil
+  if parent_device_id ~= nil then
+    bridge_device = driver:get_device_info(parent_device_id, false)
   end
 
-  local bridge_device = known_dni_to_device_map[bridge_id or ""]
+  if not bridge_device then
+    bridge_device = driver:get_device_by_dni(bridge_id)
+  end
+
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
@@ -529,7 +523,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
     profile_supports = profile_support
   }
 
-  device.log.info_with({hub_logs = true}, st_utils.stringify_table(
+  device.log.info_with({ hub_logs = true }, st_utils.stringify_table(
     dbg_table,
     "Comparing profile-reported capabilities to bridge reported representation",
     false
@@ -686,6 +680,8 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields._ADDED, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
+
+  device:online()
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   handlers.refresh_handler(driver, device)
 end
@@ -706,10 +702,73 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
+
+      local bridge_api = device:get_field(Fields.BRIDGE_API)
+      cosock.spawn(function()
+        local child_device_map = {}
+        for _, device_record in ipairs(device:get_child_list()) do
+          local hue_device_id = device_record:get_field(Fields.HUE_DEVICE_ID)
+          if hue_device_id ~= nil then
+            child_device_map[hue_device_id] = device_record
+          end
+        end
+
+        local scanned = false
+        local connectivity_status, rest_err
+
+        while true do
+          if scanned then break end
+          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          if rest_err ~= nil then
+            log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
+              device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
+            goto continue
+          end
+
+          if connectivity_status.errors and #connectivity_status.errors > 0 then
+            log.error(
+              string.format(
+                "Hue Bridge %s replied with the following error message(s) " ..
+                "when querying child device connectivity status:",
+                device.label
+              )
+            )
+            for idx, err in ipairs(connectivity_status.errors) do
+              log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
+            end
+            goto continue
+          end
+
+          if connectivity_status.data and #connectivity_status.data > 0 then
+            scanned = true
+          end
+
+          for _, status in ipairs(connectivity_status.data) do
+            local hue_device_id = (status.owner and status.owner.rid) or ""
+            log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
+            local child_device = child_device_map[hue_device_id]
+            if child_device then
+              if status.status == "connected" then
+                child_device.log.trace("Marking Online after SSE Reconnect")
+                child_device:online()
+              elseif status.status == "connectivity_issue" then
+                child_device.log.trace("Marking Offline after SSE Reconnect")
+                child_device:offline()
+              end
+            end
+          end
+          ::continue::
+        end
+      end, string.format("Hue Bridge %s Zigbee Scan Task", device.label))
     end
 
     eventsource.onerror = function()
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", device.label))
+
+      for _, device_record in ipairs(device:get_child_list()) do
+        device_record:offline()
+      end
+
       device:offline()
     end
 
@@ -717,7 +776,7 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
-        local events, err = table.unpack(json_result)
+        local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
           log.error_with({ hub_logs = true },
@@ -849,7 +908,7 @@ init_bridge = function(driver, device)
     ))
     cosock.spawn(
       function()
-        local bridge_info, err
+        local bridge_info
         -- create a very slow backoff
         local backoff_generator = utils.backoff_builder(10, 0.1, 0.1)
         local sleep_time = 0.1
@@ -860,35 +919,24 @@ init_bridge = function(driver, device)
               (device.label or device.id or "unknown device")
             )
           )
-          bridge_info, err = HueApi.get_bridge_info(
-            ip,
-            utils.labeled_socket_builder(
-              "[BridgeInit: " ..
-              (device.label or device.device_network_id or device.id or "unknown bridge") .. " Bridge Info Request"
-            )
-          )
+          bridge_info = driver.datastore.bridge_netinfo[device_bridge_id]
 
-          if err ~= nil or bridge_info == nil then
-            log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s",
-              (device.label or device.device_network_id or device.id or "unknown bridge"),
-              (err or "unexpected nil in error position")
-            )
-            )
+          if not bridge_info then
+            log.debug(string.format("Bridge info for %s not yet available", device_bridge_id))
             goto continue
-          end
+          else
+            if tonumber(bridge_info.swversion or "0", 10) < HueApi.MIN_CLIP_V2_SWVERSION then
+              log.warn("Found bridge that does not support CLIP v2 API, ignoring")
+              driver.ignored_bridges[device_bridge_id] = true
+              return
+            end
 
-          if tonumber(bridge_info.swversion or "0", 10) < HueApi.MIN_CLIP_V2_SWVERSION then
-            log.warn("Found bridge that does not support CLIP v2 API, ignoring")
-            driver.ignored_bridges[device_bridge_id] = true
-            return
-          end
-
-          if bridge_info ~= nil then
             log.info("Bridge info for %s received, initializing network configuration")
-            driver.joined_bridges[device_bridge_id] = bridge_info
+            driver.joined_bridges[device_bridge_id] = true
             do_bridge_network_init(driver, device, bridge_url, api_key)
             return
           end
+
           ::continue::
           if sleep_time < 10 then
             sleep_time = backoff_generator()
@@ -981,6 +1029,15 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 _initialize = function(driver, device, event, args, parent_device_id)
+  local maybe_device = driver:get_device_by_dni(device.device_network_id)
+  if not (
+        maybe_device
+        and maybe_device.id == device.id
+      )
+  then
+    driver.datastore.dni_to_device_id[device.device_network_id] = device.id
+  end
+
   log.info(
     string.format("_initialize handling event %s for device %s", event, (device.label or device.id or "unknown device")))
   if not device:get_field(Fields._ADDED) then
@@ -1129,7 +1186,7 @@ cosock.spawn(function()
             for stray_dni, stray_light in pairs(stray_lights) do
               local matching_v1_id = stray_light.data and stray_light.data.bulbId and
                   stray_light.data.bulbId == device_data.id_v1:gsub("/lights/", "")
-              local matching_uuid = stray_light.device_network_id == svc_info.rid or
+              local matching_uuid = stray_light.parent_assigned_child_key == svc_info.rid or
                   stray_light.device_network_id == svc_info.rid
 
               if matching_v1_id or matching_uuid then
@@ -1227,42 +1284,49 @@ local switch_level_handler = handlers.switch_level_handler
 local set_color_temp_handler = handlers.set_color_temp_handler
 
 local function remove(driver, device)
+  driver.datastore.dni_to_device_id[device.device_network_id] = nil
   if device:get_field(Fields.DEVICE_TYPE) == "bridge" then
     local api_instance = device:get_field(Fields.BRIDGE_API)
     if api_instance then
       api_instance:shutdown()
       device:set_field(Fields.BRIDGE_API, nil)
     end
+
+    local event_source = device:get_field(Fields.EVENT_SOURCE)
+    if event_source then
+      event_source:close()
+      device:set_field(Fields.EVENT_SOURCE, nil)
+    end
   end
 end
 
 local function supports_switch(hue_repr)
   return
-    hue_repr.on ~= nil
+      hue_repr.on ~= nil
       and type(hue_repr.on) == "table"
       and type(hue_repr.on.on) == "boolean"
 end
 
 local function supports_switch_level(hue_repr)
   return
-    hue_repr.dimming ~= nil
+      hue_repr.dimming ~= nil
       and type(hue_repr.dimming) == "table"
       and type(hue_repr.dimming.brightness) == "number"
 end
 
 local function supports_color_temp(hue_repr)
   return
-    hue_repr.color_temperature ~= nil
+      hue_repr.color_temperature ~= nil
       and type(hue_repr.color_temperature) == "table"
       and next(hue_repr.color_temperature) ~= nil
 end
 
 local function supports_color_control(hue_repr)
   return
-  hue_repr.color ~= nil
-    and type(hue_repr.color) == "table"
-    and type(hue_repr.color.xy) == "table"
-    and type(hue_repr.color.gamut) == "table"
+      hue_repr.color ~= nil
+      and type(hue_repr.color) == "table"
+      and type(hue_repr.color.xy) == "table"
+      and type(hue_repr.color.gamut) == "table"
 end
 
 local support_check_handlers = {
@@ -1313,9 +1377,63 @@ local hue = Driver("hue",
       else
         return false
       end
+    end,
+    update_bridge_netinfo = function(self, bridge_id, bridge_info)
+      if self.joined_bridges[bridge_id] then
+        local bridge_device = self:get_device_by_dni(bridge_id)
+        if not bridge_device then
+          log.warn_with({ hub_logs = true },
+            string.format(
+              "Couldn't locate bridge device for joined bridge with DNI %s",
+              bridge_id
+            )
+          )
+          return
+        end
+
+        if bridge_info.ip ~= bridge_device:get_field(Fields.IPV4) then
+          update_bridge_fields_from_info(self, bridge_info, bridge_device)
+          local maybe_api_client = bridge_device:get_field(Fields.BRIDGE_API)
+          local maybe_api_key = bridge_device:get_field(Fields.API_KEY) or Discovery.api_keys[bridge_id]
+          local maybe_event_source = bridge_device:get_field(Fields.EVENT_SOURCE)
+          local bridge_url = "https://" .. bridge_info.ip
+
+          if maybe_api_key then
+            if maybe_api_client then
+              maybe_api_client:update_connection(bridge_url, maybe_api_key)
+            end
+
+            if maybe_event_source then
+              maybe_event_source:close()
+              bridge_device:set_field(Fields.EVENT_SOURCE, nil)
+              do_bridge_network_init(self, bridge_device, bridge_url, maybe_api_key)
+            end
+          end
+        end
+      end
+    end,
+    get_device_by_dni = function(self, dni, force_refresh)
+      local device_uuid = self.datastore.dni_to_device_id[dni]
+      if not device_uuid then return nil end
+      return self:get_device_info(device_uuid, force_refresh)
     end
   }
 )
+
+if hue.datastore["bridge_netinfo"] == nil then
+  hue.datastore["bridge_netinfo"] = {}
+end
+
+if hue.datastore["dni_to_device_id"] == nil then
+  hue.datastore["dni_to_device_id"] = {}
+end
+
+-- Kick off a scan right away to attempt to populate some information
+hue:call_with_delay(3, Discovery.do_mdns_scan, "Philips Hue mDNS Initial Scan")
+
+-- re-scan every minute
+local MDNS_SCAN_INTERVAL_SECONDS = 60
+hue:call_on_schedule(MDNS_SCAN_INTERVAL_SECONDS, Discovery.do_mdns_scan, "Philips Hue mDNS Scan Task")
 
 log.info("Starting Hue driver")
 hue:run()

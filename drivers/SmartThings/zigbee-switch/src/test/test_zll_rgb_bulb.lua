@@ -176,19 +176,18 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "Set Hue command test",
-  function()
-    local test_data = {
-      { hue = 75, saturation = 65,  x = 0x3E51, y = 0x255D },
-      { hue = 75, saturation = nil, x = 0x500F, y = 0x543B }
-    }
+local test_data = {
+  { hue = 75, saturation = 65,  x = 0x3E51, y = 0x255D },
+  { hue = 75, saturation = nil, x = 0x500F, y = 0x543B }
+}
 
-    for _, data in ipairs(test_data) do
+for _, data in ipairs(test_data) do
+  test.register_coroutine_test(
+    "Set Hue command test",
+    function()
       if data.saturation ~= nil then
-        mock_device.wrapped_device.state_cache = {["main"] = {["colorControl"] = {["saturation"] = {["value"] = data.saturation}}}}
-      else
-        mock_device.wrapped_device.state_cache = {}
+        test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.CurrentSaturation:build_test_attr_report(mock_device, math.ceil(data.saturation / 100 * 0xFE))})
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(data.saturation)))
       end
 
       test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")
@@ -218,23 +217,21 @@ test.register_coroutine_test(
 
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-      end
-  end
-)
+    end
+  )
+end
 
-test.register_coroutine_test(
-  "Set Saturation command test",
-  function()
-    local test_data = {
-      { hue = 75, saturation = 65, x = 0x3E51, y = 0x255D },
-      { hue = nil, saturation = 65, x = 0x86EF, y = 0x5465 }
-    }
-
-    for _, data in ipairs(test_data) do
-      if data.saturation ~= nil then
-        mock_device.wrapped_device.state_cache = {["main"] = {["colorControl"] = {["hue"] = {["value"] = data.hue}}}}
-      else
-        mock_device.wrapped_device.state_cache = {}
+test_data = {
+  { hue = 75, saturation = 65, x = 0x3E51, y = 0x255D },
+  { hue = nil, saturation = 65, x = 0x86EF, y = 0x5465 }
+}
+for _, data in ipairs(test_data) do
+  test.register_coroutine_test(
+    "Set Saturation command test",
+    function()
+      if data.hue ~= nil then
+        test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.CurrentHue:build_test_attr_report(mock_device, math.ceil(data.hue / 100 * 0xFE))})
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(data.hue)))
       end
 
       test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")
@@ -265,8 +262,8 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
     end
-  end
-)
+  )
+end
 
 test.register_coroutine_test(
   "Set Hue/Saturation command test",
