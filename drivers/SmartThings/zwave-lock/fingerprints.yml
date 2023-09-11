@@ -295,6 +295,7 @@ zwaveGeneric:
       supported:
         - 0x62 # door lock
         - 0x63 # user code
+        - 0x80 # battery
     deviceProfileName: base-lock
   - id: "GenericZwaveLock2"
     deviceLabel: Door Lock

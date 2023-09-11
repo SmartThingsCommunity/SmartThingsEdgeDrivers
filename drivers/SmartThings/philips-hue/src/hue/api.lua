@@ -57,7 +57,7 @@ end
 
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.error(
+    log.error_with({ hub_logs = true },
       st_utils.stringify_table(
         {
           resp = response,
@@ -82,11 +82,11 @@ local function process_rest_response(response, err, partial, err_callback)
 
     if not success then
       return nil, st_utils.stringify_table(
-        {response_body = body, json = json_result}, "Couldn't decode JSON in SSE callback", false
+        { response_body = body, json = json_result }, "Couldn't decode JSON in SSE callback", false
       )
     end
 
-    return table.unpack(json_result)
+    return table.unpack(json_result, 1, json_result.n)
   else
     return nil, "no response or error received"
   end
@@ -94,7 +94,7 @@ end
 
 function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
   log.debug(st_utils.stringify_table(
-    {base_url, api_key},
+    { base_url, api_key },
     "Creating new Bridge Manager:",
     true
   ))
@@ -115,16 +115,17 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
       local msg, err = control_rx:receive()
       if err then
         if err ~= "timeout" then
-          log.error("[PhilipsHueApi] Error receiving on control channel for REST API thread", err)
+          log.error_with({ hub_logs = true }, "[PhilipsHueApi] Error receiving on control channel for REST API thread",
+            err)
         else
-          log.trace("Timeout on Hue API Control Channel, continuing")
+          log.info_with({ hub_logs = true }, "Timeout on Hue API Control Channel, continuing")
         end
         goto continue
       end
 
       if msg and msg._type then
         if msg._type == ControlMessageTypes.Shutdown then
-          log.info("[PhilipsHueApi] REST API Control Thread received shutdown message");
+          log.info_with({ hub_logs = true }, "[PhilipsHueApi] REST API Control Thread received shutdown message");
           self._running = false
           goto continue
         end
@@ -184,7 +185,7 @@ local function do_get(instance, path)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 local function do_put(instance, path, payload)
@@ -197,7 +198,7 @@ local function do_put(instance, path, payload)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -210,7 +211,8 @@ function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   rx:settimeout(10)
   cosock.spawn(
     function()
-      tx:send(table.pack(process_rest_response(RestClient.one_shot_get("https://" .. bridge_ip .. "/api/config", nil, socket_builder))))
+      tx:send(table.pack(process_rest_response(RestClient.one_shot_get("https://" .. bridge_ip .. "/api/config", nil,
+        socket_builder))))
     end,
     string.format("%s get_bridge_info", bridge_ip)
   )
@@ -218,7 +220,7 @@ function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -232,7 +234,8 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   cosock.spawn(
     function()
       local body = json.encode { devicetype = "smartthings_edge_driver#" .. bridge_ip, generateclientkey = true }
-      tx:send(table.pack(process_rest_response(RestClient.one_shot_post("https://" .. bridge_ip .. "/api", body, nil, socket_builder))))
+      tx:send(table.pack(process_rest_response(RestClient.one_shot_post("https://" .. bridge_ip .. "/api", body, nil,
+        socket_builder))))
     end,
     string.format("%s request_api_key", bridge_ip)
   )
@@ -240,12 +243,14 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
 
 function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
+
+function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
 
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 

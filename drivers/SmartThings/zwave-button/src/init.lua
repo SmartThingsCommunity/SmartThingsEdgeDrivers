@@ -42,7 +42,8 @@ local driver_template = {
     added = added_handler,
   },
   sub_drivers = {
-    require("zwave-multi-button")
+    require("zwave-multi-button"),
+    require("apiv6_bugfix"),
   }
 }
 

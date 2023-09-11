@@ -82,6 +82,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_sensor,
         Configuration:Set({configuration_value = 360, parameter_number = 4, size = 2})
       ))

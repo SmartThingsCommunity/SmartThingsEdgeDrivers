@@ -24,5 +24,5 @@ preferences:
   - preferenceId: stse.changeToWirelessSwitch
     explicit: true
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: d3530dd0-6a53-370b-9b4f-36ac09f99a38
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Switch_Power

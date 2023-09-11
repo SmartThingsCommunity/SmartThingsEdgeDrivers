@@ -1,0 +1,6 @@
+matterGeneric:
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-profile
