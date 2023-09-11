@@ -49,9 +49,9 @@ end
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
   local supported_modes = device:get_field(rvc_run_mode_supported_mode)
   for _, mode in ipairs(supported_modes) do
-    if mode.Mode == ib.data.value then
-      if RVC_RUN_MODE_MAP[mode.ModeTags[0].Value] then
-        device:emit_event_for_endpoint(ib.endpoint_id, RVC_RUN_MODE_MAP[mode.ModeTags[0].Value]())
+    if mode.mode == ib.data.value then
+      if RVC_RUN_MODE_MAP[mode.mode_tags[0].value] then
+        device:emit_event_for_endpoint(ib.endpoint_id, RVC_RUN_MODE_MAP[mode.mode_tags[0].value]())
       end
       return
     end
@@ -65,9 +65,9 @@ end
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
   local supported_modes = device:get_field(rvc_clean_mode_supported_mode)
   for _, mode in ipairs(supported_modes) do
-    if mode.Mode == ib.data.value then
-      if RVC_CLEAN_MODE_MAP[mode.ModeTags[0].Value] then
-        device:emit_event_for_endpoint(ib.endpoint_id, RVC_CLEAN_MODE_MAP[mode.ModeTags[0].Value]())
+    if mode.mode == ib.data.value then
+      if RVC_CLEAN_MODE_MAP[mode.mode_tags[0].value] then
+        device:emit_event_for_endpoint(ib.endpoint_id, RVC_CLEAN_MODE_MAP[mode.mode_tags[0].value]())
       end
       return
     end
