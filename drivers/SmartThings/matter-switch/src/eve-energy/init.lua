@@ -31,7 +31,7 @@ local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local RECURRING_POLL_TIMER = "RECURRING_POLL_TIMER"
 local TIMER_REPEAT = (1 * 60)    -- Run the timer each minute
-local REPORT_TIMEOUT = (10 * 60) -- Report the value each 10 minutes
+local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 
 
 -------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ local function updateEnergyMeter(device, totalConsumptionWh)
   -- Report the energy consumed
   device:emit_event(capabilities.energyMeter.energy({ value = totalConsumptionWh, unit = "Wh" }))
 
-  -- Only send powerConsumptionReport every 10 minutes
+  -- Only send powerConsumptionReport every couple of minutes (REPORT_TIMEOUT)
   local current_time = os.time()
   local last_time = device:get_field(LAST_REPORT_TIME) or 0
   local next_time = last_time + REPORT_TIMEOUT
