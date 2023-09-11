@@ -21,7 +21,7 @@ components:
         - deepClean
         - vaccum
         - mop
-  # TODO: Add values for Common Mode Tags
+  # TODO: Add values for General States
   - id: spacewonder52282.robotCleanerOperationalState
     version: 1
     config:
