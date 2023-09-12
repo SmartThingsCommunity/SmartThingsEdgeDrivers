@@ -2,39 +2,42 @@ local mdns = require "st.mdns"
 local socket = require "cosock.socket"
 local log = require "log"
 
+local api = require "api.apis"
 local disco_helper = require "disco_helper"
 local devices = require "devices"
 local const = require "constants"
 
-local Discovery = {}
+local Discovery = {
+  cached_devices = {},
+}
 
-local function update_device_discovery_cache(driver, dni, params)
+local function update_device_discovery_cache(dni, params, token)
   log.info(string.format("update_device_discovery_cache for device dni: dni=%s, ip=%s", dni, params.ip))
   local device_info = devices.get_device_info(dni, params)
-  driver.registered_devices[dni] = {
+  Discovery.cached_devices[dni] = {
     ip = params.ip,
     device_info = device_info,
+    credential = token,
   }
 end
 
 local function try_add_device(driver, device_dni, device_params)
   log.trace(string.format("try_add_device : dni=%s, ip=%s", device_dni, device_params.ip))
 
-  update_device_discovery_cache(driver, device_dni, device_params)
+  local token, err = api.InitCredentialsToken(device_params.ip)
 
-  local device_info = devices.get_device_info(device_dni, device_params)
-
-  if not device_info then
-    log.error(string.format("failed to create device create msg. device_info is nil. dni=%s", device_dni))
-    return nil
+  if err then
+    log.error(string.format("failed to get credential token for dni=%s, ip=%s", device_dni, device_params.ip))
+    return
   end
 
-  driver:try_create_device(device_info)
+  update_device_discovery_cache(device_dni, device_params, token)
+  driver:try_create_device(Discovery.cached_devices[device_dni].device_info)
 end
 
-function Discovery.set_device_field(driver, device)
+function Discovery.set_device_field(device)
   log.info(string.format("set_device_field : dni=%s", device.device_network_id))
-  local device_cache_value = driver.registered_devices[device.device_network_id]
+  local device_cache_value = Discovery.cached_devices[device.device_network_id]
 
   -- persistent fields
   device:set_field(const.IP, device_cache_value.ip, {
@@ -43,6 +46,11 @@ function Discovery.set_device_field(driver, device)
   device:set_field(const.DEVICE_INFO, device_cache_value.device_info, {
     persist = true,
   })
+  if device_cache_value.credential then
+    device:set_field(const.CREDENTIAL, device_cache_value.credential, {
+      persist = true,
+    })
+  end
 end
 
 local function find_params_table()
@@ -81,9 +89,9 @@ local function discovery_device(driver)
   log.debug("\n\n--- Update devices cache ---\n")
   for dni, params in pairs(known_discovered_devices) do
     log.trace(string.format("known dni=%s, ip=%s", dni, params.ip))
-    if driver.registered_devices[dni] then
-      update_device_discovery_cache(driver, dni, params)
-      Discovery.set_device_field(driver, known_devices[dni])
+    if Discovery.cached_devices[dni] then
+      update_device_discovery_cache(dni, params)
+      Discovery.set_device_field(known_devices[dni])
     end
   end
 
@@ -91,7 +99,7 @@ local function discovery_device(driver)
     log.debug("\n\n--- Try to create unkown devices ---\n")
     for dni, ip in pairs(unknown_discovered_devices) do
       log.trace(string.format("unknown dni=%s, ip=%s", dni, ip))
-      if not driver.registered_devices[dni] then
+      if not Discovery.cached_devices[dni] then
         try_add_device(driver, dni, params_table[dni])
       end
     end

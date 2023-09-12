@@ -17,54 +17,28 @@ local const = require "constants"
 -- Device Functions
 ----------------------------------------------------------
 
-local function device_removed(driver, device)
-  log.info("Device removed")
-  local id = device.device_network_id
-  driver.registered_devices[id] = nil
-  -- cancel timers
-  local update_timer = device:get_field(const.UPDATE_TIMER)
-  if update_timer ~= nil then
-    device.thread:cancel_timer(update_timer)
+local function stop_check_for_updates_thread(device)
+  local current_timer = device:get_field(const.UPDATE_TIMER)
+  if current_timer ~= nil then
+    log.info(string.format("create_check_for_updates_thread: dni=%s, remove old timer", device.device_network_id))
+    device.thread:cancel_timer(current_timer)
   end
 end
 
-local function update_connection(driver)
-  log.debug("Entered update_connection()...")
-  -- only test connections if there are registered devices
-    local devices = driver:get_devices()
-  if next(devices) ~= nil then
-    local registeredDevices = driver.registered_devices
-    local devices_ip_table = discovery.find_ip_table()
-    for _, device in ipairs(devices) do
-      local device_dni = device.device_network_id
-      local device_ip = device:get_field(const.IP)
-      local current_ip = devices_ip_table[device_dni]
-      -- check if this device's dni appeared in the scan
-      if current_ip then
-        -- set device online and update device IP if it changed
-        device:online()
-        if current_ip ~= device_ip then
-          -- update IP associated to this device
-          log.warn(string.format("Harman Luxury Driver updated %s IP to %s", device_dni, current_ip))
-          registeredDevices[device_dni].ip = current_ip
-          device:set_field(const.IP, current_ip, {
-            persist = true,
-          })
-        end
-      else
-        -- set device offline if not detected
-        log.warn(string.format(
-                   "Harman Luxury Driver set %s offline as it didn't appear on latest update connections scan",
-                   device_dni))
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
-        device:emit_event(capabilities.audioTrackData.audioTrackData({
-          title = "",
-        }))
-        device:offline()
-      end
-    end
-  end
+local function device_removed(_, device)
+  log.info("Device removed")
+  -- cancel timers
+  stop_check_for_updates_thread(device)
+end
+
+local function goOffline(device)
+  stop_check_for_updates_thread(device)
+  device:emit_event(capabilities.switch.switch.off())
+  device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
+  device:emit_event(capabilities.audioTrackData.audioTrackData({
+    title = "",
+  }))
+  device:offline()
 end
 
 local function refresh(_, device)
@@ -227,11 +201,8 @@ local function check_for_updates(device)
 end
 
 local function create_check_for_updates_thread(device)
-  local old_timer = device:get_field(const.UPDATE_TIMER)
-  if old_timer ~= nil then
-    log.info(string.format("create_check_for_updates_thread: dni=%s, remove old timer", device.device_network_id))
-    device.thread:cancel_timer(old_timer)
-  end
+  -- stop old timer if one exists
+  stop_check_for_updates_thread(device)
 
   log.info(string.format("create_check_for_updates_thread: dni=%s", device.device_network_id))
   local new_timer = device.thread:call_on_schedule(const.UPDATE_INTERVAL, function()
@@ -261,12 +232,7 @@ local function device_init(driver, device)
                        "NUMBER1", "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8",
                        "NUMBER9"}))
 
-  local device_dni = device.device_network_id
-
   local device_ip = device:get_field(const.IP)
-  if not device_ip then
-    device_ip = driver.registered_devices[device_dni]
-  end
   log.trace(string.format("device IP: %s", device_ip))
 
   create_check_for_updates_thread(device)
@@ -274,9 +240,61 @@ local function device_init(driver, device)
   refresh(driver, device)
 end
 
+local function update_connection(driver)
+  log.debug("Entered update_connection()...")
+  -- only test connections if there are registered devices
+  local devices = driver:get_devices()
+  if next(devices) ~= nil then
+    local devices_ip_table = discovery.find_ip_table()
+    for _, device in ipairs(devices) do
+      local device_dni = device.device_network_id
+      local device_ip = device:get_field(const.IP)
+      local current_ip = devices_ip_table[device_dni]
+      -- check if this device's dni appeared in the scan
+      if current_ip then
+        -- update IP associated to this device if changed
+        if current_ip ~= device_ip then
+          log.warn(string.format("Harman Luxury Driver updated %s IP to %s", device_dni, current_ip))
+          device:set_field(const.IP, current_ip, {
+            persist = true,
+          })
+        end
+        -- set device online if credentials still match and update device IP if it changed
+        local active_token, err = api.GetCredentialsToken(current_ip)
+        if active_token then
+          local device_token = device:get_field(const.CREDENTIAL)
+          if active_token == device_token then
+            -- if device is going back online after being offline we want to also reinitialize the device
+            local state = device:get_latest_state("main", capabilities.healthCheck.ID,
+                                                  capabilities.healthCheck.healthStatus.NAME)
+            if state == "offline" then
+              device_init(driver, device)
+            end
+            device:online()
+          else
+            log.warn(string.format("device with dni: %s no longer holds the credential token", device_dni))
+            goOffline(device)
+          end
+        else
+          log.warn(string.format(
+                     "device with dni: %s had issues while trying to read credentail token. Error message: %s",
+                     device_dni, err))
+          goOffline(device)
+        end
+      else
+        -- set device offline if not detected
+        log.warn(string.format(
+                   "Harman Luxury Driver set %s offline as it didn't appear on latest update connections scan",
+                   device_dni))
+        goOffline(device)
+      end
+    end
+  end
+end
+
 local function device_added(driver, device)
   log.info(string.format("Device added: %s", device.label))
-  discovery.set_device_field(driver, device)
+  discovery.set_device_field(device)
   -- ensuring device is initialised
   device_init(driver, device)
 end
@@ -354,9 +372,8 @@ local driver = Driver("Harman Luxury", {
     },
   },
   supported_capabilities = {capabilities.switch, capabilities.audioMute, capabilities.audioVolume,
-                            capabilities.mediaPlayback, capabilities.mediaTrackControl, capabilities.keypadInput,
-                            capabilities.mediaPresets},
-  registered_devices = {},
+                            capabilities.mediaPresets, capabilities.audioNotification, capabilities.mediaPlayback,
+                            capabilities.mediaTrackControl, capabilities.healthCheck, capabilities.refresh},
 })
 
 ----------------------------------------------------------

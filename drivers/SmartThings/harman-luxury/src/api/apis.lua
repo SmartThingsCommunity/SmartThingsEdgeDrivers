@@ -86,6 +86,20 @@ function APIs.SetDeviceName(ip, value)
   return set.String(ip, DEVICE_NAME_PATH, value)
 end
 
+--- get active credential token from a Harman Luxury device on ip
+---@param ip string
+---@return boolean|number|string|table|nil, nil|string
+function APIs.InitCredentialsToken(ip)
+  return invoke.Activate(ip, SMARTTHINGS_PATH .. "initCredentialsToken")
+end
+
+--- get active credential token from a Harman Luxury device on ip
+---@param ip string
+---@return boolean|number|string|table|nil, nil|string
+function APIs.GetCredentialsToken(ip)
+  return invoke.Activate(ip, SMARTTHINGS_PATH .. "getCredentialsToken")
+end
+
 --- power manager APIs -----------------------------------
 
 --- invoke smartthings:setOn on ip
