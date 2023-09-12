@@ -40,6 +40,9 @@ function Discovery.set_device_field(device)
   local device_cache_value = Discovery.cached_devices[device.device_network_id]
 
   -- persistent fields
+  device:set_field(const.STATUS, true, {
+    persist = true,
+  })
   device:set_field(const.IP, device_cache_value.ip, {
     persist = true,
   })

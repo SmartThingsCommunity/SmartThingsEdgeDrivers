@@ -22,8 +22,6 @@ components:
     version: 1
   - id: keypadInput
     version: 1
-  - id: healthCheck
-    version: 1
   - id: refresh
     version: 1
   categories:

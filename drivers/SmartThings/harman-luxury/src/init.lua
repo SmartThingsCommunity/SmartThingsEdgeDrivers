@@ -38,6 +38,9 @@ local function goOffline(device)
   device:emit_event(capabilities.audioTrackData.audioTrackData({
     title = "",
   }))
+  device:set_field(const.STATUS, false, {
+    persist = true,
+  })
   device:offline()
 end
 
@@ -265,11 +268,13 @@ local function update_connection(driver)
           local device_token = device:get_field(const.CREDENTIAL)
           if active_token == device_token then
             -- if device is going back online after being offline we want to also reinitialize the device
-            local state = device:get_latest_state("main", capabilities.healthCheck.ID,
-                                                  capabilities.healthCheck.healthStatus.NAME)
-            if state == "offline" then
+            local state = device:get_field(const.STATUS)
+            if state == false then
               device_init(driver, device)
             end
+            device:set_field(const.STATUS, true, {
+              persist = true,
+            })
             device:online()
           else
             log.warn(string.format("device with dni: %s no longer holds the credential token", device_dni))
@@ -373,7 +378,7 @@ local driver = Driver("Harman Luxury", {
   },
   supported_capabilities = {capabilities.switch, capabilities.audioMute, capabilities.audioVolume,
                             capabilities.mediaPresets, capabilities.audioNotification, capabilities.mediaPlayback,
-                            capabilities.mediaTrackControl, capabilities.healthCheck, capabilities.refresh},
+                            capabilities.mediaTrackControl, capabilities.refresh},
 })
 
 ----------------------------------------------------------

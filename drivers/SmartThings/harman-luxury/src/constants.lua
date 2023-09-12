@@ -3,6 +3,7 @@ local Constants = {
   IP = "device_ipv4",
   DEVICE_INFO = "device_info",
   CREDENTIAL = "credential",
+  STATUS = "status",
   HEALTH_TIMER = "health_timer",
   UPDATE_TIMER = "value_updates_timer",
 

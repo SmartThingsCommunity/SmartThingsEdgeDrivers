@@ -18,8 +18,6 @@ components:
     version: 1
   - id: audioNotification 
     version: 1
-  - id: healthCheck
-    version: 1
   - id: refresh
     version: 1
   categories:
