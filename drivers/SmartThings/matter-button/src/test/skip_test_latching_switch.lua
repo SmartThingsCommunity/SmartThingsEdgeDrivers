@@ -8,7 +8,7 @@ local clusters = require "st.matter.generated.zap_clusters"
 local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("button-profile.yml"),
-    manufacture_info = {vendor_id = 0x0000, product_id = 0x0000},
+    manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     endpoints = {
     {
       endpoint_id = 1,
