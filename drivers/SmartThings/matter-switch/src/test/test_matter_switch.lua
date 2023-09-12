@@ -529,4 +529,18 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Do not report when receiving a color temperature of 0 mireds",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
+      }
+    }
+  }
+)
+
 test.run_registered_tests()
