@@ -97,8 +97,9 @@ function Devices.get_device_info(dni, params)
   end
 
   -- if device lacks or have the wrong MNID or unsupported SetupID, grub info from device
-  log.warn("Devices.get_device_info: Failed to get supported MNID or SetupID, using info from device with IP:" ..
-             params.ip)
+  log.warn(string.format(
+             "Devices.get_device_info: Failed to get supported MNID or SetupID, using info from device with IP:",
+             params.ip))
   return GetDefaultDeviceInfo(dni, params.ip)
 end
 
