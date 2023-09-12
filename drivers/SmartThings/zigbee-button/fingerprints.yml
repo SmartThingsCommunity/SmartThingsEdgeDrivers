@@ -159,6 +159,11 @@ zigbeeManufacturer:
     model: ROB_200-008-0
     deviceLabel: ROBB 4x Wireless Smarrt Switch
     deviceProfileName: four-buttons-battery
+  - id: "Third Reality/3RSB22BZ"
+    deviceLabel: ThirdReality Smart Button
+    manufacturer: Third Reality, Inc
+    model: 3RSB22BZ
+    deviceProfileName: one-button-battery
   # # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: 语音场景(4寸）面板
