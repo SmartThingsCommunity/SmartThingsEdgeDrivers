@@ -7,6 +7,8 @@ local net_utils = require "st.net_utils"
 local st_utils = require "st.utils"
 local log = require "log"
 
+local const = require "constants"
+
 ----------------------------------------------------------
 --- Definitions
 ----------------------------------------------------------
@@ -15,6 +17,8 @@ local HTTP = "http://"
 local GET_DATA = "/api/getData"
 local GET_ROWS = "/api/getRows"
 local SET_DATA = "/api/setData"
+
+http.TIMEOUT = const.HTTP_TIMEOUT
 
 ----------------------------------------------------------
 --- Functions
