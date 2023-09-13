@@ -60,6 +60,13 @@ matterManufacturer:
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
 
+  #SONOFF
+  - id: "SONOFF MINIR4M"
+    deviceLabel: Smart Plug-in Unit
+    vendorId: 0x1321
+    productId: 0x0002
+    deviceProfileName: plug-binary
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
