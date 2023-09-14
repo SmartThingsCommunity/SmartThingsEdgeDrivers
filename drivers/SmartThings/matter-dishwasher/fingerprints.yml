@@ -1,6 +1,18 @@
 matterManufacturer:
-  - id: "matter/dishwasher"
+  - id: "virtual/matter/dishwasher"
     deviceLabel: Matter Dishwasher
     vendorId: 0x10e1
     productId: 0x1026
+    deviceProfileName: dishwasher
+  - id: "all-clusters-app/matter/dishwasher"
+    deviceLabel: Matter Dishwasher
+    vendorId: 0xFFF1
+    productId: 0x8001
+    deviceProfileName: dishwasher
+
+matterGeneric:
+  - id: "matter/dishwasher"
+    deviceLabel: Matter Dishwasher
+    deviceTypes:
+      - id: 0x0075
     deviceProfileName: dishwasher
