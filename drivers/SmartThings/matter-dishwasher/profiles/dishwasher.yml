@@ -4,6 +4,10 @@ components:
   capabilities:
   - id: switch
     version: 1
+  - id: spacewonder52282.dishwasherMode
+    version: 1
+  - id: spacewonder52282.operationalState1
+    version: 1
   - id: refresh
     version: 1
   categories:
