@@ -22,7 +22,7 @@ components:
         - vaccum
         - mop
   # TODO: Add values for General States
-  - id: spacewonder52282.robotCleanerOperationalState
+  - id: spacewonder52282.robotCleanerOperationalState2
     version: 1
     config:
       values:

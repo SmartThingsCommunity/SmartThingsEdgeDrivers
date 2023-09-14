@@ -20,7 +20,7 @@ local log = require "log"
 
 local robotCleanerCleaningModeId = "spacewonder52282.robotCleanerCleaningMode"
 local robotCleanerCleaningMode = capabilities[robotCleanerCleaningModeId]
-local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState"
+local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState2"
 local robotCleanerOperationalState = capabilities[robotCleanerOperationalStateId]
 
 local rvc_run_mode_supported_mode = "RvcRunMode.SupportedMode"
@@ -47,14 +47,14 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
-  local supported_modes = device:get_field(rvc_run_mode_supported_mode)
-  for _, mode in ipairs(supported_modes) do
-    if mode.mode == ib.data.value then
-      if RVC_RUN_MODE_MAP[mode.mode_tags[0].value] then
-        device:emit_event_for_endpoint(ib.endpoint_id, RVC_RUN_MODE_MAP[mode.mode_tags[0].value]())
-      end
-      return
-    end
+  log.info_with({ hub_logs = true },
+  string.format("run_current_mode_attr_handler currentMode: %s", ib.data.value))
+
+  local current_mode=math.floor(ib.data.value)
+  if current_mode==1 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerMovement.robotCleanerMovement.cleaning())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerMovement.robotCleanerMovement.idle())
   end
 end
 
@@ -63,39 +63,57 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
-  local supported_modes = device:get_field(rvc_clean_mode_supported_mode)
-  for _, mode in ipairs(supported_modes) do
-    if mode.mode == ib.data.value then
-      if RVC_CLEAN_MODE_MAP[mode.mode_tags[0].value] then
-        device:emit_event_for_endpoint(ib.endpoint_id, RVC_CLEAN_MODE_MAP[mode.mode_tags[0].value]())
-      end
-      return
-    end
+  log.info_with({ hub_logs = true },
+  string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
+
+  local current_mode=math.floor(ib.data.value)
+  if current_mode==0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean())
+  elseif current_mode==1 then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.mop())
   end
 end
 
 local function rvc_operational_state_attr_handler(driver, device, ib, response)
-  if ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.SEEKING_CHARGER then
+  log.info_with({ hub_logs = true },
+  string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
+
+  if ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.SEEKING_CHARGER then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.seekingcharger())
-  elseif ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.CHARGING then
+  elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.CHARGING then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
-  elseif ib.data.value == clusters.RvcOperationalState.attributes.OperationalState.DOCKED then
+  elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.DOCKED then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.docked())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
   end
 end
 
+-- Capability Handlers --
 local function handle_robot_cleaner_movement(driver, device, cmd)
-  -- TODO: implement
-  -- local endpoint_id = device:component_to_endpoint(cmd.component)
-  -- local req = clusters.RvcRunMode.server.commands.ChangeToMode(device, endpoint_id)
-  -- device:send(req)
+  log.info_with({ hub_logs = true },
+  string.format("handle_robot_cleaner_movement currentMode: %s", cmd.args.mode))
+
+  if cmd.args.mode==capabilities.robotCleanerMovement.robotCleanerMovement.cleaning.NAME then
+      device:send(clusters.RvcRunMode.commands.ChangeToMode(device, 1, 1))
+  else
+      device:send(clusters.RvcRunMode.commands.ChangeToMode(device, 1, 0))
+  end
 end
 
 local function handle_robot_cleaner_cleaning_mode(driver, device, cmd)
-  -- TODO: implement
-  -- local endpoint_id = device:component_to_endpoint(cmd.component)
-  -- local req = clusters.RvcCleanMode.server.commands.ChangeToMode(device, endpoint_id)
-  -- device:send(req)
+  log.info_with({ hub_logs = true },
+  string.format("handle_robot_cleaner_cleaning_mode currentMode: %s", cmd.args.mode))
+
+  if cmd.args.mode==robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean.NAME then
+    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 0))
+  elseif cmd.args.mode==robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum.NAME then
+    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 1))
+  else
+    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 2))
+  end
 end
 
 local matter_driver_template = {
