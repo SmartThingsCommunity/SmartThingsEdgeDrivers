@@ -4,6 +4,10 @@ components:
   capabilities:
   - id: contactSensor
     version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: spacewonder52282.laundryWasherMode
+    version: 1
   - id: refresh
     version: 1
   categories:

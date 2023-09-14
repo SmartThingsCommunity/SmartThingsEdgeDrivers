@@ -19,6 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local temperatureLevelId = "spacewonder52282.temperatureLevel"
+local temperatureLevel = capabilities[temperatureLevelId]
 local dishwasherModeId = "spacewonder52282.dishwasherMode"
 local dishwasherMode = capabilities[dishwasherModeId]
 local operationalStateId = "spacewonder52282.operationalState1"
@@ -34,6 +36,26 @@ local function on_off_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
+  end
+end
+
+local function temperatureControl_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+  string.format("temperatureControl_attr_handler: %s", ib.data.value))
+
+  local current_mode=math.floor(ib.data.value)
+  if current_mode==0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
+  elseif current_mode==1 then
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel2())
+  elseif current_mode==2 then
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel3())
+  elseif current_mode==3 then
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel4())
+  elseif current_mode==4 then
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel5())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
   end
 end
 
@@ -79,6 +101,25 @@ local function handle_switch_off(driver, device, cmd)
   device:send(req)
 end
 
+local function handle_temperature(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+  string.format("handle_temperature currentMode: %s", cmd.args.level))
+
+  if cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
+  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel2.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 1))
+  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel3.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 2))
+  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel4.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 3))
+  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel5.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 4))
+  else
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
+  end
+end
+
 local function handle_dishwasher_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
   string.format("handle_dishwasher_mode currentMode: %s", cmd.args.mode))
@@ -103,6 +144,9 @@ local matter_driver_template = {
       [clusters.OnOff.ID] = {
         [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
       },
+      [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = temperatureControl_attr_handler,
+      },
       [clusters.DishwasherMode.ID] = {
         [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
       },
@@ -115,6 +159,10 @@ local matter_driver_template = {
     [capabilities.switch.ID] = {
       clusters.OnOff.attributes.OnOff
     },
+    [temperatureLevelId] = {
+      clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
+      clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
+    },
     [dishwasherModeId] = {
       clusters.DishwasherMode.attributes.CurrentMode,
     },
@@ -126,6 +174,9 @@ local matter_driver_template = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
       [capabilities.switch.commands.off.NAME] = handle_switch_off,
+    },
+    [temperatureLevelId] = {
+      [temperatureLevel.commands.setTemperature.NAME] = handle_temperature,
     },
     [dishwasherModeId] = {
       [dishwasherMode.commands.setDishwasherMode.NAME] = handle_dishwasher_mode,
