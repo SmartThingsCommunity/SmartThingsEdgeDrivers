@@ -1,6 +1,18 @@
 matterManufacturer:
-  - id: "matter/laundry-washer"
+  - id: "virtual/matter/laundry-washer"
     deviceLabel: Matter Laundry Washer
     vendorId: 0x10e1
     productId: 0x1024
+    deviceProfileName: laundry-washer
+  - id: "all-clusters-app/matter/washer"
+    deviceLabel: Matter Laundry Washer
+    vendorId: 0xFFF1
+    productId: 0x8001
+    deviceProfileName: laundry-washer
+
+matterGeneric:
+  - id: "matter/laundry-washer"
+    deviceLabel: Matter Laundry Washer
+    deviceTypes:
+      - id: 0x0073
     deviceProfileName: laundry-washer
