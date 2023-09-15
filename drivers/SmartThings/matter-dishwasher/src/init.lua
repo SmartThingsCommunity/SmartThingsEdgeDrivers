@@ -103,7 +103,7 @@ end
 
 local function handle_temperature(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_temperature currentMode: %s", cmd.args.level))
+  string.format("handle_temperature: %s", cmd.args.level))
 
   if cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
     device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))

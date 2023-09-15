@@ -2,11 +2,13 @@ name: refrigerator
 components:
 - id: main
   capabilities:
+  - id: spacewonder52282.refrigeratorAndTccMode
+    version: 1
   - id: contactSensor
     version: 1
-  - id: temperatureMeasurement
+  - id: spacewonder52282.temperatureLevel
     version: 1
-  - id: spacewonder52282.laundryWasherMode
+  - id: temperatureMeasurement
     version: 1
   - id: refresh
     version: 1
