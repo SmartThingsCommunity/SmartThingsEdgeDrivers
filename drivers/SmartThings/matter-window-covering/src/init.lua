@@ -97,7 +97,8 @@ local function current_status_handler(driver, device, ib, response)
                    ) or DEFAULT_LEVEL
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
-       rb.info_block.cluster_id == clusters.WindowCovering.ID then
+       rb.info_block.cluster_id == clusters.WindowCovering.ID and
+       rb.info_block.data.value ~= nil then
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
   end
