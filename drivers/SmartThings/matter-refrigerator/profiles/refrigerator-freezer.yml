@@ -19,7 +19,7 @@ components:
   categories:
   - name: Refrigerator
 - id: freezer
-  capabilties:
+  capabilities:
   - id: temperatureMeasurement
     version: 1
   - id: thermostatCoolingSetpoint # todo: replace with Refrigeration Setpoint?
