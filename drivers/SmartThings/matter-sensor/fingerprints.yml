@@ -16,6 +16,17 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x004D
     deviceProfileName: contact-battery
+  #Heiman
+  - id: "Heiman Motion"
+    deviceLabel: Heiman Motion
+    vendorId: 0x120B
+    productId: 0x1001
+    deviceProfileName: matter-motion-battery-illuminance
+  - id: "Heiman DoorAndWindow"
+    deviceLabel: Heiman Door and Window D1-M
+    vendorId: 0x120B
+    productId: 0x1031
+    deviceProfileName: contact-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
