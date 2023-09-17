@@ -1,0 +1,5 @@
+name: 'interfree Zigbee Multi Switch-4gang'
+packageKey: 'Zigbee_Multi_Switch-4gang'
+description: 'interfree_zigbee_switch_0726'
+permissions:
+  zigbee: {}

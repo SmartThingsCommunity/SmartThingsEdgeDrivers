@@ -1,8 +1,0 @@
-name: virtual-dimmer
-components:
-  - id: main
-    capabilities:
-      - id: switchLevel
-        version: 1
-    categories:
-      - name: Switch

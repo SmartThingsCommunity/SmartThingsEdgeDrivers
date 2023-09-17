@@ -1,0 +1,164 @@
+name: single-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: legendabsolute60149.randomOnOff2
+    version: 1
+  - id: legendabsolute60149.randomNextStep2
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: legendabsolute60149.energyReset1
+    version: 1
+  - id: legendabsolute60149.getGroups
+    version: 1
+  - id: legendabsolute60149.signalMetrics
+    version: 1
+  - id: legendabsolute60149.driverVersion1
+    version: 1
+  - id: refresh
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  categories:
+  - name: SmartPlug
+preferences:
+  - name: "version"
+    title: "Version 6.5 (jun 2022)"
+    description: "Added signal metrics, state after power lost and battery profile"   
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 0
+      default: ""
+  - name: "localTimeOffset"
+    title: "Local Time Offset to UTC (-12 to 12)"
+    description: "Select Your Local Time Offset to UTC Time Hours (-12 to 12)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -12
+      maximum: 12
+      default: 0 
+  - name: "changeProfile"
+    title: "Select Profile Icon"
+    description: "Select Profile Icon:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Switch" : "Switch"
+        "Plug": "Plug"
+        "Light": "Light"
+        "Vent": "Vent"
+        "Camera": "Camera"
+        "Humidifier": "Humidifier"
+        "Oven" : "Oven"
+        "Tv": "Tv"
+        "Air": "Air"
+        "Refrigerator": "Refrigerator"
+        "Washer": "Washer"
+      default: "Switch"
+  - name: "restoreState"
+    title: "Restore State After Power Lost"
+    description: "After the power supply is back on, the State can be restored to previous state or remain switched off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "device remains switched Off"
+        "1": "device remains switched On"
+        "255": "device restores previous state"
+      default: "255"
+  - name: "randomMin"
+    title: "Random ON-OFF Minimum Time"
+    description: "Select Minimum Time ON-OFF Interval (0.5 min to 60 min)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.5
+      maximum: 60
+      default: 1 
+  - name: "randomMax"
+    title: "Random ON-OFF Maximum Time"
+    description: "Select Maximum Time ON-OFF Interval (0.5 min to 60 min)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.5
+      maximum: 60
+      default: 10 
+  - name: "onTime"
+    title: "Programmed time for ON State"
+    description: "Selec Programmed time for ON State (1 min to 60 min)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 600
+      default: 10
+  - name: "offTime"
+    title: "Programmed time for OFF State"
+    description: "Selec Programmed time for OFF State (1 min to 60 min)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 600
+      default: 10
+  - name: "loadPower"
+    title: "Set Power of the Load Connected (W)"
+    description: "Set Power of the Load Connected to this Device (W)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 4000
+      default: 0 
+  - name: "powerTimer"
+    title: "Power Interval Calculation(min)"
+    description: "Select Power Interval Calculation (1 min to 10 min)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 10
+      default: 5
+  - name: "groupAdd"
+    title: "Add Group Number"
+    description: "Insert Group number to Add. Value = 0, Get All Groups in History Events"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 0 
+  - name: "groupRemove"
+    title: "Remove Group Number"
+    description: "Insert Group number to Remove. Value = 0, all Groups Removed"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 65535
+      default: 1
+  - name: "signalMetricsVisibles"
+    title: "Signal Metrics Visible in History"
+    description: "Signal Metrics Visible in App History:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes": "Signal Metrics Visible"
+        "No": "Signal Metrics No Visible"
+      default: "No"
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch

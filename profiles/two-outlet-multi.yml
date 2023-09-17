@@ -1,0 +1,27 @@
+name: two-outlet-multi
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  categories:
+  - name: SmartPlug
+- id: switch2
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+
+metadata:
+  deviceType: SmartPlug
+  ocfDeviceType: oic.d.smartplug
+  deviceTypeId: SmartPlug
+  mnmn: SmartThingsCommunity
+  vid: abbb4aa7-5588-3d70-ac2b-3ff0dc840888

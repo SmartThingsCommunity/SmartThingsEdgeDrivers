@@ -1,3 +1,0 @@
-mdns:
-  - service: "_hue._tcp"
-

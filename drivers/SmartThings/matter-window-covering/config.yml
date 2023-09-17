@@ -1,6 +1,0 @@
-name: 'Matter Window Covering'
-packageKey: 'matter-window-covering'
-permissions:
-  matter: {}
-description: "SmartThings driver for Matter window covering devices"
-vendorSupportInformation: "https://support.smartthings.com"

@@ -1,6 +1,0 @@
-zigbeeManufacturer :
-  - id: Ecolink/FFZB1-SM-ECO
-    deviceLabel: Ecolink Sound Sensor
-    manufacturer: Ecolink
-    model: FFZB1-SM-ECO
-    deviceProfileName: battery-sound-temperature

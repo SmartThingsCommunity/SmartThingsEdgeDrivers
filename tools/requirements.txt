@@ -1,4 +1,0 @@
-junit_xml
-requests
-PyYAML
-regex

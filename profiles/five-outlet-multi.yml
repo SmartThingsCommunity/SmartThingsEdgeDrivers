@@ -1,0 +1,146 @@
+name: five-outlet-multi
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: legendabsolute60149.switchAllOnOff1
+    version: 1
+  - id: legendabsolute60149.signalMetrics
+    version: 1
+  - id: refresh
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  categories:
+  - name: SmartPlug
+- id: switch2
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+- id: switch3
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+- id: switch4
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+- id: switch5
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
+preferences:
+  - name: "version"
+    title: "Version 2.0 (Feb 2022)"
+    description: "Add: Multitile profiles" 
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 0
+      default: ""
+  - name: "changeProfileFivePlug"
+    title: "Select Tile Type"
+    description: "Select Multi-Tile or Single-Tile Type:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Multi" : "Multi-Tile Switch"
+        "Single": "Single-Tile Switch"
+      default: "Multi"
+  - name: "restoreState"
+    title: "Restore State After Power Lost"
+    description: "After the power supply is back on, the State can be restored to previous state or remain switched off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "device remains switched Off"
+        "1": "device remains switched On"
+        "255": "device restores previous state"
+      default: "255"
+  - name: "signalMetricsVisibles"
+    title: "Signal Metrics Visible in History"
+    description: "Signal Metrics Visible in App History:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Signal Metrics Visible"
+        "No": "Signal Metrics No Visible"
+      default: "No"
+  - name: "switch1Child"
+    title: "Single Device to Action All On-Off"
+    description: "Create Single Device to Action All On-Off Switch:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch2Child"
+    title: "Create Single Device for Switch2"
+    description: "Create Single Device for Switch2:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch3Child"
+    title: "Create Single Device for Switch3"
+    description: "Create Single Device for Switch3:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch4Child"
+    title: "Create Single Device for Switch4"
+    description: "Create Single Device for Switch4:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch5Child"
+    title: "Create Single Device for Switch5"
+    description: "Create Single Device for Switch5:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+metadata:
+  deviceType: SmartPlug
+  ocfDeviceType: oic.d.smartplug
+  deviceTypeId: SmartPlug
+  mnmn: SmartThingsCommunity
+  vid: ea9f415e-e124-34a8-9e91-1de7efa3cc8d

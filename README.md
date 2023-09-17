@@ -1,34 +1,46 @@
-# SmartThingsEdgeDrivers
+## (NEW RELEASE) New version of Zigbee Multi Switch Mc driver as Zigbee Multi Switch and Childs Mc
 
-## What is SmartThings Edge?
+- Includes preferences to create child devices for each component, including All Switch On-Off.
 
-SmartThings Edge is our new architecture for Hub Connected devices that uses Device Drivers to execute commands locally on SmartThings Hubs. Edge Drivers are [Lua©-based](https://www.lua.org/) and can be used for Hub Connected devices, including Zigbee, Z-Wave, and LAN protocols. Read more about SmartThings Edge in our [public announcement](https://developer.samsung.com/smartthings/blog/en-us/2021/08/19/new-smartthings-edge-for-devices-and-automations?mc_cid=aac4089a1b&mc_eid=c15e37816a).
+- You can leave them No option (default option) or create the ones you need with an individual device
 
-## Documentation and Tutorials
 
-Visit the SmartThings Edge Device Driver documentation on our [developer documentation portal](https://developer.smartthings.com/docs/devices/hub-connected/get-started) to get started.
+## (NEW RELEASE) Version 3.5 update for the Edge Beta Driver: Zigbee Multi Switch Mc
 
-Be sure to check out the SmartThings Community for [tutorials](https://community.smartthings.com/c/developer-programs/tutorials/103), code samples, and more.
+## Improvements:
 
-## Code of Conduct
+- Added in preferences a setting to restore the state of the switch after a power loss same as Zigbee Switch Mc:
 
-The code of conduct for SmartThingsEdgeDrivers can be found in
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+- Added capability for Device Last Hop Metrics Signal, LQI and RSSI.
 
-## How to Contribute
 
-Pull requests to this repo are intended to be from OEMs submitting pull requests for devices seeking Works With SmartThings (WWST) Certification, for maintaining existing certification, and for bug fixes to existing drivers. For more info on WWST certification and the submission process, visit our [certification documentation](https://developer.smartthings.com/docs/devices/hub-connected/certify-your-device).
+## V3 versions of the Zigbee Multi Switch Mc and Zigbee Multi Switch Zemismart Mc
 
-By submitting a pull request, you represent that you have the right to
-license your contribution to SmartThings and agree by submitting your patch that
-your contributions are licensed under the [Apache 2.0 license](LICENSE). Before
-submitting your pull request, please make sure you have tested your changes and that
-they follow the project guidelines for [contributing code](https://developer.smartthings.com/docs/devices/hub-connected/certify-your-device#code-formatting-and-submission-criteria).
+Both drivers have:
 
-Before contributions can be merged, all contributors must agree to the [SmartThings
-Individual Contributor License
-Agreement](https://cla-assistant.io/SmartThingsCommunity/SmartThingsEdgeDrivers).
+- The function of turning on and off all the switches at the same time with a custom capability
+- The Mosaic muti component optional and selectable in preferences
 
-## License
+The latest updates of the default Beta Edge libraries no longer require the additional code that was in the Zigbee Multi Switch Zemismart Mc driver.
 
-SmartThingsEdgeDrivers is released under the [Apache 2.0 License](LICENSE).
+- This code allowed updating the App status of the secondary switches, when On and Off were pressed on the physical switch of the multiple plugs strips.
+
+- I’ve tried my three plug strip and it works the same with one than with another driver.
+
+If anyone detects that this does not work, please tell me
+
+- I have added all the fingerprints of the Zigbee Multi Switch Zemismart Mc driver to the Zigbee Multi Switch Mc driver
+
+## - From now on I will only add new devices to the Zigbee Multi Switch Mc driver
+
+- I will keep the Zigbee Multi Switch Zemismart Mc driver for a reasonable time and when no one misses it I will delete it
+
+- All Zigbee Multi Switch Zemismart Mc driver users will be able to switch to Zigbee Multi Switch Mc driver whenever they want or they can use it as long as they don’t uninstall it from their Hub
+
+## Edge Driver Zigbee multi switch Zemismart
+
+## Author: Mariano Colmenarejo (Oct 2021)
+
+Author: me
+
+## For supported devices see fingerprints.yml file

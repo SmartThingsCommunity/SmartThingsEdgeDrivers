@@ -1,6 +1,0 @@
-matterGeneric:
-  - id: "windowcovering"
-    deviceLabel: Matter Window Covering
-    deviceTypes:
-      - id: 0x0202 # Window Covering
-    deviceProfileName: window-covering-profile

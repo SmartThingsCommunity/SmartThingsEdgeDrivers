@@ -1,0 +1,414 @@
+zigbeeManufacturer:
+  - id: "Zemismart/KS-811-ZB"
+    deviceLabel: Zemismart KS-811-ZB
+    manufacturer: _TZ3000_vjhyd6ar
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "Zemismart/TZ3000_3wkqni6o"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: _TZ3000_adkvzooy
+    model: TS0042
+    deviceProfileName: two-switch
+  - id: "eWeLink/ZB-SW02"
+    deviceLabel: eWeLink ZB-SW02 Switch
+    manufacturer: eWeLink
+    model: ZB-SW02
+    deviceProfileName: two-switch
+  - id: "Zemismart/TZ3000_tonrapsk"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: _TZ3000_tonrapsk
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "Zemismart/TZ3000_k44bsygw"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: _TZ3000_k44bsygw
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "Avatto/_TZ3000_bvrlqyj7"
+    deviceLabel: Avatto TZ3000 Switch
+    manufacturer: _TZ3000_bvrlqyj7
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "Zemismart/_TZ3000_wu0shw0i"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: _TZ3000_wu0shw0i
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "Zemismart/_TZ3000_k008kbls"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: _TZ3000_k008kbls
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0003/_TZ3000_odzoiovu"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_odzoiovu
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0003/_TZ3000_vsasbzkf"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_vsasbzkf
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0004/_TZ3000_ltt60asa"
+    deviceLabel: TS0004 Switch
+    manufacturer: _TZ3000_ltt60asa
+    model: TS0004
+    deviceProfileName: four-switch
+  - id: "FeiBit/ZSW1HKJ2.7"
+    deviceLabel: FeiBit 2 Switch
+    manufacturer: Feibit Inc co.
+    model: FB56+ZSW1HKJ2.7
+    deviceProfileName: two-switch
+  - id: "TS0012/_TZ3000_fvh3pjaz"
+    deviceLabel: TS0012 Switch
+    manufacturer: _TZ3000_fvh3pjaz
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "Zemismart/TUYATEC-O6SNCwd6"
+    deviceLabel: Zemismart TZ3000 Switch
+    manufacturer: TUYATEC-O6SNCwd6
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "FeiBit/ZSW1HKJ2.5"
+    deviceLabel: FeiBit 2 Switch
+    manufacturer: Feibit Inc co.
+    model: FB56+ZSW1HKJ2.5
+    deviceProfileName: two-switch
+  - id: "TS0003/_TZ3000_34zbimxh"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_34zbimxh
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0013/_TYZB01_stv9a4gy"
+    deviceLabel: TS0013 Switch
+    manufacturer: _TYZB01_stv9a4gy
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "TS0013/_TZ3000_wyhuocal"
+    deviceLabel: TS0013 Switch
+    manufacturer: _TZ3000_wyhuocal
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "TS0002/_TZ3000_atp7xmd9"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TZ3000_atp7xmd9
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0004/_TZ3000_excgg5kb"
+    deviceLabel: TS0004 Switch
+    manufacturer: _TZ3000_excgg5kb
+    model: TS0004
+    deviceProfileName: four-switch
+  - id: "TS0004/_TZ3000_a37eix1s"
+    deviceLabel: TS0004 Switch
+    manufacturer: _TZ3000_a37eix1s
+    model: TS0004
+    deviceProfileName: four-switch
+  - id: "LIDL/TS011F"
+    deviceLabel: Lidl MultiPlug
+    manufacturer: _TZ3000_1obwwnmq
+    model: TS011F
+    deviceProfileName: three-outlet
+  - id: "FeiBit/3-Switch"
+    deviceLabel: FeiBit 3 Switch
+    manufacturer: FeiBit
+    model: FNB56-ZSW03LX2.0
+    deviceProfileName: three-switch
+  - id: "3A Smart/LXN2S2"
+    deviceLabel: 3A Smart 2 Switch
+    manufacturer: 3A Smart Home DE
+    model: LXN-2S27LX1.0
+    deviceProfileName: two-switch
+  - id: "FeiBit/ZSN08KJ2.3"
+    deviceLabel: FeiBit 2 Switch
+    manufacturer: Feibit Inc co., LTD
+    model: FB56+ZSN08KJ2.3
+    deviceProfileName: two-switch
+  - id: "LIDL/TS011F-UK"
+    deviceLabel: Lidl MultiPlug
+    manufacturer: _TZ3000_vmpbygs5
+    model: TS011F
+    deviceProfileName: three-outlet
+  - id: "Zemismart/TS011F"
+    deviceLabel: Lidl MultiPlug
+    manufacturer: _TZ3000_92qd4sqa
+    model: TS011F
+    deviceProfileName: two-outlet
+  - id: "FeiBit/2-Switch"
+    deviceLabel: FeiBit 2 Switch
+    manufacturer: FeiBit
+    model: FNB56-ZSW02LX2.0
+    deviceProfileName: two-switch
+  - id: "3A Smart/LXN59-2S7LX1.0"
+    deviceLabel: 3A Smart 2 Switch
+    manufacturer: 3A Smart Home DE
+    model: LXN59-2S7LX1.0
+    deviceProfileName: two-switch
+  - id: "Lonsonho/_TYZB01_mtlhqn48"
+    deviceLabel: Lonsonho Switch
+    manufacturer: _TYZB01_mtlhqn48
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0002/_TZ3000_h34ihclt"
+    deviceLabel: TS0012 Switch
+    manufacturer: _TZ3000_h34ihclt
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "E220-KR3N0Z0-HA"
+    deviceLabel: MultiPlug
+    manufacturer: 
+    model: E220-KR3N0Z0-HA
+    deviceProfileName: three-outlet
+  - id: "3A Smart/LXN-3S27LX1.0"
+    deviceLabel: 3A Smart 3 Switch
+    manufacturer: 3A Smart Home DEf
+    model: LXN-3S27LX1.0
+    deviceProfileName: three-switch
+  - id: "_TZ3000_pmz6mjyu/Switch"
+    deviceLabel: TS011F Switch
+    manufacturer: _TZ3000_pmz6mjyu
+    model: TS011F
+    deviceProfileName: two-switch
+  - id: "_TZ3000_3zofvcaa/Outlet"
+    deviceLabel: TS011F Outlet
+    manufacturer: _TZ3000_3zofvcaa
+    model: TS011F
+    deviceProfileName: two-outlet
+  - id: "Zemismart/_TYZB01_wmak4qjy"
+    deviceLabel: Zemismart TS0002 Switch
+    manufacturer: _TYZB01_wmak4qjy
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0002/_TZ3000_jcfje0kb"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TZ3000_jcfje0kb
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "Moes/_TZ3000_qewo8dlz"
+    deviceLabel: Moes TS0013 Switch
+    manufacturer: _TZ3000_qewo8dlz
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "Zemismart/_TZ3000_zmbedyhc"
+    deviceLabel: Zemismart three Switch
+    manufacturer: _TZ3000_zmbedyhc
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "Zemismart/_TZ3000_sieosxue"
+    deviceLabel: Three Switch
+    manufacturer: _TZ3000_sieosxue
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "Zemismart/_TZ3000_pc0qmva4"
+    deviceLabel: Two Switch
+    manufacturer: _TZ3000_pc0qmva4
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "Lonsonho/_TZ3000_fisb3ajo"
+    deviceLabel: Two Switch
+    manufacturer: _TZ3000_fisb3ajo
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "LIDL/_TZ3000_vzopcetz"
+    deviceLabel: Lidl MultiPlug
+    manufacturer: _TZ3000_vzopcetz
+    model: TS011F
+    deviceProfileName: three-outlet
+  - id: "Smartenit/ZBMLC30"
+    deviceLabel: Smartenit Two Switch
+    manufacturer: Compacta International, Ltd
+    model: ZBMLC30
+    deviceProfileName: two-switch
+  - id: "lonsonho/_TYZB01_zsl6z0pw"
+    deviceLabel: lonsonho TS0003 Switch
+    manufacturer: _TYZB01_zsl6z0pw
+    model: TS0003
+    deviceProfileName: two-switch
+  - id: "TS0012/ _TZ3000_18ejxno0"
+    deviceLabel: TS0012 Switch
+    manufacturer: _TZ3000_18ejxno0
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0003/_TZ3000_pfc7i3kt"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_pfc7i3kt
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS011F/_TYZB01_hlla45kx"
+    deviceLabel: TS011F Two Plugs
+    manufacturer: _TYZB01_hlla45kx
+    model: TS011F
+    deviceProfileName: two-outlet
+  - id: "_TZ3000_zwaadvus/TS011F"
+    deviceLabel: TS011F MultiPlug
+    manufacturer: _TZ3000_zwaadvus
+    model: TS011F
+    deviceProfileName: two-outlet
+  - id: "TS011F/_TZ3000_cfnprab5"
+    deviceLabel: TS011F Switch
+    manufacturer: _TZ3000_cfnprab5
+    model: TS011F
+    deviceProfileName: five-outlet
+  - id: "3A Smart/LXN-4S27LX1.0"
+    deviceLabel: 3A Smart 4 Switch
+    manufacturer: 3A Smart Home DE
+    model: LXN-4S27LX1.0
+    deviceProfileName: four-switch
+  - id: "TS0003/_TZ3000_vjhcenzo"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_vjhcenzo
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0115/_TYZB01_vkwryfdr"
+    deviceLabel: TS0115 Switch
+    manufacturer: _TYZB01_vkwryfdr
+    model: TS0115
+    deviceProfileName: five-outlet
+  - id: "TS0003/_TZ3000_wqfdvxen"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_wqfdvxen
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0003/_TZ3000_tbfw3xj0"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_tbfw3xj0
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0002/_TZ3000_svoqrno4"
+    deviceLabel: Two Switch
+    manufacturer: _TZ3000_svoqrno4
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0012/_TZ3000_tadoh7zu"
+    deviceLabel: Two Switch
+    manufacturer: _TZ3000_tadoh7zu
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0013/_TZ3000_m7djrkhw"
+    deviceLabel: TS0013 Switch
+    manufacturer: _TZ3000_m7djrkhw
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "TS0003/_TYZB01_gzhgaaqi"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TYZB01_gzhgaaqi
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0002/_TYZB01_qcgw8qfa"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TYZB01_qcgw8qfa
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0002/_TYZB01_01gpyda5"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TYZB01_01gpyda5
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: Aurora/DoubleSocket50AU
+    deviceLabel: AURORA Outlet 1
+    manufacturer: Aurora
+    model: DoubleSocket50AU
+    deviceProfileName: two-plug-power
+  - id: "TS0002/_TZ3000_zmy4lslw"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TZ3000_zmy4lslw
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "3A Smart/LXX60-FN27LX1.0"
+    deviceLabel: 3A Smart 4 Switch
+    manufacturer: 3A Smart Home DE
+    model: LXX60-FN27LX1.0
+    deviceProfileName: four-switch
+  - id: "TS0003/_TZ3000_empogkya"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TZ3000_empogkya
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "TS0002/_TZ3000_u4kojtqz"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TZ3000_u4kojtqz
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0012/_TZ3000_rbl8c85w"
+    deviceLabel: TS0012 Switch
+    manufacturer: _TZ3000_rbl8c85w
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0013/_TZ3000_lrgccsxm"
+    deviceLabel: TS0013 Switch
+    manufacturer: _TZ3000_lrgccsxm
+    model: TS0013
+    deviceProfileName: three-switch
+  - id: "TS0002/_TZ3000_01gpyda5"
+    deviceLabel: TS0002 Switch
+    manufacturer: _TZ3000_01gpyda5
+    model: TS0002
+    deviceProfileName: two-switch
+  - id: "TS0012/TUYATEC-zsi5eg2o"
+    deviceLabel: TS0012 Switch
+    manufacturer: TUYATEC-zsi5eg2o
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "TS0003/_TYZB01_nft8zgds"
+    deviceLabel: TS0003 Switch
+    manufacturer: _TYZB01_nft8zgds
+    model: TS0003
+    deviceProfileName: three-switch
+  - id: "3A Smart/LXN56-TS27LX1.2"
+    deviceLabel: 3A Smart 2 Switch
+    manufacturer: 3A Smart Home DE
+    model: LXN56-TS27LX1.2
+    deviceProfileName: two-switch
+  - id: "FeiBit/FNB56-SKT1DHG1.4"
+    deviceLabel: FeiBit 2 Switch
+    manufacturer: FeiBit
+    model: FNB56-SKT1DHG1.4
+    deviceProfileName: two-switch
+  - id: "FeiBit/FB56-ZSW1JKJ2.7"
+    deviceLabel: FeiBit 4 Switch
+    manufacturer: Feibit Inc co.
+    model: FB56+ZSW1JKJ2.7
+    deviceProfileName: four-switch
+  - id: "TS0006/_TZ3000_jyupj3fw"
+    deviceLabel: TS0115 Switch
+    manufacturer: _TZ3000_jyupj3fw
+    model: TS0006
+    deviceProfileName: five-switch  # need six-switch profile
+  - id: "TS0012/_TYZB01_vzrytttn"
+    deviceLabel: TS0012 Switch
+    manufacturer: _TYZB01_vzrytttn
+    model: TS0012
+    deviceProfileName: two-switch
+  - id: "Interfree/XSSW4O" # -------------------- Interfree 4K
+    deviceLabel: Interfree 4 Gang
+    manufacturer: Interfree
+    model: XSSW4O
+    deviceProfileName: four-switch
+  - id: "Interfree/XSSW3O" # -------------------- Interfree 3K
+    deviceLabel: Interfree 3 Gang
+    manufacturer: Interfree
+    model: XSSW3O
+    deviceProfileName: three-switch
+  - id: "Interfree/XSSW2O" # -------------------- Interfree 2K
+    deviceLabel: Interfree 2 Gang
+    manufacturer: Interfree
+    model: XSSW2O
+    deviceProfileName: two-switch
+  - id: "Interfree/XSSW1O"
+    deviceLabel: Interfree 1 Gang
+    manufacturer: Interfree
+    model: XSSW1O
+    deviceProfileName: single-switch
+  - id: "Interfree/UPSK2O"
+    deviceLabel: Interfree Socket U1
+    manufacturer: Interfree
+    model: UPSK2O
+    deviceProfileName: two-outlet
+  - id: "Interfree/UPUSK1O"
+    deviceLabel: Interfree Socket U1B
+    manufacturer: Interfree
+    model: UPUSK1O
+    deviceProfileName: single-outlet
+    
+
+    

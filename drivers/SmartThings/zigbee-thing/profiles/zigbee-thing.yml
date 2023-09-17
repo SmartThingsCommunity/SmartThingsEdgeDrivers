@@ -1,6 +1,0 @@
-name: zigbee-thing
-components:
-- id: main
-  capabilities:
-  - id: refresh
-    version: 1

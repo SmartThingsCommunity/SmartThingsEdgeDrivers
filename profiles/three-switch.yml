@@ -1,0 +1,108 @@
+name: three-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: legendabsolute60149.switchAllOnOff1
+    version: 1
+  - id: legendabsolute60149.signalMetrics
+    version: 1
+  - id: refresh
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  categories:
+  - name: Switch
+- id: switch2
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+- id: switch3
+  capabilities:
+  - id: switch
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+  - name: "version"
+    title: "Version 2.0 (Feb 2022)"
+    description: "Add: Multitile profiles" 
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      minLength: 0
+      maxLength: 0
+      default: ""
+  - name: "changeProfileThreeSw"
+    title: "Select Tile Type"
+    description: "Select Multi-Tile or Single-Tile Type:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Multi" : "Multi-Tile Switch"
+        "Single": "Single-Tile Switch"
+      default: "Single"
+  - name: "restoreState"
+    title: "Restore State After Power Lost"
+    description: "After the power supply is back on, the State can be restored to previous state or remain switched off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "device remains switched Off"
+        "1": "device remains switched On"
+        "255": "device restores previous state"
+      default: "255"
+  - name: "signalMetricsVisibles"
+    title: "Signal Metrics Visible in History"
+    description: "Signal Metrics Visible in App History:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Signal Metrics Visible"
+        "No": "Signal Metrics No Visible"
+      default: "No"
+  - name: "switch1Child"
+    title: "Single Device to Action All On-Off"
+    description: "Create Single Device to Action All On-Off Switch:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch2Child"
+    title: "Create Single Device for Switch2"
+    description: "Create Single Device for Switch2:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+  - name: "switch3Child"
+    title: "Create Single Device for Switch3"
+    description: "Create Single Device for Switch3:"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes" : "Create Single Device"
+        "No": "No Create Single Device"
+      default: "No"
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch  
