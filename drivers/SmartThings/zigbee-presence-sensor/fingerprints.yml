@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "aqara/lumi.motion.ac01"
+    deviceLabel: Aqara Presence Sensor FP1
+    manufacturer: aqara
+    model: lumi.motion.ac01
+    deviceProfileName: aqara-presence-sensor-fp1
   - id: SmartThings/Arrival/1
     deviceLabel: SmartThings Presence Sensor
     manufacturer: SmartThings

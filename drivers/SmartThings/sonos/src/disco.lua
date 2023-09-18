@@ -1,4 +1,5 @@
 local log = require "log"
+local cosock = require "cosock"
 local ssdp = require "ssdp"
 
 --- @module 'sonos.Discovery'
@@ -12,10 +13,20 @@ local ssdp_discovery_callback = function(driver, ssdp_group_info, known_devices_
   if not found_ip_addrs[ssdp_group_info.ip] then
     found_ip_addrs[ssdp_group_info.ip] = true
 
-    local function add_device_callback(dni, _, player_info, _)
+    local function add_device_callback(dni, inner_ssdp_group_info, player_info, group_info)
       if not known_devices_dnis[dni] then
         local name = player_info.device.name or player_info.device.modelDisplayName or "Unknown Sonos Player"
         local model = player_info.device.modelDisplayName or "Unknown Sonos Model"
+
+        local field_cache = {
+          household_id = inner_ssdp_group_info.household_id,
+          player_id = player_info.playerId,
+          wss_url = player_info.websocketUrl
+        }
+
+        driver._field_cache[dni] = field_cache
+
+        driver.sonos:update_household_info(player_info.householdId, group_info)
 
         local create_device_msg = {
           type = "LAN",
@@ -50,6 +61,7 @@ function Discovery.discover(driver, _, should_continue)
     ssdp.search(SONOS_SSDP_SEARCH_TERM, function(group_info)
       ssdp_discovery_callback(driver, group_info, known_devices_dnis, driver.found_ips)
     end)
+    cosock.socket.sleep(0.1)
   end
   log.info("Ending Sonos discovery")
 end

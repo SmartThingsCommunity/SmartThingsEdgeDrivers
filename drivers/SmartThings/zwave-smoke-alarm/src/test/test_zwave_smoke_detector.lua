@@ -203,11 +203,11 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, "added" },
     },
-    -- {
-    --   channel = "capability",
-    --   direction = "send",
-    --   message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-    -- },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+    },
     {
       channel = "capability",
       direction = "receive",
@@ -365,7 +365,15 @@ test.register_message_test(
           sensor_type = SensorBinary.sensor_type.SMOKE
         })
       )
-    }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        WakeUp:IntervalGet({ })
+      )
+    },
   },
   {
     inner_block_ordering = "relaxed"

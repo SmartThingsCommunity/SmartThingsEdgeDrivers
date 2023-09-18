@@ -10,11 +10,6 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 local Groups = clusters.Groups
 
-local maxPower = capabilities["stse.maxPower"]
-local restorePowerState = capabilities["stse.restorePowerState"]
-local electricSwitchType = capabilities["stse.electricSwitchType"]
-local changeToWirelessSwitch = capabilities["stse.changeToWirelessSwitch"]
-
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
@@ -34,23 +29,24 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
+  { mfr = "LUMI", model = "lumi.switch.b2laus01" }
 }
 
 local preference_map = {
-  [restorePowerState.ID] = {
+  ["stse.restorePowerState"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = RESTORE_POWER_STATE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Boolean,
   },
-  [changeToWirelessSwitch.ID] = {
+  ["stse.changeToWirelessSwitch"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
     value_map = { [true] = 0x00,[false] = 0x01 },
   },
-  [maxPower.ID] = {
+  ["stse.maxPower"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = MAX_POWER_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
@@ -81,7 +77,7 @@ local preference_map = {
       ["23"] = SinglePrecisionFloat(0, 11, 0.123046875)
     },
   },
-  [electricSwitchType.ID] = {
+  ["stse.electricSwitchType"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,

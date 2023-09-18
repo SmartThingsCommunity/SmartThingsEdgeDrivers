@@ -2,3 +2,5 @@ name: 'Zigbee Sound Sensor'
 packageKey: 'zigbee-sound-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee sound sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"
