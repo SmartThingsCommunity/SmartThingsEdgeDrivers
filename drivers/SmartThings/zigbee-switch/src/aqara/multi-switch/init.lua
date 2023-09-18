@@ -81,6 +81,12 @@ local function device_added(driver, device)
 
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
       PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
+  elseif device.network_type == "DEVICE_EDGE_CHILD" then
+    device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
+      { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
+      { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   end
 end
 
