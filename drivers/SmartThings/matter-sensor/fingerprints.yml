@@ -16,6 +16,11 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x004D
     deviceProfileName: contact-battery
+  - id: "Eve/Weather"
+    deviceLabel: Eve Weather
+    vendorId: 0x130a
+    productId: 0x57
+    deviceProfileName: temperature-humidity-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
