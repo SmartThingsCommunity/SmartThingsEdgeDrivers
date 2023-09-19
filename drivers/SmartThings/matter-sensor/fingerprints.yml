@@ -10,7 +10,7 @@ matterManufacturer:
     deviceLabel: Eve Motion
     vendorId: 0x130a
     productId: 0x0059
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "Eve/DoorAndWindow"
     deviceLabel: Eve Door and Window
     vendorId: 0x130a
@@ -49,12 +49,12 @@ matterGeneric:
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
       - id: 0x0106 # Light Sensor
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "matter/motion-sensor"
     deviceLabel: Matter Motion Sensor
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
-    deviceProfileName: matter-motion-battery
+    deviceProfileName: motion-battery
   - id: "matter/motion-sensor/contact"
     deviceLabel: Matter Motion/Contact Sensor
     deviceTypes:
