@@ -1,4 +1,4 @@
-import os, subprocess, requests, json, time, yaml
+import os, subprocess, requests, json, time, yaml, csv
 
 BRANCH = os.environ.get('BRANCH')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
@@ -30,6 +30,23 @@ print(ENVIRONMENT_URL)
 driver_updates = []
 drivers_updated = []
 uploaded_drivers = {}
+
+## do translations here
+LOCALE = os.environ.get('LOCALE')
+if LOCALE:
+  LOCALE = LOCALE.lower()
+
+  current_path = os.path.dirname(__file__)
+  localization_dir = os.path.join(current_path, "localizations")
+  localization_file = os.path.join(localization_dir, LOCALE+".csv")
+  slash_escape = str.maketrans({"/": r"\/"})
+  if os.path.isfile(localization_file):
+    print("Localizing from english to "+LOCALE+" using "+str(localization_file))
+    with open(localization_file) as csvfile:
+      reader = csv.reader(csvfile)
+      for row in reader:
+        print("en: "+row[0]+" "+LOCALE+": "+row[1])
+        subprocess.run("find . -name 'fingerprints.yml' | xargs sed -i '' 's/deviceLabel: "+row[0].translate(slash_escape)+"/deviceLabel: "+row[1].translate(slash_escape)+"/g'", shell=True)
 
 # Get drivers currently on the channel
 response = requests.get(
