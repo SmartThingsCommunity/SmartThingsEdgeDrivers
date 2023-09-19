@@ -60,6 +60,33 @@ matterManufacturer:
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
 
+#Zemismart
+  - id: "Zemismart/MT606-4/Swtich"
+      deviceLabel: Zemismart Thread Smart Switch
+      vendorId: 0x139C
+      productId: 0xAA01
+      deviceProfileName: switch-4
+  - id: "Zemismart/MT606-1/Swtich"
+      deviceLabel: Zemismart Thread Smart Switch
+      vendorId: 0x139C
+      productId: 0xAA02
+      deviceProfileName: switch-binary
+  - id: "Zemismart/MT606-2/Swtich"
+      deviceLabel: Zemismart Thread Smart Switch
+      vendorId: 0x139C
+      productId: 0xAA03
+      deviceProfileName: switch-2
+  - id: "Zemismart/MT606-3/Swtich"
+      deviceLabel: Zemismart Thread Smart Switch
+      vendorId: 0x139C
+      productId: 0xAA04
+      deviceProfileName: switch-3
+  - id: "Zemismart/MT606-6/Swtich"
+      deviceLabel: Zemismart Thread Smart Switch
+      vendorId: 0x139C
+      productId: 0xAA05
+      deviceProfileName: switch-6
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
