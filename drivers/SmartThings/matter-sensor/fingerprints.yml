@@ -19,7 +19,7 @@ matterManufacturer:
   - id: "Eve/Weather"
     deviceLabel: Eve Weather
     vendorId: 0x130a
-    productId: 0x57
+    productId: 0x0057
     deviceProfileName: temperature-humidity-battery
 
 matterGeneric:
