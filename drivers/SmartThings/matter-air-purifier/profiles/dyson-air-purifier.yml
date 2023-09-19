@@ -1,0 +1,18 @@
+name: dyson-air-purifier
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: spacewonder52282.airPurifierFanMode
+    version: 1
+  - id: fanSpeed
+    version: 1
+  - id: spacewonder52282.hepaFilterStatus3
+    version: 1
+  - id: spacewonder52282.activatedCarbonFilterStatus3
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
