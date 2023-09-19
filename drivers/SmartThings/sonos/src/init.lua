@@ -84,10 +84,17 @@ local function find_player_for_device(driver, device, should_continue)
 end
 
 local function update_fields_from_ssdp_scan(driver, device, fields)
-  local current_player_id = device:get_field(PlayerFields.PLAYER_ID)
-  local current_url = device:get_field(PlayerFields.WSS_URL)
-  local current_household_id = device:get_field(PlayerFields.HOUSEHOULD_ID)
-  local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection|nil
+  device.log.debug("Updating fields from SSDP scan")
+  local is_initialized = device:get_field(PlayerFields._IS_INIT)
+
+  local current_player_id, current_url, current_household_id, sonos_conn
+
+  if is_initialized then
+     current_player_id =device:get_field(PlayerFields.PLAYER_ID)
+     current_url = device:get_field(PlayerFields.WSS_URL)
+     current_household_id = device:get_field(PlayerFields.HOUSEHOULD_ID)
+     sonos_conn = device:get_field(PlayerFields.CONNECTION)
+  end
 
   local already_connected = sonos_conn ~= nil
   local refresh = false
@@ -170,6 +177,7 @@ local function _initialize_device(driver, device)
     driver.datastore.dni_to_device_id[device.device_network_id] = device.id
   end
   if not device:get_field(PlayerFields._IS_SCANNING) then
+    device.log.debug("Starting Scan in _initialize_device for %s", device.label)
     device:set_field(PlayerFields._IS_SCANNING, true)
     cosock.spawn(
       function()
@@ -181,7 +189,7 @@ local function _initialize_device(driver, device)
               driver._field_cache[device.device_network_id]
 
           if not is_already_found then
-            log.debug("Rescanning for player with DNI " .. device.device_network_id)
+            device.log.debug(string.format("Rescanning for player with DNI %s", device.device_network_id))
             device:offline()
             local success = false
 
@@ -198,7 +206,7 @@ local function _initialize_device(driver, device)
             end
           end
 
-          log.trace("Setting persistent fields")
+          device.log.trace("Setting persistent fields")
           local fields = driver._field_cache[device.device_network_id]
           update_fields_from_ssdp_scan(driver, device, fields)
 

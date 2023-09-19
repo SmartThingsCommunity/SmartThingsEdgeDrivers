@@ -138,7 +138,7 @@ local function emit_light_status_events(light_device, light)
           )
         )
       else
-        light_device:emit_event(capabilities.colorControl.hue(adjusted_sat))
+        light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
       end
     end
   end
