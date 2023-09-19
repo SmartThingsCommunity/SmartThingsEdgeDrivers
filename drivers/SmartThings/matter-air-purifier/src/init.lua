@@ -94,6 +94,10 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, airPurifierFanMode.supportedAirPurifierFanModes(supportedAirPurifierFanModes))
 end
 
+local function speed_current_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeed.fanSpeed(ib.data.value))
+end
+
 local function hepa_filter_change_indication_handler(driver, device, ib, response)
   if ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK then
     device:emit_event_for_endpoint(ib.endpoint_id, hepaFilterStatus.filterStatus.normal())
@@ -151,6 +155,10 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
   end
 end
 
+local function handle_fan_speed(driver, device, cmd)
+  device:send(clusters.FanControl.attributes.SpeedSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.speed))
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -162,7 +170,8 @@ local matter_driver_template = {
       },
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
-        [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler
+        [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
+        [clusters.FanControl.attributes.SpeedCurrent.ID] = speed_current_handler,
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = hepa_filter_change_indication_handler
@@ -180,6 +189,9 @@ local matter_driver_template = {
       clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
+    [capabilities.fanSpeed.ID] = {
+      clusters.FanControl.attributes.SpeedCurrent
+    },
     [hepaFilterStatusId] = {
       clusters.HepaFilterMonitoring.attributes.ChangeIndication
     },
@@ -194,6 +206,9 @@ local matter_driver_template = {
     },
     [airPurifierFanModeId] = {
       [airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode
+    },
+    [capabilities.fanSpeed.ID] = {
+      [capabilities.fanSpeed.commands.setFanSpeed.NAME] = handle_fan_speed
     }
   },
   supported_capabilities = {
