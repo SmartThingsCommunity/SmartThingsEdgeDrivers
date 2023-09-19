@@ -1,4 +1,4 @@
-matterManufacturer:
+matterManufacturer:    
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -32,6 +32,33 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+
+#Nanoleaf
+  - id: "Nanoleaf NL53"
+    deviceLabel: Essentials BR30
+    vendorId: 0x115a
+    productId: 0x35
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "Nanoleaf NL54"
+    deviceLabel: Essentials GU10
+    vendorId: 0x115a
+    productId: 0x36
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "Nanoleaf NL65"
+    deviceLabel: Essentials Downlight
+    vendorId: 0x115a
+    productId: 0x41
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "Nanoleaf NL67"
+    deviceLabel: Essentials A19/A60
+    vendorId: 0x115a
+    productId: 0x43
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "Nanoleaf NL68"
+    deviceLabel: Essentials Lightstrip
+    vendorId: 0x115a
+    productId: 0x44
+    deviceProfileName: light-color-level-2700K-6500K
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
