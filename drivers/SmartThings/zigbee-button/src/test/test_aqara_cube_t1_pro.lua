@@ -27,7 +27,7 @@ local CUBEACTION_TIME = 3
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("aqara-cube-t1-pro.yml"),
+    profile = t_utils.get_profile_definition("cube-t1-pro.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,

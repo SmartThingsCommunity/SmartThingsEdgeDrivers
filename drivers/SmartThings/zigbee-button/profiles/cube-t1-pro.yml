@@ -1,4 +1,4 @@
-name: aqara-cube-t1-pro
+name: cube-t1-pro
 components:
   - id: main
     capabilities:
