@@ -4,11 +4,6 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1021
     deviceProfileName: refrigerator
-  - id: "all-clusters-app/matter/refriger"
-    deviceLabel: Matter Refrigerator
-    vendorId: 0xFFF1
-    productId: 0x8001
-    deviceProfileName: refrigerator
 
 matterGeneric:
   - id: "matter/refrigerator"
