@@ -11,11 +11,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x002D # Air Purifier
     deviceProfileName: air-purifier
-  - id: "Dyson/AirPurifier"
-    deviceLabel: Dyson Matter Air Purifier
+  - id: "Matter/SVE/AirPurifier"
+    deviceLabel: Matter SVE Air Purifier
     deviceTypes:
       - id: 0x002D # Air Purifier
       - id: 0x002C # Air Quality
       - id: 0x0302 # Temperature Sensor
       - id: 0x0307 # Humidity Sensor
-    deviceProfileName: dyson-air-purifier
+    deviceProfileName: sve-air-purifier
