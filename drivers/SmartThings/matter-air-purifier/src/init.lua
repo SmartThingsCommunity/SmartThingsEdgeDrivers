@@ -21,9 +21,11 @@ local log = require "log"
 local hepaFilterStatusId = "spacewonder52282.hepaFilterStatus3"
 local activatedCarbonFilterStatusId = "spacewonder52282.activatedCarbonFilterStatus3"
 local airPurifierFanModeId = "spacewonder52282.airPurifierFanMode"
+local fanWindId = "spacewonder52282.fanWind"
 local hepaFilterStatus = capabilities[hepaFilterStatusId]
 local activatedCarbonFilterStatus = capabilities[activatedCarbonFilterStatusId]
 local airPurifierFanMode = capabilities[airPurifierFanModeId]
+local fanWind = capabilities[fanWindId]
 
 local function device_init(driver, device)
   device:subscribe()
@@ -98,6 +100,25 @@ local function speed_current_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeed.fanSpeed(ib.data.value))
 end
 
+local function wind_support_handler(driver, device, ib, response)
+  local supportedFanWind = {}
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
+    table.insert(supportedFanWind, fanWind.fanWind.sleepWind.NAME)
+  end
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
+    table.insert(supportedFanWind, fanWind.fanWind.naturalWind.NAME)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, fanWind.supportedFanWind(supportedFanWind))
+end
+
+local function wind_setting_handler(driver, device, ib, response)
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
+    device:emit_event_for_endpoint(ib.endpoint_id, fanWind.fanWind.sleepWind())
+  elseif ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
+    device:emit_event_for_endpoint(ib.endpoint_id, fanWind.fanWind.naturalWind())
+  end
+end
+
 local function hepa_filter_change_indication_handler(driver, device, ib, response)
   if ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK then
     device:emit_event_for_endpoint(ib.endpoint_id, hepaFilterStatus.filterStatus.normal())
@@ -155,6 +176,14 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
   end
 end
 
+local function set_fan_wind(driver, device, cmd)
+  if cmd.args.fanWind == fanWind.fanWind.sleepWind.NAME then
+    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.SLEEP_WIND))
+  elseif cmd.args.fanWind == fanWind.fanWind.naturalWind.NAME then
+    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.NATURAL_WIND))
+  end
+end
+
 local function handle_fan_speed(driver, device, cmd)
   device:send(clusters.FanControl.attributes.SpeedSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.speed))
 end
@@ -172,6 +201,8 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.SpeedCurrent.ID] = speed_current_handler,
+        [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
+        [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = hepa_filter_change_indication_handler
@@ -188,6 +219,10 @@ local matter_driver_template = {
     [airPurifierFanModeId] = {
       clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
+    },
+    [fanWindId] = {
+      clusters.FanControl.attributes.WindSupport,
+      clusters.FanControl.attributes.WindSetting
     },
     [capabilities.fanSpeed.ID] = {
       clusters.FanControl.attributes.SpeedCurrent
@@ -206,6 +241,9 @@ local matter_driver_template = {
     },
     [airPurifierFanModeId] = {
       [airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode
+    },
+    [fanWindId] = {
+      [fanWind.commands.setFanWind.NAME] = set_fan_wind
     },
     [capabilities.fanSpeed.ID] = {
       [capabilities.fanSpeed.commands.setFanSpeed.NAME] = handle_fan_speed
