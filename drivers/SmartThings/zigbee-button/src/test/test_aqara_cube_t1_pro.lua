@@ -4,8 +4,6 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
-local clusters = require "st.zigbee.zcl.clusters"
-local PowerConfiguration = clusters.PowerConfiguration
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0x0009

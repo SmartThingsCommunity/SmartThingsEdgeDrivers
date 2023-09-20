@@ -35,38 +35,34 @@ local callback_timer = function(driver, device, cmd)
   end
 end
 
-local function delete_timer(device)
+local function reset_thread(device)
   local timer = device:get_field(CUBEACTION_TIMER)
   if timer then
     device.thread:cancel_timer(timer)
     device:set_field(CUBEACTION_TIMER, nil, { persist = true })
   end
+  device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
 end
 
 local function data_handler(driver, device, value, zb_rx)
   local val = value.value
-  local timer = nil
   if val == 0x0000 then -- Shake
     device:emit_event(cubeAction.cubeAction("shake"))
-    delete_timer(device)
-    device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
+    reset_thread(device)
   elseif val == 0x0004 then -- hold
     device:emit_event(cubeAction.cubeAction("pickUpAndHold"))
-    delete_timer(device)
-    device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
+    reset_thread(device)
   elseif val & 0x0400 == 0x0400 then -- Flip to side
     local faceNum = val & 0x0007
     device:emit_event(cubeAction.cubeAction(cubeFlipToSideVal[faceNum + 0x1]))
-    delete_timer(device)
-    device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
+    reset_thread(device)
   end
 end
 
 local function rotate_handler(driver, device, value, zb_rx)
   -- Rotation
   device:emit_event(cubeAction.cubeAction("rotate"))
-  delete_timer(device)
-  device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
+  reset_thread(device)
 end
 
 local function face_handler(driver, device, value, zb_rx)
