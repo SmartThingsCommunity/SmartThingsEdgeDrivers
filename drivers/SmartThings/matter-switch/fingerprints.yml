@@ -60,7 +60,6 @@ matterManufacturer:
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
 
->>>>>>> 05381c53738939b41f2cc0cf8df2eb7347ce111e
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
