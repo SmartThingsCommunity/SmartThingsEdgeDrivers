@@ -2146,6 +2146,11 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: basic-switch
+  - id: "Insta GmbH/DALI TW control unit"
+    deviceLabel: NEXENTRO DALI TW control unit
+    manufacturer: Insta GmbH
+    model: NEXENTRO DALI TW control unit
+    deviceProfileName: color-temp-bulb-2000K-10000K
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
