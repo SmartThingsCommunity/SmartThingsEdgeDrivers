@@ -187,8 +187,9 @@ local function handle_resetEnergyMeter(self, device)
   -- 978307200 is the number of seconds from 1 January 1970 to 1 January 2001
   local current_time = os.time()
   local current_time_2001 = current_time - 978307200
-
-  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+  if current_time_2001 < 0 then
+    current_time_2001 = 0
+  end
 
   local last_time = device:get_field(LAST_REPORT_TIME) or 0
   local startTime = iso8061Timestamp(last_time)
@@ -206,6 +207,8 @@ local function handle_resetEnergyMeter(self, device)
     deltaEnergy = 0,
     energy = 0
   }))
+
+  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
 end
 
 -------------------------------------------------------------------------------------
