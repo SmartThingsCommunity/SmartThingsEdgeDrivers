@@ -21,12 +21,14 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
 local utils = require "st.utils"
+local data_types = require "st.matter.data_types"
 
 local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
 local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
+local PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT = 0x130A000E
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local RECURRING_POLL_TIMER = "RECURRING_POLL_TIMER"
@@ -181,6 +183,30 @@ local function handle_refresh(self, device)
   requestData(device)
 end
 
+local function handle_resetEnergyMeter(self, device)
+  -- 978307200 is the number of seconds from 1 January 1970 to 1 January 2001
+  local current_time = os.time()
+  local current_time_2001 = current_time - 978307200
+
+  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+  local last_time = device:get_field(LAST_REPORT_TIME) or 0
+  local startTime = iso8061Timestamp(last_time)
+  local endTime = iso8061Timestamp(current_time - 1)
+
+  -- Reset the consumption on the device
+  local data = data_types.validate_or_build_type(current_time_2001, data_types.Uint32)
+  device:send(cluster_base.write(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT, nil,
+    data))
+
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+    start = startTime,
+    ["end"] = endTime,
+    deltaEnergy = 0,
+    energy = 0
+  }))
+end
 
 -------------------------------------------------------------------------------------
 -- Eve Energy Handler
@@ -219,6 +245,9 @@ local eve_energy_handler = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
+    },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = handle_resetEnergyMeter,
     },
   },
   supported_capabilities = {
