@@ -21,7 +21,6 @@ local CloseCode = require"lustre.frame.close".CloseCode
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local bose_utils = require "utils"
-local MAX_RECONNECT_ATTEMPTS = 10
 local RECONNECT_PERIOD = 120 -- 2 min
 
 --- @field device table the device the listener is listening for events
@@ -133,14 +132,16 @@ function Listener:handle_xml_event(xml)
       local result = {}
       if not updates.presetsUpdated.presets.preset._attr then -- it is a list of presets rather than just one preset
         for _, preset in ipairs(updates.presetsUpdated.presets.preset) do
-          table.insert(result, {
-            id = preset._attr.id, --always exists
-            name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
-            mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
-            imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
-          })
+          if preset._attr and preset._attr.id then
+            table.insert(result, {
+              id = preset._attr.id, --must exist for valid preset
+              name = bose_utils.sanitize_field(preset.ContentItem.itemName, preset._attr.id),
+              mediaSource = bose_utils.sanitize_field(preset.ContentItem._attr.source),
+              imageUrl = bose_utils.sanitize_field(preset.ContentItem.containerArt),
+            })
+          end
         end
-      else
+      elseif updates.presetsUpdated.presets.preset._attr and updates.presetsUpdated.presets.preset._attr.id then
         table.insert(result, {
           id = updates.presetsUpdated.presets.preset._attr.id,
           name = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.itemName,
@@ -148,6 +149,8 @@ function Listener:handle_xml_event(xml)
           mediaSource = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem._attr.source),
           imageUrl = bose_utils.sanitize_field(updates.presetsUpdated.presets.preset.ContentItem.containerArt),
         })
+      else
+        log.warn("received invalid presets from device")
       end
       self:presets_update(result)
     else
@@ -168,7 +171,7 @@ function Listener:try_reconnect()
   end
   log.info(string.format("[%s](%s) Attempting to reconnect websocket for speaker at %s",
                          bose_utils.get_serial_number(self.device), self.device.label, ip))
-  while retries < MAX_RECONNECT_ATTEMPTS do
+  while true do
     if self:start() then
       self.driver:inject_capability_command(self.device,
                                             { capability = capabilities.refresh.ID,
@@ -178,11 +181,9 @@ function Listener:try_reconnect()
       return
     end
     retries = retries + 1
-    log.info(string.format("Retry reconnect in %s seconds", RECONNECT_PERIOD))
+    log.info(string.format("Reconnect attempt %s in %s seconds", retries, RECONNECT_PERIOD))
     socket.sleep(RECONNECT_PERIOD)
   end
-  log.warn(string.format("[%s](%s) failed to reconnect websocket for device events",
-                         bose_utils.get_serial_number(self.device), self.device.label))
 end
 
 --- @return success boolean

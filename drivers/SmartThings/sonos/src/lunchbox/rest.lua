@@ -1,8 +1,8 @@
 local socket = require "cosock.socket"
-local ssl = require "cosock.ssl"
-local log = require "log"
+local st_utils = require "st.utils"
 
-local utils = require "lunchbox.util"
+local lb_utils = require "lunchbox.util"
+local utils = require "utils"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"
 
@@ -14,31 +14,6 @@ local RestCallStates = {
   COMPLETE = "Complete",
 }
 
--- build a exponential backoff time value generator
---
--- max: the maximum wait interval (not including `rand factor`)
--- inc: the rate at which to exponentially back off
--- rand: a randomization range of (-rand, rand) to be added to each interval
-local function backoff_builder(max, inc, rand)
-  local count = 0
-  inc = inc or 1
-  return function()
-    local randval = 0
-    if rand then
-      randval = math.random() * rand * 2 - rand
-    end
-
-    local base = inc * (2 ^ count - 1)
-    count = count + 1
-
-    -- ensure base backoff (not including random factor) is less than max
-    if max then base = math.min(base, max) end
-
-    -- ensure total backoff is >= 0
-    return math.max(base + randval, 0)
-  end
-end
-
 local function connect(client)
   local port = 80
   local use_ssl = false
@@ -49,17 +24,29 @@ local function connect(client)
   end
 
   if client.base_url.port ~= port then port = client.base_url.port end
+  local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
 
-  client.socket = client.socket_builder(client.base_url.host, port, use_ssl)
+  if sock == nil then
+    client.socket = nil
+    return false, err
+  end
+
+  client.socket = sock
+  return true
 end
 
 local function reconnect(client)
-  client.socket:close()
-  client.socket = nil
-  connect(client)
+  if client.socket ~= nil then
+    client.socket:close()
+    client.socket = nil
+  end
+  return connect(client)
 end
 
 local function send_request(client, request)
+  if client.socket == nil then
+    return nil, "no socket available"
+  end
   local payload = request:serialize()
 
   local bytes, err, idx = nil, nil, 0
@@ -81,7 +68,11 @@ local function parse_chunked_response(original_response, sock)
 
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
-  local next_chunk_bytes = tonumber(original_response:get_body(), 16)
+  local original_body, err = original_response:get_body()
+  if type(original_body) ~= "string" or err ~= nil then
+    return original_body, (err or "unexpected nil in error position")
+  end
+  local next_chunk_bytes = tonumber(original_body, 16)
   local next_chunk_body = ""
   local bytes_read = 0;
 
@@ -147,11 +138,25 @@ local function handle_response(sock)
   if initial_recv ~= nil then
     local headers = initial_recv:get_headers()
 
-    if headers:get_one("Transfer-Encoding") == "chunked" then
+    if headers and headers:get_one("Transfer-Encoding") == "chunked" then
       full_response = parse_chunked_response(initial_recv, sock)
     else
-      if headers:get_one("Content-length") then
-        body = sock:receive(tonumber(headers:get_one("Content-length")))
+      local content_length_header = (headers and headers:get_one("Content-length")) or nil
+      if content_length_header then
+        local content_length = tonumber(content_length_header)
+        if type(content_length) ~= "number" then
+          return nil, string.format("content_length is not a number: %s", st_utils.stringify_table(content_length_header))
+        end
+
+        body, err, partial = sock:receive(content_length)
+        if err ~= nil then
+          return nil, err, partial
+        end
+
+        if body == nil then
+          return nil, string.format("Unexpected nil body response, partial response receive: %s", partial)
+        end
+
         initial_recv:append_body(body)
         initial_recv._received_body = true
       end
@@ -165,9 +170,19 @@ local function handle_response(sock)
 end
 
 local function execute_request(client, request, retry_fn)
-  if client.socket == nil then connect(client) end
+  if not client._active then
+    return nil, "Called `execute request` on a terminated REST Client"
+  end
 
-  local should_retry = retry_fn or function() return false end
+  if client.socket == nil then
+    local success, err = connect(client)
+    if not success then return nil, err end
+  end
+
+  local should_retry = retry_fn
+  if type(should_retry) ~= "function" then
+    should_retry = function() return false end
+  end
 
   -- send output
   local _bytes_sent, send_err, _idx = nil, nil, 0
@@ -176,12 +191,13 @@ local function execute_request(client, request, retry_fn)
   -- return values
   local ret, err = nil, nil
 
-  local backoff = backoff_builder(60, 1, 0.1)
+  local backoff = utils.backoff_builder(60, 1, 0.1)
   local current_state = RestCallStates.SEND
 
   repeat
+    local retry = should_retry()
     if current_state == RestCallStates.SEND then
-
+      backoff = utils.backoff_builder(60, 1, 0.1)
       _bytes_sent, send_err, _idx = send_request(client, request)
 
       if not send_err then
@@ -216,9 +232,16 @@ local function execute_request(client, request, retry_fn)
         current_state = RestCallStates.COMPLETE
       end
     elseif current_state == RestCallStates.RECONNECT then
-
-      reconnect(client)
-      current_state = RestCallStates.RETRY
+      local success, reconn_err = reconnect(client)
+      if success then
+        current_state = RestCallStates.RETRY
+      elseif not retry then
+        ret = nil
+        err = reconn_err
+        current_state = RestCallStates.COMPLETE
+      else
+        socket.sleep(backoff())
+      end
     elseif current_state == RestCallStates.RETRY then
       bytes_sent, send_err, _idx = nil, nil, 0
       response, recv_err, partial = nil, nil, nil
@@ -230,33 +253,6 @@ local function execute_request(client, request, retry_fn)
   return ret, err
 end
 
-local function make_socket(host, port, wrap_ssl)
-  local sock, err = socket.tcp()
-
-  if err ~= nil or (not sock) then
-    return nil, (err or "unknown error creating TCP socket")
-  end
-
-  -- sock:setoption("keepalive", true)
-  _, err = sock:connect(host, port)
-
-  if err then return nil, err end
-
-  if wrap_ssl then
-    sock, err =
-    ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
-    if sock ~= nil then
-      _, err = sock:dohandshake()
-    elseif err ~= nil then
-      log.error("Error setting up TLS: " .. err)
-    end
-  end
-
-  if err ~= nil then sock = nil end
-
-  return sock, err
-end
-
 ---@class RestClient
 ---
 ---@field base_url table `net.url` URL table
@@ -265,19 +261,33 @@ local RestClient = {}
 RestClient.__index = RestClient
 
 function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
-  local url_table = utils.force_url_table(full_url)
-
-  return RestClient.new(url_table.scheme .. "://" .. url_table.host .. ":" .. url_table.port, socket_builder):get(
-    url_table.path, additional_headers
-  )
+  local url_table = lb_utils.force_url_table(full_url)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host .. ":" .. url_table.port, socket_builder)
+  local ret, err = client:get(url_table.path, additional_headers)
+  client:shutdown()
+  client = nil
+  return ret, err
 end
 
 function RestClient.one_shot_post(full_url, body, additional_headers, socket_builder)
-  local url_table = utils.force_url_table(full_url)
+  local url_table = lb_utils.force_url_table(full_url)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host .. ":" .. url_table.port, socket_builder)
+  local ret, err = client:post(url_table.path, body, additional_headers)
+  client:shutdown()
+  client = nil
+  return ret, err
+end
 
-  return RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder):post(
-    url_table.path, body, additional_headers
-  )
+function RestClient:close_socket()
+  if self.socket ~= nil and self._active then
+    self.socket:close()
+    self.socket = nil
+  end
+end
+
+function RestClient:shutdown()
+  self:close_socket()
+  self._active = false
 end
 
 function RestClient:update_base_url(new_url)
@@ -286,7 +296,7 @@ function RestClient:update_base_url(new_url)
     self.socket = nil
   end
 
-  self.base_url = utils.force_url_table(new_url)
+  self.base_url = lb_utils.force_url_table(new_url)
 end
 
 local function _build_request(method, path, host, additional_headers)
@@ -326,11 +336,11 @@ function RestClient:put(path, body_string, additional_headers, retry_fn)
 end
 
 function RestClient.new(base_url, sock_builder)
-  base_url = utils.force_url_table(base_url)
+  base_url = lb_utils.force_url_table(base_url)
 
-  if type(sock_builder) ~= "function" then sock_builder = make_socket end
+  if type(sock_builder) ~= "function" then sock_builder = utils.labeled_socket_builder("Sonos REST API") end
 
-  return setmetatable({ base_url = base_url, socket_builder = sock_builder, socket = nil }, RestClient)
+  return setmetatable({ base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true }, RestClient)
 end
 
 return RestClient

@@ -58,7 +58,7 @@ test.register_coroutine_test(
           mock_device.id,
           {
             capability_id = "windowShadeLevel", component_id = "main",
-            attribute_id = "shadeLevel", state = { value = 1 }
+            attribute_id = "shadeLevel", state = { value = 99 }
           }
         }
     )
@@ -88,7 +88,7 @@ test.register_coroutine_test(
           mock_device.id,
           {
             capability_id = "windowShadeLevel", component_id = "main",
-            attribute_id = "shadeLevel", state = { value = 10 }
+            attribute_id = "shadeLevel", state = { value = 90 }
           }
         }
     )
@@ -109,11 +109,11 @@ test.register_coroutine_test(
       mock_device.id,
       {
         capability_id = "windowShadeLevel", component_id = "main",
-        attribute_id = "shadeLevel", state = { value = 15 }
+        attribute_id = "shadeLevel", state = { value = 85 }
       }
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
     )
     test.mock_time.advance_time(3)
     test.socket.capability:__expect_send(
@@ -136,7 +136,7 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 30)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 70)
     })
   end
 )
@@ -154,8 +154,133 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
+  end
+)
+
+test.register_coroutine_test(
+  "an attribute read should be sent after 30s of no response",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(30, "oneshot")
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+    test.wait_for_events()
+    test.mock_time.advance_time(30)
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device,
+                                            zigbee_test_utils.mock_hub_eui,
+                                            clusters.WindowCovering.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(mock_device,
+                                                                                          0,
+                                                                                          600,
+                                                                                          1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "an attribute read should not be sent after 30s if there is a response",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(30, "oneshot") --Only one timer in the driver
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot") --delay timer for defaults parially open delay
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+    test.wait_for_events()
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 15)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "windowShadeLevel", component_id = "main",
+        attribute_id = "shadeLevel", state = { value = 85 }
+      }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(20)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(11)
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "an attribute read should not be sent after 30s if there is a response another timing",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(30, "oneshot") --Only one timer in the driver
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot") --delay timer for defaults parially open delay
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 15)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "windowShadeLevel", component_id = "main",
+        attribute_id = "shadeLevel", state = { value = 85 }
+      }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.wait_for_events()
+
+    test.mock_time.advance_time(28)
+    test.wait_for_events()
   end
 )
 

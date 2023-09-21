@@ -8,13 +8,14 @@ def getEnvName() {
 
 def getChangedDrivers() {
   def drivers = [].toSet()
-  def driver_prefix = "drivers/SmartThings/"
+  def driver_prefix = "drivers/"
   for (changeLogSet in currentBuild.changeSets) {
     for (entry in changeLogSet.items) {
       for (file in entry.affectedFiles) {
         if (file.path.startsWith(driver_prefix) && !file.path.contains("test")) {
           def short_path = file.path.substring(driver_prefix.length())
-          def driver_name = short_path.substring(0, short_path.indexOf('/'))
+          def first_slash = short_path.indexOf('/') + 1
+          def driver_name = short_path.substring(first_slash, short_path.indexOf('/', first_slash))
           drivers.add(driver_name)
         }
       }
@@ -26,7 +27,7 @@ def getChangedDrivers() {
 pipeline {
   agent {
     docker {
-      image 'smartthings-registry.jfrog.io/iot/edge/edblua-formatter:latest'
+      image 'python:3.10'
       label 'production'
       args '--entrypoint= -u 0:0'
     }
@@ -38,7 +39,13 @@ pipeline {
   stages {
     stage('requirements') {
       steps {
+        script {
+          currentBuild.displayName = "#" + currentBuild.number + " " + env.BRANCH
+          currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
+        }
         sh 'git clean -xfd'
+        sh 'apt-get update'
+        sh 'apt-get install zip -y'
         sh 'pip3 install -r tools/requirements.txt'
       }
     }
@@ -53,9 +60,7 @@ pipeline {
         stages {
           stage('environment_update') {
             steps {
-              script {
-                sh 'python3 tools/deploy.py'
-              }
+              sh 'python3 tools/deploy.py'
             }
           }
         }

@@ -1,5 +1,16 @@
 matterManufacturer:
+  #Aqara
+  - id: "Aqara/DoorAndWindow"
+    deviceLabel: Aqara Door and Window Sensor P2
+    vendorId: 0x115F
+    productId: 0x2002
+    deviceProfileName: contact-battery
   #Eve
+  - id: "Eve Motion"
+    deviceLabel: Eve Motion
+    vendorId: 0x130a
+    productId: 0x0059
+    deviceProfileName: matter-motion-battery-illuminance
   - id: "Eve/DoorAndWindow"
     deviceLabel: Eve Door and Window
     vendorId: 0x130a

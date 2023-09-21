@@ -139,11 +139,24 @@ local function switch_report_handler(driver, device, cmd)
   end
 end
 
+-- Device appears to have some trouble with energy reset commands if the value is read too quickly
+local function reset(driver, device, command)
+  device.thread:call_with_delay(.5, function ()
+    device:send_to_component(Meter:Reset({}), command.component)
+  end)
+  device.thread:call_with_delay(1.5, function()
+    device:send_to_component(Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}), command.component)
+  end)
+end
+
 local multi_metering_switch = {
   NAME = "multi metering switch",
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = reset
     }
   },
   zwave_handlers = {
