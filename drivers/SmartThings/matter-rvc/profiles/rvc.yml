@@ -21,16 +21,8 @@ components:
         - deepClean
         - vaccum
         - mop
-  # TODO: Add values for General States
   - id: spacewonder52282.robotCleanerOperationalState2
     version: 1
-    config:
-      values:
-      - key: "robotCleanerOperationalState.value"
-        enabledValues:
-        - seekingcharger
-        - charging
-        - docked
   - id: refresh
     version: 1
   categories:
