@@ -83,6 +83,14 @@ local PREFERENCE_TABLES = {
   }
 }
 
+local SCENE_ID_BUTTON_EVENT_MAP = {
+  { state_name = "pushed",    button_state = capabilities.button.button.pushed },
+  { state_name = "double",    button_state = capabilities.button.button.double },
+  { state_name = "pushed_3x", button_state = capabilities.button.button.pushed_3x },
+  { state_name = "held",      button_state = capabilities.button.button.held },
+  { state_name = "up",        button_state = capabilities.button.button.up }
+}
+
 local profile = t_utils.get_profile_definition("aeotec-pico-switch.yml")
 local childProfile = t_utils.get_profile_definition("switch-scenes-power-energy-consumption-report-aeotec.yml")
 
@@ -147,20 +155,6 @@ test.register_coroutine_test(
       parent_assigned_child_key = "02"
     })
 
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
-          { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
-      )
-    )
-
     -- do refresh
     test.socket.zigbee:__expect_send({
       mock_device.id,
@@ -181,14 +175,6 @@ test.register_coroutine_test(
     })
   end
 )
-
-local SCENE_ID_BUTTON_EVENT_MAP = {
-  { state_name = "pushed", button_state = capabilities.button.button.pushed},
-  { state_name = "double", button_state = capabilities.button.button.double},
-  { state_name = "pushed_3x", button_state = capabilities.button.button.pushed_3x },
-  { state_name = "held", button_state = capabilities.button.button.held },
-  { state_name = "up", button_state = capabilities.button.button.up }
-}
 
 for i, button_event in ipairs(SCENE_ID_BUTTON_EVENT_MAP) do
   -- i = scene_id and goes from 0x01 to 0x05

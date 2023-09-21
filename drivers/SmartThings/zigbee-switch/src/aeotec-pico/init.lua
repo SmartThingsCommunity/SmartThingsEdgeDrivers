@@ -17,6 +17,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local utils = require "st.utils"
+local log = require "log"
 
 -- Clusters
 local SimpleMetering = clusters.SimpleMetering
@@ -177,7 +178,12 @@ local temperature_handler = function(driver, device, value, zb_rx)
 end
 
 local scenes_cluster_handler = function(driver, device, zb_rx)
-  local ep = zb_rx.address_header.src_endpoint.value == 0x04 and 0x02 or 0x01
+  local ep = 0x01
+  if device:get_model() == "ZGA002" then
+    ep = zb_rx.address_header.src_endpoint.value == 0x03 and 0x08 or 0x07
+  else
+    ep = zb_rx.address_header.src_endpoint.value == 0x04 and 0x02 or 0x01
+  end
 
   local button_event = SCENE_ID_BUTTON_EVENT_MAP[zb_rx.body.zcl_body.scene_id.value]
 
@@ -211,11 +217,30 @@ local device_added = function(driver, device, event)
     end
   end
 
-  device:emit_event(
-    capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
-    { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
-    { visibility = { displayed = false } }))
+  if device:get_model() == "ZGA002" then
+    device:try_update_metadata({ profile = "aeotec-pico-switch-two-button-control" })
+  end
+
+  device.thread:call_with_delay(3, function()
+    log.debug(utils.stringify_table(device.profile.components.main.capabilities, 'capabilities', true))
+    if device.profile.components.main.capabilities["button"] ~= nil then
+      device:emit_event(
+        capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
+          { visibility = { displayed = false } }))
+      device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
+        { visibility = { displayed = false } }))
+    else
+      for _, component in pairs(device.profile.components) do
+        if component:match("button(%d)") then
+          device:emit_component_event(component,
+            capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
+              { visibility = { displayed = false } }))
+          device:emit_component_event(component,
+            capabilities.button.numberOfButtons({ value = 2 }, { visibility = { displayed = false } }))
+        end
+      end
+    end
+  end)
 
   refresh(driver, device)
 end
@@ -245,7 +270,22 @@ local do_configure = function(driver, device)
   device:emit_event(capabilities.temperatureAlarm.temperatureAlarm('cleared'))
 end
 
+local function endpoint_to_component(device, ep)
+  if ep == 8 and device.profile.components["button2"] ~= nil then
+    return "button2"
+  elseif ep == 7 and device.profile.components["button1"] ~= nil then
+    return "button1"
+  else
+    return "main"
+  end
+end
+
 local device_init = function(driver, device, event)
+
+  if device:get_model() == "ZGA002" then
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+  end
+
   if device.network_type == st_device.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
   end
@@ -269,9 +309,6 @@ local aeotec_pico_switch = {
         [Scenes.server.commands.RecallScene.ID] = scenes_cluster_handler
       }
     },
-    --[[ zdo = {
-      [mgmt_bind_resp.MGMT_BIND_RESPONSE] = zdo_binding_table_handler
-    }, ]]
     attr = {
       [ElectricalMeasurement.ID] = {
         [ElectricalMeasurement.attributes.RMSCurrent.ID] = current_meter_handler,

@@ -104,7 +104,7 @@ local zigbee_switch_driver_template = {
     require("ge-link-bulb"),
     require("bad_on_off_data_type"),
     require("robb"),
-    require("wallhero")
+    require("wallhero"),
     require("aeotec-pico")
   },
   lifecycle_handlers = {
