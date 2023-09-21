@@ -1,10 +1,8 @@
 local log = require "log"
 local json = require "st.json"
 local RestClient = require "lunchbox.rest"
-local utils = require "st.utils"
+local utils = require "utils"
 local cosock = require "cosock"
-local socket = require "cosock.socket"
-local ssl = require "cosock.ssl"
 
 local jbl_api = {}
 jbl_api.__index = jbl_api
@@ -24,29 +22,9 @@ local ADDITIONAL_HEADERS = {
     ["Content-Type"] = "application/json",
 }
 
-function jbl_api.socket_builder(host, port, wrap_ssl)
-    local sock, err = socket.tcp()
-
-    if err ~= nil or (not sock) then
-      return nil, (err or "unknown error creating TCP socket")
-    end
-
-    sock:setoption("keepalive", true)
-    _, err = sock:connect(host, port)
-
-    if wrap_ssl then
-      sock, err =
-        ssl.wrap(sock, SSL_CONFIG)
-      if sock ~= nil then
-        _, err = sock:dohandshake()
-      elseif err ~= nil then
-        log.error("Error setting up TLS: " .. err)
-      end
-    end
-
-    if err ~= nil then sock = nil end
-
-    return sock, err
+function jbl_api.labeled_socket_builder(label)
+    local socket_builder = utils.labeled_socket_builder(label, SSL_CONFIG)
+    return socket_builder
 end
 
 local function get_base_url(device_ip)
@@ -57,7 +35,13 @@ local function process_rest_response(response, err, partial)
     if err ~= nil then
         return response, err, nil
     elseif response ~= nil then
-        return json.decode(response:get_body()), nil, response.status
+        local status, decoded_json = pcall(json.decode, response:get_body())
+        if status then
+            return decoded_json, nil, response.status
+        else
+            log.error(string.format("process_rest_response : failed to decode data"))
+            return nil, "failed to decode data", nil
+        end
     else
         return nil, "no response or error received", nil
     end
@@ -73,10 +57,6 @@ end
 
 local function do_get(api_instance, path)
     return process_rest_response(api_instance.client:get(path, api_instance.headers, retry_fn(5)))
-end
-
-local function do_put(api_instance, path, payload)
-    return process_rest_response(api_instance.client:put(path, payload, api_instance.headers, retry_fn(5)))
 end
 
 local function do_post(api_instance, path, payload)
@@ -108,10 +88,8 @@ function jbl_api.get_credential(bridge_ip, socket_builder)
     log.info("get_credential : start (" .. tostring(start_time) .. "), timeout (" .. tostring(timeout_time) .. ")")
 
     while true do
-        local now = cosock.socket.gettime()
-
         local response, error, status = process_rest_response(RestClient.one_shot_get(get_base_url(bridge_ip) .. "/authcode", ADDITIONAL_HEADERS, socket_builder))
-        now = cosock.socket.gettime()
+        local now = cosock.socket.gettime()
 
         if now > timeout_time then
             log.error("get_credential take too long time : now(" .. tostring(now) .. ") > timeout (" .. tostring(timeout_time) .. ")")

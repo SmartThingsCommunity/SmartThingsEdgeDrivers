@@ -1,17 +1,18 @@
 local log = require "log"
-local discovery = {}
 
 local fields = require "fields"
 local discovery_mdns = require "discovery_mdns"
 
 local socket = require "cosock.socket"
 
+local discovery = {}
+
 -- mapping from device DNI to info needed at discovery/init time
 local device_discovery_cache = {}
 
 local function set_device_field(driver, device)
 
-  log.info("set_device_field : dni = " .. tostring(device.device_network_id))
+  log.info(string.format("set_device_field : %s", device.device_network_id))
   local device_cache_value = device_discovery_cache[device.device_network_id]
 
   -- persistent fields
@@ -21,7 +22,7 @@ local function set_device_field(driver, device)
 end
 
 local function update_device_discovery_cache(driver, dni, ip, credential)
-  log.info("update_device_discovery_cache for device dni: " .. tostring(dni) .. ", " .. tostring(ip))
+  log.info(string.format("update_device_discovery_cache for device dni: %s, %s", dni, ip))
   local device_info = driver.discovery_helper.get_device_info(driver, dni, ip)
   device_discovery_cache[dni] = {
     ip = ip,
@@ -31,12 +32,12 @@ local function update_device_discovery_cache(driver, dni, ip, credential)
 end
 
 local function try_add_device(driver, device_dni, device_ip)
-  log.trace("try_add_device : dni=" .. tostring(device_dni) .. ", ip=" .. tostring(device_ip))
+  log.trace(string.format("try_add_device : dni=%s, ip=%s", device_dni, device_ip))
 
   local credential  = driver.discovery_helper.get_credential(driver, device_dni, device_ip)
 
   if not credential then
-    log.error("failed to get credential. dni=" .. device_dni .. ", ip=" .. device_ip)
+    log.error(string.format("failed to get credential. dni=%s, ip=%s", device_dni, device_ip))
     return
   end
 
@@ -59,8 +60,6 @@ end
 
 
 local function discovery_device(driver)
-  local unknown_discovered_devices = {}
-  local known_discovered_devices = {}
   local known_devices = {}
 
   for _, device in pairs(driver:get_devices()) do
@@ -70,25 +69,16 @@ local function discovery_device(driver)
   local ip_table = discovery.find_ip_table(driver)
 
   for dni, ip in pairs(ip_table) do
-    log.info("discovery_device dni, ip = " .. tostring(dni) .. ", " .. tostring(ip))
+    log.info(string.format("discovery_device dni, ip = %s, %s", dni, ip))
     if not known_devices or not known_devices[dni] then
-      unknown_discovered_devices[dni] = ip
+      log.trace(string.format("unknown dni= %s, ip= %s", dni, ip))
+      if not device_discovery_cache[dni] then
+        try_add_device(driver, dni, ip)
+      end
     else
-      known_discovered_devices[dni] = ip
+      log.trace(string.format("known dni= %s, ip= %s", dni, ip))
     end
   end
-
-  for dni, ip in pairs(known_discovered_devices) do
-    log.trace("known dni=" .. tostring(dni) .. ", ip=" .. tostring(ip))
-  end
-
-  for dni, ip in pairs(unknown_discovered_devices) do
-    log.trace("unknown dni=" .. tostring(dni) .. ", ip=" .. tostring(ip))
-    if not device_discovery_cache[dni] then
-      try_add_device(driver, dni, ip)
-    end
-  end
-
 end
 
 function discovery.do_network_discovery(driver, _, should_continue)

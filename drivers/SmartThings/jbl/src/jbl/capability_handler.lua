@@ -1,9 +1,6 @@
 local log = require "log"
 local json = require "st.json"
-local utils = require "st.utils"
 local fields = require "fields"
-
-local capabilities = require "st.capabilities"
 
 local capability_handler = {}
 capability_handler.__index = capability_handler
@@ -19,9 +16,9 @@ local function smartthings_playback_capability_handler(driver, device, capabilit
 
     local jbl_playback_status = st_status_to_jbl_playback_status_table[capability_status]
 
-    local response, err, status = conn_info:post_playback(string.format('{"playback": "%s"}', jbl_playback_status))
+    local _, err, status = conn_info:post_playback(string.format('{"playback": "%s"}', jbl_playback_status))
     if not err and status == 200 then
-        device:emit_event(capabilities.mediaPlayback.playbackStatus[capability_status]())
+        log.info(string.format("post_playback success, dni = %s", device.device_network_id))
     elseif status == 404 then
         log.error("404 error. delete device. dni = " .. tostring(device.device_network_id))
         device:offline()
@@ -40,7 +37,7 @@ function capability_handler.next_track_handler(driver, device, args)
     local conn_info = device:get_field(fields.CONN_INFO)
     log.info(string.format("media_track_control.next_track_handler : dni = %s", device.device_network_id))
 
-    local response, err, status = conn_info:post_playback('{"playback": "next track"}')
+    local _, err, status = conn_info:post_playback('{"playback": "next track"}')
     if err or status == 404 then
         log.error("media_track_control.next_track_handler : 404 error. delete device. dni = " .. tostring(device.device_network_id))
         device:offline()
@@ -51,7 +48,7 @@ function capability_handler.previous_track_handler(driver, device, args)
     local conn_info = device:get_field(fields.CONN_INFO)
     log.info(string.format("media_track_control.previous_track_handler : dni = %s", device.device_network_id))
 
-    local response, err, status = conn_info:post_playback('{"playback": "previous track"}')
+    local _, err, status = conn_info:post_playback('{"playback": "previous track"}')
     if err or status == 404 then
         log.error("media_track_control.previous_track_handler : 404 error. delete device. dni = " .. tostring(device.device_network_id))
         device:offline()
@@ -64,9 +61,9 @@ function capability_handler.set_volume_handler(driver, device, args)
     log.info(string.format("audio_volume.set_volume : dni = %s, volume = %d", device.device_network_id, volume))
 
 
-    local response, err, status = conn_info:post_volume(string.format('{"volume": %d}', volume))
+    local _, err, status = conn_info:post_volume(string.format('{"volume": %d}', volume))
     if not err and status == 200 then
-        device:emit_event(capabilities.audioVolume.volume(volume))
+        log.info(string.format("post_volume success, dni = %s", device.device_network_id))
     elseif status == 404 then
         log.error("set_volume_handler : 404 error. delete device. dni = " .. tostring(device.device_network_id))
         device:offline()
@@ -112,10 +109,10 @@ local function smartthings_audioMute_capability_handler(driver, device, mute_sta
     log.info(string.format("smartthings_audioMute_capability_handler dni = %s, status = %s", device.device_network_id, mute_state))
 
     local jbl_mute_state = st_state_to_jbl_muted_state_table[mute_state]
-    
-    local response, err, status = conn_info:post_playback(string.format('{"mute": "%s"}', jbl_mute_state))
+
+    local _, err, status = conn_info:post_playback(string.format('{"mute": "%s"}', jbl_mute_state))
     if not err and status == 200 then
-        device:emit_event(capabilities.audioMute.mute[mute_state]())
+        log.info(string.format("post_playback success, dni = %s", device.device_network_id))
     elseif status == 404 then
         log.error("smartthings_audioMute_capability_handler : 404 error. delete device. dni = " .. tostring(device.device_network_id))
         device:offline()

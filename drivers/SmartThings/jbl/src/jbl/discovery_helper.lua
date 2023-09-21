@@ -1,4 +1,4 @@
---  Copyright 2022 SmartThings
+--  Copyright 2023 SmartThings
 --
 --  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 --  except in compliance with the License. You may obtain a copy of the License at:
@@ -43,7 +43,7 @@ function discovery_helper.get_service_type_and_domain()
 end
 
 function discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
-    local device_info = jbl_api.get_info(device_ip, jbl_api.socket_builder)
+    local device_info = jbl_api.get_info(device_ip, jbl_api.labeled_socket_builder(device_dni))
 
     if not device_info then
         log.error("failed to create device create msg. device_info is nil. dni = " .. device_dni)
@@ -64,7 +64,7 @@ function discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
 end
 
 function discovery_helper.get_credential(driver, bridge_dni, bridge_ip)
-    local credential = jbl_api.get_credential(bridge_ip, jbl_api.socket_builder)
+    local credential = jbl_api.get_credential(bridge_ip, jbl_api.labeled_socket_builder(bridge_dni))
 
     if not credential then
         log.error("credential is nil")
@@ -75,7 +75,7 @@ function discovery_helper.get_credential(driver, bridge_dni, bridge_ip)
 end
 
 function discovery_helper.get_connection_info(driver, device_dni, device_ip, device_info)
-    local conn_info = jbl_api.new_device_manager(device_ip, device_info, jbl_api.socket_builder)
+    local conn_info = jbl_api.new_device_manager(device_ip, device_info, jbl_api.labeled_socket_builder(device_dni))
 
     if conn_info == nil then
         log.error("conn_info is nil")
@@ -85,7 +85,7 @@ function discovery_helper.get_connection_info(driver, device_dni, device_ip, dev
 end
 
 function discovery_helper.get_device_info(driver, device_dni, device_ip)
-    local device_info = jbl_api.get_info(device_ip, jbl_api.socket_builder)
+    local device_info = jbl_api.get_info(device_ip, jbl_api.labeled_socket_builder(device_dni))
 
     if device_info == nil then
         log.error("device_info is nil")

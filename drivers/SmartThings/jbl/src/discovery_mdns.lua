@@ -5,11 +5,7 @@ local net_utils = require "st.net_utils"
 local discovery_mdns = {}
 
 local function byte_array_to_plain_text(byte_array)
-    local str = ""
-    for _, value in pairs(byte_array) do
-        str = str .. string.char(value)
-    end
-    return str
+    return string.char(table.unpack(byte_array))
 end
 
 local function get_text_by_srvname(srvname, discovery_responses)
@@ -51,7 +47,7 @@ function discovery_mdns.find_text_list_in_mdns_response(driver, ip, discovery_re
     for _, found_item in pairs(discovery_responses.found or {}) do
         if found_item.host_info.address == ip then
             for _, raw_text_array in pairs(found_item.txt.text or {}) do
-                local text_item =  byte_array_to_plain_text(raw_text_array)
+                local text_item = byte_array_to_plain_text(raw_text_array)
                 table.insert(text_list, text_item)
             end
         end
@@ -64,7 +60,7 @@ function discovery_mdns.find_text_list_in_mdns_response(driver, ip, discovery_re
     return text_list
 end
 
-local function filter_response_by_servie_name(service_type, domain, discovery_responses)
+local function filter_response_by_service_name(service_type, domain, discovery_responses)
     local filtered_responses = {
       answers = {},
       found = {}
@@ -97,10 +93,8 @@ local function insert_dni_ip_from_answers(driver, filtered_responses, target_tab
         end
 
         if ip ~= nil then
-            if dni == nil then
-                dni = driver.discovery_helper.get_dni(driver, ip, filtered_responses)
-            end
-    
+            dni = driver.discovery_helper.get_dni(driver, ip, filtered_responses)
+
             if dni ~= nil then
                 target_table[dni] = ip
             end
@@ -118,9 +112,7 @@ local function insert_dni_ip_from_found(driver, filtered_responses, target_table
         end
 
         if ip ~= nil then
-            if dni == nil then
-                dni = driver.discovery_helper.get_dni(driver, ip, filtered_responses)
-            end
+            dni = driver.discovery_helper.get_dni(driver, ip, filtered_responses)
 
             if dni ~= nil then
                 target_table[dni] = ip
@@ -132,7 +124,7 @@ end
 local function get_dni_ip_table_from_mdns_responses(driver, service_type, domain, discovery_responses)
     local dni_ip_table = {}
 
-    local filtered_responses = filter_response_by_servie_name(service_type, domain, discovery_responses)
+    local filtered_responses = filter_response_by_service_name(service_type, domain, discovery_responses)
 
     insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
     insert_dni_ip_from_found(driver, filtered_responses, dni_ip_table)
@@ -144,7 +136,7 @@ function discovery_mdns.find_ip_table_by_mdns(driver)
     log.info("discovery_mdns.find_device_ips")
 
     local service_type, domain = driver.discovery_helper.get_service_type_and_domain()
-    local discovery_responses = mdns.discover(service_type, domain) or {answers = {}, additional = {}}
+    local discovery_responses = mdns.discover(service_type, domain) or {found = {}}
 
     local dni_ip_table = get_dni_ip_table_from_mdns_responses(driver, service_type, domain, discovery_responses)
 

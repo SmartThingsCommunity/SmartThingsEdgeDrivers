@@ -10,6 +10,7 @@ local fields = {
   EVENT_SOURCE = "eventsource",
   MONITORING_TIMER = "monitoring_timer",
   CREDENTIAL = "credential",
+  _INIT = "init"
 }
 
 return fields

@@ -16,8 +16,6 @@ local log = require "log"
 
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
-local json = require "st.json"
-local utils = require "st.utils"
 
 local discovery = require "discovery"
 local fields = require "fields"
@@ -28,7 +26,7 @@ local jbl_capability_handler = require "jbl.capability_handler"
 
 local EventSource = require "lunchbox.sse.eventsource"
 
-local DEFAULT_MONITORING_INTERVAL = 300
+local CONNECTION_MONITORING_INTERVAL = 300
 local CREDENTIAL_KEY_HEADER = "Authorization"
 
 local function handle_sse_event(driver, device, msg)
@@ -94,7 +92,7 @@ local function update_connection(driver, device, device_ip, device_info)
 end
 
 
-local function find_new_connetion(driver, device)
+local function find_new_connection(driver, device)
   log.info("find new connection for dni=" .. tostring(device.device_network_id))
   local ip_table = discovery.find_ip_table(driver)
   local ip = ip_table[device.device_network_id]
@@ -109,7 +107,7 @@ local function check_and_update_connection(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
   if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
     device:offline()
-    find_new_connetion(driver, device)
+    find_new_connection(driver, device)
     conn_info = device:get_field(fields.CONN_INFO)
   end
 
@@ -118,31 +116,44 @@ local function check_and_update_connection(driver, device)
   end
 end
 
-local function create_monitoring_thread(driver, device, device_info)
-  local old_timer = device:get_field(fields.MONITORING_TIMER)
-  if old_timer ~= nil then
-    log.info("monitoring_timer: dni=" .. device.device_network_id .. ", remove old timer")
-    device.thread:cancel_timer(old_timer)
-  end
-
-  local monitoring_interval = DEFAULT_MONITORING_INTERVAL
-
-  log.info("create_monitoring_thread: dni=" .. device.device_network_id)
-  local new_timer = device.thread:call_on_schedule(monitoring_interval, function()
+local function connection_monitoring(driver)
+  local device_list = driver:get_devices()
+  for _, device in ipairs(device_list) do
+    log.info(string.format("connection monitering. dni= %s", device.device_network_id))
+    local device_info = device:get_field(fields.DEVICE_INFO)
     check_and_update_connection(driver, device)
     driver.device_manager.device_monitor(driver, device, device_info)
-    end, "monitor_timer")
-  device:set_field(fields.MONITORING_TIMER, new_timer)
+  end
 end
 
-local function refresh(driver, device, cmd)
-  log.info("refresh : dni =  " .. tostring(device.device_network_id))
+local function refresh_action(driver, device, cmd)
   check_and_update_connection(driver, device)
   driver.device_manager.refresh(driver, device)
 end
 
+local function refresh(driver, device, cmd)
+  log.info("refresh : dni =  " .. tostring(device.device_network_id))
+  device.thread:call_with_delay(0, function()
+    refresh_action(driver, device, cmd)
+  end)
+end
+
+local function device_removed(driver, device)
+  log.info("device_removed : dni =  " .. tostring(device.device_network_id))
+  local eventsource = device:get_field(fields.EVENT_SOURCE)
+  if eventsource then
+    log.info("Eventsource Close: dni = " .. tostring(device.device_network_id))
+    eventsource:close()
+  end
+end
+
 local function device_init(driver, device)
   log.info("device_init : dni = " .. tostring(device.device_network_id))
+
+  if device:get_field(fields._INIT) then
+    log.info(string.format("device_init : already initialized. dni = %s", device.device_network_id))
+    return
+  end
 
   local device_dni = device.device_network_id
 
@@ -158,17 +169,16 @@ local function device_init(driver, device)
     return
   end
 
-  log.trace("Creating device monitoring for " .. device.device_network_id)
-  create_monitoring_thread(driver, device, device_info)
-
   update_connection(driver, device, device_ip, device_info)
+
   refresh(driver, device, nil)
+  device:set_field(fields._INIT, true, { persist = false })
 end
 
 local lan_driver = Driver("jbl",
   {
     discovery = discovery.do_network_discovery,
-    lifecycle_handlers = {added = discovery.device_added, init = device_init},
+    lifecycle_handlers = {added = discovery.device_added, init = device_init, removed = device_removed},
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = refresh,
@@ -201,6 +211,8 @@ local lan_driver = Driver("jbl",
     controlled_devices = {},
   }
 )
+
+lan_driver:call_on_schedule(CONNECTION_MONITORING_INTERVAL, connection_monitoring, "JBL Connection monitoring thread")
 
 log.info("Starting lan driver")
 lan_driver:run()

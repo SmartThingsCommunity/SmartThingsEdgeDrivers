@@ -1,8 +1,6 @@
 local log = require "log"
 local json = require "st.json"
-local utils = require "st.utils"
 local fields = require "fields"
-local discovery = require "discovery"
 
 local capabilities = require "st.capabilities"
 
@@ -27,13 +25,9 @@ local function is_new_audioTrackData(device, audioTrackData)
     return true
 end
 
-local jbl_playback_state_to_smartthings_playbck_status_table = {
+local jbl_playback_state_to_smartthings_playback_status_table = {
     paused = "paused",
     playing = "playing",
-    stopped = "stopped",
-    ["fast forwarding"] = "fast forwarding",
-    rewinding = "rewinding",
-    buffering = "paused",
 }
 
 function device_manager.handle_status(driver, device, status)
@@ -42,7 +36,7 @@ function device_manager.handle_status(driver, device, status)
         return
     end
 
-    local playback_status = jbl_playback_state_to_smartthings_playbck_status_table[status.playback]
+    local playback_status = jbl_playback_state_to_smartthings_playback_status_table[status.playback]
     if playback_status and playback_status ~= device:get_latest_state("main", capabilities.mediaPlayback.ID, capabilities.mediaPlayback.playbackStatus.NAME, "") then
         log.info("device_manager.handle_status : update playbackStatus = " .. tostring(playback_status) .. ", dni = " .. tostring(device.device_network_id))
         device:emit_event(capabilities.mediaPlayback.playbackStatus[playback_status]())
@@ -104,7 +98,11 @@ local sse_event_handlers = {
 }
 
 function device_manager.handle_sse_event(driver, device, event_type, data)
-    local device_json = json.decode(data) or nil
+    local status, device_json = pcall(json.decode, data)
+    if not status then
+        log.error(string.format("handle_sse_event : failed to decode data"))
+        return
+    end
 
     local event_handler = sse_event_handlers[event_type]
     if event_handler then

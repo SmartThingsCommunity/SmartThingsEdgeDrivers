@@ -248,6 +248,9 @@ local function connecting_action(source)
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
+      _, err = source._sock:settimeout(60)
+      if err ~= nil then return nil, err end
+
       _, err = source._sock:connect(source.url.host, source.url.port)
       if err ~= nil then return nil, err end
 
@@ -298,7 +301,7 @@ local function connecting_action(source)
   if err ~= nil then
     return nil, err
   end
-  local content_type = string.lower(headers:get_one('content-type'))
+  local content_type = string.lower((headers:get_one('content-type') or "none"))
   if not content_type:find("text/event-stream", 1, true) then
     local err_msg = "Expected content type of text/event-stream in response headers, received: " .. content_type
     return nil, err_msg
@@ -462,6 +465,11 @@ function EventSource.new(url, extra_headers, sock_builder)
   cosock.spawn(function()
     local st_utils = require "st.utils"
     while true do
+      if source.ready_state == EventSource.ReadyStates.CLOSED and
+              not source._reconnect
+      then
+        return
+      end
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
@@ -481,7 +489,9 @@ end
 --- Close the event source, signalling that a reconnect is not desired
 function EventSource:close()
   self._reconnect = false
-  self._sock:close()
+  if self._sock ~= nil then
+    self._sock:close()
+  end
   self._sock = nil
   self.ready_state = EventSource.ReadyStates.CLOSED
 end
