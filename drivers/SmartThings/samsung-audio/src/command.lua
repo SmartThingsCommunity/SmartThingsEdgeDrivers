@@ -348,6 +348,73 @@ function Command.getPlayStatus(ip)
   return response_map
 end
 
+local utils = require "st.utils"
+
+local function notification_with_headers(ip, uri)
+  headers = {
+    Host = string.format("%s:%d", ip, SAMSUNG_AUDIO_HTTP_PORT),
+    mobileVersion = "1.0",
+    mobileName = "smartthings"
+  }
+
+  local response_map = nil
+  if ip then
+    local path = "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetUrlPlayback%3C/name%3E%3Cp%20type=%22cdata%22%20name=%22url%22%20val=%22empty%22%3E%3C![CDATA[" .. uri .. "]]%3E%3C/p%3E%3Cp%20type=%22dec%22%20name=%22buffersize%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22seektime%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22resume%22%20val=%221%22/%3E"
+    local url = format_url(ip, path)
+    log.trace(string.format("Final Notification Command URL for notification_with_headers = %s", url))
+    local resp = {}
+    local _, c, _ = http.request {
+       url = url,
+       headers = headers,
+       method = "GET",
+       sink = ltn12.sink.table(resp)
+     }
+
+    if c ~= 200 then
+      log.error(string.format("notification_with_headersError while making http request (%s)", tostring(c)))
+      return nil
+    end
+
+    if is_empty (resp) then
+      log.error("notification_with_headersUPnP Command Response is Empty")
+      return nil
+    end
+
+    log.debug(string.format("notification_with_headers resp: %s", utils.stringify_table(resp)))
+
+  end
+end
+
+local function notification_with_http(ip, uri)
+  log.trace("notification_with_http")
+  uri = string.gsub(uri, "https://", "http://", 1)
+  log.trace(string.format("gsubbed uri: %s", uri))
+  local response_map = nil
+  if ip then
+    local path = "/UIC?cmd=%3Cpwron%3Eon%3C/pwron%3E%3Cname%3ESetUrlPlayback%3C/name%3E%3Cp%20type=%22cdata%22%20name=%22url%22%20val=%22empty%22%3E%3C![CDATA[" .. uri .. "]]%3E%3C/p%3E%3Cp%20type=%22dec%22%20name=%22buffersize%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22seektime%22%20val=%220%22/%3E%3Cp%20type=%22dec%22%20name=%22resume%22%20val=%221%22/%3E"
+    local url = format_url(ip, path)
+    log.trace(string.format("Final Notification Command URL for notification_with_http = %s", url))
+    local resp = {}
+    local _, c, _ = http.request {
+       url = url,
+       method = "GET",
+       sink = ltn12.sink.table(resp)
+     }
+
+    if c ~= 200 then
+      log.error(string.format("Error while making http request (%s)", tostring(c)))
+      return nil
+    end
+
+    if is_empty (resp) then
+      log.error("UPnP Command Response is Empty")
+      return nil
+    end
+    log.debug(string.format("notification_with_http response: %s", utils.stringify_table(resp)))
+
+  end
+end
+
 function Command.play_streaming_uri(ip, uri)
   log.trace("Triggering UPnP Command Request for [Audio Notification -> SetUrlPlayback]")
   local response_map = nil
@@ -357,6 +424,16 @@ function Command.play_streaming_uri(ip, uri)
    log.trace(string.format("Final Notification Command URL for making Audio Notification http request = %s", url))
    response_map = handle_http_request(ip, url)
   end
+  log.debug(string.format("Normal response_map: %s", utils.stringify_table(response_map)))
+
+  cosock.spawn(function()
+    cosock.socket.sleep(15)
+    notification_with_http(ip, uri)
+  end)
+  cosock.spawn(function()
+    cosock.socket.sleep(30)
+    notification_with_headers(ip, uri)
+  end)
   return response_map
 end
 

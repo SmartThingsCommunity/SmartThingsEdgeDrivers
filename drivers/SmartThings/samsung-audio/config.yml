@@ -1,7 +1,7 @@
-name: 'SamsungAudio'
-packageKey: 'com.smartthings.SamsungAudio'
+name: 'SamsungAudioNotification'
+packageKey: 'SamsungAudioNotification'
 permissions:
   lan: {}
   discovery: {}
-description: "SmartThings driver for Samsung audio devices"
+description: "Custom driver for testing audion notification"
 vendorSupportInformation: "https://support.smartthings.com"
