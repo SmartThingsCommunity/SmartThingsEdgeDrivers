@@ -23,6 +23,7 @@ local cluster_base = require "st.matter.cluster_base"
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
 local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
+local PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT = 0x130A000E
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
@@ -268,6 +269,41 @@ test.register_coroutine_test(
           deltaEnergy = 0.0,
           start = "1970-01-01T00:00:00Z",
           ["end"] = "1970-01-01T16:39:59Z"
+        }))
+    )
+
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Check the reset command", function()
+    local timeDiff = 1
+    local currentTime = 978307200 + timeDiff -- 1 January 2001
+    test.mock_time.advance_time(currentTime)
+
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.energyMeter.ID,
+          command = capabilities.energyMeter.commands.resetEnergyMeter.NAME,
+          args = {}
+        },
+      }
+    )
+
+    local data = data_types.validate_or_build_type(timeDiff, data_types.Uint32)
+    test.socket.matter:__expect_send({ mock_device.id,
+      cluster_base.write(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT, nil, data) })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.powerConsumptionReport.powerConsumption({
+          energy = 0,
+          deltaEnergy = 0,
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "2001-01-01T00:00:00Z"
         }))
     )
 
