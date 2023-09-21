@@ -12,7 +12,7 @@ components:
     version: 1
   - id: carbonMonoxideMeasurement
     version: 1
-  - id: audioMute
+  - id: spacewonder52282.deviceMuted
     version: 1
   - id: filterStatus
     version: 1
