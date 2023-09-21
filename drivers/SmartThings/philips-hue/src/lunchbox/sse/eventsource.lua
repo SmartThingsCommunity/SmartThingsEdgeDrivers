@@ -466,6 +466,11 @@ function EventSource.new(url, extra_headers, sock_builder)
   cosock.spawn(function()
     local st_utils = require "st.utils"
     while true do
+      if source.ready_state == EventSource.ReadyStates.CLOSED and
+          not source._reconnect
+      then
+        return
+      end
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
@@ -485,7 +490,9 @@ end
 --- Close the event source, signalling that a reconnect is not desired
 function EventSource:close()
   self._reconnect = false
-  self._sock:close()
+  if self._sock ~= nil then
+    self._sock:close()
+  end
   self._sock = nil
   self.ready_state = EventSource.ReadyStates.CLOSED
 end

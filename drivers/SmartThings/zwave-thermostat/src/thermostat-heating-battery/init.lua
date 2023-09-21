@@ -210,6 +210,12 @@ local function set_heating_setpoint(driver, device, command)
 end
 
 local function wakeup_notification_handler(self, device, cmd)
+    --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+    --This is done to help the hub correctly set the checkInterval for migrated devices.
+    if not device:get_field("__wakeup_interval_get_sent") then
+      device:send(WakeUp:IntervalGetV1({}))
+      device:set_field("__wakeup_interval_get_sent", true)
+    end
     check_and_send_cached_setpoint(device)
     check_and_send_battery_get(device)
     check_and_send_clock_set(device)
@@ -233,8 +239,8 @@ end
 
 local function added_handler(self, device)
     -- initial capability value
-    -- device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
-    -- device:emit_event(capabilities.battery.battery(100))
+    device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = 'C' }))
+    device:emit_event(capabilities.battery.battery(100))
 
     local interval_min = 5
     if device.preferences.reportingInterval ~= nil then

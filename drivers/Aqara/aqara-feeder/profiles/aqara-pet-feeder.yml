@@ -18,5 +18,5 @@ preferences:
   - preferenceId: stse.buttonLock
     explicit: true
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: d940f929-44f9-3e28-b774-aed9449e0330
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Pet_Feeder

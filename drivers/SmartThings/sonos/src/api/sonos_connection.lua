@@ -89,18 +89,32 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
         "Could not look up coordinator info for player %s: %s", sonos_conn.device.label, err
       )
     )
+    return
   end
 
   if coordinator_id ~= self_player_id then
-    local coordinator = sonos_conn.driver.sonos:get_household(household_id).players[coordinator_id]
-    _, err = Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
+    local household = sonos_conn.driver.sonos:get_household(household_id)
+    if household == nil then
+      log.error(string.format("Cannot open coordinator socket, houshold doesn't exist: %s", household_id))
+      return
+    end
 
+    local coordinator = household.players[coordinator_id]
+    if coordinator == nil then
+      log.error(st_utils.stringify_table(
+        {household = sonos_conn.driver.sonos:get_household(household_id)}, string.format("Coordinator doesn't exist for player: %s", sonos_conn.device.label), false
+      ))
+      return
+    end
+
+    _, err = Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
     if err ~= nil then
       log.error(
         string.format(
           "Couldn't open connection to coordinator for %s: %s", sonos_conn.device.label, err
         )
       )
+      return
     end
 
     local listener_id
@@ -186,6 +200,7 @@ function SonosConnection.new(driver, device)
         Router.cleanup_unused_sockets(self.driver)
 
         if not self:coordinator_running() then
+          --TODO this is not infallible
           _open_coordinator_socket(self, household_id, player_id)
         end
 
@@ -207,7 +222,15 @@ function SonosConnection.new(driver, device)
       elseif header.type == "groupVolume" then
         log.trace(string.format("GroupVolume type message for %s", device_name))
         if body.volume and (body.muted ~= nil) then
-          local group = self.driver.sonos:get_household(header.householdId).groups[header.groupId] or { playerIds = {} }
+          local household = self.driver.sonos:get_household(header.householdId)
+          if household == nil or household.groups == nil then
+            log.error(st_utils.stringify_table(
+              {response_body = msg.data, household = household or header.householdId},
+              "Received groupVolume message for non-existent household or household groups dont exist", false
+            ))
+            return
+          end
+          local group = household.groups[header.groupId] or { playerIds = {} }
           for _, player_id in ipairs(group.playerIds) do
             local device_for_player = self.driver._player_id_to_device[player_id]
             --- we've seen situations where these messages can be processed while a device
@@ -220,7 +243,15 @@ function SonosConnection.new(driver, device)
         end
       elseif header.type == "playbackStatus" then
         log.trace(string.format("PlaybackStatus type message for %s", device_name))
-        local group = self.driver.sonos:get_household(header.householdId).groups[header.groupId] or { playerIds = {} }
+        local household = self.driver.sonos:get_household(header.householdId)
+        if household == nil or household.groups == nil then
+          log.error(st_utils.stringify_table(
+            {response_body = msg.data, household = household or header.householdId},
+            "Received playbackStatus message for non-existent household or household groups dont exist", false
+          ))
+          return
+        end
+        local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
           local device_for_player = self.driver._player_id_to_device[player_id]
           --- we've seen situations where these messages can be processed while a device
@@ -232,7 +263,15 @@ function SonosConnection.new(driver, device)
         end
       elseif header.type == "metadataStatus" then
         log.trace(string.format("MetadataStatus type message for %s", device_name))
-        local group = self.driver.sonos:get_household(header.householdId).groups[header.groupId] or { playerIds = {} }
+        local household = self.driver.sonos:get_household(header.householdId)
+        if household == nil or household.groups == nil then
+          log.error(st_utils.stringify_table(
+            {response_body = msg.data, household = household or header.householdId},
+            "Received metadataStatus message for non-existent household or household groups dont exist", false
+          ))
+          return
+        end
+        local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
           local device_for_player = self.driver._player_id_to_device[player_id]
           --- we've seen situations where these messages can be processed while a device
@@ -252,6 +291,12 @@ function SonosConnection.new(driver, device)
           for group_id, group in pairs(household.groups) do
             local coordinator_id = self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)
             local coordinator_player = household.players[coordinator_id]
+            if coordinator_player == nil then
+              log.error(st_utils.stringify_table(
+                {household = household, coordinator_id = coordinator_id}, "Received message for non-existent coordinator player", false
+              ))
+              return
+            end
 
             local url_ip = lb_utils.force_url_table(coordinator_player.websocketUrl).host
 
@@ -306,7 +351,7 @@ end
 function SonosConnection:is_running()
   local self_running = self:self_running()
   local coord_running = self:coordinator_running()
-  log.debug(string.format("%s all connections running? %s", self.device.label, {coordinator = self_running, mine = self_running}))
+  log.debug(string.format("%s all connections running? %s", self.device.label, st_utils.stringify_table({coordinator = self_running, mine = self_running})))
   return  self_running and coord_running
 end
 
@@ -376,6 +421,7 @@ function SonosConnection:start()
   end
 
   if not self:coordinator_running() then
+    --TODO this is not infallible
     _open_coordinator_socket(self, household_id, player_id)
   end
 
