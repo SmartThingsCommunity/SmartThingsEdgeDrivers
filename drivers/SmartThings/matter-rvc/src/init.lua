@@ -80,14 +80,20 @@ local function rvc_operational_state_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
   string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
 
-  if ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.SEEKING_CHARGER then
+  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.stopped())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.running())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.paused())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.ERROR then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.error())
+  elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.SEEKING_CHARGER then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.seekingcharger())
   elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.CHARGING then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
   elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.DOCKED then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.docked())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
   end
 end
 
