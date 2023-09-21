@@ -22,13 +22,13 @@ matterManufacturer:
     deviceProfileName: plug-binary
 
   #GE
-  - id: "GELightingSavant/FullColor/Bulb"
-    deviceLabel: GELighting Savant Full Color Bulb WiFi
+  - id: "GELightingSavant/Bulb/A19"
+    deviceLabel: Cync Full Color A19
     vendorId: 0x1339
     productId: 0x89
     deviceProfileName: light-color-level-2000K-7000K
-  - id: "GELightingSavant/Onoff/Plug"
-    deviceLabel: GELighting Savant OnOff Plug WiFi
+  - id: "GELightingSavant/Plug/Indoor"
+    deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
