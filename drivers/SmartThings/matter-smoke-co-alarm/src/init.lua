@@ -18,6 +18,9 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
+local deviceMutedId = "spacewonder52282.deviceMuted"
+local deviceMuted = capabilities[deviceMutedId]
+
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 
 local function device_init(driver, device)
@@ -119,7 +122,7 @@ local matter_driver_template = {
         [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = binary_state_handler_factory(capabilities.smokeDetector.smoke.clear(), capabilities.smokeDetector.smoke.detected()),
         [clusters.SmokeCoAlarm.attributes.COState.ID] = binary_state_handler_factory(capabilities.carbonMonoxideDetector.carbonMonoxide.clear(), capabilities.carbonMonoxideDetector.carbonMonoxide.detected()),
         [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = binary_state_handler_factory(nil, capabilities.battery.battery(0)),
-        [clusters.SmokeCoAlarm.attributes.DeviceMuted.ID] = binary_state_handler_factory(capabilities.audioMute.mute.unmuted(), capabilities.audioMute.mute.muted()),
+        [clusters.SmokeCoAlarm.attributes.DeviceMuted.ID] = binary_state_handler_factory(deviceMuted.deviceMuted.notMuted(), deviceMuted.deviceMuted.muted()),
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
         [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.tamperAlert.tamper.detected(), capabilities.tamperAlert.tamper.clear()),
         [clusters.SmokeCoAlarm.attributes.EndOfServiceAlert.ID] = binary_state_handler_factory(capabilities.filterStatus.filterStatus.normal(), capabilities.filterStatus.filterStatus.replace()),
@@ -151,7 +154,7 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.COState,
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
-    [capabilities.audioMute.ID] = {
+    [deviceMutedId] = {
       clusters.SmokeCoAlarm.attributes.DeviceMuted
     },
     [capabilities.filterStatus.ID] = {
