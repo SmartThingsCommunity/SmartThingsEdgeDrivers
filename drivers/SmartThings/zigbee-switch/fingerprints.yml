@@ -2146,6 +2146,11 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: basic-switch
+  - id: "WALL HERO/ACL-401S3I"
+    deviceLabel: 三位智能开关面板 1
+    manufacturer: WALL HERO
+    model: ACL-401S3I
+    deviceProfileName: basic-switch    
   - id: "Insta GmbH/Dimming Actuator"
     deviceLabel: NEXENTRO Dimming Actuator
     manufacturer: Insta GmbH
