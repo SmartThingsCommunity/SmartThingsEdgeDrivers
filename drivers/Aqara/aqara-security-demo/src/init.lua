@@ -2,6 +2,9 @@ local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local log = require "log"
 local security = require "st.security"
+local ds = require "datastore"
+
+my_ds = ds.init()
 
 function dump(data)
   if type(data) == "table" then
@@ -27,7 +30,7 @@ local function discovery_handler(driver, _, should_continue)
   example_aes_256_ecb()
   local device_list = driver:get_devices()
   local zigbee_id = "\x01\x02\x03\x04\x05\x06\x07\x08";
-  local res, err = security.get_aqara_secret("aqara", zigbee_id, "encrypted_pub_key", "model_name", "test_mn_id", "test_setup_id")
+  local res, err = security.get_aqara_secret(zigbee_id, "encrypted_pub_key", "model_name", "test_mn_id", "test_setup_id")
   if res then
     print(res)
   end
@@ -68,5 +71,14 @@ local aqara_security_demo = Driver("aqara_security_demo", {
 })
 
 security.register_aqara_secret_handler(aqara_security_demo, my_secret_data_handler)
+if aqara_security_demo.datastore and type(aqara_security_demo.datastore.cnt) == "number" then
+  my_ds.cnt = aqara_security_demo.datastore.cnt + 1
+  my_ds:save()
+else
+  my_ds.cnt = 1
+  my_ds:save()
+end
+log.info("my_ds.cnt = "..my_ds.cnt)
+
 log.info("Demo running!")
 aqara_security_demo:run()
