@@ -249,7 +249,7 @@ function SonosWebSocketRouter.close_socket_for_player(target)
   if ws ~= nil then
     local ws_id = ws.id
     table.insert(pending_close, target)
-    for _, uuid in ipairs(listener_ids_for_socket[ws_id]) do
+    for _, uuid in ipairs((listener_ids_for_socket[ws_id] or {})) do
       local listener = listeners[uuid]
 
       if listener ~= nil then
