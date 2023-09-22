@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- luacheck: globals _envlibrequire
+
 local original_log
 if _envlibrequire ~= nil then
   original_log = _envlibrequire("log")
