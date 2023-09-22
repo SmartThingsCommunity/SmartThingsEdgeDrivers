@@ -29,7 +29,7 @@ local is_aqara_products = function(opts, driver, device, ...)
   return device:get_manufacturer() == FINGERPRINTS.mfr and device:get_model() == FINGERPRINTS.model
 end
 
-local callback_timer = function(driver, device, cmd)
+local callback_timer = function(device)
   return function()
     device:emit_event(cubeAction.cubeAction("noAction"))
   end
@@ -39,30 +39,30 @@ local function reset_thread(device)
   local timer = device:get_field(CUBEACTION_TIMER)
   if timer then
     device.thread:cancel_timer(timer)
-    device:set_field(CUBEACTION_TIMER, nil, { persist = true })
+    device:set_field(CUBEACTION_TIMER, nil)
   end
-  device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(driver, device)))
+  device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(device)))
 end
 
 local function data_handler(driver, device, value, zb_rx)
   local val = value.value
   if val == 0x0000 then -- Shake
+    reset_thread(device)
     device:emit_event(cubeAction.cubeAction("shake"))
-    reset_thread(device)
   elseif val == 0x0004 then -- hold
-    device:emit_event(cubeAction.cubeAction("pickUpAndHold"))
     reset_thread(device)
+    device:emit_event(cubeAction.cubeAction("pickUpAndHold"))
   elseif val & 0x0400 == 0x0400 then -- Flip to side
     local faceNum = val & 0x0007
-    device:emit_event(cubeAction.cubeAction(cubeFlipToSideVal[faceNum + 0x1]))
     reset_thread(device)
+    device:emit_event(cubeAction.cubeAction(cubeFlipToSideVal[faceNum + 0x1]))
   end
 end
 
 local function rotate_handler(driver, device, value, zb_rx)
   -- Rotation
-  device:emit_event(cubeAction.cubeAction("rotate"))
   reset_thread(device)
+  device:emit_event(cubeAction.cubeAction("rotate"))
 end
 
 local function face_handler(driver, device, value, zb_rx)

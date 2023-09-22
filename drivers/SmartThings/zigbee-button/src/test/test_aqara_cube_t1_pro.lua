@@ -77,7 +77,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       cubeAction.cubeAction("shake")))
-    -- local movement_timer = CUBEACTION_TIME
     test.timer.__create_and_queue_test_time_advance_timer(CUBEACTION_TIME, "oneshot")
     test.mock_time.advance_time(CUBEACTION_TIME)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -97,7 +96,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       cubeAction.cubeAction("pickUpAndHold")))
-    -- local movement_timer = CUBEACTION_TIME
     test.timer.__create_and_queue_test_time_advance_timer(CUBEACTION_TIME, "oneshot")
     test.mock_time.advance_time(CUBEACTION_TIME)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -117,7 +115,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       cubeAction.cubeAction("flipToSide6")))
-    -- local movement_timer = CUBEACTION_TIME
     test.timer.__create_and_queue_test_time_advance_timer(CUBEACTION_TIME, "oneshot")
     test.mock_time.advance_time(CUBEACTION_TIME)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -137,7 +134,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       cubeAction.cubeAction("rotate")))
-    -- local movement_timer = CUBEACTION_TIME
     test.timer.__create_and_queue_test_time_advance_timer(CUBEACTION_TIME, "oneshot")
     test.mock_time.advance_time(CUBEACTION_TIME)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
