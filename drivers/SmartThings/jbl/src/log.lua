@@ -19,7 +19,7 @@ else
   original_log = require("stdout_log")
 end
 
-local hubcore_enabled_log
+local hubcore_enabled_log = {}
 
 hubcore_enabled_log.info = function(...)
   original_log.info_with({hub_logs = true}, ...)
