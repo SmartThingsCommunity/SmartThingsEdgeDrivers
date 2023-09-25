@@ -51,7 +51,7 @@ local function find_default_endpoint(device, component)
   return res
 end
 
-local function create_endpoint_to_component_map(device)
+local function initialize_switch(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
 
@@ -71,6 +71,21 @@ local function create_endpoint_to_component_map(device)
   end
 
   device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
+
+  -- New profiles need to be added for devices that have more switch endpoints
+  local MAX_MULTI_SWITCH_EPS = 7
+  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
+  -- where devices with multiple endpoints with the same device type cannot be detected
+  local num_switch_eps = #switch_eps
+  if num_switch_eps > 1 then
+    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
+  end
+  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
+    error(string.format(
+      "Matter multi switch device will have limited function. Profile doesn't exist with %d components",
+      num_switch_eps
+    ))
+  end
 end
 
 local function component_to_endpoint(device, component_name)
@@ -91,7 +106,10 @@ end
 
 local function device_init(driver, device)
   log.info_with({hub_logs=true}, "device init")
-  create_endpoint_to_component_map(device)
+  if not device:get_field(ENDPOINT_TO_COMPONENT_MAP) then
+    -- create endpoint to component map and switch profile as needed
+    initialize_switch(device)
+  end
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:subscribe()
@@ -99,24 +117,6 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
-end
-
-local function do_configure(driver, device)
-  -- New profiles need to be added for devices that have more switch endpoints
-  local MAX_MULTI_SWITCH_EPS = 7
-  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
-  -- where devices with multiple endpoints with the same device type cannot be detected
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local num_switch_eps = #switch_eps
-  if num_switch_eps > 1 then
-    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
-  end
-  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
-    error(string.format(
-      "Matter multi switch device will have limited function. Profile doesn't exist with %d components",
-      num_switch_eps
-    ))
-  end
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -302,8 +302,7 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    removed = device_removed,
-    doConfigure = do_configure,
+    removed = device_removed
   },
   matter_handlers = {
     attr = {

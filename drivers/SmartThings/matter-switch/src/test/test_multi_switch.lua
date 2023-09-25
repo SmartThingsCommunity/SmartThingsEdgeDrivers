@@ -146,8 +146,7 @@ local mock_3switch_non_sequential = test.mock_device.build_test_matter_device({
   }
 })
 
-
-local function test_init()
+local function test_init_mock_3switch()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
@@ -155,37 +154,32 @@ local function test_init()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch)
   test.socket.matter:__expect_send({mock_3switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch)
+  mock_3switch:expect_metadata_update({ profile = "switch-3" })
+end
+
+local function test_init_mock_2switch()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+  }
+  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_2switch)
   test.socket.matter:__expect_send({mock_2switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_2switch)
+  mock_2switch:expect_metadata_update({ profile = "switch-2" })
+end
+
+local function test_init_mock_3switch_non_sequential()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+  }
+  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch_non_sequential)
   test.socket.matter:__expect_send({mock_3switch_non_sequential.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch_non_sequential)
+  mock_3switch_non_sequential:expect_metadata_update({ profile = "switch-3" })
 end
-test.set_test_init_function(test_init)
 
-
-test.register_coroutine_test(
-  "Profile change for 3 switch device", function()
-    test.socket.device_lifecycle:__queue_receive({ mock_3switch.id, "doConfigure" })
-    mock_3switch:expect_metadata_update({ profile = "switch-3" })
-    mock_3switch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end)
-
-test.register_coroutine_test(
-  "Profile change for 2 switch device", function()
-    test.socket.device_lifecycle:__queue_receive({ mock_2switch.id, "doConfigure" })
-    mock_2switch:expect_metadata_update({ profile = "switch-2" })
-    mock_2switch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end)
-
-test.register_coroutine_test(
-  "Profile change for 3 switch device with non sequential endpoints", function()
-    test.socket.device_lifecycle:__queue_receive({ mock_3switch_non_sequential.id, "doConfigure" })
-    mock_3switch_non_sequential:expect_metadata_update({ profile = "switch-3" })
-    mock_3switch_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end)
-
+-- The custom "test_init" function also checks that the appropriate profile is switched on init
 test.register_message_test(
   "On command to component switch should send the appropriate commands",
   {
@@ -205,9 +199,35 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_3switch, 2)
       }
     }
-  }
+  },
+  { test_init = test_init_mock_3switch }
 )
 
+-- The custom "test_init" function also checks that the appropriate profile is switched on init
+test.register_message_test(
+  "On command to component switch should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_2switch.id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_2switch.id,
+        clusters.OnOff.server.commands.On(mock_2switch, 1)
+      }
+    }
+  },
+  { test_init = test_init_mock_2switch }
+)
+
+-- The custom "test_init" function also checks that the appropriate profile is switched on init
 test.register_message_test(
   "On command to component switch should send the appropriate commands for devices with non-sequential endpoints",
   {
@@ -227,7 +247,8 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_3switch_non_sequential, 15) -- switch 3 is on endpoint 15
       }
     }
-  }
+  },
+  { test_init = test_init_mock_3switch_non_sequential }
 )
 
 test.run_registered_tests()
