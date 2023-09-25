@@ -4,22 +4,22 @@ matterManufacturer:
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x53
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/Europe"
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x50
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/U.K."
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x54
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/Australia"
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x5E
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
 
   #GE
   - id: "GELightingSavant/Bulb/A19"
