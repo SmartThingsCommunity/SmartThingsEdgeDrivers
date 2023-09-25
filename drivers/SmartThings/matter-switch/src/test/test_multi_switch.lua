@@ -205,7 +205,7 @@ test.register_message_test(
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
 test.register_message_test(
-  "On command to component switch should send the appropriate commands",
+  "On command to main component should send the appropriate commands",
   {
     {
       channel = "capability",
