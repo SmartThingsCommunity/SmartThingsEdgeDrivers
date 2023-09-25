@@ -35,11 +35,50 @@ local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
 end
 
+--- component_to_endpoint helper function to handle situations where
+--- device does not have endpoint ids in sequential order from 1
+--- In this case the function returns the lowest endpoint value that isn't 0
+local function find_default_endpoint(device, component)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(nil)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      res = v
+      break
+    end
+  end
+  return res
+end
+
+local function create_endpoint_to_component_map(device)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
+
+  local endpoint_map = {}
+  local current_component_number = 1
+
+  -- For switch devices, the profile components follow the naming convention "switch%d",
+  -- with the exception of "main" being the first component. Each component will then map
+  -- to the next lowest endpoint that hasn't been mapped yet.
+  for _, ep in ipairs(switch_eps) do
+    if current_component_number == 1 then
+      endpoint_map[ep] = "main"
+    else
+      endpoint_map[ep] = string.format("switch%d", current_component_number)
+    end
+    current_component_number = current_component_number + 1
+  end
+
+  device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
+end
+
 local function component_to_endpoint(device, component_name)
   local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
   for ep, component in pairs(map) do
     if component == component_name then return ep end
   end
+  return find_default_endpoint(device, component_name)
 end
 
 local function endpoint_to_component(device, ep)
@@ -52,27 +91,10 @@ end
 
 local function device_init(driver, device)
   log.info_with({hub_logs=true}, "device init")
+  create_endpoint_to_component_map(device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:subscribe()
-end
-
-local function device_added(driver, device)
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(switch_eps)
-
-  local endpoint_map = {}
-  local current_component_number = 1
-  for _, ep in ipairs(switch_eps) do
-    if current_component_number == 1 then
-      endpoint_map[ep] = "main"
-    else
-      endpoint_map[ep] = string.format("switch%d", current_component_number)
-    end
-    current_component_number = current_component_number + 1
-  end
-
-  device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
 end
 
 local function device_removed(driver, device)
@@ -280,7 +302,6 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
     removed = device_removed,
     doConfigure = do_configure,
   },
