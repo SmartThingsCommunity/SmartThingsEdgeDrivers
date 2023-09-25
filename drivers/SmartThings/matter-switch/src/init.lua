@@ -29,39 +29,25 @@ local COLOR_TEMPERATURE_KELVIN_MIN = 1
 local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
+local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component_map"
+
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
 end
 
---- component_to_endpoint helper function to handle situations where
---- device does not have endpoint ids in sequential order from 1
---- In this case the function returns the lowest endpoint value that isn't 0
-local function find_default_endpoint(device, component)
-  local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(nil)
-  table.sort(eps)
-  for _, v in ipairs(eps) do
-    if v ~= 0 then --0 is the matter RootNode endpoint
-      res = v
-      break
-    end
+local function component_to_endpoint(device, component_name)
+  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
+  for ep, component in pairs(map) do
+    if component == component_name then return ep end
   end
-  return res
-end
-
-local function component_to_endpoint(device, component_id)
-  -- Assumes matter endpoint layout is sequentional starting at 1.
-  local ep_num = component_id:match("switch(%d)")
-  return ep_num and tonumber(ep_num) or find_default_endpoint(device, component_id)
 end
 
 local function endpoint_to_component(device, ep)
-  local switch_comp = string.format("switch%d", ep)
-  if device.profile.components[switch_comp] ~= nil then
-    return switch_comp
-  else
-    return "main"
+  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
+  if map[ep] and device.profile.components[map[ep]] then
+    return map[ep]
   end
+  return "main"
 end
 
 local function device_init(driver, device)
@@ -69,6 +55,24 @@ local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:subscribe()
+end
+
+local function device_added(driver, device)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
+
+  local endpoint_map = {}
+  local current_component_number = 1
+  for _, ep in ipairs(switch_eps) do
+    if current_component_number == 1 then
+      endpoint_map[ep] = "main"
+    else
+      endpoint_map[ep] = string.format("switch%d", current_component_number)
+    end
+    current_component_number = current_component_number + 1
+  end
+
+  device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
 end
 
 local function device_removed(driver, device)
@@ -82,18 +86,14 @@ local function do_configure(driver, device)
   -- where devices with multiple endpoints with the same device type cannot be detected
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local num_switch_eps = #switch_eps
-  table.sort(switch_eps)
-  --Default MCD switch handling depends on consecutive endpoint numbering
-  if num_switch_eps == switch_eps[num_switch_eps] then
-    if num_switch_eps > 1 then
-      device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
-    end
-    if num_switch_eps > MAX_MULTI_SWITCH_EPS then
-      error(string.format(
-        "Matter multi switch device will not function. Profile doesn't exist with %d components",
-        num_switch_eps
-      ))
-    end
+  if num_switch_eps > 1 then
+    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
+  end
+  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
+    error(string.format(
+      "Matter multi switch device will have limited function. Profile doesn't exist with %d components",
+      num_switch_eps
+    ))
   end
 end
 
@@ -280,6 +280,7 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     removed = device_removed,
     doConfigure = do_configure,
   },

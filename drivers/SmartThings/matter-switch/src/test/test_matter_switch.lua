@@ -91,6 +91,7 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -99,7 +100,7 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
-
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_hue_sat.id, "added" })
 end
 test.set_test_init_function(test_init)
 
