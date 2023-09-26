@@ -199,6 +199,10 @@ local function check_for_updates(device)
           device:emit_event(capabilities.audioMute.mute.unmuted())
         end
       end
+      -- check for a media presets value change
+      if changes["mediaPresets"] ~= nil then
+        device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"]))
+      end
     end
   end
 end
