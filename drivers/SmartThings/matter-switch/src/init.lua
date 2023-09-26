@@ -23,6 +23,11 @@ local RECEIVED_X = "receivedX"
 local RECEIVED_Y = "receivedY"
 local HUESAT_SUPPORT = "huesatSupport"
 local CONVERSION_CONSTANT = 1000000
+-- These values are taken from the min/max definined in the colorTemperature capability
+local COLOR_TEMPERATURE_KELVIN_MAX = 30000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1
+local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
+local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -217,6 +222,10 @@ end
 
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
+    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, "Device reported color temperature %d mired outside of supported capability range", ib.data.value)
+      return
+    end
     local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
     local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
