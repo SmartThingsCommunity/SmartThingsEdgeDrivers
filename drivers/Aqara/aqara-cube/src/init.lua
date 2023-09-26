@@ -24,12 +24,6 @@ local cubeFlipToSideVal = { "flipToSide1", "flipToSide2", "flipToSide3", "flipTo
 local CUBEACTION_TIMER = "cubeAction_timer"
 local CUBEACTION_TIME = 3
 
-local FINGERPRINTS = { mfr = "LUMI", model = "lumi.remote.cagl02" }
-
-local is_aqara_products = function(opts, driver, device, ...)
-  return device:get_manufacturer() == FINGERPRINTS.mfr and device:get_model() == FINGERPRINTS.model
-end
-
 local callback_timer = function(device)
   return function()
     device:emit_event(cubeAction.cubeAction("noAction"))
@@ -118,8 +112,7 @@ local aqara_cube_t1_pro_handler = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added
-  },
-  can_handle = is_aqara_products
+  }
 }
 
 local aqara_cube_t1_pro_driver = ZigbeeDriver("aqara_cube_t1_pro", aqara_cube_t1_pro_handler)
