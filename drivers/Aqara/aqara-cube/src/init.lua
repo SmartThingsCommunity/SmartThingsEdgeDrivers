@@ -1,3 +1,4 @@
+local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -121,4 +122,6 @@ local aqara_cube_t1_pro_handler = {
   can_handle = is_aqara_products
 }
 
-return aqara_cube_t1_pro_handler
+local aqara_cube_t1_pro_driver = ZigbeeDriver("aqara_cube_t1_pro", aqara_cube_t1_pro_handler)
+aqara_cube_t1_pro_driver:run()
+
