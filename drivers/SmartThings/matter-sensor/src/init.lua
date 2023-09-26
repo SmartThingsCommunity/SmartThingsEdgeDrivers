@@ -23,6 +23,46 @@ local function device_init(driver, device)
   device:subscribe()
 end
 
+local function do_configure(driver, device)
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local profile_name = ""
+
+  if device:supports_capability(capabilities.motionSensor) then
+    profile_name = profile_name .. "-motion"
+  end
+
+  if device:supports_capability(capabilities.contactSensor) then
+    profile_name = profile_name .. "-contact"
+  end
+
+  if device:supports_capability(capabilities.illuminanceMeasurement) then
+    profile_name = profile_name .. "-illuminance"
+  end
+
+  if device:supports_capability(capabilities.temperatureMeasurement) then
+    profile_name = profile_name .. "-temperature"
+  end
+
+  if device:supports_capability(capabilities.relativeHumidityMeasurement) then
+    profile_name = profile_name .. "-humidity"
+  end
+
+  if #battery_eps > 0 then
+    profile_name = profile_name .. "-battery"
+  end
+
+  -- remove leading "-"
+  profile_name = string.sub(profile_name, 2)
+
+  device:try_update_metadata({profile = profile_name})
+end
+
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
+end
+
 local function illuminance_attr_handler(driver, device, ib, response)
   local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
@@ -60,7 +100,9 @@ end
 
 local matter_driver_template = {
   lifecycle_handlers = {
-    init = device_init
+    init = device_init,
+    doConfigure = do_configure,
+    infoChanged = info_changed
   },
   matter_handlers = {
     attr = {

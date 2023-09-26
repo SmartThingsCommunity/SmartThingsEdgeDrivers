@@ -1,10 +1,10 @@
-name: motion-battery
+name: motion-contact
 components:
 - id: main
   capabilities:
   - id: motionSensor
     version: 1
-  - id: battery
+  - id: contactSensor
     version: 1
   - id: firmwareUpdate
     version: 1

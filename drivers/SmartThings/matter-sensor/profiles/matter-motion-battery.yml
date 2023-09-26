@@ -1,4 +1,4 @@
-name: motion-battery
+name: matter-motion-battery
 components:
 - id: main
   capabilities:
