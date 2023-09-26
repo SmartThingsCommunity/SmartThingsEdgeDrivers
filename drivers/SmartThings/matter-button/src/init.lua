@@ -11,7 +11,7 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_PROFILE_SUPPORTED = {2, 4, 8}
 
-local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component_map"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local IGNORE_NEXT_MPC = "__ignore_next_mpc"
 
@@ -67,20 +67,35 @@ end
 
 --end of helper functions
 --------------------------------------------------------------------------
+local function find_default_endpoint(device, component)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(clusters.Switch.ID)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      res = v
+      break
+    end
+  end
+  return res
+end
 
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
-  if map[ep] and device.profile.components[map[ep]] then
-    return map[ep]
+local function endpoint_to_component(device, endpoint)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, ep in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
   end
   return "main"
 end
 
 local function component_to_endpoint(device, component_name)
-  local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
-  for ep, component in pairs(map) do
-    if component == component_name then return ep end
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component_name] then
+    return map[component_name]
   end
+  return find_default_endpoint(device)
 end
 
 local function find_child(parent, ep_id)
@@ -170,17 +185,19 @@ local function device_added(driver, device)
     -- At the moment, we're taking it for granted that all momentary switches only have 2 positions
     -- TODO: flesh this out for NumberOfPositions > 2
     local current_component_number = 2
-    local endpoint_map = {}
+    local component_map = {}
+    local component_map_used = false
     for _, ep in ipairs(MS) do -- for each momentary switch endpoint (including main)
       device.log.debug("Configuring endpoint "..ep)
       -- build the mapping of endpoints to components if we have a static profile (multi-component)
       if contains(STATIC_PROFILE_SUPPORTED, #MS) then
         if ep ~= main_endpoint then
-          endpoint_map[ep] = string.format("button%d", current_component_number)
+          component_map[string.format("button%d", current_component_number)] = ep
           current_component_number = current_component_number + 1
         else
-          endpoint_map[ep] = "main"
+          component_map["main"] = ep
         end
+        component_map_used = true
       else -- use parent/child
         if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
           local name = string.format("%s %d", device.label, current_component_number)
@@ -199,8 +216,8 @@ local function device_added(driver, device)
       end
     end
 
-    if #endpoint_map > 0 then
-      device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
+    if component_map_used then
+      device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
     end
 
     if new_profile then
