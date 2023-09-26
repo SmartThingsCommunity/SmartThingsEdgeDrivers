@@ -1024,6 +1024,11 @@ zigbeeManufacturer:
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
     deviceProfileName: rgbw-bulb-2700K-5000K
+  - id: Juno/ABL-LIGHT-Z-401
+    deviceLabel: Smart Controller
+    manufacturer: Juno
+    model: ABL-LIGHT-Z-401
+    deviceProfileName: switch-level
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
