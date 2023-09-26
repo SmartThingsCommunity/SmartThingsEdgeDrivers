@@ -40,9 +40,11 @@ end
 --- component_to_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
+--- and supports the OnOff cluster. This is done to bypass the
+--- BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
   local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(nil)
+  local eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
