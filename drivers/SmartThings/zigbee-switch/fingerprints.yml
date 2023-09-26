@@ -1339,6 +1339,11 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-001
     deviceProfileName: color-temp-bulb
+  - id: Samsung/SAMSUNG-ITM-Z-005
+    deviceLabel: Samsung switch
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-005
+    deviceProfileName: switch-level   
   - id: "Samsung Electronics/HAN-LIGHT-Z-001"
     deviceLabel: SamsungB2B Light
     manufacturer: Samsung Electronics
