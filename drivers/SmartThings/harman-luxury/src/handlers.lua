@@ -136,11 +136,21 @@ function Handler.handle_play_preset(_, device, cmd)
   log.info("Starting handle_play_preset")
   -- send API to play media preset
   local ip = device:get_field(const.IP)
-  local id = cmd.args.presetId
-  local _, err = api.PlayMediaPreset(ip, id)
-  if err then
-    log.warn(string.format("Error during handle_play_preset(): %s", err))
+  local presetId = cmd.args.presetId:lower():gsub("preset", ""):gsub("%W", "")
+  local mediaPresets = device:get_latest_state("main", capabilities.mediaPresets.ID,
+                                               capabilities.mediaPresets.presets.NAME)
+  for _, preset in pairs(mediaPresets) do
+    local id = preset.id
+    local name = preset.name:lower():gsub("preset", ""):gsub("%W", "")
+    if id == presetId or name == presetId then
+      local _, err = api.PlayMediaPreset(ip, id)
+      if err then
+        log.warn(string.format("Error during handle_play_preset(): %s", err))
+      end
+      return
+    end
   end
+  log.warn(string.format("Couldn't find provided Media Preset: %s", cmd.args.presetId))
 end
 
 --- handler of audioNotification.playTrack, audioNotification.playTrackAndResume,
