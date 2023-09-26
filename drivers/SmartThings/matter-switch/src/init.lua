@@ -30,6 +30,8 @@ local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
 local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component_map"
+-- New profiles need to be added for devices that have more switch endpoints
+local MAX_MULTI_SWITCH_EPS = 7
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -54,26 +56,20 @@ end
 local function initialize_switch(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-
   local endpoint_map = {}
-  local current_component_number = 1
 
   -- For switch devices, the profile components follow the naming convention "switch%d",
   -- with the exception of "main" being the first component. Each component will then map
   -- to the next lowest endpoint that hasn't been mapped yet.
-  for _, ep in ipairs(switch_eps) do
-    if current_component_number == 1 then
+  for i, ep in ipairs(switch_eps) do
+    if i == 1 then
       endpoint_map[ep] = "main"
     else
-      endpoint_map[ep] = string.format("switch%d", current_component_number)
+      endpoint_map[ep] = string.format("switch%d", i)
     end
-    current_component_number = current_component_number + 1
   end
 
   device:set_field(ENDPOINT_TO_COMPONENT_MAP, endpoint_map, {persist = true})
-
-  -- New profiles need to be added for devices that have more switch endpoints
-  local MAX_MULTI_SWITCH_EPS = 7
   -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
   -- where devices with multiple endpoints with the same device type cannot be detected
   local num_switch_eps = #switch_eps
@@ -82,8 +78,9 @@ local function initialize_switch(device)
   end
   if num_switch_eps > MAX_MULTI_SWITCH_EPS then
     error(string.format(
-      "Matter multi switch device will have limited function. Profile doesn't exist with %d components",
-      num_switch_eps
+      "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
+      num_switch_eps,
+      MAX_MULTI_SWITCH_EPS
     ))
   end
 end
@@ -101,6 +98,7 @@ local function endpoint_to_component(device, ep)
   if map[ep] and device.profile.components[map[ep]] then
     return map[ep]
   end
+  log.warn_with({hub_logs = true}, string.format("Device has more than supported number of switches (max %d), mapping excess endpoint to main component", MAX_MULTI_SWITCH_EPS))
   return "main"
 end
 
