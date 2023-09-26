@@ -22,6 +22,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
+local Groups = clusters.Groups
 
 local button_attr = capabilities.button.button
 
@@ -218,14 +219,18 @@ test.register_coroutine_test(
           PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 21600, 1)
     })
     test.socket.zigbee:__expect_send({
-      mock_device.id,
-      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-    })
-    test.socket.zigbee:__expect_send({
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                 zigbee_test_utils.mock_hub_eui,
                                                 PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+    })
+    test.socket.zigbee:__expect_add_hub_to_group(0x0000)
+    test.socket.zigbee:__expect_send({mock_device.id,
+      Groups.commands.AddGroup(mock_device, 0x0000)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end

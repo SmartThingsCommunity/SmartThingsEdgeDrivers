@@ -345,6 +345,9 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
   },
+    sub_drivers = {
+    require("eve-energy")
+  }
 }
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
