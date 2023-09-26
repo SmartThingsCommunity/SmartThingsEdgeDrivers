@@ -127,6 +127,7 @@ local function test_init_humidity_battery()
 
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, subscribe_request_humidity_battery})
   test.mock_device.add_test_device(mock_device_humidity_battery)
+  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
 end
 
 local function test_init_humidity_no_battery()
@@ -139,6 +140,7 @@ local function test_init_humidity_no_battery()
 
   test.socket.matter:__expect_send({mock_device_humidity_no_battery.id, subscribe_request_humidity_no_battery})
   test.mock_device.add_test_device(mock_device_humidity_no_battery)
+  mock_device_humidity_no_battery:expect_metadata_update({ profile = "humidity" })
 end
 
 local function test_init_temp_humidity()
@@ -151,34 +153,26 @@ local function test_init_temp_humidity()
 
   test.socket.matter:__expect_send({mock_device_temp_humidity.id, subscribe_request_temp_humidity})
   test.mock_device.add_test_device(mock_device_temp_humidity)
+  mock_device_temp_humidity:expect_metadata_update({ profile = "temperature-humidity" })
 end
 
 test.register_coroutine_test(
-  "Profile remains the same for battery-supported devices on doConfigure lifecycle event due to cluster feature map",
+  "Test profile change on init for humidity sensor with battery",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
-    mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
-    mock_device_humidity_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_humidity_battery }
 )
 
 test.register_coroutine_test(
-  "Profile change to non-battery profile on doConfigure lifecycle event due to cluster feature map",
+  "Test profile change on init for humidity sensor without battery",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_no_battery.id, "doConfigure" })
-    mock_device_humidity_no_battery:expect_metadata_update({ profile = "humidity" })
-    mock_device_humidity_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_humidity_no_battery }
 )
 
 test.register_coroutine_test(
-  "Profile change to non-battery profile on doConfigure lifecycle event due to cluster feature map",
+  "Test profile change on init for temperature-humidity sensor",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_temp_humidity.id, "doConfigure" })
-    mock_device_temp_humidity:expect_metadata_update({ profile = "temperature-humidity" })
-    mock_device_temp_humidity:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_temp_humidity }
 )

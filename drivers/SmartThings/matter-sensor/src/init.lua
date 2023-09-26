@@ -18,12 +18,9 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
-local function device_init(driver, device)
-  log.info("device init")
-  device:subscribe()
-end
+local BATTERY_CHECKED = "__battery_checked"
 
-local function do_configure(driver, device)
+local function check_for_battery(device)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local profile_name = ""
 
@@ -55,6 +52,15 @@ local function do_configure(driver, device)
   profile_name = string.sub(profile_name, 2)
 
   device:try_update_metadata({profile = profile_name})
+  device:set_field(BATTERY_CHECKED, 1, {persist = true})
+end
+
+local function device_init(driver, device)
+  log.info("device init")
+  if not device:get_field(BATTERY_CHECKED) then
+    check_for_battery(device)
+  end
+  device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
@@ -101,7 +107,6 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = do_configure,
     infoChanged = info_changed
   },
   matter_handlers = {
