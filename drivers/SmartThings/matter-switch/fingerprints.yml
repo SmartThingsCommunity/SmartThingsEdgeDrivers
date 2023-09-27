@@ -32,6 +32,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+  - id: "Sengled/Light/Matter"
+    deviceLabel: Sengled Bulbs W41-N13
+    vendorId: 0x1160
+    productId: 0x9001
+    deviceProfileName: light-level-colorTemperature-color
 
 #Nanoleaf
   - id: "Nanoleaf NL53"
@@ -167,6 +172,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0105 # Color Dimmer Switch
     deviceProfileName: switch-color-level
+  - id: "matter/temp/color/light"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: light-level-colorTemperature-color
 
 matterThing:
   - id: SmartThings/MatterThing
