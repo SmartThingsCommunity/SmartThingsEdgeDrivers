@@ -21,6 +21,8 @@ local EMULATE_HELD = "__emulate_held" -- for MSR devices we can emulate this on 
 local MULTI_BUTTON = "__multi_button" -- for multi-press devices, only trigger an event on a multi-button complete
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS, but not MSR
 
+local HUE_MANUFACTURER_ID = 0x100B
+
 --helper function to create liste of multi press values
 local function create_multi_list(size, supportsHeld)
   local list = {"pushed", "double"}
@@ -164,18 +166,21 @@ local function device_added(driver, device)
     end
     device.log.debug("main button endpoint is "..main_endpoint)
 
-
-    local battery_support = device:get_endpoints(clusters.PowerSource.ID)
+    local battery_support = false
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+            #device:get_endpoints(clusters.PowerSource.ID) > 0 then
+      battery_support = true
+    end
 
     local new_profile = nil
     -- We have a static profile that will work for this number of buttons
     if contains(STATIC_PROFILE_SUPPORTED, #MS) then
-      if #battery_support == 0 then
-        new_profile = string.format("%d-button", #MS)
-      else
+      if battery_support then
         new_profile = string.format("%d-button-battery", #MS)
+      else
+        new_profile = string.format("%d-button", #MS)
       end
-    elseif #battery_support == 0 then
+    elseif not battery_support then
       -- a battery-less button/remote (either single or will use parent/child)
       new_profile = "button"
     end
