@@ -476,7 +476,28 @@ local function handle_name_slot(driver, device, command)
   end
 end
 
-local function device_init(driver, device) device:subscribe() end
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  -- Use the find_default_endpoint function to return the first endpoint that
+  -- supports a given cluster.
+  return find_default_endpoint(device, clusters.DoorLock.ID)
+end
+
+local function device_init(driver, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:subscribe()
+end
 
 local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
