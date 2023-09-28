@@ -121,21 +121,42 @@ matterGeneric:
     deviceTypes:
       - id: 0x0101 # Dimmable Light
     deviceProfileName: light-level
+  - id: "matter/dimmable/light/2"
+    deviceLabel: Matter Dimmable Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: light-level
   - id: "matter/colorTemperature/light"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
       - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
-  - id: "matter/color/light"
+  - id: "matter/colorTemperature/light/2"
     deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
+  - id: "matter/color/light"
+    deviceLabel: Matter Color Light
     deviceTypes:
       - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/color/temp/light"
-    deviceLabel: Matter Color Temperature Light
+    deviceLabel: Matter Color Light
     deviceTypes:
-      - id: 0x010D # Extended Color Light
       - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: light-color-level
+  - id: "matter/color/temp/light/2"
+    deviceLabel: Matter Color Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/on-off/plug"
     deviceLabel: Matter OnOff Plug
