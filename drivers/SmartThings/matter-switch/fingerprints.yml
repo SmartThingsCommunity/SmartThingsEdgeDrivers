@@ -37,8 +37,8 @@ matterManufacturer:
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
     vendorId: 0x1312
-    productId: 0x1
-    deviceProfileName: light-level-colorTemperature-2700k-6500k
+    productId: 0x01
+    deviceProfileName: light-level-colorTemperature-2710k-6500k
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic

@@ -1,4 +1,4 @@
-name: light-level-colorTemperature-2700k-6500k
+name: light-level-colorTemperature-2710k-6500k
 components:
 - id: main
   capabilities:
@@ -15,7 +15,7 @@ components:
     config:
       values:
         - key: "colorTemperature.value"
-          range: [ 2700, 6500 ]
+          range: [ 2710, 6500 ]
   - id: colorControl
     version: 1
   - id: firmwareUpdate
