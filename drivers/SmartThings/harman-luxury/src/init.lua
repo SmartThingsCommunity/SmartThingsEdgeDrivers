@@ -180,8 +180,8 @@ local function check_for_updates(device)
         device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
       -- check for a media presets change
-      if changes["mediaPresets"] and type(changes["mediaPresets"]) == "table" then
-        device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"]))
+      if changes["mediaPresets"] and type(changes["mediaPresets"].presets) == "table" then
+        device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"].presets))
       end
       -- check for a media input source change
       if changes["mediaInputSource"] then
@@ -198,10 +198,6 @@ local function check_for_updates(device)
         else
           device:emit_event(capabilities.audioMute.mute.unmuted())
         end
-      end
-      -- check for a media presets value change
-      if changes["mediaPresets"] ~= nil then
-        device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"]))
       end
     end
   end
