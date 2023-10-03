@@ -82,6 +82,7 @@ local function find_default_endpoint(device, cluster)
       return v
     end
   end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
