@@ -20,8 +20,19 @@ local utils = require "st.utils"
 
 local BATTERY_CHECKED = "__battery_checked"
 
+local HUE_MANUFACTURER_ID = 0x100B
+
+local function supports_battery_percentage_remaining(device)
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
+          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
+  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+    return true
+  end
+  return false
+end
+
 local function check_for_battery(device)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
@@ -44,7 +55,7 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-humidity"
   end
 
-  if #battery_eps > 0 then
+  if supports_battery_percentage_remaining(device) then
     profile_name = profile_name .. "-battery"
   end
 
@@ -124,7 +135,7 @@ local matter_driver_template = {
         [clusters.BooleanState.attributes.StateValue.ID] = boolean_attr_handler
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID]   = battery_percent_remaining_attr_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
