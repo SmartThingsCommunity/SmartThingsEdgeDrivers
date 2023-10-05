@@ -22,7 +22,7 @@ local Constants = {
 
   -- device setup constants
   DEFAULT_DEVICE_NAME = "HarmanLuxury",
-  DEFAULT_MANUFACTURE_NAME = "Harman Luxury Audio",
+  DEFAULT_MANUFACTURER_NAME = "Harman Luxury Audio",
   DEFAULT_MODEL_NAME = "Harman Luxury",
   DEFAULT_PRODUCT_NAME = "Harman Luxury",
 

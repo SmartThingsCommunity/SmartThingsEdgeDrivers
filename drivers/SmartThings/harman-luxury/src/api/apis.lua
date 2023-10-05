@@ -11,7 +11,7 @@ local invoke = require "api.invokes"
 local UUID_PATH = "settings:/system/memberId"
 local MAC_PATH = "settings:/system/primaryMacAddress"
 local MEMBER_ID_PATH = "settings:/system/memberId"
-local MANUFACTURE_NAME_PATH = "settings:/system/manufacturer"
+local MANUFACTURER_NAME_PATH = "settings:/system/manufacturer"
 local DEVICE_NAME_PATH = "settings:/deviceName"
 local MODEL_NAME_PATH = "settings:/system/modelName"
 local PRODUCT_NAME_PATH = "settings:/system/productName"
@@ -50,11 +50,11 @@ function APIs.GetMemberId(ip)
   return get.String(ip, MEMBER_ID_PATH)
 end
 
---- get device manufacture name from Harman Luxury on ip
+--- get device manufacturer name from Harman Luxury on ip
 ---@param ip string
 ---@return string|nil, nil|string
-function APIs.GetManufatureName(ip)
-  return get.String(ip, MANUFACTURE_NAME_PATH)
+function APIs.GetManufaturerName(ip)
+  return get.String(ip, MANUFACTURER_NAME_PATH)
 end
 
 --- get device name from Harman Luxury on ip

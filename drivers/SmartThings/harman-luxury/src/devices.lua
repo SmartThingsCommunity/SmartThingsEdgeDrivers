@@ -45,10 +45,10 @@ local function GetDefaultDeviceInfo(dni, ip)
     log.warn(string.format("Failed to get Device Name from device with IP: %s", ip))
     label = const.DEFAULT_DEVICE_NAME
   end
-  manufacturer, err = api.GetManufactureName(ip)
+  manufacturer, err = api.GetManufacturerName(ip)
   if err or type(manufacturer) ~= "string" then
-    log.warn(string.format("Failed to get Manufacture Name from device with IP: %s", ip))
-    manufacturer = const.DEFAULT_MANUFACTURE_NAME
+    log.warn(string.format("Failed to get Manufacturer Name from device with IP: %s", ip))
+    manufacturer = const.DEFAULT_MANUFACTURER_NAME
   end
   model, err = api.GetModelName(ip)
   if err or type(model) ~= "string" then
