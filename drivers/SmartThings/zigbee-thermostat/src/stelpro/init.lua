@@ -161,13 +161,10 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-<<<<<<< HEAD
 local device_added = function(self, device)
   device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
-=======
->>>>>>> aae45d2 (Adding Power consumption measurment to stelpro device )
 local stelpro_thermostat = {
   NAME = "Stelpro Thermostat Handler",
   zigbee_handlers = {
