@@ -3,4 +3,4 @@ matterGeneric:
     deviceLabel: Matter Button
     deviceTypes:
       - id: 0x000F
-    deviceProfileName: button-profile
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver

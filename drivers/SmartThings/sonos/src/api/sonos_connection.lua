@@ -351,7 +351,7 @@ end
 function SonosConnection:is_running()
   local self_running = self:self_running()
   local coord_running = self:coordinator_running()
-  log.debug(string.format("%s all connections running? %s", self.device.label, {coordinator = self_running, mine = self_running}))
+  log.debug(string.format("%s all connections running? %s", self.device.label, st_utils.stringify_table({coordinator = self_running, mine = self_running})))
   return  self_running and coord_running
 end
 

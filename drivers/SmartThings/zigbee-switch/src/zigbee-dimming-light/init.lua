@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local clusters = require "st.zigbee.zcl.clusters"
+local capabilities = require "st.capabilities"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -46,7 +47,8 @@ local DIMMING_LIGHT_FINGERPRINTS = {
   {mfr = "Leviton", model = "DL1KD"},   -- Leviton Lumina RF Dimmer Switch
   {mfr = "Leviton", model = "ZSD07"},   -- Leviton Lumina RF 0-10V Dimming Wall Switch
   {mfr = "MRVL", model = "MZ100"},
-  {mfr = "CREE", model = "Connected A-19 60W Equivalent"}
+  {mfr = "CREE", model = "Connected A-19 60W Equivalent"},
+  {mfr = "Insta GmbH", model = "NEXENTRO Dimming Actuator"}
 }
 
 local DIMMING_LIGHT_CONFIGURATION = {
@@ -87,7 +89,7 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-  -- device:emit_event(capabilities.switchLevel.level(100))
+  device:emit_event(capabilities.switchLevel.level(100))
 end
 
 local zigbee_dimming_light = {
