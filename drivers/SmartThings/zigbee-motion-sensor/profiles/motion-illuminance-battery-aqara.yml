@@ -6,9 +6,11 @@ components:
         version: 1
       - id: illuminanceMeasurement
         version: 1
+      - id: battery
+        version: 1
       - id: stse.detectionFrequency
         version: 1
-      - id: battery
+      - id: stse.sensitivityAdjustment
         version: 1
       - id: firmwareUpdate
         version: 1
