@@ -38,14 +38,14 @@ local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
   { mfr = "Stelpro", model = "SORB" },
   { mfr = "Stelpro", model = "SonomaStyle" },
-  { mfr = "Stelpro", model = "SMT402AD" }
+  { mfr = "Stelpro", model = "SMT402AD" } -- added M.Colmenarejo
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
   for _, fingerprint in ipairs(STELPRO_THERMOSTAT_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-        return true
-    end
+      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+          return true
+      end
   end
   return false
 end
@@ -159,6 +159,10 @@ local function info_changed(driver, device, event, args)
   if device.preferences ~= nil and device.preferences.lock ~= args.old_st_store.preferences.lock then
     device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, tonumber(device.preferences.lock)))
   end
+end
+
+local device_added = function(self, device)
+  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
 local stelpro_thermostat = {
