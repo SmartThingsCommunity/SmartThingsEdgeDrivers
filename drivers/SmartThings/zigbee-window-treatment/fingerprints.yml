@@ -93,6 +93,22 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+  - id: "_TZE204_fzbskaga/TS0601"
+    deviceLabel: Hanssem Window Treatment
+    manufacturer: _TZE204_fzbskaga
+    model: TS0601
+    deviceProfileName: window-treatment-hanssem
+  - id: "Smartwings/WM25/L-Z"
+    deviceLabel: Smartwings Window Treatment
+    manufacturer: Smartwings
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-battery
+  - id: "Insta GmbH/Blinds Actuator"
+    deviceLabel: NEXENTRO Blinds Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Blinds Actuator
+    deviceProfileName: window-treatment-profile
+
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment

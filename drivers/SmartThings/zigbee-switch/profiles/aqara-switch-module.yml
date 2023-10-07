@@ -22,5 +22,5 @@ preferences:
   - preferenceId: stse.electricSwitchType
     explicit: true
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: 0f305a94-72e1-3fb8-af85-24eedff49d19
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Switch_With_Energy_Meter

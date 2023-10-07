@@ -20,11 +20,11 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass.Basic
-local Basic = (require "st.zwave.CommandClass.Basic")({version=1,strict=true})
+local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 --- @type st.zwave.CommandClass.SwitchColor
-local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({version=3,strict=true})
+local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({version=1})
 --- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2,strict=true})
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
 
@@ -59,9 +59,9 @@ local function set_color(driver, device, command)
   local hue = command.args.color.hue
   local saturation = command.args.color.saturation
 
-  local duration = constants.DEFAULT_DIMMING_DURATION
   local r, g, b = utils.hsl_to_rgb(hue, saturation)
 
+  -- device only supports a value of 255 or 0 for each color channel
   r = (r >= 191) and 255 or 0
   g = (g >= 191) and 255 or 0
   b = (b >= 191) and 255 or 0
@@ -77,11 +77,8 @@ local function set_color(driver, device, command)
     color_components = {
       { color_component_id=SwitchColor.color_component_id.RED, value=r },
       { color_component_id=SwitchColor.color_component_id.GREEN, value=g },
-      { color_component_id=SwitchColor.color_component_id.BLUE, value=b },
-      { color_component_id=SwitchColor.color_component_id.WARM_WHITE, value=0 },
-      { color_component_id=SwitchColor.color_component_id.COLD_WHITE, value=0 },
+      { color_component_id=SwitchColor.color_component_id.BLUE, value=b }
     },
-    duration=duration
   })
   device:send_to_component(set, command.component)
   local query_color = function()

@@ -131,6 +131,10 @@ test.register_coroutine_test(
       )
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
           Configuration:Get({parameter_number = 9})
       ))
 
@@ -183,6 +187,10 @@ test.register_coroutine_test(
           WakeUp:Notification({})
         }
       )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Configuration:Set({parameter_number = 3, size = 2, configuration_value = 120})
@@ -287,7 +295,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_sensor.id,
-        Configuration:Report({parameter_number = 9, configuration_value = 0})
+        Configuration:Report({parameter_number = 9, configuration_value = 2}) -- device docs report this should be zero, but actual devices report 2
       }
     },
     {
