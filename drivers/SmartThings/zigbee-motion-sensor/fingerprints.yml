@@ -4,6 +4,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.motion.agl02
     deviceProfileName: motion-illuminance-battery-aqara
+  - id: "LUMI/lumi.motion.ac02"
+    deviceLabel: Aqara Motion Sensor P1
+    manufacturer: LUMI
+    model: lumi.motion.ac02
+    deviceProfileName: motion-illuminance-battery-aqara
   - id: "LUMI/lumi.motion.agl04"
     deviceLabel: Aqara High Precision Motion Sensor
     manufacturer: LUMI
