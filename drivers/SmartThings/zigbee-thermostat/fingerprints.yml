@@ -75,7 +75,7 @@ zigbeeManufacturer:
     model: STZB402+
     deviceProfileName: thermostat-temperature-temperaturealarm
   - id: "Stelpro/SMT402AD"
-    deviceLabel: Stelpro Thermostat
+    deviceLabel: Stelpro Thermostat vX
     manufacturer: Stelpro
     model: SMT402AD
     deviceProfileName: thermostat-stelpro-profile
