@@ -14,11 +14,20 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local device_management = require "st.zigbee.device_management"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 
+local RelativeHumidity = clusters.RelativeHumidity
 local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
+local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState = capabilities.thermostatOperatingState
+local ThermostatPower = capabilities.powerMeter
+
+local POWER_ATTTRIBUTE = 0x4008
+local MFG_CODE = 0x1185
 
 local RX_FREEZE_VALUE = 0x7ffd
 local RX_HEAT_VALUE = 0x7fff
@@ -28,16 +37,54 @@ local HEAT_ALRAM_TEMPERATURE = 50
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
   { mfr = "Stelpro", model = "SORB" },
-  { mfr = "Stelpro", model = "SonomaStyle" }
+  { mfr = "Stelpro", model = "SonomaStyle" },
+  { mfr = "Stelpro", model = "SMT402AD" } -- added M.Colmenarejo
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
   for _, fingerprint in ipairs(STELPRO_THERMOSTAT_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
+      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+          return true
+      end
   end
   return false
+end
+
+local do_refresh = function(self, device)
+  local attributes = {
+    Thermostat.attributes.LocalTemperature,
+    Thermostat.attributes.PIHeatingDemand,
+    Thermostat.attributes.OccupiedHeatingSetpoint,
+    ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode,
+    ThermostatUserInterfaceConfiguration.attributes.KeypadLockout,
+    RelativeHumidity.attributes.MeasuredValue
+  }
+  for _, attribute in pairs(attributes) do
+    device:send(attribute:read(device))
+  end
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Thermostat.ID, POWER_ATTTRIBUTE, MFG_CODE))
+end
+
+local device_added = function(self, device)
+  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  do_refresh(self, device)
+end
+
+local do_configure = function(self, device)
+  device:send(Thermostat.attributes.LocalTemperature:configure_reporting(device, 10, 60, 50))
+  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(device, 1, 600, 50))
+  device:send(Thermostat.attributes.PIHeatingDemand:configure_reporting(device, 1, 60, 1))
+  device:send(cluster_base.configure_reporting(device, data_types.ClusterId(Thermostat.ID) , POWER_ATTTRIBUTE, 0x23 , 1, 60, 1))
+
+  device:send(ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode:configure_reporting(device, 1, 0, 1))
+  device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:configure_reporting(device, 1, 0, 1))
+  device:send(RelativeHumidity.attributes.MeasuredValue:configure_reporting(device, 10, 300, 1))
+
+  device:emit_event(ThermostatMode.thermostatMode.heat())
+end
+
+local device_init = function(self, device)
+  do_configure(self, device)
 end
 
 local function get_temperature(temperature)
@@ -73,11 +120,11 @@ local function thermostat_local_temp_attr_handler(driver, device, value, zb_rx)
         (last_alarm == "freeze" and temperature > FREEZE_ALRAM_TEMPERATURE) or
         (last_alarm == "heat" and temperature < HEAT_ALRAM_TEMPERATURE)
       ) then
-        if last_alarm == "freeze" then
-          event = capabilities.temperatureAlarm.temperatureAlarm.freeze()
-        else
-          event = capabilities.temperatureAlarm.temperatureAlarm.heat()
-        end
+            if last_alarm == "freeze" then
+              event = capabilities.temperatureAlarm.temperatureAlarm.freeze()
+            else
+              event = capabilities.temperatureAlarm.temperatureAlarm.heat()
+            end
       end
     else
       if temperature <= FREEZE_ALRAM_TEMPERATURE then
@@ -98,9 +145,14 @@ local function thermostat_heating_set_point_attr_handler(driver, device, value, 
 end
 
 local function thermostat_heating_demand_attr_handler(driver, device, value, zb_rx)
-  local event = value.value < 10 and ThermostatOperatingState.thermostatOperatingState.idle() or
-                 ThermostatOperatingState.thermostatOperatingState.heating()
+  local event = value.value < 1 and ThermostatOperatingState.thermostatOperatingState.idle() or
+                 ThermostatOperatingState.thermostatOperatingState.heating()             
   device:emit_event(event)
+end
+
+local function thermostat_power_attr_handler(driver, device, zb_rx)
+  local point_value = zb_rx.value
+  device:emit_event(capabilities.powerMeter.power({value = point_value, unit = "W"}))
 end
 
 local function info_changed(driver, device, event, args)
@@ -109,10 +161,13 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+<<<<<<< HEAD
 local device_added = function(self, device)
   device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
+=======
+>>>>>>> aae45d2 (Adding Power consumption measurment to stelpro device )
 local stelpro_thermostat = {
   NAME = "Stelpro Thermostat Handler",
   zigbee_handlers = {
@@ -121,15 +176,22 @@ local stelpro_thermostat = {
         [Thermostat.attributes.PIHeatingDemand.ID] = thermostat_heating_demand_attr_handler,
         [Thermostat.attributes.LocalTemperature.ID] = thermostat_local_temp_attr_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = thermostat_heating_set_point_attr_handler,
+        [POWER_ATTTRIBUTE] = thermostat_power_attr_handler
       }
     }
   },
   lifecycle_handlers = {
+    init = device_init,
+    doConfigure = do_configure,
     added = device_added,
     infoChanged = info_changed
   },
-  sub_drivers = { require("stelpro.stelpro_sorb"), require("stelpro.stelpro_maestrostat") },
-  can_handle = is_stelpro_thermostat
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+    }
+  },
+  can_handle = is_stelpro_thermostat,
 }
 
 return stelpro_thermostat
