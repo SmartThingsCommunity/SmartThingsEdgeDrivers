@@ -4,6 +4,7 @@ local fields = require "fields"
 local discovery_mdns = require "discovery_mdns"
 
 local socket = require "cosock.socket"
+local st_utils = require "st.utils"
 
 local discovery = {}
 
@@ -67,6 +68,8 @@ local function discovery_device(driver)
   end
 
   local ip_table = discovery.find_ip_table(driver)
+
+  log.debug(st_utils.stringify_table(ip_table, "DNI IP Table after processing mDNS Discovery Response", true))
 
   for dni, ip in pairs(ip_table) do
     log.info(string.format("discovery_device dni, ip = %s, %s", dni, ip))

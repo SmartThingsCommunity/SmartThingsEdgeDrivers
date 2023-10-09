@@ -55,8 +55,8 @@ local function create_sse(driver, device, credential)
       end
     end
 
-    eventsource.onerror = function(msg)
-      log.error("Eventsource error: dni = " .. tostring(device.device_network_id) .. ", Error=" .. tostring(msg))
+    eventsource.onerror = function()
+      log.error("Eventsource error: dni = " .. tostring(device.device_network_id))
       device:offline()
     end
 
@@ -198,6 +198,7 @@ local lan_driver = Driver("jbl",
       [capabilities.mediaPlayback.ID] = {
         [capabilities.mediaPlayback.commands.play.NAME] = jbl_capability_handler.playback_play_handler,
         [capabilities.mediaPlayback.commands.pause.NAME] = jbl_capability_handler.playback_pause_handler,
+        [capabilities.mediaPlayback.commands.stop.NAME] = jbl_capability_handler.playback_stop_handler,
       },
       [capabilities.audioNotification.ID] = {
         [capabilities.audioNotification.commands.playTrack.NAME] = jbl_capability_handler.audioNotification_handler,

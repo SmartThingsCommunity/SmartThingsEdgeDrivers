@@ -1,6 +1,7 @@
 local log = require "log"
 local mdns = require "st.mdns"
 local net_utils = require "st.net_utils"
+local st_utils = require "st.utils"
 
 local discovery_mdns = {}
 
@@ -126,6 +127,8 @@ local function get_dni_ip_table_from_mdns_responses(driver, service_type, domain
 
     local filtered_responses = filter_response_by_service_name(service_type, domain, discovery_responses)
 
+    log.debug(st_utils.stringify_table(filtered_responses, "[get_dni_ip_table(...)] Filtered Responses", true))
+
     insert_dni_ip_from_answers(driver, filtered_responses, dni_ip_table)
     insert_dni_ip_from_found(driver, filtered_responses, dni_ip_table)
 
@@ -137,6 +140,8 @@ function discovery_mdns.find_ip_table_by_mdns(driver)
 
     local service_type, domain = driver.discovery_helper.get_service_type_and_domain()
     local discovery_responses = mdns.discover(service_type, domain) or {found = {}}
+
+    log.debug(st_utils.stringify_table(discovery_responses, "Raw mDNS Discovery Response", true))
 
     local dni_ip_table = get_dni_ip_table_from_mdns_responses(driver, service_type, domain, discovery_responses)
 
