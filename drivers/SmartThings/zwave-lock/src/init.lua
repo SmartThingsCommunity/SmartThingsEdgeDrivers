@@ -186,7 +186,9 @@ local driver_template = {
     require("samsung-lock"),
     require("keywe-lock"),
     require("apiv6_bugfix"),
-  }
+    ZwaveDriver.lazy_load_sub_driver(require("yale-lock"))
+  },
+  NAME = "zwave-lock"
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)

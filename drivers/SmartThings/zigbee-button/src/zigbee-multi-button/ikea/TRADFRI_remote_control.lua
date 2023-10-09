@@ -85,7 +85,11 @@ local remote_control = {
     added = added_handler
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "TRADFRI remote control"
+    if device:get_model() == "TRADFRI remote control" then
+      local subdriver = require("zigbee-multi-button.ikea.TRADFRI_remote_control")
+      return true, subdriver
+    end
+    return false
   end
 }
 

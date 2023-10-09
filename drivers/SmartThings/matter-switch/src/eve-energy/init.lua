@@ -44,9 +44,9 @@ local function is_eve_energy_products(opts, driver, device)
   -- this sub driver does not support child devices
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
-    return true
+    local subdriver = require("eve-energy")
+    return true, subdriver
   end
-
   return false
 end
 

@@ -17,6 +17,7 @@ local multi_utils = require "multi-sensor/multi_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local contactSensor_defaults = require "st.zigbee.defaults.contactSensor_defaults"
 local capabilities = require "st.capabilities"
+local ZigbeeDriver = require "st.zigbee"
 
 local MULTI_SENSOR_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3320" },
@@ -30,7 +31,8 @@ local MULTI_SENSOR_FINGERPRINTS = {
 local function can_handle_zigbee_multi_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(MULTI_SENSOR_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("multi-sensor")
+      return true, subdriver
     end
   end
   return false
@@ -93,7 +95,7 @@ local multi_sensor = {
     }
   },
   sub_drivers = {
-    require("multi-sensor/smartthings-multi"),
+    ZigbeeDriver.lazy_load_sub_driver(require("multi-sensor/smartthings-multi")),
     require("multi-sensor/samjin-multi"),
     require("multi-sensor/centralite-multi"),
     require("multi-sensor/thirdreality-multi")

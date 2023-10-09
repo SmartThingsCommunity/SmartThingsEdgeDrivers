@@ -37,7 +37,8 @@ local FIBARO_SINGLE_SWITCH_FINGERPRINTS = {
 local function can_handle_fibaro_single_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(FIBARO_SINGLE_SWITCH_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("fibaro-single-switch")
+      return true, subdriver
     end
   end
   return false

@@ -22,6 +22,7 @@ local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
 local utils = require 'st.utils'
 local zdo_messages = require "st.zigbee.zdo"
 local supported_values = require "zigbee-multi-button.supported_values"
+local ZigbeeDriver = require "st.zigbee"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -125,12 +126,16 @@ local ikea_of_sweden = {
     }
   },
   sub_drivers = {
-    require("zigbee-multi-button.ikea.TRADFRI_remote_control"),
-    require("zigbee-multi-button.ikea.TRADFRI_on_off_switch"),
-    require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
+    ZigbeeDriver.lazy_load_sub_driver(require("zigbee-multi-button.ikea.TRADFRI_remote_control")),
+    ZigbeeDriver.lazy_load_sub_driver(require("zigbee-multi-button.ikea.TRADFRI_on_off_switch")),
+    ZigbeeDriver.lazy_load_sub_driver(require("zigbee-multi-button.ikea.TRADFRI_open_close_remote"))
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "IKEA of Sweden" or device:get_manufacturer() == "KE"
+    if device:get_manufacturer() == "IKEA of Sweden" or device:get_manufacturer() == "KE" then
+      local subdriver = require("zigbee-multi-button.ikea")
+      return true, subdriver
+    end
+    return false
   end
 }
 

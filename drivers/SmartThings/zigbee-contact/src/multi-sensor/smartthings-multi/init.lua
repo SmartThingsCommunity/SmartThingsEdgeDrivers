@@ -89,7 +89,11 @@ local smartthings_multi = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "SmartThings"
+    if device:get_manufacturer() == "SmartThings" then
+      local subdriver = require("multi-sensor/smartthings-multi")
+      return true, subdriver
+    end
+    return false
   end
 }
 

@@ -17,6 +17,7 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local IASZone = (require "st.zigbee.zcl.clusters").IASZone
+local Driver = require "st.driver"
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
   local event
@@ -92,10 +93,10 @@ local zigbee_button_driver_template = {
   sub_drivers = {
     require("pushButton"),
     require("frient"),
-    require("zigbee-multi-button"),
+    ZigbeeDriver.lazy_load_sub_driver(require("zigbee-multi-button")),
     require("dimming-remote"),
     require("iris"),
-    require("samjin"),
+    ZigbeeDriver.lazy_load_sub_driver(require("samjin")),
     require("ewelink"),
     require("thirdreality")
   },
