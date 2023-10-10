@@ -181,27 +181,8 @@ local function set_playback_status(device, status, func_name)
     return
   else
     local ip = device:get_field(const.IP)
-    local val, err = invokeFunc[status](ip)
-    if val then
-      -- verify change and update app
-      device.thread:call_with_delay(1, function()
-        val, err = api.GetPlayerState(ip)
-        if val then
-          if val == "playing" then
-            device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
-          elseif val == "paused" then
-            device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
-          else
-            device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
-            if val == "stopped" then
-              log.warn(string.format("Error during %s(): unsupported status read - %s", func_name, val))
-            end
-          end
-        else
-          log.warn(string.format("Error getting new player state during %s(): %s", func_name, err))
-        end
-      end)
-    else
+    local _, err = invokeFunc[status](ip)
+    if err then
       log.warn(string.format("Error during %s(): %s", func_name, err))
     end
   end
