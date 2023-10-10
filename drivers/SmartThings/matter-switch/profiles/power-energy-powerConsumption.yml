@@ -1,16 +1,18 @@
-name: matter-motion-battery-illuminance
+name: power-energy-powerConsumption
 components:
 - id: main
   capabilities:
-  - id: motionSensor
+  - id: switch
     version: 1
-  - id: illuminanceMeasurement
+  - id: powerMeter
     version: 1
-  - id: battery
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
     version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: MotionSensor
+  - name: SmartPlug
