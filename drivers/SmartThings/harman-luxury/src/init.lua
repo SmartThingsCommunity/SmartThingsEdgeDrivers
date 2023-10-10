@@ -33,11 +33,13 @@ end
 
 local function goOffline(device)
   stop_check_for_updates_thread(device)
-  device:emit_event(capabilities.switch.switch.off())
-  device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
-  device:emit_event(capabilities.audioTrackData.audioTrackData({
-    title = "",
-  }))
+  if device:get_field(const.STATUS) then
+    device:emit_event(capabilities.switch.switch.off())
+    device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
+    device:emit_event(capabilities.audioTrackData.audioTrackData({
+      title = "",
+    }))
+  end
   device:set_field(const.STATUS, false, {
     persist = true,
   })
@@ -79,7 +81,7 @@ local function refresh(_, device)
                             audioTrackData.supportedTrackControlCommands))
         device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
-    else
+    elseif device:get_field(const.STATUS) then
       device:emit_event(capabilities.switch.switch.off())
       device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
     end
