@@ -23,6 +23,15 @@ local RECEIVED_X = "receivedX"
 local RECEIVED_Y = "receivedY"
 local HUESAT_SUPPORT = "huesatSupport"
 local CONVERSION_CONSTANT = 1000000
+-- These values are taken from the min/max definined in the colorTemperature capability
+local COLOR_TEMPERATURE_KELVIN_MAX = 30000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1
+local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
+local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+-- New profiles need to be added for devices that have more switch endpoints
+local MAX_MULTI_SWITCH_EPS = 7
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -31,9 +40,11 @@ end
 --- component_to_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
+--- and supports the OnOff cluster. This is done to bypass the
+--- BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
   local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(nil)
+  local eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
@@ -41,26 +52,67 @@ local function find_default_endpoint(device, component)
       break
     end
   end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
-local function component_to_endpoint(device, component_id)
-  -- Assumes matter endpoint layout is sequentional starting at 1.
-  local ep_num = component_id:match("switch(%d)")
-  return ep_num and tonumber(ep_num) or find_default_endpoint(device, component_id)
+local function initialize_switch(device)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
+  local component_map = {}
+
+  -- For switch devices, the profile components follow the naming convention "switch%d",
+  -- with the exception of "main" being the first component. Each component will then map
+  -- to the next lowest endpoint that hasn't been mapped yet.
+  for i, ep in ipairs(switch_eps) do
+    if i == 1 then
+      component_map["main"] = ep
+    else
+      component_map[string.format("switch%d", i)] = ep
+    end
+  end
+
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
+  -- where devices with multiple endpoints with the same device type cannot be detected
+  local num_switch_eps = #switch_eps
+  if num_switch_eps > 1 then
+    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
+  end
+  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
+    error(string.format(
+      "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
+      num_switch_eps,
+      MAX_MULTI_SWITCH_EPS
+    ))
+  end
+end
+
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local switch_comp = string.format("switch%d", ep)
-  if device.profile.components[switch_comp] ~= nil then
-    return switch_comp
-  else
-    return "main"
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+       return component
+    end
   end
+  log.warn_with({hub_logs = true}, string.format("Device has more than supported number of switches (max %d), mapping excess endpoint to main component", MAX_MULTI_SWITCH_EPS))
+  return "main"
 end
 
 local function device_init(driver, device)
   log.info_with({hub_logs=true}, "device init")
+  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) then
+    -- create endpoint to component map and switch profile as needed
+    initialize_switch(device)
+  end
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:subscribe()
@@ -68,28 +120,6 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
-end
-
-local function do_configure(driver, device)
-  -- New profiles need to be added for devices that have more switch endpoints
-  local MAX_MULTI_SWITCH_EPS = 7
-  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
-  -- where devices with multiple endpoints with the same device type cannot be detected
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local num_switch_eps = #switch_eps
-  table.sort(switch_eps)
-  --Default MCD switch handling depends on consecutive endpoint numbering
-  if num_switch_eps == switch_eps[num_switch_eps] then
-    if num_switch_eps > 1 then
-      device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
-    end
-    if num_switch_eps > MAX_MULTI_SWITCH_EPS then
-      error(string.format(
-        "Matter multi switch device will not function. Profile doesn't exist with %d components",
-        num_switch_eps
-      ))
-    end
-  end
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -217,6 +247,10 @@ end
 
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
+    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, "Device reported color temperature %d mired outside of supported capability range", ib.data.value)
+      return
+    end
     local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
     local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
@@ -271,8 +305,7 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    removed = device_removed,
-    doConfigure = do_configure,
+    removed = device_removed
   },
   matter_handlers = {
     attr = {
@@ -336,6 +369,9 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
   },
+    sub_drivers = {
+    require("eve-energy")
+  }
 }
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
