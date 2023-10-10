@@ -17,6 +17,7 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local device_lib = require "st.device"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -48,74 +49,56 @@ local function find_default_endpoint(device, component)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
-      res = v
-      break
+      return v
     end
   end
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
-local function initialize_switch(device)
+local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  local component_map = {}
+  local main_endpoint = find_default_endpoint(device)
 
-  -- For switch devices, the profile components follow the naming convention "switch%d",
-  -- with the exception of "main" being the first component. Each component will then map
-  -- to the next lowest endpoint that hasn't been mapped yet.
+  local current_component_number = 2
   for i, ep in ipairs(switch_eps) do
-    if i == 1 then
-      component_map["main"] = ep
-    else
-      component_map[string.format("switch%d", i)] = ep
+    if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+      local name = string.format("%s %d", device.label, current_component_number)
+      device.log.info(string.format("creating child device %s", name))
+      driver:try_create_device(
+        {
+          type = "EDGE_CHILD",
+          label = name,
+          profile = "switch-binary",
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%02X", ep),
+          vendor_provided_label = name
+        }
+      )
+      current_component_number = current_component_number + 1
     end
   end
-
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
-  -- where devices with multiple endpoints with the same device type cannot be detected
-  local num_switch_eps = #switch_eps
-  if num_switch_eps > 1 then
-    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
-  end
-  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
-    error(string.format(
-      "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
-      num_switch_eps,
-      MAX_MULTI_SWITCH_EPS
-    ))
-  end
+  device:refresh()
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
   return find_default_endpoint(device, component)
 end
 
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-       return component
-    end
-  end
-  log.warn_with({hub_logs = true}, string.format("Device has more than supported number of switches (max %d), mapping excess endpoint to main component", MAX_MULTI_SWITCH_EPS))
-  return "main"
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
 local function device_init(driver, device)
   log.info_with({hub_logs=true}, "device init")
-  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) then
-    -- create endpoint to component map and switch profile as needed
-    initialize_switch(device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_find_child(find_child)
+    initialize_switch(driver, device)
+    device:subscribe()
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:subscribe()
 end
 
 local function device_removed(driver, device)
