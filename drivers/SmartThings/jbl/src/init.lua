@@ -1,4 +1,4 @@
---  Copyright 2022 SmartThings
+--  Copyright 2023 SmartThings
 --
 --  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 --  except in compliance with the License. You may obtain a copy of the License at:
@@ -44,34 +44,35 @@ local function create_sse(driver, device, credential)
 
   local sse_url = driver.device_manager.get_sse_url(driver, device, conn_info)
   if not sse_url then
-    log.error("failed to get sse_url")
-  else
-    log.trace("Creating SSE EventSource for " .. device.device_network_id .. ", sse_url = " .. sse_url)
-    local eventsource = EventSource.new(sse_url, {[CREDENTIAL_KEY_HEADER] = credential}, nil)
-
-    eventsource.onmessage = function(msg)
-      if msg then
-        handle_sse_event(driver, device, msg)
-      end
-    end
-
-    eventsource.onerror = function()
-      log.error("Eventsource error: dni = " .. tostring(device.device_network_id))
-      device:offline()
-    end
-
-    eventsource.onopen = function(msg)
-      log.info("Eventsource open: dni = " .. tostring(device.device_network_id))
-      device:online()
-    end
-
-    local old_eventsource = device:get_field(fields.EVENT_SOURCE)
-    if old_eventsource then
-      log.info("Eventsource Close: dni = " .. tostring(device.device_network_id))
-      old_eventsource:close()
-    end
-    device:set_field(fields.EVENT_SOURCE, eventsource)
+    log.error("failed to get sse_url, dni = " .. tostring(device.device_network_id))
+    return
   end
+
+  log.trace("Creating SSE EventSource for " .. device.device_network_id .. ", sse_url = " .. sse_url)
+  local eventsource = EventSource.new(sse_url, {[CREDENTIAL_KEY_HEADER] = credential}, nil)
+
+  eventsource.onmessage = function(msg)
+    if msg then
+      handle_sse_event(driver, device, msg)
+    end
+  end
+
+  eventsource.onerror = function()
+    log.error("Eventsource error: dni = " .. tostring(device.device_network_id))
+    device:offline()
+  end
+
+  eventsource.onopen = function(msg)
+    log.info("Eventsource open: dni = " .. tostring(device.device_network_id))
+    device:online()
+  end
+
+  local old_eventsource = device:get_field(fields.EVENT_SOURCE)
+  if old_eventsource then
+    log.info("Eventsource Close: dni = " .. tostring(device.device_network_id))
+    old_eventsource:close()
+  end
+  device:set_field(fields.EVENT_SOURCE, eventsource)
 end
 
 local function update_connection(driver, device, device_ip, device_info)
