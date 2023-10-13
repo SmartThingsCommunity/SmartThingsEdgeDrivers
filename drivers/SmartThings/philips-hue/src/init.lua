@@ -138,7 +138,7 @@ local function emit_light_status_events(light_device, light)
           )
         )
       else
-        light_device:emit_event(capabilities.colorControl.hue(adjusted_sat))
+        light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
       end
     end
   end
@@ -680,6 +680,8 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields._ADDED, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
+
+  device:online()
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   handlers.refresh_handler(driver, device)
 end
@@ -700,10 +702,73 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
       log.info_with({ hub_logs = true },
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", device.label))
       device:online()
+
+      local bridge_api = device:get_field(Fields.BRIDGE_API)
+      cosock.spawn(function()
+        local child_device_map = {}
+        for _, device_record in ipairs(device:get_child_list()) do
+          local hue_device_id = device_record:get_field(Fields.HUE_DEVICE_ID)
+          if hue_device_id ~= nil then
+            child_device_map[hue_device_id] = device_record
+          end
+        end
+
+        local scanned = false
+        local connectivity_status, rest_err
+
+        while true do
+          if scanned then break end
+          connectivity_status, rest_err = bridge_api:get_connectivity_status()
+          if rest_err ~= nil then
+            log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
+              device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
+            goto continue
+          end
+
+          if connectivity_status.errors and #connectivity_status.errors > 0 then
+            log.error(
+              string.format(
+                "Hue Bridge %s replied with the following error message(s) " ..
+                "when querying child device connectivity status:",
+                device.label
+              )
+            )
+            for idx, err in ipairs(connectivity_status.errors) do
+              log.error(string.format("--- %s", st_utils.stringify_table(err, string.format("Error %s:", idx), true)))
+            end
+            goto continue
+          end
+
+          if connectivity_status.data and #connectivity_status.data > 0 then
+            scanned = true
+          end
+
+          for _, status in ipairs(connectivity_status.data) do
+            local hue_device_id = (status.owner and status.owner.rid) or ""
+            log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
+            local child_device = child_device_map[hue_device_id]
+            if child_device then
+              if status.status == "connected" then
+                child_device.log.trace("Marking Online after SSE Reconnect")
+                child_device:online()
+              elseif status.status == "connectivity_issue" then
+                child_device.log.trace("Marking Offline after SSE Reconnect")
+                child_device:offline()
+              end
+            end
+          end
+          ::continue::
+        end
+      end, string.format("Hue Bridge %s Zigbee Scan Task", device.label))
     end
 
     eventsource.onerror = function()
       log.error_with({ hub_logs = true }, string.format("Hue Bridge \"%s\" Event Source Error", device.label))
+
+      for _, device_record in ipairs(device:get_child_list()) do
+        device_record:offline()
+      end
+
       device:offline()
     end
 

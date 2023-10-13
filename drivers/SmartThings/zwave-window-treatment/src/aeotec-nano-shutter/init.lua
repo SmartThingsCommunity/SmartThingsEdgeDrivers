@@ -93,7 +93,24 @@ end
 
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
+local function added_handler(driver, device)
+  device:emit_event(capabilities.statelessCurtainPowerButton.availableCurtainPowerButtons(
+    {SET_BUTTON_TO_OPEN, SET_BUTTON_TO_CLOSE, SET_BUTTON_TO_PAUSE},
+    {visibility = {displayed = false}})
+  )
+end
+
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
 local function refresh(driver, device)
+  -- if we've already got an added device that hasn't set this value, this should cause it to be set on refresh
+  -- this can be removed later
+  if device:get_latest_state(
+    "main",
+    capabilities.statelessCurtainPowerButton.ID,
+    capabilities.statelessCurtainPowerButton.availableCurtainPowerButtons.NAME) == nil then
+    added_handler(driver, device)
+  end
   device:send(Basic:Get({}))
 end
 
@@ -119,7 +136,8 @@ local aeotec_nano_shutter = {
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    added = added_handler
   },
   NAME = "Aeotec nano shutter",
   can_handle = can_handle_aeotec_nano_shutter
