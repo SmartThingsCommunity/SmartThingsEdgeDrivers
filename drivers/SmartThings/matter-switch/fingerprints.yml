@@ -146,6 +146,12 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
+  - id: "matter/colorTemperature/light/3"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
   - id: "matter/color/light"
     deviceLabel: Matter Color Light
     deviceTypes:
