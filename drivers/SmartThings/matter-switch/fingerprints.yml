@@ -1,38 +1,38 @@
-matterManufacturer:    
+matterManufacturer:
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x53
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/Europe"
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x50
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/U.K."
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x54
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
   - id: "Eve/Energy/Australia"
     deviceLabel: Eve Energy
     vendorId: 0x130A
     productId: 0x5E
-    deviceProfileName: plug-binary
+    deviceProfileName: power-energy-powerConsumption
 
   #GE
-  - id: "GELightingSavant/FullColor/Bulb"
-    deviceLabel: GELighting Savant Full Color Bulb WiFi
+  - id: "GELightingSavant/Bulb/A19"
+    deviceLabel: Cync Full Color A19
     vendorId: 0x1339
     productId: 0x89
     deviceProfileName: light-color-level-2000K-7000K
-  - id: "GELightingSavant/Onoff/Plug"
-    deviceLabel: GELighting Savant OnOff Plug WiFi
+  - id: "GELightingSavant/Plug/Indoor"
+    deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
-
+    
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -59,6 +59,13 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
+
+#Yeelight
+  - id: "Yeelight Smart Lamp"
+    deviceLabel: Yeelight Smart Lamp
+    vendorId: 0x1312
+    productId: 0x01
+    deviceProfileName: light-level-colorTemperature-2710k-6500k
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
@@ -121,21 +128,48 @@ matterGeneric:
     deviceTypes:
       - id: 0x0101 # Dimmable Light
     deviceProfileName: light-level
+  - id: "matter/dimmable/light/2"
+    deviceLabel: Matter Dimmable Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: light-level
   - id: "matter/colorTemperature/light"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
       - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
-  - id: "matter/color/light"
+  - id: "matter/colorTemperature/light/2"
     deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
+  - id: "matter/colorTemperature/light/3"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
+  - id: "matter/color/light"
+    deviceLabel: Matter Color Light
     deviceTypes:
       - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/color/temp/light"
-    deviceLabel: Matter Color Temperature Light
+    deviceLabel: Matter Color Light
     deviceTypes:
-      - id: 0x010D # Extended Color Light
       - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: light-color-level
+  - id: "matter/color/temp/light/2"
+    deviceLabel: Matter Color Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/on-off/plug"
     deviceLabel: Matter OnOff Plug
@@ -147,26 +181,6 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
-  - id: "matter/on-off/switch"
-    deviceLabel: Matter OnOff Switch
-    deviceTypes:
-      - id: 0x0103 # OnOff Switch
-    deviceProfileName: switch-binary
-  - id: "matter/dimmable/switch"
-    deviceLabel: Matter Dimmable Switch
-    deviceTypes:
-      - id: 0x0104 # Dimmer Switch
-    deviceProfileName: switch-level
-  - id: "matter/dimmable/inunitswitch"
-    deviceLabel: Matter Dimmable Switch
-    deviceTypes:
-      - id: 0x010B # Dimmable PlugIn Unit
-    deviceProfileName: switch-level
-  - id: "matter/color/switch"
-    deviceLabel: Matter Color Switch
-    deviceTypes:
-      - id: 0x0105 # Color Dimmer Switch
-    deviceProfileName: switch-color-level
 
 matterThing:
   - id: SmartThings/MatterThing

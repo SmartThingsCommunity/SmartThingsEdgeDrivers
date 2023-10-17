@@ -7,14 +7,18 @@ local dkjson = require "dkjson"
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
---mock the actual device
+-- Mock a 4-button device using endpoints non-consecutive endpoints
 local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("4-button-battery.yml"), -- on a real device we would switch to this, rather than fingerprint to it
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     endpoints = {
     {
-      endpoint_id = 1,
+      endpoint_id = 0,
+      clusters = {},
+    },
+    {
+      endpoint_id = 10,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -25,7 +29,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       },
     },
     {
-      endpoint_id = 2,
+      endpoint_id = 20,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -35,7 +39,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       },
     },
     {
-      endpoint_id = 3,
+      endpoint_id = 30,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -45,7 +49,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       },
     },
     {
-      endpoint_id = 5,
+      endpoint_id = 50,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -92,7 +96,7 @@ local function test_init()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 50)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 end
 
@@ -106,7 +110,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}  --move to position 1?
+        mock_device, 10, {new_position = 1}  --move to position 1?
       ),
     }
   },
@@ -126,7 +130,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 2, {new_position = 1}  --move to position 1?
+        mock_device, 20, {new_position = 1}  --move to position 1?
       ),
     }
   },
@@ -136,7 +140,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 2, {previous_position = 0}  --move to position 1?
+        mock_device, 20, {previous_position = 0}  --move to position 1?
       ),
     }
   },
@@ -155,7 +159,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 2, {new_position = 1}
+        mock_device, 20, {new_position = 1}
       )
     })
     test.wait_for_events()
@@ -163,7 +167,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 2, {previous_position = 0}
+        mock_device, 20, {previous_position = 0}
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.held({state_change = true})))
@@ -177,7 +181,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 3, {new_position = 1}
+        mock_device, 30, {new_position = 1}
       )
     })
     test.wait_for_events()
@@ -185,7 +189,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 3, {previous_position = 0}
+        mock_device, 30, {previous_position = 0}
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
@@ -199,7 +203,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     })
     test.wait_for_events()
@@ -207,7 +211,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 5, {previous_position = 0}
+        mock_device, 50, {previous_position = 0}
       )
     })
   end
@@ -219,31 +223,31 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 5, {previous_position = 0}
+        mock_device, 50, {previous_position = 0}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.MultiPressOngoing:build_test_event_report(
-        mock_device, 5, {new_position = 1, current_number_of_presses_counted = 2}
+        mock_device, 50, {new_position = 1, current_number_of_presses_counted = 2}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 5, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1}
+        mock_device, 50, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1}
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.double({state_change = true})))
@@ -256,20 +260,20 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 3, {new_position = 1}
+        mock_device, 30, {new_position = 1}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.LongPress:build_test_event_report(
-        mock_device, 3, {new_position = 1}
+        mock_device, 30, {new_position = 1}
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.held({state_change = true})))
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.LongRelease:build_test_event_report(
-        mock_device, 3, {previous_position = 0}
+        mock_device, 30, {previous_position = 0}
       )
     })
   end
@@ -281,20 +285,20 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.LongPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.held({state_change = true})))
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Switch.events.LongRelease:build_test_event_report(
-        mock_device, 5, {previous_position = 0}
+        mock_device, 50, {previous_position = 0}
       )
     })
   end
@@ -308,7 +312,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       ),
     }
   },
@@ -323,7 +327,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.LongPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       ),
     }
   },
@@ -343,7 +347,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       )
     }
   },
@@ -358,7 +362,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, 1, {previous_position = 1}
+        mock_device, 10, {previous_position = 1}
       )
     }
   },
@@ -379,7 +383,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       )
     }
   },
@@ -394,7 +398,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.LongPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       ),
     }
   },
@@ -409,7 +413,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.LongRelease:build_test_event_report(
-        mock_device, 1, {previous_position = 1}
+        mock_device, 10, {previous_position = 1}
       )
     }
   },
@@ -424,7 +428,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          mock_device, 1, 2
+          mock_device, 10, 2
         )
       },
     },
@@ -445,7 +449,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          mock_device, 5, 3
+          mock_device, 50, 3
         )
       },
     },
@@ -466,7 +470,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          mock_device, 1, 7
+          mock_device, 10, 7
         )
       },
     },
@@ -487,7 +491,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       )
     }
   },
@@ -503,7 +507,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0}
+        mock_device, 10, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0}
       )
     }
   },
@@ -524,7 +528,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 10, {new_position = 1}
       )
     }
   },
@@ -540,7 +544,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 4, previous_position=0}
+        mock_device, 10, {new_position = 1, total_number_of_presses_counted = 4, previous_position=0}
       )
     }
   },
@@ -561,7 +565,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-          mock_device, 1, 150
+          mock_device, 10, 150
         ),
       },
     },
@@ -584,7 +588,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     }
   },
@@ -594,7 +598,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.LongPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     }
   },
@@ -609,7 +613,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 50, {new_position = 1}
       )
     }
   },
@@ -619,7 +623,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 5, {new_position = 0, total_number_of_presses_counted = 2, previous_position=0}
+        mock_device, 50, {new_position = 0, total_number_of_presses_counted = 2, previous_position=0}
       )
     }
   }
