@@ -16,6 +16,12 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x004D
     deviceProfileName: contact-battery
+  - id: "Eve/Weather"
+    deviceLabel: Eve Weather
+    vendorId: 0x130a
+    productId: 0x0057
+    deviceProfileName: temperature-humidity-battery
+
   - id: "TUO/ContactDoorAndWindow"
     deviceLabel: TUO Contact Sensor
     vendorId: 0x141E
