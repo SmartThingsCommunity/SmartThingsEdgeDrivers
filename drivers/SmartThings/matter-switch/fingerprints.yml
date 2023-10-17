@@ -32,7 +32,7 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
-
+    
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -59,6 +59,13 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
+
+#Yeelight
+  - id: "Yeelight Smart Lamp"
+    deviceLabel: Yeelight Smart Lamp
+    vendorId: 0x1312
+    productId: 0x01
+    deviceProfileName: light-level-colorTemperature-2710k-6500k
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
