@@ -54,8 +54,10 @@ local function emit_light_status_events(light_device, light)
   if light_device ~= nil then
     if light.status then
       if light.status == "connected" then
+        light_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
         light_device:online()
       elseif light.status == "connectivity_issue" then
+        light_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
         light_device:offline()
         return
       end
@@ -678,10 +680,10 @@ light_added = function(driver, device, parent_device_id, resource_id)
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
+  device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
 
   driver.light_id_to_device[device_light_resource_id] = device
 
-  device:online()
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   handlers.refresh_handler(driver, device)
 end
@@ -690,7 +692,6 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
   if not device:get_field(Fields.EVENT_SOURCE) then
     log.info_with({ hub_logs = true }, "Creating SSE EventSource for bridge " ..
       (device.label or device.device_network_id or device.id or "unknown bridge"))
-    device:offline()
     local url_table = lunchbox_util.force_url_table(bridge_url .. "/eventstream/clip/v2")
     local eventsource = EventSource.new(
       url_table,
