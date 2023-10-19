@@ -48,6 +48,7 @@ local devices = {
     MATCHING_MATRIX = {
       { mfr = "SOMFY", model = "Situo 1 Zigbee" },
       { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
+      { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 3
