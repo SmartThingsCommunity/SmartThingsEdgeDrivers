@@ -712,10 +712,6 @@ local function do_bridge_network_init(driver, device, bridge_url, api_key)
 
       local bridge_api = device:get_field(Fields.BRIDGE_API)
       cosock.spawn(function()
-        -- Wait bit before doing querying to allow initial state for added devices to be reported
-        -- Children will all remain offline for this amount of time when a bridge comes back online.
-        -- Children will all be online for this amount of time when a bridge id first joined.
-        cosock.socket.sleep(15) --TODO is this long enough for large hue setup initial onboarding to complete for all devices?
         local child_device_map = {}
         local children = device:get_child_list()
         device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
