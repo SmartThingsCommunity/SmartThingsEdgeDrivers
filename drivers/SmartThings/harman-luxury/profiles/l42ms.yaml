@@ -20,4 +20,6 @@ components:
     version: 1
   categories:
   - name: Speaker
-  
+preferences:
+- preferenceId: certifiedpreferences.doNotDisturbPlayback
+  explicit: true
