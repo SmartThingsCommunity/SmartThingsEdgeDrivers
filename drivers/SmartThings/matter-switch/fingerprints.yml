@@ -138,7 +138,7 @@ matterGeneric:
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
       - id: 0x010C # Color Temperature Light
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "matter/colorTemperature/light/2"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
