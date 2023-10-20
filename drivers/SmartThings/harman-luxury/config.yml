@@ -1,0 +1,5 @@
+name: 'Harman Luxury'
+packageKey: 'harman-luxury'
+permissions:
+  lan: {}
+  discovery: {}
