@@ -59,7 +59,12 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
-
+#SONOFF
+  - id: "SONOFF MINIR4M"
+    deviceLabel: Smart Plug-in Unit
+    vendorId: 0x1321
+    productId: 0x0002
+    deviceProfileName: plug-binary
 #Yeelight
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
