@@ -78,7 +78,6 @@ matterManufacturer:
     productId: 0xAA04
     deviceProfileName: "switch-3"  
 
-
 # Sengled
 # Not WWST Certified: As of the device's software release of "780014029", the device reports itself with device type of 0x10C,
 # which is primarily used for Lighting devices with only Color Temperature, but the device supports color control. Adding this
