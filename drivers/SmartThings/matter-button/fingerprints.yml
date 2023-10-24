@@ -5,6 +5,7 @@ matterGeneric:
       - id: 0x000F
     deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
 matterManufacturer:
+#TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
     vendorId: 0x141E
