@@ -217,6 +217,7 @@ local function attr_list_handler(driver, device, ib, response)
   for _, attr_id in ipairs (ib.data.elements or {}) do
     if attr_id.value == clusters.Thermostat.attributes.ThermostatRunningState.ID then
       local new_profile = string.gsub(device:get_field("profile_name"), "-nostate", "")
+      device:set_field("profile_name", new_profile)
       device.log.info(string.format("Updating device profile to %s.", new_profile))
       device:try_update_metadata({ profile = new_profile })
       return
