@@ -72,7 +72,7 @@ matterManufacturer:
     productId: 0x01
     deviceProfileName: light-level-colorTemperature-2710k-6500k
 #Zemismart
- - id: "5020/43524"
+  - id: "5020/43524"
     deviceLabel: "Zemismart Thread Smart Switch"
     vendorId: 0x139C
     productId: 0xAA04
