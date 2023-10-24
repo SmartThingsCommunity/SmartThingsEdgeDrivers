@@ -21,7 +21,7 @@ matterManufacturer:
     productId: 0x5E
     deviceProfileName: power-energy-powerConsumption
 
-  #GE
+#GE
   - id: "GELightingSavant/Bulb/A19"
     deviceLabel: Cync Full Color A19
     vendorId: 0x1339
@@ -59,13 +59,28 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
-
+#SONOFF
+  - id: "SONOFF MINIR4M"
+    deviceLabel: Smart Plug-in Unit
+    vendorId: 0x1321
+    productId: 0x0002
+    deviceProfileName: plug-binary
 #Yeelight
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
     vendorId: 0x1312
     productId: 0x01
     deviceProfileName: light-level-colorTemperature-2710k-6500k
+
+# Sengled
+# Not WWST Certified: As of the device's software release of "780014029", the device reports itself with device type of 0x10C,
+# which is primarily used for Lighting devices with only Color Temperature, but the device supports color control. Adding this
+# fingerprint to account for the color functionality
+  - id: "Sengled-Light-Bulb-W41-N15A"
+    deviceLabel: Sengled LED Smart Light Bulb (A19)
+    vendorId: 0x1160
+    productId: 0x9002
+    deviceProfileName: light-color-level-2700K-6500K
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
@@ -144,6 +159,12 @@ matterGeneric:
     deviceTypes:
       - id: 0x0100 # OnOff Light
       - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: light-level-colorTemperature
+  - id: "matter/colorTemperature/light/3"
+    deviceLabel: Matter Color Temperature Light
+    deviceTypes:
+      - id: 0x0100 # OnOff Light
       - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
   - id: "matter/color/light"
