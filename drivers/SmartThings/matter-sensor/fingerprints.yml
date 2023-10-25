@@ -21,12 +21,6 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x0057
     deviceProfileName: temperature-humidity-battery
-
-  - id: "TUO/ContactDoorAndWindow"
-    deviceLabel: TUO Contact Sensor
-    vendorId: 0x141E
-    productId: 0x0002
-    deviceProfileName: contact-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -39,6 +33,11 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0003
     deviceProfileName: "temperature-humidity-battery"
+    - id: "TUO/ContactDoorAndWindow"
+    deviceLabel: TUO Contact Sensor
+    vendorId: 0x141E
+    productId: 0x0002
+    deviceProfileName: contact-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
