@@ -132,6 +132,26 @@ local function status_report_handler(driver, device, zb_rx)
   temperature_handler(device, temperature)
 end
 
+local handle_garage_event = function(device, value)
+  local event
+  if value > 825 then
+    event = capabilities.contactSensor.contact.open()
+  elseif value < 100 then
+    event = capabilities.contactSensor.contact.closed()
+  end
+  if event ~= nil then
+    device:emit_event(event)
+  end
+end
+
+local handle_three_axis_report = function(device, x, y, z)
+  if x ~= nil and y ~= nil and z ~= nil then
+    device:emit_event(capabilities.threeAxis.threeAxis({value = {x, y, z}}))
+  end
+  if z ~= nil and device.preferences["certifiedpreferences.garageSensor"] then
+    handle_garage_event(device, math.abs(z))
+  end
+end
 
 local function xyz_handler(driver, device, zb_rx)
   -- This is a custom cluster command for the kickstarter multi.
@@ -139,7 +159,7 @@ local function xyz_handler(driver, device, zb_rx)
   local x = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(1), zb_rx.body.zcl_body.body_bytes:byte(2))
   local y = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(3), zb_rx.body.zcl_body.body_bytes:byte(4))
   local z = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(5), zb_rx.body.zcl_body.body_bytes:byte(6))
-  multi_utils.handle_three_axis_report(device, x, y, z)
+  handle_three_axis_report(device, x, y, z)
 end
 
 local smartsense_multi = {
