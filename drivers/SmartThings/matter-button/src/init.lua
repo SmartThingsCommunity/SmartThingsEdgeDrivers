@@ -384,6 +384,7 @@ local matter_driver_template = {
   subscribed_attributes = {
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
+      clusters.Switch.attributes.CurrentPosition
     },
   },
   subscribed_events = {
