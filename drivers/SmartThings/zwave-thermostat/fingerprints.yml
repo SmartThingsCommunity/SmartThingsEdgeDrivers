@@ -81,6 +81,12 @@ zwaveManufacturer:
     manufacturerId: 0x008B
     productType: 0x5452
     deviceProfileName: base-thermostat-without-battery
+  - id: "0438/0200/D013"
+    deviceLabel: Namron thermostat
+    manufacturerId: 0x0438
+    productType: 0x0200
+    productId: 0xD013
+    deviceProfileName: thermostat-for-floor-heating
   - id: "Danfoss/thermostat/0005"
     deviceLabel: Danfoss LC13 Thermostat
     manufacturerId: 0x0002
