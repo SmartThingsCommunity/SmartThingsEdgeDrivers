@@ -87,6 +87,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.shinasystems"),
     require("zigbee-multi-button.robb"),
     require("zigbee-multi-button.wallhero"),
+    require("zigbee-multi-button.SLED")
   }
 }
 
