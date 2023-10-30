@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -294,6 +294,8 @@ local zigbee_thermostat_driver = {
     require("leviton"),
     require("danfoss"),
     require("popp")
+    require("popp_danfoss"),
+    require("vimar")
   },
 }
 

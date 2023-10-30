@@ -23,7 +23,10 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   local level = 100 - value.value
   local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
   local windowShade = capabilities.windowShade.windowShade
-  if level == 0 then
+  if level == -155 then -- unknown position
+    device:emit_event(windowShade.unknown())
+    device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
+  elseif level == 0 then
     device:emit_event(windowShade.closed())
     device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   elseif level == 100 then
@@ -77,7 +80,7 @@ local function window_shade_preset_cmd(driver, device, command)
 end
 
 local ikea_window_treatment = {
-  NAME = "ikea window treatment",
+  NAME = "inverted lift percentage",
   zigbee_handlers = {
     attr = {
       [WindowCovering.ID] = {
@@ -94,7 +97,9 @@ local ikea_window_treatment = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "IKEA of Sweden"
+    return device:get_manufacturer() == "IKEA of Sweden" or
+      device:get_manufacturer() == "Smartwings" or
+      device:get_manufacturer() == "Insta GmbH"
   end
 }
 

@@ -75,6 +75,14 @@ test.register_message_test(
     },
     {
       channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        WakeUp:IntervalGet({ })
+      )
+    },
+    {
+      channel = "zwave",
       direction = "receive",
       message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command( SensorBinary:Report({
         sensor_type = SensorBinary.sensor_type.DOOR_WINDOW,
@@ -99,6 +107,9 @@ test.register_message_test(
         Battery:Get({ })
       )
     },
+  },
+  {
+    inner_block_ordering = "relaxed"
   }
 )
 

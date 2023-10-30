@@ -42,7 +42,8 @@ local presence_utils = require "presence_utils"
 local CHECKIN_INTERVAL = 20 -- seconds
 
 local function arrival_sensor_v1_can_handle(opts, driver, device, ...)
-  return device:get_model() ~= "tagv4"
+  -- excluding Aqara device and tagv4
+  return device:get_manufacturer() ~= "aqara" and device:get_model() ~= "tagv4"
 end
 
 local function legacy_battery_handler(self, device, zb_rx)
@@ -100,7 +101,7 @@ local function beep_handler(self, device, command)
 end
 
 local function added_handler(self, device)
-  -- device:emit_event(PresenceSensor.presence("present"))
+  device:emit_event(PresenceSensor.presence("present"))
 end
 
 local function init_handler(self, device, event, args)

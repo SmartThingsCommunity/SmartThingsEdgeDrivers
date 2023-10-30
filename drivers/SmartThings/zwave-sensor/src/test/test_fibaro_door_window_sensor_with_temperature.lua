@@ -273,6 +273,10 @@ test.register_coroutine_test(
     )
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
       mock_fibaro_door_window_sensor,
+      WakeUp:IntervalGet({})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_fibaro_door_window_sensor,
       Battery:Get({})
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(

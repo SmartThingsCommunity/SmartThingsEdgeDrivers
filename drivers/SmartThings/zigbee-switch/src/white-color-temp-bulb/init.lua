@@ -19,6 +19,11 @@ local colorTemperature_defaults = require "st.zigbee.defaults.colorTemperature_d
 local ColorControl = clusters.ColorControl
 
 local WHITE_COLOR_TEMP_BULB_FINGERPRINTS = {
+  ["DURAGREEN"] = {
+    ["DG-CW-02"] = true,
+    ["DG-CW-01"] = true,
+    ["DG-CCT-01"] = true
+  },
   ["Samsung Electronics"] = {
     ["ABL-LIGHT-Z-001"] = true,
     ["SAMSUNG-ITM-Z-001"] = true
@@ -128,6 +133,9 @@ local white_color_temp_bulb = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature_handler
     }
+  },
+  sub_drivers = {
+    require("white-color-temp-bulb.duragreen"),
   },
   can_handle = can_handle_white_color_temp_bulb
 }

@@ -99,7 +99,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
-
 end
 test.set_test_init_function(test_init)
 
@@ -525,6 +524,20 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(72))
+    }
+  }
+)
+
+test.register_message_test(
+  "Do not report when receiving a color temperature of 0 mireds",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
+      }
     }
   }
 )

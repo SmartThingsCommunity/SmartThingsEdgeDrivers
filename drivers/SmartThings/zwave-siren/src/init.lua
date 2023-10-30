@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
--- local cap_defaults = require "st.capabilities.defaults"
+local cap_defaults = require "st.capabilities.defaults"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver
@@ -74,7 +74,7 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local function added_handler(self, device)
-  -- cap_defaults.emit_default_events(device, self.supported_capabilities)
+  cap_defaults.emit_default_events(device, self.supported_capabilities)
 end
 
 --------------------------------------------------------------------------------------------
@@ -102,7 +102,8 @@ local driver_template = {
     require("yale-siren"),
     require("zipato-siren"),
     require("utilitech-siren"),
-    require("fortrezz")
+    require("fortrezz"),
+    require("apiv6_bugfix"),
   },
   lifecycle_handlers = {
     infoChanged = info_changed,

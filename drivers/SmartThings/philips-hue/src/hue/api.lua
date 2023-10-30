@@ -86,7 +86,7 @@ local function process_rest_response(response, err, partial, err_callback)
       )
     end
 
-    return table.unpack(json_result)
+    return table.unpack(json_result, 1, json_result.n)
   else
     return nil, "no response or error received"
   end
@@ -175,6 +175,8 @@ function PhilipsHueApi:update_connection(hub_base_url, api_key)
   self._ctrl_tx:send(msg)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -185,9 +187,11 @@ local function do_get(instance, path)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -198,7 +202,7 @@ local function do_put(instance, path, payload)
     instance.client:close_socket()
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -220,7 +224,7 @@ function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 ---@param bridge_ip string
@@ -243,17 +247,27 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   if err ~= nil then
     return nil, "cosock error: " .. err
   end
-  return table.unpack(recv)
+  return table.unpack(recv, 1, recv.n)
 end
 
 function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
 
 function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
 
+function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
+
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 
-function PhilipsHueApi:get_light_by_id(id)
-  return do_get(self, string.format("/clip/v2/resource/light/%s", id))
+function PhilipsHueApi:get_light_by_id(light_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/light/%s", light_resource_id))
+end
+
+function PhilipsHueApi:get_device_by_id(hue_device_id)
+  return do_get(self, string.format("/clip/v2/resource/device/%s", hue_device_id))
+end
+
+function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/zigbee_connectivity/%s", zigbee_resource_id))
 end
 
 function PhilipsHueApi:get_room_by_id(id)
