@@ -184,6 +184,11 @@ zigbeeManufacturer:
     manufacturer: SmartThings
     model: PGC313EU
     deviceProfileName: multi-sensor
+  - id: "Third Reality/3RVS01031Z"
+    deviceLabel: ThirdReality Vibration Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RVS01031Z
+    deviceProfileName: thirdreality-multi-sensor
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
