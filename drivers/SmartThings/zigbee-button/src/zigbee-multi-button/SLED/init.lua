@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@ local Level = clusters.Level
 local OnOff = clusters.OnOff
 local ColorControl = clusters.ColorControl
 
-local fields = {
-  IGNORE_MOVETOCOLORTEMP = "ignore_next_movetocolortemperature"
-}
-
 local emit_pushed_event = function(button_name, device)
   local additional_fields = {
     state_change = true
@@ -31,8 +27,7 @@ local emit_pushed_event = function(button_name, device)
   local event = capabilities.button.button.pushed(additional_fields)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
-    device:emit_component_event(comp, event)
-    device:emit_event(event)
+    device:emit_component_event(comp, event) 
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end
@@ -46,8 +41,7 @@ local emit_held_event = function(button_name, device)
   local event = capabilities.button.button.held(additional_fields)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
-    device:emit_component_event(comp, event)
-    device:emit_event(event)
+    device:emit_component_event(comp, event) 
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end
