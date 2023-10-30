@@ -14,7 +14,7 @@ VERBOSITY_FAILURE_TEST_LOGS = 2
 VERBOSITY_ALL_TEST_LOGS = 3
 
 DRIVER_DIR = Path(os.path.abspath(__file__)).parents[1].joinpath("drivers")
-LUACOV_CONFIG = DRIVER_DIR.parent.joinpath(".circleci").joinpath("config.luacov")
+LUACOV_CONFIG = DRIVER_DIR.parent.joinpath(".circleci", "config.luacov")
 
 def find_affected_tests(working_dir, changed_files):
     affected_tests = []
@@ -36,7 +36,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
     ts = []
     total_tests = 0
     total_passes = 0
-    for test_file in DRIVER_DIR.glob("*/*/src/test/test_*.lua"):
+    for test_file in DRIVER_DIR.glob("*" + os.path.sep + "*" + os.path.sep + "src" + os.path.sep + "test" + os.path.sep + "test_*.lua"):
         if filter != None and re.search(filter, str(test_file)) is None:
             continue
         os.chdir(test_file.parents[1])
@@ -53,7 +53,9 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         last_line = ""
         in_progress_test_name = ""
         test_cases = []
-        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).rindex('/')+1:-4].replace('_',' '))
+        test_file_name = os.path.basename(test_file)
+        test_suite_name = os.path.splitext(test_file_name)[0].replace('_', ' ')
+        test_suite = junit_xml.TestSuite(test_suite_name)
         test_case = None
         test_logs = ""
         test_title = ""
@@ -164,3 +166,4 @@ if __name__ == "__main__":
     elif args.superextraverbose:
         verbosity_level = 3
     run_tests(verbosity_level, args.filter, args.junit, args.coverage)
+

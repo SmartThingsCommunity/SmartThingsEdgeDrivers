@@ -21,7 +21,27 @@ local MatterDriver = require "st.matter.driver"
 
 local DEFAULT_LEVEL = 0
 
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  -- Use the find_default_endpoint function to return the first endpoint that
+  -- supports a given cluster.
+  return find_default_endpoint(device, clusters.WindowCovering.ID)
+end
+
 local function device_init(driver, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
 end
 
@@ -97,7 +117,8 @@ local function current_status_handler(driver, device, ib, response)
                    ) or DEFAULT_LEVEL
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
-       rb.info_block.cluster_id == clusters.WindowCovering.ID then
+       rb.info_block.cluster_id == clusters.WindowCovering.ID and
+       rb.info_block.data.value ~= nil then
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
   end
