@@ -25,6 +25,7 @@ local devices = {
       { mfr = "CentraLite", model = "3450-L" },
       { mfr = "CentraLite", model = "3450-L2" },
       { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
+      
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 4
@@ -48,9 +49,15 @@ local devices = {
     MATCHING_MATRIX = {
       { mfr = "SOMFY", model = "Situo 1 Zigbee" },
       { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
-      { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
+    NUMBER_OF_BUTTONS = 3
+  },
+  BUTTON_PUSH_HELD_3 = {
+    MATCHING_MATRIX = {
+      { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 3
   },
   BUTTON_PUSH_4 = {
