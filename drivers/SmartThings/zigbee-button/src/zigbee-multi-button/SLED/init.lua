@@ -48,7 +48,6 @@ local emit_held_event = function(button_name, device)
 end
 
 local do_configure = function(self, device)
-  do_refresh(self, device)
   device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
   -- The device reports button presses to this group but it can't be read from the binding table
 end
