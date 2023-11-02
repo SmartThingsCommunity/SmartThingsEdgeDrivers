@@ -95,9 +95,6 @@ end
 -------------------------------------------------------------------------------------
 
 local function requestData(device)
-  -- Update the on/off status
-  device:send(clusters.OnOff.attributes.OnOff:read(device))
-
   -- Update the Watt usage
   device:send(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil))
 
