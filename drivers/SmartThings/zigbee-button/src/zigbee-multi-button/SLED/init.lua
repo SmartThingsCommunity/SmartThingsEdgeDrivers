@@ -27,7 +27,7 @@ local emit_pushed_event = function(button_name, device)
   local event = capabilities.button.button.pushed(additional_fields)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
-    device:emit_component_event(comp, event) 
+    device:emit_component_event(comp, event)
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end
@@ -41,7 +41,7 @@ local emit_held_event = function(button_name, device)
   local event = capabilities.button.button.held(additional_fields)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
-    device:emit_component_event(comp, event) 
+    device:emit_component_event(comp, event)
   else
     log.warn("Attempted to emit button event for unknown button: " .. button_name)
   end
