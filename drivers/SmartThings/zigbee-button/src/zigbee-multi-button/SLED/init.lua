@@ -54,11 +54,6 @@ end
 
 local SLED_button = {
   NAME = "SLED Button",
-  capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
-    }
-  },
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
