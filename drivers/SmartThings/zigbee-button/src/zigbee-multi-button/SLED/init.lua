@@ -33,7 +33,6 @@ local emit_pushed_event = function(button_name, device)
   end
 end
 
-
 local emit_held_event = function(button_name, device)
   local additional_fields = {
     state_change = true
