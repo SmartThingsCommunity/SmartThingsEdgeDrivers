@@ -145,7 +145,6 @@ test.register_coroutine_test(
     test.mock_time.advance_time(60000) -- Ensure that the timer created in create_poll_schedule triggers
     test.socket.matter:__set_channel_ordering("relaxed")
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
     test.socket.matter:__expect_send({ mock_device.id,
@@ -182,7 +181,6 @@ test.register_coroutine_test(
       }
     )
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
     test.socket.matter:__expect_send({ mock_device.id,
