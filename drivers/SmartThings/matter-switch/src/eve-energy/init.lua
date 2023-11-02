@@ -18,7 +18,6 @@
 
 local capabilities = require "st.capabilities"
 local log = require "log"
-local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
 local utils = require "st.utils"
 local data_types = require "st.matter.data_types"
