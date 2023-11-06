@@ -175,6 +175,8 @@ function PhilipsHueApi:update_connection(hub_base_url, api_key)
   self._ctrl_tx:send(msg)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -188,6 +190,8 @@ local function do_get(instance, path)
   return table.unpack(recv, 1, recv.n)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -254,8 +258,16 @@ function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/r
 
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 
-function PhilipsHueApi:get_light_by_id(id)
-  return do_get(self, string.format("/clip/v2/resource/light/%s", id))
+function PhilipsHueApi:get_light_by_id(light_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/light/%s", light_resource_id))
+end
+
+function PhilipsHueApi:get_device_by_id(hue_device_id)
+  return do_get(self, string.format("/clip/v2/resource/device/%s", hue_device_id))
+end
+
+function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/zigbee_connectivity/%s", zigbee_resource_id))
 end
 
 function PhilipsHueApi:get_room_by_id(id)

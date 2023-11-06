@@ -2146,6 +2146,16 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: basic-switch
+  - id: "Insta GmbH/Switching Actuator"
+    deviceLabel: NEXENTRO Switching Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Switching Actuator
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Dimming Actuator"
+    deviceLabel: NEXENTRO Dimming Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Dimming Actuator
+    deviceProfileName: on-off-level
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

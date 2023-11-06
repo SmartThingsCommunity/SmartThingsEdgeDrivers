@@ -26,7 +26,7 @@ local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.COOL]              = capabilities.thermostatMode.thermostatMode.cool,
   [clusters.Thermostat.types.ThermostatSystemMode.HEAT]              = capabilities.thermostatMode.thermostatMode.heat,
   [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING] = capabilities.thermostatMode.thermostatMode.emergency_heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]          = capabilities.thermostatMode.thermostatMode.fanOnly
+  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]          = capabilities.thermostatMode.thermostatMode.fanonly
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
@@ -73,8 +73,28 @@ local subscribed_attributes = {
   }
 }
 
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  -- Use the find_default_endpoint function to return the first endpoint that
+  -- supports a given cluster.
+  return find_default_endpoint(device, clusters.Thermostat.ID)
+end
+
 local function device_init(driver, device)
   device:subscribe()
+  device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
 local function info_changed(driver, device, event, args)
