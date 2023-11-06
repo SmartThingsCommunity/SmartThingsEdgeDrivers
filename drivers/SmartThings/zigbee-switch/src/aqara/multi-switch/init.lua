@@ -8,9 +8,9 @@ local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
 local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.switch.n1acn1", children = 1, child_profile = "" },
-  { mfr = "LUMI", model = "lumi.switch.n2acn1", children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n3acn1", children = 3, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.n1acn1",   children = 1, child_profile = "" },
+  { mfr = "LUMI", model = "lumi.switch.n2acn1",   children = 2, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.n3acn1",   children = 3, child_profile = "aqara-switch-child" },
   { mfr = "LUMI", model = "lumi.switch.b2laus01", children = 2, child_profile = "aqara-switch-child" }
 }
 
@@ -70,18 +70,20 @@ local function device_added(driver, device)
     end
 
     -- for wireless button
-    device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
-      { visibility = { displayed = false } }))
     device:emit_event(capabilities.button.numberOfButtons({ value = children_amount },
       { visibility = { displayed = false } }))
-    device:emit_event(capabilities.button.button.pushed({ state_change = false }))
-
     device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
 
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
       PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
+  elseif device.network_type == "DEVICE_EDGE_CHILD" then
+    device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
+      { visibility = { displayed = false } }))
   end
+  device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
+    { visibility = { displayed = false } }))
+  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
 end
 
 local function device_init(self, device)
