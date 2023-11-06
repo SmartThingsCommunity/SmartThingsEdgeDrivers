@@ -219,6 +219,12 @@ zwaveManufacturer:
     productType: 0x8104
     productId: 0x05D4
     deviceProfileName: base-lock
+  - id: "259/259/259"
+    deviceLabel: "Kaadas"
+    manufacturerId: 0x0103
+    productId: 0x0103
+    productType: 0x0103
+    deviceProfileName: "base-lock"
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock
