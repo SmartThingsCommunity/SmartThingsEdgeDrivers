@@ -174,7 +174,7 @@ local function _initialize_device(driver, device)
         and driver:get_device_by_dni(device.device_network_id).id == device.id
       )
   then
-    driver.datastore.dni_to_device_id[device.device_network_id] = device.id
+    driver.dni_to_device_id[device.device_network_id] = device.id
   end
   if not device:get_field(PlayerFields._IS_SCANNING) then
     device.log.debug("Starting Scan in _initialize_device for %s", device.label)
@@ -264,7 +264,7 @@ end
 --- @param device SonosDevice
 local function device_removed(driver, device)
   log.trace(string.format("%s device removed", device.label))
-  driver.datastore.dni_to_device_id[device.device_network_id] = nil
+  driver.dni_to_device_id[device.device_network_id] = nil
   local player_id = device:get_field(PlayerFields.PLAYER_ID)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   if sonos_conn and sonos_conn:is_running() then sonos_conn:stop() end
@@ -383,6 +383,7 @@ local driver = Driver("Sonos", {
   handle_ssdp_discovery = handle_ssdp_discovery,
   _player_id_to_device = {},
   _field_cache = {},
+  dni_to_device_id = {},
   is_same_mac_address = function(dni, other)
     if not (type(dni) == "string" and type(other) == "string") then return false end
     local dni_normalized = dni:gsub("-", ""):gsub(":", ""):lower()
@@ -390,21 +391,21 @@ local driver = Driver("Sonos", {
     return dni_normalized == other_normalized
   end,
   get_device_by_dni = function(self, dni)
-    local device_uuid = self.datastore.dni_to_device_id[dni]
+    local device_uuid = self.dni_to_device_id[dni]
     if not device_uuid then return nil end
     return self:get_device_info(device_uuid)
   end
 })
 
-if driver.datastore["_field_cache"] == nil then
-  driver.datastore["_field_cache"] = {}
+-- Clean these up, as we no longer want them persisting.
+if driver.datastore["_field_cache"] ~= nil then
+  driver.datastore["_field_cache"] = nil
 end
 
-if driver.datastore["dni_to_device_id"] == nil then
-  driver.datastore["dni_to_device_id"] = {}
+-- Clean these up, as we no longer want them persisting.
+if driver.datastore["dni_to_device_id"] ~= nil then
+  driver.datastore["dni_to_device_id"] = nil
 end
-
-driver._field_cache = driver.datastore._field_cache
 
 -- Kick off a scan right away to attempt to populate some information
 driver:call_with_delay(3, scan_for_ssdp_updates, "Sonos SSDP Initial Scan")
