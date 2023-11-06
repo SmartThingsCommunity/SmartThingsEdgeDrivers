@@ -219,6 +219,12 @@ zwaveManufacturer:
     productType: 0x8104
     productId: 0x05D4
     deviceProfileName: base-lock
+  - id: "297/33031/18899"
+    deviceLabel: "Assure 2 Bio 430"
+    manufacturerId: 0x0129
+    productId: 0x49D3
+    productType: 0x8107
+    deviceProfileName: "base-lock"
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock
