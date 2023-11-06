@@ -1,4 +1,4 @@
-name: lock-without-codes-or-tamper
+name: lock-nocodes-notamper
 components:
 - id: main
   capabilities:
