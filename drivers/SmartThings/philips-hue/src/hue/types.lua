@@ -10,20 +10,27 @@
 --- @field public replacesbridgeid string|nil
 --- @field public modelid string
 --- @field public starterkitid string
+--- @field public ip string|nil
 
 --- @class HueDriver:Driver
 --- @field public ignored_bridges table<string,boolean>
---- @field public joined_bridges table<string,table>
+--- @field public joined_bridges table<string,boolean>
 --- @field public light_id_to_device table<string,HueChildDevice>
 --- @field public device_rid_to_light_rid table<string,string>
 --- @field public stray_bulb_tx table cosock channel
+--- @field public datastore table persistent store
 --- @field public api_key_to_bridge_id table<string,string>
---- @field private _lights_pending_refresh table<string,HueChildDevice>
+--- @field public update_bridge_netinfo fun(self: HueDriver, bridge_id: string, bridge_info: HueBridgeInfo)
 --- @field public emit_light_status_events fun(light_device: HueChildDevice, light: table)
+--- @field public get_device_by_dni fun(self: HueDriver, device_network_id: string, force_refresh?: boolean): HueDevice|nil
+--- @field private _lights_pending_refresh table<string,HueChildDevice>
 
 --- @class HueDevice:st.Device
 --- @field public label string
+--- @field public id string
+--- @field public device_network_id string
 --- @field public data table|nil migration data for a migrated device
+--- @field public log table device-scoped logging module
 --- @field public get_field fun(self: HueDevice, key: string):any
 --- @field public set_field fun(self: HueDevice, key: string, value: any, args?: table)
 --- @field public emit_event fun(self: HueDevice, event: any)

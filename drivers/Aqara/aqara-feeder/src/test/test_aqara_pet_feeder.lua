@@ -53,6 +53,8 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE, data_types.Uint8, 1) })
+    test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
+      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.OctetString, "\x00\x02\x01\x04\x18\x00\x55\x01\x00") })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.feederOperatingState.feederOperatingState("idle")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -172,6 +174,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "feederOperatingState capability - idle state",
   function()
+    local feed_timer = 1
+    test.timer.__create_and_queue_test_time_advance_timer(feed_timer, "oneshot")
     local attr_report_data = {
       { PRIVATE_ATTRIBUTE_ID, data_types.OctetString.ID, "\x00\x05\x01\x0D\x68\x00\x55\x02\x00\x06" }
     }
@@ -180,6 +184,7 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
+    test.mock_time.advance_time(feed_timer)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.feederOperatingState.feederOperatingState("idle")))
   end

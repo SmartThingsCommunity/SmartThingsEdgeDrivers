@@ -34,6 +34,11 @@ zigbeeManufacturer:
     manufacturer: Sinope Technologies
     model: WL4200S
     deviceProfileName: water-temp-battery
+  - id: "Sinope/WL4210"
+    deviceLabel: Sinope Water Leak Sensor
+    manufacturer: Sinope Technologies
+    model: WL4210
+    deviceProfileName: water-temp-battery
   - id: "WAXMAN/leakSMART Water Sensor V2"
     deviceLabel: leakSMART Water Leak Sensor
     manufacturer: WAXMAN

@@ -11,5 +11,5 @@ components:
     categories:
       - name: LightSensor
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: bf3a8ef5-1646-3acd-8c5d-af83c3971c5d
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Illuminace

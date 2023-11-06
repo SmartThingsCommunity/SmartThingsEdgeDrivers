@@ -2,3 +2,5 @@ name: 'Matter Switch'
 packageKey: 'matter-switch'
 permissions:
   matter: {}
+description: "SmartThings driver for Matter switch devices"
+vendorSupportInformation: "https://support.smartthings.com"

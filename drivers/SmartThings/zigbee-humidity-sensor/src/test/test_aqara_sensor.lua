@@ -19,6 +19,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 
+local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local RelativeHumidity = clusters.RelativeHumidity
 
@@ -42,6 +43,51 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, RelativeHumidity.attributes.MeasuredValue:read(mock_device) })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device,
+        zigbee_test_utils.mock_hub_eui,
+        TemperatureMeasurement.ID
+      )
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device,
+        zigbee_test_utils.mock_hub_eui,
+        RelativeHumidity.ID
+      )
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device,
+        zigbee_test_utils.mock_hub_eui,
+        PowerConfiguration.ID
+      )
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 3600, 7200, 50)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      RelativeHumidity.attributes.MeasuredValue:configure_reporting(mock_device, 3600, 7200, 200)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
+    })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
 
 test.register_message_test(
   "Humidity report should be handled",

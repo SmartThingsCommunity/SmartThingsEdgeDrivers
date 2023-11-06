@@ -1,0 +1,28 @@
+name: aqara-switch-power
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: button
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+preferences:
+  - preferenceId: stse.restorePowerState
+    explicit: true
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Switch_Power

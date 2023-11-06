@@ -1,4 +1,35 @@
 zigbeeManufacturer:
+  #HANSSEM SMART SWITCH
+  - id: "Winners/LSS1-101"
+    deviceLabel: HS Switch 1(1 way)
+    manufacturer: Winners
+    model: LSS1-101
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Winners/LSS1-102"
+    deviceLabel: HS Switch 1(2 way)
+    manufacturer: Winners
+    model: LSS1-102
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Winners/LSS1-103"
+    deviceLabel: HS Switch 1(3 way)
+    manufacturer: Winners
+    model: LSS1-103
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Winners/LSS1-204"
+    deviceLabel: HS Switch 1(4 way)
+    manufacturer: Winners
+    model: LSS1-204
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Winners/LSS1-205"
+    deviceLabel: HS Switch 1(5 way)
+    manufacturer: Winners
+    model: LSS1-205
+    deviceProfileName: basic-switch-no-firmware-update
+  - id: "Winners/LSS1-206"
+    deviceLabel: HS Switch 1(6 way)
+    manufacturer: Winners
+    model: LSS1-206
+    deviceProfileName: basic-switch-no-firmware-update
   - id: "LUMI/lumi.plug.maeu01"
     deviceLabel: Aqara Smart Plug
     manufacturer: LUMI
@@ -9,6 +40,31 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
+  - id: "LUMI/lumi.switch.b2laus01"
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b2laus01
+    deviceProfileName: aqara-switch-child
+  - id: "LUMI/lumi.switch.n1acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.n1acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n2acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n2acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n3acn1"
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.n3acn1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n0agl1"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0agl1
+    deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.light.acn004"
     deviceLabel: Aqara Smart Dimmer Controller T1 Pro
     manufacturer: LUMI
@@ -26,7 +82,7 @@ zigbeeManufacturer:
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
     model: "DimmerSwitch_v1.0"
-    deviceProfileName: on-off-level-no-firmware-update 
+    deviceProfileName: on-off-level-no-firmware-update
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
     model: "Mains_Power_Outlet_v1.0"
@@ -109,6 +165,21 @@ zigbeeManufacturer:
     deviceLabel: "HEIMAN Switch 1"
     manufacturer: HEIMAN
     model: HS2SW2L-EFR-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW1A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW1A-W-EF-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW2A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW2A-W-EF-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW3A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW3A-W-EF-3.0
     deviceProfileName: basic-switch
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
@@ -393,6 +464,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: on-off-level
+  - id: "ubisys/S2 (5502)"
+    deviceLabel: ubisys S2
+    manufacturer: ubisys
+    model: "S2 (5502)"
+    deviceProfileName: switch-power-firmware-2
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
@@ -913,6 +989,31 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300Z1
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z2
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z2
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z3
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z3
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z5
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z5
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -1208,6 +1309,21 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: Outdoor Accent RGB
     deviceProfileName: color-bulb
+  - id: "DURAGREEN/DG-CW-02"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CW-02
+    deviceProfileName: color-temp-bulb
+  - id: "DURAGREEN/DG-CW-01"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CW-01
+    deviceProfileName: color-temp-bulb
+  - id: "DURAGREEN/DG-CCT-01"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CCT-01
+    deviceProfileName: color-temp-bulb
   - id: "Samsung Electronics/ABL-LIGHT-Z-001"
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
@@ -2028,6 +2144,26 @@ zigbeeManufacturer:
     deviceLabel: Sengled Light par38
     manufacturer: sengled
     model: E23-N11
+  # Wall Hero
+  - id: "WALL HERO/ACL-401S4I"
+    deviceLabel: 四位智能开关面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S4I
+    deviceProfileName: basic-switch
+  - id: "WALL HERO/ACL-401S8I"
+    deviceLabel: 八位智能开关/场景面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S8I
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Switching Actuator"
+    deviceLabel: NEXENTRO Switching Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Switching Actuator
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Dimming Actuator"
+    deviceLabel: NEXENTRO Dimming Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
 zigbeeGeneric:
   - id: "genericSwitch"
