@@ -224,7 +224,7 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productId: 0x49D1
     productType: 0x8107
-    deviceProfileName: "base-lock"
+    deviceProfileName: base-lock
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock
