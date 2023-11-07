@@ -46,7 +46,7 @@ local function device_init(driver, device)
 end
 
 local sengled_water_leak_sensor_handler = {
-  NAME = "Sengled Water Leak Sensor  Handler",
+  NAME = "Sengled Water Leak Sensor Handler",
   lifecycle_handlers = {
     init = device_init
   },
