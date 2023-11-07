@@ -25,6 +25,7 @@ local OnOff = clusters.OnOff
 local AnalogInput = clusters.AnalogInput
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
+local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local RESTORE_POWER_STATE_ATTRIBUTE_ID = 0x0201
 local CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID = 0x0200
@@ -61,14 +62,54 @@ local mock_child = test.mock_device.build_test_child_device({
   parent_assigned_child_key = string.format("%02X", 2)
 })
 
+local mock_child2 = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("aqara-switch-child.yml"),
+  device_network_id = string.format("%04X:%02X", mock_device:get_short_address(), 3),
+  parent_device_id = mock_device.id,
+  parent_assigned_child_key = string.format("%02X", 3)
+})
+
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
+  test.mock_device.add_test_device(mock_child2)
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Lifecycle - added test",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 3 },
+    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" })))
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+        data_types.Uint8, 1) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
+    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+
+  end
+)
+
+test.register_coroutine_test(
+  "Lifecycle - added test",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.numberOfButtons({ value = 1 },
+    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
+    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+  end
+)
 
 test.register_coroutine_test(
   "Refresh device should read all necessary attributes",
