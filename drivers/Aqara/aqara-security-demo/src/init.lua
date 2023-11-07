@@ -20,8 +20,12 @@ function dump(data)
 end
 
 local function my_secret_data_handler(data)
-  -- At time of writing this returns nothind beyond "secret_type = aqara"
   log.info(dump(data))
+  if data.result == "success" then
+    --do successful things
+  else
+    --do failure things
+  end
 end
 
 local function discovery_handler(driver, _, should_continue)
@@ -30,7 +34,7 @@ local function discovery_handler(driver, _, should_continue)
   example_aes_256_ecb()
   local device_list = driver:get_devices()
   local zigbee_id = "\x01\x02\x03\x04\x05\x06\x07\x08";
-  local res, err = security.get_aqara_secret(zigbee_id, "encrypted_pub_key", "model_name", "test_mn_id", "test_setup_id")
+  local res, err = security.get_aqara_secret(zigbee_id, "encrypted_pub_key", "model_name", "test_mn_id", "test_setup_id", "test_product_id")
   if res then
     print(res)
   end
@@ -66,11 +70,14 @@ local aqara_security_demo = Driver("aqara_security_demo", {
   supported_capabilities = {
     capabilities.refresh,
   },
-  -- A raw handler can be used as well, the wrapper is suggested.
-  --secret_data_handler = my_secret_data_handler,
+  sub_drivers = {
+    require("child"),
+  },
+  secret_data_handlers = {
+    [security.SECRET_KIND_AQARA] = my_secret_data_handler,
+  }
 })
 
-security.register_aqara_secret_handler(aqara_security_demo, my_secret_data_handler)
 if aqara_security_demo.datastore and type(aqara_security_demo.datastore.cnt) == "number" then
   my_ds.cnt = aqara_security_demo.datastore.cnt + 1
   my_ds:save()
