@@ -219,6 +219,10 @@ zwaveManufacturer:
     productType: 0x8104
     productId: 0x05D4
     deviceProfileName: base-lock
+  - id: "297/33031/18901"
+    deviceLabel: "Assure 2 Bio 450"
+    manufacturerId: 0x0129
+    productId: 0x49D5
   - id: "Yale/YRD410-ZW3"
     deviceLabel: Yale Door Lock
     manufacturerId: 0x0129
