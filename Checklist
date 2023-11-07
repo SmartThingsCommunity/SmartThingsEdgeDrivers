@@ -14,11 +14,6 @@ This is a checklist that can be used in effort to review before submitting a PR,
 - [ ] I have verified my changes with testing with a device or have a plan for testing that has been communicated appropriately 
 - [ ] I am adding new behavior, such as adding a sub-driver, and have added new unit tests to cover the new behavior
 
-# Description
-
-<!-- Please include a summary of the change (and the related issue, if any). Please also include relevant motivation and context when necessary. -->
-
----
 
 # Type of change
 
