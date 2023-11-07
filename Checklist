@@ -10,7 +10,7 @@ This is a checklist that can be used in effort to review before submitting a PR,
  - [ ] This is a request to add a device for WWST certification and I plan on entering a console request or have entered a console request at developer.smartthings.com
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code in hard-to-understand areas
-- [ ] I have verified my changes with testing a device or have added in the description of the PR specific testing that needs to occur
+- [ ] I have verified my changes with testing with a device or have a plan for testing that has been communicated appropriately 
 - [ ] I am adding new behavior, such as adding a sub-driver, and have added new unit tests to cover the new behavior
 
 # Description
