@@ -1,0 +1,28 @@
+<!-- Check all that apply [x] -->
+
+# Checklist
+
+This is a checklist that can be used in effort to review before submitting a PR, in the Edge Drivers Repo.
+
+- [ ] This is the first time I am contributing code:
+ - [ ] I have reviewed the Contributing.file document
+ - [ ] I have signed the CLA
+ - [ ] This is a request to add a device for WWST certification and I plan on entering a console request or have entered a console request at developer.smartthings.com
+- [ ] I have performed a self-review of my code
+- [ ] I have commented my code in hard-to-understand areas
+- [ ] I have verified my changes with testing a device or have added in the description of the PR specific testing that needs to occur
+- [ ] I am adding new behavior, such as adding a sub-driver, and have added new unit tests to cover the new behavior
+
+# Description
+
+<!-- Please include a summary of the change (and the related issue, if any). Please also include relevant motivation and context when necessary. -->
+
+---
+
+# Type of change
+
+- [ ] WWST Certification Request
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactor
+- [ ] Documentation change
