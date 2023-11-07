@@ -40,7 +40,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
   { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
   { mfr = "WALL HERO", model = "ACL-401SCA4" },
-  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
