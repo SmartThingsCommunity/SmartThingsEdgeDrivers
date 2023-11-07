@@ -18,6 +18,7 @@ local HueDiscovery = {
   light_state_disco_cache = {},
   ServiceType = SERVICE_TYPE,
   Domain = DOMAIN,
+  discovery_active = false
 }
 
 local supported_resource_types = {
@@ -33,7 +34,13 @@ process_discovered_light
 ---@param _ table
 ---@param should_continue function
 function HueDiscovery.discover(driver, _, should_continue)
+  if HueDiscovery.discovery_active then
+    log.info("Hue discovery already in progress, ignoring new discovery request")
+    return
+  end
+
   log.info_with({ hub_logs = true }, "Starting Hue discovery")
+  HueDiscovery.discovery_active = true
 
   while should_continue() do
     local known_identifier_to_device_map = {}
@@ -54,6 +61,7 @@ function HueDiscovery.discover(driver, _, should_continue)
     end)
     socket.sleep(1.0)
   end
+  HueDiscovery.discovery_active = false
   log.info_with({ hub_logs = true }, "Ending Hue discovery")
 end
 
@@ -398,7 +406,7 @@ function HueDiscovery.do_mdns_scan(driver)
 
     if driver.joined_bridges[bridge_id] and not driver.ignored_bridges[bridge_id] then
       local bridge_device = driver:get_device_by_dni(bridge_id, true)
-      update_needed = update_needed or (bridge_device:get_field(Fields.IPV4) ~= bridge_info.ip)
+      update_needed = update_needed or (bridge_device and (bridge_device:get_field(Fields.IPV4) ~= bridge_info.ip))
       if update_needed then
         driver:update_bridge_netinfo(bridge_id, bridge_info)
       end

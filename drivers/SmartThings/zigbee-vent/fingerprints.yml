@@ -10,3 +10,26 @@ zigbeeManufacturer:
     model: SV01-412-MP-1.4
     deviceProfileName: vent-profile-1
 
+zigbeeGeneric:
+  - id: "keen/DTH-generic" # this is the generic FP the DTH used
+    deviceLabel: Zigbee Vent
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000
+        - 0x0001
+        - 0x0003
+        - 0x0004
+        - 0x0005
+        - 0x0006
+        - 0x0008
+        - 0x0020
+        - 0x0402
+        - 0x0403
+        - 0x0B05
+        - 0xFC01
+        - 0xFC02
+      client:
+        - 0x0019
+    deviceProfileName: vent-profile-1

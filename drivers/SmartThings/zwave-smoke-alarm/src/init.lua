@@ -50,12 +50,12 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_added = function(self, device)
-  -- if device:supports_capability_by_id("smokeDetector") then
-  --   device:emit_event(capabilities.smokeDetector.smoke.clear())
-  -- end
-  -- if device:supports_capability_by_id("carbonMonoxideDetector") then
-  --   device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
-  -- end
+  if device:supports_capability_by_id("smokeDetector") then
+    device:emit_event(capabilities.smokeDetector.smoke.clear())
+  end
+  if device:supports_capability_by_id("carbonMonoxideDetector") then
+    device:emit_event(capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  end
 end
 
 --- Handle preference changes
@@ -86,7 +86,8 @@ local driver_template = {
   sub_drivers = {
     require("zwave-smoke-co-alarm-v1"),
     require("zwave-smoke-co-alarm-v2"),
-    require("fibaro-smoke-sensor")
+    require("fibaro-smoke-sensor"),
+    require("apiv6_bugfix"),
   },
   lifecycle_handlers = {
     init = device_init,

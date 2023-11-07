@@ -1,15 +1,38 @@
 matterManufacturer:
+  #Aqara
+  - id: "Aqara/DoorAndWindow"
+    deviceLabel: Aqara Door and Window Sensor P2
+    vendorId: 0x115F
+    productId: 0x2002
+    deviceProfileName: contact-battery
   #Eve
   - id: "Eve Motion"
     deviceLabel: Eve Motion
     vendorId: 0x130a
     productId: 0x0059
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "Eve/DoorAndWindow"
     deviceLabel: Eve Door and Window
     vendorId: 0x130a
     productId: 0x004D
     deviceProfileName: contact-battery
+  - id: "Eve/Weather"
+    deviceLabel: Eve Weather
+    vendorId: 0x130a
+    productId: 0x0057
+    deviceProfileName: temperature-humidity-battery
+
+  - id: "TUO/ContactDoorAndWindow"
+    deviceLabel: TUO Contact Sensor
+    vendorId: 0x141E
+    productId: 0x0002
+    deviceProfileName: contact-battery
+  # Legrand
+  - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
+    deviceLabel: Netatmo Smart 2-in-1 Sensor
+    vendorId: 0x1021
+    productId: 0x0001
+    deviceProfileName: motion-contact-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
@@ -43,12 +66,19 @@ matterGeneric:
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
       - id: 0x0106 # Light Sensor
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
+  - id: "matter/motion-illuminance-temp"
+    deviceLabel: Matter Motion/Illuminance Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+      - id: 0x0106 # Light Sensor
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: motion-illuminance-temperature-battery
   - id: "matter/motion-sensor"
     deviceLabel: Matter Motion Sensor
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
-    deviceProfileName: matter-motion-battery
+    deviceProfileName: motion-battery
   - id: "matter/motion-sensor/contact"
     deviceLabel: Matter Motion/Contact Sensor
     deviceTypes:

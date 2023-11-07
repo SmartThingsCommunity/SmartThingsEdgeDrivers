@@ -78,7 +78,7 @@ local function set_code(self, device, cmd)
       )
     end
     local current_code_length = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-    if current_code_length ~= nil then
+    if current_code_length == nil then
       device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
       device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, send_set_user_code)
     else
@@ -119,7 +119,7 @@ local function is_user_code_report_mfr_specific(device, cmd)
   local code_id = cmd.args.user_identifier
 
   if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-      (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
+      (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
     local code_state = device:get_field(constants.CODE_STATE)
     return user_code == "**********" or user_code == nil or (code_state ~= nil and code_state["setName"..cmd.args.user_identifier] ~= nil)
   else
@@ -136,7 +136,7 @@ local function user_code_report_handler(self, device, cmd)
     local event
 
     if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-        (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
+        (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
       local code_name = LockCodesDefaults.get_code_name(device, code_id)
       local change_type = LockCodesDefaults.get_change_type(device, code_id)
       event = capabilities.lockCodes.codeChanged(code_id..""..change_type, { state_change = true })

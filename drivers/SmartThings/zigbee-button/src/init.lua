@@ -68,7 +68,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_button_driver_template = {
@@ -96,7 +96,8 @@ local zigbee_button_driver_template = {
     require("dimming-remote"),
     require("iris"),
     require("samjin"),
-    require("ewelink")
+    require("ewelink"),
+    require("thirdreality")
   },
   lifecycle_handlers = {
     added = added_handler,

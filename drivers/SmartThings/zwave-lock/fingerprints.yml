@@ -242,6 +242,11 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x8104
     productId: 0x45D5
+  - id: "297/33031/18898"
+    deviceLabel: "Yale Assure 2 Biometric"
+    manufacturerId: 0x0129
+    productId: 0x49D2
+    productType: 0x8107
     deviceProfileName: base-lock
   # Samsung
   - id: "Samsung/SmartDoorlock"

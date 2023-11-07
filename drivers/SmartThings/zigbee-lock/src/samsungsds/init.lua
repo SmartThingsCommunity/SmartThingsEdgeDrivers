@@ -12,10 +12,12 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local device_management = require "st.zigbee.device_management"
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
+local PowerConfiguration = clusters.PowerConfiguration
 local DoorLock = clusters.DoorLock
 local Lock = capabilities.lock
 local lock_utils = require "lock_utils"
@@ -49,16 +51,28 @@ local function unlock_cmd_handler(driver, device, command)
           "\x10\x04\x31\x32\x33\x35"))
 end
 
+local refresh = function(driver, device, cmd)
+  -- do nothing in refresh capability handler
+end
+
 local device_added = function(self, device)
   lock_utils.populate_state_from_data(device)
-  -- device:emit_event(capabilities.lock.lock.unlocked())
-  -- device:emit_event(capabilities.battery.battery(100))
+  device:emit_event(capabilities.lock.lock.unlocked())
+  device:emit_event(capabilities.battery.battery(100))
+end
+
+local do_configure = function(self, device)
+  device:send(device_management.build_bind_request(device, DoorLock.ID, self.environment_info.hub_zigbee_eui))
+  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
+  device:send(DoorLock.attributes.LockState:configure_reporting(device, 0, 3600, 0))
 end
 
 local battery_init = battery_defaults.build_linear_voltage_init(4.0, 6.0)
 
 local device_init = function(driver, device, event)
   battery_init(driver, device, event)
+  device:remove_monitored_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
+  device:remove_configured_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
   lock_utils.populate_state_from_data(device)
 end
 
@@ -77,11 +91,15 @@ local samsung_sds_driver = {
     }
   },
   capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = refresh
+    },
     [capabilities.lock.ID] = {
       [capabilities.lock.commands.unlock.NAME] = unlock_cmd_handler
     }
   },
   lifecycle_handlers = {
+    doConfigure = do_configure,
     added = device_added,
     init = device_init
   },
