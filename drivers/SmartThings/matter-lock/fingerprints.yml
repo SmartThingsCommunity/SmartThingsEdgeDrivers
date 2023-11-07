@@ -1,3 +1,11 @@
+matterManufacturer:
+#Yale
+- id: "Yale Assure Matter"
+    deviceLabel: Yale Assure Matter Module
+    vendorId: 0x101d
+    productId: 0x1
+    deviceProfileName: base-lock
+
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
