@@ -223,6 +223,10 @@ zwaveManufacturer:
     deviceLabel: "Assure 2 Biometric 410"
     manufacturerId: 0x0129
     productId: 0x49D1
+  - id: "297/33031/18898"
+    deviceLabel: "Yale Assure 2 Biometric"
+    manufacturerId: 0x0129
+    productId: 0x49D2
     productType: 0x8107
     deviceProfileName: base-lock
   # Samsung
