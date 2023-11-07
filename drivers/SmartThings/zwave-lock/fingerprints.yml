@@ -242,6 +242,10 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x8104
     productId: 0x45D5
+  - id: "297/33031/18899"
+    deviceLabel: "Assure 2 Bio 430"
+    manufacturerId: 0x0129
+    productId: 0x49D3
   - id: "297/33031/18897"
     deviceLabel: "Assure 2 Biometric 410"
     manufacturerId: 0x0129
