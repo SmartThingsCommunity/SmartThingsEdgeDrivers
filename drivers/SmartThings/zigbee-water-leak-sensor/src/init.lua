@@ -53,7 +53,7 @@ local zigbee_water_driver_template = {
     require("leaksmart"),
     require("frient"),
     require("thirdreality"),
-    require("sengled")
+    require("sengled"),
     require("sinope")
   },
 }
