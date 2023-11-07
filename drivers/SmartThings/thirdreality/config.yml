@@ -1,6 +1,0 @@
-name: 'R-Matter NL'
-packageKey: 'matter-switch'
-permissions:
-  matter: {}
-description: "SmartThings driver for ThirdReality Matter Night Light"
-vendorSupportInformation: "https://support.smartthings.com"

@@ -32,6 +32,16 @@ local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- New profiles need to be added for devices that have more switch endpoints
 local MAX_MULTI_SWITCH_EPS = 7
+local THIRD_REALITY_MANUFACTURER_ID = 0x1407
+
+
+local function is_third_reality_products(opts, driver, device)
+  if device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID then
+    return true
+  end
+
+  return false
+end
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -311,7 +321,8 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
-local matter_driver_template = {
+local third_reality_handler = {
+  NAME = "Third Reality Handler",
   lifecycle_handlers = {
     init = device_init,
     removed = device_removed
@@ -392,11 +403,8 @@ local matter_driver_template = {
     capabilities.motionSensor,
     capabilities.illuminanceMeasurement
   },
-    sub_drivers = {
-    require("eve-energy")
-  }
+  can_handle = is_third_reality_products
 }
 
-local matter_driver = MatterDriver("matter-switch", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
-matter_driver:run()
+return third_reality_handler;
+

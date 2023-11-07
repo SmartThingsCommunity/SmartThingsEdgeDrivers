@@ -1,4 +1,11 @@
 matterManufacturer:
+#ThirdReality
+  - id: "ThirdReality/WiFi"
+    deviceLabel: THIRDREALITY NL
+    vendorId: 0x1407
+    productId: 0x1088
+    deviceProfileName: light-color-level-nl 
+    
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
