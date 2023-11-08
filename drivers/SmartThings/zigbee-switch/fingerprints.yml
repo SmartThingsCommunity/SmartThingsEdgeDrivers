@@ -2144,6 +2144,7 @@ zigbeeManufacturer:
     deviceLabel: Sengled Light par38
     manufacturer: sengled
     model: E23-N11
+    deviceProfileName: on-off-level
   # Wall Hero
   - id: "WALL HERO/ACL-401S4I"
     deviceLabel: 四位智能开关面板 1 
