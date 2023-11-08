@@ -19,5 +19,5 @@ This is a checklist that can be used in effort to review before submitting a PR,
 
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code in hard-to-understand areas
-- [ ] I have verified my changes with testing with a device or have a plan for testing that has been communicated appropriately 
+- [ ] I have verified my changes by testing with a device or have communicated a plan for testing
 - [ ] I am adding new behavior, such as adding a sub-driver, and have added and run new unit tests to cover the new behavior
