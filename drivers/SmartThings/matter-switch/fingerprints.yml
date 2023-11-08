@@ -4,7 +4,7 @@ matterManufacturer:
     deviceLabel: THIRDREALITY NL
     vendorId: 0x1407
     productId: 0x1088
-    deviceProfileName: light-color-level-nl 
+    deviceProfileName: light-color-level-illuminance-motion 
     
 #Eve
   - id: "Eve/Energy/US"
