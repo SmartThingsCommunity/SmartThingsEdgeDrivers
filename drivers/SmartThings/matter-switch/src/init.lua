@@ -302,6 +302,15 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
+local function illuminance_attr_handler(driver, device, ib, response)
+  local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
+end
+
+local function occupancy_attr_handler(driver, device, ib, response)
+  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -322,6 +331,12 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
+      },
+      [clusters.IlluminanceMeasurement.ID] = {
+        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
+      },
+      [clusters.OccupancySensing.ID] = {
+        [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
       }
     },
     fallback = matter_handler,
@@ -342,6 +357,12 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       clusters.ColorControl.attributes.ColorTemperatureMireds,
     },
+    [capabilities.illuminanceMeasurement.ID] = {
+      clusters.IlluminanceMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    }
   },
   capability_handlers = {
     [capabilities.switch.ID] = {
@@ -368,10 +389,11 @@ local matter_driver_template = {
     capabilities.switchLevel,
     capabilities.colorControl,
     capabilities.colorTemperature,
+    capabilities.motionSensor,
+    capabilities.illuminanceMeasurement
   },
     sub_drivers = {
     require("eve-energy"),
-    require("third-reality")
   }
 }
 
