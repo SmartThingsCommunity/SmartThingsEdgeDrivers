@@ -322,13 +322,13 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_device.id,
-            { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 78 } }
+            { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 62.0 } }
           }
       )
       test.socket.zigbee:__expect_send(
           {
             mock_device.id,
-            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2556)
+            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 1667)
           }
       )
       test.wait_for_events()
