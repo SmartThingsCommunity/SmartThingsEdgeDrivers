@@ -407,5 +407,4 @@ function Command.play_streaming_uri(ip, uri)
   end 
   return response_map
 end
-
 return Command
