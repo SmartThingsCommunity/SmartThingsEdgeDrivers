@@ -255,20 +255,19 @@ local function do_refresh_light(driver, light_device, conn_status_cache, light_s
 
   local do_zigbee_request = true
   local do_light_request = true
-  local light_online = true
 
   if type(conn_status_cache) == "table" then
     local zigbee_status = conn_status_cache[hue_device_id]
-    if zigbee_status ~= nil then
-      if zigbee_status.status and zigbee_status.status == "connected" then
+    if zigbee_status ~= nil and zigbee_status.status ~= nil then
+      do_zigbee_request = false
+      if zigbee_status.status == "connected" then
         light_device.log.debug(string.format("Zigbee Status for %s is connected", light_device.label))
         light_device:online()
-        do_zigbee_request = false
+        light_device:set_field(Fields.IS_ONLINE, true)
       else
         light_device.log.debug(string.format("Zigbee Status for %s is not connected", light_device.label))
+        light_device:set_field(Fields.IS_ONLINE, false)
         light_device:offline()
-        do_zigbee_request = false
-        light_online = false
       end
     end
   end
@@ -359,10 +358,11 @@ local function do_refresh_light(driver, light_device, conn_status_cache, light_s
               if zigbee_svc.status and zigbee_svc.status == "connected" then
                 light_device.log.debug(string.format("Zigbee Status for %s is connected", light_device.label))
                 light_device:online()
+                light_device:set_field(Fields.IS_ONLINE, true)
               else
                 light_device.log.debug(string.format("Zigbee Status for %s is not connected", light_device.label))
+                light_device:set_field(Fields.IS_ONLINE, false)
                 light_device:offline()
-                light_online = false
               end
             end
           end
@@ -370,7 +370,7 @@ local function do_refresh_light(driver, light_device, conn_status_cache, light_s
       end
     end
 
-    if do_light_request then
+    if do_light_request and light_device:get_field(Fields.IS_ONLINE) then
       rest_resp, rest_err = hue_api:get_light_by_id(light_resource_id)
       if rest_err ~= nil then
         log.error_with({ hub_logs = true }, rest_err)
@@ -390,9 +390,7 @@ local function do_refresh_light(driver, light_device, conn_status_cache, light_s
             if light_info.color ~= nil and light_info.color.gamut then
               light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
             end
-            if light_online then
-              driver.emit_light_status_events(light_device, light_info)
-            end
+            driver.emit_light_status_events(light_device, light_info)
             success = true
           end
         end
