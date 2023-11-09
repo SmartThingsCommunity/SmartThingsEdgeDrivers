@@ -231,7 +231,7 @@ local device_added = function(driver, device, event)
         { visibility = { displayed = false } }))
     else
       for _, component in pairs(device.profile.components) do
-        if component:match("button(%d)") then
+        if component["id"]:match("button(%d)") then
           device:emit_component_event(component,
             capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
               { visibility = { displayed = false } }))
