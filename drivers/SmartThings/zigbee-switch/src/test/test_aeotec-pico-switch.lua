@@ -86,7 +86,7 @@ local PREFERENCE_TABLES = {
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
     label = "Aeotec Pico Switch",
-    profile = t_utils.get_profile_definition("aeotec-pico-switch.yml"),
+    profile = t_utils.get_profile_definition("aeotec-pico-switch-two-button-control.yml"),
       zigbee_endpoints = {
         [1] = {
           id = 1,
@@ -113,19 +113,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
-          { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
-      )
-    )
+    mock_device:expect_metadata_update({ profile = "aeotec-pico-switch-two-button-control" })
 
     -- do refresh
     test.socket.zigbee:__expect_send({
@@ -148,6 +136,7 @@ test.register_coroutine_test(
   end
 )
 
+
 local SCENE_ID_BUTTON_EVENT_MAP = {
   { state_name = "pushed",    button_state = capabilities.button.button.pushed },
   { state_name = "double",    button_state = capabilities.button.button.double },
@@ -166,12 +155,25 @@ for i, button_event in ipairs(SCENE_ID_BUTTON_EVENT_MAP) do
         direction = "receive",
         message = { mock_device.id,
           zigbee_test_utils.build_custom_command_id(mock_device, Scenes.ID, Scenes.server.commands.RecallScene.ID, 0x0000,
+            "\x00\x01" .. string.char(i) .. "\xFF\xFF", 0x02) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("button1",
+          button_event.button_state({ state_change = true }))
+      },
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id,
+          zigbee_test_utils.build_custom_command_id(mock_device, Scenes.ID, Scenes.server.commands.RecallScene.ID, 0x0000,
             "\x00\x01" .. string.char(i) .. "\xFF\xFF", 0x03) }
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main",
+        message = mock_device:generate_test_message("button2",
           button_event.button_state({ state_change = true }))
       }
     }

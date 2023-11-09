@@ -17,7 +17,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local utils = require "st.utils"
-local log = require "log"
 
 -- Clusters
 local SimpleMetering = clusters.SimpleMetering
@@ -182,7 +181,7 @@ local scenes_cluster_handler = function(driver, device, zb_rx)
   if device:get_model() == "ZGA002" then
     ep = zb_rx.address_header.src_endpoint.value == 0x03 and 0x08 or 0x07
   else
-    ep = zb_rx.address_header.src_endpoint.value == 0x04 and 0x02 or 0x01
+    ep = zb_rx.address_header.src_endpoint.value == 0x04 and 0x02 or ep
   end
 
   local button_event = SCENE_ID_BUTTON_EVENT_MAP[zb_rx.body.zcl_body.scene_id.value]
@@ -222,7 +221,6 @@ local device_added = function(driver, device, event)
   end
 
   device.thread:call_with_delay(3, function()
-    log.debug(utils.stringify_table(device.profile.components.main.capabilities, 'capabilities', true))
     if device.profile.components.main.capabilities["button"] ~= nil then
       device:emit_event(
         capabilities.button.supportedButtonValues({ "pushed", "double", "pushed_3x", "held", "up" },
