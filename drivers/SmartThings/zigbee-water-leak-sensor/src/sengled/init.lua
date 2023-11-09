@@ -5,7 +5,7 @@ local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 
 local FINGERPRINTS = {
-  { mfr = "SENGLED", model = "E1L-G7K" }
+  { mfr = "sengled", model = "E1L-G7K" }
 }
 
 local CONFIGURATIONS = {
