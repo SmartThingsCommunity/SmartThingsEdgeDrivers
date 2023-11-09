@@ -404,7 +404,8 @@ function Command.play_streaming_uri(ip, uri)
       log.info(string.format("Recieved error code %s",resp.err_code))
       response_map= fallback_to_http(ip,uri)
     end
-  end 
+  end
   return response_map
 end
+
 return Command
