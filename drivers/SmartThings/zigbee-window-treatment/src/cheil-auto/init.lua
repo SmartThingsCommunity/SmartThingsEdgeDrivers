@@ -15,7 +15,6 @@ local zb_data_types = require "st.zigbee.data_types"
 local zb_generic_body = require "st.zigbee.generic_body"
 local zb_window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
---local Log = require "log"
 
 -------- Define Constants for TUYA Cluster -------------
 local TUYA_CLUSTER = 0xEF00
@@ -196,7 +195,7 @@ local function device_info_changed(driver, device, event, args)
   end
 end
 
----------------------- Driver Template ------------------------h
+---------------------- Driver Template ------------------------
 
 local cheil_window_treatment = {
   NAME = "cheil autotech window treatment",
