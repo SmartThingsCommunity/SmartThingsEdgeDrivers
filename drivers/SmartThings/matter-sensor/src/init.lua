@@ -18,9 +18,66 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+local BATTERY_CHECKED = "__battery_checked"
+
+local HUE_MANUFACTURER_ID = 0x100B
+
+local function supports_battery_percentage_remaining(device)
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
+          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
+  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+    return true
+  end
+  return false
+end
+
+local function check_for_battery(device)
+  local profile_name = ""
+
+  if device:supports_capability(capabilities.motionSensor) then
+    profile_name = profile_name .. "-motion"
+  end
+
+  if device:supports_capability(capabilities.contactSensor) then
+    profile_name = profile_name .. "-contact"
+  end
+
+  if device:supports_capability(capabilities.illuminanceMeasurement) then
+    profile_name = profile_name .. "-illuminance"
+  end
+
+  if device:supports_capability(capabilities.temperatureMeasurement) then
+    profile_name = profile_name .. "-temperature"
+  end
+
+  if device:supports_capability(capabilities.relativeHumidityMeasurement) then
+    profile_name = profile_name .. "-humidity"
+  end
+
+  if supports_battery_percentage_remaining(device) then
+    profile_name = profile_name .. "-battery"
+  end
+
+  -- remove leading "-"
+  profile_name = string.sub(profile_name, 2)
+
+  device:try_update_metadata({profile = profile_name})
+  device:set_field(BATTERY_CHECKED, 1, {persist = true})
+end
+
 local function device_init(driver, device)
   log.info("device init")
+  if not device:get_field(BATTERY_CHECKED) then
+    check_for_battery(device)
+  end
   device:subscribe()
+end
+
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
 end
 
 local function illuminance_attr_handler(driver, device, ib, response)
@@ -60,7 +117,8 @@ end
 
 local matter_driver_template = {
   lifecycle_handlers = {
-    init = device_init
+    init = device_init,
+    infoChanged = info_changed
   },
   matter_handlers = {
     attr = {
@@ -77,7 +135,7 @@ local matter_driver_template = {
         [clusters.BooleanState.attributes.StateValue.ID] = boolean_attr_handler
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID]   = battery_percent_remaining_attr_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,

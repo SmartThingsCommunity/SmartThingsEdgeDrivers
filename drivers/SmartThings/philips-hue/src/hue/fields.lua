@@ -26,6 +26,7 @@ local Fields = {
   MIN_DIMMING = "mindim",
   MIN_KELVIN = "mintemp",
   MODEL_ID = "modelid",
+  IS_ONLINE = "is_online",
   PARENT_DEVICE_ID = "parent_device_id_local",
   RESOURCE_ID = "rid",
   WRAPPED_HUE = "_wrapped_hue"

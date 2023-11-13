@@ -26,7 +26,7 @@ local mock_device = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
-      endpoint_id = 0,
+      endpoint_id = 2,
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
@@ -35,7 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = 10,
       clusters = {
         {
           cluster_id = clusters.OnOff.ID,
@@ -59,7 +59,7 @@ local mock_device_variable_speed = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
-      endpoint_id = 0,
+      endpoint_id = 2,
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
@@ -68,7 +68,7 @@ local mock_device_variable_speed = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = 10,
       clusters = {
         {
           cluster_id = clusters.OnOff.ID,
@@ -132,7 +132,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, 1)
+        clusters.OnOff.server.commands.On(mock_device, 10)
       }
     },
     {
@@ -148,7 +148,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.OnOff.server.commands.Off(mock_device, 1)
+        clusters.OnOff.server.commands.Off(mock_device, 10)
       }
     },
     {
@@ -156,7 +156,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.OnOff.server.commands.Off:build_test_command_response(mock_device, 1)
+          clusters.OnOff.server.commands.Off:build_test_command_response(mock_device, 10)
       }
     },
     {
@@ -164,7 +164,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, false )
+          clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 10, false )
       }
     },
     {
@@ -177,7 +177,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, true )
+          clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 10, true )
       }
     },
     {
@@ -204,7 +204,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.Play(mock_device, 1)
+          clusters.MediaPlayback.server.commands.Play(mock_device, 10)
       }
     },
     {
@@ -212,7 +212,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 1, clusters.MediaPlayback.attributes.CurrentState.PLAYING )
+          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 10, clusters.MediaPlayback.attributes.CurrentState.PLAYING )
       }
     },
     {
@@ -239,7 +239,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.Pause(mock_device, 1)
+          clusters.MediaPlayback.server.commands.Pause(mock_device, 10)
       }
     },
     {
@@ -247,7 +247,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 1, clusters.MediaPlayback.attributes.CurrentState.PAUSED )
+          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 10, clusters.MediaPlayback.attributes.CurrentState.PAUSED )
       }
     },
     {
@@ -274,7 +274,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.StopPlayback(mock_device, 1)
+          clusters.MediaPlayback.server.commands.StopPlayback(mock_device, 10)
       }
     },
     {
@@ -282,7 +282,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 1, clusters.MediaPlayback.attributes.CurrentState.NOT_PLAYING )
+          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 10, clusters.MediaPlayback.attributes.CurrentState.NOT_PLAYING )
       }
     },
     {
@@ -309,7 +309,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.Rewind(mock_device, 1)
+          clusters.MediaPlayback.server.commands.Rewind(mock_device, 10)
       }
     },
     {
@@ -325,7 +325,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.FastForward(mock_device, 1)
+          clusters.MediaPlayback.server.commands.FastForward(mock_device, 10)
       }
     },
   }
@@ -347,7 +347,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.Previous(mock_device, 1)
+          clusters.MediaPlayback.server.commands.Previous(mock_device, 10)
       }
     },
     {
@@ -363,7 +363,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.server.commands.Next(mock_device, 1)
+          clusters.MediaPlayback.server.commands.Next(mock_device, 10)
       }
     },
   }
@@ -385,7 +385,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.UP)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.UP)
       }
     },
     {
@@ -401,7 +401,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.DOWN)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.DOWN)
       }
     },
     {
@@ -417,7 +417,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.LEFT)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.LEFT)
       }
     },
     {
@@ -433,7 +433,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.RIGHT)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.RIGHT)
       }
     },
     {
@@ -449,7 +449,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.SELECT)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.SELECT)
       }
     },
     {
@@ -465,7 +465,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.NUMBER0_OR_NUMBER10)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.NUMBER0_OR_NUMBER10)
       }
     },
     {
@@ -481,7 +481,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.NUMBERS1)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.NUMBERS1)
       }
     },
     {
@@ -497,7 +497,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.CONTENTS_MENU)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.CONTENTS_MENU)
       }
     },
     {
@@ -513,7 +513,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.SETUP_MENU)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.SETUP_MENU)
       }
     },
     {
@@ -529,7 +529,7 @@ test.register_message_test(
       direction = "send",
       message = {
           mock_device.id,
-          clusters.KeypadInput.server.commands.SendKey(mock_device, 1, clusters.KeypadInput.types.CecKeyCode.ROOT_MENU)
+          clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.ROOT_MENU)
       }
     }
   }

@@ -2146,6 +2146,37 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: basic-switch
+  - id: "WALL HERO/ACL-401ON"
+    deviceLabel: 智能墙面五孔插座
+    manufacturer: WALL HERO
+    model: ACL-401ON
+    deviceProfileName: basic-switch    
+  - id: "WALL HERO/ACL-401S1I"
+    deviceLabel: 一位智能开关面板
+    manufacturer: WALL HERO
+    model: ACL-401S1I
+    deviceProfileName: basic-switch    
+  - id: "WALL HERO/ACL-401S3I"
+    deviceLabel: 三位智能开关面板 1
+    manufacturer: WALL HERO
+    model: ACL-401S3I
+    deviceProfileName: basic-switch    
+  - id: "WALL HERO/ACL-401S2I"
+    deviceLabel: 二位智能开关面板 1
+    manufacturer: WALL HERO
+    model: ACL-401S2I
+    deviceProfileName: basic-switch
+  # End Wall Hero
+  - id: "Insta GmbH/Switching Actuator"
+    deviceLabel: NEXENTRO Switching Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Switching Actuator
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Dimming Actuator"
+    deviceLabel: NEXENTRO Dimming Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Dimming Actuator
+    deviceProfileName: on-off-level
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
