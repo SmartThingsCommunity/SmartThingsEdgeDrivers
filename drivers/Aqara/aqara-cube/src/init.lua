@@ -5,7 +5,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local PowerConfiguration = clusters.PowerConfiguration
-local utils = require "st.utils"
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0x0009
