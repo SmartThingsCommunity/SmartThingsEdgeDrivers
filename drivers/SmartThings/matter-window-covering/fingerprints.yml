@@ -5,7 +5,12 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x55
     deviceProfileName: window-covering-profile
-
+#Zemismart
+- id: 5020/65534
+    deviceLabel: Zemismart MT01 Slide Curtain
+    vendorId: 0x139C
+    productId: 0xFFFE
+    deviceProfileName: window-covering-profile
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
