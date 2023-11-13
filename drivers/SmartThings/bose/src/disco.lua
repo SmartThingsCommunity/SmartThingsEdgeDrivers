@@ -96,7 +96,7 @@ function Discovery.run_discovery_task()
           log.warn("disco| ending without sending request because no search ids requested")
           break
         end
-      elseif err == "timeout" and socket ~= nil then
+      elseif err == "timeout" and sock ~= nil then
         break
       end
 
