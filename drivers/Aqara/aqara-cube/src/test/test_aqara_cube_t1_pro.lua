@@ -4,6 +4,8 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
+local clusters = require "st.zigbee.zcl.clusters"
+local PowerConfiguration = clusters.PowerConfiguration
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0x0009
@@ -61,7 +63,16 @@ test.register_coroutine_test(
         data_types.Uint8, 1) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", cubeAction.cubeAction("noAction")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", cubeFace.cubeFace("face1Up")))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
+    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
+  end
+)
+
+test.register_coroutine_test(
+  "capability - refresh",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
   end
 )
 

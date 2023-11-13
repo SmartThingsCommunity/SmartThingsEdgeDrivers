@@ -5,6 +5,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local PowerConfiguration = clusters.PowerConfiguration
+local utils = require "st.utils"
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0x0009
@@ -65,6 +66,11 @@ local function face_handler(driver, device, value, zb_rx)
   device:emit_event(cubeFace.cubeFace(cubeFaceVal[faceNum + 1]))
 end
 
+local function do_refresh(driver, device)
+  -- refresh
+  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+end
+
 local function device_init(driver, device)
   local power_configuration = {
     cluster = PowerConfiguration.ID,
@@ -90,12 +96,17 @@ local function device_added(self, device)
     PRI_CLU, CUBE_MODE, MFG_CODE, data_types.Uint8, 1))
   device:emit_event(cubeAction.cubeAction("noAction"))
   device:emit_event(cubeFace.cubeFace("face1Up"))
-  device:emit_event(capabilities.battery.battery(100))
+  do_refresh(self, device)
 end
 
 -- [[ register ]]
 local aqara_cube_t1_pro_handler = {
   NAME = "Aqara Cube T1 Pro",
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    }
+  },
   zigbee_handlers = {
     attr = {
       [EVENT_CLU] = {
@@ -106,6 +117,9 @@ local aqara_cube_t1_pro_handler = {
       },
       [PRI_CLU] = {
         [FACE_ATTR] = face_handler
+      },
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_defaults.battery_volt_attr_handler
       }
     }
   },
