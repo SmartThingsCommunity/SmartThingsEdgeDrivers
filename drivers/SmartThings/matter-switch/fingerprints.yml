@@ -82,6 +82,38 @@ matterManufacturer:
     productId: 0x9002
     deviceProfileName: light-color-level-2700K-6500K
 
+#AiDot
+  - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: Linkind Smart Light Bulb A19 RGBTW
+    vendorId: 0x1168
+    productId: 0x03e8
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "OREiN/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: OREiN Smart Light Bulb A19 RGBTW
+    vendorId: 0x1168
+    productId: 0x03ea
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/BR30/RGBTW"
+    deviceLabel: Linkind Smart Light Bulb BR30 RGBTW
+    vendorId: 0x1168
+    productId: 0x03eb
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "OREiN/Smart/Light/Bulb/BR30/RGBTW"
+    deviceLabel: OREiN Smart Light Bulb BR30 RGBTW
+    vendorId: 0x1168
+    productId: 0x03ec
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Consciot/Smart/Light/Bulb/A19/RGBT"
+    deviceLabel: Consciot Smart Light Bulb A19 RGBT
+    vendorId: 0x1168
+    productId: 0x0405
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "Consciot/Smart/Light/Bulb/BR30/RGBT"
+    deviceLabel: Consciot Smart Light Bulb BR30 RGBT
+    vendorId: 0x1168
+    productId: 0x0406
+    deviceProfileName: light-color-level-1800K-6500K
+
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
