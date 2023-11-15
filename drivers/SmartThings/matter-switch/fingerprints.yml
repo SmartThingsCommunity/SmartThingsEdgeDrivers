@@ -1,4 +1,4 @@
-matterManufacturer:    
+matterManufacturer:
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -32,7 +32,7 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
-    
+
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -205,11 +205,6 @@ matterGeneric:
     deviceLabel: Matter Dimmable Switch
     deviceTypes:
       - id: 0x0104 # Dimmer Switch
-    deviceProfileName: switch-level
-  - id: "matter/dimmable/inunitswitch"
-    deviceLabel: Matter Dimmable Switch
-    deviceTypes:
-      - id: 0x010B # Dimmable PlugIn Unit
     deviceProfileName: switch-level
   - id: "matter/color/switch"
     deviceLabel: Matter Color Switch
