@@ -1,15 +1,13 @@
-<!-- Check all that apply [x] -->
+Check all that apply
 
-This is a checklist that can be used in effort to review before submitting a PR, in the Edge Drivers Repo.
-
-# Type of change
+# Type of Change
 
 - [ ] WWST Certification Request
      - If this is your first time contributing code:
-           - [ ] I have reviewed the README.md file
-           - [ ] I have reviewed the CODE_OF_CONDUCT.md file
-           - [ ] I have signed the CLA
-     - [ ] I plan on entering a console request or have entered a console request at developer.smartthings.com
+          - [ ] I have reviewed the README.md file
+          - [ ] I have reviewed the CODE_OF_CONDUCT.md file
+          - [ ] I have signed the CLA
+     - [ ] I plan on entering a WWST Certification Request or have entered a request through the WWST Certification console at developer.smartthings.com
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactor
@@ -23,5 +21,8 @@ This is a checklist that can be used in effort to review before submitting a PR,
 - [ ] I am adding new behavior, such as adding a sub-driver, and have added and run new unit tests to cover the new behavior
 
 # Description
+
+
+# Summary of Completed Tests
 
 
