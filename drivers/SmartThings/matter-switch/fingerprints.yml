@@ -108,11 +108,6 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x0405
     deviceProfileName: light-color-level-1800K-6500K
-  - id: "Consciot/Smart/Light/Bulb/BR30/RGBT"
-    deviceLabel: Consciot Smart Light Bulb BR30 RGBT
-    vendorId: 0x1168
-    productId: 0x0406
-    deviceProfileName: light-color-level-1800K-6500K
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
