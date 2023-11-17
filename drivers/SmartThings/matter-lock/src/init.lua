@@ -364,30 +364,33 @@ local function lock_user_change_event_handler(driver, device, ib, response)
 end
 
 local function handle_refresh(driver, device, command)
-  local req = DoorLock.attributes.LockState:read(device, device.MATTER_DEFAULT_ENDPOINT)
-  req:merge(PowerSource.attributes.BatPercentRemaining:read(device, device.MATTER_DEFAULT_ENDPOINT))
+  -- Note: no endpoint specified indicates a wildcard endpoint
+  local req = DoorLock.attributes.LockState:read(device)
+  req:merge(PowerSource.attributes.BatPercentRemaining:read(device))
   device:send(req)
 end
 
 local function handle_lock(driver, device, command)
+  local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
   if cota_cred then
     device:send(
-      DoorLock.server.commands.LockDoor(device, device.MATTER_DEFAULT_ENDPOINT, cota_cred)
+      DoorLock.server.commands.LockDoor(device, ep, cota_cred)
     )
   else
-    device:send(DoorLock.server.commands.LockDoor(device, device.MATTER_DEFAULT_ENDPOINT))
+    device:send(DoorLock.server.commands.LockDoor(device, ep))
   end
 end
 
 local function handle_unlock(driver, device, command)
+  local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
   if cota_cred then
     device:send(
-      DoorLock.server.commands.UnlockDoor(device, device.MATTER_DEFAULT_ENDPOINT, cota_cred)
+      DoorLock.server.commands.UnlockDoor(device, ep, cota_cred)
     )
   else
-    device:send(DoorLock.server.commands.UnlockDoor(device, device.MATTER_DEFAULT_ENDPOINT))
+    device:send(DoorLock.server.commands.UnlockDoor(device, ep))
   end
 end
 
@@ -476,7 +479,27 @@ local function handle_name_slot(driver, device, command)
   end
 end
 
-local function device_init(driver, device) device:subscribe() end
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  return find_default_endpoint(device, clusters.DoorLock.ID)
+end
+
+local function device_init(driver, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:subscribe()
+ end
 
 local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
@@ -484,8 +507,12 @@ local function device_added(driver, device)
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
-    device.log.debug("Device does not support lockCodes")
-    device:try_update_metadata({profile = "lock-without-codes"})
+    if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
+      device.log.debug("Device does not support lockCodes. Switching profile.")
+      device:try_update_metadata({profile = "lock-without-codes"})
+    else
+      device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
+    end
   else
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))

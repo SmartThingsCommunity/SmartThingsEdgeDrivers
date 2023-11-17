@@ -26,7 +26,7 @@ local mock_device = test.mock_device.build_test_matter_device(
     preferences = { presetPosition = 30 },
     endpoints = {
       {
-        endpoint_id = 0,
+        endpoint_id = 2,
         clusters = {
           {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
         },
@@ -35,7 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device(
         }
       },
       {
-        endpoint_id = 1,
+        endpoint_id = 10,
         clusters = { -- list the clusters
           {
             cluster_id = clusters.WindowCovering.ID,
@@ -76,14 +76,14 @@ test.register_coroutine_test(
       {
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-          mock_device, 1, 10000
+          mock_device, 10, 10000
         ),
       }
     )
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
-        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 0),
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
     test.socket.capability:__expect_send(
@@ -106,14 +106,14 @@ test.register_coroutine_test(
       {
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-          mock_device, 1, 0
+          mock_device, 10, 0
         ),
       }
     )
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
-        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 0),
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
     test.socket.capability:__expect_send(
@@ -136,14 +136,14 @@ test.register_coroutine_test(
       {
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-          mock_device, 1, ((100 - 25) *100)
+          mock_device, 10, ((100 - 25) *100)
         ),
       }
     )
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
-        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 0),
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
     test.socket.capability:__expect_send(
@@ -165,14 +165,14 @@ test.register_coroutine_test("WindowCovering OperationalStatus opening", functio
     {
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-        mock_device, 1, ((100 - 25) *100)
+        mock_device, 10, ((100 - 25) *100)
       ),
     }
   )
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
-      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 1),
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 1),
     }
   )
   test.socket.capability:__expect_send(
@@ -193,14 +193,14 @@ test.register_coroutine_test("WindowCovering OperationalStatus closing", functio
     {
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-        mock_device, 1, ((100 - 25) *100)
+        mock_device, 10, ((100 - 25) *100)
       ),
     }
   )
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
-      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 2),
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 2),
     }
   )
   test.socket.capability:__expect_send(
@@ -221,14 +221,14 @@ test.register_coroutine_test("WindowCovering OperationalStatus unknown", functio
     {
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-        mock_device, 1, ((100 - 25) *100)
+        mock_device, 10, ((100 - 25) *100)
       ),
     }
   )
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
-      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 3),
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 3),
     }
   )
   test.socket.capability:__expect_send(
@@ -252,7 +252,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device, 1)}
+      {mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device, 10)}
     )
     test.wait_for_events()
   end
@@ -267,7 +267,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.DownOrClose(mock_device, 1)}
+      {mock_device.id, WindowCovering.server.commands.DownOrClose(mock_device, 10)}
     )
     test.wait_for_events()
   end
@@ -282,7 +282,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.StopMotion(mock_device, 1)}
+      {mock_device.id, WindowCovering.server.commands.StopMotion(mock_device, 10)}
     )
     test.wait_for_events()
   end
@@ -324,7 +324,7 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
     }
   )
   test.socket.matter:__expect_send(
-    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, 8000)}
+    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8000)}
   )
 end)
 
@@ -332,7 +332,7 @@ test.register_coroutine_test("LevelControl CurrentLevel handler", function()
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
-      clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 100),
+      clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 10, 100),
     }
   )
   test.socket.capability:__expect_send(
@@ -349,7 +349,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-          mock_device, 1, 150
+          mock_device, 10, 150
         ),
       }
     )
@@ -364,9 +364,9 @@ test.register_coroutine_test(
 test.register_coroutine_test("OperationalStatus report contains current position report", function()
   test.socket.capability:__set_channel_ordering("relaxed")
   local report = WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-    mock_device, 1, ((100 - 25) *100)
+    mock_device, 10, ((100 - 25) *100)
   )
-  table.insert(report.info_blocks, WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 1, 0).info_blocks[1])
+  table.insert(report.info_blocks, WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0).info_blocks[1])
   test.socket.matter:__queue_receive({ mock_device.id, report})
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
@@ -388,7 +388,7 @@ test.register_coroutine_test("Handle windowcoveringPreset", function()
     }
   )
   test.socket.matter:__expect_send(
-    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 1, 7000)}
+    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 7000)}
   )
 end)
 
