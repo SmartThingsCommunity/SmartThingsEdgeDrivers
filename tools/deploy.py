@@ -10,6 +10,10 @@ print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
 branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
 ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
+if not ENVIRONMENT_URL:
+  print("No environment url specified, aborting.")
+  exit(0)
+
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
 CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
 if not CHANNEL_ID:
