@@ -32,6 +32,7 @@ local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- New profiles need to be added for devices that have more switch endpoints
 local MAX_MULTI_SWITCH_EPS = 7
+local detect_matter_thing
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -69,7 +70,7 @@ local function initialize_switch(device)
   -- support for bindings.
   local num_server_eps = 0
   for _, ep in ipairs(switch_eps) do
-    if(device:supports_server_cluster(clusters.OnOff.ID, ep)) then
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_server_eps = num_server_eps + 1;
       if num_server_eps == 1 then
         component_map["main"] = ep
@@ -89,7 +90,7 @@ local function initialize_switch(device)
   -- does not have a generic fingerprint and will join as a matter-thing. However, we have
   -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
   -- is a workaround for those devices.
-  if num_server_eps == 1 and device.label == "Matter Thing" then
+  if num_server_eps == 1 and detect_matter_thing(device) == true then
     device:try_update_metadata({profile = "switch-binary"})
   elseif num_server_eps > 1 then
     device:try_update_metadata({profile = string.format("switch-%d", math.min(num_server_eps, MAX_MULTI_SWITCH_EPS))})
@@ -97,7 +98,7 @@ local function initialize_switch(device)
   if num_server_eps > MAX_MULTI_SWITCH_EPS then
     error(string.format(
       "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
-        num_server_eps,
+      num_server_eps,
       MAX_MULTI_SWITCH_EPS
     ))
   end
@@ -395,6 +396,15 @@ local matter_driver_template = {
     require("eve-energy")
   }
 }
+
+function detect_matter_thing(device)
+  for _, capability in ipairs(matter_driver_template.supported_capabilities) do
+    if device:supports_capability(capability) then
+      return false
+    end
+  end
+  return device:supports_capability(capabilities.refresh)
+end
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
 log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
