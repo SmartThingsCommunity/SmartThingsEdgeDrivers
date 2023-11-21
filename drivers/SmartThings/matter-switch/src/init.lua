@@ -64,25 +64,40 @@ local function initialize_switch(device)
   -- For switch devices, the profile components follow the naming convention "switch%d",
   -- with the exception of "main" being the first component. Each component will then map
   -- to the next lowest endpoint that hasn't been mapped yet.
-  for i, ep in ipairs(switch_eps) do
-    if i == 1 then
-      component_map["main"] = ep
-    else
-      component_map[string.format("switch%d", i)] = ep
+  -- Additionally, since we do not support bindings at the moment, we only want to count
+  -- On/Off clusters that have been implemented as server. This can be removed when we have
+  -- support for bindings.
+  local num_server_eps = 0
+  for _, ep in ipairs(switch_eps) do
+    if(device:supports_server_cluster(clusters.OnOff.ID, ep)) then
+      num_server_eps = num_server_eps + 1;
+      if num_server_eps == 1 then
+        component_map["main"] = ep
+      else
+        component_map[string.format("switch%d", num_server_eps)] = ep
+      end
     end
   end
 
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
   -- where devices with multiple endpoints with the same device type cannot be detected
-  local num_switch_eps = #switch_eps
-  if num_switch_eps > 1 then
-    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
+  -- Also, the case where num_server_eps == 1 is a workaround for devices that have the On/Off
+  -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+  -- for this device type). By default, we do not support On/Off Light Switch because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
+  -- does not have a generic fingerprint and will join as a matter-thing. However, we have
+  -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
+  -- is a workaround for those devices.
+  if num_server_eps == 1 and device.label == "Matter Thing" then
+    device:try_update_metadata({profile = "switch-binary"})
+  elseif num_server_eps > 1 then
+    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_server_eps, MAX_MULTI_SWITCH_EPS))})
   end
-  if num_switch_eps > MAX_MULTI_SWITCH_EPS then
+  if num_server_eps > MAX_MULTI_SWITCH_EPS then
     error(string.format(
       "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
-      num_switch_eps,
+        num_server_eps,
       MAX_MULTI_SWITCH_EPS
     ))
   end
@@ -302,10 +317,17 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    removed = device_removed
+    removed = device_removed,
+    infoChanged = info_changed
   },
   matter_handlers = {
     attr = {
