@@ -66,7 +66,7 @@ zigbeeManufacturer:
     model: lumi.switch.n0agl1
     deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.switch.n0acn2"
-    deviceLabel: 单路控制器 T1 (零火线版)
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
     manufacturer: LUMI
     model: lumi.switch.n0acn2
     deviceProfileName: aqara-switch-module
