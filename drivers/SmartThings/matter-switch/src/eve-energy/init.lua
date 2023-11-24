@@ -99,10 +99,12 @@ local function requestData(device)
   device:send(clusters.OnOff.attributes.OnOff:read(device))
 
   -- Update the Watt usage
-  device:send(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil))
+  local req = cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil)
 
   -- Update the energy consumption
-  device:send(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
+  req:merge(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
+
+  device:send(req)
 end
 
 local function create_poll_schedule(device)
@@ -133,7 +135,8 @@ local function find_default_endpoint(device, component)
       break
     end
   end
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead",
+    device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
