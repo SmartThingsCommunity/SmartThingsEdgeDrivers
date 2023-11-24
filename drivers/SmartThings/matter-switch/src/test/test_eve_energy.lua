@@ -149,9 +149,9 @@ test.register_coroutine_test(
     test.socket.matter:__set_channel_ordering("relaxed")
 
     test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil),
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil)
+       })
 
     test.wait_for_events()
   end,
@@ -185,9 +185,9 @@ test.register_coroutine_test(
     )
 
     test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil),
+      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil)
+      })
     test.wait_for_events()
   end
 )
