@@ -109,6 +109,12 @@ local function create_poll_schedule(device)
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
   -- Eve Energy generally report changes every 10 or 17 minutes
   local timer = device.thread:call_on_schedule(TIMER_REPEAT, function()
+    -- We want to prevent to read the power reports of the device if the device is off
+    local is_off = device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
+    if is_off then
+      return
+    end
+
     requestData(device)
   end, "polling_schedule_timer")
 
@@ -133,7 +139,8 @@ local function find_default_endpoint(device, component)
       break
     end
   end
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead",
+    device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
@@ -216,6 +223,19 @@ end
 -- Eve Energy Handler
 -------------------------------------------------------------------------------------
 
+local function on_off_attr_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
+
+    -- We want to prevent to read the power reports of the device if the device is off
+    -- As such, the timer in create_poll_schedule does nothing if the device is off
+    -- We set here the power to 0 before the read is skipped so that the power is correctly displayed and not using a stale value
+    device:emit_event(capabilities.powerMeter.power({ value = 0, unit = "W" }))
+  end
+end
+
 local function watt_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local wattValue = ib.data.value
@@ -240,6 +260,9 @@ local eve_energy_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+      },
       [PRIVATE_CLUSTER_ID] = {
         [PRIVATE_ATTR_ID_WATT] = watt_attr_handler,
         [PRIVATE_ATTR_ID_WATT_ACCUMULATED] = watt_accumulated_attr_handler
