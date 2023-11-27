@@ -2166,7 +2166,6 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S2I
     deviceProfileName: basic-switch
-  # End Wall Hero
   - id: "Insta GmbH/Switching Actuator"
     deviceLabel: NEXENTRO Switching Actuator
     manufacturer: Insta GmbH
@@ -2177,6 +2176,32 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  # SMARTvill
+  - id: SMARTvill/SLA02
+    deviceLabel: SMARTvill Switch 2
+    manufacturer: SMARTvill
+    model: SLA02
+    deviceProfileName: multi-switch-no-master-1
+  - id: SMARTvill/SLA03
+    deviceLabel: SMARTvill Switch 3
+    manufacturer: SMARTvill
+    model: SLA03
+    deviceProfileName: multi-switch-no-master-2
+  - id: SMARTvill/SLA04
+    deviceLabel: SMARTvill Switch 4
+    manufacturer: SMARTvill
+    model: SLA04
+    deviceProfileName: multi-switch-no-master-3
+  - id: SMARTvill/SLA05
+    deviceLabel: SMARTvill Switch 5
+    manufacturer: SMARTvill
+    model: SLA05
+    deviceProfileName: multi-switch-no-master-4
+  - id: SMARTvill/SLA06
+    deviceLabel: SMARTvill Switch 6
+    manufacturer: SMARTvill
+    model: SLA06
+    deviceProfileName: multi-switch-no-master-5
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
