@@ -2177,6 +2177,11 @@ zigbeeManufacturer:
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
   # SMARTvill
+  - id: SMARTvill/SLA01
+    deviceLabel: SMARTvill Switch
+    manufacturer: SMARTvill
+    model: SLA01
+    deviceProfileName: basic-switch
   - id: SMARTvill/SLA02
     deviceLabel: SMARTvill Switch 2
     manufacturer: SMARTvill
