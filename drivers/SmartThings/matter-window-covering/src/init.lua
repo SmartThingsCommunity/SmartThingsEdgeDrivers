@@ -49,9 +49,8 @@ local function match_profile(device)
   if #battery_eps > 0 then
     profile_name = "window-covering-battery"
   end
-
   device:try_update_metadata({profile = profile_name})
-  device:set_field(PROFILE_MATCHED, 1, {persist = true})
+  device:set_field(PROFILE_MATCHED, 1)
 end
 
 local function device_init(driver, device)
@@ -64,7 +63,12 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
+    -- Profile has changed, resubscribe
     device:subscribe()
+  else
+    -- Something else has changed info (SW update, reinterview, etc.), so
+    -- try updating profile as needed
+    match_profile()
   end
 end
 
