@@ -189,7 +189,7 @@ local set_setpoint_factory = function(setpoint_attribute)
     if (value >= 40) then -- assume this is a fahrenheit value
       value = utils.f_to_c(value)
     end
-    device:send_to_component(command.component, setpoint_attribute:write(device, value*100))
+    device:send_to_component(command.component, setpoint_attribute:write(device, utils.round(value*100)))
 
     device.thread:call_with_delay(2, function(d)
       device:send_to_component(command.component, setpoint_attribute:read(device))
