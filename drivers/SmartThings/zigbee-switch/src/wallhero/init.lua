@@ -100,7 +100,7 @@ end
 local function device_info_changed(driver, device, event, args)
   local preferences = device.preferences
   local old_preferences = args.old_st_store.preferences
-  local value_map = { [true] = 0x01,[false] = 0x00 }
+  local value_map = { [true] = 0x00,[false] = 0x01 }
   if preferences ~= nil then
     local id = "stse.turnOffIndicatorLight"
     local old_value = old_preferences[id]
