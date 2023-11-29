@@ -18,8 +18,6 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
-local robotCleanerCleaningModeId = "spacewonder52282.robotCleanerCleaningMode"
-local robotCleanerCleaningMode = capabilities[robotCleanerCleaningModeId]
 local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState2"
 local robotCleanerOperationalState = capabilities[robotCleanerOperationalStateId]
 
@@ -29,12 +27,6 @@ local rvc_clean_mode_supported_mode = "RvcCleanMode.SupportedMode"
 local RVC_RUN_MODE_MAP = {
   [0x4000] = capabilities.robotCleanerMovement.robotCleanerMovement.idle,
   [0x4001] = capabilities.robotCleanerMovement.robotCleanerMovement.cleaning,
-}
-
-local RVC_CLEAN_MODE_MAP = {
-  [0x4000] = robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean,
-  [0x4001] = robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum,
-  [0x4002] = robotCleanerCleaningMode.robotCleanerCleaningMode.mop,
 }
 
 local function device_init(driver, device)
@@ -48,7 +40,7 @@ end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("run_current_mode_attr_handler currentMode: %s", ib.data.value))
+    string.format("run_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local current_mode=math.floor(ib.data.value)
   if current_mode==1 then
@@ -59,26 +51,31 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
 end
 
 local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
-  device:set_field(rvc_clean_mode_supported_mode, ib.data.value, {persist = true})
+  local supportedModes = {}
+  for _, mode in ipairs(ib.data.value) do
+    table.insert(supportedModes, mode.label)
+  end
+  device:set_field(rvc_clean_mode_supported_mode, supportedModes, {persist = true})
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedModes))
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
+    string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerCleaningMode.robotCleanerCleaningMode.mop())
+  local current_mode = math.floor(ib.data.value)
+  local supportedModes = device:get_field(rvc_clean_mode_supported_mode)
+  for _, mode in ipairs(supportedModes) do
+    if mode.mode == current_mode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode.label))
+      break
+    end
   end
 end
 
 local function rvc_operational_state_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
+    string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.stopped())
@@ -100,7 +97,7 @@ end
 -- Capability Handlers --
 local function handle_robot_cleaner_movement(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_robot_cleaner_movement currentMode: %s", cmd.args.mode))
+    string.format("handle_robot_cleaner_movement currentMode: %s", cmd.args.mode))
 
   if cmd.args.mode==capabilities.robotCleanerMovement.robotCleanerMovement.cleaning.NAME then
       device:send(clusters.RvcRunMode.commands.ChangeToMode(device, 1, 1))
@@ -111,14 +108,14 @@ end
 
 local function handle_robot_cleaner_cleaning_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_robot_cleaner_cleaning_mode currentMode: %s", cmd.args.mode))
+    string.format("handle_robot_cleaner_cleaning_mode mode: %s", cmd.args.mode))
 
-  if cmd.args.mode==robotCleanerCleaningMode.robotCleanerCleaningMode.deepClean.NAME then
-    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.mode==robotCleanerCleaningMode.robotCleanerCleaningMode.vaccum.NAME then
-    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 1))
-  else
-    device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, 2))
+  local supportedModes = device:get_field(rvc_clean_mode_supported_mode)
+  for i, mode in ipairs(supportedModes) do
+    if cmd.args.mode == mode.mode then
+      device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, i - 1))
+      return
+    end
   end
 end
 
@@ -146,7 +143,7 @@ local matter_driver_template = {
       clusters.RvcRunMode.attributes.SupportedModes,
       clusters.RvcRunMode.attributes.CurrentMode,
     },
-    [robotCleanerCleaningModeId] = {
+    [capabilities.mode.ID] = {
       clusters.RvcCleanMode.attributes.SupportedModes,
       clusters.RvcCleanMode.attributes.CurrentMode,
     },
@@ -158,8 +155,8 @@ local matter_driver_template = {
     [capabilities.robotCleanerMovement.ID] = {
       [capabilities.robotCleanerMovement.commands.setRobotCleanerMovement.NAME] = handle_robot_cleaner_movement,
     },
-    [robotCleanerCleaningModeId] = {
-      [robotCleanerCleaningMode.commands.setRobotCleanerCleaningMode.NAME] = handle_robot_cleaner_cleaning_mode,
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = handle_robot_cleaner_cleaning_mode,
     },
   },
 }
