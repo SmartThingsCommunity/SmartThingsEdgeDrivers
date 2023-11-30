@@ -56,7 +56,7 @@ if LOCALE:
           cwd=os.path.dirname(current_path)
         )
 
-    subprocess.run("git status")
+    subprocess.run("git status", shell=True)
 
 # Get drivers currently on the channel
 response = requests.get(
