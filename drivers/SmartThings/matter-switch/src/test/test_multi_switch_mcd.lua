@@ -16,9 +16,10 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local mock_3switch = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("light-binary.yml"),
+  profile = t_utils.get_profile_definition("switch-3.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -64,7 +65,7 @@ local mock_3switch = test.mock_device.build_test_matter_device({
 })
 
 local mock_2switch = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("light-binary.yml"),
+  profile = t_utils.get_profile_definition("switch-2.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -100,8 +101,9 @@ local mock_2switch = test.mock_device.build_test_matter_device({
   }
 })
 
+
 local mock_3switch_non_sequential = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("light-binary.yml"),
+  profile = t_utils.get_profile_definition("switch-3.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -147,6 +149,8 @@ local mock_3switch_non_sequential = test.mock_device.build_test_matter_device({
 })
 
 local function test_init_mock_3switch()
+  local component_map = {main = 1, switch2 = 2, switch3 = 3}
+  mock_3switch:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
@@ -154,10 +158,11 @@ local function test_init_mock_3switch()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch)
   test.socket.matter:__expect_send({mock_3switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch)
-  mock_3switch:expect_metadata_update({ profile = "switch-3" })
 end
 
 local function test_init_mock_2switch()
+  local component_map = {main = 1, switch2 = 2}
+  mock_2switch:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
@@ -165,10 +170,11 @@ local function test_init_mock_2switch()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_2switch)
   test.socket.matter:__expect_send({mock_2switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_2switch)
-  mock_2switch:expect_metadata_update({ profile = "switch-2" })
 end
 
 local function test_init_mock_3switch_non_sequential()
+  local component_map = {main = 10, switch2 = 14, switch3 = 15}
+  mock_3switch_non_sequential:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
@@ -176,7 +182,6 @@ local function test_init_mock_3switch_non_sequential()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch_non_sequential)
   test.socket.matter:__expect_send({mock_3switch_non_sequential.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch_non_sequential)
-  mock_3switch_non_sequential:expect_metadata_update({ profile = "switch-3" })
 end
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
