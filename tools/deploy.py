@@ -52,7 +52,7 @@ if LOCALE:
         print("en: "+row[0]+" "+LOCALE+": "+row[1])
         subprocess.run(
           "find . -name 'fingerprints.yml' | xargs sed -i '' 's/deviceLabel: "+row[0].translate(slash_escape)+"/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
-          shell=True
+          shell=True,
           cwd=os.path.dirname(current_path)
         )
     subprocess.run("git status")
