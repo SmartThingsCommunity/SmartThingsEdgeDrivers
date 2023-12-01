@@ -68,7 +68,7 @@ local function info_changed(driver, device, event, args)
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
-    match_profile()
+    match_profile(device)
   end
 end
 
