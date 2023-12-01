@@ -52,6 +52,13 @@ local devices = {
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 3
   },
+  BUTTON_PUSH_HELD_3 = {
+    MATCHING_MATRIX = {
+      { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
+    NUMBER_OF_BUTTONS = 3
+  },
   BUTTON_PUSH_4 = {
     MATCHING_MATRIX = {
       { mfr = "LDS", model = "ZBT-CCTSwitch-D0001" },
