@@ -1,6 +1,14 @@
+matterManufacturer:
+#Eve
+  - id: "Eve MotionBlinds"
+    deviceLabel: Eve MotionBlinds
+    vendorId: 0x130A
+    productId: 0x55
+    deviceProfileName: window-covering-battery
+
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
     deviceTypes:
       - id: 0x0202 # Window Covering
-    deviceProfileName: window-covering-profile
+    deviceProfileName: window-covering

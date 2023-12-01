@@ -47,7 +47,8 @@ local DIMMING_LIGHT_FINGERPRINTS = {
   {mfr = "Leviton", model = "DL1KD"},   -- Leviton Lumina RF Dimmer Switch
   {mfr = "Leviton", model = "ZSD07"},   -- Leviton Lumina RF 0-10V Dimming Wall Switch
   {mfr = "MRVL", model = "MZ100"},
-  {mfr = "CREE", model = "Connected A-19 60W Equivalent"}
+  {mfr = "CREE", model = "Connected A-19 60W Equivalent"},
+  {mfr = "Insta GmbH", model = "NEXENTRO Dimming Actuator"}
 }
 
 local DIMMING_LIGHT_CONFIGURATION = {
