@@ -50,7 +50,13 @@ if LOCALE:
       reader = csv.reader(csvfile)
       for row in reader:
         print("en: "+row[0]+" "+LOCALE+": "+row[1])
-        subprocess.run("find . -name 'fingerprints.yml' | xargs sed -i '' 's/deviceLabel: "+row[0].translate(slash_escape)+"/deviceLabel: "+row[1].translate(slash_escape)+"/g'", shell=True)
+        subprocess.run(
+          "find . -name 'fingerprints.yml' | xargs sed -i -E 's/deviceLabel ?: \"?"+row[0].translate(slash_escape)+"\"?/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
+          shell=True,
+          cwd=os.path.dirname(current_path)
+        )
+
+    subprocess.run("git status", shell=True)
 
 # Get drivers currently on the channel
 response = requests.get(

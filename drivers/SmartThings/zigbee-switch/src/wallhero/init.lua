@@ -28,7 +28,9 @@ local FINGERPRINTS = {
   { mfr = "WALL HERO", model = "ACL-401S4I", switches = 4, buttons = 0 },
   { mfr = "WALL HERO", model = "ACL-401S8I", switches = 4, buttons = 4 },
   { mfr = "WALL HERO", model = "ACL-401S3I", switches = 3, buttons = 0 },
-  { mfr = "WALL HERO", model = "ACL-401S2I", switches = 2, buttons = 0 }
+  { mfr = "WALL HERO", model = "ACL-401S2I", switches = 2, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401S1I", switches = 1, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401ON", switches = 1, buttons = 0 }
 }
 
 local function can_handle_wallhero_switch(opts, driver, device, ...)
@@ -100,7 +102,7 @@ end
 local function device_info_changed(driver, device, event, args)
   local preferences = device.preferences
   local old_preferences = args.old_st_store.preferences
-  local value_map = { [true] = 0x01,[false] = 0x00 }
+  local value_map = { [true] = 0x00,[false] = 0x01 }
   if preferences ~= nil then
     local id = "stse.turnOffIndicatorLight"
     local old_value = old_preferences[id]
