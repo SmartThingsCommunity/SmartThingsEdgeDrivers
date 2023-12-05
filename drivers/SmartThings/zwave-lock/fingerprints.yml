@@ -294,6 +294,13 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0001
     deviceProfileName: base-lock
+  # TLJ
+  - id: "TLJ"
+    deviceLabel: TLJ Door Lock
+    manufacturerId: 0x0449
+    productType: 0x0004
+    productId: 0x0001
+    deviceProfileName: base-lock
 # LOCKS WITHOUT CODES
   # Danalock
   - id: "Danalock/V3-BTZU"
