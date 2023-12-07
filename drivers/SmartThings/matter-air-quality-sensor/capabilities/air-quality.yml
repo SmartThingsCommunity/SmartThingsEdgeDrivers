@@ -1,0 +1,32 @@
+name: Air quality
+id: spacewonder52282.airQuality
+version: 1
+status: proposed
+
+attributes:
+  airQuality:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          enum:
+          - unknown
+          - good
+          - fair
+          - moderate
+          - poor
+          - veryPoor
+          - extremelvPoor
+      required:
+      - value
+    values:
+    - unknown
+    - good
+    - fair
+    - moderate
+    - poor
+    - veryPoor
+    - extremelvPoor
+commands: {}

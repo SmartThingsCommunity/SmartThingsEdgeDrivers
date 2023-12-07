@@ -1,0 +1,24 @@
+name: Nitrogen dioxide measurement
+id: spacewonder52282.nitrogenDioxideMeasurement
+version: 1
+status: proposed
+
+attributes:
+  nitrogenDioxideLevel:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 1000000
+        unit:
+          type: string
+          enum:
+          - ppm
+          default: ppm
+      required:
+      - value
+      - unit
+commands: {}
