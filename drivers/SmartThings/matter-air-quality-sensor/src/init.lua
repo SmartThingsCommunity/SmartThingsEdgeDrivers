@@ -196,7 +196,7 @@ local function air_quality_attr_handler(driver, device, ib, response)
   elseif state == 5 then -- VeryPoor
     device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.veryPoor())
   elseif state == 6 then -- ExtremelyPoor
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.extremelyPoor())
+    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.extremelvPoor())
   end
 end
 
