@@ -1,5 +1,3 @@
-local Fields = require "hue.fields"
-local HueApi = require "hue.api"
 local log = require "log"
 local socket = require "cosock.socket"
 
@@ -7,6 +5,8 @@ local mdns = require "st.mdns"
 local net_utils = require "st.net_utils"
 local st_utils = require "st.utils"
 
+local Fields = require "hue.fields"
+local HueApi = require "hue.api"
 local utils = require "utils"
 
 local SERVICE_TYPE = "_hue._tcp"
@@ -15,7 +15,10 @@ local DOMAIN = "local"
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
-  light_state_disco_cache = {}
+  light_state_disco_cache = {},
+  ServiceType = SERVICE_TYPE,
+  Domain = DOMAIN,
+  discovery_active = false
 }
 
 local supported_resource_types = {
@@ -31,25 +34,34 @@ process_discovered_light
 ---@param _ table
 ---@param should_continue function
 function HueDiscovery.discover(driver, _, should_continue)
+  if HueDiscovery.discovery_active then
+    log.info("Hue discovery already in progress, ignoring new discovery request")
+    return
+  end
+
   log.info_with({ hub_logs = true }, "Starting Hue discovery")
+  HueDiscovery.discovery_active = true
 
   while should_continue() do
-    local known_dni_to_device_map = {}
+    local known_identifier_to_device_map = {}
     local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
       -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
       local dni = device.parent_assigned_child_key or device.device_network_id
-      known_dni_to_device_map[dni] = device
+      known_identifier_to_device_map[dni] = device
       local ipv4 = device:get_field(Fields.IPV4);
       if ipv4 then
         computed_mac_addresses[ipv4] = dni
       end
     end
 
+    HueDiscovery.do_mdns_scan(driver)
     HueDiscovery.search_for_bridges(driver, computed_mac_addresses, function(hue_driver, bridge_ip, bridge_id)
-      discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_dni_to_device_map)
+      discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_identifier_to_device_map)
     end)
+    socket.sleep(1.0)
   end
+  HueDiscovery.discovery_active = false
   log.info_with({ hub_logs = true }, "Ending Hue discovery")
 end
 
@@ -58,83 +70,27 @@ end
 ---@param computed_mac_addresses table<string,string>
 ---@param callback fun(driver: HueDriver, ip: string, id: string)
 function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callback)
-  local mdns_responses, err = mdns.discover(SERVICE_TYPE, DOMAIN)
-
-  if err ~= nil then
-    log.error_with({ hub_logs = true }, "Error during service discovery: ", err)
-    return
-  end
-
-  if not (mdns_responses and mdns_responses.found and #mdns_responses.found > 0) then
-    log.warn("No mdns responses for Hue service this attempt, continuing...")
-    return
-  end
-
-  for _, info in ipairs(mdns_responses.found) do
-    if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
-      log.trace("Invalid IPv4 address: " .. info.host_info.address)
-      goto continue
-    end
-    if info.service_info.service_type ~= SERVICE_TYPE then -- response for a different service type. Shouldn't happen.
-      log.warn("Unexpected service type response: " .. info.service_info.service_type)
-      goto continue
-    end
-    if info.service_info.domain ~= DOMAIN then -- response for a different domain. Shouldn't happen.
-      log.warn("Unexpected domain response: " .. info.service_info.domain)
-      goto continue
-    end
-
-    local ip_addr = info.host_info.address;
-
-    if not computed_mac_addresses[ip_addr] then
-      -- Hue *typically* formats the BridgeID as the uppercase MAC address, minus separators.
-      -- However, it can be user overriden, set by a user, and may not be unique, so we want
-      -- to stick to that format but make sure it's actually the mac address. Instead of pulling
-      -- the bridge id out of the bridge info, we'll extract the MAC address and apply the above mentioned
-      -- formatting rules. We also prefer the MAC because it makes for a good Device Network ID.
-      local bridge_info, rest_err, _ = HueApi.get_bridge_info(
-        ip_addr,
-        utils.labeled_socket_builder("[Discovery: " .. ip_addr .. " Bridge Info Request]")
-      )
-      if rest_err ~= nil or not bridge_info then
-        log.error_with({ hub_logs = true }, string.format(
-          "Error querying bridge info for discovered IP address %s: %s",
-          ip_addr,
-          (rest_err or "unexpected nil in error position")
-        )
-        )
-        goto continue
-      end
-
-      -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
-      -- we strip thoes out and make the string uppercase
-      if bridge_info.mac then
-        local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
-        computed_mac_addresses[ip_addr] = bridge_id
-      end
-    end
-
-    if type(callback) == "function" then
-      callback(driver, ip_addr, computed_mac_addresses[ip_addr])
+  local scanned_bridges = driver.datastore.bridge_netinfo or {}
+  for bridge_id, bridge_info in pairs(scanned_bridges) do
+    if type(callback) == "function" and bridge_info ~= nil then
+      callback(driver, bridge_info.ip, bridge_id)
     else
       log.warn(
         "Argument passed in `callback` position for "
         .. "`HueDiscovery.search_for_bridges` is not a function"
       )
     end
-
-    ::continue::
   end
 end
 
 ---@param driver HueDriver
 ---@param bridge_ip string
 ---@param bridge_id string
----@param known_dni_to_device_map table<string,HueDevice>
-discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to_device_map)
+---@param known_identifier_to_device_map table<string,HueDevice>
+discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identifier_to_device_map)
   if driver.ignored_bridges[bridge_id] then return end
 
-  local known_bridge_device = known_dni_to_device_map[bridge_id]
+  local known_bridge_device = known_identifier_to_device_map[bridge_id]
   if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
     HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
   end
@@ -142,7 +98,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
   if known_bridge_device ~= nil
       and driver.joined_bridges[bridge_id]
       and HueDiscovery.api_keys[bridge_id]
-      and known_bridge_device:get_field(Fields._INIT) then
+      and known_bridge_device:get_field(Fields._INIT)
+  then
     log.info_with({ hub_logs = true }, string.format("Scanning bridge %s for devices...", bridge_id))
 
     HueDiscovery.disco_api_instances[bridge_id] = HueDiscovery.disco_api_instances[bridge_id]
@@ -154,7 +111,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
 
     HueDiscovery.search_bridge_for_supported_devices(driver, HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
-        discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_dni_to_device_map)
+        discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
       end,
       "[Discovery: " ..
       (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge scan]"
@@ -162,8 +119,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
     return
   end
 
-  local socket_builder = utils.labeled_socket_builder(bridge_id)
   if not HueDiscovery.api_keys[bridge_id] then
+    local socket_builder = utils.labeled_socket_builder(bridge_id)
     local api_key_response, err, _ = HueApi.request_api_key(bridge_ip, socket_builder)
 
     if err ~= nil or not api_key_response then
@@ -193,10 +150,10 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
   end
 
   if HueDiscovery.api_keys[bridge_id] and not driver.joined_bridges[bridge_id] then
-    local bridge_info, err, _ = HueApi.get_bridge_info(bridge_ip, socket_builder)
-    if err ~= nil or not bridge_info then
-      log.error_with({ hub_logs = true }, string.format("Error querying bridge info for %s: %s", bridge_id,
-        (err or "unexpected nil in error position")))
+    local bridge_info = driver.datastore.bridge_netinfo[bridge_id]
+
+    if not bridge_info then
+      log.debug(string.format("Bridge info for %s not yet available", bridge_id))
       return
     end
 
@@ -206,8 +163,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_dni_to
       return
     end
 
-    bridge_info.ip = bridge_ip
-    driver.joined_bridges[bridge_id] = bridge_info
+    driver.joined_bridges[bridge_id] = true
 
     if not known_bridge_device then
       local create_device_msg = {
@@ -272,13 +228,13 @@ end
 ---@param bridge_id string
 ---@param svc_info table
 ---@param device_info table
----@param known_dni_to_device_map table<string,HueDevice>
-discovered_device_callback = function(driver, bridge_id, svc_info, device_info, known_dni_to_device_map)
+---@param known_identifier_to_device_map table<string,HueDevice>
+discovered_device_callback = function(driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
   local v1_dni = bridge_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
   local edge_dni = svc_info.rid or ""
-  if known_dni_to_device_map[v1_dni] or known_dni_to_device_map[edge_dni] then return end
+  if known_identifier_to_device_map[v1_dni] or known_identifier_to_device_map[edge_dni] then return end
   if svc_info.rtype == "light" then
-    process_discovered_light(driver, bridge_id, svc_info.rid, device_info, known_dni_to_device_map)
+    process_discovered_light(driver, bridge_id, svc_info.rid, device_info, known_identifier_to_device_map)
   end
 end
 
@@ -286,8 +242,8 @@ end
 ---@param bridge_id string
 ---@param resource_id string
 ---@param device_info table
----@param known_dni_to_device_map table<string,boolean>
-process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_dni_to_device_map)
+---@param known_identifier_to_device_map table<string,boolean>
+process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_identifier_to_device_map)
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then
     log.warn("No API instance for bridge_id ", bridge_id)
@@ -334,7 +290,7 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
       goto continue
     end
 
-    local bridge_device = known_dni_to_device_map[bridge_id]
+    local bridge_device = known_identifier_to_device_map[bridge_id]
 
     local create_device_msg = {
       type = "EDGE_CHILD",
@@ -348,11 +304,12 @@ process_discovered_light = function(driver, bridge_id, resource_id, device_info,
     }
 
     HueDiscovery.light_state_disco_cache[light.id] = {
+      hue_provided_name = light.metadata.name,
       id = light.id,
       on = light.on,
       color = light.color,
       dimming = light.dimming,
-      color_temp = light.color_temperature,
+      color_temperature = light.color_temperature,
       mode = light.mode,
       parent_device_id = bridge_device.id,
       hue_device_id = light.owner.rid,
@@ -368,6 +325,93 @@ end
 
 is_device_service_supported = function(svc_info)
   return supported_resource_types[svc_info.rtype or ""]
+end
+
+function HueDiscovery.do_mdns_scan(driver)
+  local bridge_netinfo = driver.datastore.bridge_netinfo
+  local mdns_responses, err = mdns.discover(HueDiscovery.ServiceType, HueDiscovery.Domain)
+
+  if err ~= nil then
+    log.error_with({ hub_logs = true }, "Error during service discovery: ", err)
+    return
+  end
+
+  if not (mdns_responses and mdns_responses.found and #mdns_responses.found > 0) then
+    log.warn("No mdns responses for Hue service this attempt, continuing...")
+    return
+  end
+
+  for _, info in ipairs(mdns_responses.found) do
+    if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
+      log.trace("Invalid IPv4 address: " .. info.host_info.address)
+      return
+    end
+
+    if info.service_info.service_type ~= HueDiscovery.ServiceType then -- response for a different service type. Shouldn't happen.
+      log.warn("Unexpected service type response: " .. info.service_info.service_type)
+      return
+    end
+
+    if info.service_info.domain ~= HueDiscovery.Domain then -- response for a different domain. Shouldn't happen.
+      log.warn("Unexpected domain response: " .. info.service_info.domain)
+      return
+    end
+
+    -- Hue *typically* formats the BridgeID as the uppercase MAC address, minus separators.
+    -- However, it can be user overriden, set by a user, and may not be unique, so we want
+    -- to stick to that format but make sure it's actually the mac address. Instead of pulling
+    -- the bridge id out of the bridge info, we'll extract the MAC address and apply the above mentioned
+    -- formatting rules. We also prefer the MAC because it makes for a good Device Network ID.
+    local ip_addr = info.host_info.address;
+    local bridge_info, rest_err, _ = HueApi.get_bridge_info(
+      ip_addr,
+      utils.labeled_socket_builder("[mDNS Scan: " .. ip_addr .. " Bridge Info Request]")
+    )
+    if rest_err ~= nil or not bridge_info then
+      log.error_with({ hub_logs = true },
+        string.format(
+          "Error querying bridge info for discovered IP address %s: %s",
+          ip_addr,
+          (rest_err or "unexpected nil in error position")
+        )
+      )
+      return
+    end
+    -- '-' and ':' or '::' are the accepted separators used for MAC address segments, so
+    -- we strip thoes out and make the string uppercase
+    if not bridge_info.mac then
+      log.warn_with({ hub_logs = true },
+        string.format(
+          "No MAC address in returned Bridge Info for IP %s.", ip_addr
+        )
+      )
+      return
+    end
+
+    bridge_info.ip = ip_addr
+    local bridge_id = bridge_info.mac:gsub("-", ""):gsub(":", ""):upper()
+
+    -- sanitize userdata nulls from JSON decode
+    for k, v in pairs(bridge_info) do
+      if type(v) == "userdata" then
+        bridge_info[k] = nil
+      end
+    end
+
+    local update_needed = false
+    if not utils.deep_table_eq((bridge_netinfo[bridge_id] or {}), bridge_info) then
+      bridge_netinfo[bridge_id] = bridge_info
+      update_needed = true
+    end
+
+    if driver.joined_bridges[bridge_id] and not driver.ignored_bridges[bridge_id] then
+      local bridge_device = driver:get_device_by_dni(bridge_id, true)
+      update_needed = update_needed or (bridge_device and (bridge_device:get_field(Fields.IPV4) ~= bridge_info.ip))
+      if update_needed then
+        driver:update_bridge_netinfo(bridge_id, bridge_info)
+      end
+    end
+  end
 end
 
 return HueDiscovery

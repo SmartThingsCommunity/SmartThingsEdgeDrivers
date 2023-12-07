@@ -166,6 +166,21 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HS2SW2L-EFR-3.0
     deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW1A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW1A-W-EF-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW2A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW2A-W-EF-3.0
+    deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6SW3A-W-EF-3.0"
+    deviceLabel: "HEIMAN Switch 1"
+    manufacturer: HEIMAN
+    model: HS6SW3A-W-EF-3.0
+    deviceProfileName: basic-switch
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
@@ -449,6 +464,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: on-off-level
+  - id: "ubisys/S2 (5502)"
+    deviceLabel: ubisys S2
+    manufacturer: ubisys
+    model: "S2 (5502)"
+    deviceProfileName: switch-power-firmware-2
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
@@ -969,6 +989,31 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300Z1
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z2
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z2
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z3
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z3
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z5
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z5
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SBM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SBM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -1264,6 +1309,21 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: Outdoor Accent RGB
     deviceProfileName: color-bulb
+  - id: "DURAGREEN/DG-CW-02"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CW-02
+    deviceProfileName: color-temp-bulb
+  - id: "DURAGREEN/DG-CW-01"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CW-01
+    deviceProfileName: color-temp-bulb
+  - id: "DURAGREEN/DG-CCT-01"
+    deviceLabel: DG Light
+    manufacturer: DURAGREEN
+    model: DG-CCT-01
+    deviceProfileName: color-temp-bulb
   - id: "Samsung Electronics/ABL-LIGHT-Z-001"
     deviceLabel: Juno Connect
     manufacturer: Samsung Electronics
@@ -2075,6 +2135,48 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  # Wall Hero
+  - id: "WALL HERO/ACL-401S4I"
+    deviceLabel: 四位智能开关面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S4I
+    deviceProfileName: wallhero
+  - id: "WALL HERO/ACL-401S8I"
+    deviceLabel: 八位智能开关/场景面板 1 
+    manufacturer: WALL HERO
+    model: ACL-401S8I
+    deviceProfileName: wallhero
+  - id: "WALL HERO/ACL-401ON"
+    deviceLabel: 智能墙面五孔插座
+    manufacturer: WALL HERO
+    model: ACL-401ON
+    deviceProfileName: wallhero    
+  - id: "WALL HERO/ACL-401S1I"
+    deviceLabel: 一位智能开关面板
+    manufacturer: WALL HERO
+    model: ACL-401S1I
+    deviceProfileName: wallhero    
+  - id: "WALL HERO/ACL-401S3I"
+    deviceLabel: 三位智能开关面板 1
+    manufacturer: WALL HERO
+    model: ACL-401S3I
+    deviceProfileName: wallhero    
+  - id: "WALL HERO/ACL-401S2I"
+    deviceLabel: 二位智能开关面板 1
+    manufacturer: WALL HERO
+    model: ACL-401S2I
+    deviceProfileName: wallhero
+  # End Wall Hero
+  - id: "Insta GmbH/Switching Actuator"
+    deviceLabel: NEXENTRO Switching Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Switching Actuator
+    deviceProfileName: basic-switch
+  - id: "Insta GmbH/Dimming Actuator"
+    deviceLabel: NEXENTRO Dimming Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Dimming Actuator
+    deviceProfileName: on-off-level
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

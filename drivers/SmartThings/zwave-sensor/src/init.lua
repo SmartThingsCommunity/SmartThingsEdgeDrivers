@@ -21,6 +21,8 @@ local ZwaveDriver = require "st.zwave.driver"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
+--- @type st.zwave.CommandClass.WakeUp
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local preferences = require "preferences"
 local configurations = require "configurations"
@@ -59,6 +61,16 @@ local function basic_set_handler(driver, device, cmd)
   end
 end
 
+local function wakeup_notification(driver, device, cmd)
+  --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+  --This is done to help the hub correctly set the checkInterval for migrated devices.
+  if not device:get_field("__wakeup_interval_get_sent") then
+    device:send(WakeUp:IntervalGetV1({}))
+    device:set_field("__wakeup_interval_get_sent", true)
+  end
+  device:refresh()
+end
+
 local function do_configure(driver, device)
   configurations.initial_configuration(driver, device)
   device:refresh()
@@ -67,21 +79,21 @@ local function do_configure(driver, device)
   end
 end
 
--- local initial_events_map = {
---   [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
---   [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
---   [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
---   [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
---   [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
---   [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
--- }
+local initial_events_map = {
+  [capabilities.tamperAlert.ID] = capabilities.tamperAlert.tamper.clear(),
+  [capabilities.waterSensor.ID] = capabilities.waterSensor.water.dry(),
+  [capabilities.moldHealthConcern.ID] = capabilities.moldHealthConcern.moldHealthConcern.good(),
+  [capabilities.contactSensor.ID] = capabilities.contactSensor.contact.closed(),
+  [capabilities.smokeDetector.ID] = capabilities.smokeDetector.smoke.clear(),
+  [capabilities.motionSensor.ID] = capabilities.motionSensor.motion.inactive()
+}
 
 local function added_handler(self, device)
-  -- for id, event in pairs(initial_events_map) do
-  --   if device:supports_capability_by_id(id) then
-  --     device:emit_event(event)
-  --   end
-  -- end
+  for id, event in pairs(initial_events_map) do
+    if device:supports_capability_by_id(id) then
+      device:emit_event(event)
+    end
+  end
 end
 
 local driver_template = {
@@ -113,7 +125,7 @@ local driver_template = {
     require("zooz-4-in-1-sensor"),
     require("vision-motion-detector"),
     require("fibaro-flood-sensor"),
-    require("zwave-water-temp-humidity-sensor"),
+    require("aeotec-water-sensor"),
     require("glentronics-water-leak-sensor"),
     require("homeseer-multi-sensor"),
     require("fibaro-door-window-sensor"),
@@ -126,7 +138,8 @@ local driver_template = {
     require("fibaro-motion-sensor"),
     require("v1-contact-event"),
     require("timed-tamper-clear"),
-    require("wakeup-no-poll")
+    require("wakeup-no-poll"),
+    require("apiv6_bugfix")
   },
   lifecycle_handlers = {
     added = added_handler,
@@ -137,6 +150,9 @@ local driver_template = {
   zwave_handlers = {
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
+    },
+    [cc.WAKE_UP] = {
+      [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
 }

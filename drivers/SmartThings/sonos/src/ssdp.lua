@@ -29,7 +29,11 @@ end
 
 function SSDP.search(search_term, callback)
   log.debug(string.format("Beginning SSDP search for search term %s", search_term))
-  local s = assert(socket.udp(), "create discovery socket")
+  local s, err = socket.udp()
+  if err then
+    log.error(string.format("udp socket creation failure: %s", err))
+    return
+  end
 
   local listen_ip = "0.0.0.0"
   local listen_port = 0
@@ -48,13 +52,22 @@ function SSDP.search(search_term, callback)
 
   -- bind local ip and port
   -- device will unicast back to this ip and port
-  assert(s:setsockname(listen_ip, listen_port), "discovery socket setsockname")
+  local _, err = s:setsockname(listen_ip, listen_port)
+  if err then
+    log.error(string.format("udp socket failure setsockname: %s", err))
+    return
+  end
   local timeouttime = socket.gettime() + (mx + 1) -- 3 second timeout, `MX` + 1 for network delay
 
   -- local deviceid = "placeholder"
 
   log.debug("sending discovery multicast request")
-  assert(s:sendto(multicast_msg, multicast_ip, multicast_port))
+  local _, err = s:sendto(multicast_msg, multicast_ip, multicast_port)
+  if err then
+    log.error(string.format("udp socket failure sendto: %s", err))
+    return
+  end
+
   while true do
     local time_remaining = math.max(0, timeouttime - socket.gettime())
     s:settimeout(time_remaining)
@@ -63,9 +76,13 @@ function SSDP.search(search_term, callback)
     if val then
       local headers = process_response(val)
 
+      -- log all SSDP responses, even if they don't have proper headers
+      log.debug_with({ hub_logs = true },
+        string.format("Received response for Sonos search with headers [%s], processing details",
+          st_utils.stringify_table(headers)))
       if
-          -- we don't explicitly check "st" because we don't index in to the contained
-          -- value so the equality check suffices as a nil check as well.
+      -- we don't explicitly check "st" because we don't index in to the contained
+      -- value so the equality check suffices as a nil check as well.
           SSDP.check_headers_contain(
             headers,
             "server",
@@ -75,8 +92,6 @@ function SSDP.search(search_term, callback)
             "household.smartspeaker.audio") and
           headers["st"] == search_term and headers["server"]:find("Sonos")
       then
-        log.debug(string.format("Received response for Sonos search with headers [%s], processing details",
-          st_utils.stringify_table(headers)))
         local ip =
             headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
 
@@ -103,7 +118,7 @@ function SSDP.search(search_term, callback)
         elseif ip and is_group_coordinator and group_id and
             group_name and household_id and wss_url then
           if #group_id == 0 then
-            log.debug(string.format(
+            log.debug_with({ hub_logs = true }, string.format(
               "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
               st_utils.stringify_table(group_info, nil, false)))
           elseif callback ~= nil then

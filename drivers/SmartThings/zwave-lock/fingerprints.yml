@@ -219,6 +219,54 @@ zwaveManufacturer:
     productType: 0x8104
     productId: 0x05D4
     deviceProfileName: base-lock
+  - id: "297/33031/18901"
+    deviceLabel: "Assure 2 Bio 450"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D5
+    deviceProfileName: base-lock    
+  - id: "Yale/YRD410-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D1
+    deviceProfileName: base-lock
+  - id: "Yale/YRD420-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D2
+    deviceProfileName: base-lock
+  - id: "Yale/YRD430-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D3
+    deviceProfileName: base-lock
+  - id: "Yale/YRD450-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D5
+    deviceProfileName: base-lock    
+  - id: "297/33031/18899"
+    deviceLabel: "Assure 2 Bio 430"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D3
+    deviceProfileName: base-lock    
+  - id: "297/33031/18897"
+    deviceLabel: "Assure 2 Biometric 410"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D1
+    deviceProfileName: base-lock    
+  - id: "297/33031/18898"
+    deviceLabel: "Yale Assure 2 Biometric"
+    manufacturerId: 0x0129
+    productId: 0x49D2
+    productType: 0x8107
+    deviceProfileName: base-lock
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock
@@ -244,6 +292,13 @@ zwaveManufacturer:
     deviceLabel: Philia Door Lock
     manufacturerId: 0x0366
     productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: base-lock
+  # TLJ
+  - id: "TLJ"
+    deviceLabel: TLJ Door Lock
+    manufacturerId: 0x0449
+    productType: 0x0004
     productId: 0x0001
     deviceProfileName: base-lock
 # LOCKS WITHOUT CODES
@@ -295,6 +350,7 @@ zwaveGeneric:
       supported:
         - 0x62 # door lock
         - 0x63 # user code
+        - 0x80 # battery
     deviceProfileName: base-lock
   - id: "GenericZwaveLock2"
     deviceLabel: Door Lock

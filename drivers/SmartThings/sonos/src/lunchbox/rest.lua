@@ -95,6 +95,8 @@ local function parse_chunked_response(original_response, sock)
         if partial ~= nil and #partial >= 1 then
           full_response:append_body(partial)
           next_chunk_bytes = 0
+        else
+          return nil, next_err
         end
       else
         return nil, ("unexpected error reading chunked transfer: " .. next_err)
@@ -139,7 +141,11 @@ local function handle_response(sock)
     local headers = initial_recv:get_headers()
 
     if headers and headers:get_one("Transfer-Encoding") == "chunked" then
-      full_response = parse_chunked_response(initial_recv, sock)
+      local response, err = parse_chunked_response(initial_recv, sock)
+      if err ~= nil then
+        return nil, err
+      end
+      full_response = response
     else
       local content_length_header = (headers and headers:get_one("Content-length")) or nil
       if content_length_header then

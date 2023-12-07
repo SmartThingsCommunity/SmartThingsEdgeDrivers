@@ -7,16 +7,16 @@ local Types = {}
 
 --- @enum SonosCapabilities
 Types.SonosCapabilities = {
-  PLAYBACK = "PLAYBACK", --- The player can produce audio. You can target it for playback.
-  CLOUD = "CLOUD", --- The player can send commands and receive events over the internet.
-  HT_PLAYBACK = "HT_PLAYBACK", --- The player is a home theater source. It can reproduce the audio from a home theater system, typically delivered by S/PDIF or HDMI.
-  HT_POWER_STATE = "HT_POWER_STATE", --- The player can control the home theater power state. For example, it can switch a connected TV on or off.
-  AIRPLAY = "AIRPLAY", --- The player can host AirPlay streams. This capability is present when the device is advertising AirPlay support.
-  LINE_IN = "LINE_IN", --- The player has an analog line-in.
-  AUDIO_CLIP = "AUDIO_CLIP", ---  The device is capable of playing audio clip notifications.
-  VOICE = "VOICE", --- The device supports the voice namespace (not yet implemented by Sonos).
+  PLAYBACK = "PLAYBACK",                   --- The player can produce audio. You can target it for playback.
+  CLOUD = "CLOUD",                         --- The player can send commands and receive events over the internet.
+  HT_PLAYBACK = "HT_PLAYBACK",             --- The player is a home theater source. It can reproduce the audio from a home theater system, typically delivered by S/PDIF or HDMI.
+  HT_POWER_STATE = "HT_POWER_STATE",       --- The player can control the home theater power state. For example, it can switch a connected TV on or off.
+  AIRPLAY = "AIRPLAY",                     --- The player can host AirPlay streams. This capability is present when the device is advertising AirPlay support.
+  LINE_IN = "LINE_IN",                     --- The player has an analog line-in.
+  AUDIO_CLIP = "AUDIO_CLIP",               ---  The device is capable of playing audio clip notifications.
+  VOICE = "VOICE",                         --- The device supports the voice namespace (not yet implemented by Sonos).
   SPEAKER_DETECTION = "SPEAKER_DETECTION", --- The component device is capable of detecting connected speaker drivers.
-  FIXED_VOLUME = "FIXED_VOLUME" --- The device supports fixed volume.
+  FIXED_VOLUME = "FIXED_VOLUME"            --- The device supports fixed volume.
 }
 
 --- @alias PlayerId string
@@ -220,7 +220,15 @@ function SonosState.new()
         role = "auxilary"
       end
 
-      handlers.handle_group_update(device, {role, coordinator_id, group_id})
+      if type(coordinator_id) == "table" then
+        --info gather since post migration we have seen once that coordinator_id is sometimes a table,
+        -- which causes a crash when emitting the mediaGroup.groupPrimaryDeviceId capability event
+        local ut = require "st.utils"
+        log.warn(ut.stringify_table({ household = household, coordinator_id = coordinator_id },
+          "Household update with invalid coordinator_id data:", false
+        ))
+      end
+      handlers.handle_group_update(device, { role, coordinator_id, group_id })
     end
   end
 
@@ -229,7 +237,13 @@ function SonosState.new()
   --- @param player_id PlayerId
   --- @return GroupId
   ret.get_group_for_player = function(self, household_id, player_id)
-    return private.households[household_id].player_to_group_map[player_id]
+    local household = private.households[household_id]
+    if household == nil then
+      local ut = require "st.utils"
+      log.error(ut.stringify_table({ household = household }, "Get group for invalid household", false))
+      return
+    end
+    return household.player_to_group_map[player_id]
   end
 
   --- @param self SonosState
@@ -237,7 +251,13 @@ function SonosState.new()
   --- @param group_id GroupId
   --- @return PlayerId
   ret.get_coordinator_for_group = function(self, household_id, group_id)
-    return private.households[household_id].group_to_coordinator_map[group_id]
+    local household = private.households[household_id]
+    if household == nil then
+      local ut = require "st.utils"
+      log.error(ut.stringify_table({ household = household }, "Get coordinator for invalid household", false))
+      return
+    end
+    return household.group_to_coordinator_map[group_id]
   end
 
   --- @param self SonosState
