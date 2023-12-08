@@ -8,9 +8,24 @@ SONOS_SSDP_SEARCH_TERM = "urn:smartspeaker-audio:service:SpeakerGroup:1"
 local SSDP = {}
 
 local function process_response(val)
-  local info = {}
+  -- check first line assuming it's the HTTP Status Line, which if not is invalid
+  local status_line = string.match(val, "([^\r\n]*)\r\n")
+  if not (status_line and string.match(status_line, "HTTP/1.1 200 OK"))  then
+    return nil, string.format("SSDP Response HTTP Status Line missing or not '200 OK': %q", status_line)
+  end
+  -- strip status line from payload
   val = string.gsub(val, "HTTP/1.1 200 OK\r\n", "", 1)
-  for k, v in string.gmatch(val, "([%g]+): ([%g ]*)\r\n") do
+
+  local info = {}
+  -- iterate line-by-line by splitting on `\r\n`
+  for l in string.gmatch(val, "([^\r\n]*)\r\n") do
+    if l == nil or l == "" then
+      break
+    end
+    local k, v = string.match(l, "(.-):%s*(.*)$")
+    if k == nil or k == "" then
+      return nil, string.format("Couldn't parse header/value pair for line %q", l)
+    end
     info[string.lower(k)] = v
   end
   return info
@@ -21,7 +36,10 @@ function SSDP.check_headers_contain(response, ...)
   local header_vals = table.pack(...)
   for _, header in ipairs(header_vals) do
     if header ~= nil then
-      if not response[header] then return false end
+      if not response[header] then
+        log.warn("No header available for key " .. st_utils.stringify_table(header))
+        return false
+      end
     end
   end
   return true
