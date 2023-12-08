@@ -59,6 +59,11 @@ local function temperatureControl_attr_handler(driver, device, ib, response)
   end
 end
 
+local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("dishwasher_supported_modes_attr_handler supportedModes: %s", ib.data.value))
+end
+
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
   string.format("dishwasher_mode_attr_handler currentMode: %s", ib.data.value))
@@ -148,6 +153,7 @@ local matter_driver_template = {
         [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = temperatureControl_attr_handler,
       },
       [clusters.DishwasherMode.ID] = {
+        [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
         [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
       },
       [clusters.OperationalState.ID] = {
@@ -164,6 +170,7 @@ local matter_driver_template = {
       clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
     },
     [dishwasherModeId] = {
+      clusters.DishwasherMode.attributes.SupportedModes,
       clusters.DishwasherMode.attributes.CurrentMode,
     },
     [operationalStateId] = {
