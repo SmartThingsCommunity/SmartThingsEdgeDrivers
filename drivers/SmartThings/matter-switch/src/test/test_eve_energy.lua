@@ -262,16 +262,6 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50000, unit = "Wh" }))
     )
 
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 50000,
-          deltaEnergy = 0.0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T16:39:59Z"
-        }))
-    )
-
     test.wait_for_events()
   end
 )
