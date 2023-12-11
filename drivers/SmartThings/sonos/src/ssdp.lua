@@ -22,7 +22,15 @@ local function process_response(val)
     if l == nil or l == "" then
       break
     end
-    local k, v = string.match(l, "(.-):%s*(.*)$")
+    -- SSDP Messages use the HTTP/1.1 Header Field rules described in RFC 2616, 4.2: https://datatracker.ietf.org/doc/html/rfc2616#section-4.2
+    -- This pattern extracts the Key/Value pairs in to a Lua table via the two capture groups.
+    -- The key capture group is composed entirely of a negating matcher to exclude illegal characters, ending at the `:`.
+    -- The RFC states that after the colon there may be any arbitrary amount of leading space between the colon
+    -- and the value, and that the value shouldn't have any trailing whitespace, so we exclude those as well.
+    -- The original Luncheon implementation of this Lua Pattern used iteration and detected the `;` separator
+    -- that indicates key/value parameters, however, we don't make that distinction here and instead leave parsing
+    -- values with parameters to the consumers of the output of this function.
+    local k, v = string.match(l, '([^%c()<>@,;:\\"/%[%]?={} \t]+):%s*(.-)%s*$')
     if k == nil or k == "" then
       return nil, string.format("Couldn't parse header/value pair for line %q", l)
     end
