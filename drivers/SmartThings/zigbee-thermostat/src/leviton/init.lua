@@ -16,6 +16,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local Thermostat = clusters.Thermostat
 local FanControl = clusters.FanControl
 local capabilities = require "st.capabilities"
+local utils = require "st.utils"
 
 local ENDPOINT = 10
 
@@ -89,12 +90,12 @@ end
 
 local function set_cooling_setpoint(driver, device, command)
   device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = command.args.setpoint*1.0, unit = "C"}))
-  device:send_to_component(command.component, Thermostat.attributes.OccupiedCoolingSetpoint:write(device, command.args.setpoint*100))
+  device:send_to_component(command.component, Thermostat.attributes.OccupiedCoolingSetpoint:write(device, utils.round(command.args.setpoint*100)))
 end
 
 local function set_heating_setpoint(driver, device, command)
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = command.args.setpoint*1.0, unit = "C"}))
-  device:send_to_component(command.component, Thermostat.attributes.OccupiedHeatingSetpoint:write(device, command.args.setpoint*100))
+  device:send_to_component(command.component, Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(command.args.setpoint*100)))
 end
 
 local leviton_thermostat = {
