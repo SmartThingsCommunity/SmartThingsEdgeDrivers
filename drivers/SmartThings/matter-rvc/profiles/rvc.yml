@@ -2,19 +2,15 @@ name: rvc
 components:
 - id: main
   capabilities:
-  - id: robotCleanerMovement
-    version: 1
-    config:
-      values:
-      - key: "robotCleanerMovement.value"
-        enabledValues:
-        - idle
-        - cleaning
-  - id: mode
-    version: 1
   - id: spacewonder52282.robotCleanerOperationalState2
     version: 1
+  - id: mode
+    version: 1
   - id: refresh
+    version: 1
+- id: cleanMode
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: RobotCleaner
