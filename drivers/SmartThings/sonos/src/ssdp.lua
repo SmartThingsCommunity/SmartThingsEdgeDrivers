@@ -92,12 +92,28 @@ function SSDP.search(search_term, callback)
     local val, rip, _ = s:receivefrom()
 
     if val then
-      local headers = process_response(val)
+      local headers, err = process_response(val)
 
-      -- log all SSDP responses, even if they don't have proper headers
+      if err ~= nil then
+        log.error(err or "Unknown error while parsing SSDP response headers")
+        goto continue
+      end
+
+      if headers == nil then
+        log.error("No headers found in SSDP response")
+        goto continue
+      end
+
+      if headers["st"] ~= search_term then
+        log.trace("Received SSDP response for different search term, skipping.")
+        goto continue
+      end
+
+      -- log all parseable SSDP responses for the search term,
+      -- even if they don't have proper headers.
       log.debug_with({ hub_logs = true },
-        string.format("Received response for Sonos search with headers [%s], processing details",
-          st_utils.stringify_table(headers)))
+      string.format("Received response for Sonos search with headers [%s], processing details",
+        st_utils.stringify_table(headers)))
       if
       -- we don't explicitly check "st" because we don't index in to the contained
       -- value so the equality check suffices as a nil check as well.
@@ -107,8 +123,7 @@ function SSDP.search(search_term, callback)
             "location",
             "groupinfo.smartspeaker.audio",
             "websock.smartspeaker.audio",
-            "household.smartspeaker.audio") and
-          headers["st"] == search_term and headers["server"]:find("Sonos")
+            "household.smartspeaker.audio") and headers["server"]:find("Sonos")
       then
         local ip =
             headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
@@ -163,6 +178,7 @@ function SSDP.search(search_term, callback)
         "error receiving discovery replies for search term: %s",
         rip))
     end
+    ::continue::
   end
   s:close()
 end
