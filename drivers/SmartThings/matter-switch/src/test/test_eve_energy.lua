@@ -138,6 +138,20 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Check when the device is removed", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+
+    local poll_timer = mock_device:get_field("RECURRING_POLL_TIMER")
+    assert(poll_timer ~= nil, "poll_timer should exist")
+
+    local report_poll_timer = mock_device:get_field("RECURRING_REPORT_POLL_TIMER")
+    assert(report_poll_timer ~= nil, "report_poll_timer should exist")
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
+    test.wait_for_events()
+  end
+)
 
 test.register_coroutine_test(
   "Check that the timer created in create_poll_schedule properly reads the device in requestData",
@@ -303,7 +317,7 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "Test the on attribute", function()
-	local data = data_types.validate_or_build_type(1, data_types.Uint16, "on")
+    local data = data_types.validate_or_build_type(1, data_types.Uint16, "on")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
