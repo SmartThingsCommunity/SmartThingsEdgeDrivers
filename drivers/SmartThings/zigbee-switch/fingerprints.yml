@@ -2140,32 +2140,32 @@ zigbeeManufacturer:
     deviceLabel: 四位智能开关面板 1 
     manufacturer: WALL HERO
     model: ACL-401S4I
-    deviceProfileName: basic-switch
+    deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S8I"
     deviceLabel: 八位智能开关/场景面板 1 
     manufacturer: WALL HERO
     model: ACL-401S8I
-    deviceProfileName: basic-switch
+    deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401ON"
     deviceLabel: 智能墙面五孔插座
     manufacturer: WALL HERO
     model: ACL-401ON
-    deviceProfileName: basic-switch    
+    deviceProfileName: wallhero    
   - id: "WALL HERO/ACL-401S1I"
     deviceLabel: 一位智能开关面板
     manufacturer: WALL HERO
     model: ACL-401S1I
-    deviceProfileName: basic-switch    
+    deviceProfileName: wallhero    
   - id: "WALL HERO/ACL-401S3I"
     deviceLabel: 三位智能开关面板 1
     manufacturer: WALL HERO
     model: ACL-401S3I
-    deviceProfileName: basic-switch    
+    deviceProfileName: wallhero    
   - id: "WALL HERO/ACL-401S2I"
     deviceLabel: 二位智能开关面板 1
     manufacturer: WALL HERO
     model: ACL-401S2I
-    deviceProfileName: basic-switch
+    deviceProfileName: wallhero
   # End Wall Hero
   - id: "Insta GmbH/Switching Actuator"
     deviceLabel: NEXENTRO Switching Actuator

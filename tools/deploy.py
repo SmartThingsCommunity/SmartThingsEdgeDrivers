@@ -10,6 +10,10 @@ print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
 branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
 ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
+if not ENVIRONMENT_URL:
+  print("No environment url specified, aborting.")
+  exit(0)
+
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
 CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
 if not CHANNEL_ID:
@@ -46,7 +50,13 @@ if LOCALE:
       reader = csv.reader(csvfile)
       for row in reader:
         print("en: "+row[0]+" "+LOCALE+": "+row[1])
-        subprocess.run("find . -name 'fingerprints.yml' | xargs sed -i '' 's/deviceLabel: "+row[0].translate(slash_escape)+"/deviceLabel: "+row[1].translate(slash_escape)+"/g'", shell=True)
+        subprocess.run(
+          "find . -name 'fingerprints.yml' | xargs sed -i -E 's/deviceLabel ?: \"?"+row[0].translate(slash_escape)+"\"?/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
+          shell=True,
+          cwd=os.path.dirname(current_path)
+        )
+
+    subprocess.run("git status", shell=True)
 
 # Get drivers currently on the channel
 response = requests.get(

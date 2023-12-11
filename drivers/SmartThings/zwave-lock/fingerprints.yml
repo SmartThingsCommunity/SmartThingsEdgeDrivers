@@ -222,7 +222,9 @@ zwaveManufacturer:
   - id: "297/33031/18901"
     deviceLabel: "Assure 2 Bio 450"
     manufacturerId: 0x0129
+    productType: 0x8107
     productId: 0x49D5
+    deviceProfileName: base-lock    
   - id: "Yale/YRD410-ZW3"
     deviceLabel: Yale Door Lock
     manufacturerId: 0x0129
@@ -246,14 +248,19 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x8104
     productId: 0x45D5
+    deviceProfileName: base-lock    
   - id: "297/33031/18899"
     deviceLabel: "Assure 2 Bio 430"
     manufacturerId: 0x0129
+    productType: 0x8107
     productId: 0x49D3
+    deviceProfileName: base-lock    
   - id: "297/33031/18897"
     deviceLabel: "Assure 2 Biometric 410"
     manufacturerId: 0x0129
+    productType: 0x8107
     productId: 0x49D1
+    deviceProfileName: base-lock    
   - id: "297/33031/18898"
     deviceLabel: "Yale Assure 2 Biometric"
     manufacturerId: 0x0129
@@ -285,6 +292,13 @@ zwaveManufacturer:
     deviceLabel: Philia Door Lock
     manufacturerId: 0x0366
     productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: base-lock
+  # TLJ
+  - id: "TLJ"
+    deviceLabel: TLJ Door Lock
+    manufacturerId: 0x0449
+    productType: 0x0004
     productId: 0x0001
     deviceProfileName: base-lock
 # LOCKS WITHOUT CODES
