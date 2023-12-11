@@ -100,6 +100,16 @@ local function rvc_operational_state_attr_handler(driver, device, ib, response)
   end
 end
 
+local function rvc_operational_error_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("rvc_operational_error_attr_handler operationalErrorStruct: %s", ib.data.value))
+
+  -- local operationalError = ib.data.value.error_state_id
+  -- if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToStartOrResume())
+  -- end
+end
+
 -- Capability Handlers --
 local function handle_robot_cleaner_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -140,6 +150,7 @@ local matter_driver_template = {
       },
       [clusters.RvcOperationalState.ID] = {
         [clusters.RvcOperationalState.attributes.OperationalState.ID] = rvc_operational_state_attr_handler,
+        [clusters.RvcOperationalState.attributes.OperationalError.ID] = rvc_operational_error_attr_handler,
       },
     }
   },
@@ -152,6 +163,7 @@ local matter_driver_template = {
     },
     [robotCleanerOperationalStateId] = {
       clusters.RvcOperationalState.attributes.OperationalState,
+      clusters.RvcOperationalState.attributes.OperationalError,
     },
   },
   capability_handlers = {
