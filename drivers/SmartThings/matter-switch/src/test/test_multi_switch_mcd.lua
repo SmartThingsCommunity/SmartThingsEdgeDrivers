@@ -31,7 +31,7 @@ local mock_3switch = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -40,7 +40,7 @@ local mock_3switch = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0100, device_type_revision = 2, -- On/Off Light
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
       }
     },
     {
@@ -49,7 +49,7 @@ local mock_3switch = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0100, device_type_revision = 2, -- On/Off Light
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
       }
     },
     {
@@ -58,7 +58,7 @@ local mock_3switch = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0100, device_type_revision = 2, -- On/Off Light
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
       }
     },
   }

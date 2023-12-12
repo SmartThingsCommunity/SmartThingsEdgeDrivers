@@ -38,7 +38,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
       }
     },
     {
@@ -56,6 +56,9 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_revision = 1,
           feature_map = 0, --u32 bitmap
         }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- On/Off Plug
       }
     }
   }

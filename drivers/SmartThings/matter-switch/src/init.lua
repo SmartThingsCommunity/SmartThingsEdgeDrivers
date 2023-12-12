@@ -32,6 +32,7 @@ local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local detect_matter_thing
 
 local function convert_huesat_st_to_matter(val)
@@ -121,7 +122,7 @@ end
 local function detect_bridge(device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == 0x000E then -- look for aggregator type
+      if dt.device_type_id == AGGREGATOR_DEVICE_TYPE_ID then
         return true
       end
     end
