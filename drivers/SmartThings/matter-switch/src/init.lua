@@ -118,12 +118,26 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+local function detect_bridge(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == 0x000E then -- look for aggregator type
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     -- initialize_switch will create parent-child devices as needed for multi-switch devices.
     -- However, we want to maintain support for existing MCD devices, so do not initialize
     -- device if it has already been previously initialized as an MCD device.
-    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and not device:get_field(SWITCH_INITIALIZED) then
+    -- Also, do not attempt a profile switch for a bridge device.
+    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
+       not device:get_field(SWITCH_INITIALIZED) and
+       not detect_bridge(device) then
       -- create child devices as needed for multi-switch devices
       initialize_switch(driver, device)
     end
