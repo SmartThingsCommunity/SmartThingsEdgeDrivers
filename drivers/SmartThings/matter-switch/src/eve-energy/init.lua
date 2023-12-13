@@ -99,6 +99,7 @@ local function create_poll_schedule(device)
 end
 
 local function delete_poll_schedule(device)
+  print("----------------- delete poll schedule")
   local poll_timer = device:get_field(RECURRING_POLL_TIMER)
   if poll_timer ~= nil then
     device.thread:cancel_timer(poll_timer)
@@ -108,8 +109,10 @@ end
 
 
 local function create_poll_report_schedule(device)
+  print("---------------- Calling create 15 min poll")
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
   local timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+    print("---------------- Calling scheduled power report 15 min")
     local current_time = os.time()
     local last_time = device:get_field(LAST_REPORT_TIME) or 0
     local latestTotalConsumptionWH = device:get_field(LATEST_TOTAL_CONSUMPTION_WH) or 0
