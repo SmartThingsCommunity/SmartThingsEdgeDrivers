@@ -296,7 +296,7 @@ zwaveManufacturer:
     deviceProfileName: base-lock
   # Philips
   - id: "541/2307/212"
-    deviceLabel: Philips
+    deviceLabel: Philips Lock
     manufacturerId: 0x021D
     productId: 0x00D4
     productType: 0x0903
