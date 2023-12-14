@@ -1,0 +1,6 @@
+name: 'ITM Fan Light 231201'
+packageKey: 'itm-fan-light'
+description: 'EDGE Driver, ITM Fan Light'
+vendorSupportInformation:
+permissions:
+  zigbee: {}
