@@ -11,7 +11,8 @@ local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
 local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.light.acn004" }
+  { mfr = "LUMI", model = "lumi.light.acn004" },
+  { mfr = "Aqara", model = "lumi.light.acn014" }
 }
 
 local function is_aqara_products(opts, driver, device)
