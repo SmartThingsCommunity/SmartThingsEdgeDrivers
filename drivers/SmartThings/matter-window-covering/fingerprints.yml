@@ -5,7 +5,17 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x55
     deviceProfileName: window-covering-battery
-
+#Zemismart
+  - id: "5020/65376"
+    deviceLabel: Zemismart MT25B Roller Motor
+    vendorId: 0x139C
+    productId: 0xFF60
+    deviceProfileName: window-covering-battery
+  - id: "5020/65296"
+    deviceLabel: Zemismart MT82 Smart Curtain
+    vendorId: 0x139C
+    productId: 0xFF10
+    deviceProfileName: window-covering
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
