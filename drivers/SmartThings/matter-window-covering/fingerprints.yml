@@ -10,7 +10,7 @@ matterManufacturer:
     deviceLabel: Zemismart MT01 Slide Curtain
     vendorId: 0x139C
     productId: 0xFFFE
-    deviceProfileName: window-covering-profile
+    deviceProfileName: window-covering-battery
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
