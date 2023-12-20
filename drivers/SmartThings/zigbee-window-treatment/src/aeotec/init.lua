@@ -63,8 +63,8 @@ local function setTimer(device, level, ep)
     end
 
     set_status_timer = device.thread:call_with_delay(1, function()
-        local current_level = device:get_latest_state(comp, capabilities.windowShadeLevel.ID,
-            capabilities.windowShadeLevel.shadeLevel.NAME)
+        local current_level = device:get_latest_state(comp, WindowShadeLevel.ID,
+            WindowShadeLevel.shadeLevel.NAME) or 0
         if current_level == 0 then
             device:emit_event_for_endpoint(ep, WindowShade.windowShade.open())
         elseif current_level == 100 then
@@ -84,7 +84,7 @@ local function current_lift_position_attr_handler(driver, device, value, zb_rx)
     local comp = tonumber(ep) == 1 and "main" or "venetianBlind"
     local level = value.value > 100 and 100 or value.value
     local current_level = device:get_latest_state(comp, WindowShadeLevel.ID,
-        WindowShadeLevel.shadeLevel.NAME)
+        WindowShadeLevel.shadeLevel.NAME) or 0
 
     if level == 0 then
         device:emit_event_for_endpoint(ep, WindowShade.windowShade.open())
