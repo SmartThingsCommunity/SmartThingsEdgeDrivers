@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ local device_init = function(self, device)
   end
 end
 
-local zigbee_switch_driver_template = {
+local zigbee_fan_driver = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
@@ -43,4 +43,7 @@ local zigbee_switch_driver_template = {
   }
 }
 
-zigbee_switch:run()
+defaults.register_for_default_handlers(zigbee_fan_driver,zigbee_fan_driver.supported_capabilities)
+local fan = ZigbeeDriver("zigbee-fan", zigbee_fan_driver)
+fan:run()
+
