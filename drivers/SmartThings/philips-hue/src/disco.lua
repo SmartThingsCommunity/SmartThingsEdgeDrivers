@@ -259,7 +259,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
       local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_id)
       if is_child_of_bridge and not not_known_to_bridge then
         device.log.info(string.format("Device is no longer joined to Hue Bridge %q, deleting", parent_bridge_device.label))
-        driver:try_delete_device(device.id)
+        driver:do_hue_light_delete(device)
       end
     end
   end

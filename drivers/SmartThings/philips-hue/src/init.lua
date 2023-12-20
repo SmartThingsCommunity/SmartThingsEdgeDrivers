@@ -832,9 +832,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
                     )
                   )
                   light_device.log.trace("Attempting to delete Device UUID " .. tostring(light_device.id))
-                  driver:try_delete_device(light_device.id)
-                  -- light_device:set_field(Fields.IS_ONLINE, false)
-                  -- light_device:offline()
+                  driver:do_hue_light_delete(light_device)
                 end
               end
             end
@@ -1489,6 +1487,15 @@ local hue = Driver("hue",
     stray_bulb_tx = stray_bulb_tx,
     _lights_pending_refresh = {},
     emit_light_status_events = emit_light_status_events,
+    do_hue_light_delete = function(driver, device)
+      if type(driver.try_delete_device) ~= "function" then
+        device.log.warn("Requesting device delete on API version that doesn't support it. Marking device offline.")
+        device:offline()
+        return
+      end
+
+      driver:try_delete_device(device.id)
+    end,
     check_hue_repr_for_capability_support = function(hue_repr, capability_id)
       local handler = support_check_handlers[capability_id]
       if type(handler) == "function" then
