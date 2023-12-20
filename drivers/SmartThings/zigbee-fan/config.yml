@@ -1,6 +1,6 @@
-name: 'ITM Fan Light 231201'
-packageKey: 'itm-fan-light'
-description: 'EDGE Driver, ITM Fan Light'
-vendorSupportInformation:
+name: 'Zigbee Fan'
+packageKey: 'zigbee-fan'
+description: 'SmartThings driver for zigbee fan devices'
+vendorSupportInformation:"https://support.smartthings.com"
 permissions:
   zigbee: {}
