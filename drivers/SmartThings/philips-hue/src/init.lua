@@ -712,6 +712,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API)
       cosock.spawn(function()
+        Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
         local child_device_map = {}
         local children = bridge_device:get_child_list()
         bridge_device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
@@ -1254,7 +1255,7 @@ cosock.spawn(function()
             (msg.device.label or msg.device.device_network_id or msg.device.id or "unknown bridge")
           )
         )
-        Discovery.search_bridge_for_supported_devices(thread_local_driver, api_instance,
+        Discovery.search_bridge_for_supported_devices(thread_local_driver, msg_device:get_field(Fields.BRIDGE_ID), api_instance,
           function(hue_driver, svc_info, device_data)
             if not (svc_info.rid and svc_info.rtype and svc_info.rtype == "light") then return end
 
