@@ -1,0 +1,6 @@
+matterGeneric:
+  - id: "matter/disco-bal"
+    deviceLabel: Matter Disco Ball
+    deviceTypes:
+      - id: 0x5678
+    deviceProfileName: disco-ball-base

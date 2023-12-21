@@ -1,0 +1,4 @@
+name: 'Matter Disco Ball'
+packageKey: 'matter-disco-ball'
+permissions:
+  matter: {}
