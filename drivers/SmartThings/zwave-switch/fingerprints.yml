@@ -898,6 +898,12 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: "881/259/78"
+    deviceLabel: "Heavy Duty Smart Switch"
+    manufacturerId: 0x371
+    productId: 0x4E
+    productType: 0x103
+    deviceProfileName: "metering-switch"
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
