@@ -18,24 +18,24 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
---- @class st.matter.clusters.OnOff.OnTime
---- @alias OnTime
+--- @class st.matter.clusters.DiscoBall.EventList
+--- @alias EventList
 ---
---- @field public ID number 0x4001 the ID of this attribute
---- @field public NAME string "OnTime" the name of this attribute
---- @field public data_type st.matter.data_types.Uint16 the data type of this attribute
+--- @field public ID number 0xFFFA the ID of this attribute
+--- @field public NAME string "EventList" the name of this attribute
+--- @field public data_type st.matter.data_types.Array the data type of this attribute
 
-local OnTime = {
-  ID = 0x4001,
-  NAME = "OnTime",
-  base_type = data_types.Uint16,
+local EventList = {
+  ID = 0xFFFA,
+  NAME = "EventList",
+  base_type = data_types.Array,
 }
---- Create a Uint16 object of this attribute with any additional features provided for the attribute
---- This is also usable with the OnTime(...) syntax
+--- Create a Array object of this attribute with any additional features provided for the attribute
+--- This is also usable with the EventList(...) syntax
 ---
---- @vararg vararg the values needed to construct a Uint16
---- @return st.matter.data_types.Uint16
-function OnTime:new_value(...)
+--- @vararg vararg the values needed to construct a Array
+--- @return st.matter.data_types.Array
+function EventList:new_value(...)
   local o = self.base_type(table.unpack({...}))
   
   return o
@@ -46,7 +46,7 @@ end
 --- @param device st.matter.Device
 --- @param endpoint_id number|nil
 --- @return st.matter.interaction_model.InteractionRequest containing an Interaction Request
-function OnTime:read(device, endpoint_id)
+function EventList:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
@@ -56,34 +56,15 @@ function OnTime:read(device, endpoint_id)
   )
 end
 
---- Constructs an st.matter.interaction_model.InteractionRequest to write
---- this attribute to a device
----
---- @param device st.matter.Device
---- @param endpoint_id number|nil
---- @param value st.matter.data_types.Uint16
---- @return st.matter.data_types.Uint16 the value to write
-function OnTime:write(device, endpoint_id, value)
-  local data = data_types.validate_or_build_type(value, self.base_type)
-  
-  return cluster_base.write(
-    device,
-    endpoint_id,
-    self._cluster.ID,
-    self.ID,
-    nil, --event_id
-    data
-  )
-end
 
---- Reporting policy: OnTime => true => mandatory
+--- Reporting policy: EventList => true => mandatory
 
 --- Sets up a Subscribe Interaction
 ---
 --- @param device any
 --- @param endpoint_id number|nil
 --- @return any
-function OnTime:subscribe(device, endpoint_id)
+function EventList:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
@@ -93,19 +74,19 @@ function OnTime:subscribe(device, endpoint_id)
   )
 end
 
-function OnTime:set_parent_cluster(cluster)
+function EventList:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
---- Builds an OnTime test attribute reponse for the driver integration testing framework
+--- Builds an EventList test attribute reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message for
 --- @param endpoint_id number|nil
 --- @param value any
 --- @param status string Interaction status associated with the path
 --- @return st.matter.interaction_model.InteractionResponse of type REPORT_DATA
-function OnTime:build_test_report_data(
+function EventList:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -123,12 +104,12 @@ function OnTime:build_test_report_data(
   )
 end
 
-function OnTime:deserialize(tlv_buf)
+function EventList:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
   
   return data
 end
 
-setmetatable(OnTime, {__call = OnTime.new_value})
-return OnTime
+setmetatable(EventList, {__call = EventList.new_value})
+return EventList
 

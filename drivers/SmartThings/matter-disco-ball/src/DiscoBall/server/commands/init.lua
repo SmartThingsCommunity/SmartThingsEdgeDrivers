@@ -18,7 +18,13 @@ local command_mt = {}
 command_mt.__command_cache = {}
 command_mt.__index = function(self, key)
   if command_mt.__command_cache[key] == nil then
-    local req_loc = string.format("st.matter.generated.zap_clusters.OnOff.server.commands.%s", key)
+    -- If key is an alias, use its root
+    if rawget(self, "aliases") ~= nil then
+      if self.aliases[key] ~= nil then
+        key = self.aliases[key]
+      end
+    end
+    local req_loc = string.format("st.matter.clusters.generated.DiscoBall.server.commands.%s", key)
     local raw_def = require(req_loc)
     local cluster = rawget(self, "_cluster")
     command_mt.__command_cache[key] = raw_def:set_parent_cluster(cluster)
@@ -26,22 +32,27 @@ command_mt.__index = function(self, key)
   return command_mt.__command_cache[key]
 end
 
---- @class st.matter.generated.zap_clusters.OnOffServerCommands
+--- @class st.matter.clusters.generated.DiscoBallServerCommands
 ---
---- @field public Off st.matter.generated.zap_clusters.OnOff.Off
---- @field public On st.matter.generated.zap_clusters.OnOff.On
---- @field public Toggle st.matter.generated.zap_clusters.OnOff.Toggle
---- @field public OffWithEffect st.matter.generated.zap_clusters.OnOff.OffWithEffect
---- @field public OnWithRecallGlobalScene st.matter.generated.zap_clusters.OnOff.OnWithRecallGlobalScene
---- @field public OnWithTimedOff st.matter.generated.zap_clusters.OnOff.OnWithTimedOff
-local OnOffServerCommands = {}
+--- @field public StartRequest st.matter.clusters.generated.DiscoBall.StartRequest
+--- @field public StopRequest st.matter.clusters.generated.DiscoBall.StopRequest
+--- @field public ReverseRequest st.matter.clusters.generated.DiscoBall.ReverseRequest
+--- @field public WobbleRequest st.matter.clusters.generated.DiscoBall.WobbleRequest
+--- @field public PatternRequest st.matter.clusters.generated.DiscoBall.PatternRequest
+--- @field public StatsRequest st.matter.clusters.generated.DiscoBall.StatsRequest
+local DiscoBallServerCommands = {}
 
-function OnOffServerCommands:set_parent_cluster(cluster)
+function DiscoBallServerCommands:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-setmetatable(OnOffServerCommands, command_mt)
+setmetatable(DiscoBallServerCommands, command_mt)
 
-return OnOffServerCommands
+local status, aliases = pcall(require, "st.matter.clusters.aliases.DiscoBall.server.commands")
+if status then
+  DiscoBallServerCommands.aliases = aliases
+end
+
+return DiscoBallServerCommands
 

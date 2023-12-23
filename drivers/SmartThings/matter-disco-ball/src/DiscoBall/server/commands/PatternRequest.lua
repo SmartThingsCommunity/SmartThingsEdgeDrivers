@@ -19,28 +19,36 @@ local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
 -----------------------------------------------------------
--- OnOff command OnWithRecallGlobalScene
+-- DiscoBall command PatternRequest
 -----------------------------------------------------------
 
---- @class st.matter.clusters.OnOff.OnWithRecallGlobalScene
---- @alias OnWithRecallGlobalScene
+--- @class st.matter.clusters.DiscoBall.PatternRequest
+--- @alias PatternRequest
 ---
---- @field public ID number 0x0041 the ID of this command
---- @field public NAME string "OnWithRecallGlobalScene" the name of this command
-local OnWithRecallGlobalScene = {}
+--- @field public ID number 0x0004 the ID of this command
+--- @field public NAME string "PatternRequest" the name of this command
+--- @field public passcode data_types.UTF8String1
+local PatternRequest = {}
 
-OnWithRecallGlobalScene.NAME = "OnWithRecallGlobalScene"
-OnWithRecallGlobalScene.ID = 0x0041
-OnWithRecallGlobalScene.field_defs = {
+PatternRequest.NAME = "PatternRequest"
+PatternRequest.ID = 0x0004
+PatternRequest.field_defs = {
+  {
+    name = "passcode",
+    field_id = 0,
+    optional = false,
+    nullable = false,
+    data_type = data_types.UTF8String1,
+  },
 }
 
---- Builds an OnWithRecallGlobalScene test command reponse for the driver integration testing framework
+--- Builds an PatternRequest test command reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message to
 --- @param endpoint_id number|nil
 --- @param status string Interaction status associated with the path
 --- @return st.matter.st.matter.interaction_model.InteractionResponse of type COMMAND_RESPONSE
-function OnWithRecallGlobalScene:build_test_command_response(device, endpoint_id, status)
+function PatternRequest:build_test_command_response(device, endpoint_id, status)
   return self._cluster:build_test_command_response(
     device,
     endpoint_id,
@@ -51,15 +59,16 @@ function OnWithRecallGlobalScene:build_test_command_response(device, endpoint_id
   )
 end
 
---- Initialize the OnWithRecallGlobalScene command
+--- Initialize the PatternRequest command
 ---
---- @param self OnWithRecallGlobalScene the template class for this command
+--- @param self PatternRequest the template class for this command
 --- @param device st.matter.Device the device to build this message to
+--- @param passcode st.matter.data_types.UTF8String1
 
 --- @return st.matter.interaction_model.InteractionRequest of type INVOKE
-function OnWithRecallGlobalScene:init(device, endpoint_id)
+function PatternRequest:init(device, endpoint_id, passcode)
   local out = {}
-  local args = {}
+  local args = {passcode}
   if #args > #self.field_defs then
     error(self.NAME .. " received too many arguments")
   end
@@ -78,19 +87,20 @@ function OnWithRecallGlobalScene:init(device, endpoint_id)
     end
   end
   setmetatable(out, {
-    __index = OnWithRecallGlobalScene,
-    __tostring = OnWithRecallGlobalScene.pretty_print
+    __index = PatternRequest,
+    __tostring = PatternRequest.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
     out,
     endpoint_id,
     self._cluster.ID,
-    self.ID
+    self.ID,
+    true
   )
 end
 
-function OnWithRecallGlobalScene:set_parent_cluster(cluster)
+function PatternRequest:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
@@ -98,7 +108,7 @@ end
 --- Add field names to each command field
 ---
 --- @param base_type_obj st.matter.data_types.Structure
-function OnWithRecallGlobalScene:augment_type(base_type_obj)
+function PatternRequest:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -115,11 +125,11 @@ function OnWithRecallGlobalScene:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function OnWithRecallGlobalScene:deserialize(tlv_buf)
+function PatternRequest:deserialize(tlv_buf)
   return TLVParser.decode_tlv(tlv_buf)
 end
 
-setmetatable(OnWithRecallGlobalScene, {__call = OnWithRecallGlobalScene.init})
+setmetatable(PatternRequest, {__call = PatternRequest.init})
 
-return OnWithRecallGlobalScene
+return PatternRequest
 

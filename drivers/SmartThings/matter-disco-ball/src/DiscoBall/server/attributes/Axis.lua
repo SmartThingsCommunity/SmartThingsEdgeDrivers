@@ -18,24 +18,24 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
---- @class st.matter.clusters.OnOff.GlobalSceneControl
---- @alias GlobalSceneControl
+--- @class st.matter.clusters.DiscoBall.Axis
+--- @alias Axis
 ---
---- @field public ID number 0x4000 the ID of this attribute
---- @field public NAME string "GlobalSceneControl" the name of this attribute
---- @field public data_type st.matter.data_types.Boolean the data type of this attribute
+--- @field public ID number 0x0003 the ID of this attribute
+--- @field public NAME string "Axis" the name of this attribute
+--- @field public data_type st.matter.data_types.Uint8 the data type of this attribute
 
-local GlobalSceneControl = {
-  ID = 0x4000,
-  NAME = "GlobalSceneControl",
-  base_type = data_types.Boolean,
+local Axis = {
+  ID = 0x0003,
+  NAME = "Axis",
+  base_type = data_types.Uint8,
 }
---- Create a Boolean object of this attribute with any additional features provided for the attribute
---- This is also usable with the GlobalSceneControl(...) syntax
+--- Create a Uint8 object of this attribute with any additional features provided for the attribute
+--- This is also usable with the Axis(...) syntax
 ---
---- @vararg vararg the values needed to construct a Boolean
---- @return st.matter.data_types.Boolean
-function GlobalSceneControl:new_value(...)
+--- @vararg vararg the values needed to construct a Uint8
+--- @return st.matter.data_types.Uint8
+function Axis:new_value(...)
   local o = self.base_type(table.unpack({...}))
   
   return o
@@ -46,7 +46,7 @@ end
 --- @param device st.matter.Device
 --- @param endpoint_id number|nil
 --- @return st.matter.interaction_model.InteractionRequest containing an Interaction Request
-function GlobalSceneControl:read(device, endpoint_id)
+function Axis:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
@@ -56,15 +56,34 @@ function GlobalSceneControl:read(device, endpoint_id)
   )
 end
 
+--- Constructs an st.matter.interaction_model.InteractionRequest to write
+--- this attribute to a device
+---
+--- @param device st.matter.Device
+--- @param endpoint_id number|nil
+--- @param value st.matter.data_types.Uint8
+--- @return st.matter.data_types.Uint8 the value to write
+function Axis:write(device, endpoint_id, value)
+  local data = data_types.validate_or_build_type(value, self.base_type)
+  
+  return cluster_base.write(
+    device,
+    endpoint_id,
+    self._cluster.ID,
+    self.ID,
+    nil, --event_id
+    data
+  )
+end
 
---- Reporting policy: GlobalSceneControl => true => mandatory
+--- Reporting policy: Axis => true => mandatory
 
 --- Sets up a Subscribe Interaction
 ---
 --- @param device any
 --- @param endpoint_id number|nil
 --- @return any
-function GlobalSceneControl:subscribe(device, endpoint_id)
+function Axis:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
@@ -74,19 +93,19 @@ function GlobalSceneControl:subscribe(device, endpoint_id)
   )
 end
 
-function GlobalSceneControl:set_parent_cluster(cluster)
+function Axis:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
---- Builds an GlobalSceneControl test attribute reponse for the driver integration testing framework
+--- Builds an Axis test attribute reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message for
 --- @param endpoint_id number|nil
 --- @param value any
 --- @param status string Interaction status associated with the path
 --- @return st.matter.interaction_model.InteractionResponse of type REPORT_DATA
-function GlobalSceneControl:build_test_report_data(
+function Axis:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -104,12 +123,12 @@ function GlobalSceneControl:build_test_report_data(
   )
 end
 
-function GlobalSceneControl:deserialize(tlv_buf)
+function Axis:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
   
   return data
 end
 
-setmetatable(GlobalSceneControl, {__call = GlobalSceneControl.new_value})
-return GlobalSceneControl
+setmetatable(Axis, {__call = Axis.new_value})
+return Axis
 

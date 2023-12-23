@@ -17,35 +17,39 @@
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
---- @class st.matter.clusters.OnOff.types.OnOffStartUpOnOff: st.matter.data_types.Uint8
---- @alias OnOffStartUpOnOff
+--- @class st.matter.clusters.DiscoBall.types.StatusCode: st.matter.data_types.Uint8
+--- @alias StatusCode
 ---
 --- @field public byte_length number 1
---- @field public OFF number 0
---- @field public ON number 1
---- @field public TOGGLE_PREVIOUS_ON_OFF number 2
+--- @field public UNSUPPORTED_PATTERN number 2
 
-local OnOffStartUpOnOff = {}
-local new_mt = UintABC.new_mt({NAME = "OnOffStartUpOnOff", ID = data_types.name_to_id_map["Uint8"]}, 1)
+local StatusCode = {}
+local new_mt = UintABC.new_mt({NAME = "StatusCode", ID = data_types.name_to_id_map["Uint8"]}, 1)
 new_mt.__index.pretty_print = function(self)
   local name_lookup = {
-    [self.OFF] = "OFF",
-    [self.ON] = "ON",
-    [self.TOGGLE_PREVIOUS_ON_OFF] = "TOGGLE_PREVIOUS_ON_OFF",
+    [self.UNSUPPORTED_PATTERN] = "UNSUPPORTED_PATTERN",
   }
   return string.format("%s: %s", self.field_name or self.NAME, name_lookup[self.value] or string.format("%d", self.value))
 end
 new_mt.__tostring = new_mt.__index.pretty_print
 
-new_mt.__index.OFF  = 0x00
-new_mt.__index.ON  = 0x01
-new_mt.__index.TOGGLE_PREVIOUS_ON_OFF  = 0x02
+new_mt.__index.UNSUPPORTED_PATTERN  = 0x02
 
-OnOffStartUpOnOff.augment_type = function(cls, val)
+StatusCode.UNSUPPORTED_PATTERN  = 0x02
+
+StatusCode.augment_type = function(cls, val)
   setmetatable(val, new_mt)
 end
 
-setmetatable(OnOffStartUpOnOff, new_mt)
+setmetatable(StatusCode, new_mt)
 
-return OnOffStartUpOnOff
+local status, aliases = pcall(require, "st.matter.clusters.aliases.DiscoBall.types.StatusCode")
+if status then
+  for key, alias in pairs(aliases) do
+    new_mt.__index[key] = new_mt.__index[alias]
+  end
+end
+
+return StatusCode
+
 

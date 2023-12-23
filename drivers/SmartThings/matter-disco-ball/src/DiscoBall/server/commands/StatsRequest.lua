@@ -19,45 +19,31 @@ local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
 -----------------------------------------------------------
--- OnOff command Toggle
+-- DiscoBall command StatsRequest
 -----------------------------------------------------------
 
---- @class st.matter.clusters.OnOff.Toggle
---- @alias Toggle
+--- @class st.matter.clusters.DiscoBall.StatsRequest
+--- @alias StatsRequest
 ---
---- @field public ID number 0x0002 the ID of this command
---- @field public NAME string "Toggle" the name of this command
-local Toggle = {}
+--- @field public ID number 0x0005 the ID of this command
+--- @field public NAME string "StatsRequest" the name of this command
+local StatsRequest = {}
 
-Toggle.NAME = "Toggle"
-Toggle.ID = 0x0002
-Toggle.field_defs = {
+StatsRequest.NAME = "StatsRequest"
+StatsRequest.ID = 0x0005
+StatsRequest.field_defs = {
 }
 
---- Builds an Toggle test command reponse for the driver integration testing framework
----
---- @param device st.matter.Device the device to build this message to
---- @param endpoint_id number|nil
---- @param status string Interaction status associated with the path
---- @return st.matter.st.matter.interaction_model.InteractionResponse of type COMMAND_RESPONSE
-function Toggle:build_test_command_response(device, endpoint_id, status)
-  return self._cluster:build_test_command_response(
-    device,
-    endpoint_id,
-    self._cluster.ID,
-    self.ID,
-    nil, --tlv
-    status
-  )
-end
+--- Refer to StatsResponse:build_test_command_response for
+--- building a test command reponse for the driver integration testing framework
 
---- Initialize the Toggle command
+--- Initialize the StatsRequest command
 ---
---- @param self Toggle the template class for this command
+--- @param self StatsRequest the template class for this command
 --- @param device st.matter.Device the device to build this message to
 
 --- @return st.matter.interaction_model.InteractionRequest of type INVOKE
-function Toggle:init(device, endpoint_id)
+function StatsRequest:init(device, endpoint_id)
   local out = {}
   local args = {}
   if #args > #self.field_defs then
@@ -78,8 +64,8 @@ function Toggle:init(device, endpoint_id)
     end
   end
   setmetatable(out, {
-    __index = Toggle,
-    __tostring = Toggle.pretty_print
+    __index = StatsRequest,
+    __tostring = StatsRequest.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
@@ -90,7 +76,7 @@ function Toggle:init(device, endpoint_id)
   )
 end
 
-function Toggle:set_parent_cluster(cluster)
+function StatsRequest:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
@@ -98,7 +84,7 @@ end
 --- Add field names to each command field
 ---
 --- @param base_type_obj st.matter.data_types.Structure
-function Toggle:augment_type(base_type_obj)
+function StatsRequest:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -115,11 +101,11 @@ function Toggle:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function Toggle:deserialize(tlv_buf)
+function StatsRequest:deserialize(tlv_buf)
   return TLVParser.decode_tlv(tlv_buf)
 end
 
-setmetatable(Toggle, {__call = Toggle.init})
+setmetatable(StatsRequest, {__call = StatsRequest.init})
 
-return Toggle
+return StatsRequest
 

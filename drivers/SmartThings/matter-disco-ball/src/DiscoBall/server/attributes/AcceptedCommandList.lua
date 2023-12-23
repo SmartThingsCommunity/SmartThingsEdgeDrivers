@@ -18,7 +18,7 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
---- @class st.matter.clusters.OnOff.AcceptedCommandList
+--- @class st.matter.clusters.DiscoBall.AcceptedCommandList
 --- @alias AcceptedCommandList
 ---
 --- @field public ID number 0xFFF9 the ID of this attribute

@@ -18,16 +18,34 @@ local types_mt = {}
 types_mt.__types_cache = {}
 types_mt.__index = function(self, key)
   if types_mt.__types_cache[key] == nil then
-    local req_loc = string.format("DiscoBall.types.%s", key)
+    -- If key is an alias, use its root
+    if rawget(self, "aliases") ~= nil then
+      if self.aliases[key] ~= nil then
+        key = self.aliases[key]
+      end
+    end
+    local req_loc = string.format("st.matter.clusters.generated.DiscoBall.types.%s", key)
     local cluster_type = require(req_loc)
     types_mt.__types_cache[key] = cluster_type
   end
   return types_mt.__types_cache[key]
 end
 
+--- @class st.matter.clusters.generated.DiscoBallTypes
+---
+--- @field public RotateEnum st.matter.clusters.generated.DiscoBall.types.RotateEnum
+--- @field public StatusCode st.matter.clusters.generated.DiscoBall.types.StatusCode
+
+--- @field public Feature st.matter.clusters.generated.DiscoBall.types.Feature
+--- @field public WobbleBitmap st.matter.clusters.generated.DiscoBall.types.WobbleBitmap
 local DiscoBallTypes = {}
 
 setmetatable(DiscoBallTypes, types_mt)
+
+local status, aliases = pcall(require, "st.matter.clusters.aliases.DiscoBall.types")
+if status then
+  DiscoBallTypes.aliases = aliases
+end
 
 return DiscoBallTypes
 

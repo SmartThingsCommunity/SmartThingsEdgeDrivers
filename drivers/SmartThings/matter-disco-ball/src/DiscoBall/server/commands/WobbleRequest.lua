@@ -17,48 +17,30 @@
 local data_types = require "st.matter.data_types"
 local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
-local OnOffEffectIdentifierType = require "st.matter.generated.zap_clusters.OnOff.types.OnOffEffectIdentifier"
-local OnOffDelayedAllOffEffectVariantType = require "st.matter.generated.zap_clusters.OnOff.types.OnOffDelayedAllOffEffectVariant"
 
 -----------------------------------------------------------
--- OnOff command OffWithEffect
+-- DiscoBall command WobbleRequest
 -----------------------------------------------------------
 
---- @class st.matter.clusters.OnOff.OffWithEffect
---- @alias OffWithEffect
+--- @class st.matter.clusters.DiscoBall.WobbleRequest
+--- @alias WobbleRequest
 ---
---- @field public ID number 0x0040 the ID of this command
---- @field public NAME string "OffWithEffect" the name of this command
---- @field public effect_id st.matter.clusters.OnOff.types.OnOffEffectIdentifier
---- @field public effect_variant st.matter.clusters.OnOff.types.OnOffDelayedAllOffEffectVariant
-local OffWithEffect = {}
+--- @field public ID number 0x0003 the ID of this command
+--- @field public NAME string "WobbleRequest" the name of this command
+local WobbleRequest = {}
 
-OffWithEffect.NAME = "OffWithEffect"
-OffWithEffect.ID = 0x0040
-OffWithEffect.field_defs = {
-  {
-    name = "effect_id",
-    field_id = 0,
-    optional = false,
-    nullable = false,
-    data_type = OnOffEffectIdentifierType,
-  },
-  {
-    name = "effect_variant",
-    field_id = 1,
-    optional = false,
-    nullable = false,
-    data_type = OnOffDelayedAllOffEffectVariantType,
-  },
+WobbleRequest.NAME = "WobbleRequest"
+WobbleRequest.ID = 0x0003
+WobbleRequest.field_defs = {
 }
 
---- Builds an OffWithEffect test command reponse for the driver integration testing framework
+--- Builds an WobbleRequest test command reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message to
 --- @param endpoint_id number|nil
 --- @param status string Interaction status associated with the path
 --- @return st.matter.st.matter.interaction_model.InteractionResponse of type COMMAND_RESPONSE
-function OffWithEffect:build_test_command_response(device, endpoint_id, status)
+function WobbleRequest:build_test_command_response(device, endpoint_id, status)
   return self._cluster:build_test_command_response(
     device,
     endpoint_id,
@@ -69,17 +51,15 @@ function OffWithEffect:build_test_command_response(device, endpoint_id, status)
   )
 end
 
---- Initialize the OffWithEffect command
+--- Initialize the WobbleRequest command
 ---
---- @param self OffWithEffect the template class for this command
+--- @param self WobbleRequest the template class for this command
 --- @param device st.matter.Device the device to build this message to
---- @param effect_id st.matter.clusters.OnOff.types.OnOffEffectIdentifier
---- @param effect_variant st.matter.clusters.OnOff.types.OnOffDelayedAllOffEffectVariant
 
 --- @return st.matter.interaction_model.InteractionRequest of type INVOKE
-function OffWithEffect:init(device, endpoint_id, effect_id, effect_variant)
+function WobbleRequest:init(device, endpoint_id)
   local out = {}
-  local args = {effect_id, effect_variant}
+  local args = {}
   if #args > #self.field_defs then
     error(self.NAME .. " received too many arguments")
   end
@@ -98,8 +78,8 @@ function OffWithEffect:init(device, endpoint_id, effect_id, effect_variant)
     end
   end
   setmetatable(out, {
-    __index = OffWithEffect,
-    __tostring = OffWithEffect.pretty_print
+    __index = WobbleRequest,
+    __tostring = WobbleRequest.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
@@ -110,7 +90,7 @@ function OffWithEffect:init(device, endpoint_id, effect_id, effect_variant)
   )
 end
 
-function OffWithEffect:set_parent_cluster(cluster)
+function WobbleRequest:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
@@ -118,7 +98,7 @@ end
 --- Add field names to each command field
 ---
 --- @param base_type_obj st.matter.data_types.Structure
-function OffWithEffect:augment_type(base_type_obj)
+function WobbleRequest:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -135,11 +115,11 @@ function OffWithEffect:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function OffWithEffect:deserialize(tlv_buf)
+function WobbleRequest:deserialize(tlv_buf)
   return TLVParser.decode_tlv(tlv_buf)
 end
 
-setmetatable(OffWithEffect, {__call = OffWithEffect.init})
+setmetatable(WobbleRequest, {__call = WobbleRequest.init})
 
-return OffWithEffect
+return WobbleRequest
 

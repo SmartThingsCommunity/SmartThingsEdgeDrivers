@@ -17,29 +17,42 @@
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
---- @class st.matter.clusters.OnOff.types.OnOffDyingLightEffectVariant: st.matter.data_types.Uint8
---- @alias OnOffDyingLightEffectVariant
+--- @class st.matter.clusters.DiscoBall.types.RotateEnum: st.matter.data_types.Uint8
+--- @alias RotateEnum
 ---
 --- @field public byte_length number 1
---- @field public _20_PERCENTER_DIM_UP_IN_0P5_SECONDS_THEN_FADE_TO_OFF_IN_1_SECOND number 0
+--- @field public CLOCKWISE number 1
+--- @field public COUNTER_CLOCKWISE number 2
 
-local OnOffDyingLightEffectVariant = {}
-local new_mt = UintABC.new_mt({NAME = "OnOffDyingLightEffectVariant", ID = data_types.name_to_id_map["Uint8"]}, 1)
+local RotateEnum = {}
+local new_mt = UintABC.new_mt({NAME = "RotateEnum", ID = data_types.name_to_id_map["Uint8"]}, 1)
 new_mt.__index.pretty_print = function(self)
   local name_lookup = {
-    [self._20_PERCENTER_DIM_UP_IN_0P5_SECONDS_THEN_FADE_TO_OFF_IN_1_SECOND] = "_20_PERCENTER_DIM_UP_IN_0P5_SECONDS_THEN_FADE_TO_OFF_IN_1_SECOND",
+    [self.CLOCKWISE] = "CLOCKWISE",
+    [self.COUNTER_CLOCKWISE] = "COUNTER_CLOCKWISE",
   }
   return string.format("%s: %s", self.field_name or self.NAME, name_lookup[self.value] or string.format("%d", self.value))
 end
 new_mt.__tostring = new_mt.__index.pretty_print
 
-new_mt.__index._20_PERCENTER_DIM_UP_IN_0P5_SECONDS_THEN_FADE_TO_OFF_IN_1_SECOND  = 0x00
+new_mt.__index.CLOCKWISE  = 0x01
+new_mt.__index.COUNTER_CLOCKWISE  = 0x02
 
-OnOffDyingLightEffectVariant.augment_type = function(cls, val)
+RotateEnum.CLOCKWISE  = 0x01
+RotateEnum.COUNTER_CLOCKWISE  = 0x02
+
+RotateEnum.augment_type = function(cls, val)
   setmetatable(val, new_mt)
 end
 
-setmetatable(OnOffDyingLightEffectVariant, new_mt)
+setmetatable(RotateEnum, new_mt)
 
-return OnOffDyingLightEffectVariant
+local status, aliases = pcall(require, "st.matter.clusters.aliases.DiscoBall.types.RotateEnum")
+if status then
+  for key, alias in pairs(aliases) do
+    new_mt.__index[key] = new_mt.__index[alias]
+  end
+end
+
+return RotateEnum
 

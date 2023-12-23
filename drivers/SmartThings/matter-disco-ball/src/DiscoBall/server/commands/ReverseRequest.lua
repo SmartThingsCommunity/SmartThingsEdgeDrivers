@@ -19,28 +19,28 @@ local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
 -----------------------------------------------------------
--- OnOff command Off
+-- DiscoBall command ReverseRequest
 -----------------------------------------------------------
 
---- @class st.matter.clusters.OnOff.Off
---- @alias Off
+--- @class st.matter.clusters.DiscoBall.ReverseRequest
+--- @alias ReverseRequest
 ---
---- @field public ID number 0x0000 the ID of this command
---- @field public NAME string "Off" the name of this command
-local Off = {}
+--- @field public ID number 0x0002 the ID of this command
+--- @field public NAME string "ReverseRequest" the name of this command
+local ReverseRequest = {}
 
-Off.NAME = "Off"
-Off.ID = 0x0000
-Off.field_defs = {
+ReverseRequest.NAME = "ReverseRequest"
+ReverseRequest.ID = 0x0002
+ReverseRequest.field_defs = {
 }
 
---- Builds an Off test command reponse for the driver integration testing framework
+--- Builds an ReverseRequest test command reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message to
 --- @param endpoint_id number|nil
 --- @param status string Interaction status associated with the path
 --- @return st.matter.st.matter.interaction_model.InteractionResponse of type COMMAND_RESPONSE
-function Off:build_test_command_response(device, endpoint_id, status)
+function ReverseRequest:build_test_command_response(device, endpoint_id, status)
   return self._cluster:build_test_command_response(
     device,
     endpoint_id,
@@ -51,13 +51,13 @@ function Off:build_test_command_response(device, endpoint_id, status)
   )
 end
 
---- Initialize the Off command
+--- Initialize the ReverseRequest command
 ---
---- @param self Off the template class for this command
+--- @param self ReverseRequest the template class for this command
 --- @param device st.matter.Device the device to build this message to
 
 --- @return st.matter.interaction_model.InteractionRequest of type INVOKE
-function Off:init(device, endpoint_id)
+function ReverseRequest:init(device, endpoint_id)
   local out = {}
   local args = {}
   if #args > #self.field_defs then
@@ -78,8 +78,8 @@ function Off:init(device, endpoint_id)
     end
   end
   setmetatable(out, {
-    __index = Off,
-    __tostring = Off.pretty_print
+    __index = ReverseRequest,
+    __tostring = ReverseRequest.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
@@ -90,7 +90,7 @@ function Off:init(device, endpoint_id)
   )
 end
 
-function Off:set_parent_cluster(cluster)
+function ReverseRequest:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
@@ -98,7 +98,7 @@ end
 --- Add field names to each command field
 ---
 --- @param base_type_obj st.matter.data_types.Structure
-function Off:augment_type(base_type_obj)
+function ReverseRequest:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -115,11 +115,11 @@ function Off:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function Off:deserialize(tlv_buf)
+function ReverseRequest:deserialize(tlv_buf)
   return TLVParser.decode_tlv(tlv_buf)
 end
 
-setmetatable(Off, {__call = Off.init})
+setmetatable(ReverseRequest, {__call = ReverseRequest.init})
 
-return Off
+return ReverseRequest
 

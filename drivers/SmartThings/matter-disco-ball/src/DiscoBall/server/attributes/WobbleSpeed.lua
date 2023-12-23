@@ -18,50 +18,26 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
---- @class st.matter.clusters.OnOff.StartUpOnOff
---- @alias StartUpOnOff
+--- @class st.matter.clusters.DiscoBall.WobbleSpeed
+--- @alias WobbleSpeed
 ---
---- @field public ID number 0x4003 the ID of this attribute
---- @field public NAME string "StartUpOnOff" the name of this attribute
+--- @field public ID number 0x0004 the ID of this attribute
+--- @field public NAME string "WobbleSpeed" the name of this attribute
 --- @field public data_type st.matter.data_types.Uint8 the data type of this attribute
---- @field public OFF number 0
---- @field public ON number 1
---- @field public TOGGLE_PREVIOUS_ON_OFF number 2
 
-local StartUpOnOff = {
-  ID = 0x4003,
-  NAME = "StartUpOnOff",
+local WobbleSpeed = {
+  ID = 0x0004,
+  NAME = "WobbleSpeed",
   base_type = data_types.Uint8,
 }
-StartUpOnOff.OFF = 0x00
-StartUpOnOff.ON = 0x01
-StartUpOnOff.TOGGLE_PREVIOUS_ON_OFF = 0x02
-
-StartUpOnOff.enum_fields = {
-  [StartUpOnOff.OFF] = "OFF",
-  [StartUpOnOff.ON] = "ON",
-  [StartUpOnOff.TOGGLE_PREVIOUS_ON_OFF] = "TOGGLE_PREVIOUS_ON_OFF",
-}
-
---- Add additional functionality to the base type object
----
---- @param base_type_obj st.matter.data_types.Uint8 the base data type object to add functionality to
-function StartUpOnOff:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function StartUpOnOff.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, StartUpOnOff.enum_fields[value_obj.value])
-end
 --- Create a Uint8 object of this attribute with any additional features provided for the attribute
---- This is also usable with the StartUpOnOff(...) syntax
+--- This is also usable with the WobbleSpeed(...) syntax
 ---
 --- @vararg vararg the values needed to construct a Uint8
 --- @return st.matter.data_types.Uint8
-function StartUpOnOff:new_value(...)
+function WobbleSpeed:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  self:augment_type(o)
+  
   return o
 end
 
@@ -70,7 +46,7 @@ end
 --- @param device st.matter.Device
 --- @param endpoint_id number|nil
 --- @return st.matter.interaction_model.InteractionRequest containing an Interaction Request
-function StartUpOnOff:read(device, endpoint_id)
+function WobbleSpeed:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
@@ -87,9 +63,9 @@ end
 --- @param endpoint_id number|nil
 --- @param value st.matter.data_types.Uint8
 --- @return st.matter.data_types.Uint8 the value to write
-function StartUpOnOff:write(device, endpoint_id, value)
+function WobbleSpeed:write(device, endpoint_id, value)
   local data = data_types.validate_or_build_type(value, self.base_type)
-  self:augment_type(data)
+  
   return cluster_base.write(
     device,
     endpoint_id,
@@ -100,14 +76,14 @@ function StartUpOnOff:write(device, endpoint_id, value)
   )
 end
 
---- Reporting policy: StartUpOnOff => true => mandatory
+--- Reporting policy: WobbleSpeed => true => mandatory
 
 --- Sets up a Subscribe Interaction
 ---
 --- @param device any
 --- @param endpoint_id number|nil
 --- @return any
-function StartUpOnOff:subscribe(device, endpoint_id)
+function WobbleSpeed:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
@@ -117,26 +93,26 @@ function StartUpOnOff:subscribe(device, endpoint_id)
   )
 end
 
-function StartUpOnOff:set_parent_cluster(cluster)
+function WobbleSpeed:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
---- Builds an StartUpOnOff test attribute reponse for the driver integration testing framework
+--- Builds an WobbleSpeed test attribute reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message for
 --- @param endpoint_id number|nil
 --- @param value any
 --- @param status string Interaction status associated with the path
 --- @return st.matter.interaction_model.InteractionResponse of type REPORT_DATA
-function StartUpOnOff:build_test_report_data(
+function WobbleSpeed:build_test_report_data(
   device,
   endpoint_id,
   value,
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  self:augment_type(data)
+  
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -147,12 +123,12 @@ function StartUpOnOff:build_test_report_data(
   )
 end
 
-function StartUpOnOff:deserialize(tlv_buf)
+function WobbleSpeed:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  self:augment_type(data)
+  
   return data
 end
 
-setmetatable(StartUpOnOff, {__call = StartUpOnOff.new_value})
-return StartUpOnOff
+setmetatable(WobbleSpeed, {__call = WobbleSpeed.new_value})
+return WobbleSpeed
 

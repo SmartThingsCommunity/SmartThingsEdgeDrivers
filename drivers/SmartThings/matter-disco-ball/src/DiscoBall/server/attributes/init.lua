@@ -18,7 +18,7 @@ local attr_mt = {}
 attr_mt.__attr_cache = {}
 attr_mt.__index = function(self, key)
   if attr_mt.__attr_cache[key] == nil then
-    local req_loc = string.format("st.matter.generated.zap_clusters.OnOff.server.attributes.%s", key)
+    local req_loc = string.format("st.matter.clusters.generated.DiscoBall.server.attributes.%s", key)
     local raw_def = require(req_loc)
     local cluster = rawget(self, "_cluster")
     raw_def:set_parent_cluster(cluster)
@@ -27,23 +27,28 @@ attr_mt.__index = function(self, key)
   return attr_mt.__attr_cache[key]
 end
 
---- @class st.matter.generated.zap_clusters.OnOffServerAttributes
+--- @class st.matter.clusters.generated.DiscoBallServerAttributes
 ---
---- @field public OnOff st.matter.generated.zap_clusters.OnOff.server.attributes.OnOff
---- @field public GlobalSceneControl st.matter.generated.zap_clusters.OnOff.server.attributes.GlobalSceneControl
---- @field public OnTime st.matter.generated.zap_clusters.OnOff.server.attributes.OnTime
---- @field public OffWaitTime st.matter.generated.zap_clusters.OnOff.server.attributes.OffWaitTime
---- @field public StartUpOnOff st.matter.generated.zap_clusters.OnOff.server.attributes.StartUpOnOff
---- @field public AcceptedCommandList st.matter.generated.zap_clusters.OnOff.server.attributes.AcceptedCommandList
---- @field public AttributeList st.matter.generated.zap_clusters.OnOff.server.attributes.AttributeList
-local OnOffServerAttributes = {}
+--- @field public Run st.matter.clusters.generated.DiscoBall.server.attributes.Run
+--- @field public Rotate st.matter.clusters.generated.DiscoBall.server.attributes.Rotate
+--- @field public Speed st.matter.clusters.generated.DiscoBall.server.attributes.Speed
+--- @field public Axis st.matter.clusters.generated.DiscoBall.server.attributes.Axis
+--- @field public WobbleSpeed st.matter.clusters.generated.DiscoBall.server.attributes.WobbleSpeed
+--- @field public Pattern st.matter.clusters.generated.DiscoBall.server.attributes.Pattern
+--- @field public Name st.matter.clusters.generated.DiscoBall.server.attributes.Name
+--- @field public WobbleSupport st.matter.clusters.generated.DiscoBall.server.attributes.WobbleSupport
+--- @field public WobbleSetting st.matter.clusters.generated.DiscoBall.server.attributes.WobbleSetting
+--- @field public AcceptedCommandList st.matter.clusters.generated.DiscoBall.server.attributes.AcceptedCommandList
+--- @field public EventList st.matter.clusters.generated.DiscoBall.server.attributes.EventList
+--- @field public AttributeList st.matter.clusters.generated.DiscoBall.server.attributes.AttributeList
+local DiscoBallServerAttributes = {}
 
-function OnOffServerAttributes:set_parent_cluster(cluster)
+function DiscoBallServerAttributes:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-setmetatable(OnOffServerAttributes, attr_mt)
+setmetatable(DiscoBallServerAttributes, attr_mt)
 
-return OnOffServerAttributes
+return DiscoBallServerAttributes
 

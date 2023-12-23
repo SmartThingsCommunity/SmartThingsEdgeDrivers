@@ -17,55 +17,30 @@
 local data_types = require "st.matter.data_types"
 local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
-local OnOffControlType = require "st.matter.generated.zap_clusters.OnOff.types.OnOffControl"
 
 -----------------------------------------------------------
--- OnOff command OnWithTimedOff
+-- DiscoBall command StopRequest
 -----------------------------------------------------------
 
---- @class st.matter.clusters.OnOff.OnWithTimedOff
---- @alias OnWithTimedOff
+--- @class st.matter.clusters.DiscoBall.StopRequest
+--- @alias StopRequest
 ---
---- @field public ID number 0x0042 the ID of this command
---- @field public NAME string "OnWithTimedOff" the name of this command
---- @field public on_off_control st.matter.clusters.OnOff.types.OnOffControl
---- @field public on_time data_types.Uint16
---- @field public off_wait_time data_types.Uint16
-local OnWithTimedOff = {}
+--- @field public ID number 0x0001 the ID of this command
+--- @field public NAME string "StopRequest" the name of this command
+local StopRequest = {}
 
-OnWithTimedOff.NAME = "OnWithTimedOff"
-OnWithTimedOff.ID = 0x0042
-OnWithTimedOff.field_defs = {
-  {
-    name = "on_off_control",
-    field_id = 0,
-    optional = false,
-    nullable = false,
-    data_type = OnOffControlType,
-  },
-  {
-    name = "on_time",
-    field_id = 1,
-    optional = false,
-    nullable = false,
-    data_type = data_types.Uint16,
-  },
-  {
-    name = "off_wait_time",
-    field_id = 2,
-    optional = false,
-    nullable = false,
-    data_type = data_types.Uint16,
-  },
+StopRequest.NAME = "StopRequest"
+StopRequest.ID = 0x0001
+StopRequest.field_defs = {
 }
 
---- Builds an OnWithTimedOff test command reponse for the driver integration testing framework
+--- Builds an StopRequest test command reponse for the driver integration testing framework
 ---
 --- @param device st.matter.Device the device to build this message to
 --- @param endpoint_id number|nil
 --- @param status string Interaction status associated with the path
 --- @return st.matter.st.matter.interaction_model.InteractionResponse of type COMMAND_RESPONSE
-function OnWithTimedOff:build_test_command_response(device, endpoint_id, status)
+function StopRequest:build_test_command_response(device, endpoint_id, status)
   return self._cluster:build_test_command_response(
     device,
     endpoint_id,
@@ -76,18 +51,15 @@ function OnWithTimedOff:build_test_command_response(device, endpoint_id, status)
   )
 end
 
---- Initialize the OnWithTimedOff command
+--- Initialize the StopRequest command
 ---
---- @param self OnWithTimedOff the template class for this command
+--- @param self StopRequest the template class for this command
 --- @param device st.matter.Device the device to build this message to
---- @param on_off_control st.matter.clusters.OnOff.types.OnOffControl
---- @param on_time st.matter.data_types.Uint16
---- @param off_wait_time st.matter.data_types.Uint16
 
 --- @return st.matter.interaction_model.InteractionRequest of type INVOKE
-function OnWithTimedOff:init(device, endpoint_id, on_off_control, on_time, off_wait_time)
+function StopRequest:init(device, endpoint_id)
   local out = {}
-  local args = {on_off_control, on_time, off_wait_time}
+  local args = {}
   if #args > #self.field_defs then
     error(self.NAME .. " received too many arguments")
   end
@@ -106,8 +78,8 @@ function OnWithTimedOff:init(device, endpoint_id, on_off_control, on_time, off_w
     end
   end
   setmetatable(out, {
-    __index = OnWithTimedOff,
-    __tostring = OnWithTimedOff.pretty_print
+    __index = StopRequest,
+    __tostring = StopRequest.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
@@ -118,7 +90,7 @@ function OnWithTimedOff:init(device, endpoint_id, on_off_control, on_time, off_w
   )
 end
 
-function OnWithTimedOff:set_parent_cluster(cluster)
+function StopRequest:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
@@ -126,7 +98,7 @@ end
 --- Add field names to each command field
 ---
 --- @param base_type_obj st.matter.data_types.Structure
-function OnWithTimedOff:augment_type(base_type_obj)
+function StopRequest:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -143,11 +115,11 @@ function OnWithTimedOff:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function OnWithTimedOff:deserialize(tlv_buf)
+function StopRequest:deserialize(tlv_buf)
   return TLVParser.decode_tlv(tlv_buf)
 end
 
-setmetatable(OnWithTimedOff, {__call = OnWithTimedOff.init})
+setmetatable(StopRequest, {__call = StopRequest.init})
 
-return OnWithTimedOff
+return StopRequest
 
