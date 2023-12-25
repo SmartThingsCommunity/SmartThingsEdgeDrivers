@@ -164,6 +164,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSB22BZ
     deviceProfileName: one-button-battery
+  - id: Samsung/SAMSUNG-ITM-Z-005
+    deviceLabel: ITM Switch
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-005
+    deviceProfileName: SLED-three-buttons  
   # # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: 语音场景(4寸）面板

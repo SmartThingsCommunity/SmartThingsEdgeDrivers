@@ -18,10 +18,10 @@
 
 local capabilities = require "st.capabilities"
 local log = require "log"
-local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
 local utils = require "st.utils"
 local data_types = require "st.matter.data_types"
+local device_lib = require "st.device"
 
 local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
@@ -41,7 +41,9 @@ local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 -------------------------------------------------------------------------------------
 
 local function is_eve_energy_products(opts, driver, device)
-  if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+  -- this sub driver does not support child devices
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
     return true
   end
 
@@ -95,9 +97,6 @@ end
 -------------------------------------------------------------------------------------
 
 local function requestData(device)
-  -- Update the on/off status
-  device:send(clusters.OnOff.attributes.OnOff:read(device))
-
   -- Update the Watt usage
   device:send(cluster_base.read(device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil))
 

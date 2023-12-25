@@ -17,6 +17,8 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local frameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local test = require "integration_test"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
@@ -319,6 +321,30 @@ test.register_message_test(
         message = mock_third_child:generate_test_message("main", capabilities.switch.switch.off())
       }
     }
+)
+
+test.register_coroutine_test(
+  "Handle turnOffIndicatorLight in infochanged : On",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_parent_device:generate_info_changed({
+      preferences = { ["stse.turnOffIndicatorLight"] = false }
+    }))
+    test.socket.zigbee:__expect_send({ mock_parent_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,
+        0x6000, 0x1235, data_types.Uint8, 0x01) })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle turnOffIndicatorLight in infochanged : Off",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_parent_device:generate_info_changed({
+      preferences = { ["stse.turnOffIndicatorLight"] = true }
+    }))
+    test.socket.zigbee:__expect_send({ mock_parent_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,
+        0x6000, 0x1235, data_types.Uint8, 0x00) })
+  end
 )
 
 test.register_message_test(

@@ -1,0 +1,25 @@
+id: stse.cubeFace
+version: 1
+status: proposed
+name: Cube Face
+ephemeral: false
+attributes:
+  cubeFace:
+    schema:
+      type: object
+      properties:
+        value:
+          title: CubeFace
+          type: string
+          enum:
+            - face1Up
+            - face2Up
+            - face3Up
+            - face4Up
+            - face5Up
+            - face6Up
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

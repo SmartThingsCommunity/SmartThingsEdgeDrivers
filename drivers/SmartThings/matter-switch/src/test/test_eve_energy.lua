@@ -38,7 +38,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
       }
     },
     {
@@ -56,6 +56,9 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_revision = 1,
           feature_map = 0, --u32 bitmap
         }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- On/Off Plug
       }
     }
   }
@@ -145,7 +148,6 @@ test.register_coroutine_test(
     test.mock_time.advance_time(60000) -- Ensure that the timer created in create_poll_schedule triggers
     test.socket.matter:__set_channel_ordering("relaxed")
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
     test.socket.matter:__expect_send({ mock_device.id,
@@ -182,7 +184,6 @@ test.register_coroutine_test(
       }
     )
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
     test.socket.matter:__expect_send({ mock_device.id,
