@@ -43,7 +43,7 @@ if LOCALE:
   current_path = os.path.dirname(__file__)
   localization_dir = os.path.join(current_path, "localizations")
   localization_file = os.path.join(localization_dir, LOCALE+".csv")
-  slash_escape = str.maketrans({"/": r"\/"})
+  slash_escape = str.maketrans({"/": r"\/", "(": r"\(", ")": r"\)"})
   if os.path.isfile(localization_file):
     print("Localizing from english to "+LOCALE+" using "+str(localization_file))
     with open(localization_file) as csvfile:
