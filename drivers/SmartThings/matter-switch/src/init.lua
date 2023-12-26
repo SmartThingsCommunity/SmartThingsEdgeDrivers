@@ -17,6 +17,7 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local device_lib = require "st.device"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -29,9 +30,9 @@ local COLOR_TEMPERATURE_KELVIN_MIN = 1
 local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
+local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
--- New profiles need to be added for devices that have more switch endpoints
-local MAX_MULTI_SWITCH_EPS = 7
+local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local detect_matter_thing
 
 local function convert_huesat_st_to_matter(val)
@@ -44,46 +45,47 @@ end
 --- and supports the OnOff cluster. This is done to bypass the
 --- BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
-  local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
-      res = v
-      break
+      return v
     end
   end
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return res
+  return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function initialize_switch(device)
+local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  local component_map = {}
 
-  -- For switch devices, the profile components follow the naming convention "switch%d",
-  -- with the exception of "main" being the first component. Each component will then map
-  -- to the next lowest endpoint that hasn't been mapped yet.
-  -- Additionally, since we do not support bindings at the moment, we only want to count
-  -- On/Off clusters that have been implemented as server. This can be removed when we have
+  -- Since we do not support bindings at the moment, we only want to count On/Off
+  -- clusters that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_server_eps = 0
+  local main_endpoint = find_default_endpoint(device)
   for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_server_eps = num_server_eps + 1;
-      if num_server_eps == 1 then
-        component_map["main"] = ep
-      else
-        component_map[string.format("switch%d", num_server_eps)] = ep
+      num_server_eps = num_server_eps + 1
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        local name = string.format("%s %d", device.label, num_server_eps)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = "switch-binary",
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
       end
     end
   end
 
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
-  -- where devices with multiple endpoints with the same device type cannot be detected
-  -- Also, the case where num_server_eps == 1 is a workaround for devices that have the On/Off
+  device:set_field(SWITCH_INITIALIZED, true)
+  -- The case where num_server_eps == 1 is a workaround for devices that have the On/Off
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
   -- for this device type). By default, we do not support On/Off Light Switch because by spec these
   -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
@@ -92,15 +94,6 @@ local function initialize_switch(device)
   -- is a workaround for those devices.
   if num_server_eps == 1 and detect_matter_thing(device) == true then
     device:try_update_metadata({profile = "switch-binary"})
-  elseif num_server_eps > 1 then
-    device:try_update_metadata({profile = string.format("switch-%d", math.min(num_server_eps, MAX_MULTI_SWITCH_EPS))})
-  end
-  if num_server_eps > MAX_MULTI_SWITCH_EPS then
-    error(string.format(
-      "Matter multi switch device will have limited function. Profile doesn't exist with %d components, max is %d",
-      num_server_eps,
-      MAX_MULTI_SWITCH_EPS
-    ))
   end
 end
 
@@ -119,19 +112,41 @@ local function endpoint_to_component(device, ep)
        return component
     end
   end
-  log.warn_with({hub_logs = true}, string.format("Device has more than supported number of switches (max %d), mapping excess endpoint to main component", MAX_MULTI_SWITCH_EPS))
   return "main"
 end
 
-local function device_init(driver, device)
-  log.info_with({hub_logs=true}, "device init")
-  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) then
-    -- create endpoint to component map and switch profile as needed
-    initialize_switch(device)
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+end
+
+local function detect_bridge(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == AGGREGATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:subscribe()
+  return false
+end
+
+local function device_init(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    -- initialize_switch will create parent-child devices as needed for multi-switch devices.
+    -- However, we want to maintain support for existing MCD devices, so do not initialize
+    -- device if it has already been previously initialized as an MCD device.
+    -- Also, do not attempt a profile switch for a bridge device.
+    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
+       not device:get_field(SWITCH_INITIALIZED) and
+       not detect_bridge(device) then
+      -- create child devices as needed for multi-switch devices
+      initialize_switch(driver, device)
+    end
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_find_child(find_child)
+    device:subscribe()
+  end
 end
 
 local function device_removed(driver, device)
@@ -264,7 +279,7 @@ end
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, "Device reported color temperature %d mired outside of supported capability range", ib.data.value)
+      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of supported capability range", ib.data.value))
       return
     end
     local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
