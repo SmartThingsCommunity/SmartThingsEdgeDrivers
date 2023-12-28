@@ -4,6 +4,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 
 local DANFOSS_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Danfoss", model = "eTRV0100" },
+  { mfr = "Danfoss", model = "eTRV0101" },
   { mfr = "Danfoss", model = "eTRV0103" }
 }
 

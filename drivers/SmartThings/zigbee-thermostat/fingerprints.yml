@@ -19,8 +19,13 @@ zigbeeManufacturer:
     manufacturer: Danfoss
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
+  - id: "Danfoss/eTRV0101"
+    deviceLabel: Danfoss Thermostat
+    manufacturer: Danfoss
+    model: eTRV0103
+    deviceProfileName: thermostat-popp-danfoss
   - id: "Danfoss/eTRV0103"
-    deviceLabel: Danfoss Ally Thermostat
+    deviceLabel: Danfoss Thermostat
     manufacturer: Danfoss
     model: eTRV0103
     deviceProfileName: thermostat-popp-danfoss
