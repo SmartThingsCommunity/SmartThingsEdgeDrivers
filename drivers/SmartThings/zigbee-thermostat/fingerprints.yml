@@ -22,7 +22,7 @@ zigbeeManufacturer:
   - id: "Danfoss/eTRV0101"
     deviceLabel: Danfoss Thermostat
     manufacturer: Danfoss
-    model: eTRV0103
+    model: eTRV0101
     deviceProfileName: thermostat-popp-danfoss
   - id: "Danfoss/eTRV0103"
     deviceLabel: Danfoss Thermostat
