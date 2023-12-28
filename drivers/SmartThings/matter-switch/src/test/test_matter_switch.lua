@@ -34,7 +34,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -48,6 +48,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
       }
     }
   }
@@ -66,6 +69,9 @@ local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
       }
     }
   }
