@@ -3,7 +3,8 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = clusters.PowerConfiguration
 
 local DANFOSS_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Danfoss", model = "eTRV0100" }
+  { mfr = "Danfoss", model = "eTRV0100" },
+  { mfr = "Danfoss", model = "eTRV0103" }
 }
 
 local is_danfoss_thermostat = function(opts, driver, device)
