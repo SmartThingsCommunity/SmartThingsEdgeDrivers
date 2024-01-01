@@ -17,7 +17,7 @@
 local data_types = require "st.matter.data_types"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
 
-local RotateEnum = require "st.matter.clusters.generated.DiscoBall.types.RotateEnum"
+local RotateEnum = require "generated.DiscoBall.types.RotateEnum"
 
 
 

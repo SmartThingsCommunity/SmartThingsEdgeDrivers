@@ -16,7 +16,7 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
-local discoBall = require "DiscoBall"
+local discoBall = require "generated.DiscoBall"
 
 local log = require "log"
 
@@ -49,8 +49,8 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
-      [DiscoBall.ID] = {
-        [DiscoBall.attributes.Run.ID] = air_quality_attr_handler,
+      [discoBall.ID] = {
+        [discoBall.attributes.Run.ID] = air_quality_attr_handler,
       }
     }
   },

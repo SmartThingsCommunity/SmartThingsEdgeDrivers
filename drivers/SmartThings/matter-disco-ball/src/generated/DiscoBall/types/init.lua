@@ -24,20 +24,20 @@ types_mt.__index = function(self, key)
         key = self.aliases[key]
       end
     end
-    local req_loc = string.format("st.matter.clusters.generated.DiscoBall.types.%s", key)
+    local req_loc = string.format("generated.DiscoBall.types.%s", key)
     local cluster_type = require(req_loc)
     types_mt.__types_cache[key] = cluster_type
   end
   return types_mt.__types_cache[key]
 end
 
---- @class st.matter.clusters.generated.DiscoBallTypes
+--- @class generated.DiscoBallTypes
 ---
---- @field public RotateEnum st.matter.clusters.generated.DiscoBall.types.RotateEnum
---- @field public StatusCode st.matter.clusters.generated.DiscoBall.types.StatusCode
+--- @field public RotateEnum generated.DiscoBall.types.RotateEnum
+--- @field public StatusCode generated.DiscoBall.types.StatusCode
 
---- @field public Feature st.matter.clusters.generated.DiscoBall.types.Feature
---- @field public WobbleBitmap st.matter.clusters.generated.DiscoBall.types.WobbleBitmap
+--- @field public Feature generated.DiscoBall.types.Feature
+--- @field public WobbleBitmap generated.DiscoBall.types.WobbleBitmap
 local DiscoBallTypes = {}
 
 setmetatable(DiscoBallTypes, types_mt)

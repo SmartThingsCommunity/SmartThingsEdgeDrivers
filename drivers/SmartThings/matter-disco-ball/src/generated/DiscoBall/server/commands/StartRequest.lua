@@ -17,7 +17,7 @@
 local data_types = require "st.matter.data_types"
 local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
-local RotateEnumType = require "st.matter.clusters.generated.DiscoBall.types.RotateEnum"
+local RotateEnumType = require "generated.DiscoBall.types.RotateEnum"
 
 -----------------------------------------------------------
 -- DiscoBall command StartRequest
