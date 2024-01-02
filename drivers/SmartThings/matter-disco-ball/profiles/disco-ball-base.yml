@@ -2,7 +2,7 @@ name: disco-ball-base
 components:
   - id: main
     capabilities:
-      - id: adminmirror01019.discoBall
+      - id: summertalent21965.discoBall
         version: 1
       - id: refresh
         version: 1

@@ -1,0 +1,231 @@
+{
+    "dashboard": {
+        "states": [
+            {
+                "label": "{{running.value}}",
+                "alternatives": [
+                    {
+                        "key": "true",
+                        "value": "Running",
+                        "type": "active"
+                    },
+                    {
+                        "key": "false",
+                        "value": "Idle",
+                        "type": "inactive"
+                    }
+                ]
+            },
+            {
+                "label": "Connected"
+            }
+        ],
+        "actions": [
+            {
+                "displayType": "playPause",
+                "playPause": {
+                    "command": {
+                        "play": "start",
+                        "pause": "stop"
+                    },
+                    "state": {
+                        "value": "running.value",
+                        "valueType": "boolean",
+                        "play": "true",
+                        "pause": "false"
+                    }
+                }
+            }
+        ]
+    },
+    "detailView": [
+        {
+            "label": "State",
+            "displayType": "playPause",
+            "playPause": {
+                "command": {
+                    "play": "start",
+                    "pause": "stop"
+                },
+                "state": {
+                    "value": "running.value",
+                    "valueType": "boolean",
+                    "play": "true",
+                    "pause": "false",
+                    "alternatives": [
+                        {
+                            "key": "true",
+                            "value": "Running",
+                            "type": "active"
+                        },
+                        {
+                            "key": "false",
+                            "value": "Idle",
+                            "type": "active"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "label": "Rotation",
+            "displayType": "toggleSwitch",
+            "toggleSwitch": {
+                "command": {
+                    "name": "setRotation",
+                    "on": "clockwise",
+                    "off": "counterClockwise",
+                    "argumentType": "string"
+                },
+                "state": {
+                    "value": "rotation.value",
+                    "valueType": "string",
+                    "on": "clockwise",
+                    "off": "counterClockwise",
+                    "label": "{{rotation.value}}",
+                    "alternatives": [
+                        {
+                            "key": "clockwise",
+                            "value": "Clockwise",
+                            "type": "active"
+                        },
+                        {
+                            "key": "counterClockwise",
+                            "value": "Counter Clockwise",
+                            "type": "active"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "label": "Speed",
+            "displayType": "slider",
+            "slider": {
+                "range": [
+                    0.0,
+                    200.0
+                ],
+                "step": 1.0,
+                "unit": "speed.unit",
+                "command": "setSpeed",
+                "argumentType": "integer",
+                "value": "speed.value",
+                "valueType": "integer"
+            }
+        }
+    ],
+    "automation": {
+        "conditions": [
+            {
+                "label": "Ball Activity",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "true",
+                            "value": "Running",
+                            "type": "active"
+                        },
+                        {
+                            "key": "false",
+                            "value": "Stopped",
+                            "type": "inactive"
+                        }
+                    ],
+                    "value": "running.value",
+                    "valueType": "boolean",
+                    "multiSelectable": false
+                }
+            },
+            {
+                "label": "Ball Rotation Direction",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "clockwise",
+                            "value": "Clockwise",
+                            "type": "active"
+                        },
+                        {
+                            "key": "counterClockwise",
+                            "value": "Counter Clockwise",
+                            "type": "inactive"
+                        }
+                    ],
+                    "value": "rotation.value",
+                    "valueType": "string",
+                    "multiSelectable": false
+                }
+            },
+            {
+                "label": "Ball Rotation Speed",
+                "displayType": "slider",
+                "slider": {
+                    "range": [
+                        0.0,
+                        200.0
+                    ],
+                    "unit": "speed.unit",
+                    "value": "speed.value",
+                    "valueType": "integer"
+                }
+            }
+        ],
+        "actions": [
+            {
+                "label": "Ball Activity",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "true",
+                            "value": "Running",
+                            "type": "active"
+                        },
+                        {
+                            "key": "false",
+                            "value": "Stopped",
+                            "type": "inactive"
+                        }
+                    ],
+                    "supportedValues": "running.value"
+                }
+            },
+            {
+                "label": "Ball Rotation",
+                "displayType": "list",
+                "list": {
+                    "alternatives": [
+                        {
+                            "key": "clockwise",
+                            "value": "Clockwise",
+                            "type": "active"
+                        },
+                        {
+                            "key": "counterClockwise",
+                            "value": "Counter Clockwise",
+                            "type": "active"
+                        }
+                    ]
+                }
+            },
+            {
+                "label": "Ball Speed",
+                "displayType": "slider",
+                "slider": {
+                    "range": [
+                        0.0,
+                        200.0
+                    ],
+                    "unit": "speed.unit",
+                    "command": "setSpeed",
+                    "argumentType": "integer"
+                }
+            }
+        ]
+    },
+    "id": "summertalent21965.discoBall",
+    "version": 1
+}

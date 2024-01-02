@@ -1,0 +1,107 @@
+{
+    "id": "summertalent21965.discoBall",
+    "version": 1,
+    "status": "proposed",
+    "name": "Disco Ball",
+    "ephemeral": false,
+    "attributes": {
+        "running": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            },
+            "enumCommands": []
+        },
+        "rotation": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": [
+                            "clockwise",
+                            "counterClockwise"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            },
+            "enumCommands": []
+        },
+        "speed": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 200
+                    },
+                    "unit": {
+                        "type": "string",
+                        "enum": [
+                            "rpm"
+                        ],
+                        "default": "rpm"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            },
+            "enumCommands": []
+        }
+    },
+    "commands": {
+        "setSpeed": {
+            "name": "setSpeed",
+            "arguments": [
+                {
+                    "name": "speed",
+                    "optional": false,
+                    "schema": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 200
+                    }
+                }
+            ]
+        },
+        "stop": {
+            "name": "stop",
+            "arguments": []
+        },
+        "start": {
+            "name": "start",
+            "arguments": []
+        },
+        "setRotation": {
+            "name": "setRotation",
+            "arguments": [
+                {
+                    "name": "rotation",
+                    "optional": false,
+                    "schema": {
+                        "type": "string",
+                        "enum": [
+                            "clockwise",
+                            "counterClockwise"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}
