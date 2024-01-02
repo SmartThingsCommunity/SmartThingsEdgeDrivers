@@ -300,6 +300,28 @@ local bose = Driver("bose", {
   },
 })
 
+local function ip_change_check()
+  local id_to_device = {}
+  local device_list = bose:get_devices()
+  for _, device in ipairs(device_list) do
+    local id = bose_utils.get_serial_number(device)
+    id_to_device[id] = device
+  end
+  discovery.find(nil, function(found)
+    local known = id_to_device[found.id]
+    if known ~= nil then
+      local known_ip = known:get_field("ip")
+      if known_ip == nil or known_ip ~= found.ip then
+        log.info_with({hub_logs = true}, "Updating device ip:", found.id, found.ip)
+        known:set_field("ip", found.ip, { persist = true })
+      end
+    end
+  end)
+end
+
+local IP_CHANGE_CHECK_INTERVAL_S = 600
+bose:call_on_schedule(IP_CHANGE_CHECK_INTERVAL_S, ip_change_check, "IP Change Check Task")
+
 log.info("Starting bose driver")
 bose:run()
 log.warn("Exiting bose driver")
