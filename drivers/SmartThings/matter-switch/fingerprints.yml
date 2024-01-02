@@ -66,6 +66,21 @@ matterManufacturer:
     vendorId: 0x1321
     productId: 0x0002
     deviceProfileName: plug-binary
+  - id: "SONOFF M5-1C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000B
+    deviceProfileName: plug-binary
+  - id: "SONOFF M5-2C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000C
+    deviceProfileName: plug-binary
+  - id: "SONOFF M5-3C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000D
+    deviceProfileName: plug-binary
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
