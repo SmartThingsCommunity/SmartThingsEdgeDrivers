@@ -11,7 +11,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: GenericSensor
+  - name: HumiditySensor
 preferences:
   - preferenceId: humidityOffset
     explicit: true
