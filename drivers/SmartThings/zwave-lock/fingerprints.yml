@@ -294,6 +294,13 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0001
     deviceProfileName: base-lock
+  # Philips
+  - id: "541/2307/212"
+    deviceLabel: Philips Lock
+    manufacturerId: 0x021D
+    productId: 0x00D4
+    productType: 0x0903
+    deviceProfileName: base-lock
   # TLJ
   - id: "TLJ"
     deviceLabel: TLJ Door Lock
