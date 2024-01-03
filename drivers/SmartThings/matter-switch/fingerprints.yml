@@ -59,6 +59,11 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/1809"
+    deviceLabel: Smart Holiday String Lights
+    vendorId: 0x115A
+    productId: 0x771
+    deviceProfileName: light-color-level-2700K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -81,6 +86,13 @@ matterManufacturer:
     vendorId: 0x1160
     productId: 0x9002
     deviceProfileName: light-color-level-2700K-6500K
+
+#WiZ
+  - id: "WiZ A19"
+    deviceLabel: WiZ A19
+    vendorId: 0x100b
+    productId: 0x2168
+    deviceProfileName: light-color-level-2200K-6500K
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
