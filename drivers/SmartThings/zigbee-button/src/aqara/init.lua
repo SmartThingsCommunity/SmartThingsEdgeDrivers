@@ -73,7 +73,7 @@ end
     device:emit_event(capabilities.button.button.pushed({state_change = false}))
     device:emit_event(capabilities.battery.battery(100))
 end
- 
+
 local aqara_wireless_switch_handler = {
     NAME = "Aqara Wireless Switch Handler",
     lifecycle_handlers = {
