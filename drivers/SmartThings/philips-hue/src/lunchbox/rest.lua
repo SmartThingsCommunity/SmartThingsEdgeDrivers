@@ -129,6 +129,9 @@ local function parse_chunked_response(original_response, sock)
 end
 
 local function handle_response(sock)
+  if require("version").api > 7 then
+    return Response.tcp_source(sock)
+  end
   -- called select right before passing in so we receive immediately
   local initial_recv, initial_err, partial = Response.source(function() return sock:receive('*l') end)
 
