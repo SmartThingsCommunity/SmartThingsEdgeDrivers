@@ -1445,7 +1445,7 @@ end
 hue:call_with_delay(3, Discovery.do_mdns_scan, "Philips Hue mDNS Initial Scan")
 
 -- re-scan every minute
-local MDNS_SCAN_INTERVAL_SECONDS = 60
+local MDNS_SCAN_INTERVAL_SECONDS = 600
 hue:call_on_schedule(MDNS_SCAN_INTERVAL_SECONDS, Discovery.do_mdns_scan, "Philips Hue mDNS Scan Task")
 
 log.info("Starting Hue driver")
