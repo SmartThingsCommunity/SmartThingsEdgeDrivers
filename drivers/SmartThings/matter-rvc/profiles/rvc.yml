@@ -1,18 +1,22 @@
 name: rvc
 components:
-- id: main
-  capabilities:
-  - id: spacewonder52282.robotCleanerOperationalState2
-    version: 1
-  - id: refresh
-    version: 1
-- id: runMode
-  capabilities:
-  - id: mode
-    version: 1
-- id: cleanMode
-  capabilities:
-  - id: mode
-    version: 1
-  categories:
-  - name: RobotCleaner
+  - id: main
+    capabilities:
+      - id: spacewonder52282.robotCleanerOperationalState2
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: RobotCleaner
+  - id: runMode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+    - name: RobotCleaner
+  - id: cleanMode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+    - name: RobotCleaner
