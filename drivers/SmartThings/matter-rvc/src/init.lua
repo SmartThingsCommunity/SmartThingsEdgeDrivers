@@ -31,8 +31,8 @@ end
 -- Matter Handlers --
 local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, response)
   local supportedModes = {}
-  for _, mode in ipairs(ib.data.value) do
-    table.insert(supportedModes, mode.label)
+  for _, mode in ipairs(ib.data.elements) do
+    table.insert(supportedModes, mode.elements.label.value)
   end
   device:set_field(rvc_run_mode_supported_mode, supportedModes, {persist = true})
   local component = device.profile.components["runMode"]
@@ -43,12 +43,12 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
   log.info_with({ hub_logs = true },
     string.format("rvc_run_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode = math.floor(ib.data.value)
+  local currentMode = ib.data.value
   local supportedModes = device:get_field(rvc_run_mode_supported_mode)
-  for _, mode in ipairs(supportedModes) do
-    if mode.mode == current_mode then
+  for i, mode in ipairs(supportedModes) do
+    if i == currentMode then
       local component = device.profile.components["runMode"]
-      device:emit_component_event(component, capabilities.mode.mode(mode.label))
+      device:emit_component_event(component, capabilities.mode.mode(mode))
       break
     end
   end
@@ -56,8 +56,8 @@ end
 
 local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
   local supportedModes = {}
-  for _, mode in ipairs(ib.data.value) do
-    table.insert(supportedModes, mode.label)
+  for _, mode in ipairs(ib.data.elements) do
+    table.insert(supportedModes, mode.elements.label.value)
   end
   device:set_field(rvc_clean_mode_supported_mode, supportedModes, {persist = true})
   local component = device.profile.components["cleanMode"]
@@ -68,12 +68,12 @@ local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, resp
   log.info_with({ hub_logs = true },
     string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode = math.floor(ib.data.value)
+  local currentMode = ib.data.value
   local supportedModes = device:get_field(rvc_clean_mode_supported_mode)
-  for _, mode in ipairs(supportedModes) do
-    if mode.mode == current_mode then
+  for i, mode in ipairs(supportedModes) do
+    if i == currentMode then
       local component = device.profile.components["cleanMode"]
-      device:emit_component_event(component, capabilities.mode.mode(mode.label))
+      device:emit_component_event(component, capabilities.mode.mode(mode))
       break
     end
   end
@@ -102,12 +102,36 @@ end
 
 local function rvc_operational_error_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-    string.format("rvc_operational_error_attr_handler operationalErrorStruct: %s", ib.data.value))
-
-  -- local operationalError = ib.data.value.error_state_id
-  -- if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
-  --   device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToStartOrResume())
-  -- end
+    string.format("rvc_operational_error_attr_handler operationalErrorStruct: %s", ib.data.elements))
+  -- log.info_with({ hub_logs = true },
+  --   string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements["error_state_id"]))
+  -- local operationalError = ib.data.elements["error_state_id"]
+  log.info_with({ hub_logs = true },
+    string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements[1]))
+  local operationalError = ib.data.elements[1]
+  if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToStartOrResume())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToCompleteOperation())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.commandInvalidInState())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.FAILED_TO_FIND_CHARGING_DOCK then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.failedToFindChargingDock())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.STUCK then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.stuck())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.DUST_BIN_MISSING then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.dustBinMissing())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.DUST_BIN_FULL then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.dustBinFull())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_EMPTY then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankEmpty())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_MISSING then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankMissing())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_LID_OPEN then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankLidOpen())
+  elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.MOP_CLEANING_PAD_MISSING then
+    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.mopCleaningPadMissing())
+  end
 end
 
 -- Capability Handlers --

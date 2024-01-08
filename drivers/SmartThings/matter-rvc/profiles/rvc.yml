@@ -4,9 +4,11 @@ components:
   capabilities:
   - id: spacewonder52282.robotCleanerOperationalState2
     version: 1
-  - id: mode
-    version: 1
   - id: refresh
+    version: 1
+- id: runMode
+  capabilities:
+  - id: mode
     version: 1
 - id: cleanMode
   capabilities:
