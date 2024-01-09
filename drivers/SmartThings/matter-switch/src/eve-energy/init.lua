@@ -30,9 +30,14 @@ local PRIVATE_ATTR_ID_WATT = 0x130A000A
 local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
 local PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT = 0x130A000E
 
-local LAST_REPORT_TIME = "LAST_REPORT_TIME"
+-- Timer to update the data each minute if the device is on
 local RECURRING_POLL_TIMER = "RECURRING_POLL_TIMER"
-local TIMER_REPEAT = (1 * 60)    -- Run the timer each minute
+local TIMER_REPEAT = (1 * 60) -- Run the timer each minute
+
+-- Timer to report the power consumption every 15 minutes to satisfy the ST energy requirement
+local RECURRING_REPORT_POLL_TIMER = "RECURRING_REPORT_POLL_TIMER"
+local LAST_REPORT_TIME = "LAST_REPORT_TIME"
+local LATEST_TOTAL_CONSUMPTION_WH = "LATEST_TOTAL_CONSUMPTION_WH"
 local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 
 
@@ -57,38 +62,11 @@ local function iso8061Timestamp(time)
 end
 
 local function updateEnergyMeter(device, totalConsumptionWh)
+  -- Remember the total consumption so we can report it every 15 minutes
+  device:set_field(LATEST_TOTAL_CONSUMPTION_WH, totalConsumptionWh, { persist = true })
+
   -- Report the energy consumed
   device:emit_event(capabilities.energyMeter.energy({ value = totalConsumptionWh, unit = "Wh" }))
-
-  -- Only send powerConsumptionReport every couple of minutes (REPORT_TIMEOUT)
-  local current_time = os.time()
-  local last_time = device:get_field(LAST_REPORT_TIME) or 0
-  local next_time = last_time + REPORT_TIMEOUT
-  if current_time < next_time then
-    return
-  end
-
-  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
-
-  -- Calculate the energy consumed between the start and the end time
-  local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME)
-
-  local deltaEnergyWh = 0.0
-  if previousTotalConsumptionWh ~= nil and previousTotalConsumptionWh.energy ~= nil then
-    deltaEnergyWh = math.max(totalConsumptionWh - previousTotalConsumptionWh.energy, 0.0)
-  end
-
-  local startTime = iso8061Timestamp(last_time)
-  local endTime = iso8061Timestamp(current_time - 1)
-
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-    start = startTime,
-    ["end"] = endTime,
-    deltaEnergy = deltaEnergyWh,
-    energy = totalConsumptionWh
-  }))
 end
 
 
@@ -107,6 +85,11 @@ local function requestData(device)
 end
 
 local function create_poll_schedule(device)
+  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
+  if poll_timer ~= nil then
+    return
+  end
+
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
   -- Eve Energy generally report changes every 10 or 17 minutes
   local timer = device.thread:call_on_schedule(TIMER_REPEAT, function()
@@ -114,6 +97,48 @@ local function create_poll_schedule(device)
   end, "polling_schedule_timer")
 
   device:set_field(RECURRING_POLL_TIMER, timer)
+end
+
+local function delete_poll_schedule(device)
+  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
+  if poll_timer ~= nil then
+    device.thread:cancel_timer(poll_timer)
+    device:set_field(RECURRING_POLL_TIMER, nil)
+  end
+end
+
+
+local function create_poll_report_schedule(device)
+  -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
+  local timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+    local current_time = os.time()
+    local last_time = device:get_field(LAST_REPORT_TIME) or 0
+    local latestTotalConsumptionWH = device:get_field(LATEST_TOTAL_CONSUMPTION_WH) or 0
+
+    device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+    -- Calculate the energy consumed between the start and the end time
+    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+      capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+    local deltaEnergyWh = 0.0
+    if previousTotalConsumptionWh ~= nil and previousTotalConsumptionWh.energy ~= nil then
+      deltaEnergyWh = math.max(latestTotalConsumptionWH - previousTotalConsumptionWh.energy, 0.0)
+    end
+
+    local startTime = iso8061Timestamp(last_time)
+    local endTime = iso8061Timestamp(current_time - 1)
+
+    -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+      start = startTime,
+      ["end"] = endTime,
+      deltaEnergy = deltaEnergyWh,
+      energy = latestTotalConsumptionWH
+    }))
+  end, "polling_report_schedule_timer")
+
+  device:set_field(RECURRING_REPORT_POLL_TIMER, timer)
 end
 
 
@@ -166,6 +191,7 @@ local function device_init(driver, device)
   device:subscribe()
 
   create_poll_schedule(device)
+  create_poll_report_schedule(device)
 end
 
 local function device_added(driver, device)
@@ -175,11 +201,7 @@ local function device_added(driver, device)
 end
 
 local function device_removed(driver, device)
-  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
-  if poll_timer ~= nil then
-    device.thread:cancel_timer(poll_timer)
-    device:set_field(RECURRING_POLL_TIMER, nil)
-  end
+  delete_poll_schedule(device)
 end
 
 local function handle_refresh(self, device)
@@ -218,6 +240,23 @@ end
 -- Eve Energy Handler
 -------------------------------------------------------------------------------------
 
+local function on_off_attr_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
+
+    create_poll_schedule(device)
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
+
+    -- We want to prevent to read the power reports of the device if the device is off
+    -- We set here the power to 0 before the read is skipped so that the power is correctly displayed and not using a stale value
+    device:emit_event(capabilities.powerMeter.power({ value = 0, unit = "W" }))
+
+    -- Stop the timer when the device is off
+    delete_poll_schedule(device)
+  end
+end
+
 local function watt_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local wattValue = ib.data.value
@@ -242,6 +281,9 @@ local eve_energy_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+      },
       [PRIVATE_CLUSTER_ID] = {
         [PRIVATE_ATTR_ID_WATT] = watt_attr_handler,
         [PRIVATE_ATTR_ID_WATT_ACCUMULATED] = watt_accumulated_attr_handler
