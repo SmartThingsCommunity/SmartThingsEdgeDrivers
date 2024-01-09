@@ -21,8 +21,8 @@ local log = require "log"
 local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState2"
 local robotCleanerOperationalState = capabilities[robotCleanerOperationalStateId]
 
-local rvc_run_mode_supported_mode = "RvcRunMode.SupportedMode"
-local rvc_clean_mode_supported_mode = "RvcCleanMode.SupportedMode"
+local rvcRunModeSupportedModes = {}
+local rvcCleanModeSupportedModes = {}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -30,13 +30,12 @@ end
 
 -- Matter Handlers --
 local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, response)
-  local supportedModes = {}
+  rvcRunModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    table.insert(supportedModes, mode.elements.label.value)
+    table.insert(rvcRunModeSupportedModes, mode.elements.label.value)
   end
-  device:set_field(rvc_run_mode_supported_mode, supportedModes, {persist = true})
   local component = device.profile.components["runMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(rvcRunModeSupportedModes))
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -44,9 +43,8 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
     string.format("rvc_run_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  local supportedModes = device:get_field(rvc_run_mode_supported_mode)
-  for i, mode in ipairs(supportedModes) do
-    if i == currentMode then
+  for i, mode in ipairs(rvcRunModeSupportedModes) do
+    if i - 1 == currentMode then
       local component = device.profile.components["runMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
       break
@@ -55,13 +53,13 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
 end
 
 local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
-  local supportedModes = {}
+  rvcCleanModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    table.insert(supportedModes, mode.elements.label.value)
+    table.insert(rvcCleanModeSupportedModes, mode.elements.label.value)
   end
-  device:set_field(rvc_clean_mode_supported_mode, supportedModes, {persist = true})
+  -- device:set_field(rvc_clean_mode_supported_mode, supportedModes, {persist = true})
   local component = device.profile.components["cleanMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(rvcCleanModeSupportedModes))
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -69,9 +67,8 @@ local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, resp
     string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  local supportedModes = device:get_field(rvc_clean_mode_supported_mode)
-  for i, mode in ipairs(supportedModes) do
-    if i == currentMode then
+  for i, mode in ipairs(rvcCleanModeSupportedModes) do
+    if i - 1 == currentMode then
       local component = device.profile.components["cleanMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
       break
@@ -139,19 +136,18 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
     string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
+  local ENDPOINT = 1
   if cmd.component == "runMode" then
-    local supportedModes = device:get_field(rvc_run_mode_supported_mode)
-    for i, mode in ipairs(supportedModes) do
-      if cmd.args.mode == mode.mode then
-        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, 1, i - 1))
+    for i, mode in ipairs(rvcRunModeSupportedModes) do
+      if cmd.args.mode == mode then
+        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
       end
     end
   elseif cmd.component == "cleanMode" then
-    local supportedModes = device:get_field(rvc_clean_mode_supported_mode)
-    for i, mode in ipairs(supportedModes) do
-      if cmd.args.mode == mode.mode then
-        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, 1, i - 1))
+    for i, mode in ipairs(rvcCleanModeSupportedModes) do
+      if cmd.args.mode == mode then
+        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
       end
     end
