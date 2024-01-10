@@ -26,6 +26,7 @@ local PRIVATE_MODE = "PRIVATE_MODE"
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" },
   { mfr = "LUMI", model = "lumi.switch.n0agl1" },
+  { mfr = "LUMI", model = "lumi.switch.n0acn2" },
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },

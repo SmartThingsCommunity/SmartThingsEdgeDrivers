@@ -121,11 +121,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: get changed drivers
         id: changed-drivers
-        uses: tj-actions/changed-files@v35
+        uses: tj-actions/changed-files@v41
         with:
           dir_names: true
           dir_names_max_depth: 3
-          files: "drivers"
+          files: "drivers/**"
+          safe_output: false
       - run: echo ${{ steps.changed-drivers.outputs.all_modified_files }}
       - name: Install Python requirements
         run: pip install -r tools/requirements.txt
