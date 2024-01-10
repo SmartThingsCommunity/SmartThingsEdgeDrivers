@@ -38,7 +38,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
       }
     },
     {
@@ -56,6 +56,9 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_revision = 1,
           feature_map = 0, --u32 bitmap
         }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- On/Off Plug
       }
     }
   }
@@ -138,6 +141,20 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Check when the device is removed", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+
+    local poll_timer = mock_device:get_field("RECURRING_POLL_TIMER")
+    assert(poll_timer ~= nil, "poll_timer should exist")
+
+    local report_poll_timer = mock_device:get_field("RECURRING_REPORT_POLL_TIMER")
+    assert(report_poll_timer ~= nil, "report_poll_timer should exist")
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
+    test.wait_for_events()
+  end
+)
 
 test.register_coroutine_test(
   "Check that the timer created in create_poll_schedule properly reads the device in requestData",
@@ -145,11 +162,9 @@ test.register_coroutine_test(
     test.mock_time.advance_time(60000) -- Ensure that the timer created in create_poll_schedule triggers
     test.socket.matter:__set_channel_ordering("relaxed")
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+    local attribute_read = cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil)
+    attribute_read:merge(cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
+    test.socket.matter:__expect_send({ mock_device.id, attribute_read})
 
     test.wait_for_events()
   end,
@@ -182,11 +197,9 @@ test.register_coroutine_test(
       }
     )
 
-    test.socket.matter:__expect_send({ mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil) })
-    test.socket.matter:__expect_send({ mock_device.id,
-      cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil) })
+    local refresh_response = cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT, nil)
+    refresh_response:merge(cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
+    test.socket.matter:__expect_send({ mock_device.id, refresh_response})
     test.wait_for_events()
   end
 )
@@ -262,16 +275,6 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50000, unit = "Wh" }))
     )
 
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 50000,
-          deltaEnergy = 0.0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T16:39:59Z"
-        }))
-    )
-
     test.wait_for_events()
   end
 )
@@ -309,6 +312,82 @@ test.register_coroutine_test(
 
     test.wait_for_events()
   end
+)
+
+test.register_coroutine_test(
+  "Test the on attribute", function()
+    local data = data_types.validate_or_build_type(1, data_types.Uint16, "on")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        cluster_base.build_test_report_data(
+          mock_device,
+          0x01,
+          clusters.OnOff.ID,
+          clusters.OnOff.attributes.OnOff.ID,
+          data
+        )
+      }
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch({ value = "on" }))
+    )
+
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Report with power consumption after 15 minutes even when device is off", function()
+    -- device is off
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, false)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch({ value = "off" }))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0, unit = "W" }))
+    )
+
+    test.wait_for_events()
+    -- after 15 minutes, the device should still report power consumption even when off
+    test.mock_time.advance_time(60 * 15) -- Ensure that the timer created in create_poll_schedule triggers
+
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.powerConsumptionReport.powerConsumption({
+          energy = 0,
+          deltaEnergy = 0.0,
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T00:14:59Z"
+        }))
+    )
+
+    test.wait_for_events()
+  end,
+  {
+    test_init = function()
+      local cluster_subscribe_list = {
+        clusters.OnOff.attributes.OnOff,
+      }
+      test.socket.matter:__set_channel_ordering("relaxed")
+      local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+      for i, cluster in ipairs(cluster_subscribe_list) do
+        if i > 1 then
+          subscribe_request:merge(cluster:subscribe(mock_device))
+        end
+      end
+      test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
+      test.mock_device.add_test_device(mock_device)
+      test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
+      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
+    end
+  }
 )
 
 test.run_registered_tests()

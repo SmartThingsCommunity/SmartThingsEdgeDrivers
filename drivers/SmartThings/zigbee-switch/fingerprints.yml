@@ -65,6 +65,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.n0agl1
     deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.switch.n0acn2"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0acn2
+    deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.light.acn004"
     deviceLabel: Aqara Smart Dimmer Controller T1 Pro
     manufacturer: LUMI
