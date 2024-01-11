@@ -33,6 +33,20 @@ local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
+local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
+local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
+local COLOR_TEMP_LIGHT_DEVICE_TYPE_ID = 0x010C
+local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
+local ON_OFF_PLUG_DEVICE_TYPE_ID = 0x010A
+local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
+local device_type_profile_map = {
+  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
+  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
+  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
+  [ON_OFF_PLUG_DEVICE_TYPE_ID] = "plug-binary",
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level"
+}
 local detect_matter_thing
 
 local function convert_huesat_st_to_matter(val)
@@ -56,6 +70,26 @@ local function find_default_endpoint(device, component)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
+local function assign_child_profile(device, child_ep)
+  local profile
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == child_ep then
+      -- Some devices report multiple device types which are a subset of
+      -- a superset device type (For example, Dimmable Light is a superset of
+      -- On/Off light). This mostly applies to the four light types, so we will want
+      -- to match the profile for the superset device type. This can be done by
+      -- matching to the device type with the highest ID
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        id = math.max(id, dt.device_type_id)
+      end
+      profile = device_type_profile_map[id]
+    end
+  end
+  -- default to "switch-binary" if no profile is found
+  return profile or "switch-binary"
+end
+
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
@@ -70,11 +104,12 @@ local function initialize_switch(driver, device)
       num_server_eps = num_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_server_eps)
+        local child_profile = assign_child_profile(device, ep)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
             label = name,
-            profile = "switch-binary",
+            profile = child_profile,
             parent_device_id = device.id,
             parent_assigned_child_key = string.format("%d", ep),
             vendor_provided_label = name
@@ -283,7 +318,8 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
-    local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
+    local temp_device = find_child(device, ib.endpoint_id) or device
+    local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
       most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
