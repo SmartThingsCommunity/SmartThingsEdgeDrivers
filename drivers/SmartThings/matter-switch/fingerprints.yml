@@ -65,6 +65,22 @@ matterManufacturer:
     vendorId: 0x1321
     productId: 0x0002
     deviceProfileName: plug-binary
+  - id: "SONOFF M5-1C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000B
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-2C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000C
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-3C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000D
+    deviceProfileName: switch-binary
+
 #Yeelight
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
