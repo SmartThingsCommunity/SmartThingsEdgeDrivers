@@ -408,7 +408,8 @@ local matter_driver_template = {
     capabilities.colorTemperature,
   },
     sub_drivers = {
-    require("eve-energy")
+    -- require("eve-energy"),
+    require("eve-energy-outlet"),
   }
 }
 
