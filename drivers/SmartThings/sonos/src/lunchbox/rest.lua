@@ -6,6 +6,8 @@ local utils = require "utils"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"
 
+local api_version = require("version").api
+
 local RestCallStates = {
   SEND = "Send",
   RECEIVE = "Receive",
@@ -132,6 +134,11 @@ local function parse_chunked_response(original_response, sock)
 end
 
 local function handle_response(sock)
+  if api_version >= 9 then
+    local response, err = Response.tcp_source(sock)
+    if err or (not response) then return response, (err or "unknown error") end
+    return response, response:fill_body()
+  end
   -- called select right before passing in so we receive immediately
   local initial_recv, initial_err, partial = Response.source(function() return sock:receive('*l') end)
 
