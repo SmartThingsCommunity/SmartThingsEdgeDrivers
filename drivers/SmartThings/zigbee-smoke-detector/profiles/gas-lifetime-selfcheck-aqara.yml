@@ -1,0 +1,28 @@
+name: gas-lifetime-selfcheck-aqara.yml
+components:
+- id: main
+  capabilities:
+  - id: gasDetector
+    version: 1
+  - id: refresh
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: stse.selfCheck
+    version: 1
+  - id: stse.lifeTimeReport
+    version: 1
+  - id: stse.sensitivityAdjustment
+    version: 1
+    config:
+     values:
+       - key: "sensitivityAdjustment.value"
+         enabledValues:
+           - 'Low'
+           - 'High'
+       - key: "{{enumCommands}}"
+         enabledValues:
+           - 'Low'
+           - 'High'
+  categories:
+  - name: SmokeDetector

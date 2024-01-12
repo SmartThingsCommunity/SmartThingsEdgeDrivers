@@ -1,0 +1,45 @@
+id: stse.selfCheck
+version: 1
+status: proposed
+name: Self Check
+ephemeral: false
+attributes:
+  selfCheckState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - idle
+            - selfChecking
+            - selfCheckCompleted
+      additionalProperties: false
+      required:
+        - value
+    setter: setSelfCheckState
+  supportedSelfCheckState:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - idle
+              - selfChecking
+              - selfCheckCompleted
+commands:
+  setSelfCheckState:
+    name: setSelfCheckState
+    arguments:
+      - name: state
+        optional: false
+        schema:
+          type: string
+          enum:
+            - idle
+            - selfChecking
+            - selfCheckCompleted
