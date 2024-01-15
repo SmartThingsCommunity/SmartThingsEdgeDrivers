@@ -57,36 +57,33 @@ local CONFIGURATIONS = {
 local function smoke_zone_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event(capabilities.smokeDetector.smoke.detected())
-    else if value.value == 0 then
-      device:emit_event(capabilities.smokeDetector.smoke.clear())
-    end
+  elseif value.value == 0 then
+    device:emit_event(capabilities.smokeDetector.smoke.clear())
   end
 end
 
 local function buzzer_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event(capabilities.audioMute.mute.muted())
-    else if value.value == 0 then
-      device:emit_event(capabilities.audioMute.mute.unmuted())
-    end
+  elseif value.value == 0 then
+    device:emit_event(capabilities.audioMute.mute.unmuted())
   end
 end
-
 
 
 local function selfcheck_status_handler(driver, device, value, zb_rx)
   if value.value == 0 then
     device:emit_event(selfCheck.selfCheckState.idle())
-    else if value.value == 1 then
-      device:emit_event(selfCheck.selfCheckState.selfCheckCompleted())
-    end
+  elseif value.value == 1 then
+    device:emit_event(selfCheck.selfCheckState.selfCheckCompleted())
   end
 end
 
 
+
 local function mute_handler(driver, device, cmd)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
-  PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
+    PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
 end
 
 local function unmute_handler(driver, device, cmd)
@@ -122,7 +119,7 @@ end
 
 local function device_added(driver, device)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
-  PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
   device:emit_event(capabilities.smokeDetector.smoke.clear())
   device:emit_event(capabilities.audioMute.mute.unmuted())
   device:emit_event(selfCheck.selfCheckState.idle())
