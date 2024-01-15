@@ -50,51 +50,46 @@ local CONFIGURATIONS = {
 local function gas_zone_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event(capabilities.gasDetector.gas.detected())
-    else if value.value == 0 then
-      device:emit_event(capabilities.gasDetector.gas.clear())
-    end
+  elseif value.value == 0 then
+    device:emit_event(capabilities.gasDetector.gas.clear())
   end
 end
 
 local function buzzer_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event(capabilities.audioMute.mute.muted())
-    else if value.value == 0 then
-      device:emit_event(capabilities.audioMute.mute.unmuted())
-    end
+  elseif value.value == 0 then
+    device:emit_event(capabilities.audioMute.mute.unmuted())
   end
 end
 
 local function lifetime_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
     device:emit_event(lifeTimeReport.lifeTimeState.endOfLife())
-    else if value.value == 0 then
-      device:emit_event(lifeTimeReport.lifeTimeState.normal())
-    end
+  elseif value.value == 0 then
+    device:emit_event(lifeTimeReport.lifeTimeState.normal())
   end
 end
 
 local function selfcheck_status_handler(driver, device, value, zb_rx)
   if value.value == 0 then
     device:emit_event(selfCheck.selfCheckState.idle())
-    else if value.value == 1 then
-      device:emit_event(selfCheck.selfCheckState.selfCheckCompleted())
-    end
+  elseif value.value == 1 then
+    device:emit_event(selfCheck.selfCheckState.selfCheckCompleted())
   end
 end
 
 local function sensitivity_adjustment_handler(driver, device, value, zb_rx)
   if value.value == 0x01 then
     device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Low())
-    else if value.value == 0x02 then
-      device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
-    end
+  elseif value.value == 0x02 then
+    device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
   end
 end
 
 local function mute_handler(driver, device, cmd)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
-  PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
+    PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
 end
 
 local function unmute_handler(driver, device, cmd)
@@ -106,10 +101,10 @@ local function sensitivity_adjustment_capability_handler(driver, device, command
   local sensitivity = command.args.sensitivity
   if sensitivity == 'High' then
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x02))
+      PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x02))
   elseif sensitivity == 'Low' then
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+      PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
   end
 end
 
@@ -139,7 +134,7 @@ end
 
 local function device_added(driver, device)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
-  PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
   device:emit_event(capabilities.gasDetector.gas.clear())
   device:emit_event(capabilities.audioMute.mute.unmuted())
   device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
