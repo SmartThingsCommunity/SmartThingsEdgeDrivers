@@ -99,13 +99,8 @@ end
 
 local function rvc_operational_error_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-    string.format("rvc_operational_error_attr_handler operationalErrorStruct: %s", ib.data.elements))
-  -- log.info_with({ hub_logs = true },
-  --   string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements["error_state_id"]))
-  -- local operationalError = ib.data.elements["error_state_id"]
-  log.info_with({ hub_logs = true },
-    string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements[1]))
-  local operationalError = ib.data.elements[1]
+    string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+  local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
     device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToStartOrResume())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
