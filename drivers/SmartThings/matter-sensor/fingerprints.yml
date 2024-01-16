@@ -27,6 +27,12 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0002
     deviceProfileName: contact-battery
+  #Heiman
+  - id: "Heiman/Motion"
+    deviceLabel: Heiman Motion Sensor
+    vendorId: 0x120B
+    productId: 0x1001
+    deviceProfileName: matter-motion-battery-illuminance
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
