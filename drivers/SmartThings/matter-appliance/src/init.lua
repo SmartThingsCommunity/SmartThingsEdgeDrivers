@@ -19,12 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
-local laundryWasherModeId = "spacewonder52282.laundryWasherMode"
-local laundryWasherMode = capabilities[laundryWasherModeId]
 local temperatureLevelId = "spacewonder52282.temperatureLevel"
 local temperatureLevel = capabilities[temperatureLevelId]
-local dishwasherModeId = "spacewonder52282.dishwasherMode"
-local dishwasherMode = capabilities[dishwasherModeId]
 local operationalStateId = "spacewonder52282.operationalState1"
 local operationalState = capabilities[operationalStateId]
 
@@ -58,43 +54,6 @@ local function temperatureControl_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel5())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
-  end
-end
-
-local function laundry_washer_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-  string.format("laundry_washer_mode_attr_handler currentMode: %s", ib.data.value))
-
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.normal())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.heavy())
-  elseif current_mode==2 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.delicate())
-  elseif current_mode==3 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.whites())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.normal())
-  end
-end
-
-local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("dishwasher_supported_modes_attr_handler supportedModes: %s", ib.data.value))
-end
-
-local function dishwasher_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-  string.format("dishwasher_mode_attr_handler currentMode: %s", ib.data.value))
-
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.normal())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.heavy())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.light())
   end
 end
 
@@ -145,38 +104,6 @@ local function handle_temperature(driver, device, cmd)
   end
 end
 
-local function handle_laundry_washer_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-  string.format("handle_laundry_washer_mode currentMode: %s", cmd.args.mode))
-
-  if cmd.args.mode==laundryWasherMode.laundryWasherMode.normal.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.heavy.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 1))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.delicate.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 2))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.whites.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 3))
-  else
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 0))
-  end
-end
-
-local function handle_dishwasher_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-  string.format("handle_dishwasher_mode currentMode: %s", cmd.args.mode))
-
-  if cmd.args.mode==dishwasherMode.dishwasherMode.normal.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.mode==dishwasherMode.dishwasherMode.heavy.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 1))
-  elseif cmd.args.mode==dishwasherMode.dishwasherMode.light.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 2))
-  else
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 0))
-  end
-end
-
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -188,13 +115,6 @@ local matter_driver_template = {
       },
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = temperatureControl_attr_handler,
-      },
-      [clusters.LaundryWasherMode.ID] = {
-        [clusters.LaundryWasherMode.attributes.CurrentMode.ID] = laundry_washer_mode_attr_handler,
-      },
-      [clusters.DishwasherMode.ID] = {
-        [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
-        [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
       },
       [clusters.OperationalState.ID] = {
         [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
@@ -209,13 +129,6 @@ local matter_driver_template = {
       clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
       clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
     },
-    [laundryWasherModeId] = {
-      clusters.LaundryWasherMode.attributes.CurrentMode,
-    },
-    [dishwasherModeId] = {
-      clusters.DishwasherMode.attributes.SupportedModes,
-      clusters.DishwasherMode.attributes.CurrentMode,
-    },
     [operationalStateId] = {
       clusters.OperationalState.attributes.OperationalState,
     },
@@ -228,13 +141,11 @@ local matter_driver_template = {
     [temperatureLevelId] = {
       [temperatureLevel.commands.setTemperature.NAME] = handle_temperature,
     },
-    [laundryWasherModeId] = {
-      [laundryWasherMode.commands.setLaundryWasherMode.NAME] = handle_laundry_washer_mode,
-    },
-    [dishwasherModeId] = {
-      [dishwasherMode.commands.setDishwasherMode.NAME] = handle_dishwasher_mode,
-    },
   },
+  sub_drivers = {
+    require("matter-dishwasher"),
+    require("matter-laundry-washer"),
+  }
 }
 
 local matter_driver = MatterDriver("matter-appliance", matter_driver_template)
