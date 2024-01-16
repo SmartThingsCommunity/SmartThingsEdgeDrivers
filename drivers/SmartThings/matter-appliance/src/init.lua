@@ -191,6 +191,6 @@ local matter_driver_template = {
   },
 }
 
-local matter_driver = MatterDriver("matter-dishwasher", matter_driver_template)
+local matter_driver = MatterDriver("matter-appliance", matter_driver_template)
 log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()
