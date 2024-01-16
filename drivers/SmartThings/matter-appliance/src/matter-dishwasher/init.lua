@@ -19,8 +19,7 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
-local dishwasherModeId = "spacewonder52282.dishwasherMode"
-local dishwasherMode = capabilities[dishwasherModeId]
+local dishwasherModeSupportedModes = {}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -28,41 +27,41 @@ end
 
 -- Matter Handlers --
 local function is_matter_dishwasher(opts, driver, device)
-  return device:supports_capability_by_id(dishwasherModeId)
+  return device:supports_capability_by_id(capabilities.mode.ID)
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("dishwasher_supported_modes_attr_handler supportedModes: %s", ib.data.value))
+  dishwasherModeSupportedModes = {}
+  for _, mode in ipairs(ib.data.elements) do
+    table.insert(dishwasherModeSupportedModes, mode.elements.label.value)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(dishwasherModeSupportedModes))
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("dishwasher_mode_attr_handler currentMode: %s", ib.data.value))
+    string.format("dishwasher_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.normal())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.heavy())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, dishwasherMode.dishwasherMode.light())
+  local currentMode = ib.data.value
+  for i, mode in ipairs(dishwasherModeSupportedModes) do
+    if i - 1 == currentMode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      break
+    end
   end
 end
 
 -- Capability Handlers --
 local function handle_dishwasher_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_dishwasher_mode currentMode: %s", cmd.args.mode))
+    string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
 
-  if cmd.args.mode==dishwasherMode.dishwasherMode.normal.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.mode==dishwasherMode.dishwasherMode.heavy.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 1))
-  elseif cmd.args.mode==dishwasherMode.dishwasherMode.light.NAME then
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 2))
-  else
-    device:send(clusters.DishwasherMode.commands.ChangeToMode(device, 1, 0))
+  local ENDPOINT = 1
+  for i, mode in ipairs(dishwasherModeSupportedModes) do
+    if cmd.args.mode == mode then
+      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+      return
+    end
   end
 end
 
@@ -80,14 +79,14 @@ local matter_dishwasher_handler = {
     }
   },
   subscribed_attributes = {
-    [dishwasherModeId] = {
+    [capabilities.mode.ID] = {
       clusters.DishwasherMode.attributes.SupportedModes,
       clusters.DishwasherMode.attributes.CurrentMode,
     },
   },
   capability_handlers = {
-    [dishwasherModeId] = {
-      [dishwasherMode.commands.setDishwasherMode.NAME] = handle_dishwasher_mode,
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = handle_dishwasher_mode,
     },
   },
   can_handle = is_matter_dishwasher,
