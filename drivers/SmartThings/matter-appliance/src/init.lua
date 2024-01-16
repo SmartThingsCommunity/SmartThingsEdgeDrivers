@@ -145,6 +145,7 @@ local matter_driver_template = {
   sub_drivers = {
     require("matter-dishwasher"),
     require("matter-laundry-washer"),
+    require("matter-refrigerator"),
   }
 }
 
