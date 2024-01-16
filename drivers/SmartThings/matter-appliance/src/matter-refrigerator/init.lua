@@ -23,8 +23,6 @@ local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component"
 
 local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
 local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
-local temperatureLevelId = "spacewonder52282.temperatureLevel"
-local temperatureLevel = capabilities[temperatureLevelId]
 
 local function endpoint_to_component(device, ep)
   local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
@@ -59,6 +57,10 @@ local function device_added(driver, device)
 end
 
 -- Matter Handlers --
+local function is_matter_refrigerator(opts, driver, device)
+  return device:supports_capability_by_id(refrigeratorAndTccModeId)
+end
+
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
   string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
@@ -78,26 +80,6 @@ local function refrigerator_alarm_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
-  end
-end
-
-local function temperatureControl_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-  string.format("temperatureControl_attr_handler: %s", ib.data.value))
-
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel2())
-  elseif current_mode==2 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel3())
-  elseif current_mode==3 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel4())
-  elseif current_mode==4 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel5())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
   end
 end
 
@@ -129,26 +111,8 @@ local function handle_refrigerator_tcc_mode(driver, device, cmd)
   end
 end
 
-local function handle_temperature(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-  string.format("handle_temperature: %s", cmd.args.level))
-
-  if cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel2.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 1))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel3.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 2))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel4.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 3))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel5.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 4))
-  else
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
-  end
-end
-
-local matter_driver_template = {
+local matter_refrigerator_handler = {
+  NAME = "matter-refrigerator",
   lifecycle_handlers = {
     init = device_init,
     added = device_added,
@@ -160,9 +124,6 @@ local matter_driver_template = {
       },
       [clusters.RefrigeratorAlarm.ID] = {
         [clusters.RefrigeratorAlarm.attributes.State.ID] = refrigerator_alarm_attr_handler
-      },
-      [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = temperatureControl_attr_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
@@ -176,10 +137,6 @@ local matter_driver_template = {
     [capabilities.contactSensor.ID] = {
       clusters.RefrigeratorAlarm.attributes.State
     },
-    [temperatureLevelId] = {
-      clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
-      clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
-    },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
@@ -188,12 +145,8 @@ local matter_driver_template = {
     [refrigeratorAndTccModeId] = {
       [refrigeratorAndTccMode.commands.setRefrigeratorAndTccMode.NAME] = handle_refrigerator_tcc_mode,
     },
-    [temperatureLevelId] = {
-      [temperatureLevel.commands.setTemperature.NAME] = handle_temperature,
-    },
   },
+  can_handle = is_matter_refrigerator,
 }
 
-local matter_driver = MatterDriver("matter-refrigerator", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
-matter_driver:run()
+return matter_refrigerator_handler

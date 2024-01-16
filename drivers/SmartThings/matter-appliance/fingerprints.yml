@@ -1,4 +1,9 @@
 matterManufacturer:
+  - id: "virtual/matter/refrigerator"
+    deviceLabel: Matter Refrigerator
+    vendorId: 0x10e1
+    productId: 0x1021
+    deviceProfileName: refrigerator
   - id: "virtual/matter/laundry-washer"
     deviceLabel: Matter Laundry Washer
     vendorId: 0x10e1
@@ -11,6 +16,12 @@ matterManufacturer:
     deviceProfileName: dishwasher
 
 matterGeneric:
+  - id: "matter/refrigerator"
+    deviceLabel: Matter Refrigerator
+    deviceTypes:
+      - id: 0x0070
+      - id: 0x0071
+    deviceProfileName: refrigerator-freezer
   - id: "matter/laundry-washer"
     deviceLabel: Matter Laundry Washer
     deviceTypes:

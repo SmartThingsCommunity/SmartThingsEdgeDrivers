@@ -67,6 +67,7 @@ local function handle_dishwasher_mode(driver, device, cmd)
 end
 
 local matter_dishwasher_handler = {
+  NAME = "matter-dishwasher",
   lifecycle_handlers = {
     init = device_init,
   },
