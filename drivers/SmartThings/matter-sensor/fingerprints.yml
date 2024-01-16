@@ -38,7 +38,7 @@ matterManufacturer:
     deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
     productId: 0x1031
-    deviceProfileName: "contact-battery"
+    deviceProfileName: contact-battery
 
 matterGeneric:
   - id: "matter/contact/sensor"
