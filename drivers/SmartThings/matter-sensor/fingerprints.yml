@@ -35,7 +35,7 @@ matterManufacturer:
     deviceProfileName: motion-contact-battery
 # HEIMAN
   - id: "4619/4145"
-    deviceLabel: "Heiman Door and Window D1-M"
+    deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
     productId: 0x1031
     deviceProfileName: "contact-battery"
