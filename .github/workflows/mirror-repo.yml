@@ -1,10 +1,11 @@
 name: Mirror repo
 
-on: push
-  branches:
-    - main
-    - beta
-    - production
+on:
+  push:
+    branches:
+      - main
+      - beta
+      - production
 
 jobs:
   to_ecode:
