@@ -11,20 +11,19 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
-local st_device = require "st.device"
+local stDevice = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local FanControl = clusters.FanControl
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 
-local IFL_FINGERPRINTS = {
+local FINGERPRINTS = {
   { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-003" },
 }
 
-local is_ifl = function(opts, driver, device)
-  for _, fingerprint in ipairs(IFL_FINGERPRINTS) do
+local function can_handle_itm_fanlight(opts, driver, device, ...)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       return true
     end
@@ -32,33 +31,60 @@ local is_ifl = function(opts, driver, device)
   return false
 end
 
--- Create child device
+local levels_for_speed = {
+  [0] = 0,
+  [1] = 25,
+  [2] = 50,
+  [3] = 100,
+}
 
-local function add_child(driver,parent,profile,child_type)
-    local child_metadata = {
-        type = "EDGE_CHILD",
-        label = string.format("%s %s", parent.label, child_type),
-        profile = profile,
-        parent_device_id = parent.id,
-        parent_assigned_child_key = child_type,
-        vendor_provided_label = string.format("%s %s", parent.label, child_type)
-    }
-    driver:try_create_device(child_metadata)
+local function level_to_speed(level)
+  local speed = 0
+  if level == 0 then
+    speed  = 0
+  elseif level  > 0 and level <= 25 then
+    speed = 1
+  elseif level > 25 and level <= 75 then
+    speed = 2
+  else
+    speed = 3
+  end
+  return speed
 end
 
-local function info_changed(driver, device, event, args)
-  if (device.preferences or {}).childLight2 then
-    if not device:get_child_by_parent_assigned_key('light') then
-        add_child(driver,device,'switch-level','light')
-    end
+-- CREATE CHILD DEVICE
+
+local function create_child_devices(driver, device, profile, child_type)
+  local metadata = {
+    type = "EDGE_CHILD",
+    parent_assigned_child_key = child_type,
+    label = string.format("%s %s", device.label, child_type),
+    profile = profile,
+    parent_device_id = device.id,
+    vendor_provided_label = string.format("%s %s", device.label, child_type)
+  }
+  driver:try_create_device(metadata)
+  device:refresh()
+end
+
+local function device_added(driver, device)
+  if device.network_type ~= stDevice.NETWORK_TYPE_CHILD then
+    create_child_devices(driver, device, 'switch-level', 'light')
   end
+end
+
+local function device_init(driver, device)
+  -- device:set_find_child(find_child)
+  local dev = device:get_parent_device()
+  dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
+  device:refresh()
 end
 
 -- CAPABILITY HANDLERS
 
 local function on_handler(driver, device, command)
   local dev = device
-  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+  if device.network_type == stDevice.NETWORK_TYPE_CHILD then
     command.component = 'light'
     dev = device:get_parent_device()
   end
@@ -69,11 +95,12 @@ local function on_handler(driver, device, command)
     dev:send(FanControl.attributes.FanMode:write(dev,speed))
     dev:send(FanControl.attributes.FanMode:read(dev,speed))
   end
+  dev:send(FanControl.attributes.FanMode:read(dev,speed))
 end
 
 local function off_handler(driver, device, command)
   local dev = device
-  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+  if device.network_type == stDevice.NETWORK_TYPE_CHILD then
     command.component = 'light'
     dev = device:get_parent_device()
   end
@@ -87,13 +114,17 @@ end
 
 local function switch_level_handler(driver, device, command)
   local dev = device
-  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+  if device.network_type == stDevice.NETWORK_TYPE_CHILD then
     command.component = 'light'
     dev = device:get_parent_device()
   end
   if command.component == 'light' then
     local level = math.floor(command.args.level/100.0 * 254)
     dev:send(Level.server.commands.MoveToLevelWithOnOff(dev, level, command.args.rate or 0xFFFF))
+  else
+    local speed = level_to_speed(command.args.level)
+    dev:send(FanControl.attributes.FanMode:write(dev,speed))
+    dev:send(FanControl.attributes.FanMode:read(dev,speed))
   end
 end
 
@@ -108,6 +139,7 @@ local function zb_fan_control_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.fanSpeed.fanSpeed(value.value))
   local evt = capabilities.switch.switch(value.value > 0 and 'on' or 'off', { visibility = { displayed = false } })
   device:emit_component_event(device.profile.components.main,evt)
+  device:emit_component_event(device.profile.components.main,capabilities.switchLevel.level(levels_for_speed[value.value], { visibility = { displayed = false } }))
   if value.value > 0 then
     device:set_field('LAST_FAN_SPD', value.value, {persist = true})
   end
@@ -160,9 +192,10 @@ local itm_fan_light = {
     }
   },
   lifecycle_handlers = {
-    infoChanged = info_changed,
+    added = device_added,
+    init = device_init
   },
-  can_handle = is_ifl
+  can_handle = can_handle_itm_fanlight
 }
 
 return itm_fan_light
