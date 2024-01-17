@@ -43,7 +43,8 @@ local FIBARO_DOUBLE_SWITCH_FINGERPRINTS = {
 local function can_handle_fibaro_double_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(FIBARO_DOUBLE_SWITCH_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("fibaro-double-switch")
+      return true, subdriver
     end
   end
   return false
