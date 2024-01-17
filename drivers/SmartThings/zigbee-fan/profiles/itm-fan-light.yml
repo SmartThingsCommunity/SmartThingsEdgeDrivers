@@ -5,6 +5,8 @@ components:
     capabilities:
       - id: switch
         version: 1
+      - id: switchLevel
+        version: 1
       - id: fanSpeed
         version: 1
       - id: firmwareUpdate
@@ -24,11 +26,6 @@ components:
         version: 1
     categories:
       - name: Light
-preferences:
-  - title: "Child Device"
-    name: childLight2
-    description: "Create Child Device : Light"
-    required: true
-    preferenceType: boolean
-    definition:
-      default: false
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-fan-3-speed
