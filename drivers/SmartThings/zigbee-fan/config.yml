@@ -1,7 +1,7 @@
 name: 'Zigbee Fan'
 packageKey: 'zigbee-fan'
-description: 'SmartThings driver for zigbee fan devices'
-vendorSupportInformation:"https://support.smartthings.com"
 permissions:
   zigbee: {}
-fdfd
+description: "SmartThings driver for zigbee fan devices"
+vendorSupportInformation: "https://support.smartthings.com"
+
