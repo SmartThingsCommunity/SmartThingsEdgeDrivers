@@ -1,7 +1,7 @@
 zigbeeManufacturer:
-  # FANS
+  # FAN LIGHT
   - id: "Samsung/SAMSUNG-ITM-Z-003"
-    deviceLabel: ITM Fan Light
+    deviceLabel: Fan
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-003
     deviceProfileName: itm-fan-light
