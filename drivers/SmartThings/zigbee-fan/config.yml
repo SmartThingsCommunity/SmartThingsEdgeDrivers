@@ -4,3 +4,4 @@ description: 'SmartThings driver for zigbee fan devices'
 vendorSupportInformation:"https://support.smartthings.com"
 permissions:
   zigbee: {}
+fdfd
