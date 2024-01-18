@@ -16,8 +16,6 @@ components:
     version: 1
   - id: mediaTrackControl
     version: 1
-  - id: mediaInputSource
-    version: 1
   - id: audioNotification 
     version: 1
   - id: refresh
