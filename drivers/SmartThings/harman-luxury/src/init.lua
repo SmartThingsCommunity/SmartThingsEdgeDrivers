@@ -219,6 +219,12 @@ end
 local function device_init(driver, device)
   log.info(string.format("Initiating device: %s", device.label))
 
+  local device_dni = device.device_network_id
+  if driver.datastore.discovery_cache[device_dni] then
+    log.warn("set unsaved device field")
+    discovery.set_device_field(driver, device)
+  end
+
   -- set supported default media playback commands
   device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
                       {capabilities.mediaPlayback.commands.play.NAME, capabilities.mediaPlayback.commands.pause.NAME,
@@ -301,7 +307,9 @@ end
 
 local function device_added(driver, device)
   log.info(string.format("Device added: %s", device.label))
-  discovery.set_device_field(device)
+  discovery.set_device_field(driver, device)
+  local device_dni = device.device_network_id
+  discovery.joined_device[device_dni] = nil
   -- ensuring device is initialised
   device_init(driver, device)
 end
@@ -397,6 +405,14 @@ end, const.HEALTH_TIMER)
 ----------------------------------------------------------
 -- main
 ----------------------------------------------------------
+
+-- initialise data store for Harman Luxury driver
+
+if driver.datastore.discovery_cache == nil then
+  driver.datastore.discovery_cache = {}
+end
+
+-- start driver run loop
 
 log.info("Starting Harman Luxury run loop")
 driver:run()
