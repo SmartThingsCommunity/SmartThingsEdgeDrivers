@@ -121,7 +121,8 @@ local function check_for_updates(device)
   log.trace(string.format("%s, checking if device values changed", device.device_network_id))
   local ip = device:get_field(const.IP)
   local changes, _ = api.InvokeGetUpdates(ip)
-  if changes then
+  -- check if changes is empty
+  if next(changes) ~= nil then
     log.debug(string.format("changes: %s", st_utils.stringify_table(changes)))
     if type(changes) ~= "table" then
       log.warn("check_for_updates: Received value was not a table (JSON). Likely an error occured")

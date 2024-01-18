@@ -303,7 +303,7 @@ end
 
 --- invoke smartthings:updateValues on ip
 ---@param ip string
----@return boolean|number|string|table|nil, nil|string
+---@return table|nil, nil|string
 function APIs.InvokeGetUpdates(ip)
   return invoke.Activate(ip, SMARTTHINGS_PATH .. "updateValues")
 end
