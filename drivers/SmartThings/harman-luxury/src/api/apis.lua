@@ -53,7 +53,7 @@ end
 --- get device manufacturer name from Harman Luxury on ip
 ---@param ip string
 ---@return string|nil, nil|string
-function APIs.GetManufaturerName(ip)
+function APIs.GetManufacturerName(ip)
   return get.String(ip, MANUFACTURER_NAME_PATH)
 end
 
