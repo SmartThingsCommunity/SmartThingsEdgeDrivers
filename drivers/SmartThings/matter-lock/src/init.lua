@@ -507,8 +507,12 @@ local function device_added(driver, device)
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
-    device.log.debug("Device does not support lockCodes")
-    device:try_update_metadata({profile = "lock-without-codes"})
+    if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
+      device.log.debug("Device does not support lockCodes. Switching profile.")
+      device:try_update_metadata({profile = "lock-without-codes"})
+    else
+      device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
+    end
   else
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
