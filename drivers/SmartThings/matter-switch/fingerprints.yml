@@ -1884,13 +1884,6 @@ matterManufacturer:
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
 
-#Aqara
-  - id: "Aqara LED Light Bulb T1"
-    deviceLabel: Aqara LED Light Bulb T1
-    vendorId: 0x115F
-    productLabel: Aqara LED Light Bulb T1
-    deviceProfileName: light-level-colorTemperature-2710k-6500k
-
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them
