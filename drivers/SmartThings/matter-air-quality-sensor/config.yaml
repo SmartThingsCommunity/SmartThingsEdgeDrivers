@@ -1,4 +1,4 @@
-name: 'Test Matter Air Quality Sensor'
-packageKey: 'test-matter-air-quality-sensor'
+name: 'Matter Air Quality Sensor'
+packageKey: 'matter-air-quality-sensor'
 permissions:
   matter: {}

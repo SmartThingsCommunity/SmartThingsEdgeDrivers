@@ -19,15 +19,8 @@ local utils = require "st.utils"
 
 local log = require "log"
 
-local airQualityID = "spacewonder52282.airQuality"
-local nitrogenDioxideMeasurementID = "spacewonder52282.nitrogenDioxideMeasurement"
-local ozoneMeasurementID = "spacewonder52282.ozoneMeasurement"
-local airQuality = capabilities[airQualityID]
-local nitrogenDioxideMeasurement = capabilities[nitrogenDioxideMeasurementID]
-local ozoneMeasurement = capabilities[ozoneMeasurementID]
-
 local subscribed_attributes = {
-  [airQualityID] = {
+  [capabilities.airQualityHealthConcern.ID] = {
     clusters.AirQuality.attributes.AirQuality
   },
   [capabilities.temperatureMeasurement.ID] = {
@@ -44,11 +37,11 @@ local subscribed_attributes = {
     clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
     clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
   },
-  [nitrogenDioxideMeasurementID] = {
+  [capabilities.nitrogenDioxideMeasurement.ID] = {
     clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
     clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
   },
-  [ozoneMeasurementID] = {
+  [capabilities.ozoneMeasurement.ID] = {
     clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
     clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
   },
@@ -166,7 +159,17 @@ local conversion_tables = {
 }
 
 local function unit_conversion(value, from_unit, to_unit)
+  log.info_with( {hub_logs = true} , "CHT: Calling unit conversion function")
   local conversion_function = conversion_tables[from_unit][to_unit]
+  if conversion_function == nil then
+    log.info_with( {hub_logs = true} , "CHT unit conversion was nil")
+    return 1
+  end
+
+  if value == nil then
+    log.info_with( {hub_logs = true} , "CHT: value was nil")
+    return 1
+  end
   return conversion_function(value)
 end
 
@@ -184,24 +187,28 @@ end
 local function air_quality_attr_handler(driver, device, ib, response)
   local state = ib.data.value
   if state == 0 then -- Unknown
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.unknown())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.unknown())
   elseif state == 1 then -- Good
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.good())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.good())
   elseif state == 2 then -- Fair
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.fair())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.moderate())
   elseif state == 3 then -- Moderate
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.moderate())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.slightlyUnhealthy())
   elseif state == 4 then -- Poor
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.poor())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.unhealthy())
   elseif state == 5 then -- VeryPoor
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.veryPoor())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.veryUnhealthy())
   elseif state == 6 then -- ExtremelyPoor
-    device:emit_event_for_endpoint(ib.endpoint_id, airQuality.airQuality.extremelvPoor())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airQualityHealthConcern.airQualityHealthConcern.hazardous())
   end
 end
 
 local function temp_event_handler(driver, device, ib, response)
-  local temp = ib.data.value / 100.0
+  local value = ib.data.value
+  if( ib.data.value == nil) then
+    value = 25
+  end
+  local temp = value / 100.0
   local unit = "C"
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
 end
@@ -237,12 +244,12 @@ local matter_driver_template = {
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonDioxideMeasurement.NAME)
       },
       [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
-        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(nitrogenDioxideMeasurementID, nitrogenDioxideMeasurement.nitrogenDioxideLevel, units.PPM),
-        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(nitrogenDioxideMeasurementID)
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.nitrogenDioxideMeasurement.NAME, capabilities.nitrogenDioxideMeasurement.nitrogenDioxide, units.PPM),
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.nitrogenDioxideMeasurement.NAME)
       },
       [clusters.OzoneConcentrationMeasurement.ID] = {
-        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(ozoneMeasurementID, ozoneMeasurement.ozoneLevel, units.PPM),
-        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(ozoneMeasurementID)
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.ozoneMeasurement.NAME, capabilities.ozoneMeasurement.ozone, units.PPM),
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.ozoneMeasurement.NAME)
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {
         [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, units.PPM),

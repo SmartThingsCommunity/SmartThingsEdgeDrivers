@@ -1,0 +1,21 @@
+matterManufacturer:
+  - id: "matter/samsung-air-purifier"
+    deviceLabel: Samsung Matter Air Purifier
+    vendorId: 0xFFF1
+    productId: 0x8001
+    deviceProfileName: air-purifier
+
+matterGeneric:
+  - id: "matter/air-purifier"
+    deviceLabel: Matter Air Purifier
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+    deviceProfileName: air-purifier
+  - id: "Matter/SVE/AirPurifier"
+    deviceLabel: Matter SVE Air Purifier
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: sve-air-purifier
