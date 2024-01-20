@@ -15,11 +15,9 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local utils = require "st.utils"
 
 local log = require "log"
-
-local deviceMutedId = "spacewonder52282.deviceMuted"
-local deviceMuted = capabilities[deviceMutedId]
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 
@@ -83,7 +81,7 @@ local function temp_event_handler(driver, device, ib, response)
 end
 
 local function humidity_attr_handler(driver, device, ib, response)
-  local humidity = math.floor(ib.data.value / 100.0)
+  local humidity = utils.round(ib.data.value / 100.0)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
 end
 
@@ -104,16 +102,19 @@ local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
   device:set_field(CARBON_MONOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
 end
 
-local function battery_percent_remaining_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
+local function battery_alert_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
   end
 end
 
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
     infoChanged = info_changed
   },
   matter_handlers = {
@@ -121,11 +122,9 @@ local matter_driver_template = {
       [clusters.SmokeCoAlarm.ID] = {
         [clusters.SmokeCoAlarm.attributes.SmokeState.ID] = binary_state_handler_factory(capabilities.smokeDetector.smoke.clear(), capabilities.smokeDetector.smoke.detected()),
         [clusters.SmokeCoAlarm.attributes.COState.ID] = binary_state_handler_factory(capabilities.carbonMonoxideDetector.carbonMonoxide.clear(), capabilities.carbonMonoxideDetector.carbonMonoxide.detected()),
-        [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = binary_state_handler_factory(nil, capabilities.battery.battery(0)),
-        [clusters.SmokeCoAlarm.attributes.DeviceMuted.ID] = binary_state_handler_factory(deviceMuted.deviceMuted.notMuted(), deviceMuted.deviceMuted.muted()),
+        [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = battery_alert_attr_handler,
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
-        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.tamperAlert.tamper.detected(), capabilities.tamperAlert.tamper.clear()),
-        [clusters.SmokeCoAlarm.attributes.EndOfServiceAlert.ID] = binary_state_handler_factory(capabilities.filterStatus.filterStatus.normal(), capabilities.filterStatus.filterStatus.replace()),
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.hardwareFault.hardwareFault.detected(), capabilities.hardwareFault.hardwareFault.clear()),
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
@@ -136,14 +135,8 @@ local matter_driver_template = {
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
-      },
-      [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
       }
     },
-    event = {
-      -- add the events (0x00-0x0A)
-    }
   },
   subscribed_attributes = {
     [capabilities.smokeDetector.ID] = {
@@ -154,13 +147,7 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.COState,
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
-    [deviceMutedId] = {
-      clusters.SmokeCoAlarm.attributes.DeviceMuted
-    },
-    [capabilities.filterStatus.ID] = {
-      clusters.SmokeCoAlarm.attributes.EndOfServiceAlert
-    },
-    [capabilities.tamperAlert.ID] = {
+    [capabilities.hardwareFault.ID] = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
     },
     [capabilities.temperatureMeasurement.ID] = {
@@ -173,13 +160,9 @@ local matter_driver_template = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
-    [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining,
+    [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
-  },
-  capability_handlers = {
-    -- mute/unmute needs a handler
   },
 }
 

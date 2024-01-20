@@ -212,7 +212,7 @@ test.register_message_test(
       direction = "receive",
       message = {
           mock_device.id,
-          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 10, clusters.MediaPlayback.attributes.CurrentState.PLAYING )
+          clusters.MediaPlayback.attributes.CurrentState:build_test_report_data(mock_device, 10, clusters.MediaPlayback.types.PlaybackStateEnum.PLAYING )
       }
     },
     {

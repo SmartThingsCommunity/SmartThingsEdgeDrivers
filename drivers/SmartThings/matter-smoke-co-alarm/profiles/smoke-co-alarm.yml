@@ -12,15 +12,11 @@ components:
     version: 1
   - id: carbonMonoxideMeasurement
     version: 1
-  - id: spacewonder52282.deviceMuted
+  - id: hardwareFault
     version: 1
-  - id: filterStatus
-    version: 1
-  - id: tamperAlert
+  - id: batteryLevel
     version: 1
   - id: refresh
-    version: 1
-  - id: battery
     version: 1
   categories:
   - name: SmokeDetector
