@@ -51,6 +51,10 @@ local function unlock_cmd_handler(driver, device, command)
           "\x10\x04\x31\x32\x33\x35"))
 end
 
+local function lock_cmd_handler(driver, device, command)
+  --do nothing in lock command handler
+end
+
 local refresh = function(driver, device, cmd)
   -- do nothing in refresh capability handler
 end
@@ -95,7 +99,8 @@ local samsung_sds_driver = {
       [capabilities.refresh.commands.refresh.NAME] = refresh
     },
     [capabilities.lock.ID] = {
-      [capabilities.lock.commands.unlock.NAME] = unlock_cmd_handler
+      [capabilities.lock.commands.unlock.NAME] = unlock_cmd_handler,
+      [capabilities.lock.commands.lock.NAME] = lock_cmd_handler
     }
   },
   lifecycle_handlers = {
