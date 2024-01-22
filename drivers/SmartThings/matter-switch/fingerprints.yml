@@ -59,10 +59,10 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
-  - id: "4442/1809"
+  - id: "Nanoleaf NL71K1"
     deviceLabel: Smart Holiday String Lights
     vendorId: 0x115A
-    productId: 0x771
+    productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
