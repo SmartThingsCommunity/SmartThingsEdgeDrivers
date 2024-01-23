@@ -33,32 +33,32 @@ matterManufacturer:
     productId: 0xAC
     deviceProfileName: plug-binary
 #Lifx
-  - id: 5155/169
+  - id: "5155/169"
     deviceLabel: LIFX Color (A21)
     vendorId: 0x1423
     productId: 0x00A9
     deviceProfileName: light-color-level
-  - id: 5155/171
+  - id: "5155/171"
     deviceLabel: LIFX Spot
     vendorId: 0x1423
     productId: 0x00AB
     deviceProfileName: light-color-level
-  - id: 5155/173
+  - id: "5155/173"
     deviceLabel: LIFX Path (Round)
     vendorId: 0x1423
     productId: 0x00AD
     deviceProfileName: light-color-level
-  - id: 5155/174
+  - id: "5155/174"
     deviceLabel: LIFX Path (Square)
     vendorId: 0x1423
     productId: 0x00AE
     deviceProfileName: light-color-level
-  - id: 5155/175
+  - id: "5155/175"
     deviceLabel: LIFX Color (PAR38)
     vendorId: 0x1423
     productId: 0x00AF
     deviceProfileName: light-color-level
-  - id: 5155/176
+  - id: "5155/176"
     deviceLabel: LIFX Ceiling
     vendorId: 0x1423
     productId: 0x00B0
