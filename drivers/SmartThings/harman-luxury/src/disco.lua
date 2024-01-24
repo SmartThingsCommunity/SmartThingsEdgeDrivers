@@ -84,8 +84,10 @@ local function discovery_device(driver)
     log.info(string.format("discovery_device dni=%s, ip=%s", dni, params.ip))
     if not known_devices or not known_devices[dni] then
       unknown_discovered_devices[dni] = params
+      log.info(string.format("discovery_device unknown dni=%s, ip=%s", dni, params.ip))
     else
       known_discovered_devices[dni] = params
+      log.info(string.format("discovery_device known dni=%s, ip=%s", dni, params.ip))
     end
   end
 
