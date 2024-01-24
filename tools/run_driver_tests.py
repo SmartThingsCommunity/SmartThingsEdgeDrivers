@@ -73,7 +73,14 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
             if m is not None:
                 test_title = line
                 in_progress_test_name = m.group(1)
-                test_case = junit_xml.TestCase(in_progress_test_name)
+                test_name_regex = re.compile(in_progress_test_name)
+                line_number = None
+                with open(test_file, 'r') as search_file:
+                    for idx, line in enumerate(search_file, 1):
+                        if test_name_regex.search(line) :
+                            line_number = idx
+                            break
+                test_case = junit_xml.TestCase(in_progress_test_name, line=line_number)
                 test_count += 1
             elif re.search("PASSED", line) is not None:
                 test_done = True
@@ -84,7 +91,8 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
             elif re.search("FAILED", line) is not None:
                 test_done = True
                 test_status = line
-                failure_files[test_file].append(in_progress_test_name)
+                failure_string = f"{in_progress_test_name} [line {test_case.line}]"
+                failure_files[test_file].append(failure_string)
                 if "traceback" in test_case.stdout:
                     test_case.add_error_info(line, test_case.stdout)
                 else:

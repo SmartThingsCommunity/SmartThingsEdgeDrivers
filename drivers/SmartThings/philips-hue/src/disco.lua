@@ -83,6 +83,31 @@ function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callbac
   end
 end
 
+function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
+  if driver.ignored_bridges[bridge_id] then return end
+
+  local known_identifier_to_device_map = {}
+  for _, device in ipairs(driver:get_devices()) do
+    -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
+    local dni = device.parent_assigned_child_key or device.device_network_id
+    known_identifier_to_device_map[dni] = device
+  end
+
+  local known_bridge_device = known_identifier_to_device_map[bridge_id]
+  if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
+    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
+  end
+
+  HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
+    function(hue_driver, svc_info, device_info)
+      discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
+    end,
+    "[Discovery: " ..
+    (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge re-scan]",
+    true
+  )
+end
+
 ---@param driver HueDriver
 ---@param bridge_ip string
 ---@param bridge_id string
@@ -109,7 +134,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
           utils.labeled_socket_builder((known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge"))
         )
 
-    HueDiscovery.search_bridge_for_supported_devices(driver, HueDiscovery.disco_api_instances[bridge_id],
+    HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
         discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
       end,
@@ -182,9 +207,10 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
 end
 
 ---@param driver HueDriver
+---@param bridge_id string
 ---@param api_instance PhilipsHueApi
 ---@param callback fun(driver: HueDriver, svc_info: table, device_data: table)
-function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, callback, log_prefix)
+function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api_instance, callback, log_prefix, do_delete)
   local prefix = ""
   if type(log_prefix) == "string" and #log_prefix > 0 then prefix = log_prefix .. " " end
 
@@ -203,9 +229,11 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, 
     return
   end
 
+  local device_is_joined_to_bridge = {}
   for _, device_data in ipairs(devices.data or {}) do
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
+        device_is_joined_to_bridge[device_data.id] = true
         log.info_with({ hub_logs = true }, string.format(
           prefix ..
           "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
@@ -219,6 +247,19 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, api_instance, 
             .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
           )
         end
+      end
+    end
+  end
+
+  if do_delete then
+    for _, device in ipairs(driver:get_devices()) do ---@cast device HueDevice
+      local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID) or ""]
+      local parent_device_id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID) or ""
+      local parent_bridge_device = driver:get_device_info(parent_device_id)
+      local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_id)
+      if is_child_of_bridge and not not_known_to_bridge then
+        device.log.info(string.format("Device is no longer joined to Hue Bridge %q, deleting", parent_bridge_device.label))
+        driver:do_hue_light_delete(device)
       end
     end
   end

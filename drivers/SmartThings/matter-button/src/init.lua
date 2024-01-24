@@ -9,7 +9,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_PROFILE_SUPPORTED = {2, 4, 8}
+local STATIC_PROFILE_SUPPORTED = {2, 4, 6, 8}
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
