@@ -28,11 +28,15 @@ local function try_add_device(driver, device_dni, device_params)
 
   if err then
     log.error(string.format("failed to get credential token for dni=%s, ip=%s", device_dni, device_params.ip))
-    return
+    return false
   end
 
   update_device_discovery_cache(driver, device_dni, device_params, token)
-  driver:try_create_device(driver.datastore.discovery_cache[device_dni].device_info)
+  if driver:try_create_device(driver.datastore.discovery_cache[device_dni].device_info) == 1 then
+    return true
+  else
+    return false
+  end
 end
 
 function Discovery.set_device_field(driver, device)
@@ -81,8 +85,7 @@ local function discovery_device(driver)
 
   log.debug("\n\n--- Checking if devices are known or not ---\n")
   for dni, params in pairs(params_table) do
-    log.info(string.format("discovery_device dni=%s, ip=%s", dni, params.ip))
-    if not known_devices or not known_devices[dni] then
+    if next(known_devices) == nil or not known_devices[dni] then
       unknown_discovered_devices[dni] = params
       log.info(string.format("discovery_device unknown dni=%s, ip=%s", dni, params.ip))
     else
@@ -105,8 +108,9 @@ local function discovery_device(driver)
     for dni, ip in pairs(unknown_discovered_devices) do
       log.trace(string.format("unknown dni=%s, ip=%s", dni, ip))
       if not Discovery.joined_device[dni] then
-        try_add_device(driver, dni, params_table[dni])
-        Discovery.joined_device[dni] = true
+        if try_add_device(driver, dni, params_table[dni]) then
+          Discovery.joined_device[dni] = true
+        end
       end
     end
   end
