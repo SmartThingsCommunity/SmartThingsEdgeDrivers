@@ -31,6 +31,19 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
+local FINGERPRINTS = {
+  { mfr = 0x0086, prod = 0x0103, model = 0x004E }, -- US
+  { mfr = 0x0086, prod = 0x0203, model = 0x004E }, -- AU
+  { mfr = 0x0086, prod = 0x0003, model = 0x004E }  -- EU
+}
+
+local function can_handle(opts, driver, device, ...)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then return true end
+  end
+  return false
+end
+
 local function emit_power_consumption_report_event(device, value, channel)
   -- powerConsumptionReport report interval
   local current_time = os.time()
@@ -91,8 +104,11 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value =
-      new_parameter_value }))
+      device:send(Configuration:Set({
+        parameter_number = preferences[id].parameter_number,
+        size = preferences[id].size,
+        configuration_value = new_parameter_value
+      }))
     end
   end
 end
@@ -112,9 +128,8 @@ local driver_template = {
   NAME = "Aeotec Heavy Duty",
   lifecycle_handlers = {
     infoChanged = info_changed
-  }
+  },
+  can_handle = can_handle
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
-local ge_switch = ZwaveDriver("aeotec-heavy-duty", driver_template)
-ge_switch:run()
+return driver_template;
