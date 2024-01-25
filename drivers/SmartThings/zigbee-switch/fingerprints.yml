@@ -35,6 +35,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.plug.maeu01
     deviceProfileName: switch-power-energy-consumption-report-aqara
+  - id: "LUMI/lumi.plug.macn01"
+    deviceLabel: Aqara Smart Plug T1
+    manufacturer: LUMI
+    model: lumi.plug.macn01
+    deviceProfileName: switch-power-energy-consumption-report-aqara-t1
   - id: "LUMI/lumi.switch.b1laus01"
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
@@ -64,6 +69,11 @@ zigbeeManufacturer:
     deviceLabel: Aqara Single Switch Module T1 (With Neutral)
     manufacturer: LUMI
     model: lumi.switch.n0agl1
+    deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.switch.n0acn2"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0acn2
     deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.light.acn004"
     deviceLabel: Aqara Smart Dimmer Controller T1 Pro
