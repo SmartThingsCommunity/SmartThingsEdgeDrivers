@@ -168,6 +168,10 @@ local matter_driver_template = {
       clusters.LaundryWasherControls.attributes.NumberOfRinses,
       clusters.LaundryWasherControls.attributes.SupportedRinses,
     },
+    [capabilities.washerOperatingState.ID] = {
+      clusters.OperationalState.attributes.OperationalState,
+      clusters.OperationalState.attributes.OperationalError,
+    },
     [refrigeratorAndTccModeId] = {
       clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
       clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
