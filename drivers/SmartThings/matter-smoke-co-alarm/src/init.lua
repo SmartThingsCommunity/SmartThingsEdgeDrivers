@@ -102,12 +102,6 @@ local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
   device:set_field(CARBON_MONOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
 end
 
-local function battery_percent_remaining_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
-  end
-end
-
 local function battery_alert_attr_handler(driver, device, ib, response)
   if ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL then
     device:emit_event(capabilities.batteryLevel.battery.normal())
