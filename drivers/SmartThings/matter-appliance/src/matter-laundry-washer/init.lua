@@ -21,8 +21,7 @@ local utils = require "st.utils"
 
 local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
-local laundryWasherModeId = "spacewonder52282.laundryWasherMode"
-local laundryWasherMode = capabilities[laundryWasherModeId]
+local laundryWasherModeSupportedModes = {}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -40,39 +39,38 @@ local function is_matter_laundry_washer(opts, driver, device)
   return false
 end
 
+local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
+  laundryWasherModeSupportedModes = {}
+  for _, mode in ipairs(ib.data.elements) do
+    table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
+end
+
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("laundry_washer_mode_attr_handler currentMode: %s", ib.data.value))
+    string.format("laundry_washer_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.normal())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.heavy())
-  elseif current_mode==2 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.delicate())
-  elseif current_mode==3 then
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.whites())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, laundryWasherMode.laundryWasherMode.normal())
+  local currentMode = ib.data.value
+  for i, mode in ipairs(laundryWasherModeSupportedModes) do
+    if i - 1 == currentMode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      break
+    end
   end
 end
 
 -- Capability Handlers --
 local function handle_laundry_washer_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_laundry_washer_mode currentMode: %s", cmd.args.mode))
+    string.format("handle_laundry_washer_mode mode: %s", cmd.args.mode))
 
-  if cmd.args.mode==laundryWasherMode.laundryWasherMode.normal.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.heavy.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 1))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.delicate.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 2))
-  elseif cmd.args.mode==laundryWasherMode.laundryWasherMode.whites.NAME then
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 3))
-  else
-    device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, 1, 0))
+  local ENDPOINT = 1
+  for i, mode in ipairs(laundryWasherModeSupportedModes) do
+    if cmd.args.mode == mode then
+      device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+      return
+    end
   end
 end
 
@@ -84,13 +82,14 @@ local matter_laundry_washer_handler = {
   matter_handlers = {
     attr = {
       [clusters.LaundryWasherMode.ID] = {
+        [clusters.LaundryWasherMode.attributes.SupportedModes.ID] = laundry_washer_supported_modes_attr_handler,
         [clusters.LaundryWasherMode.attributes.CurrentMode.ID] = laundry_washer_mode_attr_handler,
       },
     }
   },
   capability_handlers = {
-    [laundryWasherModeId] = {
-      [laundryWasherMode.commands.setLaundryWasherMode.NAME] = handle_laundry_washer_mode,
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
     },
   },
   can_handle = is_matter_laundry_washer,

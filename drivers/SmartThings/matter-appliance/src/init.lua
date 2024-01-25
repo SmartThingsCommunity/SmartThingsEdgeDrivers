@@ -23,8 +23,6 @@ local temperatureLevelId = "spacewonder52282.temperatureLevel"
 local temperatureLevel = capabilities[temperatureLevelId]
 local operationalStateId = "spacewonder52282.operationalState1"
 local operationalState = capabilities[operationalStateId]
-local laundryWasherModeId = "spacewonder52282.laundryWasherMode"
-local laundryWasherMode = capabilities[laundryWasherModeId]
 local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
 local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
 
@@ -139,8 +137,6 @@ local matter_driver_template = {
     [capabilities.mode.ID] = {
       clusters.DishwasherMode.attributes.SupportedModes,
       clusters.DishwasherMode.attributes.CurrentMode,
-    },
-    [laundryWasherModeId] = {
       clusters.LaundryWasherMode.attributes.SupportedModes,
       clusters.LaundryWasherMode.attributes.CurrentMode,
     },
