@@ -1,0 +1,24 @@
+zigbeeManufacturer:
+  - id: "Interfree/XSSW4O" # -------------------- Interfree 4K
+    deviceLabel: Interfree 4 Gang
+    manufacturer: Interfree
+    model: XSSW4O
+    deviceProfileName: four-switch
+  - id: "Interfree/XSSW3O" # -------------------- Interfree 3K
+    deviceLabel: Interfree 3 Gang
+    manufacturer: Interfree
+    model: XSSW3O
+    deviceProfileName: three-switch
+  - id: "Interfree/XSSW2O" # -------------------- Interfree 2K
+    deviceLabel: Interfree 2 Gang
+    manufacturer: Interfree
+    model: XSSW2O
+    deviceProfileName: two-switch
+  - id: "Interfree/XSSW1O"
+    deviceLabel: Interfree 1 Gang
+    manufacturer: Interfree
+    model: XSSW1O
+    deviceProfileName: single-switch
+    
+
+    

@@ -1,0 +1,5 @@
+name: 'interfree-switch-driver'
+packageKey: 'interfree-switch-driver'
+description: 'interfree-switch-driver'
+permissions:
+  zigbee: {}
