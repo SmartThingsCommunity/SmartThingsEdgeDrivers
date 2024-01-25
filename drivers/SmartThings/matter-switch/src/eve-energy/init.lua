@@ -25,6 +25,7 @@ local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 
 local EVE_MANUFACTURER_ID = 0x130A
+local EVE_ENERGY_OUTLET_PID = 0x69
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
@@ -49,7 +50,8 @@ local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 local function is_eve_energy_products(opts, driver, device)
   -- this sub driver does not support child devices
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and
+     device.manufacturer_info.product_id ~= EVE_ENERGY_OUTLET_PID then
     return true
   end
 

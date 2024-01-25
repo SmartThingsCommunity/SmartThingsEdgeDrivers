@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: power-energy-powerConsumption
+  - id: "Eve/Energy/OutletUS"
+    deviceLabel: Eve Energy Outlet
+    vendorId: 0x130A
+    productId: 0x69
+    deviceProfileName: plug-binary
 
 #GE
   - id: "GELightingSavant/Bulb/A19"
