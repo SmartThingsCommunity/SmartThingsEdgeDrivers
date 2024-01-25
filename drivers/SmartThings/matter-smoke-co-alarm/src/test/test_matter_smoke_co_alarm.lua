@@ -81,7 +81,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.NORMAL)
+				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
 			}
 		},
 		{
@@ -94,7 +94,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.WARNING)
+				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
 			}
 		},
 		{
@@ -107,7 +107,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.CRITICAL)
+				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
 			}
 		},
 		{
@@ -126,7 +126,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.NORMAL)
+				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
 			}
 		},
 		{
@@ -139,7 +139,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.WARNING)
+				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
 			}
 		},
 		{
@@ -152,7 +152,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.base_type.CRITICAL)
+				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
 			}
 		},
 		{
@@ -171,7 +171,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.base_type.NORMAL)
+				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.NORMAL)
 			}
 		},
 		{
@@ -184,7 +184,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.base_type.WARNING)
+				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.WARNING)
 			}
 		},
 		{
@@ -197,7 +197,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.base_type.CRITICAL)
+				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.CRITICAL)
 			}
 		},
 		{
@@ -341,7 +341,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit:build_test_report_data(mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit.base_type.PPM)
+        clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit:build_test_report_data(mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit.PPM)
       }
     },
     {
@@ -362,7 +362,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit:build_test_report_data(mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit.base_type.PPB)
+        clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit:build_test_report_data(mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.server.attributes.MeasurementUnit.PPB)
       }
     },
     {

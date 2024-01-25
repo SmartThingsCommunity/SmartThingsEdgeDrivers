@@ -81,7 +81,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.LOW)
+				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
 			}
 		},
     {
@@ -97,7 +97,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.OFF)
+				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.OFF)
 			}
 		}
 	}
@@ -138,7 +138,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.LOW)
+				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
 			}
 		},
     {
@@ -154,7 +154,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.LOW)
+				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
 			}
 		},
     {
@@ -170,7 +170,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.AUTO)
+				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.AUTO)
 			}
 		}
 	}
@@ -258,7 +258,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.OFF)
+				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.OFF)
 			}
 		},
 		{
@@ -271,7 +271,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.LOW)
+				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
 			}
 		},
 		{
@@ -289,7 +289,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.base_type.HIGH)
+				clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.HIGH)
 			}
 		},
 		{
@@ -313,7 +313,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.base_type.OK)
+				clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK)
 			}
 		},
 		{
@@ -326,7 +326,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.base_type.CRITICAL)
+				clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL)
 			}
 		},
 		{
@@ -339,7 +339,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.base_type.OK)
+				clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.OK)
 			}
 		},
 		{
@@ -352,7 +352,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.base_type.CRITICAL)
+				clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.CRITICAL)
 			}
 		},
 		{
