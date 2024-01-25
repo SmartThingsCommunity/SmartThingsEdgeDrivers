@@ -6,9 +6,9 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
-  - id: thermostatMode
+  - id: relativeHumidityMeasurement
     version: 1
-  - id: spacewonder52282.airPurifierFanMode
+  - id: thermostatMode
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
@@ -16,7 +16,11 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
-  - id: relativeHumidityMeasurement
+  - id: airConditionerFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: windMode
     version: 1
   - id: refresh
     version: 1
