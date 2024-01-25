@@ -6,6 +6,10 @@ components:
     version: 1
   - id: mode
     version: 1
+  - id: laundryWasherSpinSpeed
+    version: 1
+  - id: laundryWasherRinseMode
+    version: 1
   - id: spacewonder52282.temperatureLevel
     version: 1
   - id: spacewonder52282.operationalState1
