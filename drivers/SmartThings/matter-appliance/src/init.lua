@@ -39,9 +39,16 @@ local function on_off_attr_handler(driver, device, ib, response)
   end
 end
 
-local function temperatureControl_attr_handler(driver, device, ib, response)
+local function temperature_setpoint_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("temperatureControl_attr_handler: %s", ib.data.value))
+    string.format("temperature_setpoint_attr_handler: %s", ib.data.value))
+
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = ib.data.value, unit = "C"}))
+end
+
+local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
   local current_mode=math.floor(ib.data.value)
   if current_mode==0 then
@@ -87,22 +94,31 @@ local function handle_switch_off(driver, device, cmd)
   device:send(req)
 end
 
-local function handle_temperature(driver, device, cmd)
+local function handle_temperature_setpoint(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_temperature: %s", cmd.args.level))
+    string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
-  if cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel2.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 1))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel3.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 2))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel4.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 3))
-  elseif cmd.args.level==temperatureLevel.temperatureLevel.temperatureLevel5.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 4))
+  local ENDPOINT = 1
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, cmd.args.setpoint, nil))
+end
+
+local function handle_temperature_level(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_temperature_level: %s", cmd.args.level))
+
+  local ENDPOINT = 1
+  if cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 0))
+  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel2.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 1))
+  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel3.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 2))
+  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel4.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 3))
+  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel5.NAME then
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 4))
   else
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, 1, nil, 0))
+    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 0))
   end
 end
 
@@ -116,7 +132,8 @@ local matter_driver_template = {
         [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
       },
       [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = temperatureControl_attr_handler,
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
       },
       [clusters.OperationalState.ID] = {
         [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
@@ -126,6 +143,9 @@ local matter_driver_template = {
   subscribed_attributes = {
     [capabilities.switch.ID] = {
       clusters.OnOff.attributes.OnOff
+    },
+    [capabilities.temperatureSetpoint.ID] = {
+      clusters.TemperatureControl.attributes.TemperatureSetpoint
     },
     [temperatureLevelId] = {
       clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
@@ -171,8 +191,11 @@ local matter_driver_template = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
       [capabilities.switch.commands.off.NAME] = handle_switch_off,
     },
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
+    },
     [temperatureLevelId] = {
-      [temperatureLevel.commands.setTemperature.NAME] = handle_temperature,
+      [temperatureLevel.commands.setTemperature.NAME] = handle_temperature_level,
     },
   },
   sub_drivers = {
