@@ -23,6 +23,10 @@ local temperatureLevelId = "spacewonder52282.temperatureLevel"
 local temperatureLevel = capabilities[temperatureLevelId]
 local operationalStateId = "spacewonder52282.operationalState1"
 local operationalState = capabilities[operationalStateId]
+local laundryWasherModeId = "spacewonder52282.laundryWasherMode"
+local laundryWasherMode = capabilities[laundryWasherModeId]
+local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
+local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
 
 local function device_init(driver, device)
   device:subscribe()
@@ -131,6 +135,24 @@ local matter_driver_template = {
     },
     [operationalStateId] = {
       clusters.OperationalState.attributes.OperationalState,
+    },
+    [capabilities.mode.ID] = {
+      clusters.DishwasherMode.attributes.SupportedModes,
+      clusters.DishwasherMode.attributes.CurrentMode,
+    },
+    [laundryWasherModeId] = {
+      clusters.LaundryWasherMode.attributes.SupportedModes,
+      clusters.LaundryWasherMode.attributes.CurrentMode,
+    },
+    [refrigeratorAndTccModeId] = {
+      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
+      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
+    },
+    [capabilities.contactSensor.ID] = {
+      clusters.RefrigeratorAlarm.attributes.State
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
   },
   capability_handlers = {

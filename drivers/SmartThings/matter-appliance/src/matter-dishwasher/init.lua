@@ -19,6 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local DISHWASHER_DEVICE_TYPE_ID = 0x0075
+
 local dishwasherModeSupportedModes = {}
 
 local function device_init(driver, device)
@@ -27,7 +29,14 @@ end
 
 -- Matter Handlers --
 local function is_matter_dishwasher(opts, driver, device)
-  return device:supports_capability_by_id(capabilities.mode.ID)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == DISHWASHER_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -77,12 +86,6 @@ local matter_dishwasher_handler = {
         [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
       },
     }
-  },
-  subscribed_attributes = {
-    [capabilities.mode.ID] = {
-      clusters.DishwasherMode.attributes.SupportedModes,
-      clusters.DishwasherMode.attributes.CurrentMode,
-    },
   },
   capability_handlers = {
     [capabilities.mode.ID] = {

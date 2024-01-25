@@ -19,6 +19,7 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component"
 
 local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
@@ -58,7 +59,14 @@ end
 
 -- Matter Handlers --
 local function is_matter_refrigerator(opts, driver, device)
-  return device:supports_capability_by_id(refrigeratorAndTccModeId)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == REFRIGERATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
@@ -129,17 +137,6 @@ local matter_refrigerator_handler = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
       },
     }
-  },
-  subscribed_attributes = {
-    [refrigeratorAndTccModeId] = {
-      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
-    },
-    [capabilities.contactSensor.ID] = {
-      clusters.RefrigeratorAlarm.attributes.State
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
-    },
   },
   capability_handlers = {
     [refrigeratorAndTccModeId] = {
