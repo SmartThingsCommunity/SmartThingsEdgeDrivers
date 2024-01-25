@@ -21,7 +21,16 @@ local utils = require "st.utils"
 
 local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
+local LAUNDRY_WASHER_RINSE_MODE_MAP = {
+  [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.NONE] = capabilities.laundryWasherRinseMode.rinseMode.none,
+  [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.NORMAL] = capabilities.laundryWasherRinseMode.rinseMode.normal,
+  [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.EXTRA] = capabilities.laundryWasherRinseMode.rinseMode.extra,
+  [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.MAX] = capabilities.laundryWasherRinseMode.rinseMode.max,
+}
+
 local laundryWasherModeSupportedModes = {}
+local laundryWasherControlsSpinSpeeds = {}
+local laundryWasherControlsSupportedRinses = {}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -60,6 +69,48 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
   end
 end
 
+local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
+  laundryWasherControlsSpinSpeeds = {}
+  for _, spin_speed in ipairs(ib.data.elements) do
+    table.insert(laundryWasherControlsSpinSpeeds, spin_speed)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
+end
+
+local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("laundry_washer_controls_spin_speed_current_attr_handler spinSpeedCurrent: %s", ib.data.value))
+
+  local spinSpeedCurrent = ib.data.value
+  for i, spin_speed in ipairs(laundryWasherControlsSpinSpeeds) do
+    if i - 1 == spinSpeedCurrent then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spin_speed))
+      break
+    end
+  end
+end
+
+local function laundry_washer_controls_number_of_rinses_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("laundry_washer_controls_number_of_rinses_attr_handler numberOfRinses: %s", ib.data.value))
+
+  local numberOfRinses = ib.data.value
+  for cluster_val, capability_val in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
+    if numberOfRinses == cluster_val then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.rinseMode(capability_val))
+      break
+    end
+  end
+end
+
+local function laundry_washer_controls_supported_rinses_attr_handler(driver, device, ib, response)
+  laundryWasherControlsSupportedRinses = {}
+  for _, numberOfRinses in ipairs(ib.data.elements) do
+    table.insert(laundryWasherControlsSupportedRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses]())
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(laundryWasherControlsSupportedRinses))
+end
+
 -- Capability Handlers --
 local function handle_laundry_washer_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -70,6 +121,32 @@ local function handle_laundry_washer_mode(driver, device, cmd)
     if cmd.args.mode == mode then
       device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
       return
+    end
+  end
+end
+
+local function handle_laundry_washer_spin_speed(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
+
+  local ENDPOINT = 1
+  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+    if cmd.args.spinSpeed == spinSpeed then
+      device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
+      return
+    end
+  end
+end
+
+local function handle_laundry_washer_rinse_mode(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_laundry_washer_rinse_mode rinseMode: %s", cmd.args.rinseMode))
+
+  local ENDPOINT = 1
+  for cluster_val, capability_val in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
+    if cmd.args.rinseMode == capability_val then
+      device:send(clusters.LaundryWasherControls.attributes.NumberOfRinses:write(device, ENDPOINT, cluster_val))
+      break
     end
   end
 end
@@ -85,11 +162,19 @@ local matter_laundry_washer_handler = {
         [clusters.LaundryWasherMode.attributes.SupportedModes.ID] = laundry_washer_supported_modes_attr_handler,
         [clusters.LaundryWasherMode.attributes.CurrentMode.ID] = laundry_washer_mode_attr_handler,
       },
+      [clusters.LaundryWasherControls.ID] = {
+        [clusters.LaundryWasherControls.attributes.SpinSpeeds.ID] = laundry_washer_controls_spin_speeds_attr_handler,
+        [clusters.LaundryWasherControls.attributes.SpinSpeedCurrent.ID] = laundry_washer_controls_spin_speed_current_attr_handler,
+        [clusters.LaundryWasherControls.attributes.NumberOfRinses.ID] = laundry_washer_controls_number_of_rinses_attr_handler,
+        [clusters.LaundryWasherControls.attributes.SupportedRinses.ID] = laundry_washer_controls_supported_rinses_attr_handler,
+      },
     }
   },
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
+      [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
+      [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },
   },
   can_handle = is_matter_laundry_washer,
