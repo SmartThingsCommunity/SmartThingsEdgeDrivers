@@ -111,6 +111,33 @@ local function laundry_washer_controls_supported_rinses_attr_handler(driver, dev
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(laundryWasherControlsSupportedRinses))
 end
 
+local function operational_state_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+  string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
+
+  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.stop())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.run())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.pause())
+  end
+end
+
+local function operational_error_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+  -- TODO: Add error enum to washerOperatingState
+  -- local operationalError = ib.data.elements.error_state_id.value
+  -- if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.unableToStartOrResume())
+  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.unableToCompleteOperation())
+  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.washerOperatingState.machineState.commandInvalidInState())
+  -- end
+end
+
 -- Capability Handlers --
 local function handle_laundry_washer_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -167,6 +194,10 @@ local matter_laundry_washer_handler = {
         [clusters.LaundryWasherControls.attributes.SpinSpeedCurrent.ID] = laundry_washer_controls_spin_speed_current_attr_handler,
         [clusters.LaundryWasherControls.attributes.NumberOfRinses.ID] = laundry_washer_controls_number_of_rinses_attr_handler,
         [clusters.LaundryWasherControls.attributes.SupportedRinses.ID] = laundry_washer_controls_supported_rinses_attr_handler,
+      },
+      [clusters.OperationalState.ID] = {
+        [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
+        [clusters.OperationalState.attributes.OperationalError.ID] = operational_error_attr_handler,
       },
     }
   },
