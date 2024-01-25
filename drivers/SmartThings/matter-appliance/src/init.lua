@@ -149,10 +149,17 @@ local matter_driver_template = {
       clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
     },
     [capabilities.contactSensor.ID] = {
-      clusters.RefrigeratorAlarm.attributes.State
+      clusters.DishwasherAlarm.attributes.State,
+      clusters.RefrigeratorAlarm.attributes.State,
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.waterFlowAlarm.ID] = {
+      clusters.DishwasherAlarm.attributes.State
+    },
+    [capabilities.temperatureAlarm.ID] = {
+      clusters.DishwasherAlarm.attributes.State
     },
   },
   capability_handlers = {

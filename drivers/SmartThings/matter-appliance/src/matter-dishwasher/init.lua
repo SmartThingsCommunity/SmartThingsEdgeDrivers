@@ -60,6 +60,55 @@ local function dishwasher_mode_attr_handler(driver, device, ib, response)
   end
 end
 
+local function dishwasher_alarm_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("dishwasher_alarm_attr_handler state: %s", ib.data.value))
+
+  local isWaterFlowRateAlarm = false
+  local isContacSensorAlarm = false
+  local isTemperatureAlarm = false
+  local isWaterFlowVolumeAlarm = false
+
+  local state = ib.data.value
+  if state & clusters.DishwasherAlarm.types.AlarmMap.INFLOW_ERROR > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.alarm())
+    isWaterFlowRateAlarm = true
+  end
+  if state & clusters.DishwasherAlarm.types.AlarmMap.DRAIN_ERROR > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.alarm())
+    isWaterFlowRateAlarm = true
+  end
+  if state & clusters.DishwasherAlarm.types.AlarmMap.DOOR_ERROR > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
+    isContacSensorAlarm = true
+  end
+  if state & clusters.DishwasherAlarm.types.AlarmMap.TEMP_TOO_LOW > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.freeze())
+    isTemperatureAlarm = true
+  end
+  if state & clusters.DishwasherAlarm.types.AlarmMap.TEMP_TOO_HIGH > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.heat())
+    isTemperatureAlarm = true
+  end
+  if state & clusters.DishwasherAlarm.types.AlarmMap.WATER_LEVEL_ERROR > 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.volumeAlarm.alarm())
+    isWaterFlowVolumeAlarm = true
+  end
+
+  if not isWaterFlowRateAlarm then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.normal())
+  end
+  if not isContacSensorAlarm then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
+  end
+  if not isTemperatureAlarm then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  end
+  if not isWaterFlowVolumeAlarm then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.volumeAlarm.normal())
+  end
+end
+
 -- Capability Handlers --
 local function handle_dishwasher_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -84,6 +133,9 @@ local matter_dishwasher_handler = {
       [clusters.DishwasherMode.ID] = {
         [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
         [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
+      },
+      [clusters.DishwasherAlarm.ID] = {
+        [clusters.DishwasherAlarm.attributes.State.ID] = dishwasher_alarm_attr_handler,
       },
     }
   },
