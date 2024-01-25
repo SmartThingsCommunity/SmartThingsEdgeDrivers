@@ -1,5 +1,3 @@
--- Author: CommanderQ
---
 -- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local ZwaveDriver = require "st.zwave.driver"
-local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 --- @type st.zwave.CommandClass
