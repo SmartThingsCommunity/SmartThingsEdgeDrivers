@@ -19,6 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
+
 local laundryWasherModeId = "spacewonder52282.laundryWasherMode"
 local laundryWasherMode = capabilities[laundryWasherModeId]
 
@@ -28,7 +30,14 @@ end
 
 -- Matter Handlers --
 local function is_matter_laundry_washer(opts, driver, device)
-  return device:supports_capability_by_id(laundryWasherModeId)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == LAUNDRY_WASHER_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
@@ -78,11 +87,6 @@ local matter_laundry_washer_handler = {
         [clusters.LaundryWasherMode.attributes.CurrentMode.ID] = laundry_washer_mode_attr_handler,
       },
     }
-  },
-  subscribed_attributes = {
-    [laundryWasherModeId] = {
-      clusters.LaundryWasherMode.attributes.CurrentMode,
-    },
   },
   capability_handlers = {
     [laundryWasherModeId] = {
