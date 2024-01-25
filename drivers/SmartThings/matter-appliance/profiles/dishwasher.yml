@@ -8,6 +8,12 @@ components:
     version: 1
   - id: mode
     version: 1
+  - id: waterFlowAlarm
+    version: 1
+  - id: contactSensor
+    version: 1
+  - id: temperatureAlarm
+    version: 1
   - id: spacewonder52282.operationalState1
     version: 1
   - id: refresh
