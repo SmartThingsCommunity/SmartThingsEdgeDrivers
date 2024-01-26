@@ -1,3 +1,5 @@
+-- Author: CommanderQ
+--
 -- Copyright 2021 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
