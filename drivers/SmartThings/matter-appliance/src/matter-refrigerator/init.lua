@@ -192,6 +192,14 @@ local function handle_refrigerator_tcc_mode(driver, device, cmd)
     end
 end
 
+local function handle_temperature_setpoint(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
+
+  local ep = component_to_endpoint(device, cmd.component)
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, cmd.args.setpoint, nil))
+end
+
 local matter_refrigerator_handler = {
   NAME = "matter-refrigerator",
   lifecycle_handlers = {
@@ -219,6 +227,9 @@ local matter_refrigerator_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_refrigerator_tcc_mode,
+    },
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
     },
   },
   can_handle = is_matter_refrigerator,
