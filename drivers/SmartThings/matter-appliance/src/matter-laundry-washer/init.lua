@@ -53,7 +53,10 @@ local function laundry_washer_supported_modes_attr_handler(driver, device, ib, r
   for _, mode in ipairs(ib.data.elements) do
     table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
+  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
+  local component = device.profile.components["main"]
+  device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
@@ -63,7 +66,10 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
   local currentMode = ib.data.value
   for i, mode in ipairs(laundryWasherModeSupportedModes) do
     if i - 1 == currentMode then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      local component = device.profile.components["main"]
+      device:emit_component_event(component, capabilities.mode.mode(mode))
       break
     end
   end
@@ -71,10 +77,13 @@ end
 
 local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
   laundryWasherControlsSpinSpeeds = {}
-  for _, spin_speed in ipairs(ib.data.elements) do
-    table.insert(laundryWasherControlsSpinSpeeds, spin_speed)
+  for _, spinSpeed in ipairs(ib.data.elements) do
+    table.insert(laundryWasherControlsSpinSpeeds, spinSpeed)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
+  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
+  local component = device.profile.components["laundryWasherSpinSpeed"]
+  device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherControlsSpinSpeeds))
 end
 
 local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
@@ -82,9 +91,12 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
     string.format("laundry_washer_controls_spin_speed_current_attr_handler spinSpeedCurrent: %s", ib.data.value))
 
   local spinSpeedCurrent = ib.data.value
-  for i, spin_speed in ipairs(laundryWasherControlsSpinSpeeds) do
+  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
     if i - 1 == spinSpeedCurrent then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spin_speed))
+      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
+      local component = device.profile.components["laundryWasherSpinSpeed"]
+      device:emit_component_event(component, capabilities.mode.mode(spinSpeed))
       break
     end
   end
@@ -95,9 +107,9 @@ local function laundry_washer_controls_number_of_rinses_attr_handler(driver, dev
     string.format("laundry_washer_controls_number_of_rinses_attr_handler numberOfRinses: %s", ib.data.value))
 
   local numberOfRinses = ib.data.value
-  for cluster_val, capability_val in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
-    if numberOfRinses == cluster_val then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.rinseMode(capability_val))
+  for clusterVal, capabilityVal in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
+    if numberOfRinses == clusterVal then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.rinseMode(capabilityVal))
       break
     end
   end
@@ -144,39 +156,56 @@ local function handle_laundry_washer_mode(driver, device, cmd)
     string.format("handle_laundry_washer_mode mode: %s", cmd.args.mode))
 
   local ENDPOINT = 1
-  for i, mode in ipairs(laundryWasherModeSupportedModes) do
-    if cmd.args.mode == mode then
-      device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-      return
+  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- for i, mode in ipairs(laundryWasherModeSupportedModes) do
+  --   if cmd.args.mode == mode then
+  --     device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+  --     return
+  --   end
+  -- end
+  if cmd.component == "main" then
+    for i, mode in ipairs(laundryWasherModeSupportedModes) do
+      if cmd.args.mode == mode then
+        device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        return
+      end
+    end
+  elseif cmd.component == "laundryWasherSpinSpeed" then
+    for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+      if cmd.args.mode == spinSpeed then
+        device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
+        return
+      end
     end
   end
 end
 
-local function handle_laundry_washer_spin_speed(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
+-- TODO: Wait for laundryWasherSpinSpeed creation
+-- local function handle_laundry_washer_spin_speed(driver, device, cmd)
+--   log.info_with({ hub_logs = true },
+--     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
 
-  local ENDPOINT = 1
-  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
-    if cmd.args.spinSpeed == spinSpeed then
-      device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
-      return
-    end
-  end
-end
+--   local ENDPOINT = 1
+--   for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+--     if cmd.args.spinSpeed == spinSpeed then
+--       device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
+--       return
+--     end
+--   end
+-- end
 
-local function handle_laundry_washer_rinse_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_laundry_washer_rinse_mode rinseMode: %s", cmd.args.rinseMode))
+-- local function handle_laundry_washer_rinse_mode(driver, device, cmd)
+--   log.info_with({ hub_logs = true },
+--     string.format("handle_laundry_washer_rinse_mode rinseMode: %s", cmd.args.rinseMode))
 
-  local ENDPOINT = 1
-  for cluster_val, capability_val in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
-    if cmd.args.rinseMode == capability_val then
-      device:send(clusters.LaundryWasherControls.attributes.NumberOfRinses:write(device, ENDPOINT, cluster_val))
-      break
-    end
-  end
-end
+--   local ENDPOINT = 1
+--   for cluster_val, capability_val in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
+--     if cmd.args.rinseMode == capability_val then
+--       device:send(clusters.LaundryWasherControls.attributes.NumberOfRinses:write(device, ENDPOINT, cluster_val))
+--       break
+--     end
+--   end
+-- end
 
 local matter_laundry_washer_handler = {
   NAME = "matter-laundry-washer",
@@ -204,8 +233,9 @@ local matter_laundry_washer_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
-      [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
-      [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
+      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
+      -- [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },
   },
   can_handle = is_matter_laundry_washer,

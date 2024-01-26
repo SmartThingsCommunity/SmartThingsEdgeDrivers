@@ -6,8 +6,6 @@ components:
     version: 1
   - id: mode
     version: 1
-  - id: laundryWasherSpinSpeed
-    version: 1
   - id: laundryWasherRinseMode
     version: 1
   - id: temperatureSetpoint
@@ -18,5 +16,10 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: Washer
+- id: laundryWasherSpinSpeed
+  capabilities:
+  - id: mode
   categories:
   - name: Washer
