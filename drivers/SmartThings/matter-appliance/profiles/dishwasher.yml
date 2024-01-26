@@ -4,6 +4,8 @@ components:
   capabilities:
   - id: switch
     version: 1
+  - id: temperatureSetpoint
+    version: 1
   - id: spacewonder52282.temperatureLevel
     version: 1
   - id: mode
