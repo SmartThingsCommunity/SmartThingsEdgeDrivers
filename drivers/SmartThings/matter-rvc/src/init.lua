@@ -18,9 +18,6 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
-local robotCleanerOperationalStateId = "spacewonder52282.robotCleanerOperationalState2"
-local robotCleanerOperationalState = capabilities[robotCleanerOperationalStateId]
-
 local rvcRunModeSupportedModes = {}
 local rvcCleanModeSupportedModes = {}
 
@@ -81,48 +78,49 @@ local function rvc_operational_state_attr_handler(driver, device, ib, response)
     string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.stopped())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.stopped())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.running())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.running())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.paused())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.paused())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.ERROR then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.error())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.error())
   elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.SEEKING_CHARGER then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.seekingcharger())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.seekingcharger())
   elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.CHARGING then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.charging())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.charging())
   elseif ib.data.value == clusters.RvcOperationalState.types.OperationalStateEnum.DOCKED then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.docked())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.docked())
   end
 end
 
 local function rvc_operational_error_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+
   local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToStartOrResume())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.unableToStartOrResume())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.unableToCompleteOperation())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.unableToCompleteOperation())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.commandInvalidInState())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.commandInvalidInState())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.FAILED_TO_FIND_CHARGING_DOCK then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.failedToFindChargingDock())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.failedToFindChargingDock())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.STUCK then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.stuck())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.stuck())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.DUST_BIN_MISSING then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.dustBinMissing())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.dustBinMissing())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.DUST_BIN_FULL then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.dustBinFull())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.dustBinFull())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_EMPTY then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankEmpty())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.waterTankEmpty())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_MISSING then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankMissing())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.waterTankMissing())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.WATER_TANK_LID_OPEN then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.waterTankLidOpen())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.waterTankLidOpen())
   elseif operationalError == clusters.RvcOperationalState.types.ErrorStateEnum.MOP_CLEANING_PAD_MISSING then
-    device:emit_event_for_endpoint(ib.endpoint_id, robotCleanerOperationalState.robotCleanerOperationalState.mopCleaningPadMissing())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.operatingState.mopCleaningPadMissing())
   end
 end
 
@@ -176,7 +174,7 @@ local matter_driver_template = {
       clusters.RvcCleanMode.attributes.SupportedModes,
       clusters.RvcCleanMode.attributes.CurrentMode,
     },
-    [robotCleanerOperationalStateId] = {
+    [capabilities.robotCleanerOperatingState.ID] = {
       clusters.RvcOperationalState.attributes.OperationalState,
       clusters.RvcOperationalState.attributes.OperationalError,
     },
