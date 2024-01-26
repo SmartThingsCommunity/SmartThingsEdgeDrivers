@@ -19,9 +19,6 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
-local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
-local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
-
 local supportedTemperatureLevels = {}
 
 local function device_init(driver, device)
@@ -139,6 +136,8 @@ local matter_driver_template = {
       clusters.LaundryWasherMode.attributes.CurrentMode,
       clusters.LaundryWasherControls.attributes.SpinSpeeds,
       clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
+      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
+      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
     },
     [capabilities.laundryWasherRinseMode.ID] = {
       clusters.LaundryWasherControls.attributes.NumberOfRinses,
@@ -147,10 +146,6 @@ local matter_driver_template = {
     [capabilities.washerOperatingState.ID] = {
       clusters.OperationalState.attributes.OperationalState,
       clusters.OperationalState.attributes.OperationalError,
-    },
-    [refrigeratorAndTccModeId] = {
-      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
-      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
     },
     [capabilities.contactSensor.ID] = {
       clusters.DishwasherAlarm.attributes.State,
