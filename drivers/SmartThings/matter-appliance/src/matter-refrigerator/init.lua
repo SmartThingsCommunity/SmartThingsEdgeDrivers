@@ -23,6 +23,7 @@ local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
 
 local endpointToComponentMap = {}
+local endpointToComponentTLMap = {}
 local supportedTemperatureLevelsMap = {}
 local refrigeratorTccModeSupportedModesMap = {}
 
@@ -39,6 +40,11 @@ local function component_to_endpoint(device, component_name)
   for ep, component in pairs(map) do
     if component == component_name then return ep end
   end
+  map = endpointToComponentTLMap
+  for ep, component in pairs(map) do
+    if component == component_name then return ep end
+  end
+  return 1
 end
 
 local function device_init(driver, device)
@@ -61,6 +67,10 @@ local function device_added(driver, device)
     endpointToComponentMap = { -- This is just a guess for now
       [cabinet_eps[1]] = "refrigerator",
       [cabinet_eps[2]] = "freezer"
+    }
+    endpointToComponentTLMap = { -- This is just a guess for now
+      [cabinet_eps[1]] = "refrigeratorTemperatureLevel",
+      [cabinet_eps[2]] = "freezerTemperatureLevel"
     }
   end
 end
@@ -86,7 +96,8 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id]
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if i - 1 == temperatureLevel then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(tempLevel))
+      local component = device.profile.components[endpointToComponentTLMap[ib.endpoint_id]]
+      device:emit_component_event(component, capabilities.mode.mode(tempLevel))
       break
     end
   end
@@ -102,7 +113,8 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedTemperatureLevels))
+  local component = device.profile.components[endpointToComponentTLMap[ib.endpoint_id]]
+  device:emit_component_event(component, capabilities.mode.supportedModes(supportedTemperatureLevels))
 end
 
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
@@ -142,7 +154,7 @@ local function temp_event_handler(driver, device, ib, response)
 
   local temp = 0
   local unit = "C"
-  if ib.data.value==nil then
+  if ib.data.value == nil then
     temp = 0
   else
     temp = ib.data.value / 100.0
@@ -163,24 +175,15 @@ local function handle_refrigerator_tcc_mode(driver, device, cmd)
     --   end
     -- end
     local ep = component_to_endpoint(device, cmd.component)
-    if cmd.component == "main" then
+    if cmd.component == "main" or cmd.component == "refrigerator" or cmd.component == "freezer" then
       local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ep]
       for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
         if cmd.args.mode == mode then
-          device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, 1, i - 1))
+          device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, ep, i - 1))
           return
         end
       end
-    elseif cmd.component == "refrigerator" then
-      -- TODO Create temperatureLevel
-      local supportedTemperatureLevels = supportedTemperatureLevelsMap[ep]
-      for i, tempLevel in ipairs(supportedTemperatureLevels) do
-        if cmd.args.mode == tempLevel then
-          device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, nil, i - 1))
-          return
-        end
-      end
-    elseif cmd.component == "freezer" then
+    elseif cmd.component == "refrigeratorTemperatureLevel" or cmd.component == "freezerTemperatureLevel" then
       -- TODO Create temperatureLevel
       local supportedTemperatureLevels = supportedTemperatureLevelsMap[ep]
       for i, tempLevel in ipairs(supportedTemperatureLevels) do
