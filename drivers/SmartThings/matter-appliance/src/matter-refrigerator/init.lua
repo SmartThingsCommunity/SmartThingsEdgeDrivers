@@ -84,7 +84,7 @@ local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
 end
 
 local function refrigerator_alarm_attr_handler(driver, device, ib, response)
-  if ib.data.value & clusters.RefrigeratorAlarm.types.AlarmMap.DOOR_OPEN then
+  if ib.data.value & clusters.RefrigeratorAlarm.types.AlarmMap.DOOR_OPEN > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
