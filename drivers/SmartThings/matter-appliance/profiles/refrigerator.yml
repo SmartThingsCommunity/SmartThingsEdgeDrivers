@@ -6,11 +6,17 @@ components:
     version: 1
   - id: contactSensor
     version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: refrigerator
+  capabilities:
   - id: spacewonder52282.temperatureLevel
     version: 1
   - id: temperatureMeasurement
-    version: 1
-  - id: refresh
     version: 1
   categories:
   - name: Refrigerator
