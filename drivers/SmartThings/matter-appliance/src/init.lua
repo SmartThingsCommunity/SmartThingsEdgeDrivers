@@ -159,8 +159,6 @@ local matter_driver_template = {
       clusters.DishwasherMode.attributes.CurrentMode,
       clusters.LaundryWasherMode.attributes.SupportedModes,
       clusters.LaundryWasherMode.attributes.CurrentMode,
-    },
-    [capabilities.laundryWasherSpinSpeed.ID] = {
       clusters.LaundryWasherControls.attributes.SpinSpeeds,
       clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
     },
