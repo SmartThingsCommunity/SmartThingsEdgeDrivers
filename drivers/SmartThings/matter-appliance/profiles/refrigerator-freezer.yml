@@ -2,6 +2,8 @@ name: refrigerator-freezer
 components:
 - id: main
   capabilities:
+  - id: mode
+    version: 1
   - id: contactSensor
     version: 1
   - id: firmwareUpdate
@@ -12,17 +14,17 @@ components:
   - name: Refrigerator
 - id: refrigerator
   capabilities:
-  - id: temperatureMeasurement
+  - id: mode
     version: 1
-  - id: thermostatCoolingSetpoint # todo: replace with Refrigeration Setpoint?
+  - id: temperatureMeasurement
     version: 1
   categories:
   - name: Refrigerator
 - id: freezer
   capabilities:
-  - id: temperatureMeasurement
+  - id: mode
     version: 1
-  - id: thermostatCoolingSetpoint # todo: replace with Refrigeration Setpoint?
+  - id: temperatureMeasurement
     version: 1
   categories:
   - name: Refrigerator

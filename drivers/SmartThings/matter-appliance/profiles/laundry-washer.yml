@@ -19,10 +19,12 @@ components:
 - id: temperatureLevel
   capabilities:
   - id: mode
+    version: 1
   categories:
   - name: Washer
 - id: laundryWasherSpinSpeed
   capabilities:
   - id: mode
+    version: 1
   categories:
   - name: Washer

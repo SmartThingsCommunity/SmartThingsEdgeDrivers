@@ -23,5 +23,6 @@ components:
 - id: temperatureLevel
   capabilities:
   - id: mode
+    version: 1
   categories:
   - name: Dishwasher
