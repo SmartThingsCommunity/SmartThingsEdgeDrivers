@@ -138,6 +138,33 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
   end
 end
 
+local function operational_state_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
+
+  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.stop())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.run())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.pause())
+  end
+end
+
+local function operational_error_attr_handler(driver, device, ib, response)
+  -- TODO: Add error enum to dishwasherOperatingState
+  -- log.info_with({ hub_logs = true },
+  --   string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+  -- local operationalError = ib.data.elements.error_state_id.value
+  -- if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.unableToStartOrResume())
+  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.unableToCompleteOperation())
+  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.commandInvalidInState())
+  -- end
+end
+
 -- Capability Handlers --
 local function handle_dishwasher_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -186,6 +213,10 @@ local matter_dishwasher_handler = {
       },
       [clusters.DishwasherAlarm.ID] = {
         [clusters.DishwasherAlarm.attributes.State.ID] = dishwasher_alarm_attr_handler,
+      },
+      [clusters.OperationalState.ID] = {
+        [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
+        [clusters.OperationalState.attributes.OperationalError.ID] = operational_error_attr_handler,
       },
     }
   },

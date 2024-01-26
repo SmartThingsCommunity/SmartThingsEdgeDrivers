@@ -19,8 +19,6 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
-local operationalStateId = "spacewonder52282.operationalState1"
-local operationalState = capabilities[operationalStateId]
 local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
 local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
 
@@ -72,21 +70,6 @@ end
 --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
 -- end
 
-local function operational_state_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-  string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
-
-  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
-    device:emit_event_for_endpoint(ib.endpoint_id, operationalState.operationalState.stopped())
-  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
-    device:emit_event_for_endpoint(ib.endpoint_id, operationalState.operationalState.running())
-  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
-    device:emit_event_for_endpoint(ib.endpoint_id, operationalState.operationalState.paused())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, operationalState.operationalState.error())
-  end
-end
-
 -- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
@@ -134,9 +117,6 @@ local matter_driver_template = {
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
       },
-      [clusters.OperationalState.ID] = {
-        [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
-      },
     }
   },
   subscribed_attributes = {
@@ -146,8 +126,9 @@ local matter_driver_template = {
     [capabilities.temperatureSetpoint.ID] = {
       clusters.TemperatureControl.attributes.TemperatureSetpoint
     },
-    [operationalStateId] = {
+    [capabilities.dishwasherOperatingState.ID] = {
       clusters.OperationalState.attributes.OperationalState,
+      clusters.OperationalState.attributes.OperationalError,
     },
     [capabilities.mode.ID] = {
       clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
