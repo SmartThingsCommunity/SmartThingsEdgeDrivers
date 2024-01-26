@@ -10,12 +10,15 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
-  - id: spacewonder52282.temperatureLevel
-    version: 1
   - id: washerOperatingState
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: Washer
+- id: temperatureLevel
+  capabilities:
+  - id: mode
   categories:
   - name: Washer
 - id: laundryWasherSpinSpeed

@@ -28,6 +28,7 @@ local LAUNDRY_WASHER_RINSE_MODE_MAP = {
   [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.MAX] = capabilities.laundryWasherRinseMode.rinseMode.max,
 }
 
+local supportedTemperatureLevels = {}
 local laundryWasherModeSupportedModes = {}
 local laundryWasherControlsSpinSpeeds = {}
 local laundryWasherControlsSupportedRinses = {}
@@ -48,12 +49,40 @@ local function is_matter_laundry_washer(opts, driver, device)
   return false
 end
 
+-- TODO Create temperatureLevel
+local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
+
+  local temperatureLevel = ib.data.value
+  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+    if i - 1 == temperatureLevel then
+      local component = device.profile.components["temperatureLevel"]
+      device:emit_component_event(component, capabilities.mode.mode(tempLevel))
+      break
+    end
+  end
+end
+
+-- TODO Create temperatureLevel
+local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
+
+  supportedTemperatureLevels = {}
+  for _, tempLevel in ipairs(ib.data.elements) do
+    table.insert(supportedTemperatureLevels, tempLevel.value)
+  end
+  local component = device.profile.components["temperatureLevel"]
+  device:emit_component_event(component, capabilities.mode.supportedModes(supportedTemperatureLevels))
+end
+
 local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
   laundryWasherModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
     table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
   end
-  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- TODO: Create laundryWasherSpinSpeed
   -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
   local component = device.profile.components["main"]
   device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
@@ -66,7 +95,7 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
   local currentMode = ib.data.value
   for i, mode in ipairs(laundryWasherModeSupportedModes) do
     if i - 1 == currentMode then
-      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- TODO: Create laundryWasherSpinSpeed
       -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       local component = device.profile.components["main"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
@@ -80,7 +109,7 @@ local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, 
   for _, spinSpeed in ipairs(ib.data.elements) do
     table.insert(laundryWasherControlsSpinSpeeds, spinSpeed)
   end
-  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- TODO: Create laundryWasherSpinSpeed
   -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
   local component = device.profile.components["laundryWasherSpinSpeed"]
   device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherControlsSpinSpeeds))
@@ -93,7 +122,7 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
   local spinSpeedCurrent = ib.data.value
   for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
     if i - 1 == spinSpeedCurrent then
-      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- TODO: Create laundryWasherSpinSpeed
       -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
       local component = device.profile.components["laundryWasherSpinSpeed"]
       device:emit_component_event(component, capabilities.mode.mode(spinSpeed))
@@ -156,7 +185,7 @@ local function handle_laundry_washer_mode(driver, device, cmd)
     string.format("handle_laundry_washer_mode mode: %s", cmd.args.mode))
 
   local ENDPOINT = 1
-  -- TODO: Wait for laundryWasherSpinSpeed creation
+  -- TODO: Create laundryWasherSpinSpeed
   -- for i, mode in ipairs(laundryWasherModeSupportedModes) do
   --   if cmd.args.mode == mode then
   --     device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
@@ -177,10 +206,18 @@ local function handle_laundry_washer_mode(driver, device, cmd)
         return
       end
     end
+  elseif cmd.component == "temperatureLevel" then
+    -- TODO Create temperatureLevel
+    for i, tempLevel in ipairs(supportedTemperatureLevels) do
+      if cmd.args.mode == tempLevel then
+        device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+        return
+      end
+    end
   end
 end
 
--- TODO: Wait for laundryWasherSpinSpeed creation
+-- TODO: Create laundryWasherSpinSpeed
 -- local function handle_laundry_washer_spin_speed(driver, device, cmd)
 --   log.info_with({ hub_logs = true },
 --     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
@@ -214,6 +251,10 @@ local matter_laundry_washer_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
+        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
+      },
       [clusters.LaundryWasherMode.ID] = {
         [clusters.LaundryWasherMode.attributes.SupportedModes.ID] = laundry_washer_supported_modes_attr_handler,
         [clusters.LaundryWasherMode.attributes.CurrentMode.ID] = laundry_washer_mode_attr_handler,
@@ -233,7 +274,7 @@ local matter_laundry_washer_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
-      -- TODO: Wait for laundryWasherSpinSpeed creation
+      -- TODO: Create laundryWasherSpinSpeed
       -- [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
       -- [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },

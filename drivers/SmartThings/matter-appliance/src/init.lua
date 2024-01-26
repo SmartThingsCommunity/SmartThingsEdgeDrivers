@@ -19,12 +19,12 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
-local temperatureLevelId = "spacewonder52282.temperatureLevel"
-local temperatureLevel = capabilities[temperatureLevelId]
 local operationalStateId = "spacewonder52282.operationalState1"
 local operationalState = capabilities[operationalStateId]
 local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
 local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
+
+local supportedTemperatureLevels = {}
 
 local function device_init(driver, device)
   device:subscribe()
@@ -46,25 +46,31 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = ib.data.value, unit = "C"}))
 end
 
-local function selected_temperature_level_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
+-- TODO Create temperatureLevel
+-- local function selected_temperature_level_attr_handler(driver, device, ib, response)
+--   log.info_with({ hub_logs = true },
+--     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel2())
-  elseif current_mode==2 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel3())
-  elseif current_mode==3 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel4())
-  elseif current_mode==4 then
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel5())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, temperatureLevel.temperatureLevel.temperatureLevel1())
-  end
-end
+--   local temperatureLevel = ib.data.value
+--   for i, tempLevel in ipairs(supportedTemperatureLevels) do
+--     if i - 1 == temperatureLevel then
+--       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
+--       break
+--     end
+--   end
+-- end
+
+-- TODO Create temperatureLevel
+-- local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+--   log.info_with({ hub_logs = true },
+--     string.format("supported_temperature_levels_attr_handler: %s", ib.data.value))
+
+--   supportedTemperatureLevels = {}
+--   for _, tempLevel in ipairs(ib.data.elements) do
+--     table.insert(supportedTemperatureLevels, tempLevel.value)
+--   end
+--   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+-- end
 
 local function operational_state_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
@@ -102,25 +108,19 @@ local function handle_temperature_setpoint(driver, device, cmd)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, cmd.args.setpoint, nil))
 end
 
-local function handle_temperature_level(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_temperature_level: %s", cmd.args.level))
+-- TODO Create temperatureLevel
+-- local function handle_temperature_level(driver, device, cmd)
+--   log.info_with({ hub_logs = true },
+--     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
-  local ENDPOINT = 1
-  if cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel1.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 0))
-  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel2.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 1))
-  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel3.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 2))
-  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel4.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 3))
-  elseif cmd.args.level == temperatureLevel.temperatureLevel.temperatureLevel5.NAME then
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 4))
-  else
-    device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, 0))
-  end
-end
+--   local ENDPOINT = 1
+--   for i, tempLevel in ipairs(supportedTemperatureLevels) do
+--     if cmd.args.temperatureLevel == tempLevel then
+--       device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+--       return
+--     end
+--   end
+-- end
 
 local matter_driver_template = {
   lifecycle_handlers = {
@@ -133,7 +133,6 @@ local matter_driver_template = {
       },
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
       },
       [clusters.OperationalState.ID] = {
         [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
@@ -147,14 +146,12 @@ local matter_driver_template = {
     [capabilities.temperatureSetpoint.ID] = {
       clusters.TemperatureControl.attributes.TemperatureSetpoint
     },
-    [temperatureLevelId] = {
-      clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
-      clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
-    },
     [operationalStateId] = {
       clusters.OperationalState.attributes.OperationalState,
     },
     [capabilities.mode.ID] = {
+      clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
+      clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
       clusters.DishwasherMode.attributes.SupportedModes,
       clusters.DishwasherMode.attributes.CurrentMode,
       clusters.LaundryWasherMode.attributes.SupportedModes,
@@ -195,9 +192,6 @@ local matter_driver_template = {
     },
     [capabilities.temperatureSetpoint.ID] = {
       [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
-    },
-    [temperatureLevelId] = {
-      [temperatureLevel.commands.setTemperature.NAME] = handle_temperature_level,
     },
   },
   sub_drivers = {
