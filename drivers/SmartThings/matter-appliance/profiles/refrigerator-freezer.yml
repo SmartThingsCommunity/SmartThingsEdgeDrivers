@@ -14,21 +14,33 @@ components:
   - name: Refrigerator
 - id: refrigerator
   capabilities:
-  - id: temperatureSetpoint
-    version: 1
   - id: mode
+    version: 1
+  - id: temperatureSetpoint
     version: 1
   - id: temperatureMeasurement
     version: 1
   categories:
   - name: Refrigerator
-- id: freezer
+- id: refrigeratorTemperatureLevel
   capabilities:
-  - id: temperatureSetpoint
-    version: 1
   - id: mode
     version: 1
+  categories:
+  - name: Refrigerator
+- id: freezer
+  capabilities:
+  - id: mode
+    version: 1
+  - id: temperatureSetpoint
+    version: 1
   - id: temperatureMeasurement
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: freezerTemperatureLevel
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Refrigerator
