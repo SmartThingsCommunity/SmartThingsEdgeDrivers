@@ -2,9 +2,7 @@ name: sve-air-purifier
 components:
 - id: main
   capabilities:
-  - id: switch
-    version: 1
-  - id: spacewonder52282.airPurifierFanMode
+  - id: airPurifierFanMode
     version: 1
   - id: fanSpeed
     version: 1
