@@ -2,7 +2,7 @@ name: refrigerator
 components:
 - id: main
   capabilities:
-  - id: spacewonder52282.refrigeratorAndTccMode
+  - id: mode
     version: 1
   - id: contactSensor
     version: 1

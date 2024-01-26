@@ -22,8 +22,7 @@ local utils = require "st.utils"
 local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local ENDPOINT_TO_COMPONENT_MAP = "__endpoint_to_component"
 
-local refrigeratorAndTccModeId = "spacewonder52282.refrigeratorAndTccMode"
-local refrigeratorAndTccMode = capabilities[refrigeratorAndTccModeId]
+local refrigeratorTccModeSupportedModes = {}
 
 local function endpoint_to_component(device, ep)
   local map = device:get_field(ENDPOINT_TO_COMPONENT_MAP) or {}
@@ -69,17 +68,24 @@ local function is_matter_refrigerator(opts, driver, device)
   return false
 end
 
+local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
+  refrigeratorTccModeSupportedModes = {}
+  for _, mode in ipairs(ib.data.elements) do
+    table.insert(refrigeratorTccModeSupportedModes, mode.elements.label.value)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(refrigeratorTccModeSupportedModes))
+end
+
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-  string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
+    string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
 
-  local current_mode=math.floor(ib.data.value)
-  if current_mode==0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, refrigeratorAndTccMode.refrigeratorAndTccMode.rapidCool())
-  elseif current_mode==1 then
-    device:emit_event_for_endpoint(ib.endpoint_id, refrigeratorAndTccMode.refrigeratorAndTccMode.rapidFreeze())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, refrigeratorAndTccMode.refrigeratorAndTccMode.rapidCool())
+  local currentMode = ib.data.value
+  for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
+    if i - 1 == currentMode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      break
+    end
   end
 end
 
@@ -108,15 +114,15 @@ end
 -- Capability Handlers --
 local function handle_refrigerator_tcc_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
-  string.format("handle_refrigerator_tcc_mode currentMode: %s", cmd.args.level))
+    string.format("handle_refrigerator_tcc_mode mode: %s", cmd.args.mode))
 
-  if cmd.args.level==refrigeratorAndTccMode.refrigeratorAndTccMode.rapidCool.NAME then
-    device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, 1, 0))
-  elseif cmd.args.level==refrigeratorAndTccMode.refrigeratorAndTccMode.rapidFreeze.NAME then
-    device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, 1, 1))
-  else
-    device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, 1, 0))
-  end
+    local ENDPOINT = 1
+    for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
+      if cmd.args.mode == mode then
+        device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        return
+      end
+    end
 end
 
 local matter_refrigerator_handler = {
@@ -128,6 +134,7 @@ local matter_refrigerator_handler = {
   matter_handlers = {
     attr = {
       [clusters.RefrigeratorAndTemperatureControlledCabinetMode.ID] = {
+        [clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes.ID] = refrigerator_tcc_supported_modes_attr_handler,
         [clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode.ID] = refrigerator_tcc_mode_attr_handler,
       },
       [clusters.RefrigeratorAlarm.ID] = {
@@ -139,8 +146,8 @@ local matter_refrigerator_handler = {
     }
   },
   capability_handlers = {
-    [refrigeratorAndTccModeId] = {
-      [refrigeratorAndTccMode.commands.setRefrigeratorAndTccMode.NAME] = handle_refrigerator_tcc_mode,
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = handle_refrigerator_tcc_mode,
     },
   },
   can_handle = is_matter_refrigerator,
