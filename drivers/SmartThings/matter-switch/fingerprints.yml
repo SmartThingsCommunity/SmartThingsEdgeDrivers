@@ -32,6 +32,92 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+  - id: "GELightingSavant/Fixture/0xB4"
+    deviceLabel: Cync 4" High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0xB4
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0xB5"
+    deviceLabel: Cync 6" High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0xB5
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0xB1"
+    deviceLabel: Cync Full Color 2" Wafer
+    vendorId: 0x1339
+    productId: 0xB1
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0x2C"
+    deviceLabel: Cync Full Color 3" Puck
+    vendorId: 0x1339
+    productId: 0x2C
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Fixture/0xAE"
+    deviceLabel: Cync Full Color 4" Wafer
+    vendorId: 0x1339
+    productId: 0xAE
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0xAF"
+    deviceLabel: Cync Full Color 6" Wafer
+    vendorId: 0x1339
+    productId: 0xAF
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Bulb/0xAB"
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0xAB
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Bulb/0x62"
+    deviceLabel: Cync Full Color Globe
+    vendorId: 0x1339
+    productId: 0x62
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Bulb/0x68"
+    deviceLabel: Cync Full Color PAR38
+    vendorId: 0x1339
+    productId: 0x68
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Bulb/0x2E"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x2E
+    deviceProfileName: light-color-level-2000K-7000K    
+  - id: "GELightingSavant/Bulb/0x61"
+    deviceLabel: Cync Full Color ST19
+    vendorId: 0x1339
+    productId: 0x61
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Fixture/0x29"
+    deviceLabel: Cync Full Color Undercabinet 12"
+    vendorId: 0x1339
+    productId: 0x29
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0x2A"
+    deviceLabel: Cync Full Color Undercabinet 18"
+    vendorId: 0x1339
+    productId: 0x2A
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Fixture/0x2B"
+    deviceLabel: Cync Full Color Undercabinet 24"
+    vendorId: 0x1339
+    productId: 0x2B
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "GELightingSavant/Bulb/0x6E"
+    deviceLabel: Cync Indoor Light Strip 16ft
+    vendorId: 0x1339
+    productId: 0x6E
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Bulb/0x7B"
+    deviceLabel: Cync Indoor Light Strip 32ft
+    vendorId: 0x1339
+    productId: 0x7B
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "GELightingSavant/Plug/0x6F"
+    deviceLabel: Cync Outdoor Plug
+    vendorId: 0x1339
+    productId: 0x6F
+    deviceProfileName: plug-binary
+
 
 #Nanoleaf
   - id: "Nanoleaf NL53"
