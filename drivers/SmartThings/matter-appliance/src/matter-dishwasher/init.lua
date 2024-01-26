@@ -21,6 +21,7 @@ local utils = require "st.utils"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 
+local supportedTemperatureLevels = {}
 local dishwasherModeSupportedModes = {}
 
 local function device_init(driver, device)
@@ -37,6 +38,34 @@ local function is_matter_dishwasher(opts, driver, device)
     end
   end
   return false
+end
+
+-- TODO Create temperatureLevel
+local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
+
+  local temperatureLevel = ib.data.value
+  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+    if i - 1 == temperatureLevel then
+      local component = device.profile.components["temperatureLevel"]
+      device:emit_component_event(component, capabilities.mode.mode(tempLevel))
+      break
+    end
+  end
+end
+
+-- TODO Create temperatureLevel
+local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
+
+  supportedTemperatureLevels = {}
+  for _, tempLevel in ipairs(ib.data.elements) do
+    table.insert(supportedTemperatureLevels, tempLevel.value)
+  end
+  local component = device.profile.components["temperatureLevel"]
+  device:emit_component_event(component, capabilities.mode.supportedModes(supportedTemperatureLevels))
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -115,10 +144,27 @@ local function handle_dishwasher_mode(driver, device, cmd)
     string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
 
   local ENDPOINT = 1
-  for i, mode in ipairs(dishwasherModeSupportedModes) do
-    if cmd.args.mode == mode then
-      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-      return
+  -- TODO: Create temperatureLevel
+  -- for i, mode in ipairs(dishwasherModeSupportedModes) do
+  --   if cmd.args.mode == mode then
+  --     device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+  --     return
+  --   end
+  -- end
+  if cmd.component == "main" then
+    for i, mode in ipairs(dishwasherModeSupportedModes) do
+      if cmd.args.mode == mode then
+        device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        return
+      end
+    end
+  elseif cmd.component == "temperatureLevel" then
+    -- TODO Create temperatureLevel
+    for i, tempLevel in ipairs(supportedTemperatureLevels) do
+      if cmd.args.mode == tempLevel then
+        device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+        return
+      end
     end
   end
 end
@@ -130,6 +176,10 @@ local matter_dishwasher_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
+        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
+      },
       [clusters.DishwasherMode.ID] = {
         [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
         [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
