@@ -334,7 +334,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Relative humidity reports should generate correct messages",
+  "Carbon Monoxide reports should generate correct messages",
   {
     {
       channel = "matter",
