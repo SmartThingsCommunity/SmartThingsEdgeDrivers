@@ -24,6 +24,11 @@ zigbeeManufacturer:
     manufacturer: SOMFY
     model: Situo 4 Zigbee
     deviceProfileName: twelve-buttons
+  - id: "IKEA of Sweden/RODRET Dimmer"
+    deviceLabel: RODRET Dimmer
+    manufacturer: IKEA of Sweden
+    model: RODRET Dimmer
+    deviceProfileName: two-buttons
   - id: "IKEA of Sweden/TRADFRI on"
     deviceLabel: IKEA Remote Control
     manufacturer: IKEA of Sweden
