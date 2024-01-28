@@ -25,6 +25,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
   { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
   { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
+  { mfr = "IKEA of Sweden", model = "RODRET Dimmer" },
   { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" },
   { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
   { mfr = "IKEA of Sweden", model = "TRADFRI remote control" },

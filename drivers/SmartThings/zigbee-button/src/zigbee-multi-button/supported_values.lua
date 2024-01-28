@@ -38,6 +38,7 @@ local devices = {
   },
   BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {
+      { mfr = "IKEA of Sweden", model = "RODRET Dimmer" },
       { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
       { mfr = "KE", model = "TRADFRI open/close remote" }
     },

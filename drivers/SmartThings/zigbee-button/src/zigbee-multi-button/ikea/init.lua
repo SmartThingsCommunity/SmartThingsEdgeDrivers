@@ -127,7 +127,9 @@ local ikea_of_sweden = {
   sub_drivers = {
     require("zigbee-multi-button.ikea.TRADFRI_remote_control"),
     require("zigbee-multi-button.ikea.TRADFRI_on_off_switch"),
-    require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
+    require("zigbee-multi-button.ikea.TRADFRI_open_close_remote"),
+    require("zigbee-multi-button.ikea.RODRET_Dimmer")
+
   },
   can_handle = function(opts, driver, device, ...)
     return device:get_manufacturer() == "IKEA of Sweden" or device:get_manufacturer() == "KE"
