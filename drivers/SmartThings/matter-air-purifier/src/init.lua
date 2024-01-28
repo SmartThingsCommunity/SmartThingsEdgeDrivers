@@ -14,6 +14,7 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local utils = require "st.utils"
 
 local log = require "log"
 
@@ -91,8 +92,8 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.supportedAirPurifierFanModes(supportedAirPurifierFanModes))
 end
 
-local function speed_current_handler(driver, device, ib, response)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeed.fanSpeed(ib.data.value))
+local function percent_current_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
 end
 
 local function wind_support_handler(driver, device, ib, response)
@@ -179,8 +180,9 @@ local function set_fan_wind(driver, device, cmd)
   end
 end
 
-local function handle_fan_speed(driver, device, cmd)
-  device:send(clusters.FanControl.attributes.SpeedSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.speed))
+local function handle_fan_speed_percent(driver, device, cmd)
+  log.info(string.format("handle fan speed percent: %s", utils.stringify_table(cmd)))
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.percent))
 end
 
 local matter_driver_template = {
@@ -195,7 +197,7 @@ local matter_driver_template = {
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
-        [clusters.FanControl.attributes.SpeedCurrent.ID] = speed_current_handler,
+        [clusters.FanControl.attributes.PercentCurrent.ID] = percent_current_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
       },
@@ -216,8 +218,8 @@ local matter_driver_template = {
       clusters.FanControl.attributes.WindSupport,
       clusters.FanControl.attributes.WindSetting
     },
-    [capabilities.fanSpeed.ID] = {
-      clusters.FanControl.attributes.SpeedCurrent
+    [capabilities.fanSpeedPercent.ID] = {
+      clusters.FanControl.attributes.PercentCurrent
     },
     [capabilities.filterStatus.ID] = {
       clusters.HepaFilterMonitoring.attributes.ChangeIndication,
@@ -235,8 +237,8 @@ local matter_driver_template = {
     -- [capabilities.windMode] = {
     --   [capabilities.windMode.commands.setWindMode.NAME] = set_fan_wind
     -- },
-    [capabilities.fanSpeed.ID] = {
-      [capabilities.fanSpeed.commands.setFanSpeed.NAME] = handle_fan_speed
+    [capabilities.fanSpeedPercent.ID] = {
+      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = handle_fan_speed_percent
     }
   },
   supported_capabilities = {

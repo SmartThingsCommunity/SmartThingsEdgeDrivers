@@ -22,7 +22,7 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-quality-sensor.yml"),
+  profile = t_utils.get_profile_definition("air-quality-sensor-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -213,19 +213,106 @@ test.register_coroutine_test(
   function()
     test.socket.matter:__queue_receive({
       mock_device.id,
-      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.types.MeasurementUnitEnum.PPM
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPM
       )
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
-      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
         mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
       )
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 18, unit = "ppm"}))
+      mock_device:generate_test_message("main", capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = 18, unit = "ppm"}))
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Level value reports should generate events",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.unknown())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.CarbonDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.types.LevelValueEnum.MEDIUM
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern.moderate())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.Pm1ConcentrationMeasurement.types.LevelValueEnum.HIGH
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.unhealthy())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.dustHealthConcern.dustHealthConcern.hazardous())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Configure should read units from device",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 

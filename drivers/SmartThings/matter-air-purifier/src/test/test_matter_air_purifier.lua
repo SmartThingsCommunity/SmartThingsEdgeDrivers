@@ -48,7 +48,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
-  clusters.FanControl.attributes.SpeedCurrent,
+  clusters.FanControl.attributes.PercentCurrent,
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
   clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
 }
@@ -66,7 +66,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-	"On/Off command should send the appropriate commands",
+	"On/Off command should send the appropriate FanMode commands",
 	{
 		{
 			channel = "capability",
@@ -223,20 +223,20 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.SpeedCurrent:build_test_report_data(mock_device, 1, 10)
+				clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 10)
 			}
 		},
 		{
 			channel = "capability",
 			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(10))
+			message = mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(10))
 		},
-    {
+    	{
 			channel = "capability",
 			direction = "receive",
 			message = {
 				mock_device.id,
-				{ capability = "fanSpeed", component = "main", command = "setFanSpeed", args = { 50 } }
+				{ capability = "fanSpeedPercent", component = "main", command = "setPercent", args = { 50 } }
 			}
 		},
 		{
@@ -244,7 +244,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.FanControl.attributes.SpeedSetting:write(mock_device, 1, 50)
+				clusters.FanControl.attributes.PercentSetting:write(mock_device, 1, 50)
 			}
 		}
 	}

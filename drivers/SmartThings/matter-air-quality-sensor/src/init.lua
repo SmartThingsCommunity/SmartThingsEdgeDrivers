@@ -95,18 +95,10 @@ local function configure(driver, device)
   end
 end
 
-local function device_added(driver, device)
-  device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
-  device:send(clusters.AirQuality.attributes.MeasuredValue:read(device))
-  -- we _should_ have a unit by now
-  for _, cluster in ipairs(units_required) do
-    device:send(cluster.attributes.MeasuredValue:read(device))
-  end
-end
-
 local function store_unit_factory(capability_name)
   return function(driver, device, ib, response)
+    log.info_with( {hub_logs = true}, string.format("CHT: store unit factory called with name %s, and value %s", capability_name.."_unit", ib.data.value))
+
     device:set_field(capability_name.."_unit", ib.data.value, {persist = true})
   end
 end
@@ -134,6 +126,17 @@ local unit_strings = {
   [units.PCIL] = "pCi/L"
 }
 
+-- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
+-- so CarbonMonoxideConcentratinMeasurement is used below but the same enum types exist
+-- in all ConcentrationMeasurement clusters
+local level_strings = {
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN] = "unknown",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.LOW] = "good",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.MEDIUM] = "moderate",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.HIGH] = "unhealthy",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL] = "hazardous",
+}
+
 local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end
@@ -159,15 +162,14 @@ local conversion_tables = {
 }
 
 local function unit_conversion(value, from_unit, to_unit)
-  log.info_with( {hub_logs = true} , "CHT: Calling unit conversion function")
   local conversion_function = conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
-    log.info_with( {hub_logs = true} , "CHT unit conversion was nil")
+    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversionfrom %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
     return 1
   end
 
   if value == nil then
-    log.info_with( {hub_logs = true} , "CHT: value was nil")
+    log.info_with( {hub_logs = true} , "unit conversion value is nil")
     return 1
   end
   return conversion_function(value)
@@ -180,6 +182,12 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
       local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
       device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
     end
+  end
+end
+
+local function levelHandlerFactory(attribute)
+  return function(driver, device, ib, response)
+    device:emit_event_for_endpoint(ib.endpoint_id, attribute(level_strings[ib.data.value]))
   end
 end
 
@@ -237,11 +245,13 @@ local matter_driver_template = {
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonMonoxideMeasurement.NAME, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel, units.PPM),
-        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonMonoxideMeasurement.NAME)
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonMonoxideMeasurement.NAME),
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern),
       },
       [clusters.CarbonDioxideConcentrationMeasurement.ID] = {
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonDioxide, units.PPM),
-        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonDioxideMeasurement.NAME)
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonDioxideMeasurement.NAME),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern),
       },
       [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
         [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.nitrogenDioxideMeasurement.NAME, capabilities.nitrogenDioxideMeasurement.nitrogenDioxide, units.PPM),
@@ -253,19 +263,23 @@ local matter_driver_template = {
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {
         [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, units.PPM),
-        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.formaldehydeMeasurement.NAME)
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.formaldehydeMeasurement.NAME),
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern),
       },
       [clusters.Pm1ConcentrationMeasurement.ID] = {
         [clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.veryFineDustSensor.NAME, capabilities.veryFineDustSensor.veryFineDustLevel, units.UGM3),
-        [clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.veryFineDustSensor.NAME)
+        [clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.veryFineDustSensor.NAME),
+        [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
       },
       [clusters.Pm25ConcentrationMeasurement.ID] = {
         [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, units.UGM3),
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.fineDustSensor.NAME)
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.fineDustSensor.NAME),
+        [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
       },
       [clusters.Pm10ConcentrationMeasurement.ID] = {
         [clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.dustSensor.NAME, capabilities.dustSensor.dustLevel, units.UGM3),
-        [clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.dustSensor.NAME)
+        [clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.dustSensor.NAME),
+        [clusters.Pm10ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.dustHealthConcern.dustHealthConcern),
       },
       [clusters.RadonConcentrationMeasurement.ID] = {
         [clusters.RadonConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.radonMeasurement.NAME, capabilities.radonMeasurement.radonLevel, units.PCIL),

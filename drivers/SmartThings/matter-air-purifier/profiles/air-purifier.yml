@@ -6,7 +6,7 @@ components:
     version: 1
   - id: airPurifierFanMode
     version: 1
-  - id: fanSpeed
+  - id: fanSpeedPercent
     version: 1
   - id: refresh
     version: 1
