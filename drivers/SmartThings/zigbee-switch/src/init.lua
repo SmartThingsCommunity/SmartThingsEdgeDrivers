@@ -96,6 +96,7 @@ local zigbee_switch_driver_template = {
     require("multi-switch-no-master"),
     require("zigbee-dual-metering-switch"),
     require("rgb-bulb"),
+    require("smartvill"),
     require("zigbee-dimming-light"),
     require("white-color-temp-bulb"),
     require("rgbw-bulb"),
