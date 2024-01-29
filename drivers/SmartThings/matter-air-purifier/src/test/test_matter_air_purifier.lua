@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
@@ -49,6 +48,8 @@ local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.WindSupport,
+  clusters.FanControl.attributes.WindSetting,
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
   clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
 }
@@ -157,7 +158,7 @@ test.register_message_test(
 				clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
 			}
 		},
-    {
+    	{
 			channel = "capability",
 			direction = "receive",
 			message = {
@@ -319,7 +320,7 @@ test.register_message_test(
 		{
 			channel = "capability",
 			direction = "send",
-			message = mock_device:generate_test_message("HEPA-Filter", capabilities.filterStatus.filterStatus.normal())
+			message = mock_device:generate_test_message("hepaFilter", capabilities.filterStatus.filterStatus.normal())
 		},
     {
 			channel = "matter",
@@ -332,7 +333,7 @@ test.register_message_test(
 		{
 			channel = "capability",
 			direction = "send",
-			message = mock_device:generate_test_message("HEPA-Filter", capabilities.filterStatus.filterStatus.replace())
+			message = mock_device:generate_test_message("hepaFilter", capabilities.filterStatus.filterStatus.replace())
 		},
     {
 			channel = "matter",
@@ -345,7 +346,7 @@ test.register_message_test(
 		{
 			channel = "capability",
 			direction = "send",
-			message = mock_device:generate_test_message("Activated-Carbon-Filter", capabilities.filterStatus.filterStatus.normal())
+			message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.normal())
 		},
     {
 			channel = "matter",
@@ -358,8 +359,60 @@ test.register_message_test(
 		{
 			channel = "capability",
 			direction = "send",
-			message = mock_device:generate_test_message("Activated-Carbon-Filter", capabilities.filterStatus.filterStatus.replace())
+			message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
 		},
+	}
+)
+
+local supportedFanWind = {
+	capabilities.windMode.windMode.sleepWind.NAME,
+	capabilities.windMode.windMode.naturalWind.NAME
+}
+test.register_message_test(
+	"Test wind mode",
+	{
+		{
+			channel = "matter",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03) -- SleepWind (0x0001) and NaturalWind (0x0002)
+			}
+		},
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind))
+		},
+		{
+			channel = "matter",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
+			}
+		},
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
+		},
+		{
+			channel = "capability",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				{ capability = "windMode", component = "main", command = "setWindMode", args = { "naturalWind" } }
+			}
+		},
+		{
+			channel = "matter",
+			direction = "send",
+			message = {
+				mock_device.id,
+				clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
+			}
+		}
 	}
 )
 

@@ -15,13 +15,7 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
-
 local log = require "log"
-
-local hepaFilterStatusId = "spacewonder52282.hepaFilterStatus3"
-local activatedCarbonFilterStatusId = "spacewonder52282.activatedCarbonFilterStatus3"
-local hepaFilterStatus = capabilities[hepaFilterStatusId]
-local activatedCarbonFilterStatus = capabilities[activatedCarbonFilterStatusId]
 
 local function device_init(driver, device)
   device:subscribe()
@@ -96,27 +90,8 @@ local function percent_current_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
 end
 
-local function wind_support_handler(driver, device, ib, response)
-  local supportedFanWind = {}
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
-    table.insert(supportedFanWind, capabilities.windMode.windMode.sleepWind.NAME)
-  end
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
-    table.insert(supportedFanWind, capabilities.windMode.windMode.naturalWind.NAME)
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.supportedFanWind(supportedFanWind))
-end
-
-local function wind_setting_handler(driver, device, ib, response)
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.sleepWind())
-  elseif ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.naturalWind())
-  end
-end
-
 local function hepa_filter_change_indication_handler(driver, device, ib, response)
-  local component = device.profile.components["HEPA-Filter"]
+  local component = device.profile.components["hepaFilter"]
   if ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK then
     device:emit_component_event(component, capabilities.filterStatus.filterStatus.normal())
   elseif ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.WARNING then
@@ -127,7 +102,7 @@ local function hepa_filter_change_indication_handler(driver, device, ib, respons
 end
 
 local function activated_carbon_filter_change_indication_handler(driver, device, ib, response)
-  local component = device.profile.components["Activated-Carbon-Filter"]
+  local component = device.profile.components["activatedCarbonFilter"]
   if ib.data.value == clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.OK then
     device:emit_component_event(component, capabilities.filterStatus.filterStatus.normal())
   elseif ib.data.value == clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.WARNING then
@@ -172,17 +147,35 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
   end
 end
 
-local function set_fan_wind(driver, device, cmd)
-  if cmd.args.windMode == capabilities.windMode.windMode.sleepWind.NAME then
-    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.SLEEP_WIND))
-  elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
-    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.NATURAL_WIND))
+local function handle_fan_speed_percent(driver, device, cmd)
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.percent))
+end
+
+local function wind_support_handler(driver, device, ib, response)
+  local supportedFanWind = {}
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
+    table.insert(supportedFanWind, capabilities.windMode.windMode.sleepWind.NAME)
+  end
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
+    table.insert(supportedFanWind, capabilities.windMode.windMode.naturalWind.NAME)
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.supportedWindModes(supportedFanWind))
+end
+
+local function wind_setting_handler(driver, device, ib, response)
+  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.sleepWind())
+  elseif ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.naturalWind())
   end
 end
 
-local function handle_fan_speed_percent(driver, device, cmd)
-  log.info(string.format("handle fan speed percent: %s", utils.stringify_table(cmd)))
-  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), cmd.args.percent))
+local function set_fan_wind(driver, device, cmd)
+  if cmd.args.windMode == capabilities.windMode.windMode.sleepWind.NAME then
+    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.SLEEP_WIND))
+   elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
+    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.NATURAL_WIND))
+  end
 end
 
 local matter_driver_template = {
@@ -214,7 +207,7 @@ local matter_driver_template = {
       clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
-    [capabilities.windMode] = {
+    [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,
       clusters.FanControl.attributes.WindSetting
     },
@@ -234,15 +227,18 @@ local matter_driver_template = {
     [capabilities.airPurifierFanMode.ID] = {
       [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode
     },
-    -- [capabilities.windMode] = {
-    --   [capabilities.windMode.commands.setWindMode.NAME] = set_fan_wind
-    -- },
     [capabilities.fanSpeedPercent.ID] = {
       [capabilities.fanSpeedPercent.commands.setPercent.NAME] = handle_fan_speed_percent
-    }
+    },
+    [capabilities.windMode.ID] = {
+      [capabilities.windMode.commands.setWindMode.NAME] = set_fan_wind
+    },
   },
   supported_capabilities = {
-    capabilities.switch
+    capabilities.switch,
+    capabilities.airPurifierFanMode,
+    capabilities.fanSpeedPercent,
+    capabilities.windMode
   },
 }
 

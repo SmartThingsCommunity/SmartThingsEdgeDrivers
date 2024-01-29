@@ -8,15 +8,17 @@ components:
     version: 1
   - id: fanSpeedPercent
     version: 1
+  - id: windMode
+    version: 1
   - id: refresh
     version: 1
-- id: HEPA-Filter
+- id: hepaFilter
   capabilities:
   - id: filterState
     version: 1
   - id: filterStatus
     version: 1
-- id: Activated-Carbon-Filter
+- id: activatedCarbonFilter
   capabilities:
   - id: filterState
     version: 1
