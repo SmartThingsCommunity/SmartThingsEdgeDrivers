@@ -317,26 +317,9 @@ local devices = {
       dimmerPaddleControl = {parameter_number = 27, size = 1}
     }
   },
-  AEOTEC_HEAVY_DUTY_EU = {
+  AEOTEC_HEAVY_DUTY = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
-      product_types = 0x0003,
-      product_ids = 0x004E
-    },
-    PARAMETERS = AEOTEC_HEAVY_DUTY_SWITCH.PARAMETERS
-  },
-  AEOTEC_HEAVY_DUTY_US = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0086,
-      product_types = 0x0103,
-      product_ids = 0x004E
-    },
-    PARAMETERS = AEOTEC_HEAVY_DUTY_SWITCH.PARAMETERS
-  },
-  AEOTEC_HEAVY_DUTY_AU = {
-    MATCHING_MATRIX = {
-      mfrs = 0x0086,
-      product_types = 0x0203,
       product_ids = 0x004E
     },
     PARAMETERS = AEOTEC_HEAVY_DUTY_SWITCH.PARAMETERS

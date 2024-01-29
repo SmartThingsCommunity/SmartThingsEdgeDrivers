@@ -30,14 +30,12 @@ local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
 local FINGERPRINTS = {
-  { mfr = 0x0086, prod = 0x0103, model = 0x004E }, -- US
-  { mfr = 0x0086, prod = 0x0203, model = 0x004E }, -- AU
-  { mfr = 0x0086, prod = 0x0003, model = 0x004E }  -- EU
+  { mfr = 0x0086, model = 0x004E }
 }
 
 local function can_handle(opts, driver, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then return true end
+    if device:id_match(fingerprint.mfr, nil, fingerprint.model) then return true end
   end
   return false
 end
