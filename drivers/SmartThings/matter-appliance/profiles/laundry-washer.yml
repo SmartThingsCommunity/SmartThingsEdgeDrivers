@@ -10,7 +10,7 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
-  - id: washerOperatingState
+  - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
     version: 1

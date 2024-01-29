@@ -14,7 +14,7 @@ components:
     version: 1
   - id: temperatureAlarm
     version: 1
-  - id: dishwasherOperatingState
+  - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
     version: 1
