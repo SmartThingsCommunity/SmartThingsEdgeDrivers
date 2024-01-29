@@ -21,6 +21,8 @@ local utils = require "st.utils"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 
+local applianceOperatingStateId = "spacewonder52282.applianceOperatingState"
+local applianceOperatingState = capabilities[applianceOperatingStateId]
 local supportedTemperatureLevels = {}
 local dishwasherModeSupportedModes = {}
 
@@ -143,26 +145,31 @@ local function operational_state_attr_handler(driver, device, ib, response)
     string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.stop())
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingState.stopped())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.run())
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingState.running())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.pause())
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingState.paused())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.ERROR then
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingState.error())
   end
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
   -- TODO: Add error enum to dishwasherOperatingState
-  -- log.info_with({ hub_logs = true },
-  --   string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
-  -- local operationalError = ib.data.elements.error_state_id.value
-  -- if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
-  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.unableToStartOrResume())
-  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
-  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.unableToCompleteOperation())
-  -- elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
-  --   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dishwasherOperatingState.machineState.commandInvalidInState())
-  -- end
+  log.info_with({ hub_logs = true },
+    string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+
+  local operationalError = ib.data.elements.error_state_id.value
+  if operationalError == clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingError.noError())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingError.unableToStartOrResume())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingError.unableToCompleteOperation())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperatingState.operatingError.commandInvalidInState())
+  end
 end
 
 -- Capability Handlers --

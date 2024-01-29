@@ -19,6 +19,8 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+local applianceOperatingStateId = "spacewonder52282.applianceOperatingState"
+local applianceOperatingState = capabilities[applianceOperatingStateId]
 local supportedTemperatureLevels = {}
 
 local function device_init(driver, device)
@@ -123,7 +125,7 @@ local matter_driver_template = {
     [capabilities.temperatureSetpoint.ID] = {
       clusters.TemperatureControl.attributes.TemperatureSetpoint
     },
-    [capabilities.dishwasherOperatingState.ID] = {
+    [applianceOperatingStateId] = {
       clusters.OperationalState.attributes.OperationalState,
       clusters.OperationalState.attributes.OperationalError,
     },
@@ -142,10 +144,6 @@ local matter_driver_template = {
     [capabilities.laundryWasherRinseMode.ID] = {
       clusters.LaundryWasherControls.attributes.NumberOfRinses,
       clusters.LaundryWasherControls.attributes.SupportedRinses,
-    },
-    [capabilities.washerOperatingState.ID] = {
-      clusters.OperationalState.attributes.OperationalState,
-      clusters.OperationalState.attributes.OperationalError,
     },
     [capabilities.contactSensor.ID] = {
       clusters.DishwasherAlarm.attributes.State,
