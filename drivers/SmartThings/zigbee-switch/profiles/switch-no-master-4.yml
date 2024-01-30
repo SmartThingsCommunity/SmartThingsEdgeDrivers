@@ -1,4 +1,4 @@
-name: smartvill-switch-no-master-2
+name: switch-no-master-4
 components:
   - id: main
     capabilities:
@@ -20,4 +20,15 @@ components:
         version: 1
     categories:
       - name: Switch
-
+  - id: switch3
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch
+  - id: switch4
+    capabilities:
+      - id: switch
+        version: 1
+    categories:
+      - name: Switch

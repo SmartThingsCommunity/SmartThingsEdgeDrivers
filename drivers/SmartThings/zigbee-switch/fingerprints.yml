@@ -4,7 +4,7 @@ zigbeeManufacturer:
     deviceLabel: "SMARTvill SLA06"
     manufacturer: SMARTvill
     model: SLA06
-    deviceProfileName: smartvill-switch-no-master-6
+    deviceProfileName: switch-no-master-6
   - id: "SMARTvill/SLA05"
     deviceLabel: "SMARTvill SLA05"
     manufacturer: SMARTvill
@@ -14,17 +14,17 @@ zigbeeManufacturer:
     deviceLabel: "SMARTvill SLA04"
     manufacturer: SMARTvill
     model: SLA04
-    deviceProfileName: smartvill-switch-no-master-4
+    deviceProfileName: switch-no-master-4
   - id: "SMARTvill/SLA03"
     deviceLabel: "SMARTvill SLA03"
     manufacturer: SMARTvill
     model: SLA03
-    deviceProfileName: smartvill-switch-no-master-3
+    deviceProfileName: switch-no-master-3
   - id: "SMARTvill/SLA02"
     deviceLabel: "SMARTvill SLA02"
     manufacturer: SMARTvill
     model: SLA02
-    deviceProfileName: smartvill-switch-no-master-2
+    deviceProfileName: switch-no-master-2
   - id: "SMARTvill/SLA01"
     deviceLabel: SMARTvill SLA01
     manufacturer: SMARTvill
@@ -65,6 +65,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.plug.maeu01
     deviceProfileName: switch-power-energy-consumption-report-aqara
+  - id: "LUMI/lumi.plug.macn01"
+    deviceLabel: Aqara Smart Plug T1
+    manufacturer: LUMI
+    model: lumi.plug.macn01
+    deviceProfileName: switch-power-energy-consumption-report-aqara-t1
   - id: "LUMI/lumi.switch.b1laus01"
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
