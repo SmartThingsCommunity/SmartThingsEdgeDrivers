@@ -953,6 +953,12 @@ zwaveManufacturer:
     productId: 0x008D
     productType: 0x0002
     deviceProfileName: dual-metering-switch
+  - id: 1120/2/143
+    deviceLabel: Wave 1PM Mini
+    manufacturerId: 0x0460
+    productId: 0x008F
+    productType: 0x0002
+    deviceProfileName: metering-switch
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
