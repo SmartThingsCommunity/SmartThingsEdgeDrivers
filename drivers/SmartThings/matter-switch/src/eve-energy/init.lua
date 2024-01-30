@@ -204,7 +204,6 @@ local function initialize_switch(driver, device)
     end
   end
 
-  device:try_update_metadata({ profile = "power-energy-powerConsumption-only" })
   device:set_field(SWITCH_INITIALIZED, true)
 end
 
