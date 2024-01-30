@@ -64,6 +64,11 @@ local function zone_status_handler(driver, device, zone_status, zb_rx)
   end
 end
 
+local function do_init(driver, device)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+end
+
 local function added_handler(self, device)
   device:emit_event(capabilities.accelerationSensor.acceleration.inactive())
   device:refresh()
@@ -72,7 +77,8 @@ end
 local multi_sensor = {
   NAME = "Zigbee Multi Sensor",
   lifecycle_handlers = {
-    added = added_handler
+    added = added_handler,
+    init = do_init
   },
   zigbee_handlers = {
     global = {
