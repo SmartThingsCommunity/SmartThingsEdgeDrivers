@@ -26,6 +26,7 @@ local device_lib = require "st.device"
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local ON_OFF_STATES = "ON_OFF_STATES"
 
 local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
@@ -230,6 +231,22 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+local function on_off_state(device, endpoint)
+  local map = device:get_field(ON_OFF_STATES) or {}
+  if map[endpoint] then
+    return map[endpoint]
+  end
+
+  return false
+end
+
+local function set_on_off_state(device, endpoint, value)
+  local map = device:get_field(ON_OFF_STATES) or {}
+
+  map[endpoint] = value
+  device:set_field(ON_OFF_STATES, map)
+end
+
 
 -------------------------------------------------------------------------------------
 -- Device Management
@@ -298,16 +315,28 @@ end
 
 local function on_off_attr_handler(driver, device, ib, response)
   if ib.data.value then
+    set_on_off_state(device, ib.endpoint_id, true)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
 
-    -- the poll schedule is only needed for devices that support powerConsumption
-    if device:supports_capability(capabilities.powerConsumptionReport) then
-      create_poll_schedule(device)
-    end
+    -- If one of the outlet is on, we should create the poll to monitor the power consumption
+    create_poll_schedule(device)
   else
+    set_on_off_state(device, ib.endpoint_id, false)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
 
-    if device:supports_capability(capabilities.powerConsumptionReport) then
+    -- Detect if all the outlets are off
+    local shouldDeletePoll = true
+    local eps = device:get_endpoints(clusters.OnOff.ID)
+    for _, v in ipairs(eps) do
+      local isOutletOn = on_off_state(device, v)
+      if isOutletOn then
+        shouldDeletePoll = false
+        break
+      end
+    end
+
+    -- If all the outlet are off, we should delete the poll
+    if shouldDeletePoll then
       -- We want to prevent to read the power reports of the device if the device is off
       -- We set here the power to 0 before the read is skipped so that the power is correctly displayed and not using a stale value
       device:emit_event(capabilities.powerMeter.power({ value = 0, unit = "W" }))
