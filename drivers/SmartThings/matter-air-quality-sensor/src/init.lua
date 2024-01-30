@@ -84,6 +84,13 @@ local units_required = {
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement
 }
 
+local common_optional_clusters = {
+  clusters.RelativeHumidityMeasurement.ID,
+  clusters.CarbonDioxideConcentrationMeasurement.ID,
+  clusters.Pm25ConcentrationMeasurement.ID,
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID
+}
+
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -93,12 +100,37 @@ local function configure(driver, device)
   for _, cluster in ipairs(units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
+
+  -- check to see if device can switch to a more limited profile based on cluster support
+  local CO_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID)
+  local CO2_eps = device:get_endpoints(clusters.CarbonDioxideConcentrationMeasurement.ID)
+  local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local NO2_eps = device:get_endpoints(clusters.NitrogenDioxideConcentrationMeasurement.ID)
+  local ozone_eps = device:get_endpoints(clusters.OzoneConcentrationMeasurement.ID)
+  local formaldehyde_eps = device:get_endpoints(clusters.FormaldehydeConcentrationMeasurement.ID)
+  local pm1_eps = device:get_endpoints(clusters.Pm1ConcentrationMeasurement.ID)
+  local pm2_5_eps = device:get_endpoints(clusters.Pm25ConcentrationMeasurement.ID)
+  local pm10_eps = device:get_endpoints(clusters.Pm10ConcentrationMeasurement.ID)
+  local radon_eps = device:get_endpoints(clusters.RadonConcentrationMeasurement.ID)
+  local tvoc_eps = device:get_endpoints(clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID)
+
+  -- check to see if device can switch to a profile with less capabilities to support
+  if #CO_eps > 0 or #NO2_eps > 0 or #ozone_eps > 0 or #formaldehyde_eps > 0 or #pm1_eps > 0 or
+     #pm10_eps > 0 or #radon_eps > 0 then
+      -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
+      device:try_update_metadata({profile = "air-quality-sensor"})
+  elseif #humidity_eps > 0 or #temp_eps > 0 or #CO2_eps > 0 or #pm2_5_eps > 0 or #tvoc_eps > 0 then
+    -- device supports one or more of the common clusters, so switch to a more limited profile
+    device:try_update_metadata({profile = "air-quality-sensor-common"})
+  else
+    -- device only supports air quality at this point
+    device:try_update_metadata({profile = "air-quality-sensor-AQI-only"})
+  end
 end
 
 local function store_unit_factory(capability_name)
   return function(driver, device, ib, response)
-    log.info_with( {hub_logs = true}, string.format("CHT: store unit factory called with name %s, and value %s", capability_name.."_unit", ib.data.value))
-
     device:set_field(capability_name.."_unit", ib.data.value, {persist = true})
   end
 end
