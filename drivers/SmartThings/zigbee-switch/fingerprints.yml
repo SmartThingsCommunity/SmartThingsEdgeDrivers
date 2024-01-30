@@ -9,7 +9,7 @@ zigbeeManufacturer:
     deviceLabel: "SMARTvill SLA05"
     manufacturer: SMARTvill
     model: SLA05
-    deviceProfileName: smartvill-switch-no-master-5
+    deviceProfileName: switch-no-master-5
   - id: "SMARTvill/SLA04"
     deviceLabel: "SMARTvill SLA04"
     manufacturer: SMARTvill
