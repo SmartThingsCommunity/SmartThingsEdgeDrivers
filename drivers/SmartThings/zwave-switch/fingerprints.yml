@@ -898,6 +898,19 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+#Shelly/Qubino
+  - id: 1120/2/137
+    deviceLabel: Wave Plug UK
+    manufacturerId: 0x0460
+    productId: 0x0089
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/136
+    deviceLabel: Wave Plug US
+    manufacturerId: 0x0460
+    productId: 0x0088
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
