@@ -18,12 +18,47 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+local pumpOperationModeId = "insideimage13541.pumpOperationMode2"
+local pumpOperationMode = capabilities[pumpOperationModeId]
+local pumpControlModeId = "insideimage13541.pumpControlMode"
+local pumpControlMode = capabilities[pumpControlModeId]
+
+local PUMP_OPERATION_MODE_MAP = {
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.operationMode.Normal,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.operationMode.Minimum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.operationMode.Maximum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = pumpOperationMode.operationMode.Local,
+}
+
+local PUMP_CURRENT_OPERATION_MODE_MAP = {
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.currentOperationMode.Normal,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.currentOperationMode.Minimum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.currentOperationMode.Maximum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = pumpOperationMode.operationMode.Local,
+}
+
+local PUMP_CONTROL_MODE_MAP = {
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_SPEED]         = pumpControlMode.controlMode.constantspeed,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_PRESSURE]      = pumpControlMode.controlMode.constantpressure,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.PROPORTIONAL_PRESSURE]  = pumpControlMode.controlMode.proportionalpressure,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_FLOW]          = pumpControlMode.controlMode.constantflow,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_TEMPERATURE]   = pumpControlMode.controlMode.constanttemperature,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.AUTOMATIC]              = pumpControlMode.controlMode.automatic,
+}
+
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff,
   },
   [capabilities.switchLevel.ID] = {
     clusters.LevelControl.attributes.CurrentLevel
+  },
+  [pumpOperationModeId]={
+    clusters.PumpConfigurationAndControl.attributes.OperationMode,
+    clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode,
+  },
+  [pumpControlModeId]={
+    clusters.PumpConfigurationAndControl.attributes.EffectiveControlMode,
   },
 }
 
@@ -67,10 +102,17 @@ end
 
 local function do_configure(driver, device)
   local pump_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID)
+  local prsconst_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_PRESSURE})
+  local prscomp_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.COMPENSATED_PRESSURE})
+  local flw_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_FLOW})
+  local spd_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_SPEED})
+  local temp_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_TEMPERATURE})
+  local auto_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.AUTOMATIC})
+  local local_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.LOCAL_OPERATION})
   local level_eps = device:get_endpoints(clusters.LevelControl.ID)
   local profile_name = "pump"
   if #pump_eps == 1 then
-    if #pump_eps > 0 then
+    if #level_eps > 0 then
       profile_name = profile_name .. "-level"
     end
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
@@ -78,6 +120,35 @@ local function do_configure(driver, device)
   else
     log.warn_with({hub_logs=true}, "Device does not support pump configuration and control cluster")
   end
+
+  local supported_op_modes = {pumpOperationMode.operationMode.Normal.NAME}
+  local supported_control_modes = {}
+  if #prsconst_eps > 0 then
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantpressure.NAME)
+  end
+  if #prscomp_eps > 0 then
+    table.insert(supported_control_modes, pumpControlMode.controlMode.proportionalpressure.NAME)
+  end
+  if #spd_eps > 0 then
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.Minimum.NAME)
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.Maximum.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantspeed.NAME)
+  end
+  if #flw_eps > 0 then
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantflow.NAME)
+  end
+  if #temp_eps > 0 then
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constanttemperature.NAME)
+  end
+  if #auto_eps > 0 then
+    table.insert(supported_control_modes, pumpControlMode.controlMode.automatic.NAME)
+  end
+  if #local_eps > 0 then
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.Local.NAME)
+  end
+
+  device:emit_event_for_endpoint(pump_eps, pumpOperationMode.supportedOperationModes(supported_op_modes))
+  device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
 end
 
 -- Matter Handlers --
@@ -96,6 +167,18 @@ local function level_attr_handler(driver, device, ib, response)
   end
 end
 
+local function operation_mode_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, PUMP_OPERATION_MODE_MAP[ib.data.value]())
+end
+
+local function effective_operation_mode_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, PUMP_CURRENT_OPERATION_MODE_MAP[ib.data.value]())
+end
+
+local function effective_control_mode_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, PUMP_CONTROL_MODE_MAP[ib.data.value]())
+end
+
 -- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
@@ -111,9 +194,22 @@ end
 
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
+  local level = math.floor(cmd.args.level / 100.0 * 254)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
   device:send(req)
+end
+
+local function set_operation_mode(driver, device, cmd)
+  local mode_id = nil
+  for id, mode in pairs(PUMP_OPERATION_MODE_MAP) do
+    if mode.NAME == cmd.args.operationMode then
+      mode_id = id
+      break
+    end
+  end
+  if mode_id then
+    device:send(clusters.PumpConfigurationAndControl.attributes.OperationMode:write(device, device:component_to_endpoint(cmd.component), mode_id))
+  end
 end
 
 local matter_driver_template = {
@@ -130,17 +226,15 @@ local matter_driver_template = {
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler
       },
+      [clusters.PumpConfigurationAndControl.ID] = {
+        [clusters.PumpConfigurationAndControl.attributes.OperationMode.ID] = operation_mode_handler,
+        [clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode.ID] = effective_operation_mode_handler,
+        [clusters.PumpConfigurationAndControl.attributes.EffectiveControlMode.ID] = effective_control_mode_handler,
+      },
     },
     fallback = matter_handler,
   },
-  subscribed_attributes = {
-    [capabilities.switch.ID] = {
-      clusters.OnOff.attributes.OnOff,
-    },
-    [capabilities.switchLevel.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel
-    },
-  },
+  subscribed_attributes = subscribed_attributes,
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
@@ -149,10 +243,15 @@ local matter_driver_template = {
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_level,
     },
+    [pumpOperationModeId] = {
+      [pumpOperationMode.commands.setOperationMode.NAME] = set_operation_mode,
+    },
   },
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
+    pumpOperationMode,
+    pumpControlMode,
   },
 }
 
