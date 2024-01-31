@@ -21,7 +21,26 @@ local log = require "log"
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 
+local function match_profile(device)
+  local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
+  local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
+
+  local profile_name = "smoke-co-battery" -- Fallback to largest profile
+
+  if #smoke_eps > 0 and #co_eps == 0 then
+    -- Device supports smoke but not CO alarm
+    profile_name = "smoke-battery"
+  end
+  -- TODO: Add the elseif arm with CO but not smoke, and possibly 
+  -- other combinations without battery, CO detection vs concentration etc as devices show up
+
+  device:try_update_metadata({profile = profile_name})
+  -- TODO: Persist the "profile_matched" field in driver datastore
+end
+
 local function device_init(driver, device)
+  -- TODO: Check the "profile_matched" field in driver datastore
+  match_profile(device)
   device:subscribe()
 end
 
@@ -65,12 +84,19 @@ local function bool_handler_factory(trueEvent, falseEvent)
 end
 
 local function test_in_progress_event_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.tested())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  if device:supports_capability(capabilities.smokeDetector) then
+    if ib.data.value then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.tested())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
+    end
+  end
+  if device:supports_capability(capabilities.carbonMonoxideDetector) then
+    if ib.data.value then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+    end
   end
 end
 
