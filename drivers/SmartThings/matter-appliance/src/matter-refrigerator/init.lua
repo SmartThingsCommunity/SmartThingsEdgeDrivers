@@ -200,7 +200,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local ep = component_to_endpoint(device, cmd.component)
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, cmd.args.setpoint, nil))
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils:round(cmd.args.setpoint * 100), nil))
 end
 
 local matter_refrigerator_handler = {
