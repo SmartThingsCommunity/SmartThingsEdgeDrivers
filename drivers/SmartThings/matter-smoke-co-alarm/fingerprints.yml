@@ -3,7 +3,7 @@ matterManufacturer:
     deviceLabel: Samsung Matter Smoke/CO Alarm
     vendorId: 0x10e1
     productId: 0x1027
-    deviceProfileName: smoke-co-alarm
+    deviceProfileName: smoke-co-battery
 
 matterGeneric:
   - id: "matter/smoke-co-alarm"
