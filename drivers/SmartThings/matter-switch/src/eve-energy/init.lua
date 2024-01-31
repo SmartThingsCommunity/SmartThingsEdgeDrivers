@@ -251,18 +251,20 @@ end
 -------------------------------------------------------------------------------------
 
 local function device_init(driver, device)
-  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
-      not device:get_field(SWITCH_INITIALIZED) then
-    -- create child devices as needed for multi-switch devices
-    initialize_switch(driver, device)
-  end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_find_child(find_child)
-  device:subscribe()
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
+        not device:get_field(SWITCH_INITIALIZED) then
+      -- create child devices as needed for multi-switch devices
+      initialize_switch(driver, device)
+    end
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_find_child(find_child)
+    device:subscribe()
 
-  create_poll_schedule(device)
-  create_poll_report_schedule(device)
+    create_poll_schedule(device)
+    create_poll_report_schedule(device)
+  end
 end
 
 local function device_added(driver, device)
