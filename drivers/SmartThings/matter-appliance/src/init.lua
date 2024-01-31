@@ -38,9 +38,11 @@ end
 
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
-    string.format("temperature_setpoint_attr_handler: %s", ib.data.value))
+    string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = ib.data.value, unit = "C"}))
+  local temp = ib.data.value / 100.0
+  local unit = "C"
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
 end
 
 -- TODO Create temperatureLevel
@@ -87,7 +89,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local ENDPOINT = 1
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, cmd.args.setpoint, nil))
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, utils:round(cmd.args.setpoint * 100), nil))
 end
 
 -- TODO Create temperatureLevel
