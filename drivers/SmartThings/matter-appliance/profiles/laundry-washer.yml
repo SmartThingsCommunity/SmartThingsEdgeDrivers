@@ -10,6 +10,10 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
+    config:
+      values:
+        - key: "temperatureSetpoint.value"
+          range: [ 0, 100 ]
   - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh

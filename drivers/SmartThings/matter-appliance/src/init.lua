@@ -15,9 +15,15 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 
 local log = require "log"
 local utils = require "st.utils"
+
+local setpoint_limit_device_field = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP",
+}
 
 local applianceOperatingStateId = "spacewonder52282.applianceOperatingState"
 local applianceOperatingState = capabilities[applianceOperatingStateId]
@@ -25,6 +31,24 @@ local supportedTemperatureLevels = {}
 
 local function device_init(driver, device)
   device:subscribe()
+end
+
+local function do_configure(driver, device)
+  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+
+  --Query setpoint limits if needed
+  local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  if #tn_eps ~= 0 then
+    if device:get_field(setpoint_limit_device_field.MIN_TEMP) == nil then
+      setpoint_limit_read:merge(clusters.TemperatureControl.attributes.MinTemperature:read())
+    end
+    if device:get_field(setpoint_limit_device_field.MAX_TEMP) == nil then
+      setpoint_limit_read:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+    end
+  end
+  if #setpoint_limit_read.info_blocks ~= 0 then
+    device:send(setpoint_limit_read)
+  end
 end
 
 -- Matter Handlers --
@@ -40,9 +64,31 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
-  local temp = ib.data.value / 100.0
+  local min = device:get_field(setpoint_limit_device_field.MIN_TEMP) or 0
+  local max = device:get_field(setpoint_limit_device_field.MAX_TEMP) or 100
   local unit = "C"
+  local range = {
+    minimum = {
+      value = min,
+      unit = unit
+    },
+    maximum = {
+      value = max,
+      unit = unit
+    }
+  }
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
+
+  local temp = ib.data.value / 100.0
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
+end
+
+local function setpoint_limit_handler(limit_field)
+  return function(driver, device, ib, response)
+    local val = ib.data.value / 100.0
+    log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
+    device:set_field(limit_field, val, { persist = true })
+  end
 end
 
 -- TODO Create temperatureLevel
@@ -88,8 +134,25 @@ local function handle_temperature_setpoint(driver, device, cmd)
   log.info_with({ hub_logs = true },
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
+  local value = cmd.args.setpoint
+  local cached_temp_val, temp_setpoint = device:get_latest_state(
+    cmd.component, capabilities.temperatureSetpoint.ID,
+    capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
+    0, { value = 0, unit = "C" }
+  )
+  local min = device:get_field(setpoint_limit_device_field.MIN_TEMP) or 0
+  local max = device:get_field(setpoint_limit_device_field.MAX_TEMP) or 100
+  if value < min or value > max then
+    log.warn(string.format(
+      "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
+      value, min, max
+    ))
+    device:emit_event(capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
+    return
+  end
+
   local ENDPOINT = 1
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, utils:round(cmd.args.setpoint * 100), nil))
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, utils.round(value * 100.0), nil))
 end
 
 -- TODO Create temperatureLevel
@@ -109,6 +172,7 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    doConfigure = do_configure,
   },
   matter_handlers = {
     attr = {
@@ -117,6 +181,8 @@ local matter_driver_template = {
       },
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_TEMP),
       },
     }
   },

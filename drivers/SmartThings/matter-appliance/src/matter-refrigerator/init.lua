@@ -22,6 +22,11 @@ local utils = require "st.utils"
 local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
 
+local setpoint_limit_device_field = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP",
+}
+
 local endpointToComponentMap = {}
 local endpointToComponentTLMap = {}
 local supportedTemperatureLevelsMap = {}
@@ -85,6 +90,40 @@ local function is_matter_refrigerator(opts, driver, device)
     end
   end
   return false
+end
+
+local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
+
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+  local min = device:get_field(min_field) or 0
+  local max = device:get_field(max_field) or 100
+  local unit = "C"
+  local range = {
+    minimum = {
+      value = min,
+      unit = unit
+    },
+    maximum = {
+      value = max,
+      unit = unit
+    }
+  }
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
+
+  local temp = ib.data.value / 100.0
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
+end
+
+local function setpoint_limit_handler(limit_field)
+  return function(driver, device, ib, response)
+    local field = string.format("%s-%d", limit_field, ib.endpoint_id)
+    local val = ib.data.value / 100.0
+    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device:set_field(field, val, { persist = true })
+  end
 end
 
 -- TODO Create temperatureLevel
@@ -199,8 +238,28 @@ local function handle_temperature_setpoint(driver, device, cmd)
   log.info_with({ hub_logs = true },
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
+  local value = cmd.args.setpoint
+  local cached_temp_val, temp_setpoint = device:get_latest_state(
+    cmd.component, capabilities.temperatureSetpoint.ID,
+    capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
+    0, { value = 0, unit = "C" }
+  )
   local ep = component_to_endpoint(device, cmd.component)
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils:round(cmd.args.setpoint * 100), nil))
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
+  local min = device:get_field(min_field) or 0
+  local max = device:get_field(max_field) or 100
+  if value < min or value > max then
+    log.warn(string.format(
+      "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
+      value, min, max
+    ))
+    device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
+    return
+  end
+  
+  local ep = component_to_endpoint(device, cmd.component)
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
 local matter_refrigerator_handler = {
@@ -212,6 +271,9 @@ local matter_refrigerator_handler = {
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_TEMP),
         [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
         [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
       },
