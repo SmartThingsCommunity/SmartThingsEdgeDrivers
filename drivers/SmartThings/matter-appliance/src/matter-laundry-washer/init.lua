@@ -109,7 +109,7 @@ end
 local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
   laundryWasherControlsSpinSpeeds = {}
   for _, spinSpeed in ipairs(ib.data.elements) do
-    table.insert(laundryWasherControlsSpinSpeeds, spinSpeed)
+    table.insert(laundryWasherControlsSpinSpeeds, spinSpeed.value)
   end
   -- TODO: Create laundryWasherSpinSpeed
   -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
