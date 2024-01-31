@@ -1,32 +1,32 @@
 zigbeeManufacturer:
   #HANSSEM SMART SWITCH
   - id: "SMARTvill/SLA06"
-    deviceLabel: "SMARTvill SLA06"
+    deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
     model: SLA06
-    deviceProfileName: switch-no-master-6
+    deviceProfileName: basic-switch
   - id: "SMARTvill/SLA05"
-    deviceLabel: "SMARTvill SLA05"
+    deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
     model: SLA05
-    deviceProfileName: switch-no-master-5
+    deviceProfileName: basic-switch
   - id: "SMARTvill/SLA04"
-    deviceLabel: "SMARTvill SLA04"
+    deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
     model: SLA04
-    deviceProfileName: switch-no-master-4
+    deviceProfileName: basic-switch
   - id: "SMARTvill/SLA03"
-    deviceLabel: "SMARTvill SLA03"
+    deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
     model: SLA03
-    deviceProfileName: switch-no-master-3
+    deviceProfileName: basic-switch
   - id: "SMARTvill/SLA02"
-    deviceLabel: "SMARTvill SLA02"
+    deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
     model: SLA02
-    deviceProfileName: switch-no-master-2
+    deviceProfileName: basic-switch
   - id: "SMARTvill/SLA01"
-    deviceLabel: SMARTvill SLA01
+    deviceLabel: SMARTvill Switch 1
     manufacturer: SMARTvill
     model: SLA01
     deviceProfileName: basic-switch
