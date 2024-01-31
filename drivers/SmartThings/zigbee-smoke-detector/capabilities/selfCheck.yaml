@@ -18,19 +18,6 @@ attributes:
       required:
         - value
     setter: setSelfCheckState
-  supportedSelfCheckState:
-    schema:
-      type: object
-      additionalProperties: false
-      properties:
-        value:
-          type: array
-          items:
-            type: string
-            enum:
-              - idle
-              - selfChecking
-              - selfCheckCompleted
 commands:
   setSelfCheckState:
     name: setSelfCheckState
