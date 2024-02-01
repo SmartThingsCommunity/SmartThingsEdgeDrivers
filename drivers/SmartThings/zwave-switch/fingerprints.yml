@@ -917,12 +917,6 @@ zwaveManufacturer:
     productId: 0x0081
     productType: 0x0002
     deviceProfileName: dual-metering-switch
-  - id: 1120/2/131
-    deviceLabel: Wave 1
-    manufacturerId: 0x0460
-    productId: 0x0083
-    productType: 0x0002
-    deviceProfileName: switch-binary-indicator
   - id: 1120/2/132
     deviceLabel: Wave 1PM
     manufacturerId: 0x0460
@@ -953,12 +947,6 @@ zwaveManufacturer:
     productId: 0x008D
     productType: 0x0002
     deviceProfileName: dual-metering-switch
-  - id: 1120/2/142
-    deviceLabel: Wave 1 Mini
-    manufacturerId: 0x0460
-    productId: 0x008E
-    productType: 0x0002
-    deviceProfileName: switch-binary
   - id: 1120/2/143
     deviceLabel: Wave 1PM Mini
     manufacturerId: 0x0460
