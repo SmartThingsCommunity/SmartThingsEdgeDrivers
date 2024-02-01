@@ -5,9 +5,16 @@ matterGeneric:
       - id: 0x002C
     deviceProfileName: air-quality-sensor
   - id: "matter/air-quality-tuo"
-    deviceLabel: Matter Air Quality Sensor
+    deviceLabel: Tuo Air Quality
     deviceTypes:
       - id: 0x002C # Air Quality
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0305 # Pressure Sensor
+    deviceProfileName: air-quality-tuo
+  - id: "matter/temp-tuo"
+    deviceLabel: Tuo Temp Sensor
+    deviceTypes:
       - id: 0x0307 # Humidity Sensor
       - id: 0x0302 # Temperature Sensor
       - id: 0x0305 # Pressure Sensor
