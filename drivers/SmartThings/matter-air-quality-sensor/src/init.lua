@@ -125,7 +125,7 @@ local function configure(driver, device)
     device:try_update_metadata({profile = "air-quality-sensor-common"})
   else
     -- device only supports air quality at this point
-    device:try_update_metadata({profile = "air-quality-sensor-AQI-only"})
+    --device:try_update_metadata({profile = "air-quality-sensor-AQI-only"})
   end
 end
 
@@ -258,6 +258,11 @@ local function humidity_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
 end
 
+local function pressure_attr_handler(driver, device, ib, response)
+  local pressure = utils.round(ib.data.value / 10.0)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.atmosphericPressureMeasurement.atmosphericPressure(pressure))
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -274,6 +279,9 @@ local matter_driver_template = {
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      },
+      [clusters.PressureMeasurement.ID] = {
+        [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonMonoxideMeasurement.NAME, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel, units.PPM),
