@@ -4,7 +4,7 @@ matterGeneric:
     deviceTypes:
       - id: 0x002C
     deviceProfileName: air-quality-sensor
-  - id: "matter/air-quality-sensor"
+  - id: "matter/air-quality-tuo"
     deviceLabel: Matter Air Quality Sensor
     deviceTypes:
       - id: 0x002C # Air Quality
