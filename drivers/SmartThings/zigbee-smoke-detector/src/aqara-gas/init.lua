@@ -18,7 +18,7 @@ local capabilities = require "st.capabilities"
 local sensitivityAdjustment = capabilities["stse.sensitivityAdjustment"]
 local sensitivityAdjustmentCommandName = "setSensitivityAdjustment"
 local selfCheck = capabilities["stse.selfCheck"]
-local setSelfCheckStateCommandName = "setSelfCheckState"
+local startSelfCheckCommandName  = "startSelfCheck"
 local lifeTimeReport = capabilities["stse.lifeTimeReport"]
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
@@ -168,7 +168,7 @@ local aqara_gas_detector_handler = {
       [sensitivityAdjustmentCommandName] = sensitivity_adjustment_capability_handler
     },
     [selfCheck.ID] = {
-      [setSelfCheckStateCommandName] = self_check_attr_handler
+      [startSelfCheckCommandName] = self_check_attr_handler
     },
   },
   can_handle = is_aqara_products

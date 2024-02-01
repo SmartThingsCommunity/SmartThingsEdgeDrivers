@@ -152,7 +152,7 @@ test.register_coroutine_test(
   "Capability on command should be handled : device selfCheck",
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = selfCheckId, component = "main", command = "setSelfCheckState", args = {state = "selfCheckCompleted"} } })
+      { capability = selfCheckId, component = "main", command = "startSelfCheck", args = {state = "selfCheckCompleted"} } })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",selfCheck.selfCheckState.selfChecking()))
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
