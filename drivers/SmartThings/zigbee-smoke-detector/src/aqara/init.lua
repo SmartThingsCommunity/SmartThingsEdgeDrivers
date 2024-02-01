@@ -16,7 +16,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local capabilities = require "st.capabilities"
-local log = require "log"
 
 
 local selfCheck = capabilities["stse.selfCheck"]
@@ -94,7 +93,6 @@ end
 
 
 local function self_check_attr_handler(self, device, zone_status, zb_rx)
-  log.debug("Enter selfcheck_handler")
   device:emit_event(selfCheck.selfCheckState.selfChecking())
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true))
