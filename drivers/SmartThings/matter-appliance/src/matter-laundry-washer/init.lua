@@ -92,6 +92,7 @@ end
 local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
   laundryWasherModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
+    log.info(string.format("Inserting supported washer mode: %s", mode.elements.label.value))
     table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
   end
   -- TODO: Create laundryWasherSpinSpeed
@@ -111,14 +112,16 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
       -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       local component = device.profile.components["main"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
-      break
+      return
     end
   end
+  log.warn(string.format("Washer mode %s not found in supported washer modes", spinSpeed.value))
 end
 
 local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
   laundryWasherControlsSpinSpeeds = {}
   for _, spinSpeed in ipairs(ib.data.elements) do
+    log.info(string.format("Inserting supported spin speed mode: %s", spinSpeed.value))
     table.insert(laundryWasherControlsSpinSpeeds, spinSpeed.value)
   end
   -- TODO: Create laundryWasherSpinSpeed
@@ -138,9 +141,10 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
       -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
       local component = device.profile.components["laundryWasherSpinSpeed"]
       device:emit_component_event(component, capabilities.mode.mode(spinSpeed))
-      break
+      return
     end
   end
+  log.warn(string.format("Spin speed %s not found in supported speed modes", spinSpeed.value))
 end
 
 local function laundry_washer_controls_number_of_rinses_attr_handler(driver, device, ib, response)
