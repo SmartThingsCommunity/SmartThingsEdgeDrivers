@@ -1,5 +1,5 @@
 zigbeeManufacturer:
-  #HANSSEM SMART SWITCH
+  #SMARTvill
   - id: "SMARTvill/SLA06"
     deviceLabel: "SMARTvill Switch 1"
     manufacturer: SMARTvill
@@ -30,6 +30,7 @@ zigbeeManufacturer:
     manufacturer: SMARTvill
     model: SLA01
     deviceProfileName: basic-switch
+  #HANSSEM SMART SWITCH
   - id: "Winners/LSS1-101"
     deviceLabel: HS Switch 1(1 way)
     manufacturer: Winners
