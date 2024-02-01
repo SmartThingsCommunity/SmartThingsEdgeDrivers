@@ -1,0 +1,75 @@
+name: Appliance Operational State
+id: spacewonder52282.applianceOperationalState
+version: 1
+status: proposed
+
+attributes:
+  operatingState:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          enum:
+            - stopped
+            - running
+            - paused
+            - error
+      required:
+      - value
+    setter: setOperatingState
+  supportedOperatingStates:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - stopped
+              - running
+              - paused
+              - error
+  operatingError:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          enum:
+            - noError
+            - unableToStartOrResume
+            - unableToCompleteOperation
+            - commandInvalidInState
+      required:
+      - value
+  supportedOperatingErrors:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - noError
+              - unableToStartOrResume
+              - unableToCompleteOperation
+              - commandInvalidInState
+commands:
+  setOperatingState:
+    arguments:
+    - name: state
+      schema:
+        type: string
+        enum:
+          - stopped
+          - running
+          - paused
+      optional: false
+    name: setOperatingState
