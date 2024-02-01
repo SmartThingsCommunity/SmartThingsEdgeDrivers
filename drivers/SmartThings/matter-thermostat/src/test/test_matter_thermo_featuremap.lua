@@ -37,7 +37,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = 1,
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {
           cluster_id = clusters.Thermostat.ID,
           cluster_revision=5,
@@ -70,7 +70,7 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {
           cluster_id = clusters.Thermostat.ID,
           cluster_revision=5,
