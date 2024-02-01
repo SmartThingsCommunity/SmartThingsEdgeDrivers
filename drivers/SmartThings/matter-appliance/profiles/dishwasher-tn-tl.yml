@@ -1,9 +1,15 @@
-name: dishwasher
+name: dishwasher-tn-tl
 components:
 - id: main
   capabilities:
   - id: switch
     version: 1
+  - id: temperatureSetpoint
+    version: 1
+    config:
+      values:
+        - key: "temperatureSetpoint.value"
+          range: [ 0, 100 ]
   - id: mode
     version: 1
   - id: waterFlowAlarm
@@ -15,6 +21,12 @@ components:
   - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: Dishwasher
+- id: temperatureLevel
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Dishwasher

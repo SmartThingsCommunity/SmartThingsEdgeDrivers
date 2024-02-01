@@ -44,6 +44,11 @@ end
 
 -- TODO Create temperatureLevel
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  if #tl_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
@@ -59,6 +64,11 @@ end
 
 -- TODO Create temperatureLevel
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  if #tl_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 

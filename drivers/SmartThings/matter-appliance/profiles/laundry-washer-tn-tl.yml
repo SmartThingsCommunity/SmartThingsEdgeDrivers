@@ -1,4 +1,4 @@
-name: laundry-washer
+name: laundry-washer-tn-tl
 components:
 - id: main
   capabilities:
@@ -8,9 +8,21 @@ components:
     version: 1
   - id: laundryWasherRinseMode
     version: 1
+  - id: temperatureSetpoint
+    version: 1
+    config:
+      values:
+        - key: "temperatureSetpoint.value"
+          range: [ 0, 100 ]
   - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: Washer
+- id: temperatureLevel
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Washer

@@ -1,4 +1,4 @@
-name: laundry-washer
+name: laundry-washer-tl
 components:
 - id: main
   capabilities:
@@ -11,6 +11,12 @@ components:
   - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: Washer
+- id: temperatureLevel
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Washer

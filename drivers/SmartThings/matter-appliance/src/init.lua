@@ -20,6 +20,10 @@ local im = require "st.matter.interaction_model"
 local log = require "log"
 local utils = require "st.utils"
 
+local dishwasher = require("matter-dishwasher")
+local laundryWasher = require("matter-laundry-washer")
+local refrigerator = require("matter-refrigerator")
+
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",
@@ -35,6 +39,43 @@ end
 
 local function do_configure(driver, device)
   local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  if dishwasher.can_handle({}, driver, device) then
+    local profile_name = "dishwasher"
+    if #tn_eps > 0 and #tl_eps > 0 then
+      profile_name = profile_name .. "-tn" .. "-tl"
+    elseif #tn_eps > 0 then
+      profile_name = profile_name .. "-tn"
+    elseif #tl_eps > 0 then
+      profile_name = profile_name .. "-tl"
+    end
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  elseif laundryWasher.can_handle({}, driver, device) then
+    local profile_name = "laundry-washer"
+    if #tn_eps > 0 and #tl_eps > 0 then
+      profile_name = profile_name .. "-tn" .. "-tl"
+    elseif #tn_eps > 0 then
+      profile_name = profile_name .. "-tn"
+    elseif #tl_eps > 0 then
+      profile_name = profile_name .. "-tl"
+    end
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  elseif refrigerator.can_handle({}, driver, device) then
+    local profile_name = "refrigerator"
+    -- if #tn_eps > 0 and #tl_eps > 0 then
+    --   profile_name = profile_name .. "-tn" .. "-tl"
+    -- elseif #tn_eps > 0 then
+    --   profile_name = profile_name .. "-tn"
+    -- elseif #tl_eps > 0 then
+    --   profile_name = profile_name .. "-tl"
+    -- end
+    -- log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    -- device:try_update_metadata({profile = profile_name})
+  else
+    log.warn_with({hub_logs=true}, "Device has not sub driver")
+  end
 
   --Query setpoint limits if needed
   local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -61,6 +102,11 @@ local function on_off_attr_handler(driver, device, ib, response)
 end
 
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  if #tn_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
@@ -85,6 +131,11 @@ end
 
 local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
+    local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+    if #tn_eps == 0 then
+      log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      return
+    end
     local val = ib.data.value / 100.0
     log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
     device:set_field(limit_field, val, { persist = true })
@@ -131,6 +182,11 @@ local function handle_switch_off(driver, device, cmd)
 end
 
 local function handle_temperature_setpoint(driver, device, cmd)
+  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  if #tn_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
@@ -191,7 +247,9 @@ local matter_driver_template = {
       clusters.OnOff.attributes.OnOff
     },
     [capabilities.temperatureSetpoint.ID] = {
-      clusters.TemperatureControl.attributes.TemperatureSetpoint
+      clusters.TemperatureControl.attributes.TemperatureSetpoint,
+      clusters.TemperatureControl.attributes.MinTemperature,
+      clusters.TemperatureControl.attributes.MaxTemperature,
     },
     [applianceOperatingStateId] = {
       clusters.OperationalState.attributes.OperationalState,
@@ -236,10 +294,21 @@ local matter_driver_template = {
       [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
     },
   },
+  supported_capabilities = {
+    capabilities.switch,
+    capabilities.temperatureSetpoint,
+    applianceOperatingStateId,
+    capabilities.mode,
+    capabilities.laundryWasherRinseMode,
+    capabilities.contactSensor,
+    capabilities.temperatureMeasurement,
+    capabilities.waterFlowAlarm,
+    capabilities.temperatureAlarm,
+  },
   sub_drivers = {
-    require("matter-dishwasher"),
-    require("matter-laundry-washer"),
-    require("matter-refrigerator"),
+    dishwasher,
+    laundryWasher,
+    refrigerator
   }
 }
 

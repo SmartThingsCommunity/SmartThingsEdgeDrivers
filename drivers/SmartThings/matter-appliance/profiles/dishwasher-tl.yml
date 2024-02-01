@@ -1,4 +1,4 @@
-name: laundry-washer
+name: dishwasher-tl
 components:
 - id: main
   capabilities:
@@ -6,17 +6,21 @@ components:
     version: 1
   - id: mode
     version: 1
-  - id: laundryWasherRinseMode
+  - id: waterFlowAlarm
+    version: 1
+  - id: contactSensor
+    version: 1
+  - id: temperatureAlarm
     version: 1
   - id: spacewonder52282.applianceOperatingState
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: Washer
-- id: laundryWasherSpinSpeed
+  - name: Dishwasher
+- id: temperatureLevel
   capabilities:
   - id: mode
     version: 1
   categories:
-  - name: Washer
+  - name: Dishwasher

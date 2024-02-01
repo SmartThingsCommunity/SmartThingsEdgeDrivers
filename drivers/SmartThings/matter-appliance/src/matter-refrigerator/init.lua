@@ -93,6 +93,11 @@ local function is_matter_refrigerator(opts, driver, device)
 end
 
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  if #tn_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
@@ -119,6 +124,11 @@ end
 
 local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
+    local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+    if #tn_eps == 0 then
+      log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      return
+    end
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
     log.info("Setting " .. field .. " to " .. string.format("%s", val))
@@ -128,6 +138,11 @@ end
 
 -- TODO Create temperatureLevel
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  if #tl_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
@@ -144,6 +159,11 @@ end
 
 -- TODO Create temperatureLevel
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  if #tl_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
@@ -235,6 +255,11 @@ local function handle_refrigerator_tcc_mode(driver, device, cmd)
 end
 
 local function handle_temperature_setpoint(driver, device, cmd)
+  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  if #tn_eps == 0 then
+    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
   log.info_with({ hub_logs = true },
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
