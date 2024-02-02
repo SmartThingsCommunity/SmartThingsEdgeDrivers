@@ -17,14 +17,7 @@ attributes:
       additionalProperties: false
       required:
         - value
-    setter: startSelfCheck
 commands:
   startSelfCheck:
     name: startSelfCheck
-    arguments:
-      - name: state
-        optional: false
-        schema:
-          type: string
-          enum:
-            - startSelfCheck
+    arguments: []
