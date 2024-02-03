@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local t_utils = require "integration_test.utils"
 
 local profile = t_utils.get_profile_definition("metering-switch.yml")
