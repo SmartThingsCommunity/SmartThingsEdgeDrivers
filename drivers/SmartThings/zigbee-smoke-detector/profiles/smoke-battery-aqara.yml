@@ -16,3 +16,6 @@ components:
     version: 1    
   categories:
   - name: SmokeDetector
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: b61c7b6b-10ab-34d7-9bd5-3c0912ce129f
