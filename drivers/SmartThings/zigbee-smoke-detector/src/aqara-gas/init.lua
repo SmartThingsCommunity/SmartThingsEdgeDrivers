@@ -99,13 +99,24 @@ end
 
 local function sensitivity_adjustment_capability_handler(driver, device, command)
   local sensitivity = command.args.sensitivity
-  if sensitivity == 'High' then
-    device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x02))
-  elseif sensitivity == 'Low' then
-    device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
-  end
+  local pre_sensitivity_value = 'High'
+
+	if pre_sensitivity_value ~= sensitivity then
+	  if sensitivity == 'High' then
+		device:send(cluster_base.write_manufacturer_specific_attribute(device,
+		  PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x02))
+	  elseif sensitivity == 'Low' then
+		device:send(cluster_base.write_manufacturer_specific_attribute(device,
+		  PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+	  end
+    pre_sensitivity_value = sensitivity
+	else
+		if sensitivity == 'High' then
+		  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
+		elseif sensitivity == 'Low' then
+		  device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Low())
+		end
+	end
 end
 
 local function self_check_attr_handler(self, device, zone_status, zb_rx)
