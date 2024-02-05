@@ -177,6 +177,10 @@ local function do_configure(driver, device)
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
+  elseif #fan_eps == 1 then
+    profile_name = "fan"
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   else
     log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
   end
