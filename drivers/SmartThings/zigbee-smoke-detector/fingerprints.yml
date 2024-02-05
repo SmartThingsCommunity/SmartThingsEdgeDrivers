@@ -1,6 +1,6 @@
 zigbeeManufacturer:
   - id: "LUMI/lumi.sensor_gas.acn02"
-    deviceLabel: Aqara Smart Gas Detector
+    deviceLabel: Aqara Smart Natural Gas Detector
     manufacturer: LUMI
     model: lumi.sensor_gas.acn02
     deviceProfileName: gas-lifetime-selfcheck-aqara.yml

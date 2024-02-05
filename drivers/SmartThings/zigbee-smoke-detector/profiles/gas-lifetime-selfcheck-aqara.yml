@@ -14,15 +14,8 @@ components:
     version: 1
   - id: stse.sensitivityAdjustment
     version: 1
-    config:
-     values:
-       - key: "sensitivityAdjustment.value"
-         enabledValues:
-           - 'Low'
-           - 'High'
-       - key: "{{enumCommands}}"
-         enabledValues:
-           - 'Low'
-           - 'High'
-  categories:
+categories:
   - name: SmokeDetector
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: 407e7b4f-4e9c-3cb3-9849-bd0d57f9b40a

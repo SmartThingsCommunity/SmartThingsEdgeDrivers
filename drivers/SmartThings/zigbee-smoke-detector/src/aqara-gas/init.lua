@@ -93,8 +93,9 @@ local function mute_handler(driver, device, cmd)
 end
 
 local function unmute_handler(driver, device, cmd)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0))
+  -- device:send(cluster_base.write_manufacturer_specific_attribute(device,
+  --   PRIVATE_CLUSTER_ID, PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0))
+  device:emit_event(capabilities.audioMute.mute.muted())
 end
 
 local function sensitivity_adjustment_capability_handler(driver, device, command)
