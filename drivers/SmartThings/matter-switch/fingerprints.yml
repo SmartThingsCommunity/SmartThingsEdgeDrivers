@@ -59,10 +59,10 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
-  - id: "4442/1809"
+  - id: "Nanoleaf NL71K1"
     deviceLabel: Smart Holiday String Lights
     vendorId: 0x115A
-    productId: 0x771
+    productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -70,6 +70,22 @@ matterManufacturer:
     vendorId: 0x1321
     productId: 0x0002
     deviceProfileName: plug-binary
+  - id: "SONOFF M5-1C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000B
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-2C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000C
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-3C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000D
+    deviceProfileName: switch-binary
+
 #Yeelight
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
