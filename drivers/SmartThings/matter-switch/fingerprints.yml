@@ -76,7 +76,7 @@ matterManufacturer:
     deviceLabel: "Zemismart Thread Smart Switch"
     vendorId: 0x139C
     productId: 0xAA04
-    deviceProfileName: "switch-binary"  
+    deviceProfileName: switch-binary 
   - id: "5020/43523"
     deviceLabel: "Zemismart Thread Smart Switch"
     vendorId: 0x139C
