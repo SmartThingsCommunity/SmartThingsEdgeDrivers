@@ -30,7 +30,6 @@ local function update_device_discovery_cache(driver, dni, ip, credential)
     ip = ip,
     device_info = device_info,
     credential = credential,
-    device_info = device_info,
   }
 end
 
