@@ -721,4 +721,67 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "Lock state attribute reports (after the first) should be delayed if they come before event notifications ",
+  function()
+    init_code_slot(1, "Code 1", mock_device)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } })))
+    test.socket.zigbee:__queue_receive({mock_device.id, DoorLock.attributes.LockState:build_test_attr_report(mock_device, DoorLockState.UNLOCKED)})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lock.lock.unlocked()
+      )
+    )
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.OperatingEventNotification.build_test_rx(
+            mock_device,
+            0x00, -- 0 = keypad
+            OperationEventCode.UNLOCK,
+            0x0001,
+            "1234",
+            0x0000,
+            ""
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
+      )
+    )
+    test.mock_time.advance_time(2)
+    test.timer.__create_and_queue_test_time_advance_timer(2.5, "oneshot")
+    test.socket.zigbee:__queue_receive({mock_device.id, DoorLock.attributes.LockState:build_test_attr_report(mock_device, DoorLockState.LOCKED)})
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.OperatingEventNotification.build_test_rx(
+            mock_device,
+            0x00, -- 0 = keypad
+            OperationEventCode.LOCK,
+            0x0001,
+            "1234",
+            0x0000,
+            ""
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lock.lock.locked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
+      )
+    )
+    test.mock_time.advance_time(2.5)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lock.lock.locked()
+      )
+    )
+  end
+)
+
 test.run_registered_tests()

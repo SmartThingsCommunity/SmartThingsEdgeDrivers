@@ -1,4 +1,35 @@
 zigbeeManufacturer:
+  #SMARTvill
+  - id: "SMARTvill/SLA06"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA06
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA05"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA05
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA04"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA04
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA03"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA03
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA02"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA02
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA01"
+    deviceLabel: SMARTvill Switch 1
+    manufacturer: SMARTvill
+    model: SLA01
+    deviceProfileName: basic-switch
   #HANSSEM SMART SWITCH
   - id: "Winners/LSS1-101"
     deviceLabel: HS Switch 1(1 way)
@@ -35,6 +66,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.plug.maeu01
     deviceProfileName: switch-power-energy-consumption-report-aqara
+  - id: "LUMI/lumi.plug.macn01"
+    deviceLabel: Aqara Smart Plug T1
+    manufacturer: LUMI
+    model: lumi.plug.macn01
+    deviceProfileName: switch-power-energy-consumption-report-aqara-t1
   - id: "LUMI/lumi.switch.b1laus01"
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
@@ -64,6 +100,11 @@ zigbeeManufacturer:
     deviceLabel: Aqara Single Switch Module T1 (With Neutral)
     manufacturer: LUMI
     model: lumi.switch.n0agl1
+    deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.switch.n0acn2"
+    deviceLabel: Aqara Single Switch Module T1 (With Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.n0acn2
     deviceProfileName: aqara-switch-module
   - id: "LUMI/lumi.light.acn004"
     deviceLabel: Aqara Smart Dimmer Controller T1 Pro

@@ -22,6 +22,7 @@ local CONTACT_TEMPERATURE_SENSOR_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3323-G" },
   { mfr = "CentraLite", model = "Contact Sensor-A" },
   { mfr = "Visonic", model = "MCT-340 E" },
+  { mfr = "Visonic", model = "MCT-340 SMA" },
   { mfr = "Ecolink", model = "4655BC0-R" },
   { mfr = "Ecolink", model = "DWZB1-ECO" },
   { mfr = "iMagic by GreatStar", model = "1116-S" },

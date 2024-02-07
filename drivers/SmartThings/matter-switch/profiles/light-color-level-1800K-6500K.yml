@@ -1,0 +1,26 @@
+name: light-color-level-1800K-6500K
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
+  - id: colorTemperature
+    version: 1
+    config:
+      values:
+        - key: "colorTemperature.value"
+          range: [ 1800, 6500 ]
+  - id: colorControl
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light
