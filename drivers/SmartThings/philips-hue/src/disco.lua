@@ -253,14 +253,17 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
 
   if do_delete then
     for _, device in ipairs(driver:get_devices()) do ---@cast device HueDevice
+      -- We're only interested in processing child/non-bridge devices here.
+      if utils.is_bridge(driver, device) then goto continue end
       local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID) or ""]
       local parent_device_id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID) or ""
       local parent_bridge_device = driver:get_device_info(parent_device_id)
       local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_id)
-      if is_child_of_bridge and not not_known_to_bridge then
+      if parent_bridge_device and is_child_of_bridge and not not_known_to_bridge then
         device.log.info(string.format("Device is no longer joined to Hue Bridge %q, deleting", parent_bridge_device.label))
         driver:do_hue_light_delete(device)
       end
+      ::continue::
     end
   end
 end

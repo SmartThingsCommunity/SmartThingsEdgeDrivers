@@ -40,8 +40,6 @@ local utils = require "utils"
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
 
-local api_version = require("version").api
-
 local StrayDeviceMessageTypes = {
   FoundBridge = "FOUND_BRIDGE",
   NewStrayLight = "NEW_STRAY_LIGHT",
@@ -717,12 +715,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API)
       cosock.spawn(function()
-        -- auto-add/auto-delete is only supported with newer lua libs. We do a conditional
-        -- check in the delete routine, but we try to avoid doing it at all here with an
-        -- additional defensive check against the Lua Libs API version.
-        if api_version >= 9 then
-          Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
-        end
+        Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
         local child_device_map = {}
         local children = bridge_device:get_child_list()
         bridge_device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
