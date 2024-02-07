@@ -74,10 +74,20 @@ local function device_added(driver, device)
 end
 
 local function device_init(driver, device)
-  -- device:set_find_child(find_child)
   local dev = device:get_parent_device()
-  dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
-  device:refresh()
+    if dev == nil then
+    dev = device
+  end
+     dev:refresh(driver, dev)
+ end
+
+ local function info_changed(driver, device, event, args)
+  local dev = device:get_parent_device()
+  if dev == nil then
+    dev = device
+  end
+  dev:send(FanControl.attributes.FanMode:read(dev))
+  dev:refresh(driver, dev)
 end
 
 -- CAPABILITY HANDLERS
@@ -95,7 +105,6 @@ local function on_handler(driver, device, command)
     dev:send(FanControl.attributes.FanMode:write(dev,speed))
     dev:send(FanControl.attributes.FanMode:read(dev,speed))
   end
-  dev:send(FanControl.attributes.FanMode:read(dev,speed))
 end
 
 local function off_handler(driver, device, command)
@@ -108,8 +117,8 @@ local function off_handler(driver, device, command)
     dev:send(OnOff.server.commands.Off(dev))
   else
     dev:send(FanControl.attributes.FanMode:write(dev,FanControl.attributes.FanMode.OFF))
+    dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
   end
-  dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
 end
 
 local function switch_level_handler(driver, device, command)
@@ -193,7 +202,8 @@ local itm_fan_light = {
   },
   lifecycle_handlers = {
     added = device_added,
-    init = device_init
+    init = device_init,
+    infoChanged=info_changed
   },
   can_handle = can_handle_itm_fanlight
 }
