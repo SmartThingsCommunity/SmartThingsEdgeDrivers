@@ -33,6 +33,50 @@ local applianceOperationalStateId = "spacewonder52282.applianceOperationalState"
 local applianceOperationalState = capabilities[applianceOperationalStateId]
 local supportedTemperatureLevels = {}
 
+local subscribed_attributes = {
+  [capabilities.switch.ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [capabilities.temperatureSetpoint.ID] = {
+    clusters.TemperatureControl.attributes.TemperatureSetpoint,
+    clusters.TemperatureControl.attributes.MinTemperature,
+    clusters.TemperatureControl.attributes.MaxTemperature,
+  },
+  [applianceOperationalStateId] = {
+    clusters.OperationalState.attributes.OperationalState,
+    clusters.OperationalState.attributes.OperationalError,
+  },
+  [capabilities.mode.ID] = {
+    clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
+    clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
+    clusters.DishwasherMode.attributes.SupportedModes,
+    clusters.DishwasherMode.attributes.CurrentMode,
+    clusters.LaundryWasherMode.attributes.SupportedModes,
+    clusters.LaundryWasherMode.attributes.CurrentMode,
+    clusters.LaundryWasherControls.attributes.SpinSpeeds,
+    clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
+    clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
+    clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
+  },
+  [capabilities.laundryWasherRinseMode.ID] = {
+    clusters.LaundryWasherControls.attributes.NumberOfRinses,
+    clusters.LaundryWasherControls.attributes.SupportedRinses,
+  },
+  [capabilities.contactSensor.ID] = {
+    clusters.DishwasherAlarm.attributes.State,
+    clusters.RefrigeratorAlarm.attributes.State,
+  },
+  [capabilities.temperatureMeasurement.ID] = {
+    clusters.TemperatureMeasurement.attributes.MeasuredValue
+  },
+  [capabilities.waterFlowAlarm.ID] = {
+    clusters.DishwasherAlarm.attributes.State
+  },
+  [capabilities.temperatureAlarm.ID] = {
+    clusters.DishwasherAlarm.attributes.State
+  },
+}
+
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -90,6 +134,20 @@ local function do_configure(driver, device)
   if #setpoint_limit_read.info_blocks ~= 0 then
     device:send(setpoint_limit_read)
   end
+end
+
+local function info_changed(driver, device, event, args)
+  --Note this is needed because device:subscribe() does not recalculate
+  -- the subscribed attributes each time it is run, that only happens at init.
+  -- This will change in the 0.48.x release of the lua libs.
+  for cap_id, attributes in pairs(subscribed_attributes) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, attr in ipairs(attributes) do
+        device:add_subscribed_attribute(attr)
+      end
+    end
+  end
+  device:subscribe()
 end
 
 -- Matter Handlers --
@@ -229,6 +287,7 @@ local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,
+    infoChanged = info_changed,
   },
   matter_handlers = {
     attr = {
@@ -242,49 +301,7 @@ local matter_driver_template = {
       },
     }
   },
-  subscribed_attributes = {
-    [capabilities.switch.ID] = {
-      clusters.OnOff.attributes.OnOff
-    },
-    [capabilities.temperatureSetpoint.ID] = {
-      clusters.TemperatureControl.attributes.TemperatureSetpoint,
-      clusters.TemperatureControl.attributes.MinTemperature,
-      clusters.TemperatureControl.attributes.MaxTemperature,
-    },
-    [applianceOperationalStateId] = {
-      clusters.OperationalState.attributes.OperationalState,
-      clusters.OperationalState.attributes.OperationalError,
-    },
-    [capabilities.mode.ID] = {
-      clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
-      clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
-      clusters.DishwasherMode.attributes.SupportedModes,
-      clusters.DishwasherMode.attributes.CurrentMode,
-      clusters.LaundryWasherMode.attributes.SupportedModes,
-      clusters.LaundryWasherMode.attributes.CurrentMode,
-      clusters.LaundryWasherControls.attributes.SpinSpeeds,
-      clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
-      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
-      clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
-    },
-    [capabilities.laundryWasherRinseMode.ID] = {
-      clusters.LaundryWasherControls.attributes.NumberOfRinses,
-      clusters.LaundryWasherControls.attributes.SupportedRinses,
-    },
-    [capabilities.contactSensor.ID] = {
-      clusters.DishwasherAlarm.attributes.State,
-      clusters.RefrigeratorAlarm.attributes.State,
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.waterFlowAlarm.ID] = {
-      clusters.DishwasherAlarm.attributes.State
-    },
-    [capabilities.temperatureAlarm.ID] = {
-      clusters.DishwasherAlarm.attributes.State
-    },
-  },
+  subscribed_attributes = subscribed_attributes,
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
