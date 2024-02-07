@@ -1927,7 +1927,7 @@ matterManufacturer:
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
 #Zemismart
-  - id: 5020/61154
+  - id: "5020/61154"
     deviceLabel: Zemismart Inline Module
     vendorId: 0x139C
     productId: 0xEEE2
