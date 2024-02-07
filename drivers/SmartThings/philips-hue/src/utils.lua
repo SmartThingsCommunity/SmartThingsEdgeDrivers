@@ -1,3 +1,4 @@
+local Fields = require "fields"
 local log = require "log"
 ---@module 'utils'
 local utils = {}
@@ -39,7 +40,7 @@ end
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_light(device)
-  return device.parent_assigned_child_key and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and
+  return device.parent_assigned_child_key ~= nil and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and
       not (device.data and device.data.username and device.data.bulbId)
 end
 
@@ -147,8 +148,8 @@ function utils.labeled_socket_builder(label)
       )
       sock, err =
           ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
-      if err ~= nil then
-        return nil, "SSL wrap error: " .. err
+      if not sock or err ~= nil then
+        return nil, (err and "SSL wrap error: " .. err) or "Unexpected nil socket returned from ssl.wrap"
       end
       log.info(
         string.format(

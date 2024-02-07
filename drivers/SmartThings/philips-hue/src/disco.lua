@@ -5,7 +5,7 @@ local mdns = require "st.mdns"
 local net_utils = require "st.net_utils"
 local st_utils = require "st.utils"
 
-local Fields = require "hue.fields"
+local Fields = require "fields"
 local HueApi = require "hue.api"
 local utils = require "utils"
 
@@ -94,8 +94,8 @@ function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
   end
 
   local known_bridge_device = known_identifier_to_device_map[bridge_id]
-  if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
-    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
+  if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
+    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
 
   HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
@@ -116,8 +116,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
   if driver.ignored_bridges[bridge_id] then return end
 
   local known_bridge_device = known_identifier_to_device_map[bridge_id]
-  if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
-    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
+  if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
+    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
 
   if known_bridge_device ~= nil
@@ -283,7 +283,7 @@ end
 ---@param bridge_id string
 ---@param resource_id string
 ---@param device_info table
----@param known_identifier_to_device_map table<string,boolean>
+---@param known_identifier_to_device_map table<string,HueDevice>
 process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_identifier_to_device_map)
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then
