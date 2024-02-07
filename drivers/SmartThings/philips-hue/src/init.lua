@@ -246,6 +246,26 @@ local function migrate_bridge(driver, device)
   )
 end
 
+local function update_bridge_fields_from_info(driver, bridge_info, bridge_device)
+  local bridge_ip = bridge_info.ip
+  local device_bridge_id = bridge_device.device_network_id
+
+  if bridge_device:get_field(Fields._REFRESH_AFTER_INIT) == nil then
+    bridge_device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
+  end
+
+  bridge_device:set_field(Fields.DEVICE_TYPE, "bridge", { persist = true })
+  bridge_device:set_field(Fields.MODEL_ID, bridge_info.modelid, { persist = true })
+  bridge_device:set_field(Fields.BRIDGE_ID, device_bridge_id, { persist = true })
+  bridge_device:set_field(Fields.BRIDGE_SW_VERSION, tonumber(bridge_info.swversion or "0", 10), { persist = true })
+
+  if Discovery.api_keys[device_bridge_id] then
+    bridge_device:set_field(HueApi.APPLICATION_KEY_HEADER, Discovery.api_keys[device_bridge_id], { persist = true })
+    driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
+  end
+  bridge_device:set_field(Fields.IPV4, bridge_ip, { persist = true })
+end
+
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
 local function spawn_bridge_add_api_key_task(driver, device)
@@ -309,28 +329,9 @@ local function spawn_bridge_add_api_key_task(driver, device)
     end
 
     Discovery.api_keys[device_bridge_id] = api_key
+    update_bridge_fields_from_info(driver, bridge_info, device)
     _initialize(driver, device)
   end, "Hue Bridge Background Join Task")
-end
-
-local function update_bridge_fields_from_info(driver, bridge_info, bridge_device)
-  local bridge_ip = bridge_info.ip
-  local device_bridge_id = bridge_device.device_network_id
-
-  if bridge_device:get_field(Fields._REFRESH_AFTER_INIT) == nil then
-    bridge_device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
-  end
-
-  bridge_device:set_field(Fields.DEVICE_TYPE, "bridge", { persist = true })
-  bridge_device:set_field(Fields.MODEL_ID, bridge_info.modelid, { persist = true })
-  bridge_device:set_field(Fields.BRIDGE_ID, device_bridge_id, { persist = true })
-  bridge_device:set_field(Fields.BRIDGE_SW_VERSION, tonumber(bridge_info.swversion or "0", 10), { persist = true })
-
-  if Discovery.api_keys[device_bridge_id] then
-    bridge_device:set_field(HueApi.APPLICATION_KEY_HEADER, Discovery.api_keys[device_bridge_id], { persist = true })
-    driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
-  end
-  bridge_device:set_field(Fields.IPV4, bridge_ip, { persist = true })
 end
 
 ---@param driver HueDriver
@@ -1002,6 +1003,26 @@ init_bridge = function(driver, device)
   local ip = device:get_field(Fields.IPV4)
   local api_key = device:get_field(HueApi.APPLICATION_KEY_HEADER)
   local bridge_url = "https://" .. ip
+
+  if not api_key then
+    if not Discovery.api_keys[device_bridge_id] then
+      log.error_with({ hub_logs = true },
+        string.format(
+          "Received `added` lifecycle event for bridge %s with unknown API key, " ..
+          "please press the Link Button on your Hue Bridge(s).",
+          (device.label or device.device_network_id or device.id or "unknown bridge")
+        )
+      )
+      -- we have to do a long poll here to give the user a chance to hit the link button on the
+      -- hue bridge, so in this specific pathological case we start a new coroutine and complete
+      -- the handling of the device add on a different task to free up the driver task
+      spawn_bridge_add_api_key_task(driver, device)
+      return
+    else
+      api_key = Discovery.api_keys[device_bridge_id]
+      device:set_field(HueApi.APPLICATION_KEY_HEADER, api_key, {persist = true})
+    end
+  end
 
   if not Discovery.api_keys[device_bridge_id] then
     log.debug(string.format(
