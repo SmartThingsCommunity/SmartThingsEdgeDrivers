@@ -339,9 +339,18 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+local function device_added(driver, device)
+  -- refresh child devices to get initial attribute state in case child device
+  -- was created after the initial subscription report
+  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    handle_refresh(driver, device)
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     removed = device_removed,
     infoChanged = info_changed
   },
