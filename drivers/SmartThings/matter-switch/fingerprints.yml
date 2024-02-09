@@ -76,7 +76,7 @@ matterManufacturer:
     deviceLabel: "Zemismart Thread Smart Switch"
     vendorId: 0x139C
     productId: 0xAA05
-    deviceProfileName: "switch-6"    
+    deviceProfileName: switch-binary    
 
 # Sengled
 # Not WWST Certified: As of the device's software release of "780014029", the device reports itself with device type of 0x10C,
