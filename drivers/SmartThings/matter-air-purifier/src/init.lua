@@ -82,6 +82,12 @@ local function percent_current_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
 end
 
+local function hepa_filter_condition_handler(driver, device, ib, response)
+  local component = device.profile.components["hepaFilter"]
+  local condition = ib.data.value
+  device:emit_component_event(component, capabilities.filterState.filterLifeRemaining(condition))
+end
+
 local function hepa_filter_change_indication_handler(driver, device, ib, response)
   local component = device.profile.components["hepaFilter"]
   if ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK then
@@ -91,6 +97,12 @@ local function hepa_filter_change_indication_handler(driver, device, ib, respons
   elseif ib.data.value == clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL then
     device:emit_component_event(component, capabilities.filterStatus.filterStatus.replace())
   end
+end
+
+local function activated_carbon_filter_condition_handler(driver, device, ib, response)
+  local component = device.profile.components["activatedCarbonFilter"]
+  local condition = ib.data.value
+  device:emit_component_event(component, capabilities.filterState.filterLifeRemaining(condition))
 end
 
 local function activated_carbon_filter_change_indication_handler(driver, device, ib, response)
@@ -174,9 +186,11 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
       },
       [clusters.HepaFilterMonitoring.ID] = {
+        [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
         [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = hepa_filter_change_indication_handler
       },
       [clusters.ActivatedCarbonFilterMonitoring.ID] = {
+        [clusters.ActivatedCarbonFilterMonitoring.attributes.Condition.ID] = activated_carbon_filter_condition_handler,
         [clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.ID] = activated_carbon_filter_change_indication_handler
       }
     }
@@ -192,6 +206,10 @@ local matter_driver_template = {
     },
     [capabilities.fanSpeedPercent.ID] = {
       clusters.FanControl.attributes.PercentCurrent
+    },
+    [capabilities.filterState.ID] = {
+      clusters.HepaFilterMonitoring.attributes.Condition,
+      clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
     },
     [capabilities.filterStatus.ID] = {
       clusters.HepaFilterMonitoring.attributes.ChangeIndication,
@@ -212,7 +230,9 @@ local matter_driver_template = {
   supported_capabilities = {
     capabilities.airPurifierFanMode,
     capabilities.fanSpeedPercent,
-    capabilities.windMode
+    capabilities.windMode,
+    capabilities.filterState,
+    capabilities.filterStatus
   },
 }
 
