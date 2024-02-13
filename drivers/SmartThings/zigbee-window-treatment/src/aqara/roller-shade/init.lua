@@ -92,7 +92,7 @@ local function device_info_changed(driver, device, event, args)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
