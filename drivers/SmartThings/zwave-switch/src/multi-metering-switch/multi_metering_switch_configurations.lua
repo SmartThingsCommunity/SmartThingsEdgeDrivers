@@ -118,7 +118,8 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x0460,
       product_types = {0x0081, 0x008D},
-      product_ids = 0x0002
+      product_ids = 0x0002,
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "metering-switch"
@@ -128,7 +129,8 @@ local devices = {
     MATCHING_MATRIX = {
       mfrs = 0x0460,
       product_types = 0x008C,
-      product_ids = 0x0002
+      product_ids = 0x0002,
+      children = 1
     },
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
