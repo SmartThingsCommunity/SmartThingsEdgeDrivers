@@ -12,12 +12,16 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: AirPurifier
 - id: hepaFilter
   capabilities:
   - id: filterState
     version: 1
   - id: filterStatus
     version: 1
+  categories:
+  - name: AirPurifier
 - id: activatedCarbonFilter
   capabilities:
   - id: filterState
