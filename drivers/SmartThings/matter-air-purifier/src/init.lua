@@ -22,14 +22,6 @@ local function device_init(driver, device)
 end
 
 -- Matter Handlers --
-local function on_off_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
-  end
-end
-
 local function fan_mode_handler(driver, device, ib, response)
   if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
@@ -113,16 +105,6 @@ local function activated_carbon_filter_change_indication_handler(driver, device,
 end
 
 -- Capability Handlers --
-local function handle_switch_on(driver, device, cmd)
-  local fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
-  device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
-end
-
-local function handle_switch_off(driver, device, cmd)
-  local fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
-  device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
-end
-
 local function set_air_purifier_fan_mode(driver, device, cmd)
   local fan_mode_id = nil
   if cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME then
@@ -184,9 +166,6 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
-      [clusters.OnOff.ID] = {
-        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
-      },
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
@@ -220,10 +199,6 @@ local matter_driver_template = {
     }
   },
   capability_handlers = {
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.on.NAME] = handle_switch_on,
-      [capabilities.switch.commands.off.NAME] = handle_switch_off,
-    },
     [capabilities.airPurifierFanMode.ID] = {
       [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode
     },
@@ -235,7 +210,6 @@ local matter_driver_template = {
     },
   },
   supported_capabilities = {
-    capabilities.switch,
     capabilities.airPurifierFanMode,
     capabilities.fanSpeedPercent,
     capabilities.windMode
