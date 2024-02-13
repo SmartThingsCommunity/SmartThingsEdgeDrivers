@@ -33,6 +33,38 @@ matterManufacturer:
     productId: 0xAC
     deviceProfileName: plug-binary
 
+#Lifx
+  - id: "5155/169"
+    deviceLabel: LIFX Color (A21)
+    vendorId: 0x1423
+    productId: 0x00A9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/171"
+    deviceLabel: LIFX Spot
+    vendorId: 0x1423
+    productId: 0x00AB
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/173"
+    deviceLabel: LIFX Path (Round)
+    vendorId: 0x1423
+    productId: 0x00AD
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/174"
+    deviceLabel: LIFX Path (Square)
+    vendorId: 0x1423
+    productId: 0x00AE
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/175"
+    deviceLabel: LIFX Color (PAR38)
+    vendorId: 0x1423
+    productId: 0x00AF
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/176"
+    deviceLabel: LIFX Ceiling
+    vendorId: 0x1423
+    productId: 0x00B0
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
