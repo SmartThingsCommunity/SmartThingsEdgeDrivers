@@ -154,14 +154,13 @@ local function handle_fan_speed_percent(driver, device, cmd)
 end
 
 local function wind_support_handler(driver, device, ib, response)
-  local supportedFanWind = {}
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
-    table.insert(supportedFanWind, capabilities.windMode.windMode.sleepWind.NAME)
+  local supported_wind_modes = {capabilities.windMode.windMode.noWind.NAME}
+  for mode, wind_mode in pairs(WIND_MODE_MAP) do
+    if ((ib.data.value >> mode) & 1) > 0 then
+      table.insert(supported_wind_modes, wind_mode.NAME)
+    end
   end
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
-    table.insert(supportedFanWind, capabilities.windMode.windMode.naturalWind.NAME)
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.supportedWindModes(supportedFanWind))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.supportedWindModes(supported_wind_modes))
 end
 
 local function wind_setting_handler(driver, device, ib, response)
@@ -171,14 +170,17 @@ local function wind_setting_handler(driver, device, ib, response)
       return
     end
   end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.noWind())
 end
 
-local function set_fan_wind(driver, device, cmd)
+local function set_wind_mode(driver, device, cmd)
+  local wind_mode = 0
   if cmd.args.windMode == capabilities.windMode.windMode.sleepWind.NAME then
-    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.SLEEP_WIND))
+    wind_mode = clusters.FanControl.types.WindBitmap.SLEEP_WIND
   elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
-    device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.NATURAL_WIND))
+    wind_mode = clusters.FanControl.types.WindBitmap.NATURAL_WIND
   end
+  device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), wind_mode))
 end
 
 local matter_driver_template = {
@@ -233,7 +235,7 @@ local matter_driver_template = {
       [capabilities.fanSpeedPercent.commands.setPercent.NAME] = handle_fan_speed_percent
     },
     [capabilities.windMode.ID] = {
-      [capabilities.windMode.commands.setWindMode.NAME] = set_fan_wind
+      [capabilities.windMode.commands.setWindMode.NAME] = set_wind_mode
     },
   },
   supported_capabilities = {
