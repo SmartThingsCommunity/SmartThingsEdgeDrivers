@@ -17,6 +17,11 @@ local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
 local log = require "log"
 
+local WIND_MODE_MAP = {
+  [0]		= capabilities.windMode.windMode.sleepWind,
+  [1]		= capabilities.windMode.windMode.naturalWind
+}
+
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -160,17 +165,18 @@ local function wind_support_handler(driver, device, ib, response)
 end
 
 local function wind_setting_handler(driver, device, ib, response)
-  if ib.data.value & clusters.FanControl.types.WindSettingMask.SLEEP_WIND then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.sleepWind())
-  elseif ib.data.value & clusters.FanControl.types.WindSettingMask.NATURAL_WIND then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.naturalWind())
+  for index, wind_mode in pairs(WIND_MODE_MAP) do
+    if ((ib.data.value >> index) & 1) > 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, wind_mode())
+      return
+    end
   end
 end
 
 local function set_fan_wind(driver, device, cmd)
   if cmd.args.windMode == capabilities.windMode.windMode.sleepWind.NAME then
     device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.SLEEP_WIND))
-   elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
+  elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
     device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), clusters.FanControl.types.WindSettingMask.NATURAL_WIND))
   end
 end
