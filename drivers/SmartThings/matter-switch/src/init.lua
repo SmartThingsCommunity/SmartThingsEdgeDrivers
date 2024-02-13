@@ -85,14 +85,14 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps == 1 is a workaround for devices that have the On/Off
+  -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
   -- for this device type). By default, we do not support On/Off Light Switch because by spec these
   -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
   -- does not have a generic fingerprint and will join as a matter-thing. However, we have
   -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
   -- is a workaround for those devices.
-  if num_server_eps == 1 and detect_matter_thing(device) == true then
+  if num_server_eps > 0 and detect_matter_thing(device) == true then
     device:try_update_metadata({profile = "switch-binary"})
   end
 end
