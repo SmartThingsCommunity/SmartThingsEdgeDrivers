@@ -104,7 +104,22 @@ function jbl_api.get_credential(bridge_ip, socket_builder)
 end
 
 function jbl_api.get_info(device_ip, socket_builder)
-  return process_rest_response(RestClient.one_shot_get(get_base_url(device_ip) .. "/info", ADDITIONAL_HEADERS, socket_builder))
+  local raw_device_info = process_rest_response(RestClient.one_shot_get(get_base_url(device_ip) .. "/info", ADDITIONAL_HEADERS, socket_builder))
+  if raw_device_info == nil then
+    log.error("failed to get device info")
+    return nil
+  end
+
+  local device_info = {
+    deviceType = raw_device_info.deviceType or "",
+    firmwareVersion = raw_device_info.firmwareVersion or "",
+    label = raw_device_info.label or "",
+    manufacturerName = raw_device_info.manufacturerName or "",
+    modelName = raw_device_info.modelName or "",
+    serialNumber = raw_device_info.serialNumber or "",
+  }
+
+  return device_info
 end
 
 function jbl_api:get_status()

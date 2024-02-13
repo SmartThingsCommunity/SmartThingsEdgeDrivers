@@ -1926,7 +1926,12 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
-
+#Zemismart
+  - id: "5020/61154"
+    deviceLabel: Zemismart Inline Module
+    vendorId: 0x139C
+    productId: 0xEEE2
+    deviceProfileName: switch-binary
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
