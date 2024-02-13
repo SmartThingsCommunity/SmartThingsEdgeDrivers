@@ -17,12 +17,23 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local device_lib = require "st.device"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
 local RECEIVED_Y = "receivedY"
 local HUESAT_SUPPORT = "huesatSupport"
 local CONVERSION_CONSTANT = 1000000
+-- These values are taken from the min/max definined in the colorTemperature capability
+local COLOR_TEMPERATURE_KELVIN_MAX = 30000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1
+local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
+local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+
+local SWITCH_INITIALIZED = "__switch_intialized"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
+local detect_matter_thing
 
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
@@ -31,65 +42,115 @@ end
 --- component_to_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
+--- and supports the OnOff cluster. This is done to bypass the
+--- BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
-  local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(nil)
+  local eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
-      res = v
-      break
+      return v
     end
   end
-  return res
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function component_to_endpoint(device, component_id)
-  -- Assumes matter endpoint layout is sequentional starting at 1.
-  local ep_num = component_id:match("switch(%d)")
-  return ep_num and tonumber(ep_num) or find_default_endpoint(device, component_id)
+local function initialize_switch(driver, device)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
+
+  -- Since we do not support bindings at the moment, we only want to count On/Off
+  -- clusters that have been implemented as server. This can be removed when we have
+  -- support for bindings.
+  local num_server_eps = 0
+  local main_endpoint = find_default_endpoint(device)
+  for _, ep in ipairs(switch_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      num_server_eps = num_server_eps + 1
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        local name = string.format("%s %d", device.label, num_server_eps)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = "switch-binary",
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
+      end
+    end
+  end
+
+  device:set_field(SWITCH_INITIALIZED, true)
+  -- The case where num_server_eps == 1 is a workaround for devices that have the On/Off
+  -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+  -- for this device type). By default, we do not support On/Off Light Switch because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
+  -- does not have a generic fingerprint and will join as a matter-thing. However, we have
+  -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
+  -- is a workaround for those devices.
+  if num_server_eps == 1 and detect_matter_thing(device) == true then
+    device:try_update_metadata({profile = "switch-binary"})
+  end
+end
+
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local switch_comp = string.format("switch%d", ep)
-  if device.profile.components[switch_comp] ~= nil then
-    return switch_comp
-  else
-    return "main"
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+       return component
+    end
   end
+  return "main"
+end
+
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+end
+
+local function detect_bridge(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == AGGREGATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local function device_init(driver, device)
-  log.info_with({hub_logs=true}, "device init")
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:subscribe()
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    -- initialize_switch will create parent-child devices as needed for multi-switch devices.
+    -- However, we want to maintain support for existing MCD devices, so do not initialize
+    -- device if it has already been previously initialized as an MCD device.
+    -- Also, do not attempt a profile switch for a bridge device.
+    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
+       not device:get_field(SWITCH_INITIALIZED) and
+       not detect_bridge(device) then
+      -- create child devices as needed for multi-switch devices
+      initialize_switch(driver, device)
+    end
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_find_child(find_child)
+    device:subscribe()
+  end
 end
 
 local function device_removed(driver, device)
   log.info("device removed")
-end
-
-local function do_configure(driver, device)
-  -- New profiles need to be added for devices that have more switch endpoints
-  local MAX_MULTI_SWITCH_EPS = 7
-  -- Note: This profile switching is needed because of shortcoming in the generic fingerprints
-  -- where devices with multiple endpoints with the same device type cannot be detected
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local num_switch_eps = #switch_eps
-  table.sort(switch_eps)
-  --Default MCD switch handling depends on consecutive endpoint numbering
-  if num_switch_eps == switch_eps[num_switch_eps] then
-    if num_switch_eps > 1 then
-      device:try_update_metadata({profile = string.format("switch-%d", math.min(num_switch_eps, MAX_MULTI_SWITCH_EPS))})
-    end
-    if num_switch_eps > MAX_MULTI_SWITCH_EPS then
-      error(string.format(
-        "Matter multi switch device will not function. Profile doesn't exist with %d components",
-        num_switch_eps
-      ))
-    end
-  end
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -217,6 +278,10 @@ end
 
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
+    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of supported capability range", ib.data.value))
+      return
+    end
     local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
     local most_recent_temp = device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
@@ -268,11 +333,17 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     removed = device_removed,
-    doConfigure = do_configure,
+    infoChanged = info_changed
   },
   matter_handlers = {
     attr = {
@@ -336,7 +407,19 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
   },
+    sub_drivers = {
+    require("eve-energy")
+  }
 }
+
+function detect_matter_thing(device)
+  for _, capability in ipairs(matter_driver_template.supported_capabilities) do
+    if device:supports_capability(capability) then
+      return false
+    end
+  end
+  return device:supports_capability(capabilities.refresh)
+end
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
 log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))

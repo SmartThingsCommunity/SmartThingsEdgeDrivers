@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "Vimar/02973-smart-wheel-thermostat"
+    deviceLabel: Vimar Smart Thermostat
+    manufacturer: Vimar
+    model: WheelThermostat_v1.0
+    deviceProfileName: thermostat-fanless-heating-no-fw
   - id: "LUX/KONOZ"
     deviceLabel: LUX Thermostat
     manufacturer: LUX
@@ -15,10 +20,15 @@ zigbeeManufacturer:
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
   - id: "D5X84YU/eT093WRO"
-    deviceLabel: POPP Thermostat
+    deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
     model: eT093WRO
-    deviceProfileName: thermostat-popp-danfoss
+    deviceProfileName: thermostat-popp
+  - id: "D5X84YU/eT093WRG"
+    deviceLabel: POPP Smart Thermostat (Zigbee)
+    manufacturer: D5X84YU
+    model: eT093WRG
+    deviceProfileName: thermostat-popp
   - id: "Zen Within/Zen-01"
     deviceLabel: Zen Thermostat
     manufacturer: Zen Within

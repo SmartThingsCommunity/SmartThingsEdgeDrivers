@@ -14,7 +14,7 @@ VERBOSITY_FAILURE_TEST_LOGS = 2
 VERBOSITY_ALL_TEST_LOGS = 3
 
 DRIVER_DIR = Path(os.path.abspath(__file__)).parents[1].joinpath("drivers")
-LUACOV_CONFIG = DRIVER_DIR.parent.joinpath(".circleci").joinpath("config.luacov")
+LUACOV_CONFIG = DRIVER_DIR.parent.joinpath(".circleci", "config.luacov")
 
 def find_affected_tests(working_dir, changed_files):
     affected_tests = []
@@ -36,7 +36,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
     ts = []
     total_tests = 0
     total_passes = 0
-    for test_file in DRIVER_DIR.glob("*/*/src/test/test_*.lua"):
+    for test_file in DRIVER_DIR.glob("*" + os.path.sep + "*" + os.path.sep + "src" + os.path.sep + "test" + os.path.sep + "test_*.lua"):
         if filter != None and re.search(filter, str(test_file)) is None:
             continue
         os.chdir(test_file.parents[1])
@@ -53,7 +53,9 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         last_line = ""
         in_progress_test_name = ""
         test_cases = []
-        test_suite = junit_xml.TestSuite(str(test_file)[str(test_file).rindex('/')+1:-4].replace('_',' '))
+        test_file_name = os.path.basename(test_file)
+        test_suite_name = os.path.splitext(test_file_name)[0].replace('_', ' ')
+        test_suite = junit_xml.TestSuite(test_suite_name)
         test_case = None
         test_logs = ""
         test_title = ""
@@ -71,7 +73,14 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
             if m is not None:
                 test_title = line
                 in_progress_test_name = m.group(1)
-                test_case = junit_xml.TestCase(in_progress_test_name)
+                test_name_regex = re.compile(in_progress_test_name)
+                line_number = None
+                with open(test_file, 'r') as search_file:
+                    for idx, line in enumerate(search_file, 1):
+                        if test_name_regex.search(line) :
+                            line_number = idx
+                            break
+                test_case = junit_xml.TestCase(in_progress_test_name, line=line_number)
                 test_count += 1
             elif re.search("PASSED", line) is not None:
                 test_done = True
@@ -82,7 +91,8 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
             elif re.search("FAILED", line) is not None:
                 test_done = True
                 test_status = line
-                failure_files[test_file].append(in_progress_test_name)
+                failure_string = f"{in_progress_test_name} [line {test_case.line}]"
+                failure_files[test_file].append(failure_string)
                 if "traceback" in test_case.stdout:
                     test_case.add_error_info(line, test_case.stdout)
                 else:
@@ -164,3 +174,4 @@ if __name__ == "__main__":
     elif args.superextraverbose:
         verbosity_level = 3
     run_tests(verbosity_level, args.filter, args.junit, args.coverage)
+

@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "Lumi/lumi.remote.cagl02"
+    deviceLabel: Aqara Cube T1 Pro
+    manufacturer: LUMI
+    model: lumi.remote.cagl02
+    deviceProfileName: cube-t1-pro

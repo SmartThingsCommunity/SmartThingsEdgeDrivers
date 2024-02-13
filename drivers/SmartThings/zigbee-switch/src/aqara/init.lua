@@ -17,6 +17,7 @@ local WIRELESS_SWITCH_CLUSTER_ID = 0x0012
 local WIRELESS_SWITCH_ATTRIBUTE_ID = 0x0055
 local RESTORE_POWER_STATE_ATTRIBUTE_ID = 0x0201
 local CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID = 0x0200
+local RESTORE_TURN_OFF_INDICATOR_LIGHT_ATTRIBUTE_ID = 0x0203
 local MAX_POWER_ATTRIBUTE_ID = 0x020B
 local ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID = 0x000A
 
@@ -25,7 +26,9 @@ local PRIVATE_MODE = "PRIVATE_MODE"
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" },
+  { mfr = "LUMI", model = "lumi.plug.macn01" },
   { mfr = "LUMI", model = "lumi.switch.n0agl1" },
+  { mfr = "LUMI", model = "lumi.switch.n0acn2" },
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
@@ -77,12 +80,51 @@ local preference_map = {
       ["23"] = SinglePrecisionFloat(0, 11, 0.123046875)
     },
   },
+  ["stse.maxPowerCN"] = {
+    cluster_id = PRIVATE_CLUSTER_ID,
+    attribute_id = MAX_POWER_ATTRIBUTE_ID,
+    mfg_code = MFG_CODE,
+    data_type = data_types.SinglePrecisionFloat,
+    value_map = {
+      ["1"] = SinglePrecisionFloat(0, 6, 0.5625),
+      ["2"] = SinglePrecisionFloat(0, 7, 0.5625),
+      ["3"] = SinglePrecisionFloat(0, 8, 0.171875),
+      ["4"] = SinglePrecisionFloat(0, 8, 0.5625),
+      ["5"] = SinglePrecisionFloat(0, 8, 0.953125),
+      ["6"] = SinglePrecisionFloat(0, 9, 0.171875),
+      ["7"] = SinglePrecisionFloat(0, 9, 0.3671875),
+      ["8"] = SinglePrecisionFloat(0, 9, 0.5625),
+      ["9"] = SinglePrecisionFloat(0, 9, 0.7578125),
+      ["10"] = SinglePrecisionFloat(0, 9, 0.953125),
+      ["11"] = SinglePrecisionFloat(0, 10, 0.07421875),
+      ["12"] = SinglePrecisionFloat(0, 10, 0.171875),
+      ["13"] = SinglePrecisionFloat(0, 10, 0.26953125),
+      ["14"] = SinglePrecisionFloat(0, 10, 0.3671875),
+      ["15"] = SinglePrecisionFloat(0, 10, 0.46484375),
+      ["16"] = SinglePrecisionFloat(0, 10, 0.5625),
+      ["17"] = SinglePrecisionFloat(0, 10, 0.66015625),
+      ["18"] = SinglePrecisionFloat(0, 10, 0.7578125),
+      ["19"] = SinglePrecisionFloat(0, 10, 0.85546875),
+      ["20"] = SinglePrecisionFloat(0, 10, 0.953125),
+      ["21"] = SinglePrecisionFloat(0, 11, 0.025390625),
+      ["22"] = SinglePrecisionFloat(0, 11, 0.07421875),
+      ["23"] = SinglePrecisionFloat(0, 11, 0.123046875),
+      ["24"] = SinglePrecisionFloat(0, 11, 0.171875),
+      ["25"] = SinglePrecisionFloat(0, 11, 0.220703125)
+    },
+  },
   ["stse.electricSwitchType"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
     value_map = { rocker = 0x01, rebound = 0x02 },
+  },
+  ["stse.turnOffIndicatorLight"] = {
+    cluster_id = PRIVATE_CLUSTER_ID,
+    attribute_id = RESTORE_TURN_OFF_INDICATOR_LIGHT_ATTRIBUTE_ID,
+    mfg_code = MFG_CODE,
+    data_type = data_types.Boolean,
   },
 }
 

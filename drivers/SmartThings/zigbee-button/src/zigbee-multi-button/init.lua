@@ -23,6 +23,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "AduroSmart Eria", model = "Adurolight_NCC" },
   { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
   { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
+  { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
+  { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
   { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" },
   { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
   { mfr = "IKEA of Sweden", model = "TRADFRI remote control" },
@@ -36,7 +38,9 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "SBM300ZB2" },
   { mfr = "ShinaSystem", model = "SBM300ZB3" },
   { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
-  { mfr = "ROBB smarrt", model = "ROB_200-008-0" }
+  { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
+  { mfr = "WALL HERO", model = "ACL-401SCA4" },
+  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -64,7 +68,7 @@ local function added_handler(self, device)
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
     end
   end
-  -- device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {
@@ -81,7 +85,9 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.adurosmart"),
     require("zigbee-multi-button.heiman"),
     require("zigbee-multi-button.shinasystems"),
-    require("zigbee-multi-button.robb")
+    require("zigbee-multi-button.robb"),
+    require("zigbee-multi-button.wallhero"),
+    require("zigbee-multi-button.SLED")
   }
 }
 

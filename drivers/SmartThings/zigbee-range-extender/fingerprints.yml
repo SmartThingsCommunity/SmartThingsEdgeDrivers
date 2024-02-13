@@ -24,3 +24,8 @@ zigbeeManufacturer:
     model: WG001-Z01
     deviceLabel: Aeotec Range Extender Zi
     deviceProfileName: range-extender
+  - id: "Insta GmbH/Pushbutton Interface"
+    deviceLabel: NEXENTRO Pushbutton Interface
+    manufacturer: Insta GmbH
+    model: NEXENTRO Pushbutton Interface
+    deviceProfileName: range-extender

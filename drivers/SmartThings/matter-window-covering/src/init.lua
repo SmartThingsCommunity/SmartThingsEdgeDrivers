@@ -20,9 +20,56 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 
 local DEFAULT_LEVEL = 0
+local PROFILE_MATCHED = "__profile_matched"
+
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  -- Use the find_default_endpoint function to return the first endpoint that
+  -- supports a given cluster.
+  return find_default_endpoint(device, clusters.WindowCovering.ID)
+end
+
+local function match_profile(device)
+  local profile_name = "window-covering"
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
+          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+
+  if #battery_eps > 0 then
+    profile_name = "window-covering-battery"
+  end
+  device:try_update_metadata({profile = profile_name})
+  device:set_field(PROFILE_MATCHED, 1)
+end
 
 local function device_init(driver, device)
+  if not device:get_field(PROFILE_MATCHED) then
+    match_profile(device)
+  end
+  device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+end
+
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    -- Profile has changed, resubscribe
+    device:subscribe()
+  else
+    -- Something else has changed info (SW update, reinterview, etc.), so
+    -- try updating profile as needed
+    match_profile(device)
+  end
 end
 
 local function device_added(driver, device)
@@ -97,7 +144,8 @@ local function current_status_handler(driver, device, ib, response)
                    ) or DEFAULT_LEVEL
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
-       rb.info_block.cluster_id == clusters.WindowCovering.ID then
+       rb.info_block.cluster_id == clusters.WindowCovering.ID and
+       rb.info_block.data.value ~= nil then
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
   end
@@ -135,7 +183,7 @@ end
 
 
 local matter_driver_template = {
-  lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added},
+  lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added, infoChanged = info_changed},
   matter_handlers = {
     attr = {
       --TODO LevelControl may not be needed for certified devices since
