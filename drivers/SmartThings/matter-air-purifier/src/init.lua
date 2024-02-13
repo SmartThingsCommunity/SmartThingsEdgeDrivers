@@ -24,18 +24,15 @@ end
 -- Matter Handlers --
 local function fan_mode_handler(driver, device, ib, response)
   if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.off())
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.low())
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.medium())
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.high())
   else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.on())
-    if ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.low())
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.medium())
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.high())
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.auto())
-    end
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.auto())
   end
 end
 
@@ -43,17 +40,20 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
   local supportedAirPurifierFanModes
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
     }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
     }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
@@ -61,17 +61,20 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
     }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
     }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
     }
   else
     supportedAirPurifierFanModes = {
+      capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
       capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
     }
   end
