@@ -31,8 +31,6 @@ local zigbee_fan_driver = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
-    capabilities.colorControl,
-    capabilities.colorTemperature,
     capabilities.fanspeed
   },
   sub_drivers = {
