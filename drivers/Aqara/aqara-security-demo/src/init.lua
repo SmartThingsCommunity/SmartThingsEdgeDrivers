@@ -120,9 +120,21 @@ local aqara_security_demo = Driver("aqara_security_demo", {
 if aqara_security_demo.datastore and type(aqara_security_demo.datastore.cnt) == "number" then
   my_ds.cnt = aqara_security_demo.datastore.cnt + 1
   my_ds:save()
+  local res, err = my_ds:commit()
+  if res then
+    print(dump(res))
+  else
+    print(err)
+  end
 else
   my_ds.cnt = 1
   my_ds:save()
+  local res, err = my_ds:commit()
+  if res then
+    print(dump(res))
+  else
+    print(err)
+  end
 end
 log.info("my_ds.cnt = "..my_ds.cnt)
 
