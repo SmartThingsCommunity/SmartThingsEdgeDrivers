@@ -160,8 +160,8 @@ local function laundry_washer_controls_supported_rinses_attr_handler(driver, dev
 
   laundryWasherControlsSupportedRinses = {}
   for _, numberOfRinses in ipairs(ib.data.elements) do
-    log.info_with({ hub_logs = true }, string.format("numberOfRinses: %s => %s", numberOfRinses.value, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value]))
-    table.insert(laundryWasherControlsSupportedRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value])
+    log.info_with({ hub_logs = true }, string.format("numberOfRinses: %s => %s", numberOfRinses.value, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME))
+    table.insert(laundryWasherControlsSupportedRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME)
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(laundryWasherControlsSupportedRinses))
 end
@@ -256,7 +256,7 @@ local function handle_laundry_washer_rinse_mode(driver, device, cmd)
 
   local ENDPOINT = 1
   for clusterVal, capabilityVal in pairs(LAUNDRY_WASHER_RINSE_MODE_MAP) do
-    if cmd.args.rinseMode == capabilityVal then
+    if cmd.args.rinseMode == capabilityVal.NAME then
       device:send(clusters.LaundryWasherControls.attributes.NumberOfRinses:write(device, ENDPOINT, clusterVal))
       break
     end
@@ -319,8 +319,12 @@ local matter_laundry_washer_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
-      -- TODO: Create laundryWasherSpinSpeed
-      -- [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
+    },
+    -- TODO: Create laundryWasherSpinSpeed
+    -- [capabilities.laundryWasherSpinSpeed.ID] = {
+    --   [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
+    -- },
+    [capabilities.laundryWasherRinseMode.ID] = {
       [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },
     [applianceOperationalStateId] = {
