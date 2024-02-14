@@ -105,6 +105,7 @@ local function on_handler(driver, device, command)
     dev:send(FanControl.attributes.FanMode:write(dev,speed))
     dev:send(FanControl.attributes.FanMode:read(dev,speed))
   end
+  dev:send(FanControl.attributes.FanMode:read(dev,speed)) 
 end
 
 local function off_handler(driver, device, command)
@@ -116,9 +117,9 @@ local function off_handler(driver, device, command)
   if command.component == 'light' then
     dev:send(OnOff.server.commands.Off(dev))
   else
-    dev:send(FanControl.attributes.FanMode:write(dev,FanControl.attributes.FanMode.OFF))
-    dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
+    dev:send(FanControl.attributes.FanMode:write(dev,FanControl.attributes.FanMode.OFF)) 
   end
+  dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
 end
 
 local function switch_level_handler(driver, device, command)
@@ -177,35 +178,5 @@ local itm_fan_light = {
   NAME = "ITM Fan Light",
   zigbee_handlers = {
     attr = {
-      [FanControl.ID] = {
-        [FanControl.attributes.FanMode.ID] = zb_fan_control_handler
-      },
-      [Level.ID] = {
-        [Level.attributes.CurrentLevel.ID] = zb_level_handler
-      },
-      [OnOff.ID] = {
-        [OnOff.attributes.OnOff.ID] = zb_onoff_handler
-      }
-    }
-  },
-  capability_handlers = {
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.on.NAME] = on_handler,
-      [capabilities.switch.commands.off.NAME] = off_handler,
-    },
-    [capabilities.switchLevel.ID] = {
-      [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_handler
-    },
-    [capabilities.fanSpeed.ID] = {
-      [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
-    }
-  },
-  lifecycle_handlers = {
-    added = device_added,
-    init = device_init,
-    infoChanged=info_changed
-  },
-  can_handle = can_handle_itm_fanlight
-}
-
 return itm_fan_light
+
