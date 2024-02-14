@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -154,7 +153,6 @@ test.register_message_test(
                 channel = "device_lifecycle",
                 direction = "receive",
                 message = { mock_parent_device.id, "init" }
-
             },
             {
                 channel = "zigbee",
@@ -306,6 +304,11 @@ test.register_message_test(
                 channel = "zigbee",
                 direction = "send",
                 message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device) }
+            },
+            {
+                channel = "zigbee",
+                direction = "send",
+                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
             }
         }
 )
@@ -323,6 +326,11 @@ test.register_message_test(
                 channel = "zigbee",
                 direction = "send",
                 message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device) }
+            },
+            {
+                channel = "zigbee",
+                direction = "send",
+                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
             }
         }
 )
