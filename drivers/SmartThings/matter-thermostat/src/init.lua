@@ -43,6 +43,9 @@ local setpoint_limit_device_field = {
   MIN_DEADBAND = "MIN_DEADBAND",
 }
 
+local TEMP_MIN = "__temp_min"
+local TEMP_MAX = "__temp_max"
+
 local subscribed_attributes = {
   [capabilities.temperatureMeasurement.ID] = {
     clusters.Thermostat.attributes.LocalTemperature,
@@ -119,6 +122,7 @@ local function do_configure(driver, device)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if #thermo_eps == 1 then
@@ -171,10 +175,13 @@ local function do_configure(driver, device)
   if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
     setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
   end
+  setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
+  setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
   if #setpoint_limit_read.info_blocks ~= 0 then
     device:send(setpoint_limit_read)
   end
 end
+
 
 local function device_added(driver, device)
   device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
@@ -186,6 +193,34 @@ local function temp_event_handler(attribute)
     local temp = ib.data.value / 100.0
     local unit = "C"
     device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
+  end
+end
+
+local function temp_min_attr_handler(driver, device, ib, response)
+  if ib.data.value ~= nil then
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    device:set_field(TEMP_MIN, temp)
+    local temp_max = device:get_field(TEMP_MAX)
+    if temp_max then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = temp, maximum = temp_max }, unit = unit }))
+      device:set_field(TEMP_MIN, nil)
+      device:set_field(TEMP_MAX, nil)
+    end
+  end
+end
+
+local function temp_max_attr_handler(driver, device, ib, response)
+  if ib.data.value ~= nil then
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    device:set_field(TEMP_MAX, temp)
+    local temp_min = device:get_field(TEMP_MIN)
+    if temp_min then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = temp_min, maximum = temp }, unit = unit }))
+      device:set_field(TEMP_MIN, nil)
+      device:set_field(TEMP_MAX, nil)
+    end
   end
 end
 
@@ -374,11 +409,15 @@ local function set_setpoint(setpoint)
   end
 end
 
-local function setpoint_limit_handler(limit_field)
+local function setpoint_limit_handler(limit_field, limit_field_opposite, attribute)
   return function(driver, device, ib, response)
     local val = ib.data.value / 100.0
     log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
     device:set_field(limit_field, val, { persist = true })
+    local opposite_val = device:get_field(limit_field_opposite)
+    if opposite_val then
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({ value = { minimum = math.min(val, opposite_val), maximum = math.max(val, opposite_val) }, unit = "C" }))
+    end
   end
 end
 
@@ -410,10 +449,10 @@ local matter_driver_template = {
         [clusters.Thermostat.attributes.SystemMode.ID] = system_mode_handler,
         [clusters.Thermostat.attributes.ThermostatRunningState.ID] = running_state_handler,
         [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = sequence_of_operation_handler,
-        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_HEAT),
-        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_HEAT),
-        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_COOL),
-        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_COOL),
+        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_HEAT, setpoint_limit_device_field.MAX_HEAT, capabilities.thermostatHeatingSetpoint.heatingSetpointRange),
+        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_HEAT, setpoint_limit_device_field.MIN_HEAT, capabilities.thermostatHeatingSetpoint.heatingSetpointRange),
+        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_COOL, setpoint_limit_device_field.MAX_COOL, capabilities.thermostatCoolingSetpoint.coolingSetpointRange),
+        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_COOL, setpoint_limit_device_field.MIN_COOL, capabilities.thermostatCoolingSetpoint.coolingSetpointRange),
         [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = min_deadband_limit_handler,
       },
       [clusters.FanControl.ID] = {
@@ -422,6 +461,8 @@ local matter_driver_template = {
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_min_attr_handler,
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_max_attr_handler,
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
