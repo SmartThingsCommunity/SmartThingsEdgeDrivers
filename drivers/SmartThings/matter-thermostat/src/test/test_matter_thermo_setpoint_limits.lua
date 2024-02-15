@@ -81,6 +81,8 @@ local function configure(device)
   read_limits:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
   read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
   read_limits:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+  read_limits:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
+  read_limits:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
   test.socket.matter:__expect_send({device.id, read_limits})
   mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -106,6 +108,24 @@ local function configure(device)
     device.id,
     clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(device, 1, 16) --1.6 celcius
   })
+  test.socket.matter:__queue_receive({
+    device.id,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(device, 1, 500) --5.0 celsius
+  })
+  test.socket.matter:__queue_receive({
+    device.id,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(device, 1, 4000) --40.0 celsius
+  })
+
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+  )
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+  )
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
+  )
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
   test.socket.matter:__queue_receive({
@@ -207,6 +227,33 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", cached_cooling_setpoint)
     )
   end
+)
+
+test.register_message_test(
+  "Min and max temperature attributes set capability constraint",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_device, 1, 500)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
+    }
+  }
 )
 
 test.run_registered_tests()
