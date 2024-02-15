@@ -390,6 +390,7 @@ test.register_coroutine_test(
           component_id = "main",
           attribute_id = "supportedWindowShadeCommands",
           state = {value = {"open", "close", "pause"}},
+          visibility = {displayed = false}
         },
       }
     )

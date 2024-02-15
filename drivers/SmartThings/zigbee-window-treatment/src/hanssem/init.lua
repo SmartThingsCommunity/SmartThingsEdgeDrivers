@@ -187,7 +187,7 @@ end
 -------------------- Lifecycle Handlers -------------------
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
   if getLatestLevel(device) == 0 then
     emit_event_final_position(device, getLatestLevel(device))
     device.thread:call_with_delay(3, function(d)
