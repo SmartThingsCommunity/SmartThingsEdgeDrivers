@@ -8,13 +8,13 @@ components:
         version: 1
       - id: relativeHumidityMeasurement
         version: 1
-      - id: carbonMonoxideMeasurement
-        version: 1
-      - id: carbonDioxideMeasurement
-        version: 1
       - id: nitrogenDioxideMeasurement
         version: 1
       - id: ozoneMeasurement
+        version: 1
+      - id: carbonMonoxideMeasurement
+        version: 1
+      - id: carbonDioxideMeasurement
         version: 1
       - id: formaldehydeMeasurement
         version: 1
