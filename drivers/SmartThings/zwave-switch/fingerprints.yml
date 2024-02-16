@@ -898,6 +898,11 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: "Aeotec/Heavy Duty" # EU, US, AU
+    deviceLabel: Aeotec Heavy Duty
+    manufacturerId: 0x0086
+    productId: 0x004E
+    deviceProfileName: aeotec-heavy-duty
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
