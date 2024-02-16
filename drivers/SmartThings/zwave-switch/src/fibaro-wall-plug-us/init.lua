@@ -20,7 +20,8 @@ local FIBARO_WALL_PLUG_FINGERPRINTS = {
 local function can_handle_fibaro_wall_plug(opts, driver, device, ...)
   for _, fingerprint in ipairs(FIBARO_WALL_PLUG_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("fibaro-wall-plug-us")
+      return true, subdriver
     end
   end
   return false

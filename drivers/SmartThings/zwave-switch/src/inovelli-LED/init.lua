@@ -84,7 +84,8 @@ local function can_handle_inovelli_led(opts, driver, device, ...)
     {INOVELLI_LZW31SN_PRODUCT_TYPE, INOVELLI_LZW31_PRODUCT_TYPE},
     INOVELLI_DIMMER_PRODUCT_ID
   ) then
-    return true
+    local subdriver = require("inovelli-LED")
+    return true, subdriver
   end
   return false
 end

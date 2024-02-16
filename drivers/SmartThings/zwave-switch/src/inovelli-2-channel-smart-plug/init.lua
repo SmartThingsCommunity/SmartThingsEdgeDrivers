@@ -38,7 +38,8 @@ local INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS = {
 local function can_handle_inovelli_2_channel_smart_plug(opts, driver, device, ...)
   for _, fingerprint in ipairs(INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("inovelli-2-channel-smart-plug")
+      return true, subdriver
     end
   end
   return false
