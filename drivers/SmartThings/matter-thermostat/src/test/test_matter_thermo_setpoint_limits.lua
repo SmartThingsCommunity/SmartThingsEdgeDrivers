@@ -43,6 +43,7 @@ local mock_device = test.mock_device.build_test_matter_device({
           feature_map=35, -- Heat, Cool, and Auto features.
         },
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
       }
     }
   }
@@ -58,6 +59,7 @@ local function test_init()
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
     clusters.Thermostat.attributes.LocalTemperature,
     clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.TemperatureMeasurement.attributes.MeasuredValue,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)

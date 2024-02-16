@@ -175,8 +175,10 @@ local function do_configure(driver, device)
   if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
     setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
   end
-  setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
-  setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
+  if #temp_eps ~= 0 then
+    setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
+    setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
+  end
   if #setpoint_limit_read.info_blocks ~= 0 then
     device:send(setpoint_limit_read)
   end
