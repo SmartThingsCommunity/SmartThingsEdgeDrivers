@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: power-energy-powerConsumption
+  - id: "Eve/Energy/Switzerland"
+    deviceLabel: Eve Energy
+    vendorId: 0x130A
+    productId: 0x6A
+    deviceProfileName: power-energy-powerConsumption
 
 #GE
   - id: "GELightingSavant/Bulb/A19"
