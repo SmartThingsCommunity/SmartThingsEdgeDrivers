@@ -1,11 +1,9 @@
-name: itm-fan-light
+name: fan-light
 components:
   - id: main
-    label: Fan
+    label: Fan 
     capabilities:
       - id: switch
-        version: 1
-      - id: switchLevel
         version: 1
       - id: fanSpeed
         version: 1
@@ -26,6 +24,4 @@ components:
         version: 1
     categories:
       - name: Light
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-fan-3-speed
+
