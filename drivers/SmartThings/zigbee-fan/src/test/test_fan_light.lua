@@ -22,7 +22,7 @@ local Level = clusters.Level
 
 local mock_parent_device = test.mock_device.build_test_zigbee_device(
         {
-            profile = t_utils.get_profile_definition("itm-fan-light.yml"),
+            profile = t_utils.get_profile_definition("fan-light.yml"),
             zigbee_endpoints = {
                 [1] = {
                     id = 1,
@@ -35,20 +35,10 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
         }
 )
 
-local mock_child_device = test.mock_device.build_test_child_device(
-        {
-            profile = t_utils.get_profile_definition("switch-level.yml"),
-            device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 2),
-            parent_device_id = mock_parent_device.id,
-            parent_assigned_child_key = string.format("%02X", 2)
-        }
-)
-
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
     test.mock_device.add_test_device(mock_parent_device)
-    test.mock_device.add_test_device(mock_child_device)
     zigbee_test_utils.init_noop_health_check_timer()
 end
 
@@ -65,7 +55,7 @@ test.register_message_test(
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_child_device.id, { capability = "switchLevel", component = "light",
+                message = { mock_parent_device.id, { capability = "switchLevel", component = "light",
                                                     command = "setLevel", args = { 100, 0 } } }
             },
             {
@@ -88,7 +78,7 @@ test.register_message_test(
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_child_device.id, { capability = "switchLevel", component = "light",
+                message = { mock_parent_device.id, { capability = "switchLevel", component = "light",
                                                     command = "setLevel", args = { 50, 0 } } }
             },
             {
@@ -197,7 +187,7 @@ test.register_message_test(
             {
                 channel = "device_lifecycle",
                 direction = "receive",
-                message = { mock_child_device.id, "added" }
+                message = { mock_parent_device.id, "added" }
             },
             {
                 channel = "zigbee",
@@ -297,7 +287,7 @@ test.register_message_test(
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_child_device.id, { capability = "switch", component = "light", command = "off",
+                message = { mock_parent_device.id, { capability = "switch", component = "light", command = "off",
                                                     args = {} } }
             },
             {
@@ -319,7 +309,7 @@ test.register_message_test(
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_child_device.id, { capability = "switch", component = "light", command = "on",
+                message = { mock_parent_device.id, { capability = "switch", component = "light", command = "on",
                                                      args = {} } }
             },
             {
