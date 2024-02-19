@@ -34,7 +34,7 @@ local zigbee_fan_driver = {
     capabilities.fanspeed
   },
   sub_drivers = {
-    require("itm-fan-light")
+    require("fan-light")
   },
   lifecycle_handlers = {
     init = device_init
