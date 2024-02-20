@@ -22,13 +22,38 @@ local FINGERPRINTS = {
   { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-003" },
 }
 
-local function can_handle_itm_fanlight(opts, driver, device, ...)
+local function can_handle_itm_fanlight(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       return true
     end
   end
   return false
+end
+
+local levels_for_speed = {
+  [0] = 0,
+  [1] = 25,
+  [2] = 50,
+  [3] = 100,
+}
+
+local function level_to_speed(level)
+  local speed = level
+  if speed ~= nil then
+    if level == 0 then
+      speed  = 0
+    elseif level  > 0 and level <= 25 then
+      speed = 1
+    elseif level > 25 and level <= 75 then
+      speed = 2
+    else
+      speed = 3
+    end
+  else
+    speed = 0
+  end
+  return speed
 end
 
 -- CAPABILITY HANDLERS
@@ -40,9 +65,9 @@ local function on_handler(driver, device, command)
   else
     local speed = dev:get_field('LAST_FAN_SPD') or 1
     dev:send(FanControl.attributes.FanMode:write(dev,speed))
-    dev:send(FanControl.attributes.FanMode:read(dev,speed))
+    dev:send(FanControl.attributes.FanMode:read(dev))
   end
-  dev:send(FanControl.attributes.FanMode:read(dev,speed))
+  dev:send(FanControl.attributes.FanMode:read(dev))
 end
 
 local function off_handler(driver, device, command)
@@ -63,13 +88,19 @@ local function switch_level_handler(driver, device, command)
   else
     local speed = level_to_speed(command.args.level)
     dev:send(FanControl.attributes.FanMode:write(dev,speed))
-    dev:send(FanControl.attributes.FanMode:read(dev,speed))
+    dev:send(FanControl.attributes.FanMode:read(dev))
   end
 end
 
 local function fan_speed_handler(driver, device, command)
-  device:send(FanControl.attributes.FanMode:write(device,command.args.speed))
-  device:send(FanControl.attributes.FanMode:read(device,command.args.speed))
+  if command.args.speed <= 3 then
+    device:send(FanControl.attributes.FanMode:write(device, command.args.speed))
+    device:send(FanControl.attributes.FanMode:read(device))
+  else
+    local last_speed = 3
+    device:send(FanControl.attributes.FanMode:write(device, last_speed))
+    device:send(FanControl.attributes.FanMode:read(device))
+  end
 end
 
 -- ZIGBEE HANDLERS
@@ -122,12 +153,9 @@ local itm_fan_light = {
       [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
     }
   },
-  lifecycle_handlers = {
-    added = device_added,
-    init = device_init
-  },
   can_handle = can_handle_itm_fanlight
 }
 
 return itm_fan_light
+
 
