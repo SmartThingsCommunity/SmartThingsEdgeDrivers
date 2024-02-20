@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
+local ZigbeeDriver = require "st.zigbee"
 
 local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3450-L" },
@@ -46,7 +47,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
   for _, fingerprint in ipairs(ZIGBEE_MULTI_BUTTON_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("zigbee-multi-button")
+      return true, subdriver
     end
   end
   return false
@@ -78,7 +80,7 @@ local zigbee_multi_button = {
   },
   can_handle = can_handle_zigbee_multi_button,
   sub_drivers = {
-    require("zigbee-multi-button.ikea"),
+    ZigbeeDriver.lazy_load_sub_driver(require("zigbee-multi-button.ikea")),
     require("zigbee-multi-button.somfy"),
     require("zigbee-multi-button.ecosmart"),
     require("zigbee-multi-button.centralite"),

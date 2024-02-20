@@ -24,7 +24,10 @@ local FINGERPRINTS = {
 
 local function can_handle(opts, driver, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then return true end
+    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then
+      local subdriver = require("aeotec-smart-switch")
+      return true, subdriver
+    end
   end
   return false
 end

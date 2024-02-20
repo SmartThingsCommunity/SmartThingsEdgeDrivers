@@ -408,8 +408,8 @@ local matter_driver_template = {
     capabilities.colorTemperature,
   },
     sub_drivers = {
-    require("eve-energy")
-  }
+    MatterDriver.lazy_load_sub_driver(require("eve-energy"))
+   }
 }
 
 function detect_matter_thing(device)

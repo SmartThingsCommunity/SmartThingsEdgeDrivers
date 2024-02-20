@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
+local ZwaveDriver = require "st.zwave.driver"
 
 local AEOTEC_MULTISENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0086, productId = 0x0064 }, -- MultiSensor 6
@@ -26,7 +27,8 @@ local AEOTEC_MULTISENSOR_FINGERPRINTS = {
 local function can_handle_aeotec_multisensor(opts, self, device, ...)
   for _, fingerprint in ipairs(AEOTEC_MULTISENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("aeotec-multisensor")
+      return true, subdriver
     end
   end
   return false
@@ -61,8 +63,8 @@ local aeotec_multisensor = {
     }
   },
   sub_drivers = {
-    require("aeotec-multisensor/multisensor-6"),
-    require("aeotec-multisensor/multisensor-7")
+    ZwaveDriver.lazy_load_sub_driver(require("aeotec-multisensor/multisensor-6")),
+    ZwaveDriver.lazy_load_sub_driver(require("aeotec-multisensor/multisensor-7"))
   },
   NAME = "aeotec multisensor",
   can_handle = can_handle_aeotec_multisensor

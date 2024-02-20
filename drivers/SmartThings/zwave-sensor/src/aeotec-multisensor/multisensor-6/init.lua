@@ -23,7 +23,11 @@ local MULTISENSOR_6_PRODUCT_ID = 0x0064
 local PREFERENCE_NUM = 9
 
 local function can_handle_multisensor_6(opts, self, device, ...)
-  return device.zwave_product_id == MULTISENSOR_6_PRODUCT_ID
+  if device.zwave_product_id == MULTISENSOR_6_PRODUCT_ID then
+    local subdriver = require("aeotec-multisensor/multisensor-6")
+    return true, subdriver
+  end
+  return false
 end
 
 local function wakeup_notification(driver, device, cmd)

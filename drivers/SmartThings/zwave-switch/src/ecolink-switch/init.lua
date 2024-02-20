@@ -27,7 +27,8 @@ local ECOLINK_FINGERPRINTS = {
 local function can_handle_ecolink(opts, driver, device, ...)
   for _, fingerprint in ipairs(ECOLINK_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("ecolink-switch")
+      return true, subdriver
     end
   end
   return false

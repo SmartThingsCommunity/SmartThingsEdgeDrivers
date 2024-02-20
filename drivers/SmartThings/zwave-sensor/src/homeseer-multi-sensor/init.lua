@@ -34,7 +34,8 @@ local HOMESEER_MULTI_SENSOR_FINGERPRINTS = {
 local function can_handle_homeseer_multi_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(HOMESEER_MULTI_SENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("homeseer-multi-sensor")
+      return true, subdriver
     end
   end
   return false

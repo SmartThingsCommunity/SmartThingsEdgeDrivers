@@ -31,7 +31,8 @@ local DAWON_SMART_PLUG_FINGERPRINTS = {
 local function can_handle_dawon_smart_plug(opts, driver, device, ...)
   for _, fingerprint in ipairs(DAWON_SMART_PLUG_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("dawon-smart-plug")
+      return true, subdriver
     end
   end
   return false

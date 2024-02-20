@@ -19,6 +19,15 @@ local button_utils = require "button_utils"
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 
+local function can_handle_on_off(opts, driver, device, ...)
+  device.log.info_with({ hub_logs = true }, ("Calling can_handle for IKEA on off switch"))
+  if device:get_model() == "TRADFRI on/off switch" then
+    local subdriver = require("zigbee-multi-button.ikea.TRADFRI_on_off_switch")
+    return true, subdriver
+  end
+  return false
+end
+
 local on_off_switch = {
   NAME = "On/Off Switch",
   zigbee_handlers = {
@@ -33,9 +42,7 @@ local on_off_switch = {
       },
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "TRADFRI on/off switch"
-  end
+  can_handle = can_handle_on_off
 }
 
 return on_off_switch

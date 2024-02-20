@@ -29,7 +29,11 @@ local open_close_remote = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "TRADFRI open/close remote"
+    if device:get_model() == "TRADFRI open/close remote" then
+      local subdriver = require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
+      return true, subdriver
+    end
+    return false
   end
 }
 
