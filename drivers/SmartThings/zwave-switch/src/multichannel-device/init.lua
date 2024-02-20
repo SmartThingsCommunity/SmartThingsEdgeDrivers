@@ -28,7 +28,11 @@ local map_device_class_to_profile = {
 }
 
 local function can_handle_multichannel_device(opts, driver, device, ...)
-  return device:supports_capability(capabilities.zwMultichannel)
+  if device:supports_capability(capabilities.zwMultichannel) then
+    local subdriver = require("multichannel-device")
+    return true, subdriver
+  end
+  return false
 end
 
 local function find_child(device, src_channel)
