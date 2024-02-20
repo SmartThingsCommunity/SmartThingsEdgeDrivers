@@ -41,6 +41,8 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local LATEST_TOTAL_CONSUMPTION_WH = "LATEST_TOTAL_CONSUMPTION_WH"
 local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 
+local EVE_ENERGY_OUTLET_PRODUCT_ID = 0x69
+
 
 -------------------------------------------------------------------------------------
 -- Eve specifics
@@ -49,7 +51,8 @@ local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 local function is_eve_energy_products(opts, driver, device)
   -- this sub driver does not support child devices
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and
+     device.manufacturer_info.product_id ~= EVE_ENERGY_OUTLET_PRODUCT_ID then
     return true
   end
 
