@@ -20,7 +20,7 @@ local FanControl = clusters.FanControl
 local OnOff = clusters.OnOff
 local Level = clusters.Level
 
-local mock_parent_device = test.mock_device.build_test_zigbee_device(
+local mock_base_device = test.mock_device.build_test_zigbee_device(
         {
             profile = t_utils.get_profile_definition("fan-light.yml"),
             zigbee_endpoints = {
@@ -38,289 +38,258 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-    test.mock_device.add_test_device(mock_parent_device)
+    test.mock_device.add_test_device(mock_base_device)
     zigbee_test_utils.init_noop_health_check_timer()
 end
 
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-        " Light Dim command <send> : 100% ",
+        " Light Dim command <send to device> : 100% ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-            },
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "switchLevel", component = "light",
+                message = { mock_base_device.id, { capability = "switchLevel", component = "light",
                                                     command = "setLevel", args = { 100, 0 } } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, Level.server.commands.MoveToLevelWithOnOff
-                            (mock_parent_device, 254, 0) }
+                message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+                            (mock_base_device, 254, 0) }
+            }
+        }
+)
+
+
+test.register_message_test(
+        " Light Dim command <send to device> : 50% ",
+        {
+            {
+                channel = "capability",
+                direction = "receive",
+                message = { mock_base_device.id, { capability = "switchLevel", component = "light",
+                                                   command = "setLevel", args = { 50, 0 } } }
+            },
+            {
+                channel = "zigbee",
+                direction = "send",
+                message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+                (mock_base_device, 127, 0) }
             }
         }
 )
 
 test.register_message_test(
-        " Light Dim command <send> : 50% ",
+        " Light switch <receive from device> : on ",
         {
             {
-                channel = "device_lifecycle",
+                channel = "zigbee",
                 direction = "receive",
-                message = { mock_parent_device.id, "init" }
+                message = { mock_base_device.id, OnOff.attributes.OnOff:
+                           build_test_attr_report(mock_base_device, true):from_endpoint(0x01) }
             },
             {
                 channel = "capability",
-                direction = "receive",
-                message = { mock_parent_device.id, { capability = "switchLevel", component = "light",
-                                                    command = "setLevel", args = { 50, 0 } } }
-            },
-            {
-                channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, Level.server.commands.MoveToLevelWithOnOff
-                (mock_parent_device, 127, 0) }
+                message = mock_base_device:generate_test_message("light", capabilities.switch.switch.on())
             }
         }
 )
 
 test.register_message_test(
-        " Light switch <receive> : on ",
+        " Light switch <receive from device> : off ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-
-            },
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_parent_device.id, OnOff.attributes.OnOff:
-                           build_test_attr_report(mock_parent_device, true):from_endpoint(0x01) }
+                message = { mock_base_device.id, OnOff.attributes.OnOff:
+                           build_test_attr_report(mock_base_device, false):from_endpoint(0x01) }
             },
             {
                 channel = "capability",
                 direction = "send",
-                message = mock_parent_device:generate_test_message("light", capabilities.switch.switch.on())
+                message = mock_base_device:generate_test_message("light", capabilities.switch.switch.off())
             }
         }
 )
 
 test.register_message_test(
-        " Light switch <receive> : off ",
+        " Light level <receive from device> : 100% ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-
-            },
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_parent_device.id, OnOff.attributes.OnOff:
-                           build_test_attr_report(mock_parent_device, false):from_endpoint(0x01) }
+                message = { mock_base_device.id, Level.attributes.CurrentLevel:
+                           build_test_attr_report(mock_base_device, 254):from_endpoint(0x01) }
             },
             {
                 channel = "capability",
                 direction = "send",
-                message = mock_parent_device:generate_test_message("light", capabilities.switch.switch.off())
+                message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(100))
             }
         }
 )
 
 test.register_message_test(
-        " Light level <receive> : 100% ",
+        " Light level <receive from device> : 50% ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-            },
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_parent_device.id, Level.attributes.CurrentLevel:
-                           build_test_attr_report(mock_parent_device, 254):from_endpoint(0x01) }
+                message = { mock_base_device.id, Level.attributes.CurrentLevel:
+                build_test_attr_report(mock_base_device, 127):from_endpoint(0x01) }
             },
             {
                 channel = "capability",
                 direction = "send",
-                message = mock_parent_device:generate_test_message("light", capabilities.switchLevel.level(100))
+                message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(50))
             }
         }
 )
 
 test.register_message_test(
-        " Light level <receive> : 50% ",
+        " Light level <receive from device> : 0%",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-
-            },
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_parent_device.id, Level.attributes.CurrentLevel:
-                build_test_attr_report(mock_parent_device, 127):from_endpoint(0x01) }
+                message = { mock_base_device.id, Level.attributes.CurrentLevel:
+                build_test_attr_report(mock_base_device, 0):from_endpoint(0x01) }
             },
             {
                 channel = "capability",
                 direction = "send",
-                message = mock_parent_device:generate_test_message("light", capabilities.switchLevel.level(50))
+                message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(0))
             }
         }
 )
 
 test.register_message_test(
-        " Light level & added lifecycle <receive> : 0%",
+        " FanSpeed control <send to device> : 0% ",
         {
             {
-                channel = "device_lifecycle",
+                channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, "added" }
+                message = { mock_base_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 0 } } }
             },
             {
                 channel = "zigbee",
-                direction = "receive",
-                message = { mock_parent_device.id, Level.attributes.CurrentLevel:
-                build_test_attr_report(mock_parent_device, 0):from_endpoint(0x01) }
+                direction = "send",
+                message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x00) }
             },
             {
-                channel = "capability",
+                channel = "zigbee",
                 direction = "send",
-                message = mock_parent_device:generate_test_message("light", capabilities.switchLevel.level(0))
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
 
 test.register_message_test(
-        " FanSpeed control <send> : 0% ",
+        " 'FanSpeed control <send to device> : Low ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-            },
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 0 } } }
+                message = { mock_base_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 1 } } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:write(mock_parent_device, 0x00) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x01) }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
 
 test.register_message_test(
-        " 'FanSpeed control <send> : Low ",
+        " 'FanSpeed control <send to device> : High ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-            },
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 1 } } }
+                message = { mock_base_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 3 } } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:write(mock_parent_device, 0x01) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x03) }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
 
 test.register_message_test(
-        " 'FanSpeed control <send> : High ",
+        " 'FanSpeed control <send to device> : Max ",
         {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_parent_device.id, "init" }
-            },
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 3 } } }
+                message = { mock_base_device.id, { capability = "fanSpeed", command = "setFanSpeed", args = { 4 } } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:write(mock_parent_device, 0x03) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x03) }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
 
 test.register_message_test(
-        " Light OnOff command <send> : Off ",
+        " Light OnOff command <send to device> : Off ",
         {
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "switch", component = "light", command = "off",
+                message = { mock_base_device.id, { capability = "switch", component = "light", command = "off",
                                                     args = {} } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device) }
+                message = { mock_base_device.id, OnOff.server.commands.Off(mock_base_device) }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
 
 test.register_message_test(
-        " Light OnOff command <send> : On ",
+        " Light OnOff command <send to device> : On ",
         {
             {
                 channel = "capability",
                 direction = "receive",
-                message = { mock_parent_device.id, { capability = "switch", component = "light", command = "on",
+                message = { mock_base_device.id, { capability = "switch", component = "light", command = "on",
                                                      args = {} } }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device) }
+                message = { mock_base_device.id, OnOff.server.commands.On(mock_base_device) }
             },
             {
                 channel = "zigbee",
                 direction = "send",
-                message = { mock_parent_device.id, FanControl.attributes.FanMode:read(mock_parent_device) }
+                message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
         }
 )
