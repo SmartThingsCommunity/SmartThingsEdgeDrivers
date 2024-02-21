@@ -100,7 +100,7 @@ end
 
 local function sensitivity_adjustment_capability_handler(driver, device, command)
   local sensitivity = command.args.sensitivity
-  local pre_sensitivity_value = 'High'
+  local pre_sensitivity_value = device:get_latest_state("main", sensitivityAdjustment.ID, sensitivityAdjustment.sensitivityAdjustment.NAME)
 
   if pre_sensitivity_value ~= sensitivity then
     if sensitivity == 'High' then
@@ -110,7 +110,6 @@ local function sensitivity_adjustment_capability_handler(driver, device, command
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
         PRIVATE_CLUSTER_ID, PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
     end
-    pre_sensitivity_value = sensitivity
   else
     if sensitivity == 'High' then
       device:emit_event(sensitivityAdjustment.sensitivityAdjustment.High())
