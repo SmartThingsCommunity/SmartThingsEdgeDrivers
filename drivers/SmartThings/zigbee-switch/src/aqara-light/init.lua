@@ -1,6 +1,7 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local capabilities = require "st.capabilities"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -44,11 +45,23 @@ local function device_added(driver, device, event)
   device:send(Level.attributes.OffTransitionTime:write(device, 0))
 end
 
+local function set_level_handler(driver, device, cmd)
+  local level = math.floor(cmd.args.level / 100.0 * 254)
+  local dimming_rate = 0x0000
+
+  device:send(Level.commands.MoveToLevelWithOnOff(device, level, dimming_rate))
+end
+
 local aqara_light_handler = {
   NAME = "Aqara Light Handler",
   lifecycle_handlers = {
     added = device_added,
     doConfigure = do_configure
+  },
+  capability_handlers = {
+    [capabilities.switchLevel.ID] = {
+      [capabilities.switchLevel.commands.setLevel.NAME] = set_level_handler
+        }
   },
   can_handle = is_aqara_products
 }
