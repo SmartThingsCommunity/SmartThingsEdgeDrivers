@@ -77,6 +77,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+  - id: "4921/111"
+    deviceLabel: Cync Outdoor Plug
+    vendorId: 0x1339
+    productId: 0x006F
+    deviceProfileName: plug-binary
 
 #Nanoleaf
   - id: "Nanoleaf NL53"
