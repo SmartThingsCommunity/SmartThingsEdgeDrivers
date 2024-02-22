@@ -107,16 +107,14 @@ local function do_configure(driver, device)
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif refrigerator.can_handle({}, driver, device) then
-    local profile_name = "refrigerator"
-    -- if #tn_eps > 0 and #tl_eps > 0 then
-    --   profile_name = profile_name .. "-tn" .. "-tl"
-    -- elseif #tn_eps > 0 then
-    --   profile_name = profile_name .. "-tn"
-    -- elseif #tl_eps > 0 then
-    --   profile_name = profile_name .. "-tl"
-    -- end
-    -- log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    -- device:try_update_metadata({profile = profile_name})
+    local profile_name = "refrigerator-freezer"
+    if #tn_eps > 0 then
+      profile_name = profile_name .. "-tn"
+    elseif #tl_eps > 0 then
+      profile_name = profile_name .. "-tl"
+    end
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   else
     log.warn_with({hub_logs=true}, "Device has not sub driver")
   end
