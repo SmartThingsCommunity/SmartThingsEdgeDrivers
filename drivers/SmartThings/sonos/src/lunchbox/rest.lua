@@ -6,6 +6,8 @@ local utils = require "utils"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"
 
+local api_version = require("version").api
+
 local RestCallStates = {
   SEND = "Send",
   RECEIVE = "Receive",
@@ -95,6 +97,8 @@ local function parse_chunked_response(original_response, sock)
         if partial ~= nil and #partial >= 1 then
           full_response:append_body(partial)
           next_chunk_bytes = 0
+        else
+          return nil, next_err
         end
       else
         return nil, ("unexpected error reading chunked transfer: " .. next_err)
@@ -130,6 +134,11 @@ local function parse_chunked_response(original_response, sock)
 end
 
 local function handle_response(sock)
+  if api_version >= 9 then
+    local response, err = Response.tcp_source(sock)
+    if err or (not response) then return response, (err or "unknown error") end
+    return response, response:fill_body()
+  end
   -- called select right before passing in so we receive immediately
   local initial_recv, initial_err, partial = Response.source(function() return sock:receive('*l') end)
 
@@ -139,7 +148,11 @@ local function handle_response(sock)
     local headers = initial_recv:get_headers()
 
     if headers and headers:get_one("Transfer-Encoding") == "chunked" then
-      full_response = parse_chunked_response(initial_recv, sock)
+      local response, err = parse_chunked_response(initial_recv, sock)
+      if err ~= nil then
+        return nil, err
+      end
+      full_response = response
     else
       local content_length_header = (headers and headers:get_one("Content-length")) or nil
       if content_length_header then

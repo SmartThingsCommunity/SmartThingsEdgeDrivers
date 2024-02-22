@@ -25,7 +25,7 @@ local mock_device = test.mock_device.build_test_matter_device(
           feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
           cluster_type = "SERVER"
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"}
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
       },
     },
     {
@@ -581,7 +581,7 @@ test.register_message_test(
 
 
 test.register_message_test(
-  "Handle a held event in a multi-press sequence", {
+  "Handle a long press including MultiPressComplete", {
   {
     channel = "matter",
     direction = "receive",
@@ -612,23 +612,68 @@ test.register_message_test(
     direction = "receive",
     message = {
       mock_device.id,
-      clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 50, {new_position = 1}
-      )
-    }
-  },
-  {
-    channel = "matter",
-    direction = "receive",
-    message = {
-      mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 50, {new_position = 0, total_number_of_presses_counted = 2, previous_position=0}
+        mock_device, 50, {new_position = 0, total_number_of_presses_counted = 1, previous_position=0}
       )
     }
   }
   -- no double event
 }
+)
+
+test.register_message_test(
+  "Handle long press followed by single press", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+                mock_device, 50, {new_position = 1}
+        )
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Switch.events.LongPress:build_test_event_report(
+                mock_device, 50, {new_position = 1}
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("button4", button_attr.held({state_change = true}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+                mock_device, 50, {new_position = 1}
+        )
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Switch.events.MultiPressComplete:build_test_event_report(
+                mock_device, 50, {new_position = 0, total_number_of_presses_counted = 1, previous_position=0}
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("button4", button_attr.pushed({state_change = true}))
+    }
+  }
 )
 -- run the tests
 test.run_registered_tests()

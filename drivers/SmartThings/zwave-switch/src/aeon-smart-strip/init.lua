@@ -40,7 +40,8 @@ local POWER_UNIT_WATT = "W"
 local function can_handle_aeon_smart_strip(opts, driver, device, ...)
   for _, fingerprint in ipairs(AEON_SMART_STRIP_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("aeon-smart-strip")
+      return true, subdriver
     end
   end
   return false

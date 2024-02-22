@@ -34,7 +34,11 @@ local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
 local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
+local socket = require "cosock.socket"
 local lock_utils = require "lock_utils"
+
+local DELAY_LOCK_EVENT = "_delay_lock_event"
+local MAX_DELAY = 10
 
 local reload_all_codes = function(driver, device, command)
   -- starts at first user code index then iterates through all lock codes as they come in
@@ -300,6 +304,92 @@ local function init(driver, device)
   lock_utils.populate_state_from_data(device)
 end
 
+-- The following two functions are from the lock defaults. They are in the base driver temporarily
+-- until the fix is widely released in the lua libs
+local lock_state_handler = function(driver, device, value, zb_rx)
+  local attr = capabilities.lock.lock
+  local LOCK_STATE = {
+    [value.NOT_FULLY_LOCKED]     = attr.unknown(),
+    [value.LOCKED]               = attr.locked(),
+    [value.UNLOCKED]             = attr.unlocked(),
+    [value.UNDEFINED]            = attr.unknown(),
+  }
+
+  -- this is where we decide whether or not we need to delay our lock event because we've
+  -- observed it coming before the event (or we're starting to compute the timer)
+  local delay = device:get_field(DELAY_LOCK_EVENT) or 100
+  if (delay < MAX_DELAY) then
+    device.thread:call_with_delay(delay+.5, function ()
+      device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+    end)
+  else
+    device:set_field(DELAY_LOCK_EVENT, socket.gettime())
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+  end
+end
+
+local lock_operation_event_handler = function(driver, device, zb_rx)
+  local event_code = zb_rx.body.zcl_body.operation_event_code.value
+  local source = zb_rx.body.zcl_body.operation_event_source.value
+  local OperationEventCode = require "st.zigbee.generated.zcl_clusters.DoorLock.types.OperationEventCode"
+  local METHOD = {
+    [0] = "keypad",
+    [1] = "command",
+    [2] = "manual",
+    [3] = "rfid",
+    [4] = "fingerprint",
+    [5] = "bluetooth"
+  }
+  local STATUS = {
+    [OperationEventCode.LOCK]            = capabilities.lock.lock.locked(),
+    [OperationEventCode.UNLOCK]          = capabilities.lock.lock.unlocked(),
+    [OperationEventCode.ONE_TOUCH_LOCK]  = capabilities.lock.lock.locked(),
+    [OperationEventCode.KEY_LOCK]        = capabilities.lock.lock.locked(),
+    [OperationEventCode.KEY_UNLOCK]      = capabilities.lock.lock.unlocked(),
+    [OperationEventCode.AUTO_LOCK]       = capabilities.lock.lock.locked(),
+    [OperationEventCode.MANUAL_LOCK]     = capabilities.lock.lock.locked(),
+    [OperationEventCode.MANUAL_UNLOCK]   = capabilities.lock.lock.unlocked(),
+    [OperationEventCode.SCHEDULE_LOCK]   = capabilities.lock.lock.locked(),
+    [OperationEventCode.SCHEDULE_UNLOCK] = capabilities.lock.lock.unlocked()
+  }
+  local event = STATUS[event_code]
+  if (event ~= nil) then
+    event["data"] = {}
+    if (event_code == OperationEventCode.AUTO_LOCK or
+        event_code == OperationEventCode.SCHEDULE_LOCK or
+        event_code == OperationEventCode.SCHEDULE_UNLOCK
+      ) then
+      event.data.method = "auto"
+    else
+      event.data.method = METHOD[source]
+    end
+    if (source == 0) then --keypad
+      local code_id = zb_rx.body.zcl_body.user_id.value
+      local code_name = "Code "..code_id
+      local lock_codes = device:get_field("lockCodes")
+      if (lock_codes ~= nil and
+          lock_codes[code_id] ~= nil) then
+        code_name = lock_codes[code_id]
+      end
+      event.data = {method = METHOD[0], codeId = code_id .. "", codeName = code_name}
+    end
+
+    -- if this is an event corresponding to a recently-received attribute report, we
+    -- want to set our delay timer for future lock attribute report events
+    if device:get_latest_state(
+        device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
+        capabilities.lock.ID,
+        capabilities.lock.lock.ID) == event.value.value then
+      local preceding_event_time = device:get_field(DELAY_LOCK_EVENT) or 0
+      local time_diff = socket.gettime() - preceding_event_time
+      if time_diff < MAX_DELAY then
+        device:set_field(DELAY_LOCK_EVENT, time_diff)
+      end
+    end
+
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, event)
+  end
+end
 
 local zigbee_lock_driver = {
   supported_capabilities = {
@@ -314,11 +404,13 @@ local zigbee_lock_driver = {
       },
       [LockCluster.ID] = {
         [LockCluster.client.commands.GetPINCodeResponse.ID] = get_pin_response_handler,
-        [LockCluster.client.commands.ProgrammingEventNotification.ID] = programming_event_handler
+        [LockCluster.client.commands.ProgrammingEventNotification.ID] = programming_event_handler,
+        [LockCluster.client.commands.OperatingEventNotification.ID] = lock_operation_event_handler
       }
     },
     attr = {
       [LockCluster.ID] = {
+        [LockCluster.attributes.LockState.ID] = lock_state_handler,
         [LockCluster.attributes.MaxPINCodeLength.ID] = handle_max_code_length,
         [LockCluster.attributes.MinPINCodeLength.ID] = handle_min_code_length,
         [LockCluster.attributes.NumberOfPINUsersSupported.ID] = handle_max_codes

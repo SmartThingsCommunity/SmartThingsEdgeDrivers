@@ -27,7 +27,8 @@ local ZOOZ_POWER_STRIP_FINGERPRINTS = {
 local function can_handle_zooz_power_strip(opts, driver, device, ...)
   for _, fingerprint in ipairs(ZOOZ_POWER_STRIP_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("zooz-power-strip")
+      return true, subdriver
     end
   end
   return false
