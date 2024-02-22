@@ -50,9 +50,10 @@ local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
 -------------------------------------------------------------------------------------
 
 local function is_eve_energy_products(opts, driver, device)
-  -- this sub driver does not support child devices
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+  if (device.network_type == device_lib.NETWORK_TYPE_MATTER and
+      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID) or
+     (device.network_type == device_lib.NETWORK_TYPE_CHILD and
+      device:get_parent_device().manufacturer_info.vendor_id == EVE_MANUFACTURER_ID) then
     return true
   end
 
@@ -271,6 +272,14 @@ local function device_added(driver, device)
   -- Reset the values
   device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
   device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+
+  -- refresh child devices to get initial attribute state in case child device
+  -- was created after the initial subscription report
+  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    --Note: no endpoint specified indicates a wildcard endpoint
+    local req = clusters.OnOff.attributes.OnOff:read(device)
+    device:send(req)
+  end
 end
 
 local function device_removed(driver, device)
