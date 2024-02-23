@@ -91,7 +91,7 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.fanSpeedPercent.ID] = {
-    clusters.FanControl.attributes.PercentSetting
+    clusters.FanControl.attributes.PercentCurrent
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
@@ -457,7 +457,10 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = ib.data.value
+  local speed = 0
+  if ib.data.value ~= nil then
+    speed = ib.data.value
+  end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
 
@@ -734,7 +737,7 @@ local matter_driver_template = {
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
-        [clusters.FanControl.attributes.PercentSetting.ID] = fan_speed_percent_attr_handler,
+        [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler
       },
