@@ -25,7 +25,8 @@ local EATON_ANYPLACE_SWITCH_FINGERPRINTS = {
 local function can_handle_eaton_anyplace_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(EATON_ANYPLACE_SWITCH_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("eaton-anyplace-switch")
+      return true, subdriver
     end
   end
   return false

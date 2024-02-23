@@ -20,8 +20,58 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: power-energy-powerConsumption
+  - id: "Eve/Energy/OutletUS"
+    deviceLabel: Eve Energy Outlet
+    vendorId: 0x130A
+    productId: 0x69
+    deviceProfileName: power-energy-powerConsumption
 
 #GE
+  - id: "4921/177"
+    deviceLabel: Cync Full Color 2 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00B1
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/44"
+    deviceLabel: Cync Full Color 3 Inch Puck
+    vendorId: 0x1339
+    productId: 0x002C
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/174"
+    deviceLabel: Cync Full Color 4 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00AE
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/180"
+    deviceLabel: Cync 4 Inch High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0x00B4
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/175"
+    deviceLabel: Cync Full Color 6 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00AF
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "4921/181"
+    deviceLabel: Cync 6 Inch High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0x00B5
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/41"
+    deviceLabel: Cync Full Color Undercabinet 12 Inch
+    vendorId: 0x1339
+    productId: 0x0029
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/42"
+    deviceLabel: Cync Full Color Undercabinet 18 Inch
+    vendorId: 0x1339
+    productId: 0x002A
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/43"
+    deviceLabel: Cync Full Color Undercabinet 24 Inch
+    vendorId: 0x1339
+    productId: 0x002B
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "GELightingSavant/Bulb/A19"
     deviceLabel: Cync Full Color A19
     vendorId: 0x1339
@@ -31,6 +81,11 @@ matterManufacturer:
     deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
     productId: 0xAC
+    deviceProfileName: plug-binary
+  - id: "4921/111"
+    deviceLabel: Cync Outdoor Plug
+    vendorId: 0x1339
+    productId: 0x006F
     deviceProfileName: plug-binary
 
 #Nanoleaf
@@ -59,10 +114,10 @@ matterManufacturer:
     vendorId: 0x115a
     productId: 0x44
     deviceProfileName: light-color-level-2700K-6500K
-  - id: "4442/1809"
+  - id: "Nanoleaf NL71K1"
     deviceLabel: Smart Holiday String Lights
     vendorId: 0x115A
-    productId: 0x771
+    productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -70,6 +125,22 @@ matterManufacturer:
     vendorId: 0x1321
     productId: 0x0002
     deviceProfileName: plug-binary
+  - id: "SONOFF M5-1C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000B
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-2C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000C
+    deviceProfileName: switch-binary
+  - id: "SONOFF M5-3C"
+    deviceLabel: SONOFF SwitchMan Smart Wall Switch
+    vendorId: 0x1321
+    productId: 0x000D
+    deviceProfileName: switch-binary
+
 #Yeelight
   - id: "Yeelight Smart Lamp"
     deviceLabel: Yeelight Smart Lamp
@@ -1910,7 +1981,12 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
-
+#Zemismart
+  - id: "5020/61154"
+    deviceLabel: Zemismart Inline Module
+    vendorId: 0x139C
+    productId: 0xEEE2
+    deviceProfileName: switch-binary
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
