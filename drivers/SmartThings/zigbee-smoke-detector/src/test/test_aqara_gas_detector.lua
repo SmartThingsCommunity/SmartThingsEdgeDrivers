@@ -18,8 +18,6 @@ local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 
-
-
 local selfCheck = capabilities["stse.selfCheck"]
 local lifeTimeReport = capabilities["stse.lifeTimeReport"]
 local sensitivityAdjustment = capabilities["stse.sensitivityAdjustment"]
@@ -73,7 +71,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
-    data_types.Uint8, 0x01) })
+      data_types.Uint8, 0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.gasDetector.gas.clear()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.audioMute.mute.unmuted()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", sensitivityAdjustment.sensitivityAdjustment.High()))
@@ -95,7 +93,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.gasDetector.gas.detected()))
+      capabilities.gasDetector.gas.detected()))
   end
 )
 
@@ -112,7 +110,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.audioMute.mute.muted()))
+      capabilities.audioMute.mute.muted()))
   end
 )
 
@@ -125,7 +123,7 @@ test.register_coroutine_test(
       { capability = "audioMute", component = "main", command = "mute", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
-    PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+      PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
   end
 )
 
@@ -142,7 +140,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    selfCheck.selfCheckState.selfCheckCompleted()))
+      selfCheck.selfCheckState.selfCheckCompleted()))
   end
 )
 
@@ -156,7 +154,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",selfCheck.selfCheckState.selfChecking()))
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
-    PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
+      PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end
 )
 
@@ -173,7 +171,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    lifeTimeReport.lifeTimeState.endOfLife()))
+      lifeTimeReport.lifeTimeState.endOfLife()))
   end
 )
 
@@ -190,7 +188,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    sensitivityAdjustment.sensitivityAdjustment.Low()))
+      sensitivityAdjustment.sensitivityAdjustment.Low()))
   end
 )
 
@@ -199,14 +197,33 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Capability on command should be handled : setSensitivityAdjustment Low",
   function()
+    local attr_report_data = {
+      { PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, data_types.Uint8.ID, 0x01 }
+    }
     test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = sensitivityAdjustmentId, component = "main", command = "setSensitivityAdjustment", args = {"Low"}}} )
+      { capability = sensitivityAdjustmentId, component = "main", command = "setSensitivityAdjustment", args = {"Low"}}
+    })
     test.socket.zigbee:__expect_send({ mock_device.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
-    PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01) })
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+      PRIVATE_SENSITIVITY_ADJUSTMENT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)
+    })
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      sensitivityAdjustment.sensitivityAdjustment.Low())
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = sensitivityAdjustmentId, component = "main", command = "setSensitivityAdjustment", args = {"Low"}}
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      sensitivityAdjustment.sensitivityAdjustment.Low())
+    )
   end
 )
-
 
 
 test.run_registered_tests()
