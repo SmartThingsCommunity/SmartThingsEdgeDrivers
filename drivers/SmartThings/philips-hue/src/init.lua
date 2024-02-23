@@ -715,7 +715,15 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API)
       cosock.spawn(function()
-        Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
+        -- We don't want to do a scan if we're already in a discovery loop,
+        -- because the event source connection will open if a bridge is discovered
+        -- and we'll effectively be scanning twice.
+        -- Two scans that find the same device close together can emit events close enough
+        -- together that the dedupe logic at the cloud layer will get bypassed and lead to
+        -- duplicate device records.
+        if not Discovery.discovery_active then
+          Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
+        end
         local child_device_map = {}
         local children = bridge_device:get_child_list()
         bridge_device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
@@ -1417,6 +1425,8 @@ local function remove(driver, device)
       event_source:close()
       device:set_field(Fields.EVENT_SOURCE, nil)
     end
+
+    Discovery.api_keys[device.device_network_id] = nil
   end
 end
 
@@ -1556,6 +1566,27 @@ end
 if hue.datastore["dni_to_device_id"] == nil then
   hue.datastore["dni_to_device_id"] = {}
 end
+
+
+if hue.datastore["api_keys"] == nil then
+  hue.datastore["api_keys"] = {}
+end
+
+Discovery.api_keys = setmetatable({}, {
+  __newindex = function (self, k, v)
+    assert(
+      type(v) == "string",
+      string.format("Attempted to store value of type %s in application_key table which expects \"string\" types",
+        type(v)
+      )
+    )
+    hue.datastore.api_keys[k] = v
+    hue.datastore:save()
+  end,
+  __index = function(self, k)
+    return hue.datastore.api_keys[k]
+  end
+})
 
 -- Kick off a scan right away to attempt to populate some information
 hue:call_with_delay(3, Discovery.do_mdns_scan, "Philips Hue mDNS Initial Scan")

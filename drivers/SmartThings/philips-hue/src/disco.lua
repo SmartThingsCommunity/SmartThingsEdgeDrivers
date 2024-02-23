@@ -12,6 +12,9 @@ local utils = require "utils"
 local SERVICE_TYPE = "_hue._tcp"
 local DOMAIN = "local"
 
+-- This `api_keys` table is an in-memory fall-back table. It gets overwritten
+-- with a reference to a driver datastore table before the Driver's `run` loop
+-- can get spun up in `init.lua`.
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
@@ -388,17 +391,17 @@ function HueDiscovery.do_mdns_scan(driver)
   for _, info in ipairs(mdns_responses.found) do
     if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
       log.trace("Invalid IPv4 address: " .. info.host_info.address)
-      return
+      goto continue
     end
 
     if info.service_info.service_type ~= HueDiscovery.ServiceType then -- response for a different service type. Shouldn't happen.
       log.warn("Unexpected service type response: " .. info.service_info.service_type)
-      return
+      goto continue
     end
 
     if info.service_info.domain ~= HueDiscovery.Domain then -- response for a different domain. Shouldn't happen.
       log.warn("Unexpected domain response: " .. info.service_info.domain)
-      return
+      goto continue
     end
 
     -- Hue *typically* formats the BridgeID as the uppercase MAC address, minus separators.
@@ -455,6 +458,7 @@ function HueDiscovery.do_mdns_scan(driver)
         driver:update_bridge_netinfo(bridge_id, bridge_info)
       end
     end
+    ::continue::
   end
 end
 
