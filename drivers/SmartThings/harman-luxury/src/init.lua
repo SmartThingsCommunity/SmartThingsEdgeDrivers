@@ -182,6 +182,10 @@ local function check_for_updates(device)
                             audioTrackData.supportedTrackControlCommands) or {"nextTrack", "previousTrack"})
         device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
+      -- check for a audio track data change
+      if changes["elapsedTime"] then
+        device:emit_event(capabilities.audioTrackData.elapsedTime(changes["elapsedTime"]))
+      end
       -- check for a media presets change
       if changes["mediaPresets"] and type(changes["mediaPresets"].presets) == "table" then
         device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"].presets))
