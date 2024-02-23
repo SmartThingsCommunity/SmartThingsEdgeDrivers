@@ -24,10 +24,13 @@ local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local json = require "st.json"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: table, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
-local Fields = require "hue.fields"
+local Fields = require "fields"
 local handlers = require "handlers"
 local HueApi = require "hue.api"
 local HueColorUtils = require "hue.cie_utils"
@@ -36,8 +39,6 @@ local utils = require "utils"
 
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
-
-local api_version = require("version").api
 
 local StrayDeviceMessageTypes = {
   FoundBridge = "FOUND_BRIDGE",
@@ -326,7 +327,7 @@ local function update_bridge_fields_from_info(driver, bridge_info, bridge_device
   bridge_device:set_field(Fields.BRIDGE_SW_VERSION, tonumber(bridge_info.swversion or "0", 10), { persist = true })
 
   if Discovery.api_keys[device_bridge_id] then
-    bridge_device:set_field(Fields.API_KEY, Discovery.api_keys[device_bridge_id], { persist = true })
+    bridge_device:set_field(HueApi.APPLICATION_KEY_HEADER, Discovery.api_keys[device_bridge_id], { persist = true })
     driver.api_key_to_bridge_id[Discovery.api_keys[device_bridge_id]] = device_bridge_id
   end
   bridge_device:set_field(Fields.IPV4, bridge_ip, { persist = true })
@@ -592,7 +593,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
       )
     )
 
-    local key = parent_bridge:get_field(Fields.API_KEY)
+    local key = parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER)
     local bridge_ip = parent_bridge:get_field(Fields.IPV4)
     local bridge_id = parent_bridge:get_field(Fields.BRIDGE_ID)
     if not (Discovery.api_keys[bridge_id or {}] or key) then
@@ -612,7 +613,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
     if not api_instance then
       api_instance = HueApi.new_bridge_manager(
         "https://" .. bridge_ip,
-        (parent_bridge:get_field(Fields.API_KEY) or Discovery.api_keys[bridge_id] or key),
+        (parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER) or Discovery.api_keys[bridge_id] or key),
         utils.labeled_socket_builder(
           (parent_bridge.label or bridge_id or parent_bridge.id or "unknown bridge")
         )
@@ -714,12 +715,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
 
       local bridge_api = bridge_device:get_field(Fields.BRIDGE_API)
       cosock.spawn(function()
-        -- auto-add/auto-delete is only supported with newer lua libs. We do a conditional
-        -- check in the delete routine, but we try to avoid doing it at all here with an
-        -- additional defensive check against the Lua Libs API version.
-        if api_version >= 9 then
-          Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
-        end
+        Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
         local child_device_map = {}
         local children = bridge_device:get_child_list()
         bridge_device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
@@ -996,7 +992,7 @@ init_bridge = function(driver, device)
   local bridge_manager = device:get_field(Fields.BRIDGE_API) or Discovery.disco_api_instances[device_bridge_id]
 
   local ip = device:get_field(Fields.IPV4)
-  local api_key = device:get_field(Fields.API_KEY)
+  local api_key = device:get_field(HueApi.APPLICATION_KEY_HEADER)
   local bridge_url = "https://" .. ip
 
   if not Discovery.api_keys[device_bridge_id] then
@@ -1055,7 +1051,7 @@ init_bridge = function(driver, device)
               return
             end
 
-            log.info("Bridge info for %s received, initializing network configuration")
+            log.info(string.format("Bridge info for %s received, initializing network configuration", device_bridge_id))
             driver.joined_bridges[device_bridge_id] = true
             do_bridge_network_init(driver, device, bridge_url, api_key)
             return
@@ -1119,9 +1115,9 @@ local function device_init(driver, device)
     string.format("device_init for device %s, device_type: %s", (device.label or device.id or "unknown device"),
       device_type))
   if device_type == "bridge" then
-    init_bridge(driver, device)
+    init_bridge(driver, device --[[@as HueBridgeDevice]])
   elseif device_type == "light" then
-    init_light(driver, device)
+    init_light(driver, device --[[@as HueChildDevice]])
   end
 end
 
@@ -1132,15 +1128,15 @@ local function device_added(driver, device, _, _, parent_device_id)
   log.info(
     string.format("device_added for device %s", (device.label or device.id or "unknown device")))
   if utils.is_dth_bridge(device) then
-    migrate_bridge(driver, device)
+    migrate_bridge(driver, device --[[@as HueBridgeDevice]])
   elseif utils.is_dth_light(device) then
-    migrate_light(driver, device, parent_device_id)
+    migrate_light(driver, device --[[@as HueChildDevice]], parent_device_id)
     -- Don't do a refresh if it's a migration
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   elseif utils.is_edge_bridge(device) then
-    bridge_added(driver, device)
+    bridge_added(driver, device --[[@as HueBridgeDevice]])
   elseif utils.is_edge_light(device) then
-    light_added(driver, device, parent_device_id)
+    light_added(driver, device --[[@as HueChildDevice]], parent_device_id)
   else
     log.warn(
       st_utils.stringify_table(device,
@@ -1241,7 +1237,7 @@ cosock.spawn(function()
         if not api_instance then
           api_instance = HueApi.new_bridge_manager(
             "https://" .. bridge_ip,
-            msg_device:get_field(Fields.API_KEY),
+            msg_device:get_field(HueApi.APPLICATION_KEY_HEADER),
             utils.labeled_socket_builder((msg_device.label or msg_device.device_network_id or msg_device.id or "unknown bridge"))
           )
           Discovery.disco_api_instances[msg_device.device_network_id] = api_instance
@@ -1367,7 +1363,7 @@ cosock.spawn(function()
           if not api_instance then
             api_instance = HueApi.new_bridge_manager(
               "https://" .. bridge_ip,
-              maybe_bridge:get_field(Fields.API_KEY),
+              maybe_bridge:get_field(HueApi.APPLICATION_KEY_HEADER),
               utils.labeled_socket_builder((maybe_bridge.label or maybe_bridge.device_network_id or maybe_bridge.id or "unknown bridge"))
             )
             Discovery.disco_api_instances[maybe_bridge.device_network_id] = api_instance
@@ -1527,7 +1523,7 @@ local hue = Driver("hue",
         if bridge_info.ip ~= bridge_device:get_field(Fields.IPV4) then
           update_bridge_fields_from_info(self, bridge_info, bridge_device)
           local maybe_api_client = bridge_device:get_field(Fields.BRIDGE_API)
-          local maybe_api_key = bridge_device:get_field(Fields.API_KEY) or Discovery.api_keys[bridge_id]
+          local maybe_api_key = bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) or Discovery.api_keys[bridge_id]
           local maybe_event_source = bridge_device:get_field(Fields.EVENT_SOURCE)
           local bridge_url = "https://" .. bridge_info.ip
 
