@@ -100,6 +100,13 @@ function APIs.GetCredentialsToken(ip)
   return invoke.Activate(ip, SMARTTHINGS_PATH .. "getCredentialsToken")
 end
 
+--- get supported input sources from a Harman Luxury device on ip
+---@param ip string
+---@return table|nil, nil|string
+function APIs.GetSupportedInputSources(ip)
+  return invoke.Activate(ip, SMARTTHINGS_PATH .. "getSupportedInputSources")
+end
+
 --- power manager APIs -----------------------------------
 
 --- invoke smartthings:setOn on ip

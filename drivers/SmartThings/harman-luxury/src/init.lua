@@ -224,6 +224,7 @@ end
 local function device_init(driver, device)
   log.info(string.format("Initiating device: %s", device.label))
 
+  local device_ip = device:get_field(const.IP)
   local device_dni = device.device_network_id
   if driver.datastore.discovery_cache[device_dni] then
     log.warn("set unsaved device field")
@@ -239,8 +240,8 @@ local function device_init(driver, device)
                        capabilities.mediaTrackControl.commands.previousTrack.NAME}))
 
   -- set supported input sources
-  device:emit_event(capabilities.mediaInputSource.supportedInputSources(
-                      {"HDMI", "aux", "bluetooth", "digital", "wifi"}))
+  local supportedInputSources = api.GetSupportedInputSources(device_ip)
+  device:emit_event(capabilities.mediaInputSource.supportedInputSources(supportedInputSources))
 
   -- set supported keypad inputs
   device:emit_event(capabilities.keypadInput.supportedKeyCodes(
@@ -248,7 +249,6 @@ local function device_init(driver, device)
                        "NUMBER1", "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8",
                        "NUMBER9"}))
 
-  local device_ip = device:get_field(const.IP)
   log.trace(string.format("device IP: %s", device_ip))
 
   create_check_for_updates_thread(device)
