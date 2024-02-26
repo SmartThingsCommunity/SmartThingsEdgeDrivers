@@ -5,6 +5,9 @@ local json = require "st.json"
 local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: table, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local APPLICATION_KEY_HEADER = "hue-application-key"
 
@@ -35,9 +38,10 @@ end
 
 --- Phillips Hue REST API Module
 --- @class PhilipsHueApi
---- @field private client RestClient
---- @field private headers table<string,string>
---- @field private _ctrl_tx table
+--- @field public headers table<string,string>
+--- @field package client RestClient
+--- @field package _ctrl_tx table
+--- @field package _running boolean
 local PhilipsHueApi = {}
 PhilipsHueApi.__index = PhilipsHueApi
 
@@ -138,13 +142,15 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
 
         local path, reply_tx = msg.path, msg.reply_tx
         if msg._type == ControlMessageTypes.Get then
+          local get_resp, get_err, partial = self.client:get(path, self.headers, retry_fn(5))
           reply_tx:send(
-            table.pack(process_rest_response(self.client:get(path, self.headers, retry_fn(5), rest_err_callback)))
+            table.pack(process_rest_response(get_resp, get_err, partial, rest_err_callback))
           )
         elseif msg._type == ControlMessageTypes.Put then
           local payload = msg.payload
+          local put_resp, put_err, partial = self.client:put(path, payload, self.headers, retry_fn(5))
           reply_tx:send(
-            table.pack(process_rest_response(self.client:put(path, payload, self.headers, retry_fn(5), rest_err_callback)))
+            table.pack(process_rest_response(put_resp, put_err, partial, rest_err_callback))
           )
         end
       else
