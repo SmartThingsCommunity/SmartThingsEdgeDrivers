@@ -20,6 +20,15 @@ local Level = clusters.Level
 local OnOff = clusters.OnOff
 local ColorControl = clusters.ColorControl
 
+local ZIGBEE_BUTTON_SLED_FINGERPRINTS = {
+  ["Samsung Electronics"] = {
+    ["SAMSUNG-ITM-Z-005"] = true
+  },
+  ["Juno"] = {
+    ["ABL-LIGHT-Z-401"] = true,
+  }
+}
+
 local emit_pushed_event = function(button_name, device)
   local additional_fields = {
     state_change = true
@@ -73,7 +82,7 @@ local SLED_button = {
     doConfigure = do_configure
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "Samsung Electronics" and device:get_model() == "SAMSUNG-ITM-Z-005"
+    return (ZIGBEE_BUTTON_SLED_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
   end
 }
 
