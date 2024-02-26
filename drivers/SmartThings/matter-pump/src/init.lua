@@ -114,6 +114,8 @@ local function do_configure(driver, device)
   if #pump_eps == 1 then
     if #level_eps > 0 then
       profile_name = profile_name .. "-level"
+    else
+      profile_name = profile_name .. "-only"
     end
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
