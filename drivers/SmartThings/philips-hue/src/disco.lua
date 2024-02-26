@@ -5,13 +5,16 @@ local mdns = require "st.mdns"
 local net_utils = require "st.net_utils"
 local st_utils = require "st.utils"
 
-local Fields = require "hue.fields"
+local Fields = require "fields"
 local HueApi = require "hue.api"
 local utils = require "utils"
 
 local SERVICE_TYPE = "_hue._tcp"
 local DOMAIN = "local"
 
+-- This `api_keys` table is an in-memory fall-back table. It gets overwritten
+-- with a reference to a driver datastore table before the Driver's `run` loop
+-- can get spun up in `init.lua`.
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
@@ -94,8 +97,8 @@ function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
   end
 
   local known_bridge_device = known_identifier_to_device_map[bridge_id]
-  if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
-    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
+  if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
+    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
 
   HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
@@ -116,8 +119,8 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
   if driver.ignored_bridges[bridge_id] then return end
 
   local known_bridge_device = known_identifier_to_device_map[bridge_id]
-  if known_bridge_device and known_bridge_device:get_field(Fields.API_KEY) then
-    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(Fields.API_KEY)
+  if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
+    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
 
   if known_bridge_device ~= nil
@@ -253,14 +256,17 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
 
   if do_delete then
     for _, device in ipairs(driver:get_devices()) do ---@cast device HueDevice
+      -- We're only interested in processing child/non-bridge devices here.
+      if utils.is_bridge(driver, device) then goto continue end
       local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID) or ""]
       local parent_device_id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID) or ""
       local parent_bridge_device = driver:get_device_info(parent_device_id)
       local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_id)
-      if is_child_of_bridge and not not_known_to_bridge then
+      if parent_bridge_device and is_child_of_bridge and not not_known_to_bridge then
         device.log.info(string.format("Device is no longer joined to Hue Bridge %q, deleting", parent_bridge_device.label))
         driver:do_hue_light_delete(device)
       end
+      ::continue::
     end
   end
 end
@@ -283,7 +289,7 @@ end
 ---@param bridge_id string
 ---@param resource_id string
 ---@param device_info table
----@param known_identifier_to_device_map table<string,boolean>
+---@param known_identifier_to_device_map table<string,HueDevice>
 process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_identifier_to_device_map)
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then
@@ -385,17 +391,17 @@ function HueDiscovery.do_mdns_scan(driver)
   for _, info in ipairs(mdns_responses.found) do
     if not net_utils.validate_ipv4_string(info.host_info.address) then -- we only care about the ipV4 types here.
       log.trace("Invalid IPv4 address: " .. info.host_info.address)
-      return
+      goto continue
     end
 
     if info.service_info.service_type ~= HueDiscovery.ServiceType then -- response for a different service type. Shouldn't happen.
       log.warn("Unexpected service type response: " .. info.service_info.service_type)
-      return
+      goto continue
     end
 
     if info.service_info.domain ~= HueDiscovery.Domain then -- response for a different domain. Shouldn't happen.
       log.warn("Unexpected domain response: " .. info.service_info.domain)
-      return
+      goto continue
     end
 
     -- Hue *typically* formats the BridgeID as the uppercase MAC address, minus separators.
@@ -452,6 +458,7 @@ function HueDiscovery.do_mdns_scan(driver)
         driver:update_bridge_netinfo(bridge_id, bridge_info)
       end
     end
+    ::continue::
   end
 end
 

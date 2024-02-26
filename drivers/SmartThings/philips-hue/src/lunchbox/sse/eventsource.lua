@@ -21,15 +21,15 @@ local Response = require "luncheon.response"
 --- @field public onopen function in-line callback for on-open events
 --- @field public onmessage function in-line callback for on-message events
 --- @field public onerror function in-line callback for on-error events; error callbacks will fire
---- @field private _reconnect boolean flag that says whether or not the client should attempt to reconnect on close.
---- @field private _reconnect_time_millis number The amount of time to wait between reconnects, in millis. Can be sent by the server.
---- @field private _sock_builder function|nil optional. If this function exists, it will be called to create a new TCP socket on connection.
---- @field private _sock table the TCP socket for the connection
---- @field private _needs_more boolean flag to track whether or not we're still expecting mroe on this source before we dispatch
---- @field private _last_field string the last field the parsing path saw, in case it needs to append more to its value
---- @field private _extra_headers table a table of string:string key-value pairs that will be inserted in to the initial requests's headers.
---- @field private _parse_buffers table inner state, keeps track of the various event stream buffers in between dispatches.
---- @field private _listeners table event listeners attached using the add_event_listener API instead of the inline callbacks.
+--- @field package _reconnect boolean flag that says whether or not the client should attempt to reconnect on close.
+--- @field package _reconnect_time_millis number The amount of time to wait between reconnects, in millis. Can be sent by the server.
+--- @field package _sock_builder function|nil optional. If this function exists, it will be called to create a new TCP socket on connection.
+--- @field package _sock table? the TCP socket for the connection
+--- @field package _needs_more boolean flag to track whether or not we're still expecting mroe on this source before we dispatch
+--- @field package _last_field string the last field the parsing path saw, in case it needs to append more to its value
+--- @field package _extra_headers table a table of string:string key-value pairs that will be inserted in to the initial requests's headers.
+--- @field package _parse_buffers table inner state, keeps track of the various event stream buffers in between dispatches.
+--- @field package _listeners table event listeners attached using the add_event_listener API instead of the inline callbacks.
 local EventSource = {}
 EventSource.__index = EventSource
 
@@ -156,8 +156,8 @@ local valid_fields = util.read_only {
 -- h/t to github.com/FreeMasen for the suggestions on the efficient implementation of this
 local function find_line_endings(chunk)
   local r_idx, n_idx = string.find(chunk, "[\r\n]+")
-  if r_idx == n_idx then
-    -- 1 character
+  if r_idx == nil or r_idx == n_idx then
+    -- 1 character or no match
     return r_idx, n_idx
   end
   local slice = string.sub(chunk, r_idx, n_idx)
@@ -289,8 +289,8 @@ local function connecting_action(source)
   local response
   response, err = Response.tcp_source(source._sock)
 
-  if err ~= nil then
-    return nil, err
+  if not response or err ~= nil then
+    return nil, err or "nil response from Response.tcp_source"
   end
 
   if response.status ~= 200 then
@@ -301,7 +301,7 @@ local function connecting_action(source)
   if err ~= nil then
     return nil, err
   end
-  local content_type = string.lower((headers:get_one('content-type') or "none"))
+  local content_type = string.lower((headers and headers:get_one('content-type') or "none"))
   if not content_type:find("text/event-stream", 1, true) then
     local err_msg = "Expected content type of text/event-stream in response headers, received: " .. content_type
     return nil, err_msg
