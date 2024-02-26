@@ -2059,7 +2059,7 @@ matterGeneric:
     deviceLabel: Matter Dimmable Light
     deviceTypes:
       - id: 0x0101 # Dimmable Light
-      - id: 0x0400 # Illuminance Measurement
+      - id: 0x0106 # Light Sensor
     deviceProfileName: light-level-illuminance
   - id: "matter/colorTemperature/light"
     deviceLabel: Matter Color Temperature Light
