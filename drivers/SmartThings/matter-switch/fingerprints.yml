@@ -25,6 +25,16 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x69
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/106"
+    deviceLabel: Eve Energy Switzerland
+    vendorId: 0x130A
+    productId: 0x006A
+    deviceProfileName: power-energy-powerConsumption
+  - id: "4874/107"
+    deviceLabel: Eve Energy Outdoor
+    vendorId: 0x130A
+    productId: 0x006B
+    deviceProfileName: power-energy-powerConsumption
 
 #GE
   - id: "4921/177"
