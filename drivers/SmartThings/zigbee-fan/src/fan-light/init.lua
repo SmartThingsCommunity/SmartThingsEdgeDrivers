@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local stDevice = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local FanControl = clusters.FanControl
@@ -31,85 +30,44 @@ local function can_handle_itm_fanlight(opts, driver, device)
   return false
 end
 
-local levels_for_speed = {
-  [0] = 0,
-  [1] = 25,
-  [2] = 50,
-  [3] = 100,
-}
-
-local function level_to_speed(level)
-  local speed = level
-  if speed ~= nil then
-    if level == 0 then
-      speed  = 0
-    elseif level  > 0 and level <= 25 then
-      speed = 1
-    elseif level > 25 and level <= 75 then
-      speed = 2
-    else
-      speed = 3
-    end
-  else
-    speed = 0
-  end
-  return speed
-end
-
 -- CAPABILITY HANDLERS
 
 local function on_handler(driver, device, command)
-  local dev = device
   if command.component == 'light' then
-    dev:send(OnOff.server.commands.On(dev))
+    device:send(OnOff.server.commands.On(device))
   else
-    local speed = dev:get_field('LAST_FAN_SPD') or 1
-    dev:send(FanControl.attributes.FanMode:write(dev,speed))
-    dev:send(FanControl.attributes.FanMode:read(dev))
+    local speed = device:get_field('LAST_FAN_SPD') or 1
+    device:send(FanControl.attributes.FanMode:write(device, speed))
   end
-  dev:send(FanControl.attributes.FanMode:read(dev))
+  device:send(FanControl.attributes.FanMode:read(device))
 end
 
 local function off_handler(driver, device, command)
-  local dev = device
   if command.component == 'light' then
-    dev:send(OnOff.server.commands.Off(dev))
+    device:send(OnOff.server.commands.Off(device))
   else
-    dev:send(FanControl.attributes.FanMode:write(dev,FanControl.attributes.FanMode.OFF))
+    device:send(FanControl.attributes.FanMode:write(device, FanControl.attributes.FanMode.OFF))
   end
-  dev:send(FanControl.attributes.FanMode:read(dev,FanControl.attributes.FanMode.OFF))
+  device:send(FanControl.attributes.FanMode:read(device))
 end
 
 local function switch_level_handler(driver, device, command)
-  local dev = device
-  if command.component == 'light' then
-    local level = math.floor(command.args.level/100.0 * 254)
-    dev:send(Level.server.commands.MoveToLevelWithOnOff(dev, level, command.args.rate or 0xFFFF))
-  else
-    local speed = level_to_speed(command.args.level)
-    dev:send(FanControl.attributes.FanMode:write(dev,speed))
-    dev:send(FanControl.attributes.FanMode:read(dev))
-  end
+  local level = math.floor(command.args.level/100.0 * 254)
+  device:send(Level.server.commands.MoveToLevelWithOnOff(device, level, command.args.rate or 0xFFFF))
 end
 
 local function fan_speed_handler(driver, device, command)
-  if command.args.speed <= 3 then
-    device:send(FanControl.attributes.FanMode:write(device, command.args.speed))
-    device:send(FanControl.attributes.FanMode:read(device))
-  else
-    local last_speed = 3
-    device:send(FanControl.attributes.FanMode:write(device, last_speed))
-    device:send(FanControl.attributes.FanMode:read(device))
-  end
+  device:send(FanControl.attributes.FanMode:write(device, command.args.speed))
+  device:send(FanControl.attributes.FanMode:read(device))
 end
 
 -- ZIGBEE HANDLERS
 
 local function zb_fan_control_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.fanSpeed.fanSpeed(value.value))
-  local evt = capabilities.switch.switch(value.value > 0 and 'on' or 'off', { visibility = { displayed = false } })
-  device:emit_component_event(device.profile.components.main,evt)
-  device:emit_component_event(device.profile.components.main,capabilities.switchLevel.level(levels_for_speed[value.value], { visibility = { displayed = false } }))
+  local evt = capabilities.switch.switch(value.value > 0 and 'on' or 'off', { visibility = { displayed = true } })
+  device:emit_component_event(device.profile.components.main, evt)
+  device:emit_component_event(device.profile.components.main, capabilities.fanSpeed.fanSpeed(value.value))
   if value.value > 0 then
     device:set_field('LAST_FAN_SPD', value.value, {persist = true})
   end
@@ -117,13 +75,13 @@ end
 
 local function zb_level_handler(driver, device, value, zb_rx)
   local evt = capabilities.switchLevel.level(math.floor((value.value / 254.0 * 100) + 0.5))
-  device:emit_component_event(device.profile.components.light,evt)
+  device:emit_component_event(device.profile.components.light, evt)
 end
 
 local function zb_onoff_handler(driver, device, value, zb_rx)
   local attr = capabilities.switch.switch
   local evt = value.value and attr.on() or attr.off()
-  device:emit_component_event(device.profile.components.light,evt)
+  device:emit_component_event(device.profile.components.light, evt)
 end
 
 local itm_fan_light = {
