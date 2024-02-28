@@ -1,0 +1,50 @@
+name: Laundry Dryer Controls
+id: spacewonder52282.laundryDryerControls
+version: 1
+status: proposed
+
+attributes:
+  drynessLevel:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          enum:
+            - low
+            - normal
+            - extra
+            - max
+      required:
+      - value
+    setter: setDrynessLevel
+  supportedDrynessLevels:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - low
+              - normal
+              - extra
+              - max
+      required:
+      - value
+commands:
+  setDrynessLevel:
+    arguments:
+    - name: drynessLevel
+      schema:
+        type: string
+        enum:
+          - low
+          - normal
+          - extra
+          - max
+      optional: false
+    name: setDrynessLevel

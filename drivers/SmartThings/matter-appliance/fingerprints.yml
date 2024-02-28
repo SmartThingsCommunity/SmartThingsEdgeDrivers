@@ -4,6 +4,11 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1021
     deviceProfileName: refrigerator-freezer-tn
+  # - id: "virtual/matter/laundry-dryer"
+  #   deviceLabel: Matter Laundry Dryer
+  #   vendorId: 0xFFF1
+  #   productId: 0x8001
+  #   deviceProfileName: laundry-dryer
   - id: "virtual/matter/laundry-washer"
     deviceLabel: Matter Laundry Washer
     vendorId: 0x10e1
@@ -22,6 +27,11 @@ matterGeneric:
       - id: 0x0070
       - id: 0x0071
     deviceProfileName: refrigerator-freezer
+  - id: "matter/laundry-dryer"
+    deviceLabel: Matter Laundry Dryer
+    deviceTypes:
+      - id: 0x007C
+    deviceProfileName: laundry-dryer
   - id: "matter/laundry-washer"
     deviceLabel: Matter Laundry Washer
     deviceTypes:

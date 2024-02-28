@@ -21,6 +21,7 @@ local log = require "log"
 local utils = require "st.utils"
 
 local dishwasher = require("matter-dishwasher")
+local laundryDryer = require("matter-laundry-dryer")
 local laundryWasher = require("matter-laundry-washer")
 local refrigerator = require("matter-refrigerator")
 
@@ -31,6 +32,8 @@ local setpoint_limit_device_field = {
 
 local applianceOperationalStateId = "spacewonder52282.applianceOperationalState"
 local applianceOperationalState = capabilities[applianceOperationalStateId]
+local laundryDryerControlsId = "spacewonder52282.laundryDryerControls"
+local laundryDryerControls = capabilities[laundryDryerControlsId]
 local supportedTemperatureLevels = {}
 
 local subscribed_attributes = {
@@ -45,6 +48,10 @@ local subscribed_attributes = {
   [applianceOperationalStateId] = {
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
+  },
+  [laundryDryerControlsId] = {
+    clusters.LaundryDryerControls.attributes.SupportedDrynessLevels,
+    clusters.LaundryDryerControls.attributes.SelectedDrynessLevel,
   },
   [capabilities.mode.ID] = {
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
@@ -313,6 +320,7 @@ local matter_driver_template = {
     capabilities.switch,
     capabilities.temperatureSetpoint,
     applianceOperationalStateId,
+    laundryDryerControlsId,
     capabilities.mode,
     capabilities.laundryWasherRinseMode,
     capabilities.contactSensor,
@@ -322,6 +330,7 @@ local matter_driver_template = {
   },
   sub_drivers = {
     dishwasher,
+    laundryDryer,
     laundryWasher,
     refrigerator
   }
