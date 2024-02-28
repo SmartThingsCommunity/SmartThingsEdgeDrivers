@@ -190,6 +190,32 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
+  "Max and min mired reports should generate a range report after both are received",
+  function ()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_attr_report(mock_device, 154) -- ~6500 K
+    })
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_attr_report(mock_device, 555) -- ~1800 K
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
+    )
+    -- wacky reports should not register
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_attr_report(mock_device, 0) -- infinite K
+    })
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_attr_report(mock_device, 10000) -- 100 K
+    })
+  end
+)
+
+test.register_coroutine_test(
     "lifecycle configure event should configure device",
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -304,6 +330,14 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          SimpleMetering.attributes.Divisor:read(mock_device)
                                        })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device)
+                                      })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
