@@ -127,6 +127,16 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Capability on command should not be handled : device unmute",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "audioMute", component = "main", command = "unmute", args = {} } })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.audioMute.mute.muted()))
+  end
+)
+
 
 
 test.register_coroutine_test(
