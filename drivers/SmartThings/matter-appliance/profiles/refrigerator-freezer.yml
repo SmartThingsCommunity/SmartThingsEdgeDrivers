@@ -2,9 +2,9 @@ name: refrigerator-freezer
 components:
 - id: main
   capabilities:
-  - id: mode
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
-  - id: contactSensor
+  - id: contactSensor # Refrigerator Alarm
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -12,43 +12,19 @@ components:
     version: 1
   categories:
   - name: Refrigerator
-- id: refrigerator
+- id: refrigerator # First endpoint
   capabilities:
-  - id: mode
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
-  - id: temperatureSetpoint
-    version: 1
-    config:
-      values:
-        - key: "temperatureSetpoint.value"
-          range: [ 0, 100 ]
-  - id: temperatureMeasurement
+  - id: temperatureMeasurement # Temperature Measurement
     version: 1
   categories:
   - name: Refrigerator
-- id: refrigeratorTemperatureLevel
+- id: freezer # Second endpoint
   capabilities:
-  - id: mode
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
-  categories:
-  - name: Refrigerator
-- id: freezer
-  capabilities:
-  - id: mode
-    version: 1
-  - id: temperatureSetpoint
-    version: 1
-    config:
-      values:
-        - key: "temperatureSetpoint.value"
-          range: [ 0, 100 ]
-  - id: temperatureMeasurement
-    version: 1
-  categories:
-  - name: Refrigerator
-- id: freezerTemperatureLevel
-  capabilities:
-  - id: mode
+  - id: temperatureMeasurement # Temperature Measurement
     version: 1
   categories:
   - name: Refrigerator
