@@ -102,6 +102,17 @@ local function do_configure(driver, device)
     end
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
+  elseif laundryDryer.can_handle({}, driver, device) then
+    local profile_name = "laundry-dryer"
+    if #tn_eps > 0 and #tl_eps > 0 then
+      profile_name = profile_name .. "-tn" .. "-tl"
+    elseif #tn_eps > 0 then
+      profile_name = profile_name .. "-tn"
+    elseif #tl_eps > 0 then
+      profile_name = profile_name .. "-tl"
+    end
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   elseif laundryWasher.can_handle({}, driver, device) then
     local profile_name = "laundry-washer"
     if #tn_eps > 0 and #tl_eps > 0 then

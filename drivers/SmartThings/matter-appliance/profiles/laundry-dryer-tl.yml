@@ -1,4 +1,4 @@
-name: laundry-dryer
+name: laundry-dryer-tl
 components:
 - id: main
   capabilities:
@@ -11,6 +11,12 @@ components:
   - id: spacewonder52282.applianceOperationalState # Operational State
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: Dryer
+- id: temperatureLevel # Temperature Control / TL
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Dryer

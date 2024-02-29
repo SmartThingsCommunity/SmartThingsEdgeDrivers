@@ -1,4 +1,4 @@
-name: laundry-dryer
+name: laundry-dryer-tn-tl
 components:
 - id: main
   capabilities:
@@ -8,9 +8,21 @@ components:
     version: 1
   - id: spacewonder52282.laundryDryerControls # Laundry Dryer Controls
     version: 1
+  - id: temperatureSetpoint # Temperature Control / TN
+    version: 1
+    config:
+      values:
+        - key: "temperatureSetpoint.value"
+          range: [ 0, 100 ]
   - id: spacewonder52282.applianceOperationalState # Operational State
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: Dryer
+- id: temperatureLevel # Temperature Control / TL
+  capabilities:
+  - id: mode
     version: 1
   categories:
   - name: Dryer
