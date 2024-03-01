@@ -1,4 +1,4 @@
-name: gas-lifetime-selfcheck-aqara.yml
+name: gas-lifetime-selfcheck-aqara
 components:
 - id: main
   capabilities:

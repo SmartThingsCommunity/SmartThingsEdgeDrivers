@@ -3,7 +3,7 @@ zigbeeManufacturer:
     deviceLabel: Aqara Smart Natural Gas Detector
     manufacturer: LUMI
     model: lumi.sensor_gas.acn02
-    deviceProfileName: gas-lifetime-selfcheck-aqara.yml
+    deviceProfileName: gas-lifetime-selfcheck-aqara
   - id: "Heiman/Orvibo/Gas1"
     deviceLabel: Orvibo Smoke Detector
     manufacturer: Heiman
