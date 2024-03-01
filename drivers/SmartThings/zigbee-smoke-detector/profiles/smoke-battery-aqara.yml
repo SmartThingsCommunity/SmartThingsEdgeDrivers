@@ -1,4 +1,4 @@
-name: smoke-battery-aqara.yml
+name: smoke-battery-aqara
 components:
 - id: main
   capabilities:
