@@ -117,3 +117,8 @@ matterGeneric:
       - id: 0x0302 # Temperature Sensor
       - id: 0x0305 # Pressure Sensor
     deviceProfileName: air-quality-tuo
+  - id: "matter/smoke-co-alarm"
+    deviceLabel: Matter Smoke/CO Alarm
+    deviceTypes:
+      - id: 0x0076
+    deviceProfileName: smoke-co-battery

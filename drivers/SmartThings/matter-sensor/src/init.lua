@@ -204,6 +204,20 @@ local matter_driver_template = {
     [capabilities.tvocMeasurement.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.smokeDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.hardwareFault.ID] = {
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
   },
   capability_handlers = {
@@ -217,7 +231,8 @@ local matter_driver_template = {
     capabilities.illuminanceMeasurement,
   },
   sub_drivers = {
-    require("air-quality-sensor")
+    require("air-quality-sensor"),
+    require("smoke-co-alarm")
   }
 }
 
