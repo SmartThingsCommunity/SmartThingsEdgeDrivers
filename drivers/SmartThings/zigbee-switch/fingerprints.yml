@@ -222,6 +222,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HS6SW3A-W-EF-3.0
     deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6ESK-W-EF-3.0"
+    deviceLabel: "HEIMAN Outlet"
+    manufacturer: HEIMAN
+    model: HS6ESK-W-EF-3.0
+    deviceProfileName: basic-plug
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
