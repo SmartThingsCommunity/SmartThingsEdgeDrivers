@@ -1,4 +1,0 @@
-name: 'Matter Air Quality Sensor'
-packageKey: 'matter-air-quality-sensor'
-permissions:
-  matter: {}
