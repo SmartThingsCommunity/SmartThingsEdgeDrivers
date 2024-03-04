@@ -64,3 +64,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x002B
     deviceProfileName: fan
+  - id: "matter/air-purifier"
+    deviceLabel: Matter Air Purifier
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+    deviceProfileName: air-purifier

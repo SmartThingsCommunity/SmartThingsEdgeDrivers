@@ -34,7 +34,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -53,6 +53,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RadonConcentrationMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
       }
     }
   }
@@ -71,7 +74,7 @@ local mock_device_common = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -83,6 +86,9 @@ local mock_device_common = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
       }
     }
   }

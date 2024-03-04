@@ -1,4 +1,0 @@
-name: 'Matter Air Purifier'
-packageKey: 'matter-air-purifier'
-permissions:
-  matter: {}

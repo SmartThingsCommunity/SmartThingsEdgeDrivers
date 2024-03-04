@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,6 +20,19 @@ local utils = require "st.utils"
 local log = require "log"
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
+local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
+
+local function is_matter_smoke_co_alarm(opts, driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == SMOKE_CO_ALARM_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+
+  return false
+end
 
 local function match_profile(device)
   local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
@@ -31,7 +44,7 @@ local function match_profile(device)
     -- Device supports smoke but not CO alarm
     profile_name = "smoke-battery"
   end
-  -- TODO: Add the elseif arm with CO but not smoke, and possibly 
+  -- TODO: Add the elseif arm with CO but not smoke, and possibly
   -- other combinations without battery, CO detection vs concentration etc as devices show up
 
   device:try_update_metadata({profile = profile_name})
@@ -100,17 +113,6 @@ local function test_in_progress_event_handler(driver, device, ib, response)
   end
 end
 
-local function temp_event_handler(driver, device, ib, response)
-  local temp = ib.data.value / 100.0
-  local unit = "C"
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
-end
-
-local function humidity_attr_handler(driver, device, ib, response)
-  local humidity = utils.round(ib.data.value / 100.0)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
-end
-
 local function carbon_monoxide_attr_handler(driver, device, ib, response)
   local value = ib.data.value
   local unit = device:get_field(CARBON_MONOXIDE_MEASUREMENT_UNIT)
@@ -138,7 +140,8 @@ local function battery_alert_attr_handler(driver, device, ib, response)
   end
 end
 
-local matter_driver_template = {
+local matter_smoke_co_alarm_handler = {
+  NAME = "matter-smoke-co-alarm",
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed
@@ -151,12 +154,6 @@ local matter_driver_template = {
         [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = battery_alert_attr_handler,
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
         [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.hardwareFault.hardwareFault.detected(), capabilities.hardwareFault.hardwareFault.clear()),
-      },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
-      },
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
@@ -190,8 +187,7 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
   },
+  can_handle = is_matter_smoke_co_alarm
 }
 
-local matter_driver = MatterDriver("matter-smoke-co-alarm", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
-matter_driver:run()
+return matter_smoke_co_alarm_handler

@@ -92,7 +92,6 @@ local function temperature_attr_handler(driver, device, ib, response)
 end
 
 local function humidity_attr_handler(driver, device, ib, response)
-
   local humidity = utils.round(ib.data.value / 100.0)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
 end
@@ -162,6 +161,63 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.nitrogenDioxideMeasurement.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.ozoneMeasurement.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.formaldehydeMeasurement.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustSensor.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustSensor.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.radonMeasurement.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.smokeDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.hardwareFault.ID] = {
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
   },
   capability_handlers = {
@@ -174,6 +230,10 @@ local matter_driver_template = {
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
   },
+  sub_drivers = {
+    require("air-quality-sensor"),
+    require("smoke-co-alarm")
+  }
 }
 
 local matter_driver = MatterDriver("matter-sensor", matter_driver_template)
