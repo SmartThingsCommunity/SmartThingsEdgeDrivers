@@ -23,8 +23,8 @@ local ColorControl = clusters.ColorControl
 local preferences = require "preferences"
 local utils = require "st.utils"
 
-local SANITY_CHECK_MIN_KELVIN = 1000
-local SANITY_CHECK_MAX_KELVIN = 10000
+local SANITY_CHECK_MIN_KELVIN = 1
+local SANITY_CHECK_MAX_KELVIN = 30000
 local BOUND_RECEIVED = "colorTemp_bound_received"
 local MIN = "_MIN"
 local MAX = "_MAX"
