@@ -1,4 +1,4 @@
-name: light-color-level-illuminance-motion
+name: light-color-level-illuminance-motion-1000K-15000K
 components:
 - id: main
   capabilities:
