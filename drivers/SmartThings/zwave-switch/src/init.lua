@@ -103,6 +103,19 @@ local function switch_multilevel_stop_level_change_handler(driver, device, cmd)
   device:send(SwitchMultilevel:Get({}))
 end
 
+local function lazy_load_if_possible(sub_driver_name)
+  -- gets the current lua libs api version
+  local version = require "version"
+
+  -- version 9 will include the lazy loading functions
+  if version.api >= 9 then
+    return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
+  else
+    return require(sub_driver_name)
+  end
+
+end
+
 -------------------------------------------------------------------------------------------
 -- Register message handlers and run driver
 -------------------------------------------------------------------------------------------
@@ -130,25 +143,25 @@ local driver_template = {
     }
   },
   sub_drivers = {
-    require("eaton-accessory-dimmer"),
-    require("inovelli-LED"),
-    require("dawon-smart-plug"),
-    require("inovelli-2-channel-smart-plug"),
-    require("zwave-dual-switch"),
-    require("eaton-anyplace-switch"),
-    require("fibaro-wall-plug-us"),
-    require("dawon-wall-smart-switch"),
-    require("zooz-power-strip"),
-    require("aeon-smart-strip"),
-    require("qubino-switches"),
-    require("fibaro-double-switch"),
-    require("fibaro-single-switch"),
-    require("eaton-5-scene-keypad"),
-    require("ecolink-switch"),
-    require("multi-metering-switch"),
-    require("zooz-zen-30-dimmer-relay"),
-    require("multichannel-device"),
-    require("aeotec-smart-switch")
+    lazy_load_if_possible("eaton-accessory-dimmer"),
+    lazy_load_if_possible("inovelli-LED"),
+    lazy_load_if_possible("dawon-smart-plug"),
+    lazy_load_if_possible("inovelli-2-channel-smart-plug"),
+    lazy_load_if_possible("zwave-dual-switch"),
+    lazy_load_if_possible("eaton-anyplace-switch"),
+    lazy_load_if_possible("fibaro-wall-plug-us"),
+    lazy_load_if_possible("dawon-wall-smart-switch"),
+    lazy_load_if_possible("zooz-power-strip"),
+    lazy_load_if_possible("aeon-smart-strip"),
+    lazy_load_if_possible("qubino-switches"),
+    lazy_load_if_possible("fibaro-double-switch"),
+    lazy_load_if_possible("fibaro-single-switch"),
+    lazy_load_if_possible("eaton-5-scene-keypad"),
+    lazy_load_if_possible("ecolink-switch"),
+    lazy_load_if_possible("multi-metering-switch"),
+    lazy_load_if_possible("zooz-zen-30-dimmer-relay"),
+    lazy_load_if_possible("multichannel-device"),
+    lazy_load_if_possible("aeotec-smart-switch")
   },
   lifecycle_handlers = {
     init = device_init,

@@ -27,6 +27,16 @@ components:
   categories:
   - name: Thermostat
 preferences:
+  - name: "temperatureDisplayMode"
+    title: "Temperature Display Mode"
+    description: "Change temperature display mode."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "Celsius"
+       1: "Fahrenheit"
+      default: 0
   - name: "keypadLock"
     title: "Keypad Lock"
     description: "Enable or disable the device's buttons."
@@ -85,6 +95,7 @@ preferences:
     definition:
       minimum: 5
       maximum: 36
+      default: 36
   - name: "floorLowLimit"
     title: "Floor Low Limit"
     description: "The minimum temperature limit in Celsius of the floor when in ambient control mode.(5C to 34C)"
@@ -93,6 +104,7 @@ preferences:
     definition:
       minimum: 5
       maximum: 34
+      default: 5
   - name: "floorHighLimit"
     title: "Floor High Limit"
     description: "The maximum temperature limit of the floor in Celsius when in ambient control mode.(7C to 36C)"
@@ -101,6 +113,7 @@ preferences:
     definition:
       minimum: 7
       maximum: 36
+      default: 36
   - name: "auxiliaryCycleLength"
     title: "Auxiliary Cycle Length"
     description: "Auxiliary cycle length"
@@ -111,3 +124,4 @@ preferences:
        0: "disable"
        15: "15 seconds"
        1800: "30 minutes"
+      default: 0

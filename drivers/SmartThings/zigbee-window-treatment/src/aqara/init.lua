@@ -166,8 +166,8 @@ local function do_configure(self, device)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
-  device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+  device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }, {visibility = {displayed = false}}))
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(deviceInitialization.initializedState.notInitialized())

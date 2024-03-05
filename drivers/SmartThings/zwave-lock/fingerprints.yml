@@ -224,7 +224,7 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x8107
     productId: 0x49D5
-    deviceProfileName: base-lock    
+    deviceProfileName: base-lock
   - id: "Yale/YRD410-ZW3"
     deviceLabel: Yale Door Lock
     manufacturerId: 0x0129
@@ -248,19 +248,19 @@ zwaveManufacturer:
     manufacturerId: 0x0129
     productType: 0x8104
     productId: 0x45D5
-    deviceProfileName: base-lock    
+    deviceProfileName: base-lock
   - id: "297/33031/18899"
     deviceLabel: "Assure 2 Bio 430"
     manufacturerId: 0x0129
     productType: 0x8107
     productId: 0x49D3
-    deviceProfileName: base-lock    
+    deviceProfileName: base-lock
   - id: "297/33031/18897"
     deviceLabel: "Assure 2 Biometric 410"
     manufacturerId: 0x0129
     productType: 0x8107
     productId: 0x49D1
-    deviceProfileName: base-lock    
+    deviceProfileName: base-lock
   - id: "297/33031/18898"
     deviceLabel: "Yale Assure 2 Biometric"
     manufacturerId: 0x0129
@@ -292,6 +292,45 @@ zwaveManufacturer:
     deviceLabel: Philia Door Lock
     manufacturerId: 0x0366
     productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: base-lock
+  # Kaadas
+  - id: 541/259/205
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00CD
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/199
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C7
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/200
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C8
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/201
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C9
+    productType: 0x0103
+    deviceProfileName: base-lock
+  # Philips
+  - id: "541/2307/212"
+    deviceLabel: Philips Lock
+    manufacturerId: 0x021D
+    productId: 0x00D4
+    productType: 0x0903
+    deviceProfileName: base-lock
+  # TLJ
+  - id: "TLJ"
+    deviceLabel: TLJ Door Lock
+    manufacturerId: 0x0449
+    productType: 0x0004
     productId: 0x0001
     deviceProfileName: base-lock
 # LOCKS WITHOUT CODES

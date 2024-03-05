@@ -33,7 +33,7 @@ components:
         - key: "powerSource.value"
           enabledValues:
             - battery
-            - mains
+            - dc
   categories:
   - name: MotionSensor
 preferences:

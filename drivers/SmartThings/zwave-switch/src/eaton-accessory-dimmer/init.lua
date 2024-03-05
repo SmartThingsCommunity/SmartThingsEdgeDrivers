@@ -31,7 +31,8 @@ local EATON_ACCESSORY_DIMMER_FINGERPRINTS = {
 local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
   for _, fingerprint in ipairs(EATON_ACCESSORY_DIMMER_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("eaton-accessory-dimmer")
+      return true, subdriver
     end
   end
   return false

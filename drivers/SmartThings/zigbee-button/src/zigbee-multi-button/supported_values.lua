@@ -39,7 +39,8 @@ local devices = {
   BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {
       { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
-      { mfr = "KE", model = "TRADFRI open/close remote" }
+      { mfr = "KE", model = "TRADFRI open/close remote" },
+      { mfr = "\x02KE", model = "TRADFRI open/close remote" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 2
@@ -50,6 +51,13 @@ local devices = {
       { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
+    NUMBER_OF_BUTTONS = 3
+  },
+  BUTTON_PUSH_HELD_3 = {
+    MATCHING_MATRIX = {
+      { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 3
   },
   BUTTON_PUSH_4 = {
