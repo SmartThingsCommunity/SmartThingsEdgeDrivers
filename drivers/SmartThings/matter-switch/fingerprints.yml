@@ -1,7 +1,7 @@
 matterManufacturer:
 #ThirdReality
   - id: "ThirdReality/WiFi"
-    deviceLabel: THIRDREALITY NL
+    deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
