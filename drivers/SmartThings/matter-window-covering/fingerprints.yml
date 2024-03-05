@@ -10,7 +10,7 @@ matterManufacturer:
     deviceLabel: Zemismart MT25B Roller Motor
     vendorId: 0x139C
     productId: 0xFF60
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering 
   - id: "5020/65296"
     deviceLabel: Zemismart MT82 Smart Curtain
     vendorId: 0x139C
