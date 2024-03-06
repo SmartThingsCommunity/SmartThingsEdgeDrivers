@@ -39,7 +39,8 @@ local devices = {
   BUTTON_PUSH_2 = {
     MATCHING_MATRIX = {
       { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
-      { mfr = "KE", model = "TRADFRI open/close remote" }
+      { mfr = "KE", model = "TRADFRI open/close remote" },
+      { mfr = "\x02KE", model = "TRADFRI open/close remote" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed" },
     NUMBER_OF_BUTTONS = 2

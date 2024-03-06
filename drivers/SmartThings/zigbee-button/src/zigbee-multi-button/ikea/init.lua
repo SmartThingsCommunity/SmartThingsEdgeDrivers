@@ -29,6 +29,21 @@ local Groups = clusters.Groups
 
 local ENTRIES_READ = "ENTRIES_READ"
 
+local IKEA_MFG = {
+  { mfr = "IKEA of Sweden" },
+  { mfr = "KE" },
+  { mfr = "\02KE" }
+}
+
+local can_handle_ikea = function(opts, driver, device)
+  for _, fingerprint in ipairs(IKEA_MFG) do
+    if device:get_manufacturer() == fingerprint.mfr then
+      return true
+    end
+  end
+  return false
+end
+
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui))
@@ -129,9 +144,7 @@ local ikea_of_sweden = {
     require("zigbee-multi-button.ikea.TRADFRI_on_off_switch"),
     require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "IKEA of Sweden" or device:get_manufacturer() == "KE"
-  end
+  can_handle = can_handle_ikea
 }
 
 return ikea_of_sweden

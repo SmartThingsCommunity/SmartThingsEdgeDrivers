@@ -31,6 +31,11 @@ local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
 local SWITCH_INITIALIZED = "__switch_intialized"
+-- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
+-- devices that were joined to this driver as MCD devices before the transition
+-- to join all matter-switch devices as parent-child. This value will only exist
+-- in the device table for devices that joined prior to this transition, and it
+-- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local detect_matter_thing
