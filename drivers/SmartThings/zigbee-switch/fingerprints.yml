@@ -2218,6 +2218,17 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  #AEOTEC
+  - id: "AEOTEC/ZGA002"
+    manufacturer: AEOTEC
+    model: "ZGA002"
+    deviceLabel: Aeotec Pico Switch
+    deviceProfileName: aeotec-pico-switch
+  - id: "AEOTEC/ZGA003"
+    manufacturer: AEOTEC
+    model: "ZGA003"
+    deviceLabel: Aeotec Pico Duo Switch
+    deviceProfileName: aeotec-pico-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

@@ -1,0 +1,93 @@
+name: aeotec-pico-switch
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: button
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: voltageMeasurement
+    version: 1
+  - id: currentMeasurement
+    version: 1
+  - id: temperatureAlarm
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch
+preferences:
+  - name: "s1LocalControlMode"
+    title: "S1 Local Control Mode"
+    description: "Enable/Disable local control mode of S1."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled"
+      default: 1
+  - name: "s2LocalControlMode"
+    title: "S2 Local Control Mode"
+    description: "Enable/Disable local control mode of S2."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled"
+      default: 1
+  - name: "s1ExternalSwitchConfig"
+    title: "S1 External Switch Configuration"
+    description: "Change switch configuration of S1."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "2-State Toggle Switch"
+        1: "Momentary Switch"
+        4: "Auto Detect"
+      default: 0
+  - name: "s2ExternalSwitchConfig"
+    title: "S2 External Switch Configuration"
+    description: "Change switch configuration of S2."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "2-State Toggle Switch"
+        1: "Momentary Switch"
+        4: "Auto Detect"
+      default: 0
+  - name: "s1Actions"
+    title: "S1 External Switch Actions"
+    description: "Adjust S1 External Switch Actions."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "State 2: ON | State 1: OFF"
+        1: "State 2: OFF | State 1: ON"
+        2: "Toggle"
+      default: 2
+  - name: "s2Actions"
+    title: "S2 External Switch Actions"
+    description: "Adjust S2 External Switch Actions."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "State 2: ON | State 1: OFF"
+        1: "State 2: OFF | State 1: ON"
+        2: "Toggle"
+      default: 2
