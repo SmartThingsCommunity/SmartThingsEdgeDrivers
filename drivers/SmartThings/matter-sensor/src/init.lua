@@ -18,6 +18,12 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+-- This can be removed once LuaLibs supports the PressureMeasurement cluster
+if not pcall(function(cluster) return clusters[cluster] end,
+             "PressureMeasurement") then
+  clusters.PressureMeasurement = require "PressureMeasurement"
+end
+
 local BATTERY_CHECKED = "__battery_checked"
 
 local HUE_MANUFACTURER_ID = 0x100B
@@ -55,6 +61,10 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-humidity"
   end
 
+  if device:supports_capability(capabilities.atmosphericPressureMeasurement) then
+    profile_name = profile_name .. "-pressure"
+  end
+
   if supports_battery_percentage_remaining(device) then
     profile_name = profile_name .. "-battery"
   end
@@ -86,15 +96,20 @@ local function illuminance_attr_handler(driver, device, ib, response)
 end
 
 local function temperature_attr_handler(driver, device, ib, response)
-  local temp = ib.data.value / 100.0
-  local unit = "C"
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local temp = measured_value / 100.0
+    local unit = "C"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  end
 end
 
 local function humidity_attr_handler(driver, device, ib, response)
-
-  local humidity = utils.round(ib.data.value / 100.0)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local humidity = utils.round(measured_value / 100.0)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+  end
 end
 
 local function boolean_attr_handler(driver, device, ib, response)
@@ -113,6 +128,15 @@ end
 
 local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+end
+
+local function pressure_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local kPa = utils.round(measured_value / 10.0)
+    local unit = "kPa"
+    device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = kPa, unit = unit}))
+  end
 end
 
 local matter_driver_template = {
@@ -140,6 +164,9 @@ local matter_driver_template = {
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
       },
+      [clusters.PressureMeasurement.ID] = {
+        [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
+      },
     }
   },
   -- TODO Once capabilities all have default handlers move this info there, and
@@ -162,7 +189,10 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
-    }
+    },
+    [capabilities.atmosphericPressureMeasurement.ID] = {
+      clusters.PressureMeasurement.attributes.MeasuredValue
+    },
   },
   capability_handlers = {
   },
@@ -173,6 +203,7 @@ local matter_driver_template = {
     capabilities.battery,
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
+    capabilities.atmosphericPressureMeasurement,
   },
 }
 

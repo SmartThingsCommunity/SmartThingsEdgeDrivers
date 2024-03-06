@@ -219,4 +219,13 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "Added should call refresh for child devices", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_children[child1_ep].id, "added" })
+    local req = clusters.OnOff.attributes.OnOff:read(mock_children[child1_ep])
+    test.socket.matter:__expect_send({mock_device.id, req})
+  end
+)
+
 test.run_registered_tests()
