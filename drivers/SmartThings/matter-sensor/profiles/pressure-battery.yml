@@ -1,0 +1,14 @@
+name: pressure-battery
+components:
+- id: main
+  capabilities:
+  - id: atmosphericPressureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor
