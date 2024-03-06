@@ -22,6 +22,10 @@ local MatterDriver = require "st.matter.driver"
 local DEFAULT_LEVEL = 0
 local PROFILE_MATCHED = "__profile_matched"
 
+local DEFAULT_STATUS = 0
+local cap_call_dirty_bit = 0 -- BIT0: Current Position Attribute, BIT1:Operational Status Attribute
+local is_opening_closing = 0
+
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = device:get_endpoints(cluster)
@@ -127,11 +131,33 @@ end
 
 -- current lift percentage, changed to 100ths percent
 local function current_pos_handler(driver, device, ib, response)
+  local position = 0
+
   if ib.data.value ~= nil then
-    local position = 100 - math.floor((ib.data.value / 100))
+    position = 100 - math.floor((ib.data.value / 100))
     device:emit_event_for_endpoint(
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
+  end
+  if cap_call_dirty_bit == 2 then
+    local status = device:get_latest_state(
+      "main", capabilities.windowShade.ID,
+      capabilities.windowShade.windowShade.NAME
+    ) or DEFAULT_STATUS
+    if is_opening_closing == 0 then
+      if position == 0 then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
+      elseif position == 100 then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
+      elseif position > 0 and position < 100 then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.partially_open())
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
+      end
+    end
+    cap_call_dirty_bit = 0
+  else
+    cap_call_dirty_bit = 1
   end
 end
 
@@ -150,20 +176,34 @@ local function current_status_handler(driver, device, ib, response)
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
-  if state == 0 then -- not moving
-    if position == 100 then -- open
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
-    elseif position == 0 then -- closed
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+  if cap_call_dirty_bit == 1 then
+    if state == 0 then -- not moving
+      if position == 100 then -- open
+        device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
+      elseif position == 0 then -- closed
+        device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
+      end
+    elseif state == 1 then -- opening
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
+    elseif state == 2 then -- closing
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
     else
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
     end
-  elseif state == 1 then -- opening
-    device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-  elseif state == 2 then -- closing
-    device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
+    cap_call_dirty_bit = 0
   else
-    device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
+    if state == 1 then -- opening
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
+      is_opening_closing = 1
+    elseif state == 2 then -- closing
+      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
+      is_opening_closing = 1
+    else
+      is_opening_closing = 0
+    end
+    cap_call_dirty_bit = 2
   end
 end
 
@@ -180,7 +220,6 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
   end
 end
-
 
 local matter_driver_template = {
   lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added, infoChanged = info_changed},
