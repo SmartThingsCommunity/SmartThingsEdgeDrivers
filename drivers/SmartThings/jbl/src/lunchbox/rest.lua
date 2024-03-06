@@ -30,7 +30,8 @@ local function connect(client)
     port = 443
     use_ssl = true
   end
-
+  
+  local port = client.base_url.port or default_port
   local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
 
   if sock == nil then
