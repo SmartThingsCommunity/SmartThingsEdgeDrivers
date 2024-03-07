@@ -1,0 +1,4 @@
+name: 'Matter Fan Light'
+packageKey: 'matter-fanlight'
+permissions:
+  matter: {}

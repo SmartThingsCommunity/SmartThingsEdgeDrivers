@@ -1,0 +1,8 @@
+
+matterGeneric:
+  - id: "matter/fan/color/fanlight"
+    deviceLabel: Matter Fan Color Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010D # Extended Color Light    
+    deviceProfileName: fanlight
