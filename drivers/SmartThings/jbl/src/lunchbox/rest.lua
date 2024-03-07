@@ -31,7 +31,7 @@ local function connect(client)
     use_ssl = true
   end
   
-  local port = client.base_url.port or default_port
+  if client.base_url.port ~= port then port = client.base_url.port end
   local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
 
   if sock == nil then
@@ -268,7 +268,7 @@ RestClient.__index = RestClient
 
 function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.authority, socket_builder)
   local ret, err = client:get(url_table.path, additional_headers)
   client:shutdown()
   return ret, err
@@ -276,7 +276,7 @@ end
 
 function RestClient.one_shot_post(full_url, body, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.authority, socket_builder)
   local ret, err = client:post(url_table.path, body, additional_headers)
   client:shutdown()
   return ret, err
