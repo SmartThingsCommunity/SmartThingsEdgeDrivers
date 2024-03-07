@@ -171,6 +171,19 @@ local unit_strings = {
   [units.PCIL] = "pCi/L"
 }
 
+local unit_default = {
+  [capabilities.carbonMonoxideMeasurement.NAME] = units.PPM,
+  [capabilities.carbonDioxideMeasurement.NAME] = units.PPM,
+  [capabilities.nitrogenDioxideMeasurement.NAME] = units.PPM,
+  [capabilities.ozoneMeasurement.NAME] = units.PPM,
+  [capabilities.formaldehydeMeasurement.NAME] = units.PPM,
+  [capabilities.veryFineDustSensor.NAME] = units.UGM3,
+  [capabilities.fineDustSensor.NAME] = units.UGM3,
+  [capabilities.dustSensor.NAME] = units.UGM3,
+  [capabilities.radonMeasurement.NAME] = units.BQM3,
+  [capabilities.tvocMeasurement.NAME] = units.PPM
+}
+
 -- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
 -- so CarbonMonoxideConcentratinMeasurement is used below but the same enum types exist
 -- in all ConcentrationMeasurement clusters
@@ -223,6 +236,13 @@ end
 local function measurementHandlerFactory(capability_name, attribute, target_unit)
   return function(driver, device, ib, response)
     local reporting_unit = device:get_field(capability_name.."_unit")
+
+    -- if reporting_unit is nil, initial value is not updated.
+    if reporting_unit == nil then
+      reporting_unit = unit_default[capability_name]
+      device:set_field(capability_name.."_unit", reporting_unit, {persist = true})
+    end
+
     if reporting_unit then
       local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
       device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
