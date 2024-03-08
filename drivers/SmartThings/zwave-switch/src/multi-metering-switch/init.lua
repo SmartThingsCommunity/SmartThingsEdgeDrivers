@@ -47,7 +47,8 @@ local MULTI_METERING_SWITCH_FINGERPRINTS = {
 local function can_handle_multi_metering_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(MULTI_METERING_SWITCH_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("multi-metering-switch")
+      return true, subdriver
     end
   end
   return false

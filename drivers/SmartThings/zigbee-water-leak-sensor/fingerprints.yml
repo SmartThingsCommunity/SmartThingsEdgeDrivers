@@ -104,3 +104,8 @@ zigbeeManufacturer:
     manufacturer: THIRDREALITY
     model: 3RWS18BZ
     deviceProfileName: water-battery
+  - id: NEO/NAS_WS11
+    deviceLabel: NEO Water Leak Sensor
+    manufacturer: NEO
+    model: NAS_WS11
+    deviceProfileName: water-battery

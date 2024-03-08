@@ -68,13 +68,13 @@ local function info_changed(driver, device, event, args)
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
-    match_profile()
+    match_profile(device)
   end
 end
 
 local function device_added(driver, device)
   device:emit_event(
-    capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"})
+    capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
   )
 end
 

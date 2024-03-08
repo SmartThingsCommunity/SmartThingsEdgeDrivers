@@ -1,9 +1,18 @@
+---@class ChunkedResponse : Response
+---@field package _received_body boolean
+---@field package _parsed_headers boolean
+---@field public new fun(status_code: number, socket: table?): ChunkedResponse
+---@field public fill_body fun(self: ChunkedResponse): string?
+---@field public append_body fun(self: ChunkedResponse, next_chunk_body: string): ChunkedResponse
+
 local socket = require "cosock.socket"
 
 local utils = require "utils"
 local lb_utils = require "lunchbox.util"
 local Request = require "luncheon.request"
-local Response = require "luncheon.response"
+local Response = require "luncheon.response"  --[[@as ChunkedResponse]]
+
+local api_version = require("version").api
 
 local RestCallStates = {
   SEND = "Send",
@@ -41,9 +50,15 @@ local function reconnect(client)
   return connect(client)
 end
 
+---comment
+---@param client RestClient
+---@param request Request
+---@return integer? bytes_sent
+---@return string? err_msg
+---@return integer idx
 local function send_request(client, request)
   if client.socket == nil then
-    return nil, "no socket available"
+    return nil, "no socket available", 0
   end
   local payload = request:serialize()
 
@@ -61,7 +76,7 @@ local function parse_chunked_response(original_response, sock)
     EXPECTING_BODY_CHUNK = "ExpectingBodyChunk",
   }
 
-  local full_response = Response.new(original_response.status, nil)
+  local full_response = Response.new(original_response.status, nil)  --[[@as ChunkedResponse]]
 
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
@@ -129,6 +144,11 @@ local function parse_chunked_response(original_response, sock)
 end
 
 local function handle_response(sock)
+  if api_version >= 9 then
+    local response, err = Response.tcp_source(sock)
+    if err or (not response) then return response, (err or "unknown error") end
+    return response, response:fill_body()
+  end
   -- called select right before passing in so we receive immediately
   local initial_recv, initial_err, partial = Response.source(function() return sock:receive('*l') end)
 
@@ -137,7 +157,7 @@ local function handle_response(sock)
   if initial_recv ~= nil then
     local headers = initial_recv:get_headers()
 
-    if headers:get_one("Transfer-Encoding") == "chunked" then
+    if headers and headers:get_one("Transfer-Encoding") == "chunked" then
       local response, err = parse_chunked_response(initial_recv, sock)
       if err ~= nil then
         return nil, err
@@ -155,12 +175,12 @@ end
 
 local function execute_request(client, request, retry_fn)
   if not client._active then
-    return nil, "Called `execute request` on a terminated REST Client"
+    return nil, "Called `execute request` on a terminated REST Client", nil
   end
 
   if client.socket == nil then
     local success, err = connect(client)
-    if not success then return nil, err end
+    if not success then return nil, err, nil end
   end
 
   local should_retry = retry_fn
@@ -172,7 +192,7 @@ local function execute_request(client, request, retry_fn)
   -- send output
   local _bytes_sent, send_err, _idx = nil, nil, 0
   -- recv output
-  local response, recv_err, _partial = nil, nil, nil
+  local response, recv_err, partial = nil, nil, nil
   -- return values
   local ret, err = nil, nil
 
@@ -199,7 +219,7 @@ local function execute_request(client, request, retry_fn)
         current_state = RestCallStates.COMPLETE
       end
     elseif current_state == RestCallStates.RECEIVE then
-      response, recv_err, _partial = handle_response(client.socket)
+      response, recv_err, partial = handle_response(client.socket)
 
       if not recv_err then
         ret = response
@@ -235,7 +255,7 @@ local function execute_request(client, request, retry_fn)
     end
   until current_state == RestCallStates.COMPLETE
 
-  return ret, err
+  return ret, err, partial
 end
 
 ---@class RestClient
@@ -250,7 +270,6 @@ function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
   local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
   local ret, err = client:get(url_table.path, additional_headers)
   client:shutdown()
-  client = nil
   return ret, err
 end
 
@@ -259,7 +278,6 @@ function RestClient.one_shot_post(full_url, body, additional_headers, socket_bui
   local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
   local ret, err = client:post(url_table.path, body, additional_headers)
   client:shutdown()
-  client = nil
   return ret, err
 end
 

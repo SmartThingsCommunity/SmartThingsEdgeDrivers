@@ -1350,6 +1350,19 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+    "Handle Lock cmd",
+    function()
+      test.socket.capability:__queue_receive(
+          {
+            mock_device.id,
+            { capability = "lock", component = "main", command = "lock", args = {} }
+          }
+      )
+      test.wait_for_events()
+    end
+)
+
+test.register_coroutine_test(
     "Device added function handler",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})

@@ -390,6 +390,7 @@ test.register_coroutine_test(
           component_id = "main",
           attribute_id = "supportedWindowShadeCommands",
           state = {value = {"open", "close", "pause"}},
+          visibility = {displayed = false}
         },
       }
     )
@@ -495,6 +496,16 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_mains_powered }
+)
+
+test.register_coroutine_test(
+  "InfoChanged event checks for new profile match if device has changed (i.e. through reinterview or SW update)",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
+    mock_device:expect_metadata_update({
+      profile = "window-covering-battery",
+    })
+  end
 )
 
 test.run_registered_tests()

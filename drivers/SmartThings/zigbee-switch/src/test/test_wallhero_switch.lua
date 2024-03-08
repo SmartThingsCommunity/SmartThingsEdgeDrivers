@@ -327,7 +327,7 @@ test.register_coroutine_test(
   "Handle turnOffIndicatorLight in infochanged : On",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_parent_device:generate_info_changed({
-      preferences = { ["stse.turnOffIndicatorLight"] = true }
+      preferences = { ["stse.turnOffIndicatorLight"] = false }
     }))
     test.socket.zigbee:__expect_send({ mock_parent_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,
@@ -339,7 +339,7 @@ test.register_coroutine_test(
   "Handle turnOffIndicatorLight in infochanged : Off",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_parent_device:generate_info_changed({
-      preferences = { ["stse.turnOffIndicatorLight"] = false }
+      preferences = { ["stse.turnOffIndicatorLight"] = true }
     }))
     test.socket.zigbee:__expect_send({ mock_parent_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,

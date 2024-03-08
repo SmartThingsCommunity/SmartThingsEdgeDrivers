@@ -21,11 +21,16 @@ matterManufacturer:
     vendorId: 0x130a
     productId: 0x0057
     deviceProfileName: temperature-humidity-battery
-
-  - id: "TUO/ContactDoorAndWindow"
-    deviceLabel: TUO Contact Sensor
-    vendorId: 0x141E
-    productId: 0x0002
+  #Heiman
+  - id: "Heiman/Motion"
+    deviceLabel: Heiman Motion Sensor
+    vendorId: 0x120B
+    productId: 0x1001
+    deviceProfileName: matter-motion-battery-illuminance
+  - id: "4619/4145"
+    deviceLabel: Heiman Door and Window D1-M
+    vendorId: 0x120B
+    productId: 0x1031
     deviceProfileName: contact-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
@@ -33,7 +38,17 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
-
+  #Tuo
+  - id: "5150/3"
+    deviceLabel: "TUO Temperature Sensor"
+    vendorId: 0x141E
+    productId: 0x0003
+    deviceProfileName: "temperature-humidity-battery"
+  - id: "TUO/ContactDoorAndWindow"
+    deviceLabel: TUO Contact Sensor
+    vendorId: 0x141E
+    productId: 0x0002
+    deviceProfileName: contact-battery
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -55,12 +70,24 @@ matterGeneric:
     deviceTypes:
       - id: 0x0307 # Humidity Sensor
     deviceProfileName: humidity-battery
+  - id: "matter/pressure/sensor"
+    deviceLabel: Matter Pressure Sensor
+    deviceTypes:
+      - id: 0x0305 # Pressure Sensor
+    deviceProfileName: pressure-battery
   - id: "matter/temperature-humidity/sensor"
     deviceLabel: Matter Temp/Humidity Sensor
     deviceTypes:
       - id: 0x0307 # Humidity Sensor
       - id: 0x0302 # Temperature Sensor
     deviceProfileName: temperature-humidity-battery
+  - id: "matter/temp-humidity-pressure/sensor"
+    deviceLabel: Matter Temp/Humidity/Pressure Sensor
+    deviceTypes:
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0305 # Pressure Sensor
+    deviceProfileName: temperature-humidity-pressure-battery
   - id: "matter/motion-illuminance"
     deviceLabel: Matter Motion/Illuminance Sensor
     deviceTypes:
