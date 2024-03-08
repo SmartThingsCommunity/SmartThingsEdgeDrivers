@@ -68,6 +68,9 @@ local function device_added(driver, device)
       end
     end
   end
+
+  table.sort(cabinet_eps)
+
   if #cabinet_eps > 1 then
     endpointToComponentMap = { -- This is just a guess for now
       [cabinet_eps[1]] = "refrigerator",
