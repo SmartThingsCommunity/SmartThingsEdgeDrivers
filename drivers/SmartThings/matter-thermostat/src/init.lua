@@ -45,6 +45,7 @@ local setpoint_limit_device_field = {
 
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
+local TEMP_BOUND_RECEIVED = "temp_bound_received"
 
 local subscribed_attributes = {
   [capabilities.temperatureMeasurement.ID] = {
@@ -198,30 +199,23 @@ local function temp_event_handler(attribute)
   end
 end
 
-local function temp_min_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    device:set_field(TEMP_MIN, temp)
-    local temp_max = device:get_field(TEMP_MAX)
-    if temp_max then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = temp, maximum = temp_max }, unit = unit }))
-      device:set_field(TEMP_MIN, nil)
-      device:set_field(TEMP_MAX, nil)
-    end
-  end
-end
-
-local function temp_max_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    device:set_field(TEMP_MAX, temp)
-    local temp_min = device:get_field(TEMP_MIN)
-    if temp_min then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = temp_min, maximum = temp }, unit = unit }))
-      device:set_field(TEMP_MIN, nil)
-      device:set_field(TEMP_MAX, nil)
+local temp_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value ~= nil then
+      local temp = ib.data.value / 100.0
+      local unit = "C"
+      device:set_field(TEMP_BOUND_RECEIVED..minOrMax, temp)
+      local min = device:get_field(TEMP_BOUND_RECEIVED..TEMP_MIN)
+      local max = device:get_field(TEMP_BOUND_RECEIVED..TEMP_MAX)
+      if min ~= nil and max ~= nil then
+        if min < max then
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+          device:set_field(TEMP_BOUND_RECEIVED..TEMP_MIN, nil)
+          device:set_field(TEMP_BOUND_RECEIVED..TEMP_MAX, nil)
+        else
+          device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+        end
+      end
     end
   end
 end
@@ -417,7 +411,7 @@ local function setpoint_limit_handler(limit_field, limit_field_opposite, attribu
     log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
     device:set_field(limit_field, val, { persist = true })
     local opposite_val = device:get_field(limit_field_opposite)
-    if opposite_val then
+    if opposite_val ~= nil then
       device:emit_event_for_endpoint(ib.endpoint_id, attribute({ value = { minimum = math.min(val, opposite_val), maximum = math.max(val, opposite_val) }, unit = "C" }))
     end
   end
@@ -463,8 +457,8 @@ local matter_driver_template = {
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_min_attr_handler,
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_max_attr_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
