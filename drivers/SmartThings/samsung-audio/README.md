@@ -7,7 +7,7 @@ consistent integration despite the weird behavior.
 
 ## Device testing notes
 
-Audio Speaker Device shows some wierd behavior while responding to various commands. Due to non uniform response by devices, device state mismatch can be
+Audio Speaker Device shows some weird behavior while responding to various commands. Due to non uniform response by devices, device state mismatch can be
 observed sometimes in the ST app.
 
 ## Samsung Audio TTS Notification
