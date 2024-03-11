@@ -111,6 +111,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "Aqara/lumi.light.acn014"
+    deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
+    manufacturer: Aqara
+    model: lumi.light.acn014
+    deviceProfileName: aqara-led-bulb
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch

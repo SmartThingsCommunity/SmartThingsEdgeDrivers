@@ -1,3 +1,5 @@
+--- @meta
+
 --- Hue Bridge Info as returned by the unauthenticated API endpoint `/api/config`
 --- @class HueBridgeInfo
 --- @field public name string
@@ -23,21 +25,30 @@
 --- @field public update_bridge_netinfo fun(self: HueDriver, bridge_id: string, bridge_info: HueBridgeInfo)
 --- @field public emit_light_status_events fun(light_device: HueChildDevice, light: table)
 --- @field public get_device_by_dni fun(self: HueDriver, device_network_id: string, force_refresh?: boolean): HueDevice|nil
---- @field private _lights_pending_refresh table<string,HueChildDevice>
+--- @field public do_hue_light_delete fun(self: HueDriver, light_device: HueDevice)
+--- @field public get_device_info fun(self: HueDriver, device_id: string, force_refresh: boolean?): HueDevice?
+--- @field public check_hue_repr_for_capability_support fun(hue_repr: table, capability_id: string): boolean
+--- @field public _lights_pending_refresh table<string,HueChildDevice>
 
 --- @class HueDevice:st.Device
 --- @field public label string
 --- @field public id string
 --- @field public device_network_id string
+--- @field public parent_device_id string
+--- @field public parent_assigned_child_key string?
+--- @field public manufacturer string
+--- @field public model string
+--- @field public vendor_provided_label string
 --- @field public data table|nil migration data for a migrated device
 --- @field public log table device-scoped logging module
+--- @field public profile table
 --- @field public get_field fun(self: HueDevice, key: string):any
 --- @field public set_field fun(self: HueDevice, key: string, value: any, args?: table)
 --- @field public emit_event fun(self: HueDevice, event: any)
+--- @field public supports_capability_by_id fun(self: HueDevice, capability_id: string, component: string?): boolean
 
 --- @class HueBridgeDevice:HueDevice
 --- @field public device_network_id string
 
 --- @class HueChildDevice:HueDevice
---- @field public parent_device_id string
 --- @field public parent_assigned_child_key string

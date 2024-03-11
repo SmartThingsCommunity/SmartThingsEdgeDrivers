@@ -37,6 +37,15 @@ local devices = {
         return clusters.Level.attributes.OffTransitionTime:write(device, raw_value)
       end
     }
+  },
+  AQARA_LIGHT_BULB = {
+    MATCHING_MATRIX = { mfr = "Aqara", model = "lumi.light.acn014" },
+    PARAMETERS = {
+      ["stse.restorePowerState"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
+          0x0201, 0x115F, data_types.Boolean, value)
+      end
+    }
   }
 }
 local preferences = {}

@@ -1,4 +1,3 @@
-local APPLICATION_KEY_HEADER = require "hue.api".APPLICATION_KEY_HEADER
 --- Table of constants used to index in to device store fields
 --- @class Fields
 --- @field IPV4 string the ipV4 address of a Hue bridge
@@ -14,7 +13,6 @@ local Fields = {
   _ADDED = "added",
   _INIT = "init",
   _REFRESH_AFTER_INIT = "force_refresh",
-  API_KEY = APPLICATION_KEY_HEADER,
   BRIDGE_API = "bridge_api",
   BRIDGE_ID = "bridgeid",
   BRIDGE_SW_VERSION = "swversion",
