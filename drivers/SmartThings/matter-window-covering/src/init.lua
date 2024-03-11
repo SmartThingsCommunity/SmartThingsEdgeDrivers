@@ -22,8 +22,13 @@ local MatterDriver = require "st.matter.driver"
 local DEFAULT_LEVEL = 0
 local PROFILE_MATCHED = "__profile_matched"
 
-local cap_call_dirty_bit = 0 -- BIT0: Current Position Attribute, BIT1:Operational Status Attribute
-local is_opening_closing = 0
+local OperationalStateEventEnum = {}
+OperationalStateEventEnum.NO_EVENT = 0x00
+OperationalStateEventEnum.CURRENT_POSITION_EVENT = 0x01
+OperationalStateEventEnum.OPERATIONAL_STATE_EVENT = 0x02
+
+local event_state = OperationalStateEventEnum.NO_EVENT
+local is_opening_closing = false
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -137,8 +142,8 @@ local function current_pos_handler(driver, device, ib, response)
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
   end
-  if cap_call_dirty_bit == 2 then
-    if is_opening_closing == 0 then
+  if event_state == OperationalStateEventEnum.OPERATIONAL_STATE_EVENT then
+    if is_opening_closing == false then
       if position == 0 then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
       elseif position == 100 then
@@ -149,9 +154,9 @@ local function current_pos_handler(driver, device, ib, response)
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
       end
     end
-    cap_call_dirty_bit = 0
+    event_state = OperationalStateEventEnum.NO_EVENT
   else
-    cap_call_dirty_bit = 1
+    event_state = OperationalStateEventEnum.CURRENT_POSITION_EVENT
   end
 end
 
@@ -170,7 +175,7 @@ local function current_status_handler(driver, device, ib, response)
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
-  if cap_call_dirty_bit == 1 then
+  if event_state == OperationalStateEventEnum.CURRENT_POSITION_EVENT then
     if state == 0 then -- not moving
       if position == 100 then -- open
         device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
@@ -186,18 +191,18 @@ local function current_status_handler(driver, device, ib, response)
     else
       device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
     end
-    cap_call_dirty_bit = 0
+    event_state = OperationalStateEventEnum.NO_EVENT
   else
     if state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-      is_opening_closing = 1
+      is_opening_closing = true
     elseif state == 2 then -- closing
       device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
-      is_opening_closing = 1
+      is_opening_closing = true
     else
-      is_opening_closing = 0
+      is_opening_closing = false
     end
-    cap_call_dirty_bit = 2
+    event_state = OperationalStateEventEnum.OPERATIONAL_STATE_EVENT
   end
 end
 
