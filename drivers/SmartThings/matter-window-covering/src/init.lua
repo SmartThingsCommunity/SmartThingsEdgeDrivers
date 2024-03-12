@@ -74,7 +74,7 @@ end
 
 local function device_added(driver, device)
   device:emit_event(
-    capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"})
+    capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
   )
 end
 

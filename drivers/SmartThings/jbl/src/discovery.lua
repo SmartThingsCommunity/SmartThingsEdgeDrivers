@@ -9,23 +9,24 @@ local st_utils = require "st.utils"
 local discovery = {}
 
 -- mapping from device DNI to info needed at discovery/init time
-local device_discovery_cache = {}
+local joined_device = {}
 
-local function set_device_field(driver, device)
+function discovery.set_device_field(driver, device)
 
   log.info(string.format("set_device_field : %s", device.device_network_id))
-  local device_cache_value = device_discovery_cache[device.device_network_id]
+  local device_cache_value = driver.datastore.discovery_cache[device.device_network_id]
 
   -- persistent fields
   device:set_field(fields.DEVICE_IPV4, device_cache_value.ip, {persist = true})
-  device:set_field(fields.DEVICE_INFO, device_cache_value.device_info , {persist = true})
   device:set_field(fields.CREDENTIAL, device_cache_value.credential , {persist = true})
+  device:set_field(fields.DEVICE_INFO, device_cache_value.device_info , {persist = true})
+  driver.datastore.discovery_cache[device.device_network_id] = nil
 end
 
 local function update_device_discovery_cache(driver, dni, ip, credential)
   log.info(string.format("update_device_discovery_cache for device dni: %s, %s", dni, ip))
   local device_info = driver.discovery_helper.get_device_info(driver, dni, ip)
-  device_discovery_cache[dni] = {
+  driver.datastore.discovery_cache[dni] = {
     ip = ip,
     device_info = device_info,
     credential = credential,
@@ -39,6 +40,7 @@ local function try_add_device(driver, device_dni, device_ip)
 
   if not credential then
     log.error(string.format("failed to get credential. dni=%s, ip=%s", device_dni, device_ip))
+    joined_device[device_dni] = nil
     return
   end
 
@@ -49,8 +51,9 @@ end
 
 function discovery.device_added(driver, device)
   log.info("device_added : dni = " .. tostring(device.device_network_id))
-  set_device_field(driver, device)
-  device_discovery_cache[device.device_network_id] = nil
+
+  discovery.set_device_field(driver, device)
+  joined_device[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
 end
 
@@ -75,8 +78,9 @@ local function discovery_device(driver)
     log.info(string.format("discovery_device dni, ip = %s, %s", dni, ip))
     if not known_devices or not known_devices[dni] then
       log.trace(string.format("unknown dni= %s, ip= %s", dni, ip))
-      if not device_discovery_cache[dni] then
+      if not joined_device[dni] then
         try_add_device(driver, dni, ip)
+        joined_device[dni] = true
       end
     else
       log.trace(string.format("known dni= %s, ip= %s", dni, ip))

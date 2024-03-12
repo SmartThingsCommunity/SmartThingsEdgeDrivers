@@ -1,4 +1,35 @@
 zigbeeManufacturer:
+  #SMARTvill
+  - id: "SMARTvill/SLA06"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA06
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA05"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA05
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA04"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA04
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA03"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA03
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA02"
+    deviceLabel: "SMARTvill Switch 1"
+    manufacturer: SMARTvill
+    model: SLA02
+    deviceProfileName: basic-switch
+  - id: "SMARTvill/SLA01"
+    deviceLabel: SMARTvill Switch 1
+    manufacturer: SMARTvill
+    model: SLA01
+    deviceProfileName: basic-switch
   #HANSSEM SMART SWITCH
   - id: "Winners/LSS1-101"
     deviceLabel: HS Switch 1(1 way)
@@ -80,6 +111,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "Aqara/lumi.light.acn014"
+    deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
+    manufacturer: Aqara
+    model: lumi.light.acn014
+    deviceProfileName: aqara-led-bulb
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
@@ -191,6 +227,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HS6SW3A-W-EF-3.0
     deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6ESK-W-EF-3.0"
+    deviceLabel: "HEIMAN Outlet"
+    manufacturer: HEIMAN
+    model: HS6ESK-W-EF-3.0
+    deviceProfileName: basic-plug
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN

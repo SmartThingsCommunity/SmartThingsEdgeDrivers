@@ -49,6 +49,11 @@ local PREFERENCE_TABLES = {
     attributeId = MFR_BACKLIGHT_MODE_ATTRIBUTE,
     dataType = data_types.Enum8
   },
+  temperatureDisplayMode = {
+    clusterId = ThermostatUserInterfaceConfiguration.ID,
+    attributeId = ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode.ID,
+    dataType = data_types.Enum8
+  },
   timeFormat = {
     clusterId = SINOPE_CUSTOM_CLUSTER,
     attributeId = MFR_TIME_FORMAT_ATTRIBUTE,

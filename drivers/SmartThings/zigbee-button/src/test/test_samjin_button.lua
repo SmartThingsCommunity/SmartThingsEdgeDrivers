@@ -89,7 +89,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
-        mock_device, 30, 300, 16
+        mock_device, 30, 600, 100
       )
     })
     test.socket.zigbee:__expect_send({

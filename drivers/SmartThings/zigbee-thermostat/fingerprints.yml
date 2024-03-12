@@ -119,6 +119,11 @@ zigbeeManufacturer:
     manufacturer: Centralite
     model: 3156105
     deviceProfileName: base-thermostat-no-operating-state
+  - id: "Resideo/DT300ST-M000"
+    deviceLabel: Main Thermostat
+    manufacturer: Resideo Korea
+    model: DT300ST-M000
+    deviceProfileName: thermostat-resideo-dt300st-m000
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat

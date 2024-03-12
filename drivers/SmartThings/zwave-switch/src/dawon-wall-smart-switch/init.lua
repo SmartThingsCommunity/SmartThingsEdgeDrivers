@@ -41,7 +41,8 @@ local DAWON_WALL_SMART_SWITCH_FINGERPRINTS = {
 local function can_handle_dawon_wall_smart_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(DAWON_WALL_SMART_SWITCH_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("dawon-wall-smart-switch")
+      return true, subdriver
     end
   end
   return false
