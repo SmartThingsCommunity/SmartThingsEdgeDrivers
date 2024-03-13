@@ -21,14 +21,14 @@ local MatterDriver = require "st.matter.driver"
 
 local DEFAULT_LEVEL = 0
 local PROFILE_MATCHED = "__profile_matched"
+local IS_MOVING = "__is_moving"
+local EVENT_STATE = "__event_state"
 
-local OperationalStateEventEnum = {}
-OperationalStateEventEnum.NO_EVENT = 0x00
-OperationalStateEventEnum.CURRENT_POSITION_EVENT = 0x01
-OperationalStateEventEnum.OPERATIONAL_STATE_EVENT = 0x02
-
-local event_state = OperationalStateEventEnum.NO_EVENT
-local is_opening_closing = false
+local WindowCoveringEventEnum = {
+  NO_EVENT = 0x00,
+  CURRENT_POSITION_EVENT = 0x01,
+  OPERATIONAL_STATE_EVENT = 0x02
+}
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -62,6 +62,8 @@ local function match_profile(device)
 end
 
 local function device_init(driver, device)
+  device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
+  device:set_field(IS_MOVING, false)
   if not device:get_field(PROFILE_MATCHED) then
     match_profile(device)
   end
@@ -142,8 +144,8 @@ local function current_pos_handler(driver, device, ib, response)
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
   end
-  if event_state == OperationalStateEventEnum.OPERATIONAL_STATE_EVENT then
-    if is_opening_closing == false then
+  if device:get_field(EVENT_STATE) == WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT then
+    if not device:get_field(IS_MOVING) then
       if position == 0 then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
       elseif position == 100 then
@@ -154,9 +156,9 @@ local function current_pos_handler(driver, device, ib, response)
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
       end
     end
-    event_state = OperationalStateEventEnum.NO_EVENT
+    device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
   else
-    event_state = OperationalStateEventEnum.CURRENT_POSITION_EVENT
+    device:set_field(EVENT_STATE, WindowCoveringEventEnum.CURRENT_POSITION_EVENT)
   end
 end
 
@@ -175,7 +177,7 @@ local function current_status_handler(driver, device, ib, response)
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
-  if event_state == OperationalStateEventEnum.CURRENT_POSITION_EVENT then
+  if device:get_field(EVENT_STATE) == WindowCoveringEventEnum.CURRENT_POSITION_EVENT then
     if state == 0 then -- not moving
       if position == 100 then -- open
         device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
@@ -191,18 +193,18 @@ local function current_status_handler(driver, device, ib, response)
     else
       device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
     end
-    event_state = OperationalStateEventEnum.NO_EVENT
+    device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
   else
     if state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-      is_opening_closing = true
+      device:set_field(IS_MOVING, true)
     elseif state == 2 then -- closing
       device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
-      is_opening_closing = true
+      device:set_field(IS_MOVING, true)
     else
-      is_opening_closing = false
+      device:set_field(IS_MOVING, false)
     end
-    event_state = OperationalStateEventEnum.OPERATIONAL_STATE_EVENT
+    device:set_field(EVENT_STATE, WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT)
   end
 end
 
