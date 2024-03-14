@@ -51,6 +51,27 @@ local DEFAULT_MIREK = 153
 -- "forward declare" some functions
 local _initialize, bridge_added, light_added, init_light, init_bridge
 
+local function safe_wrap_handler(handler)
+  return function(driver, device, ...)
+    if device == nil or (device and device.id == nil) then
+      log.warn("Tried to handle capability command for device that has been deleted")
+      return
+    end
+    local success, result = pcall(handler, driver, device, ...)
+    if not success then
+      log.error_with({ hub_logs = true }, string.format("Failed to invoke capability command handler. Reason: %s", result))
+    end
+    return result
+  end
+end
+
+local refresh_handler = safe_wrap_handler(handlers.refresh_handler)
+local switch_on_handler = safe_wrap_handler(handlers.switch_on_handler)
+local switch_off_handler = safe_wrap_handler(handlers.switch_off_handler)
+local switch_level_handler = safe_wrap_handler(handlers.switch_level_handler)
+local set_color_handler = safe_wrap_handler(handlers.set_color_handler)
+local set_color_temp_handler = safe_wrap_handler(handlers.set_color_temp_handler)
+
 ---@param light_device HueChildDevice
 ---@param light table
 local function emit_light_status_events(light_device, light)
@@ -260,7 +281,8 @@ local function spawn_bridge_add_api_key_task(driver, device)
     repeat
       local time_remaining = math.max(0, timeout_time - cosock.socket.gettime())
       if time_remaining == 0 then
-        device.log.error_with({ hub_logs = true },
+        local _log = device.log or log
+        _log.error_with({ hub_logs = true },
           string.format(
             "Link button not pressed or API key not received for bridge \"%s\" after 30 seconds, sleeping then trying again in a few minutes.",
             device.label
@@ -694,7 +716,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
   driver.light_id_to_device[device_light_resource_id] = device
 
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
-  handlers.refresh_handler(driver, device)
+  refresh_handler(driver, device)
 end
 
 local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key)
@@ -726,7 +748,8 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
         end
         local child_device_map = {}
         local children = bridge_device:get_child_list()
-        bridge_device.log.debug(string.format("Scanning connectivity of %s child devices", #children))
+        local _log = bridge_device.log or log
+        _log.debug(string.format("Scanning connectivity of %s child devices", #children))
         for _, device_record in ipairs(children) do
           local hue_device_id = device_record:get_field(Fields.HUE_DEVICE_ID)
           if hue_device_id ~= nil then
@@ -762,24 +785,28 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
 
           if connectivity_status.data and #connectivity_status.data > 0 then
             scanned = true
-          end
-
-          for _, status in ipairs(connectivity_status.data) do
-            local hue_device_id = (status.owner and status.owner.rid) or ""
-            log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
-            local child_device = child_device_map[hue_device_id]
-            if child_device then
-              if status.status == "connected" then
-                child_device.log.info_with({hub_logs=true}, "Marking Online after SSE Reconnect")
-                child_device:online()
-                child_device:set_field(Fields.IS_ONLINE, true)
-              elseif status.status == "connectivity_issue" then
-                child_device.log.info_with({hub_logs=true}, "Marking Offline after SSE Reconnect")
-                child_device:set_field(Fields.IS_ONLINE, false)
-                child_device:offline()
+            for _, status in ipairs(connectivity_status.data) do
+              local hue_device_id = (status.owner and status.owner.rid) or ""
+              log.trace(string.format("Checking connectivity status for device resource id %s", hue_device_id))
+              local child_device = child_device_map[hue_device_id]
+              if child_device then
+                if not child_device.id then
+                  child_device_map[hue_device_id] = nil
+                else
+                  if status.status == "connected" then
+                    child_device.log.info_with({hub_logs=true}, "Marking Online after SSE Reconnect")
+                    child_device:online()
+                    child_device:set_field(Fields.IS_ONLINE, true)
+                  elseif status.status == "connectivity_issue" then
+                    child_device.log.info_with({hub_logs=true}, "Marking Offline after SSE Reconnect")
+                    child_device:set_field(Fields.IS_ONLINE, false)
+                    child_device:offline()
+                  end
+                end
               end
             end
           end
+
           ::continue::
         end
       end, string.format("Hue Bridge %s Zigbee Scan Task", bridge_device.label))
@@ -825,7 +852,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
                 light_resource_id = driver.device_rid_to_light_rid[update_data.owner.rid]
               end
               local light_device = driver.light_id_to_device[light_resource_id]
-              if light_device ~= nil then
+              if light_device ~= nil  and light_device.id ~= nil then
                 driver.emit_light_status_events(light_device, update_data)
               end
             end
@@ -834,7 +861,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
               if delete_data.type == "light" then
                 local light_resource_id = delete_data.id
                 local light_device = driver.light_id_to_device[light_resource_id]
-                if light_device ~= nil then
+                if light_device ~= nil and light_device.id ~= nil then
                   log.info(
                     string.format(
                       "Light device \"%s\" was deleted from hue bridge %s",
@@ -860,7 +887,8 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
                 cosock.spawn(function()
                   local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
                   if hue_api == nil then
-                    bridge_device.log.warn("No Hue API instance available for new light event.")
+                    local _log = bridge_device.log or log
+                    _log.warn("No Hue API instance available for new light event.")
                     return
                   end
 
@@ -978,7 +1006,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
     local bridge_id = light_device.parent_device_id or bridge_device:get_field(Fields.PARENT_DEVICE_ID)
     if bridge_id == bridge_device.id then
       table.insert(ids_to_remove, id)
-      handlers.refresh_handler(driver, light_device)
+      refresh_handler(driver, light_device)
     end
   end
   for _, id in ipairs(ids_to_remove) do
@@ -1110,7 +1138,7 @@ init_light = function(driver, device)
   end
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
-    handlers.refresh_handler(driver, device)
+    refresh_handler(driver, device)
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
 end
@@ -1184,6 +1212,10 @@ _initialize = function(driver, device, event, args, parent_device_id)
     device_init(driver, device)
   end
 end
+
+local disco = Discovery.discover
+local added = safe_wrap_handler(_initialize)
+local init = safe_wrap_handler(_initialize)
 
 local stray_bulb_tx, stray_bulb_rx = cosock.channel.new()
 stray_bulb_rx:settimeout(30)
@@ -1291,23 +1323,25 @@ cosock.spawn(function()
               return
             end
 
-            for _, light in ipairs(light_resource.data or {}) do
-              local light_resource_description = {
-                hue_provided_name = device_data.metadata.name,
-                id = light.id,
-                on = light.on,
-                color = light.color,
-                dimming = light.dimming,
-                color_temperature = light.color_temperature,
-                mode = light.mode,
-                parent_device_id = bridge_device_uuid,
-                hue_device_id = light.owner.rid,
-                hue_device_data = device_data
-              }
-              if not Discovery.light_state_disco_cache[light.id] then
-                log.info(string.format("Caching previously unknown light service description for %s",
-                  device_data.metadata.name))
-                Discovery.light_state_disco_cache[light.id] = light_resource_description
+            if light_resource.data and #light_resource.data > 0 then
+              for _, light in ipairs(light_resource.data) do
+                local light_resource_description = {
+                  hue_provided_name = device_data.metadata.name,
+                  id = light.id,
+                  on = light.on,
+                  color = light.color,
+                  dimming = light.dimming,
+                  color_temperature = light.color_temperature,
+                  mode = light.mode,
+                  parent_device_id = bridge_device_uuid,
+                  hue_device_id = light.owner.rid,
+                  hue_device_data = device_data
+                }
+                if not Discovery.light_state_disco_cache[light.id] then
+                  log.info(string.format("Caching previously unknown light service description for %s",
+                    device_data.metadata.name))
+                  Discovery.light_state_disco_cache[light.id] = light_resource_description
+                end
               end
             end
 
@@ -1401,15 +1435,6 @@ cosock.spawn(function()
   end
 end, "Stray Hue Bulb Resolution Task")
 
-local disco = Discovery.discover
-local added = _initialize
-local init = _initialize
-
-local refresh_handler = handlers.refresh_handler
-local switch_on_handler = handlers.switch_on_handler
-local switch_off_handler = handlers.switch_off_handler
-local switch_level_handler = handlers.switch_level_handler
-local set_color_temp_handler = handlers.set_color_temp_handler
 
 local function remove(driver, device)
   driver.datastore.dni_to_device_id[device.device_network_id] = nil
@@ -1483,7 +1508,7 @@ local hue = Driver("hue",
         [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_handler,
       },
       [capabilities.colorControl.ID] = {
-        [capabilities.colorControl.commands.setColor.NAME] = handlers.set_color_handler,
+        [capabilities.colorControl.commands.setColor.NAME] = set_color_handler,
       },
       [capabilities.colorTemperature.ID] = {
         [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,
@@ -1499,10 +1524,21 @@ local hue = Driver("hue",
     api_key_to_bridge_id = {},
     stray_bulb_tx = stray_bulb_tx,
     _lights_pending_refresh = {},
-    emit_light_status_events = emit_light_status_events,
+    emit_light_status_events = function(light_device, light_table)
+      if light_device == nil or (light_device and light_device.id == nil) then
+        log.warn("Tried to emit light status event for device that has been deleted")
+        return
+      end
+      local success, result = pcall(emit_light_status_events, light_device, light_table)
+      if not success then
+        log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", result))
+      end
+      return result
+    end,
     do_hue_light_delete = function(driver, device)
       if type(driver.try_delete_device) ~= "function" then
-        device.log.warn("Requesting device delete on API version that doesn't support it. Marking device offline.")
+        local _log = device.log or log
+        _log.warn("Requesting device delete on API version that doesn't support it. Marking device offline.")
         device:offline()
         return
       end
@@ -1575,7 +1611,7 @@ end
 Discovery.api_keys = setmetatable({}, {
   __newindex = function (self, k, v)
     assert(
-      type(v) == "string",
+      type(v) == "string" or type(v) == "nil",
       string.format("Attempted to store value of type %s in application_key table which expects \"string\" types",
         type(v)
       )
