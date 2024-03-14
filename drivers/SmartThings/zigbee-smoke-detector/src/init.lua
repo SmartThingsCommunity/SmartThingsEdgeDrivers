@@ -23,6 +23,8 @@ local zigbee_smoke_driver_template = {
     capabilities.battery
   },
   sub_drivers = {
+    require("frient"),
+    require("aqara-gas")
     require("aqara"),
     require("frient")
   },
