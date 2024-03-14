@@ -114,7 +114,7 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -136,6 +136,10 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
                                        })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 0xFFFF, 0x0000, 0)
+                                      })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
@@ -149,11 +153,11 @@ test.register_message_test(
         direction = "receive",
         message = {mock_device.id, "added"}
       },
-      -- {
-      --   channel = "capability",
-      --   direction = "send",
-      --   message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      -- },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+      },
       {
         channel = "capability",
         direction = "receive",
@@ -168,6 +172,14 @@ test.register_message_test(
         message = {
           mock_device.id,
           IASZone.attributes.ZoneStatus:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 0xFFFF, 0x0000, 0)
         }
       },
     },

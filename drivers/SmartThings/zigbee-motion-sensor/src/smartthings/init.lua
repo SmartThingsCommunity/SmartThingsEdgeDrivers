@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local zcl_clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local battery_table = {
@@ -33,6 +34,9 @@ local battery_table = {
 
 local function init_handler(driver, device)
   battery_defaults.enable_battery_voltage_table(device, battery_table)
+  -- TODO: the IAS Zone changes should be replaced after supporting functions are included in the lua libs
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
 end
 
 local smartthings_motion = {

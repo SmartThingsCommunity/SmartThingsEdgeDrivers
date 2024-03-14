@@ -121,6 +121,7 @@ local function device_added(driver, device)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE, data_types.Uint8, 1))
   -- init
+  do_payload(device, 4, 24, 85, OP_WRITE, 1, 0)
   device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
   device:emit_event(capabilities.feederPortion.feedPortion({ value = 1, unit = "servings" }))
   device:emit_event(capabilities.powerSource.powerSource("dc"))

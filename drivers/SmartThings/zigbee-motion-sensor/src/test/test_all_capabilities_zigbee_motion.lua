@@ -194,7 +194,11 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 300, 0x10)
+                                         TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -227,6 +231,10 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
                                          IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 300, 0)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 0xFFFF, 0x0000, 0)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -283,6 +291,22 @@ test.register_message_test(
         message = {
           mock_device.id,
           IASZone.attributes.ZoneStatus:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 0xFFFF, 0x0000, 0)
         }
       },
     },

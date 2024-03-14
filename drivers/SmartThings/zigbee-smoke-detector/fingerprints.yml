@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.sensor_smoke.acn03"
+    deviceLabel: Aqara Smart Smoke Detector 
+    manufacturer: LUMI
+    model: lumi.sensor_smoke.acn03
+    deviceProfileName: smoke-battery-aqara
   - id: "Heiman/Orvibo/Gas1"
     deviceLabel: Orvibo Smoke Detector
     manufacturer: Heiman

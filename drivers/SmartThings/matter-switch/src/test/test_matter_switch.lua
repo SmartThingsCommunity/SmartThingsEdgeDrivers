@@ -34,7 +34,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -48,6 +48,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
       }
     }
   }
@@ -66,6 +69,9 @@ local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
       }
     }
   }
@@ -99,7 +105,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
-
 end
 test.set_test_init_function(test_init)
 
@@ -525,6 +530,20 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(72))
+    }
+  }
+)
+
+test.register_message_test(
+  "Do not report when receiving a color temperature of 0 mireds",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
+      }
     }
   }
 )

@@ -84,7 +84,7 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({
                                         mock_device.id,
-      TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 300, 0x10)
+      TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100)
     })
     test.socket.zigbee:__expect_send({
                                         mock_device.id,
@@ -134,11 +134,11 @@ test.register_message_test(
       direction = "receive",
       message = {mock_device.id, "added"}
     },
-    -- {
-    --     channel = "capability",
-    --     direction = "send",
-    --     message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
-    -- },
+    {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
+    },
     {
       channel = "capability",
       direction = "receive",

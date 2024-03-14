@@ -31,9 +31,21 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "REX", model = "HY0097", children = 2 },
   { mfr = "HEIMAN", model = "HS2SW2L-EFR-3.0", children = 1 },
   { mfr = "HEIMAN", model = "HS2SW3L-EFR-3.0", children = 2 },
+  { mfr = "HEIMAN", model = "HS6SW2A-W-EF-3.0", children = 1 },
+  { mfr = "HEIMAN", model = "HS6SW3A-W-EF-3.0", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW02", children = 1 },
   { mfr = "eWeLink", model = "ZB-SW03", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW04", children = 3 },
+  { mfr = "SMARTvill", model = "SLA02", children = 1 },
+  { mfr = "SMARTvill", model = "SLA03", children = 2 },
+  { mfr = "SMARTvill", model = "SLA04", children = 3 },
+  { mfr = "SMARTvill", model = "SLA05", children = 4 },
+  { mfr = "SMARTvill", model = "SLA06", children = 5 },
+  { mfr = "ShinaSystem", model = "SBM300Z2", children = 1 },
+  { mfr = "ShinaSystem", model = "SBM300Z3", children = 2 },
+  { mfr = "ShinaSystem", model = "SBM300Z4", children = 3 },
+  { mfr = "ShinaSystem", model = "SBM300Z5", children = 4 },
+  { mfr = "ShinaSystem", model = "SBM300Z6", children = 5 },
   { model = "E220-KR2N0Z0-HA", children = 1 },
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
@@ -104,3 +116,4 @@ local multi_switch_no_master = {
 }
 
 return multi_switch_no_master
+
