@@ -338,6 +338,11 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
+local function illuminance_attr_handler(driver, device, ib, response)
+  local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -374,7 +379,10 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
-      }
+      },
+      [clusters.IlluminanceMeasurement.ID] = {
+        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
+      },
     },
     fallback = matter_handler,
   },
@@ -393,6 +401,9 @@ local matter_driver_template = {
     },
     [capabilities.colorTemperature.ID] = {
       clusters.ColorControl.attributes.ColorTemperatureMireds,
+    },
+    [capabilities.illuminanceMeasurement.ID] = {
+      clusters.IlluminanceMeasurement.attributes.MeasuredValue
     },
   },
   capability_handlers = {
@@ -420,6 +431,7 @@ local matter_driver_template = {
     capabilities.switchLevel,
     capabilities.colorControl,
     capabilities.colorTemperature,
+    capabilities.illuminanceMeasurement,
   },
     sub_drivers = {
     require("eve-energy")
