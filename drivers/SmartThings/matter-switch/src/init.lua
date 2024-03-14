@@ -31,6 +31,11 @@ local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN
 local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 
 local SWITCH_INITIALIZED = "__switch_intialized"
+-- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
+-- devices that were joined to this driver as MCD devices before the transition
+-- to join all matter-switch devices as parent-child. This value will only exist
+-- in the device table for devices that joined prior to this transition, and it
+-- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local detect_matter_thing
@@ -85,14 +90,14 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps == 1 is a workaround for devices that have the On/Off
+  -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
   -- for this device type). By default, we do not support On/Off Light Switch because by spec these
   -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
   -- does not have a generic fingerprint and will join as a matter-thing. However, we have
   -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
   -- is a workaround for those devices.
-  if num_server_eps == 1 and detect_matter_thing(device) == true then
+  if num_server_eps > 0 and detect_matter_thing(device) == true then
     device:try_update_metadata({profile = "switch-binary"})
   end
 end
@@ -339,9 +344,18 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+local function device_added(driver, device)
+  -- refresh child devices to get initial attribute state in case child device
+  -- was created after the initial subscription report
+  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    handle_refresh(driver, device)
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     removed = device_removed,
     infoChanged = info_changed
   },

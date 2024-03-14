@@ -174,7 +174,7 @@ local function device_added(driver, device)
 
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-            #device:get_endpoints(clusters.PowerSource.ID) > 0 then
+            #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
       battery_support = true
     end
 

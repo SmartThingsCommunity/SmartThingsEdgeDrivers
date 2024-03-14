@@ -25,7 +25,7 @@ local mock_device = test.mock_device.build_test_matter_device(
           feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
           cluster_type = "SERVER"
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"}
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
       },
     },
     {

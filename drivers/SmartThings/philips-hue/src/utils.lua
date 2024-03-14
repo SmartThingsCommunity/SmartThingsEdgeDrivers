@@ -1,5 +1,6 @@
+local Fields = require "fields"
 local log = require "log"
----@module 'utils'
+---@class hue.utils
 local utils = {}
 
 local MAC_ADDRESS_STR_LEN = 12
@@ -27,7 +28,23 @@ function utils.is_nan(number)
   return tostring(number) == tostring(0 / 0)
 end
 
---- Only checked during `added` callback
+
+--- Attempts an exhaustive check of all the ways a device
+--- can indicate that it represents a Hue Bridge.
+---@param driver HueDriver
+---@param device HueDevice
+---@return boolean is_bridge true if the device record represents a Hue Bridge
+function utils.is_bridge(driver, device)
+  return (device:get_field(Fields.DEVICE_TYPE) == "bridge")
+    or (driver.datastore.bridge_netinfo[device.device_network_id] ~= nil)
+    or utils.is_edge_bridge(device) or utils.is_dth_light(device)
+    or (device.parent_assigned_child_key == nil)
+end
+
+--- Only checked during `added` callback, or as a later
+--- fallback check in the chain of booleans used in `is_bridge`.
+---
+---@see hue.utils.is_bridge
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_bridge(device)
@@ -35,11 +52,14 @@ function utils.is_edge_bridge(device)
       not (device.data and device.data.username)
 end
 
---- Only checked during `added` callback
+--- Only checked during `added` callback, or as a later
+--- fallback check in the chain of booleans used in `is_bridge`.
+---
+---@see hue.utils.is_bridge
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_light(device)
-  return device.parent_assigned_child_key and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and
+  return device.parent_assigned_child_key ~= nil and #device.parent_assigned_child_key > MAC_ADDRESS_STR_LEN and
       not (device.data and device.data.username and device.data.bulbId)
 end
 
@@ -147,8 +167,8 @@ function utils.labeled_socket_builder(label)
       )
       sock, err =
           ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
-      if err ~= nil then
-        return nil, "SSL wrap error: " .. err
+      if not sock or err ~= nil then
+        return nil, (err and "SSL wrap error: " .. err) or "Unexpected nil socket returned from ssl.wrap"
       end
       log.info(
         string.format(
