@@ -27,8 +27,8 @@ local PowerConfiguration = clusters.PowerConfiguration
 
 local MFG_CODE = 0x115F
 local PRIVATE_CLUSTER_ID = 0xFCC0
-local PRIVATE_ATTRIBUTE_ID = 0x0009
-local PRIVATE_SWITCH_MODE_ATTRIBUTE_ID = 0x0125
+local PRIVATE_ATTRIBUTE_ID_T1 = 0x0009
+local PRIVATE_ATTRIBUTE_ID_E1 = 0x0125
 
 local mock_device_e1 = test.mock_device.build_test_zigbee_device(
   {
@@ -58,10 +58,6 @@ local mock_device_t1 = test.mock_device.build_test_zigbee_device(
   }
 )
 
-
-
-
-
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device_e1)
@@ -71,12 +67,12 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Handle added lifecycle",
+  "Handle added lifecycle -- e1",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_e1.id, "added" })
 
     test.socket.zigbee:__expect_send({ mock_device_e1.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device_e1, PRIVATE_CLUSTER_ID, PRIVATE_SWITCH_MODE_ATTRIBUTE_ID, MFG_CODE,
+    cluster_base.write_manufacturer_specific_attribute(mock_device_e1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE,
     data_types.Uint8, 2) })
 
 
@@ -88,12 +84,12 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle added lifecycle",
+  "Handle added lifecycle -- t1",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_t1.id, "added" })
 
     test.socket.zigbee:__expect_send({ mock_device_t1.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device_t1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+    cluster_base.write_manufacturer_specific_attribute(mock_device_t1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE,
     data_types.Uint8, 1) })
 
 
@@ -103,9 +99,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.battery.battery(100)))
   end
 )
-
-
-
 
 test.register_coroutine_test(
   "Reported button should be handled: pushed true",
@@ -122,7 +115,6 @@ test.register_coroutine_test(
   end
 )
 
-
 test.register_coroutine_test(
   "Reported button should be handled: double true",
   function()
@@ -137,7 +129,6 @@ test.register_coroutine_test(
     capabilities.button.button.double({state_change = true})))
   end
 )
-
 
 test.register_coroutine_test(
   "Reported button should be handled: held true",
@@ -169,7 +160,5 @@ test.register_message_test(
     }
   }
 )
-
-
 
 test.run_registered_tests()

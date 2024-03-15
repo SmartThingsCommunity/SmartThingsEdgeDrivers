@@ -21,8 +21,8 @@ local capabilities = require "st.capabilities"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local PRIVATE_CLUSTER_ID = 0xFCC0
-local PRIVATE_ATTRIBUTE_ID = 0x0009
-local PRIVATE_SWITCH_MODE_ATTRIBUTE_ID = 0x0125
+local PRIVATE_ATTRIBUTE_ID_T1 = 0x0009
+local PRIVATE_ATTRIBUTE_ID_E1 = 0x0125
 local MFG_CODE = 0x115F
 
 local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
@@ -32,7 +32,6 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.remote.b1acn02" },
   { mfr = "LUMI", model = "lumi.remote.acn003" }
 }
-
 
 local configuration = {
     {
@@ -85,10 +84,10 @@ end
 local function added_handler(self, device)
     if device:get_model() == "lumi.remote.b1acn02" then
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
+      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE, data_types.Uint8, 1))
     elseif device:get_model() == "lumi.remote.acn003" then
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRIVATE_CLUSTER_ID, PRIVATE_SWITCH_MODE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 2))
+      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE, data_types.Uint8, 2))
     end
 
     device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
@@ -96,8 +95,6 @@ local function added_handler(self, device)
     device:emit_event(capabilities.button.button.pushed({state_change = false}))
     device:emit_event(capabilities.battery.battery(100))
 end
-
-
 
 local aqara_wireless_switch_handler = {
     NAME = "Aqara Wireless Switch Handler",
