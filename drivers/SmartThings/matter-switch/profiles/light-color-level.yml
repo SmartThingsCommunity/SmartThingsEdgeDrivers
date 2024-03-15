@@ -20,6 +20,3 @@ components:
     version: 1
   categories:
   - name: Light
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-rgbw-color-bulb-2580K-7050K
