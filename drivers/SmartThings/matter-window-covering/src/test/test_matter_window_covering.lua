@@ -191,7 +191,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state closed", function()
+  "WindowCovering OperationalStatus state closed before position 0", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -209,14 +209,14 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "main", capabilities.windowShadeLevel.shadeLevel(0)
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main", capabilities.windowShade.windowShade.closed()
       )
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(0)
+      )
+    )
   end
 )
 
@@ -251,7 +251,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state open", function()
+  "WindowCovering OperationalStatus state open before position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -269,12 +269,12 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "main", capabilities.windowShadeLevel.shadeLevel(100)
+        "main", capabilities.windowShade.windowShade.open()
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "main", capabilities.windowShade.windowShade.open()
+        "main", capabilities.windowShadeLevel.shadeLevel(100)
       )
     )
   end
@@ -311,7 +311,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus partially open", function()
+  "WindowCovering OperationalStatus partially open before position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
