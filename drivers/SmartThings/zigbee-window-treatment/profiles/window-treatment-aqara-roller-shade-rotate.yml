@@ -19,3 +19,7 @@ components:
 preferences:
   - preferenceId: stse.reverseRollerShadeDir
     explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Roller_Shade_Rotate
+
