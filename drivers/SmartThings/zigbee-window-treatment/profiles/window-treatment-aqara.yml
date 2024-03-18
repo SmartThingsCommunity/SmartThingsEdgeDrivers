@@ -19,3 +19,6 @@ preferences:
     explicit: true
   - preferenceId: stse.softTouch
     explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Window_Treatment
