@@ -14,9 +14,11 @@ components:
     version: 1
   categories:
   - name: Blind
-
 preferences:
   - preferenceId: reverse
     explicit: true
   - preferenceId: presetPosition
     explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Hanssem_Window_Treatment
