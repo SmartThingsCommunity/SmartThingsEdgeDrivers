@@ -1,4 +1,3 @@
----@diagnostic disable: param-type-mismatch, missing-parameter
 -- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
