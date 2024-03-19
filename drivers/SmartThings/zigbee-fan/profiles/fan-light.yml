@@ -1,0 +1,34 @@
+name: fan-light
+components:
+  - id: main
+    label: Fan 
+    capabilities:
+      - id: switch
+        version: 1
+      - id: fanSpeed
+        version: 1
+        config:
+          values:
+            - key: "fanSpeed.value"
+              range: [0, 3]
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Fan
+  - id: light
+    label: Light
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+        config:
+          values:
+            - key: "level.value"
+              range: [0, 100]
+      - id: refresh
+        version: 1
+    categories:
+      - name: Light
