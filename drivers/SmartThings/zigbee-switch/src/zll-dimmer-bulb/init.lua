@@ -138,14 +138,6 @@ local function can_handle_zll_dimmer_bulb(opts, driver, device)
   return (ZLL_DIMMER_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
 end
 
-local function do_configure(driver, device)
-  device:configure()
-end
-
-local function device_added(driver, device)
-  device:refresh()
-end
-
 local function handle_switch_on(driver, device, cmd)
   device:send(OnOff.commands.On(device))
 
@@ -182,10 +174,6 @@ end
 
 local zll_dimmer_bulb = {
   NAME = "ZLL Dimmer Bulb",
-  lifecycle_handlers = {
-    doConfigure = do_configure,
-    added = device_added
-  },
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,

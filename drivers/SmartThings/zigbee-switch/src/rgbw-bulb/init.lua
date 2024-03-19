@@ -19,6 +19,7 @@ local switch_defaults = require "st.zigbee.defaults.switch_defaults"
 local OnOff = clusters.OnOff
 local Level = clusters.Level
 local ColorControl = clusters.ColorControl
+local color_bounds = require "color_bounds"
 
 local RGBW_BULB_FINGERPRINTS = {
   ["Samsung Electronics"] = {
@@ -111,6 +112,7 @@ end
 local function do_configure(driver, device)
   device:configure()
   do_refresh(driver, device)
+  color_bounds.check_bounds_if_applicable(device)
 end
 
 -- This is only intended to ever happen once, before the device has a color temp

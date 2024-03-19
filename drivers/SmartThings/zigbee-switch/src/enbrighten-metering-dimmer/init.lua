@@ -35,11 +35,6 @@ local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, customEnergyDivisor, {persist = true})
 end
 
-local do_configure = function(self, device)
-  device:refresh()
-  device:configure()
-end
-
 local instantaneous_demand_handler = function(driver, device, value, zb_rx)
   local raw_value = value.value
   local divisor = 10
