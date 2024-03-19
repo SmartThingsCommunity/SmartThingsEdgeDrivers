@@ -22,6 +22,7 @@ local devices = {
   ITM_FAN_LIGHT = {
     FINGERPRINTS = {
       { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-003" },
+      { mfr = "KICHLER", model = "KICHLER-FANLIGHT-Z-301" },
     },
     CONFIGURATION = {
       {
