@@ -82,31 +82,31 @@ local function test_init()
   --Populate setpoint limits
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(device, 1, 1000)
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(mock_device, 1, 1000)
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(device, 1, 3222)
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:build_test_report_data(device, 1, 1000) --10.0 celcius
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:build_test_report_data(mock_device, 1, 1000) --10.0 celcius
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(device, 1, 3222) --32.22 celcius
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222) --32.22 celcius
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(device, 1, 16) --1.6 celcius
+    clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(mock_device, 1, 16) --1.6 celcius
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(device, 1, 500) --5.0 celsius
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_device, 1, 500) --5.0 celsius
   })
   test.socket.matter:__queue_receive({
     mock_device.id,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(device, 1, 4000) --40.0 celsius
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000) --40.0 celsius
   })
 
   test.socket.capability:__expect_send(
