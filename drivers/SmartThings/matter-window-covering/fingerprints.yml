@@ -1,4 +1,10 @@
 matterManufacturer:
+#Duc
+  - id: "5151/4097"
+    deviceLabel: DUC Blinds with SMARTWINGS
+    vendorId: 0x141F
+    productId: 0x1001
+    deviceProfileName: window-covering-battery
 #Eve
   - id: "Eve MotionBlinds"
     deviceLabel: Eve MotionBlinds
