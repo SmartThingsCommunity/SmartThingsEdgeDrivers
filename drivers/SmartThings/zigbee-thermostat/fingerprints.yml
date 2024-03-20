@@ -69,6 +69,11 @@ zigbeeManufacturer:
     manufacturer: Sinope Technologies
     model: TH1400ZB
     deviceProfileName: thermostat-sinope-th1400
+  - id: "Sinope Technologies/TH1420ZB-01"
+    deviceLabel: TH1420ZB-01 Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1420ZB-01
+    deviceProfileName: thermostat-sinope-th1400
   - id: "Sinope Technologies/TH1500ZB"
     deviceLabel: TH1500ZB Sinope Thermostat
     manufacturer: Sinope Technologies
