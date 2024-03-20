@@ -1,0 +1,20 @@
+name: Heater.v1
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 35 ]
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
