@@ -1,0 +1,5 @@
+name: 'DEEPSMART KNX GATEWAY'
+packageKey: 'DEEPSMART-KNX.GATEWAY'
+permissions:
+  lan: {}
+  discovery: {}
