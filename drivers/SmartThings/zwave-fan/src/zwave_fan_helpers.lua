@@ -60,6 +60,15 @@ function zwave_handlers.fan_multilevel_report(driver, device, cmd, map_switch_le
     device:emit_event(capabilities.fanSpeed.fanSpeed(map_switch_level_to_fan_speed(level)))
 
     device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+
+    if device:supports_capability_by_id(capabilities.switchLevel.ID) then
+      if level == 99 or level == 0xFF then
+        -- Directly map 99 to 100 to avoid rounding issues remapping 0-99 to 0-100
+        -- 0xFF is a (deprecated) reserved value that the spec requires be mapped to 100
+        level = 100
+      end
+      device:emit_event_for_endpoint(cmd.src_channel, capabilities.switchLevel.level(level))
+    end
   end
 end
 
