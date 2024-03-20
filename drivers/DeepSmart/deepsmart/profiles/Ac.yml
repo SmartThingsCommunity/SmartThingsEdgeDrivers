@@ -1,0 +1,22 @@
+name: Ac.v1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 16, 30 ]
+  - id: airConditionerMode
+    version: 1
+  - id: airConditionerFanMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirConditioner
