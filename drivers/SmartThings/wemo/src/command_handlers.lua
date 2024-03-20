@@ -21,4 +21,8 @@ function command_handlers.handle_refresh(driver, device)
   end
 end
 
+function command_handlers.handle_reset_energy_meter(driver, device)
+  device.log.warn("Wemo has no documented api to reset energy meter")
+end
+
 return command_handlers
