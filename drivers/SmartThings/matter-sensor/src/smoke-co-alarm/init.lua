@@ -63,11 +63,11 @@ local function info_changed(self, device, event, args)
       local eps = device:get_endpoints(clusters.SmokeCoAlarm.ID)
       if #eps > 0 then
         local smokeSensorSensitivity = device.preferences["certifiedpreferences.smokeSensorSensitivity"]
-        if smokeSensorSensitivity == 0 then -- High
+        if smokeSensorSensitivity == "0" then -- High
           device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.HIGH))
-        elseif smokeSensorSensitivity == 1 then -- Medium
+        elseif smokeSensorSensitivity == "1" then -- Medium
           device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.STANDARD))
-        elseif smokeSensorSensitivity == 2 then -- Low
+        elseif smokeSensorSensitivity == "2" then -- Low
           device:send(clusters.SmokeCoAlarm.attributes.SmokeSensitivityLevel:write(device, eps[1], clusters.SmokeCoAlarm.types.SensitivityEnum.LOW))
         end
       end
