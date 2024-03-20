@@ -41,7 +41,10 @@ local MULTI_METERING_SWITCH_FINGERPRINTS = {
   {mfr = 0x015F, prod = 0x3102, model = 0x0204}, -- WYFY Touch 4-button Switch
   {mfr = 0x015F, prod = 0x3111, model = 0x5102}, -- WYFY Touch 1-button Switch
   {mfr = 0x015F, prod = 0x3121, model = 0x5102}, -- WYFY Touch 2-button Switch
-  {mfr = 0x015F, prod = 0x3141, model = 0x5102} -- WYFY Touch 4-button Switch
+  {mfr = 0x015F, prod = 0x3141, model = 0x5102}, -- WYFY Touch 4-button Switch
+  {mfr = 0x0460, prod = 0x0081, model = 0x0002}, -- Shelly Wave 2PM
+  {mfr = 0x0460, prod = 0x008C, model = 0x0002}, -- Shelly Wave Pro 2
+  {mfr = 0x0460, prod = 0x008D, model = 0x0002}, -- Shelly Wave Pro 2PM
 }
 
 local function can_handle_multi_metering_switch(opts, driver, device, ...)
