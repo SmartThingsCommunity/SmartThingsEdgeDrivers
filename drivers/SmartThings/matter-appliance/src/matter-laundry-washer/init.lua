@@ -28,8 +28,6 @@ local LAUNDRY_WASHER_RINSE_MODE_MAP = {
   [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.MAX] = capabilities.laundryWasherRinseMode.rinseMode.max,
 }
 
-local applianceOperationalStateId = "spacewonder52282.applianceOperationalState"
-local applianceOperationalState = capabilities[applianceOperationalStateId]
 local supportedTemperatureLevels = {}
 local laundryWasherModeSupportedModes = {}
 local laundryWasherControlsSpinSpeeds = {}
@@ -171,30 +169,25 @@ local function operational_state_attr_handler(driver, device, ib, response)
     string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingState.stopped())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.stopped())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingState.running())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.running())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingState.paused())
-  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.ERROR then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingState.error())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.paused())
   end
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
-  -- TODO: Add error enum to dishwasherOperatingState
   log.info_with({ hub_logs = true },
     string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
 
   local operationalError = ib.data.elements.error_state_id.value
-  if operationalError == clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingError.noError())
-  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingError.unableToStartOrResume())
+  if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingError.unableToCompleteOperation())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToCompleteOperation())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
-    device:emit_event_for_endpoint(ib.endpoint_id, applianceOperationalState.operatingError.commandInvalidInState())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.commandInvalidInCurrentState())
   end
 end
 
@@ -265,26 +258,19 @@ end
 
 local function handle_set_operating_state(driver, device, cmd)
   log.info_with({ hub_logs = true },
-    string.format("handle_set_operating_state state: %s", cmd.args.state))
+    string.format("handle_set_operating_state state: %s", cmd.args.operationalState))
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local state = cmd.args.state
-  local latest_state = device:get_latest_state(
-    cmd.component, applianceOperationalStateId,
-    applianceOperationalState.operatingState.NAME
-  )
-  if state == applianceOperationalState.operatingState.stopped.NAME then
+  local state = cmd.args.operationalState
+  if state == "start" then
+    device:send(clusters.OperationalState.server.commands.Start(device, endpoint_id))
+  elseif state == "stop" then
     device:send(clusters.OperationalState.server.commands.Stop(device, endpoint_id))
-  elseif state == applianceOperationalState.operatingState.running.NAME then
-    if latest_state == applianceOperationalState.operatingState.paused.NAME then
-      device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
-    else
-      device:send(clusters.OperationalState.server.commands.Start(device, endpoint_id))
-    end
-  elseif state == applianceOperationalState.operatingState.paused.NAME then
+  elseif state == "resume" then
+    device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
+  elseif state == "pause" then
     device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
   end
-  -- If this attribute is not read, the capability will not be updated and the app will receive a network error.
   device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
@@ -327,8 +313,8 @@ local matter_laundry_washer_handler = {
     [capabilities.laundryWasherRinseMode.ID] = {
       [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },
-    [applianceOperationalStateId] = {
-      [applianceOperationalState.commands.setOperatingState.NAME] = handle_set_operating_state,
+    [capabilities.operationalState.ID] = {
+      [capabilities.operationalState.commands.setOperationalState.NAME] = handle_set_operating_state,
     },
   },
   can_handle = is_matter_laundry_washer,

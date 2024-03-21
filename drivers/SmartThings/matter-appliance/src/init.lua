@@ -29,8 +29,6 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP",
 }
 
-local applianceOperationalStateId = "spacewonder52282.applianceOperationalState"
-local applianceOperationalState = capabilities[applianceOperationalStateId]
 local supportedTemperatureLevels = {}
 
 local subscribed_attributes = {
@@ -42,7 +40,7 @@ local subscribed_attributes = {
     clusters.TemperatureControl.attributes.MinTemperature,
     clusters.TemperatureControl.attributes.MaxTemperature,
   },
-  [applianceOperationalStateId] = {
+  [capabilities.operationalState.ID] = {
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
   },
@@ -306,7 +304,7 @@ local matter_driver_template = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.temperatureSetpoint,
-    applianceOperationalStateId,
+    capabilities.operationalState.ID,
     capabilities.mode,
     capabilities.laundryWasherRinseMode,
     capabilities.contactSensor,
