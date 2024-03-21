@@ -4,6 +4,8 @@ components:
   capabilities:
   - id: switch
     version: 1
+  - id: temperatureLevel
+    version: 1
   - id: mode
     version: 1
   - id: waterFlowAlarm
@@ -15,12 +17,6 @@ components:
   - id: operationalState
     version: 1
   - id: refresh
-    version: 1
-  categories:
-  - name: Dishwasher
-- id: temperatureLevel
-  capabilities:
-  - id: mode
     version: 1
   categories:
   - name: Dishwasher

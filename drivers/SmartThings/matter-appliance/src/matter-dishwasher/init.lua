@@ -40,7 +40,6 @@ local function is_matter_dishwasher(opts, driver, device)
   return false
 end
 
--- TODO Create temperatureLevel
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
   local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
@@ -53,14 +52,12 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   local temperatureLevel = ib.data.value
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if i - 1 == temperatureLevel then
-      local component = device.profile.components["temperatureLevel"]
-      device:emit_component_event(component, capabilities.mode.mode(tempLevel))
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
       break
     end
   end
 end
 
--- TODO Create temperatureLevel
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
   local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
@@ -74,8 +71,7 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   for _, tempLevel in ipairs(ib.data.elements) do
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
-  local component = device.profile.components["temperatureLevel"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedTemperatureLevels))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -181,27 +177,23 @@ local function handle_dishwasher_mode(driver, device, cmd)
     string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
 
   local ENDPOINT = 1
-  -- TODO: Create temperatureLevel
-  -- for i, mode in ipairs(dishwasherModeSupportedModes) do
-  --   if cmd.args.mode == mode then
-  --     device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-  --     return
-  --   end
-  -- end
-  if cmd.component == "main" then
-    for i, mode in ipairs(dishwasherModeSupportedModes) do
-      if cmd.args.mode == mode then
-        device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-        return
-      end
+  for i, mode in ipairs(dishwasherModeSupportedModes) do
+    if cmd.args.mode == mode then
+      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+      return
     end
-  elseif cmd.component == "temperatureLevel" then
-    -- TODO Create temperatureLevel
-    for i, tempLevel in ipairs(supportedTemperatureLevels) do
-      if cmd.args.mode == tempLevel then
-        device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
-        return
-      end
+  end
+end
+
+local function handle_temperature_level(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
+
+  local ENDPOINT = 1
+  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+    if cmd.args.temperatureLevel == tempLevel then
+      device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+      return
     end
   end
 end
@@ -252,6 +244,9 @@ local matter_dishwasher_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_dishwasher_mode,
+    },
+    [capabilities.temperatureLevel.ID] = {
+      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
     },
     [capabilities.operationalState.ID] = {
       [capabilities.operationalState.commands.setOperationalState.NAME] = handle_set_operating_state,

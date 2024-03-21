@@ -16,13 +16,9 @@ components:
   capabilities:
   - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
-  - id: temperatureMeasurement # Temperature Measurement
+  - id: temperatureLevel # Temperature Control / TL
     version: 1
-  categories:
-  - name: Refrigerator
-- id: refrigeratorTemperatureLevel # First endpoint's Temperature Control
-  capabilities:
-  - id: mode # Temperature Control / TL
+  - id: temperatureMeasurement # Temperature Measurement
     version: 1
   categories:
   - name: Refrigerator
@@ -32,11 +28,7 @@ components:
     version: 1
   - id: temperatureMeasurement # Temperature Measurement
     version: 1
-  categories:
-  - name: Refrigerator
-- id: freezerTemperatureLevel # Second endpoint's Temperature Control
-  capabilities:
-  - id: mode # Temperature Control / TL
+  - id: temperatureLevel # Temperature Control / TL
     version: 1
   categories:
   - name: Refrigerator

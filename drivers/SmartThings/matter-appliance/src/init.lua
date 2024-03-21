@@ -29,8 +29,6 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP",
 }
 
-local supportedTemperatureLevels = {}
-
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff
@@ -40,13 +38,15 @@ local subscribed_attributes = {
     clusters.TemperatureControl.attributes.MinTemperature,
     clusters.TemperatureControl.attributes.MaxTemperature,
   },
+  [capabilities.temperatureLevel.ID] = {
+    clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
+    clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
+  },
   [capabilities.operationalState.ID] = {
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
   },
   [capabilities.mode.ID] = {
-    clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
-    clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
     clusters.DishwasherMode.attributes.SupportedModes,
     clusters.DishwasherMode.attributes.CurrentMode,
     clusters.LaundryWasherMode.attributes.SupportedModes,
@@ -192,32 +192,6 @@ local function setpoint_limit_handler(limit_field)
   end
 end
 
--- TODO Create temperatureLevel
--- local function selected_temperature_level_attr_handler(driver, device, ib, response)
---   log.info_with({ hub_logs = true },
---     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
-
---   local temperatureLevel = ib.data.value
---   for i, tempLevel in ipairs(supportedTemperatureLevels) do
---     if i - 1 == temperatureLevel then
---       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
---       break
---     end
---   end
--- end
-
--- TODO Create temperatureLevel
--- local function supported_temperature_levels_attr_handler(driver, device, ib, response)
---   log.info_with({ hub_logs = true },
---     string.format("supported_temperature_levels_attr_handler: %s", ib.data.value))
-
---   supportedTemperatureLevels = {}
---   for _, tempLevel in ipairs(ib.data.elements) do
---     table.insert(supportedTemperatureLevels, tempLevel.value)
---   end
---   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
--- end
-
 -- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
@@ -260,20 +234,6 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local ENDPOINT = 1
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, utils.round(value * 100.0), nil))
 end
-
--- TODO Create temperatureLevel
--- local function handle_temperature_level(driver, device, cmd)
---   log.info_with({ hub_logs = true },
---     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
-
---   local ENDPOINT = 1
---   for i, tempLevel in ipairs(supportedTemperatureLevels) do
---     if cmd.args.temperatureLevel == tempLevel then
---       device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
---       return
---     end
---   end
--- end
 
 local matter_driver_template = {
   lifecycle_handlers = {

@@ -10,15 +10,11 @@ components:
     version: 1
   - id: operationalState
     version: 1
+  - id: temperatureLevel
+    version: 1
   - id: laundryWasherSpinSpeed
     version: 1
   - id: refresh
-    version: 1
-  categories:
-  - name: Washer
-- id: temperatureLevel
-  capabilities:
-  - id: mode
     version: 1
   categories:
   - name: Washer
