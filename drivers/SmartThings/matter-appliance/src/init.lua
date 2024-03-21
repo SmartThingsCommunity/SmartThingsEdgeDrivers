@@ -170,14 +170,8 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local max = device:get_field(setpoint_limit_device_field.MAX_TEMP) or 100
   local unit = "C"
   local range = {
-    minimum = {
-      value = min,
-      unit = unit
-    },
-    maximum = {
-      value = max,
-      unit = unit
-    }
+    minimum = min,
+    maximum = max,
   }
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
 
