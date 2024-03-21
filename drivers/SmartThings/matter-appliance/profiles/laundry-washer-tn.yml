@@ -16,13 +16,9 @@ components:
           range: [ 0, 100 ]
   - id: operationalState
     version: 1
-  - id: refresh
+  - id: laundryWasherSpinSpeed
     version: 1
-  categories:
-  - name: Washer
-- id: laundryWasherSpinSpeed
-  capabilities:
-  - id: mode
+  - id: refresh
     version: 1
   categories:
   - name: Washer

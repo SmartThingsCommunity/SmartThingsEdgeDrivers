@@ -122,10 +122,7 @@ local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, 
     log.info(string.format("Inserting supported spin speed mode: %s", spinSpeed.value))
     table.insert(laundryWasherControlsSpinSpeeds, spinSpeed.value)
   end
-  -- TODO: Create laundryWasherSpinSpeed
-  -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
-  local component = device.profile.components["laundryWasherSpinSpeed"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherControlsSpinSpeeds))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
 end
 
 local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
@@ -135,10 +132,7 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
   local spinSpeedCurrent = ib.data.value
   for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
     if i - 1 == spinSpeedCurrent then
-      -- TODO: Create laundryWasherSpinSpeed
-      -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
-      local component = device.profile.components["laundryWasherSpinSpeed"]
-      device:emit_component_event(component, capabilities.mode.mode(spinSpeed))
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
       return
     end
   end
@@ -197,24 +191,10 @@ local function handle_laundry_washer_mode(driver, device, cmd)
     string.format("handle_laundry_washer_mode[%s] mode: %s", cmd.component, cmd.args.mode))
 
   local ENDPOINT = 1
-  -- TODO: Create laundryWasherSpinSpeed
-  -- for i, mode in ipairs(laundryWasherModeSupportedModes) do
-  --   if cmd.args.mode == mode then
-  --     device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-  --     return
-  --   end
-  -- end
   if cmd.component == "main" then
     for i, mode in ipairs(laundryWasherModeSupportedModes) do
       if cmd.args.mode == mode then
         device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
-        return
-      end
-    end
-  elseif cmd.component == "laundryWasherSpinSpeed" then
-    for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
-      if cmd.args.mode == spinSpeed then
-        device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
         return
       end
     end
@@ -229,19 +209,18 @@ local function handle_laundry_washer_mode(driver, device, cmd)
   end
 end
 
--- TODO: Create laundryWasherSpinSpeed
--- local function handle_laundry_washer_spin_speed(driver, device, cmd)
---   log.info_with({ hub_logs = true },
---     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
+local function handle_laundry_washer_spin_speed(driver, device, cmd)
+  log.info_with({ hub_logs = true },
+    string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
 
---   local ENDPOINT = 1
---   for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
---     if cmd.args.spinSpeed == spinSpeed then
---       device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
---       return
---     end
---   end
--- end
+  local ENDPOINT = 1
+  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+    if cmd.args.spinSpeed == spinSpeed then
+      device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, ENDPOINT, i - 1))
+      return
+    end
+  end
+end
 
 local function handle_laundry_washer_rinse_mode(driver, device, cmd)
   log.info_with({ hub_logs = true },
@@ -306,10 +285,9 @@ local matter_laundry_washer_handler = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
     },
-    -- TODO: Create laundryWasherSpinSpeed
-    -- [capabilities.laundryWasherSpinSpeed.ID] = {
-    --   [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
-    -- },
+    [capabilities.laundryWasherSpinSpeed.ID] = {
+      [capabilities.laundryWasherSpinSpeed.commands.setSpinSpeed.NAME] = handle_laundry_washer_spin_speed,
+    },
     [capabilities.laundryWasherRinseMode.ID] = {
       [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },

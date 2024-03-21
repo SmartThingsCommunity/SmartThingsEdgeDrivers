@@ -51,14 +51,16 @@ local subscribed_attributes = {
     clusters.DishwasherMode.attributes.CurrentMode,
     clusters.LaundryWasherMode.attributes.SupportedModes,
     clusters.LaundryWasherMode.attributes.CurrentMode,
-    clusters.LaundryWasherControls.attributes.SpinSpeeds,
-    clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
   },
   [capabilities.laundryWasherRinseMode.ID] = {
     clusters.LaundryWasherControls.attributes.NumberOfRinses,
     clusters.LaundryWasherControls.attributes.SupportedRinses,
+  },
+  [capabilities.laundryWasherSpinSpeed.ID] = {
+    clusters.LaundryWasherControls.attributes.SpinSpeeds,
+    clusters.LaundryWasherControls.attributes.SpinSpeedCurrent,
   },
   [capabilities.contactSensor.ID] = {
     clusters.DishwasherAlarm.attributes.State,
