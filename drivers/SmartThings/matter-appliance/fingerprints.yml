@@ -8,12 +8,12 @@ matterManufacturer:
     deviceLabel: Matter Laundry Washer
     vendorId: 0x10e1
     productId: 0x1024
-    deviceProfileName: laundry-washer
+    deviceProfileName: laundry-washer-tn-tl
   - id: "virtual/matter/dishwasher"
     deviceLabel: Matter Dishwasher
     vendorId: 0x10e1
     productId: 0x1026
-    deviceProfileName: dishwasher
+    deviceProfileName: dishwasher-tn-tl
 
 matterGeneric:
   - id: "matter/refrigerator"
@@ -26,9 +26,9 @@ matterGeneric:
     deviceLabel: Matter Laundry Washer
     deviceTypes:
       - id: 0x0073
-    deviceProfileName: laundry-washer
+    deviceProfileName: laundry-washer-tn-tl
   - id: "matter/dishwasher"
     deviceLabel: Matter Dishwasher
     deviceTypes:
       - id: 0x0075
-    deviceProfileName: dishwasher
+    deviceProfileName: dishwasher-tn-tl
