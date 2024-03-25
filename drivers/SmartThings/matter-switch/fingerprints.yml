@@ -1,4 +1,11 @@
 matterManufacturer:
+#ThirdReality
+  - id: "ThirdReality/WiFi"
+    deviceLabel: THIRDREALITY Night Light
+    vendorId: 0x1407
+    productId: 0x1088
+    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
+    
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -92,6 +99,41 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+  - id: "4921/46"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x002E
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/98"
+    deviceLabel: Cync Full Color Globe
+    vendorId: 0x1339
+    productId: 0x0062
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/171"
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0x00AB
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/97"
+    deviceLabel: Cync Full Color ST19
+    vendorId: 0x1339
+    productId: 0x0061
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/104"
+    deviceLabel: Cync Full Color PAR38
+    vendorId: 0x1339
+    productId: 0x0068
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/110"
+    deviceLabel: Cync Indoor Light Strip 16ft
+    vendorId: 0x1339
+    productId: 0x006E
+    deviceProfileName: light-color-level-2000K-7000K 
+  - id: "4921/123"
+    deviceLabel: Cync Indoor Light Strip 32ft
+    vendorId: 0x1339
+    productId: 0x007B
+    deviceProfileName: light-color-level-2000K-7000K 
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339

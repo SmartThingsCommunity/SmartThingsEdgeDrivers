@@ -8,6 +8,7 @@ HEIMAN Carbon Monoxide Sensor,海曼一氧化碳报警器
 HEIMAN Gas Detector,海曼燃气报警器
 HEIMAN Motion Sensor,海曼人体红外传感器
 HEIMAN Multipurpose Sensor,海曼温湿度传感器
+HEIMAN Outlet,海曼智能插座
 HEIMAN Open/Closed Sensor,海曼门窗传感器
 HEIMAN Remote Control,海曼情景开关
 HEIMAN Scene Panel,海曼情景开关
@@ -50,7 +51,7 @@ Aqara Smart Pet Feeder C1,Aqara智能宠物喂食器 C1
 "Aqara Smart Wall Switch H1 (With Neutral,Single Rocker)",Aqara智能墙壁开关H1 (零火线单键版)
 "Aqara Smart Wall Switch H1 (With Neutral,Double Rocker) 1",Aqara智能墙壁开关H1 (零火线双键版) 1
 "Aqara Smart Wall Switch H1 (With Neutral,Triple Rocker) 1",Aqara智能墙壁开关H1 (零火线三键版) 1
-Aqara Smart Gas Detector,Aqara天然气报警器
+Aqara Smart Natural Gas Detector,Aqara天然气报警器
 Aqara Smart Smoke Detector,Aqara烟雾报警器
 Aqara Smart Plug T1,Aqara 智能插座 T1 (国标)
 Aqara Wireless Mini Switch T1,Aqara 无线开关 T1

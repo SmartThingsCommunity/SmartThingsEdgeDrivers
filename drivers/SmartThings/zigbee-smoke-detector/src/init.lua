@@ -22,7 +22,12 @@ local zigbee_smoke_driver_template = {
     capabilities.smokeDetector,
     capabilities.battery
   },
-  sub_drivers = { require("frient") },
+  sub_drivers = {
+    require("frient"),
+    require("aqara-gas"),
+    require("aqara"),
+    require("frient")
+  },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
 }
 
