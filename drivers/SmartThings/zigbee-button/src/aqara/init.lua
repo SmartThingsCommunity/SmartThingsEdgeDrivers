@@ -89,10 +89,10 @@ local function added_handler(self, device)
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
       PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE, data_types.Uint8, 2))
     end
-    -- when the wireless switch T1 accesses the network, the gateway sends 
-    -- private attribute 0009 to make the device no longer distinguish 
-    -- between the standard gateway and the aqara gateway. 
-    -- When wireless switch E1 is connected to the network, the gateway sends 
+    -- when the wireless switch T1 accesses the network, the gateway sends
+    -- private attribute 0009 to make the device no longer distinguish
+    -- between the standard gateway and the aqara gateway.
+    -- When wireless switch E1 is connected to the network, the gateway sends
     -- private attribute 0125 to enable the device to send double-click and long-press packets.
     device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
     device:emit_event(capabilities.button.numberOfButtons({value = 1}))
