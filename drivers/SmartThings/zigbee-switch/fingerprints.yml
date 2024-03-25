@@ -2228,6 +2228,11 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  - id: "Insta GmbH/DALI TW control unit"
+    deviceLabel: NEXENTRO DALI TW control unit
+    manufacturer: Insta GmbH
+    model: NEXENTRO DALI TW control unit
+    deviceProfileName: color-temp-bulb-2000K-10000K
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

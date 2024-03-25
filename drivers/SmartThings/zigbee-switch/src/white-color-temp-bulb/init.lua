@@ -112,6 +112,9 @@ local WHITE_COLOR_TEMP_BULB_FINGERPRINTS = {
   },
   ["Ajax Online"] = {
     ["CCT"] = true
+  },
+  ["Insta GmbH"] = {
+    ["NEXENTRO DALI TW control unit"] = true
   }
 }
 
