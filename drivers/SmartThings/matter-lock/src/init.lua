@@ -78,6 +78,7 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
+    [LockState.UNLATCHED] = attr.unlocked(), -- Fully unlocked with latch pulled
   }
 
   if ib.data.value ~= nil then

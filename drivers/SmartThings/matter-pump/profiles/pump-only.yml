@@ -1,0 +1,14 @@
+name: pump-only
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: insideimage13541.pumpOperationMode2
+    version: 1
+  - id: insideimage13541.pumpControlMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Irrigation
