@@ -32,9 +32,9 @@ end
 
 -- CAPABILITY HANDLERS
 local function on_handler(driver, device, command)
-  local last_level = device:get_field('LAST_DIM_LEVEL') or 100
-  local level = math.floor((last_level/100.0) * 254 )
   if command.component == 'light' then
+    local last_level = device:get_field('LAST_DIM_LEVEL') or 100
+    local level = math.floor((last_level/100.0) * 254 )
     device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, level, command.args.rate or 0xFFFF))
     device:set_field('LAST_DIM_LEVEL', last_level, {persist = true})
   else
@@ -47,7 +47,6 @@ end
 local function off_handler(driver, device, command)
   if command.component == 'light' then
     local last_level = device:get_field('LAST_DIM_LEVEL') or 100
-    --local level = math.floor((last_level/100.0) * 254 )
     device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, 0, command.args.rate or 0xFFFF))
     device:set_field('LAST_DIM_LEVEL', last_level, {persist = true})
   else
@@ -143,8 +142,6 @@ local function info_changed(driver, device, event, args)
         device:send(FanControl.attributes.FanMode:write(device, 6))
         device:set_field('FANDIRECTION_SENDTIME', current_fandirection_time, {persist = true})
       else
-        --device.thread:call_with_delay(10 - time_difference,
-        --        function(d) device:send(FanControl.attributes.FanMode:write(device, 6)) end)
         device:set_field('FANDIRECTION_FLAG', flag_direction + 1 , {persist = true})
       end
     end
