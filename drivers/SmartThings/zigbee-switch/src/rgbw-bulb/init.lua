@@ -92,7 +92,8 @@ local RGBW_BULB_FINGERPRINTS = {
 }
 
 local function can_handle_rgbw_bulb(opts, driver, device)
-  return (RGBW_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
+  local subdriver = require("rgbw-bulb")
+  return (RGBW_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()], subdriver or false
 end
 
 local function do_refresh(driver, device)

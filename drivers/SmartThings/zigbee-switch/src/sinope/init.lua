@@ -42,7 +42,8 @@ local zigbee_sinope_switch = {
     infoChanged = info_changed
   },
   can_handle = function(opts, driver, device, ...)
-       return device:get_manufacturer() == "Sinope Technologies" and device:get_model() == "SW2500ZB"
+    local subdriver = require("sinope")
+    return device:get_manufacturer() == "Sinope Technologies" and device:get_model() == "SW2500ZB", subdriver
   end
 }
 

@@ -28,7 +28,8 @@ local GE_LINK_BULB_FINGERPRINTS = {
 }
 
 local function can_handle_ge_link_bulb(opts, driver, device)
-  return (GE_LINK_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
+  local subdriver = require("ge-link-bulb")
+  return (GE_LINK_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()], subdriver or false
 end
 
 local function info_changed(driver, device, event, args)
