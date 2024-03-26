@@ -7,6 +7,8 @@ local OnOff = clusters.OnOff
 local Level = clusters.Level
 local ColorControl = clusters.ColorControl
 
+local color_bounds = require "color_bounds"
+
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
@@ -35,6 +37,7 @@ local function do_configure(self, device)
   device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
   device:configure()
   do_refresh(self, device)
+  color_bounds.check_bounds_if_applicable(device)
 end
 
 local function device_added(driver, device, event)

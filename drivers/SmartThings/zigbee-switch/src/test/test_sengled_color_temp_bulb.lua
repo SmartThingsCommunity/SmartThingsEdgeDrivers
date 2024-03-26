@@ -81,6 +81,15 @@ test.register_coroutine_test(
       }
     )
 
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device)
+    })
+
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })

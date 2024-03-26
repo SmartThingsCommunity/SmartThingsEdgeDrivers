@@ -20,7 +20,8 @@ local constants = require "st.zigbee.constants"
 local JASCO_SWTICH_FINGERPRINTS = {
   { mfr = "Jasco Products", model = "43095" },
   { mfr = "Jasco Products", model = "43132" },
-  { mfr = "Jasco Products", model = "43078" }
+  { mfr = "Jasco Products", model = "43078" },
+  { mfr = "Jasco Products", model = "43082" }
 }
 
 local is_jasco_switch = function(opts, driver, device)
@@ -32,14 +33,9 @@ local is_jasco_switch = function(opts, driver, device)
   return false
 end
 
-local device_added = function(self, device)
+local device_init = function(self, device)
     local customEnergyDivisor = 10000
     device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, customEnergyDivisor, {persist = true})
-end
-
-local do_configure = function(self, device)
-  device:refresh()
-  device:configure()
 end
 
 local instantaneous_demand_handler = function(driver, device, value, zb_rx)
@@ -59,8 +55,7 @@ local jasco_switch = {
     }
   },
   lifecycle_handlers = {
-    added = device_added,
-    doConfigure = do_configure,
+    init = device_init,
   },
   can_handle = is_jasco_switch
 }
