@@ -28,7 +28,8 @@ local ROBB_DIMMER_FINGERPRINTS = {
 local function is_robb_dimmer(opts, driver, device)
   for _, fingerprint in ipairs(ROBB_DIMMER_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("robb")
+      return true, subdriver
     end
   end
   return false

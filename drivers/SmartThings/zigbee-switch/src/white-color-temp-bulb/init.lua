@@ -116,7 +116,8 @@ local WHITE_COLOR_TEMP_BULB_FINGERPRINTS = {
 }
 
 local function can_handle_white_color_temp_bulb(opts, driver, device)
-  return (WHITE_COLOR_TEMP_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
+  local subdriver = require("white-color-temp-bulb")
+  return (WHITE_COLOR_TEMP_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()], subdriver or false
 end
 
 local function set_color_temperature_handler(driver, device, cmd)

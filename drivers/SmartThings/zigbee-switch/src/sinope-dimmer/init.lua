@@ -105,7 +105,8 @@ local zigbee_sinope_dimmer = {
     infoChanged = info_changed
   },
   can_handle = function(opts, driver, device, ...)
-       return device:get_manufacturer() == "Sinope Technologies" and device:get_model() == "DM2500ZB"
+    local subdriver = require("sinope-dimmer")
+    return device:get_manufacturer() == "Sinope Technologies" and device:get_model() == "DM2500ZB", subdriver
   end
 }
 

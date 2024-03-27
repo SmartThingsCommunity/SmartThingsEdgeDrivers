@@ -22,23 +22,24 @@ local ZIGBEE_METERING_PLUG_FINGERPRINTS = {
 }
 
 local function switch_on_handler(driver, device, command)
-    device:send_to_component(command.component, OnOff.server.commands.On(device))
-    device:send(OnOff.server.commands.On(device):to_endpoint(0x02))
+  device:send_to_component(command.component, OnOff.server.commands.On(device))
+  device:send(OnOff.server.commands.On(device):to_endpoint(0x02))
 end
 
 local function switch_off_handler(driver, device, command)
-    device:send_to_component(command.component, OnOff.server.commands.Off(device))
-    device:send(OnOff.server.commands.Off(device):to_endpoint(0x02))
+  device:send_to_component(command.component, OnOff.server.commands.Off(device))
+  device:send(OnOff.server.commands.Off(device):to_endpoint(0x02))
 end
 
 local function is_zigbee_metering_plug(opts, driver, device)
-    for _, fingerprint in ipairs(ZIGBEE_METERING_PLUG_FINGERPRINTS) do
-        if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-            return true
-        end
+  for _, fingerprint in ipairs(ZIGBEE_METERING_PLUG_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      local subdriver = require("rexense")
+      return true, subdriver
     end
+  end
 
-    return false
+  return false
 end
 
 local zigbee_metering_plug = {

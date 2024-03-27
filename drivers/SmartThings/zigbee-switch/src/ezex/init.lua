@@ -25,7 +25,8 @@ local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
 local is_zigbee_ezex_switch = function(opts, driver, device)
   for _, fingerprint in ipairs(ZIGBEE_METERING_SWITCH_FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("ezex")
+      return true, subdriver
     end
   end
 
