@@ -88,7 +88,7 @@ local function handleReply(func_name, u, sink, code, valLocationFunc)
     end
     return nil, err
   else -- UNKNOWN VALUE
-    local err = string.format("Error in %s: Unknown return value: %s - %s", func_name, code, sink)
+    local err = string.format("Error in %s: Unknown return value: code: %s, sink: %s", func_name, code, sink)
     log.error(err)
     return nil, err
   end
