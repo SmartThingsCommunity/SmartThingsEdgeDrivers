@@ -110,16 +110,15 @@ local function info_changed(driver, device, event, args)
     local new_trim = tonumber(device.preferences.trim)
     local old_trim = tonumber(args.old_st_store.preferences.trim)
     if args.old_st_store.preferences.trim ~= device.preferences.trim then
+      local newlevel = math.floor((current_level/100.0) * 254 )
       if old_trim < new_trim then
         if new_trim >= current_level then
           local newlevel = math.floor((new_trim/100.0) * 254 )
           device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
         else
-          local newlevel = math.floor((current_level/100.0) * 254 )
           device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
         end
       else
-        local newlevel = math.floor((current_level/100.0) * 254 )
         device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
       end
     end
