@@ -64,7 +64,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT)))
+      detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.Medium()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
