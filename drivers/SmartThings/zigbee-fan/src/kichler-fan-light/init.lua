@@ -113,14 +113,10 @@ local function info_changed(driver, device, event, args)
       local newlevel = math.floor((current_level/100.0) * 254 )
       if old_trim < new_trim then
         if new_trim >= current_level then
-          local newlevel = math.floor((new_trim/100.0) * 254 )
-          device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
-        else
-          device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
+          newlevel = math.floor((new_trim/100.0) * 254 )
         end
-      else
-        device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
       end
+      device:send_to_component('light', Level.server.commands.MoveToLevelWithOnOff(device, newlevel, 0))
     end
     if device.preferences.breezemode ~= args.old_st_store.preferences.breezemode then
       local speed = device:get_field('LAST_FAN_SPD') or 1
