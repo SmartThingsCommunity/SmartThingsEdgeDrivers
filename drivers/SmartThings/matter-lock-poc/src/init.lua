@@ -14,6 +14,7 @@
 
 local MatterDriver = require "st.matter.driver"
 local clusters = require "st.matter.clusters"
+local log = require "log"
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
@@ -23,6 +24,9 @@ local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
 
 local INITIAL_COTA_INDEX = 1
+
+local lockPinCodeID = "coloroption07296.lockPinCode9"
+local lockPinCode = capabilities[lockPinCodeID]
 
 --- If a device needs a cota credential this function attempts to set the credential
 --- at the index provided. The set_credential_response_handler handles all failures
@@ -71,55 +75,9 @@ local function generate_cota_cred_for_device(device)
   device:set_field(lock_utils.COTA_CRED, cred_data, {persist = true})
 end
 
-local function lock_state_handler(driver, device, ib, response)
-  local LockState = DoorLock.attributes.LockState
-  local attr = capabilities.lock.lock
-  local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
-    [LockState.LOCKED] = attr.locked(),
-    [LockState.UNLOCKED] = attr.unlocked(),
-    [LockState.UNLATCHED] = attr.unlocked(), -- Fully unlocked with latch pulled
-  }
-
-  if ib.data.value ~= nil then
-    device:emit_event(LOCK_STATE[ib.data.value])
-  else
-    device:emit_event(LOCK_STATE[LockState.NOT_FULLY_LOCKED])
-  end
-end
-
 local function handle_battery_percent_remaining(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
-  end
-end
-
-local function max_pin_code_len_handler(driver, device, ib, response)
-  device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
-end
-
-local function min_pin_code_len_handler(driver, device, ib, response)
-  device:emit_event(capabilities.lockCodes.minCodeLength(ib.data.value, {visibility = {displayed = false}}))
-end
-
-local function num_pin_users_handler(driver, device, ib, response)
-  device:set_field(lock_utils.TOTAL_PIN_USERS, ib.data.value)
-  device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
-end
-
-local function require_remote_pin_handler(driver, device, ib, response)
-  if ib.data.value then
-    --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
-    device.thread:call_with_delay(0, function(t)
-      generate_cota_cred_for_device(device)
-      -- delay needed to allow test to override the random credential data
-      device.thread:call_with_delay(0, function(t)
-        -- Attempt to set cota credential at the lowest index
-        set_cota_credential(device, INITIAL_COTA_INDEX)
-      end)
-    end)
-  else
-    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
 end
 
@@ -293,16 +251,6 @@ local function alarm_event_handler(driver, device, ib, response)
     == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT or alarm_code.value == DlAlarmCode.FORCED_USER
     or alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
     device:emit_event(capabilities.tamperAlert.tamper.detected())
-  end
-end
-
-local function lock_op_event_handler(driver, device, ib, response)
-  local tamper_detected = device:get_latest_state(
-                            device:endpoint_to_component(ib.endopint_id),
-                              capabilities.tamperAlert.ID, capabilities.tamperAlert.tamper.NAME
-                          )
-  if nil == tamper_detected or tamper_detected == capabilities.tamperAlert.tamper.detected.NAME then
-    device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
 end
 
@@ -480,6 +428,183 @@ local function handle_name_slot(driver, device, command)
   end
 end
 
+-- Custom Driver for testing
+-- Matter Handler
+local function lock_state_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_state_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  local LockState = DoorLock.attributes.LockState
+  if ib.data.value == LockState.NOT_FULLY_LOCKED then
+    device:emit_event(lockPinCode.lockState.notFullyLocked())
+    device:emit_event(capabilities.lock.lock.unknown())
+  elseif ib.data.value == LockState.LOCKED then
+    device:emit_event(lockPinCode.lockState.locked())
+    device:emit_event(capabilities.lock.lock.locked())
+  elseif ib.data.value == LockState.UNLOCKED then
+    device:emit_event(lockPinCode.lockState.unlocked())
+    device:emit_event(capabilities.lock.lock.unlocked())
+  elseif ib.data.value == LockState.UNLATCHED then
+    device:emit_event(lockPinCode.lockState.unlatched())
+    device:emit_event(capabilities.lock.lock.locked())
+  else
+    device:emit_event(lockPinCode.lockState.locked())
+    device:emit_event(capabilities.lock.lock.locked())
+  end
+end
+
+local function lock_type_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_type_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value == DoorLock.types.DlLockType.DEAD_BOLT then
+    device:emit_event(lockPinCode.lockType.deadBolt())
+  elseif ib.data.value == DoorLock.types.DlLockType.MAGNETIC then
+    device:emit_event(lockPinCode.lockType.magnetic())
+  elseif ib.data.value == DoorLock.types.DlLockType.OTHER then
+    device:emit_event(lockPinCode.lockType.other())
+  elseif ib.data.value == DoorLock.types.DlLockType.MORTISE then
+    device:emit_event(lockPinCode.lockType.mortise())
+  elseif ib.data.value == DoorLock.types.DlLockType.RIM then
+    device:emit_event(lockPinCode.lockType.rim())
+  elseif ib.data.value == DoorLock.types.DlLockType.LATCH_BOLT then
+    device:emit_event(lockPinCode.lockType.latchBolt())
+  elseif ib.data.value == DoorLock.types.DlLockType.CYLINDRICAL_LOCK then
+    device:emit_event(lockPinCode.lockType.cylindricalLock())
+  elseif ib.data.value == DoorLock.types.DlLockType.TUBULAR_LOCK then
+    device:emit_event(lockPinCode.lockType.tubularLock())
+  elseif ib.data.value == DoorLock.types.DlLockType.INTERCONNECTED_LOCK then
+    device:emit_event(lockPinCode.lockType.interconnectedLock())
+  elseif ib.data.value == DoorLock.types.DlLockType.DEAD_LATCH then
+    device:emit_event(lockPinCode.lockType.deadLatch())
+  elseif ib.data.value == DoorLock.types.DlLockType.DOOR_FURNITURE then
+    device:emit_event(lockPinCode.lockType.doorFurniture())
+  elseif ib.data.value == DoorLock.types.DlLockType.EUROCYLINDER then
+    device:emit_event(lockPinCode.lockType.eurocylinder())
+  else
+    device:emit_event(lockPinCode.lockType.other())
+  end
+end
+
+local function max_pin_code_len_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_pin_code_len_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  device:emit_event(lockPinCode.maxPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
+end
+
+local function min_pin_code_len_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! min_pin_code_len_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  device:emit_event(lockPinCode.minPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
+end
+
+local function operating_mode_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! operating_mode_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value == DoorLock.types.OperatingModeEnum.NORMAL then
+    device:emit_event(lockPinCode.lockOperatingMode.normal())
+  elseif ib.data.value == DoorLock.types.OperatingModeEnum.VACATION then
+    device:emit_event(lockPinCode.lockOperatingMode.vacation())
+  elseif ib.data.value == DoorLock.types.OperatingModeEnum.PRIVACY then
+    device:emit_event(lockPinCode.lockOperatingMode.privacy())
+  elseif ib.data.value == DoorLock.types.OperatingModeEnum.NO_REMOTE_LOCK_UNLOCK then
+    device:emit_event(lockPinCode.lockOperatingMode.noRemoteLockUnlock())
+  elseif ib.data.value == DoorLock.types.OperatingModeEnum.PASSAGE then
+    device:emit_event(lockPinCode.lockOperatingMode.passage())
+  else
+    device:emit_event(lockPinCode.lockOperatingMode.normal())
+  end
+end
+
+local function wrong_code_entry_limit_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! wrong_code_entry_limit_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  device:emit_event(lockPinCode.wrongCodeEntryLimit(ib.data.value, {visibility = {displayed = false}}))
+end
+
+local function user_code_temporary_disable_time_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! user_code_temporary_disable_time_handler2: %d !!!!!!!!!!!!!", ib.data.value))
+  device:emit_event(lockPinCode.userCodeTemporaryDisableTime(ib.data.value, {visibility = {displayed = false}}))
+end
+
+local function require_remote_pin_handler2(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! require_remote_pin_handler2: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value then
+    device:set_field(lock_utils.COTA_CRED, true, {persist = true})
+    device:emit_event(lockPinCode.requirePinForRemoteOperation.on())
+  else
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+    device:emit_event(lockPinCode.requirePinForRemoteOperation.off())
+  end
+end
+
+local function lock_op_event_handler2(driver, device, ib, response)
+  local opType = DoorLock.types.LockOperationTypeEnum
+  local event = ib.data.elements.lock_operation_type
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_op_event_handler2: %s !!!!!!!!!!!!!", event))
+  if event.value == opType.LOCK then
+    device:emit_event(lockPinCode.lockOperationEvent.lockEvent())
+  elseif event.value == opType.UNLOCK then
+    device:emit_event(lockPinCode.lockOperationEvent.unlockEvent())
+  elseif event.value == opType.NON_ACCESS_USER_EVENT then
+    device:emit_event(lockPinCode.lockOperationEvent.nonAccessUserEvent())
+  elseif event.value == opType.FORCED_USER_EVENT then
+    device:emit_event(lockPinCode.lockOperationEvent.forcedUserEvent())
+  elseif event.value == opType.UNLATCH then
+    device:emit_event(lockPinCode.lockOperationEvent.unlatchEvent())
+  end
+end
+
+local function lock_op_err_event_handler(driver, device, ib, response)
+  local err = DoorLock.types.OperationErrorEnum
+  local event = ib.data.elements.operation_error
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_op_err_event_handler: %s !!!!!!!!!!!!!", event))
+  if event.value == err.UNSPECIFIED then
+    device:emit_event(lockPinCode.lockOperationErrorEvent.unspecified())
+  elseif event.value == err.INVALID_CREDENTIAL then
+    device:emit_event(lockPinCode.lockOperationErrorEvent.invalidCredential())
+  elseif event.value == err.DISABLED_USER_DENIED then
+    device:emit_event(lockPinCode.lockOperationErrorEvent.disabledUserDenied())
+  elseif event.value == err.RESTRICTED then
+    device:emit_event(lockPinCode.lockOperationErrorEvent.restricted())
+  elseif event.value == err.INSUFFICIENT_BATTERY then
+    device:emit_event(lockPinCode.lockOperationErrorEvent.insufficientBattery())
+  else
+    device:emit_event(lockPinCode.lockOperationErrorEvent.unspecified())
+  end
+end
+
+-- Capability Handler
+local function handle_lock2(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_lock !!!!!!!!!!!!!"))
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.LockDoor(device, ep))
+end
+
+local function handle_unlock2(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_unlock !!!!!!!!!!!!!"))
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.UnlockDoor(device, ep))
+end
+
+local function handle_lock_with_pin_code(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_lock_with_pin_code: %s !!!!!!!!!!!!!", command.args.pinCode))
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.LockDoor(device, ep, command.args.pinCode))
+  device:emit_event(lockPinCode.lockPinCode("In Progress", {visibility = {displayed = false}}))
+  device:emit_event(lockPinCode.lockPinCode(command.args.pinCode, {visibility = {displayed = false}}))
+end
+
+local function handle_unlock_with_pin_code(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_unlock_with_pin_code: %s !!!!!!!!!!!!!", command.args.pinCode))
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.UnlockDoor(device, ep, command.args.pinCode))
+  device:emit_event(lockPinCode.unlockPinCode("In Progress", {visibility = {displayed = false}}))
+  device:emit_event(lockPinCode.unlockPinCode(command.args.pinCode, {visibility = {displayed = false}}))
+end
+
+local function handle_set_pin_code(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_pin_code: %s !!!!!!!!!!!!!", command.args.pinCode))
+  local ep = device:component_to_endpoint(command.component)
+  local credential = {credential_type = 1, credential_index = 1}
+  device:send(DoorLock.server.commands.SetCredential(device, ep, 2, credential, command.args.pinCode, 1, nil, nil))
+  device:emit_event(lockPinCode.pinCodeForSetting(" ", {visibility = {displayed = false}}))
+  device:emit_event(lockPinCode.pinCodeForSetting("In Progress", {visibility = {displayed = false}}))
+  device:emit_event(lockPinCode.pinCodeForSetting(" ", {visibility = {displayed = false}}))
+end
+
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = device:get_endpoints(cluster)
@@ -500,6 +625,12 @@ end
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+
+  -- User Data Hard coding
+  local ep = device:component_to_endpoint(component_to_endpoint)
+  device:send(DoorLock.server.commands.SetUser(device, ep, 0, 1, nil, nil, nil, nil, nil))
+  local credential = {credential_type = 1, credential_index = 1}
+  device:send(DoorLock.server.commands.SetCredential(device, ep, 0, credential, "\x30\x33\x35\x37\x39\x30", 1, nil, nil))
  end
 
 local function device_added(driver, device)
@@ -541,11 +672,15 @@ local matter_lock_driver = {
   matter_handlers = {
     attr = {
       [DoorLock.ID] = {
-        [DoorLock.attributes.LockState.ID] = lock_state_handler,
-        [DoorLock.attributes.MaxPINCodeLength.ID] = max_pin_code_len_handler,
-        [DoorLock.attributes.MinPINCodeLength.ID] = min_pin_code_len_handler,
-        [DoorLock.attributes.NumberOfPINUsersSupported.ID] = num_pin_users_handler,
-        [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler,
+        [DoorLock.attributes.LockState.ID] = lock_state_handler2,
+        [DoorLock.attributes.LockType.ID] = lock_type_handler2,
+        [DoorLock.attributes.MaxPINCodeLength.ID] = max_pin_code_len_handler2,
+        [DoorLock.attributes.MinPINCodeLength.ID] = min_pin_code_len_handler2,
+        [DoorLock.attributes.OperatingMode.ID] = operating_mode_handler2,
+        [DoorLock.attributes.WrongCodeEntryLimit.ID] = wrong_code_entry_limit_handler2,
+        [DoorLock.attributes.UserCodeTemporaryDisableTime.ID] = user_code_temporary_disable_time_handler2,
+        -- [DoorLock.attributes.NumberOfPINUsersSupported.ID] = num_pin_users_handler,
+        [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler2,
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
@@ -554,7 +689,8 @@ local matter_lock_driver = {
     event = {
       [DoorLock.ID] = {
         [DoorLock.events.DoorLockAlarm.ID] = alarm_event_handler,
-        [DoorLock.events.LockOperation.ID] = lock_op_event_handler,
+        [DoorLock.events.LockOperation.ID] = lock_op_event_handler2,
+        [DoorLock.events.LockOperationError.ID] = lock_op_err_event_handler,
         [DoorLock.events.LockUserChange.ID] = lock_user_change_event_handler,
       },
     },
@@ -567,18 +703,32 @@ local matter_lock_driver = {
     },
   },
   subscribed_attributes = {
+    [lockPinCodeID] = {
+      DoorLock.attributes.LockState,
+      DoorLock.attributes.LockType,
+      DoorLock.attributes.MaxPINCodeLength,
+      DoorLock.attributes.MinPINCodeLength,
+      DoorLock.attributes.OperatingMode,
+      DoorLock.attributes.WrongCodeEntryLimit,
+      DoorLock.attributes.UserCodeTemporaryDisableTime,
+      DoorLock.attributes.RequirePINforRemoteOperation,
+    },
     [capabilities.lock.ID] = {DoorLock.attributes.LockState},
     [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
     [capabilities.lockCodes.ID] = {DoorLock.events.LockUserChange},
+    [lockPinCodeID] = {
+      DoorLock.events.LockOperation,
+      DoorLock.events.LockOperationError,
+    },
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {[capabilities.refresh.commands.refresh.NAME] = handle_refresh},
     [capabilities.lock.ID] = {
-      [capabilities.lock.commands.lock.NAME] = handle_lock,
-      [capabilities.lock.commands.unlock.NAME] = handle_unlock,
+      [capabilities.lock.commands.lock.NAME] = handle_lock2,
+      [capabilities.lock.commands.unlock.NAME] = handle_unlock2,
     },
     [capabilities.lockCodes.ID] = {
       [capabilities.lockCodes.commands.deleteCode.NAME] = handle_delete_code,
@@ -587,12 +737,18 @@ local matter_lock_driver = {
       [capabilities.lockCodes.commands.setCode.NAME] = handle_set_code,
       [capabilities.lockCodes.commands.nameSlot.NAME] = handle_name_slot,
     },
+    [lockPinCodeID] = {
+      [lockPinCode.commands.lockWithPinCode.NAME] = handle_lock_with_pin_code,
+      [lockPinCode.commands.unlockWithPinCode.NAME] = handle_unlock_with_pin_code,
+      [lockPinCode.commands.setPinCode.NAME] = handle_set_pin_code,
+    }
   },
   supported_capabilities = {
     capabilities.lock,
     capabilities.lockCodes,
     capabilities.tamperAlert,
     capabilities.battery,
+    lockPinCode,
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }
