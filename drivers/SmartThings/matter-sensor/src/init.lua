@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
@@ -25,8 +26,20 @@ if not pcall(function(cluster) return clusters[cluster] end,
 end
 
 local BATTERY_CHECKED = "__battery_checked"
+local BOUNDS_CHECKED = "__bounds_checked"
+local TEMP_BOUND_RECEIVED = "temp_bound_received"
+local TEMP_MIN = "__temp_min"
+local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
+
+local function get_field_for_endpoint(device, field, endpoint)
+  return device:get_field(string.format("%s_%d", field, endpoint))
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, persist)
+  device:set_field(string.format("%s_%d", field, endpoint), value, {persist = persist})
+end
 
 local function supports_battery_percentage_remaining(device)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
@@ -82,6 +95,17 @@ local function device_init(driver, device)
     check_for_battery(device)
   end
   device:subscribe()
+
+  if not device:get_field(BOUNDS_CHECKED) then
+    local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+    if #temp_eps ~= 0 then
+      local temp_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      temp_limit_read:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
+      temp_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
+      device:send(temp_limit_read)
+    end
+    device:set_field(BOUNDS_CHECKED, true)
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -101,6 +125,27 @@ local function temperature_attr_handler(driver, device, ib, response)
     local temp = measured_value / 100.0
     local unit = "C"
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  end
+end
+
+local temp_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value ~= nil then
+      local temp = ib.data.value / 100.0
+      local unit = "C"
+      set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp, false)
+      local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
+      local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
+      if min ~= nil and max ~= nil then
+        if min < max then
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+          set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil, false)
+          set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil, false)
+        else
+          device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+        end
+      end
+    end
   end
 end
 
@@ -150,7 +195,9 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler

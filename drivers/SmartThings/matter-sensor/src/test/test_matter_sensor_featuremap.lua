@@ -152,6 +152,11 @@ local function test_init_temp_humidity()
   end
 
   test.socket.matter:__expect_send({mock_device_temp_humidity.id, subscribe_request_temp_humidity})
+
+  local temp_limit_read = clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read()
+  temp_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
+  test.socket.matter:__expect_send({mock_device_temp_humidity.id, temp_limit_read})
+
   test.mock_device.add_test_device(mock_device_temp_humidity)
   mock_device_temp_humidity:expect_metadata_update({ profile = "temperature-humidity" })
 end

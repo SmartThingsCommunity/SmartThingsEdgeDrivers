@@ -72,6 +72,11 @@ end
 
 local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_on_init(mock_device)})
+
+  local temp_limit_read = clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read()
+  temp_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
+  test.socket.matter:__expect_send({mock_device.id, temp_limit_read})
+
   test.mock_device.add_test_device(mock_device)
   -- don't check the battery for this device because we are using the catch-all "sensor.yml" profile just for testing
   mock_device:set_field("__battery_checked", 1, {persist = true})
@@ -262,4 +267,32 @@ test.register_message_test(
       },
     }
 )
+
+test.register_message_test(
+  "Min and max temperature attributes set capability constraint",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_device, 1, 500)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
+    }
+  }
+)
+
 test.run_registered_tests()
