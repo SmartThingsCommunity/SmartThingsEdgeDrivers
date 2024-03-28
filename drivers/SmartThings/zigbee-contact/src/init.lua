@@ -45,11 +45,11 @@ local zigbee_contact_driver_template = {
   },
   sub_drivers = {
     require("aqara"),
-    require("battery-overrides"),
     require("aurora-contact-sensor"),
     require("contact-temperature-sensor"),
     require("multi-sensor"),
-    require("smartsense-multi")
+    require("smartsense-multi"),
+    require("sengled")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }

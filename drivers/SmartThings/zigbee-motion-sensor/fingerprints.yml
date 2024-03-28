@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.motion.ac02"
+    deviceLabel: Aqara Motion Sensor P1
+    manufacturer: LUMI
+    model: lumi.motion.ac02
+    deviceProfileName: motion-illuminance-battery-aqara
   - id: "LUMI/lumi.motion.agl02"
     deviceLabel: Aqara Motion Sensor T1
     manufacturer: LUMI
@@ -188,6 +193,11 @@ zigbeeManufacturer:
     deviceLabel: ThirdReality Motion Sensor
     manufacturer: THIRDREALITY
     model: 3RMS16BZ
+    deviceProfileName: motion-battery
+  - id: "sengled/E1M-G7H"
+    deviceLabel: Sengled Motion Sensor
+    manufacturer: sengled
+    model: E1M-G7H
     deviceProfileName: motion-battery
 zigbeeGeneric:
   - id: kickstarter/motion/1

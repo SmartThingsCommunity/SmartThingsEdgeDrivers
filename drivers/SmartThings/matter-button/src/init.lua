@@ -9,21 +9,26 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_PROFILE_SUPPORTED = {2, 4, 8}
+local STATIC_PROFILE_SUPPORTED = {2, 4, 6, 8}
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+
+-- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
+-- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
+-- the "held" capability event is generated when the LongPress event is received. The IGNORE_NEXT_MPC flag is used
+-- to tell the driver to ignore MultiPressComplete if it is received after a long press to avoid this extra event.
 local IGNORE_NEXT_MPC = "__ignore_next_mpc"
 
 -- These are essentially storing the supported features of a given endpoint
 -- TODO: add an is_feature_supported_for_endpoint function to matter.device that takes an endpoint
-local EMULATE_HELD = "__emulate_held" -- for MSR devices we can emulate this on the software side
-local MULTI_BUTTON = "__multi_button" -- for multi-press devices, only trigger an event on a multi-button complete
-local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS, but not MSR
+local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side
+local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
+local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
 local HUE_MANUFACTURER_ID = 0x100B
 
---helper function to create liste of multi press values
+--helper function to create list of multi press values
 local function create_multi_list(size, supportsHeld)
   local list = {"pushed", "double"}
   if supportsHeld then table.insert(list, "held") end
@@ -131,7 +136,7 @@ local function configure_buttons(device)
         -- ask the device to tell us its max number of presses
         device.log.debug("sending multi press max read")
         device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-        set_field_for_endpoint(device, MULTI_BUTTON, ep, true, true)
+        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, true)
         supportedButtonValues_event = nil -- deferred until max press handler
       elseif contains(MSL, ep) then
         device.log.debug("configuring for long press device")
@@ -169,7 +174,7 @@ local function device_added(driver, device)
 
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-            #device:get_endpoints(clusters.PowerSource.ID) > 0 then
+            #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
       battery_support = true
     end
 
@@ -270,8 +275,12 @@ end
 ----------------------------------------------------------------------------
 
 -- initial press
-local function initial_event_handler(driver, device, ib, response)
-  if not get_field_for_endpoint(device, MULTI_BUTTON, ib.endpoint_id) then
+local function initial_press_event_handler(driver, device, ib, response)
+  if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
+    -- Receipt of an InitialPress event means we do not want to ignore the next MultiPressComplete event
+    -- or else we would potentially not create the expected button capability event
+    set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
+  else
     if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
     elseif get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
@@ -281,19 +290,19 @@ local function initial_event_handler(driver, device, ib, response)
   end
 end
 
--- if the devce distinguishes a long press event, it will always be a "held"
+-- if the device distinguishes a long press event, it will always be a "held"
 -- there's also a "long release" event, but this event is required to come first
 local function long_press_event_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.held({state_change = true}))
-  local MSM = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
-  if contains(MSM, ib.endpoint_id) then
+  if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
+    -- Ignore the next MultiPressComplete event if it is sent as part of this "long press" event sequence
     set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, true)
   end
 end
 
 -- short release event handler
 local function short_release_event_handler(driver, device, ib, response)
-  if not get_field_for_endpoint(device, MULTI_BUTTON, ib.endpoint_id) then
+  if not get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
     if get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
       emulate_held_event(device, ib.endpoint_id)
     else
@@ -302,12 +311,11 @@ local function short_release_event_handler(driver, device, ib, response)
   end
 end
 
-
 -- multi-press complete
-local function multi_event_handler(driver, device, ib, response)
+local function multi_press_complete_event_handler(driver, device, ib, response)
   -- in the case of multiple button presses
   -- emit number of times, multiple presses have been completed
-  if ib.data then
+  if ib.data and get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) ~= true then
     local press_value = ib.data.elements.total_number_of_presses_counted.value
     --capability only supports up to 6 presses
     if press_value < 7 then
@@ -317,15 +325,10 @@ local function multi_event_handler(driver, device, ib, response)
       elseif press_value > 2 then
         button_event = capabilities.button.button(string.format("pushed_%dx", press_value), {state_change = true})
       end
-      if get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
-        -- We do this so that a held (LongPress) event does not generate a subsequent pushed event
-        -- when the multipresscomplete event comes through. This means that a sequence of held, pushed,
-        -- multipresscomplete(2) will only generate a held event and not a double event.
-        button_event = nil
-      end
-      if button_event then device:emit_event_for_endpoint(ib.endpoint_id, button_event) end
+
+      device:emit_event_for_endpoint(ib.endpoint_id, button_event)
     else
-      log.info("Number of presses not supported by capability")
+      log.info(string.format("Number of presses (%d) not supported by capability", press_value))
     end
   end
   set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
@@ -374,10 +377,10 @@ local matter_driver_template = {
     },
     event = {
       [clusters.Switch.ID] = {
-        [clusters.Switch.events.InitialPress.ID] = initial_event_handler,
+        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler,
         [clusters.Switch.events.LongPress.ID] = long_press_event_handler,
         [clusters.Switch.events.ShortRelease.ID] = short_release_event_handler,
-        [clusters.Switch.events.MultiPressComplete.ID] = multi_event_handler,
+        [clusters.Switch.events.MultiPressComplete.ID] = multi_press_complete_event_handler,
       }
     },
   },

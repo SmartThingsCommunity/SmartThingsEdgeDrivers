@@ -1,5 +1,4 @@
 Orvibo Gas Detector,欧瑞博 可燃气体报警器
-GDKES Switch 1,粤奇胜智能墙面开关 1
 Button,无线开关
 DG Light,DG智能灯
 GDKES Outlet,粤奇胜智能插座
@@ -9,6 +8,7 @@ HEIMAN Carbon Monoxide Sensor,海曼一氧化碳报警器
 HEIMAN Gas Detector,海曼燃气报警器
 HEIMAN Motion Sensor,海曼人体红外传感器
 HEIMAN Multipurpose Sensor,海曼温湿度传感器
+HEIMAN Outlet,海曼智能插座
 HEIMAN Open/Closed Sensor,海曼门窗传感器
 HEIMAN Remote Control,海曼情景开关
 HEIMAN Scene Panel,海曼情景开关
@@ -20,7 +20,7 @@ HONYAR Outlet,鸿雁智能插座
 HONYAR Switch 1,鸿雁智能墙面开关 1
 Light,智能球泡灯
 Motion Sensor,人体传感器
-Multipurpose Sensor,温湿度传感器
+Multipurpose Sensor,多功能传感器
 Orvibo Outlet,欧瑞博智能插座
 Orvibo Smoke Detector,欧瑞博 烟雾报警器
 Orvibo Switch 1,欧瑞博智能墙面开关 1
@@ -36,3 +36,24 @@ Zigbee Thermostat,Zigbee温控
 Zigbee Thing,Zigbee设备
 Zigbee Vent,Zigbee新风系统
 Zigbee Window Treatment,Zigbee窗帘电机
+Aqara Motion Sensor T1,Aqara 人体传感器 T1
+Aqara High Precision Motion Sensor,Aqara高精度人体传感器
+Aqara Door and Window Sensor T1,Aqara 门窗传感器T1
+Aqara Temperature and Humidity Sensor T1,Aqara温湿度传感器 T1
+Aqara Water Leak Sensor,Aqara 水浸传感器 T1
+Aqara Illuminance Sensor T1,Aqara 光照传感器T1
+Aqara Presence Sensor FP1,Aqara 人体存在传感器FP1
+Aqara Smart Dimmer Controller T1 Pro,Aqara 双色温驱动器 T1 Pro
+Aqara Single Switch Module T1 (With Neutral),Aqara 单路控制器T1 (零火版)
+Aqara Curtain Controller,Aqara智能窗帘电机 (Zigbee开合帘版)
+Aqara Roller Shade Controller,Aqara智能管状电机
+Aqara Smart Pet Feeder C1,Aqara智能宠物喂食器 C1
+"Aqara Smart Wall Switch H1 (With Neutral,Single Rocker)",Aqara智能墙壁开关H1 (零火线单键版)
+"Aqara Smart Wall Switch H1 (With Neutral,Double Rocker) 1",Aqara智能墙壁开关H1 (零火线双键版) 1
+"Aqara Smart Wall Switch H1 (With Neutral,Triple Rocker) 1",Aqara智能墙壁开关H1 (零火线三键版) 1
+Aqara Smart Natural Gas Detector,Aqara天然气报警器
+Aqara Smart Smoke Detector,Aqara烟雾报警器
+Aqara Smart Plug T1,Aqara 智能插座 T1 (国标)
+Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
+"Aqara Wireless Remote Switch E1 (Single Rocker)",Aqara 无线开关 E1 (贴墙式单键版)
+"Aqara LED Light Bulb T1 (Tunable White)",Aqara LED灯泡 T1 (可调色温)

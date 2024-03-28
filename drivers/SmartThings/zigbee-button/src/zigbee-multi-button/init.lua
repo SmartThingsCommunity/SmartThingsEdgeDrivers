@@ -29,6 +29,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
   { mfr = "IKEA of Sweden", model = "TRADFRI remote control" },
   { mfr = "KE", model = "TRADFRI open/close remote" },
+  { mfr = "\x02KE", model = "TRADFRI open/close remote" },
   { mfr = "SOMFY", model = "Situo 1 Zigbee" },
   { mfr = "SOMFY", model = "Situo 4 Zigbee" },
   { mfr = "LDS", model = "ZBT-CCTSwitch-D0001" },
@@ -39,7 +40,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "SBM300ZB3" },
   { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
   { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
-  { mfr = "WALL HERO", model = "ACL-401SCA4" }
+  { mfr = "WALL HERO", model = "ACL-401SCA4" },
+  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -86,6 +88,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.shinasystems"),
     require("zigbee-multi-button.robb"),
     require("zigbee-multi-button.wallhero"),
+    require("zigbee-multi-button.SLED")
   }
 }
 
