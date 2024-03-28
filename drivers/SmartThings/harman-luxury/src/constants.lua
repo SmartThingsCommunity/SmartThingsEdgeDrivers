@@ -10,7 +10,7 @@ local Constants = {
   -- intervals constants (in seconds)
   UPDATE_INTERVAL = 1,
   HEALTH_CHEACK_INTERVAL = 10,
-  HTTP_TIMEOUT = 5,
+  HTTP_TIMEOUT = 10,
 
   -- discovery constants
   SERVICE_TYPE = "_sue-st._tcp",
