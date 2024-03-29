@@ -193,9 +193,9 @@ local function energy_meter_handler(driver, device, value, zb_rx)
 end
 
 local function do_refresh(self, device)
-    device:send(OnOff.attributes.OnOff:read(device))
-    device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
-    device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
+  device:send(OnOff.attributes.OnOff:read(device))
+  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
+  device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
 end
 
 local function device_info_changed(driver, device, event, args)
