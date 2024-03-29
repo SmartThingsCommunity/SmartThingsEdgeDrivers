@@ -18,7 +18,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier.yml"),
+  profile = t_utils.get_profile_definition("air-purifier-all.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -47,7 +47,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
-  clusters.FanControl.attributes.PercentSetting,
+  clusters.FanControl.attributes.PercentCurrent,
   clusters.FanControl.attributes.WindSupport,
   clusters.FanControl.attributes.WindSetting,
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
@@ -172,7 +172,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.PercentSetting:build_test_report_data(mock_device, 1, 10)
+        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 10)
       }
     },
     {

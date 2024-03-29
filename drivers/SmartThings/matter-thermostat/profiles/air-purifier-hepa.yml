@@ -1,4 +1,4 @@
-name: air-purifier
+name: air-purifier-hepa
 components:
 - id: main
   capabilities:
@@ -7,6 +7,14 @@ components:
   - id: fanSpeedPercent
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: hepaFilter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
     version: 1
   categories:
   - name: AirPurifier

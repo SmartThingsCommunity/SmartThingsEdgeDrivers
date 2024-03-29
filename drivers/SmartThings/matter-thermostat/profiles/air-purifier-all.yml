@@ -1,0 +1,30 @@
+name: air-purifier-all
+components:
+- id: main
+  capabilities:
+  - id: airPurifierFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: windMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: hepaFilter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: activatedCarbonFilter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: AirPurifier
