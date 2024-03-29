@@ -238,22 +238,22 @@ test.register_message_test(
 )
 
 test.register_message_test(
-	"Current level reports should generate appropriate events",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child1_ep, 50)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
-		},
-	}
+  "Current level reports should generate appropriate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child1_ep, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+  }
 )
 
 test.register_message_test(

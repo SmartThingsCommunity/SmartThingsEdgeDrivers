@@ -63,7 +63,7 @@ local function write_attr_res_handler(driver, device, zb_rx)
     -- for unoccupied timer
     device:set_field(aqara_utils.PREF_FREQUENCY_KEY, value, { persist = true })
     -- update ui
-    device:emit_event(detectionFrequency.detectionFrequency(value))
+    device:emit_event(detectionFrequency.detectionFrequency(value, {visibility = {displayed = false}}))
   end
 end
 
@@ -80,7 +80,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
   device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
-  device:emit_event(detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT))
+  device:emit_event(detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}}))
   device:emit_event(capabilities.battery.battery(100))
 
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
