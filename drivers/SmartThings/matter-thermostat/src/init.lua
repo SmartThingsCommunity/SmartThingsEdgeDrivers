@@ -422,7 +422,6 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
     if ib.data.value ~= nil then
       local val = ib.data.value / 100.0
-      print("setting %s to %d", minOrMax, val)
       device:set_field(minOrMax, val)
       local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
       local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
@@ -441,7 +440,6 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
     if ib.data.value ~= nil then
       local val = ib.data.value / 100.0
-      print("setting %s to %d", minOrMax, val)
       device:set_field(minOrMax, val)
       local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
       local max = device:get_field(setpoint_limit_device_field.MAX_COOL)

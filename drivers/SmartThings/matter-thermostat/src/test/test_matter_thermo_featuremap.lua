@@ -151,6 +151,8 @@ local cluster_subscribe_list_no_battery = {
 }
 
 local function test_init()
+  -- Set BOUNDS_CHECKED to bypass the setpoint limit reads so they do not need
+  -- to be checked in the init function.
   mock_device:set_field("BOUNDS_CHECKED", 1, {persist = true})
   mock_device_simple:set_field("BOUNDS_CHECKED", 1, {persist = true})
   mock_device_no_battery:set_field("BOUNDS_CHECKED", 1, {persist = true})
