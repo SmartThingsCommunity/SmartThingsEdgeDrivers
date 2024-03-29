@@ -477,4 +477,66 @@ test.register_coroutine_test(
         end
 )
 
+test.register_coroutine_test(
+        " #24 Trim changed higher value <receive from lifecycle handler infoChanged> : 10% to 25% ",
+function()
+            test.socket.device_lifecycle():__queue_receive(mock_base_device:generate_info_changed(
+                    { preferences = { trim = 10, breezemode = 0, fandirection = 1 }}))
+            test.socket.capability:__queue_receive({ mock_base_device.id, { capability = "switchLevel", component = "light",
+command = "setLevel", args = { 5, 0 } } })
+            test.socket.capability:__expect_send(mock_base_device:generate_test_message("light", capabilities.switchLevel.level(5)))
+            test.socket.zigbee:__expect_send({ mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+(mock_base_device, 25, 0) })
+            test.socket.capability:__expect_send(mock_base_device:generate_test_message("light", capabilities.switchLevel.level(10)))
+            test.wait_for_events()
+            test.socket.device_lifecycle():__queue_receive(mock_base_device:generate_info_changed(
+                    { preferences = { trim = 25, breezemode = 0, fandirection = 1 }}))
+            test.socket.zigbee:__expect_send({ mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+(mock_base_device, 63, 0) })
+        end
+)
+
+test.register_coroutine_test(
+        " #25 Trim changed lower value <receive from lifecycle handler infoChanged> : 25% to 10% ",
+function()
+            test.socket.device_lifecycle():__queue_receive(mock_base_device:generate_info_changed(
+                    { preferences = { trim = 25, breezemode = 0, fandirection = 1 }}))
+            test.socket.zigbee:__expect_send({ mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+(mock_base_device, 254, 0) })
+            test.socket.device_lifecycle():__queue_receive(mock_base_device:generate_info_changed(
+                    { preferences = { trim = 10, breezemode = 0, fandirection = 1 }}))
+            test.socket.zigbee:__expect_send({ mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+(mock_base_device, 254, 0) })
+        end
+)
+
+test.register_message_test(
+        " #26 Trim triggered condition <send to device> : 5% @trim 10% ",
+{
+            {
+                channel = "capability",
+direction = "receive",
+message = { mock_base_device.id, { capability = "switchLevel", component = "light",
+command = "setLevel", args = { 5, 0 } } }
+            },
+{
+                channel = "capability",
+direction = "send",
+message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(5))
+            },
+{
+                channel = "zigbee",
+direction = "send",
+message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
+(mock_base_device, 25, 0) }
+            },
+{
+                channel = "capability",
+direction = "send",
+message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(10))
+            },
+}
+)
+
 test.run_registered_tests()
+
