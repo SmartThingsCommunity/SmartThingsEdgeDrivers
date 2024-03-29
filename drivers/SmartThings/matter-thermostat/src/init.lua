@@ -80,8 +80,8 @@ local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
 
-local function set_field_for_endpoint(device, field, endpoint, value, persist)
-  device:set_field(string.format("%s_%d", field, endpoint), value, {persist = persist})
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
 local function find_default_endpoint(device, cluster)
@@ -214,20 +214,21 @@ end
 
 local temp_attr_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value ~= nil then
-      local temp = ib.data.value / 100.0
-      local unit = "C"
-      set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp, false)
-      local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
-      local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
-      if min ~= nil and max ~= nil then
-        if min < max then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
-          set_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id, nil, false)
-          set_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id, nil, false)
-        else
-          device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
-        end
+    if ib.data.value == nil then
+      return
+    end
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp)
+    local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
       end
     end
   end
@@ -420,17 +421,18 @@ end
 
 local heating_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value ~= nil then
-      local val = ib.data.value / 100.0
-      device:set_field(minOrMax, val)
-      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
-      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
-      if min ~= nil and max ~= nil then
-        if min < max then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
-        else
-          device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
-        end
+    if ib.data.value == nil then
+      return
+    end
+    local val = ib.data.value / 100.0
+    device:set_field(minOrMax, val)
+    local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
+    local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
       end
     end
   end
@@ -438,17 +440,18 @@ end
 
 local cooling_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value ~= nil then
-      local val = ib.data.value / 100.0
-      device:set_field(minOrMax, val)
-      local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
-      local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
-      if min ~= nil and max ~= nil then
-        if min < max then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
-        else
-          device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
-        end
+    if ib.data.value == nil then
+      return
+    end
+    local val = ib.data.value / 100.0
+    device:set_field(minOrMax, val)
+    local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
+    local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
       end
     end
   end
