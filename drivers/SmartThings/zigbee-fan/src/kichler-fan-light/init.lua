@@ -106,7 +106,7 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local current_level = device:get_latest_state('light', capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME)
+    local current_level = device:get_latest_state('light', capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) or 100
     local new_trim = tonumber(device.preferences.trim)
     local old_trim = tonumber(args.old_st_store.preferences.trim)
     if args.old_st_store.preferences.trim ~= device.preferences.trim then
