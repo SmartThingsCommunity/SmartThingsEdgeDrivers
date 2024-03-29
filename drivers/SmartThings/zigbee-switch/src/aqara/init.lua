@@ -32,7 +32,11 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
-  { mfr = "LUMI", model = "lumi.switch.b2laus01" }
+  { mfr = "LUMI", model = "lumi.switch.b2laus01" },
+  { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.l2aeu1" }
 }
 
 local preference_map = {
@@ -189,9 +193,9 @@ local function energy_meter_handler(driver, device, value, zb_rx)
 end
 
 local function do_refresh(self, device)
-  device:send(OnOff.attributes.OnOff:read(device))
-  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
-  device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
+    device:send(OnOff.attributes.OnOff:read(device))
+    device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
+    device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
 end
 
 local function device_info_changed(driver, device, event, args)
