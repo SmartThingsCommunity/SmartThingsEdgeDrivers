@@ -1,4 +1,4 @@
-name: air-purifier-all
+name: air-purifier-hepa-wind
 components:
 - id: main
   capabilities:
@@ -13,14 +13,6 @@ components:
   categories:
   - name: AirPurifier
 - id: hepaFilter
-  capabilities:
-  - id: filterState
-    version: 1
-  - id: filterStatus
-    version: 1
-  categories:
-  - name: AirPurifier
-- id: activatedCarbonFilter
   capabilities:
   - id: filterState
     version: 1

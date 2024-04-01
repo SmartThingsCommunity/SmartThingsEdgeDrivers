@@ -74,4 +74,4 @@ matterGeneric:
     deviceLabel: Matter Air Purifier
     deviceTypes:
       - id: 0x002D # Air Purifier
-    deviceProfileName: air-purifier
+    deviceProfileName: air-purifier-hepa-ac-wind
