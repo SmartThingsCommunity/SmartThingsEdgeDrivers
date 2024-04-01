@@ -18,8 +18,8 @@ local clusters = require "st.matter.clusters"
 
 local log = require "log"
 
-local rvcRunModeSupportedModes = {}
-local rvcCleanModeSupportedModes = {}
+local RVC_RUN_MODE_SUPPORTED_MODES = "__rvc_run_mode_supported_modes"
+local RVC_CLEAN_MODE_SUPPORTED_MODES = "__rvc_clean_mode_supported_modes"
 
 local function device_init(driver, device)
   device:subscribe()
@@ -27,12 +27,13 @@ end
 
 -- Matter Handlers --
 local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, response)
-  rvcRunModeSupportedModes = {}
+  local supportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    table.insert(rvcRunModeSupportedModes, mode.elements.label.value)
+    table.insert(supportedModes, mode.elements.label.value)
   end
+  device:set_field(RVC_RUN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
   local component = device.profile.components["runMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(rvcRunModeSupportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -40,7 +41,8 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
     string.format("rvc_run_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  for i, mode in ipairs(rvcRunModeSupportedModes) do
+  local supportedModes = device:get_field(RVC_RUN_MODE_SUPPORTED_MODES) or {}
+  for i, mode in ipairs(supportedModes) do
     if i - 1 == currentMode then
       local component = device.profile.components["runMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
@@ -50,13 +52,13 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
 end
 
 local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
-  rvcCleanModeSupportedModes = {}
+  local supportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    table.insert(rvcCleanModeSupportedModes, mode.elements.label.value)
+    table.insert(supportedModes, mode.elements.label.value)
   end
-  -- device:set_field(rvc_clean_mode_supported_mode, supportedModes, {persist = true})
+  device:set_field(RVC_CLEAN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
   local component = device.profile.components["cleanMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(rvcCleanModeSupportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -64,7 +66,8 @@ local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, resp
     string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  for i, mode in ipairs(rvcCleanModeSupportedModes) do
+  local supportedModes = device:get_field(RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
+  for i, mode in ipairs(supportedModes) do
     if i - 1 == currentMode then
       local component = device.profile.components["cleanMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
@@ -131,14 +134,16 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
 
   local ENDPOINT = 1
   if cmd.component == "runMode" then
-    for i, mode in ipairs(rvcRunModeSupportedModes) do
+    local supportedModes = device:get_field(RVC_RUN_MODE_SUPPORTED_MODES) or {}
+    for i, mode in ipairs(supportedModes) do
       if cmd.args.mode == mode then
         device:send(clusters.RvcRunMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
       end
     end
   elseif cmd.component == "cleanMode" then
-    for i, mode in ipairs(rvcCleanModeSupportedModes) do
+    local supportedModes = device:get_field(RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
+    for i, mode in ipairs(supportedModes) do
       if cmd.args.mode == mode then
         device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
