@@ -21,15 +21,15 @@ local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
 local THERMOSTAT_MODE_MAP = {
-  [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
-  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
-  [clusters.Thermostat.types.ThermostatSystemMode.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
-  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEAT] = capabilities.thermostatMode.thermostatMode.emergencyheat,
-  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
-  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
-  [clusters.Thermostat.types.ThermostatSystemMode.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
-  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
+  [clusters.Thermostat.types.SystemModeEnum.OFF]            = capabilities.thermostatMode.thermostatMode.off,
+  [clusters.Thermostat.types.SystemModeEnum.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
+  [clusters.Thermostat.types.SystemModeEnum.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
+  [clusters.Thermostat.types.SystemModeEnum.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
+  [clusters.Thermostat.types.SystemModeEnum.EMERGENCY_HEAT] = capabilities.thermostatMode.thermostatMode.emergencyheat,
+  [clusters.Thermostat.types.SystemModeEnum.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
+  [clusters.Thermostat.types.SystemModeEnum.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
+  [clusters.Thermostat.types.SystemModeEnum.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
+  [clusters.Thermostat.types.SystemModeEnum.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
@@ -46,6 +46,9 @@ local WIND_MODE_MAP = {
   [0]		= capabilities.windMode.windMode.sleepWind,
   [1]		= capabilities.windMode.windMode.naturalWind
 }
+
+local RAC_DEVICE_TYPE_ID = 0x0072
+local AP_DEVICE_TYPE_ID = 0x002D
 
 local setpoint_limit_device_field = {
   MIN_HEAT = "MIN_HEAT",
@@ -154,20 +157,58 @@ local function info_changed(driver, device, event, args)
   device:subscribe()
 end
 
+local function is_matter_rac(driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == RAC_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+local function is_matter_ap(driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == AP_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local function do_configure(driver, device)
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.COOLING})
   local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.AUTOMODE})
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.WIND})
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local hepa_filter_eps = device:get_endpoints(clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = device:get_endpoints(clusters.ActivatedCarbonFilterMonitoring.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
-  if device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
+  if is_matter_rac(driver, device) then
     log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
-  elseif device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
+  elseif is_matter_ap(driver, device) then
     -- currently no profile switching for Air Purifier
+    profile_name = "air-purifier"
+    if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
+      profile_name = profile_name .. "-hepa" .. "-ac"
+    elseif #hepa_filter_eps > 0 then
+      profile_name = profile_name .. "-hepa"
+    elseif #ac_filter_eps > 0 then
+      profile_name = profile_name .. "-ac"
+    end
+    if #wind_eps > 0 then
+      profile_name = profile_name .. "-wind"
+    end
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   elseif #thermo_eps == 1 then
     if #humidity_eps > 0 and #fan_eps > 0 then
       profile_name = profile_name .. "-humidity" .. "-fan"
