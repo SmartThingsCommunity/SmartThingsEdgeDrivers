@@ -25,15 +25,55 @@ local function device_init(driver, device)
   device:subscribe()
 end
 
+-- Helper functions --
+local function set_field_mode_tags_of_supported_mode(device, field_prefix, index, mode_tags)
+  local field = string.format("%s_%d", field_prefix, index)
+  local mode_tags_of_supported_modes = {}
+  for _, mode_tag in ipairs(mode_tags.elements) do
+    table.insert(mode_tags_of_supported_modes, mode_tag.elements.value.value)
+  end
+  device:set_field(field, mode_tags_of_supported_modes, { persist = true })
+end
+
+local function get_field_mode_tags_of_supported_mode(device, field_prefix, index)
+  local field = string.format("%s_%d", field_prefix, index)
+  return device:get_field(field)
+end
+
+local function set_field_supported_modes(device, field_prefix, supported_modes)
+  local labels_field = string.format("%s_labels", field_prefix)
+  local mode_tags_field = string.format("%s_mode_tags", field_prefix)
+  local labels_of_supported_modes = {}
+  for i, mode in ipairs(supported_modes) do
+    table.insert(labels_of_supported_modes, mode.elements.label.value)
+    set_field_mode_tags_of_supported_mode(device, mode_tags_field, i, mode.elements.mode_tags)
+  end
+  device:set_field(labels_field, labels_of_supported_modes, { persist = true })
+end
+
+local function set_field_supported_modes_from_response(device, field_prefix, cluster_id, attribute_id, response)
+  for _, rb in ipairs(response.info_blocks) do
+    if rb.info_block.attribute_id == cluster_id and
+      rb.info_block.cluster_id == attribute_id and
+      rb.info_block.data.elements ~= nil then
+      set_field_supported_modes(device, field_prefix, rb.info_block.data.elements)
+      break
+    end
+  end
+end
+
+local function get_field_labels_of_supported_modes(device, field_prefix)
+  local field = string.format("%s_labels", field_prefix)
+  return device:get_field(field)
+end
+
 -- Matter Handlers --
 local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, response)
-  local supportedModes = {}
-  for _, mode in ipairs(ib.data.elements) do
-    table.insert(supportedModes, mode.elements.label.value)
-  end
-  device:set_field(RVC_RUN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
+  set_field_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES, ib.data.elements)
+  local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES)
+
   local component = device.profile.components["runMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -41,28 +81,21 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
     string.format("rvc_run_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  local function get_supported_modes()
-    local supportedModes = device:get_field(RVC_RUN_MODE_SUPPORTED_MODES)
-    if supportedModes ~= nil then
-      return supportedModes
+  local function get_labels_of_supported_modes()
+    local supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES)
+    if supported_modes ~= nil then
+      return supported_modes
     end
 
-    supportedModes = {}
-    for _, rb in ipairs(response.info_blocks) do
-      if rb.info_block.attribute_id == clusters.RvcRunMode.attributes.SupportedModes.ID and
-        rb.info_block.cluster_id == clusters.RvcRunMode.ID and
-        rb.info_block.data.elements ~= nil then
-        for _, mode in ipairs(rb.info_block.data.elements) do
-          table.insert(supportedModes, mode.elements.label.value)
-        end
-        device:set_field(RVC_RUN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
-        break
-      end
-    end
-    return supportedModes
+    set_field_supported_modes_from_response(device,
+      RVC_RUN_MODE_SUPPORTED_MODES,
+      clusters.RvcRunMode.ID,
+      clusters.RvcRunMode.attributes.SupportedModes.ID,
+      response)
+    return get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES) or {}
   end
-  local supportedModes = get_supported_modes()
-  for i, mode in ipairs(supportedModes) do
+  local labels_of_supported_modes = get_labels_of_supported_modes()
+  for i, mode in ipairs(labels_of_supported_modes) do
     if i - 1 == currentMode then
       local component = device.profile.components["runMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
@@ -72,13 +105,11 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
 end
 
 local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, response)
-  local supportedModes = {}
-  for _, mode in ipairs(ib.data.elements) do
-    table.insert(supportedModes, mode.elements.label.value)
-  end
-  device:set_field(RVC_CLEAN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
+  set_field_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES, ib.data.elements)
+  local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
+
   local component = device.profile.components["cleanMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -86,28 +117,21 @@ local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, resp
     string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  local function get_supported_modes()
-    local supportedModes = device:get_field(RVC_CLEAN_MODE_SUPPORTED_MODES)
-    if supportedModes ~= nil then
-      return supportedModes
+  local function get_labels_of_supported_modes()
+    local supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
+    if supported_modes ~= nil then
+      return supported_modes
     end
 
-    supportedModes = {}
-    for _, rb in ipairs(response.info_blocks) do
-      if rb.info_block.attribute_id == clusters.RvcCleanMode.attributes.SupportedModes.ID and
-        rb.info_block.cluster_id == clusters.RvcCleanMode.ID and
-        rb.info_block.data.elements ~= nil then
-        for _, mode in ipairs(rb.info_block.data.elements) do
-          table.insert(supportedModes, mode.elements.label.value)
-        end
-        device:set_field(RVC_CLEAN_MODE_SUPPORTED_MODES, supportedModes, { persist = true })
-        break
-      end
-    end
-    return supportedModes
+    set_field_supported_modes_from_response(device,
+      RVC_CLEAN_MODE_SUPPORTED_MODES,
+      clusters.RvcCleanMode.ID,
+      clusters.RvcCleanMode.attributes.SupportedModes.ID,
+      response)
+    return get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
   end
-  local supportedModes = get_supported_modes()
-  for i, mode in ipairs(supportedModes) do
+  local labels_of_supported_modes = get_labels_of_supported_modes()
+  for i, mode in ipairs(labels_of_supported_modes) do
     if i - 1 == currentMode then
       local component = device.profile.components["cleanMode"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
@@ -174,16 +198,16 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
 
   local ENDPOINT = 1
   if cmd.component == "runMode" then
-    local supportedModes = device:get_field(RVC_RUN_MODE_SUPPORTED_MODES) or {}
-    for i, mode in ipairs(supportedModes) do
+    local supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES) or {}
+    for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
         device:send(clusters.RvcRunMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
       end
     end
   elseif cmd.component == "cleanMode" then
-    local supportedModes = device:get_field(RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
-    for i, mode in ipairs(supportedModes) do
+    local supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
+    for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
         device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
         return
