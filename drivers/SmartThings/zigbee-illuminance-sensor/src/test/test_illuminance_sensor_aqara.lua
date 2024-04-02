@@ -62,7 +62,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.illuminanceMeasurement.illuminance(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE)))
+      detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
 
     test.socket.zigbee:__expect_send({ mock_device.id,
