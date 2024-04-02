@@ -67,10 +67,8 @@ local function present_value_handler(driver, device, value, zb_rx)
 end
 
 local function do_refresh(self, device)
-  if (device:get_model() == "lumi.switch.l1aeu1" or device:get_model() == "lumi.switch.l2aeu1") then
-    device:send(OnOff.attributes.OnOff:read(device))
-  else
-    device:send(OnOff.attributes.OnOff:read(device))
+  device:send(OnOff.attributes.OnOff:read(device))
+  if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
     device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(POWER_METER_ENDPOINT))
     device:send(AnalogInput.attributes.PresentValue:read(device):to_endpoint(ENERGY_METER_ENDPOINT))
   end
