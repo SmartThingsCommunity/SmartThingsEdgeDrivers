@@ -129,7 +129,6 @@ local function info_changed(driver, device, event, args)
       end
     end
     if device.preferences.fandirection ~= args.old_st_store.preferences.fandirection then
-      local flag_direction = device:get_field('FANDIRECTION_FLAG') or 0
       local send_fandirection_time = device:get_field('FANDIRECTION_SENDTIME') or 0
       local current_fandirection_time = os.time()
       local time_difference = os.difftime(current_fandirection_time, send_fandirection_time) or 0
