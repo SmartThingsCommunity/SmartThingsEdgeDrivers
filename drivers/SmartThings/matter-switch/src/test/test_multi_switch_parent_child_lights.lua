@@ -100,6 +100,9 @@ local function test_init()
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
   }
+  -- Set __bounds_checked to bypass the setpoint limit reads so they do not need
+  -- to be checked in the init function.
+  mock_device:set_field("__bounds_checked", true, {persist = true})
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
