@@ -136,8 +136,6 @@ local function info_changed(driver, device, event, args)
       if time_difference >= 10 or send_fandirection_time == 0 then
         device:send(FanControl.attributes.FanMode:write(device, 6))
         device:set_field('FANDIRECTION_SENDTIME', current_fandirection_time, {persist = true})
-      else
-        device:set_field('FANDIRECTION_FLAG', flag_direction + 1 , {persist = true})
       end
     end
   end
