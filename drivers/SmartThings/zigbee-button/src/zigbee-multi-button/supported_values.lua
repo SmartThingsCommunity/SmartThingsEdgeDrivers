@@ -55,6 +55,7 @@ local devices = {
   BUTTON_PUSH_HELD_3 = {
     MATCHING_MATRIX = {
       { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+      { mfr = "Juno", model = "ABL-LIGHT-Z-401" },
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 3
