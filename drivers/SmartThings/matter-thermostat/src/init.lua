@@ -373,12 +373,24 @@ local function set_setpoint(setpoint)
       {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE}
     ) > 0
 
+    local cooling_setpoint_range = device:get_latest_state(
+      cmd.component, capabilities.thermostatCoolingSetpoint.ID,
+      capabilities.thermostatCoolingSetpoint.coolingSetpointRange.NAME,
+      { minimum = 0, maximum = 100 }
+    )
+
+    local heating_setpoint_range = device:get_latest_state(
+      cmd.component, capabilities.thermostatHeatingSetpoint.ID,
+      capabilities.thermostatHeatingSetpoint.heatingSetpointRange.NAME,
+      { minimum = 0, maximum = 100 }
+    )
+
     --Check setpoint limits for the device
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
     if setpoint_type == "Heat" then
-      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or 100
+      local min = heating_setpoint_range["minimum"]
+      local max = heating_setpoint_range["maximum"]
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -396,8 +408,8 @@ local function set_setpoint(setpoint)
         return
       end
     else
-      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or 100
+      local min = cooling_setpoint_range["minimum"]
+      local max = cooling_setpoint_range["maximum"]
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -431,6 +443,8 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_HEAT, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_HEAT, ib.endpoint_id, nil)
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
       end
@@ -450,6 +464,8 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_COOL, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_COOL, ib.endpoint_id, nil)
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
       end
