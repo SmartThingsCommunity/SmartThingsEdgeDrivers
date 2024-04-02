@@ -170,7 +170,7 @@ zigbeeManufacturer:
     model: SAMSUNG-ITM-Z-005
     deviceProfileName: SLED-three-buttons 
   - id:  Juno/ABL-LIGHT-Z-401
-    deviceLabel: Juno Connect
+    deviceLabel: SEAMLESS Smart Controller
     manufacturer: Juno
     model: ABL-LIGHT-Z-401
     deviceProfileName: SLED-three-buttons   
