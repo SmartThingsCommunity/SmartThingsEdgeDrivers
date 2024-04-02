@@ -1,0 +1,6 @@
+name: 'Aqara Lock'
+packageKey: 'aqara-lock'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Aqara Doorlock"
+vendorSupportInformation: "https://www.aqara.com/en/support/"
