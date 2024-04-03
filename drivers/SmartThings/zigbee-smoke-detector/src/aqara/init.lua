@@ -118,19 +118,24 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
   device:emit_event(capabilities.smokeDetector.smoke.clear())
   device:emit_event(capabilities.audioMute.mute.unmuted())
   device:emit_event(selfCheck.selfCheckState.idle())
   device:emit_event(capabilities.battery.battery(100))
 end
 
+local function do_configure(self, device)
+  device:configure()
+  device:send(cluster_base.write_manufacturer_specific_attribute(device,
+    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+end
+
 local aqara_gas_detector_handler = {
   NAME = "Aqara Smoke Detector Handler",
   lifecycle_handlers = {
     init = device_init,
-    added = device_added
+    added = device_added,
+    doConfigure = do_configure
   },
   zigbee_handlers = {
     attr = {
