@@ -4,6 +4,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.sen_ill.agl01
     deviceProfileName: battery-illuminance-aqara
+  - id: "Lumengy/LMA-PVR-4X8-Z"
+    deviceLabel: Paver Lights
+    manufacturer: Lumengy
+    model: LMA-PVR-4X8-Z
+    deviceProfileName: base-illuminance 
 zigbeeGeneric:
   - id: "generic-illuminance-sensor"
     deviceLabel: Illuminance Sensor
