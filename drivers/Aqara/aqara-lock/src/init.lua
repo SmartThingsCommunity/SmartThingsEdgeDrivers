@@ -5,6 +5,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local capabilities = require "st.capabilities"
 local base64 = require "base64"
 local credential_utils = require "credential_utils"
+local utils = require "st.utils"
 
 local remoteControlStatus = capabilities.remoteControlStatus
 local lockCredentialInfo = capabilities["stse.lockCredentialInfo"]
@@ -47,25 +48,27 @@ local function device_added(self, device)
     device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
   end
   device:emit_event(Battery.battery(100))
-  device:emit_event(TamperAlert.tamper("clear", { visibility = { displayed = false } }))
-  device:emit_event(Lock.lock("locked"))
+  device:emit_event(TamperAlert.tamper.clear({ visibility = { displayed = false } }))
+  device:emit_event(Lock.lock.locked())
   credential_utils.save_data(self)
 end
 
 local function toValue(payload, start, length)
-  local ret = 0
-  for i = start, start + length - 1 do
-    ret = (ret << 8) + string.byte(payload, i)
-  end
-  return ret
+  -- local ret = 0
+  -- for i = start, start + length - 1 do
+  --   ret = (ret << 8) + string.byte(payload, i)
+  -- end
+  -- return ret
+  return utils.deserialize_int(string.sub(payload, start, start + length - 1), length, false, false)
 end
 
 local function toHex(value, length)
-  local ret = string.char(0xFF & value)
-  for i = length, 2, -1 do
-    ret = string.char(0xFF & (value >> 8 * (i - 1))) .. ret
-  end
-  return ret
+  -- local ret = string.char(0xFF & value)
+  -- for i = length, 2, -1 do
+  --   ret = string.char(0xFF & (value >> 8 * (i - 1))) .. ret
+  -- end
+  -- return ret
+  return utils.serialize_int(value, length, false, false)
 end
 
 local function event_lock_handler(driver, device, evt_name, evt_value)
@@ -101,23 +104,43 @@ local function event_battery_handler(driver, device, evt_name, evt_value)
   device:emit_event(Battery.battery(evt_value))
 end
 
-local function event_temper_alert_handler(driver, device, evt_name, evt_value)
+local function event_tamper_alert_handler(driver, device, evt_name, evt_value)
   device:emit_event(TamperAlert.tamper.detected())
 end
 
+local METHOD = {
+  LOCKED = "locked",
+  NOT_FULLY_LOCKED = "not fully locked",
+  MANUAL = "manual",
+  FINGERPRINT = "fingerprint",
+  KEYPAD = "keypad",
+  RFID = "rfid",
+  BLUETOOTH = "bluetooth",
+  COMMAND = "command",
+  NO_USE = ""
+}
+
+local HANDLERS = {
+  LOCK_HANDLER = event_lock_handler,
+  DOOR_HANDLER = event_door_handler,
+  UNLOCK_HANDLER = event_unlock_handler,
+  BATTERY_HANDLER = event_battery_handler,
+  TAMPER_ALERT_HANDLER = event_tamper_alert_handler
+}
+
 local resource_id = {
-  { id = "13.31.85", event_name = "locked",       event_handler = event_lock_handler },
-  { id = "13.17.85", event_name = "not fully locked", event_handler = event_door_handler },
-  { id = "13.48.85", event_name = "manual",       event_handler = event_unlock_handler },
-  { id = "13.51.85", event_name = "manual",       event_handler = event_unlock_handler },
-  { id = "13.42.85", event_name = "fingerprint",  event_handler = event_unlock_handler },
-  { id = "13.43.85", event_name = "keypad",       event_handler = event_unlock_handler },
-  { id = "13.44.85", event_name = "rfid",         event_handler = event_unlock_handler },
-  { id = "13.45.85", event_name = "bluetooth",    event_handler = event_unlock_handler },
-  { id = "13.90.85", event_name = "command",      event_handler = event_unlock_handler },
-  { id = "13.46.85", event_name = "keypad",       event_handler = event_unlock_handler },
-  { id = "13.56.85", event_name = "",             event_handler = event_battery_handler },
-  { id = "13.32.85", event_name = "",             event_handler = event_temper_alert_handler },
+  ["13.31.85"] = { event_name = METHOD.LOCKED, event_handler = HANDLERS.LOCK_HANDLER },
+  ["13.17.85"] = { event_name = METHOD.NOT_FULLY_LOCKED, event_handler = HANDLERS.DOOR_HANDLER },
+  ["13.48.85"] = { event_name = METHOD.MANUAL, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.51.85"] = { event_name = METHOD.MANUAL, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.42.85"] = { event_name = METHOD.FINGERPRINT, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.43.85"] = { event_name = METHOD.KEYPAD, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.44.85"] = { event_name = METHOD.RFID, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.45.85"] = { event_name = METHOD.BLUETOOTH, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.90.85"] = { event_name = METHOD.COMMAND, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.46.85"] = { event_name = METHOD.KEYPAD, event_handler = HANDLERS.UNLOCK_HANDLER },
+  ["13.56.85"] = { event_name = METHOD.NO_USE, event_handler = HANDLERS.BATTERY_HANDLER },
+  ["13.32.85"] = { event_name = METHOD.NO_USE, event_handler = HANDLERS.TAMPER_ALERT_HANDLER }
 }
 
 local function request_generate_shared_key(device)
@@ -154,13 +177,11 @@ local function lock_state_handler(driver, device, value, zb_rx)
     serial_num = toValue(msg, 3, 2)
     seq_num = string.byte(text, 3)
 
-    for k, v in pairs(resource_id) do
-      if func_id == v.id then
-        v.event_handler(driver, device, v.event_name, toValue(payload, 6, string.byte(payload, 5)))
-        goto finish
-      end
+    if resource_id[func_id] then
+      resource_id[func_id].event_handler(driver, device, resource_id[func_id].event_name,
+        toValue(payload, 6, string.byte(payload, 5)))
     end
-    ::finish::
+
     if serial_num >= 0xFFFF then
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
         PRI_CLU, PRI_ATTR, MFG_CODE, data_types.OctetString, "\x2B"))
