@@ -24,7 +24,6 @@ local SHARED_KEY = "__shared_key"
 local CLOUD_PUBLIC_KEY = "__cloud_public_key"
 
 local function my_secret_data_handler(driver, device, secret_info)
-  -- At time of writing this returns nothind beyond "secret_type = aqara"
   local shared_key = secret_info.shared_key
   local cloud_public_key = secret_info.cloud_public_key
 
@@ -54,20 +53,10 @@ local function device_added(self, device)
 end
 
 local function toValue(payload, start, length)
-  -- local ret = 0
-  -- for i = start, start + length - 1 do
-  --   ret = (ret << 8) + string.byte(payload, i)
-  -- end
-  -- return ret
   return utils.deserialize_int(string.sub(payload, start, start + length - 1), length, false, false)
 end
 
 local function toHex(value, length)
-  -- local ret = string.char(0xFF & value)
-  -- for i = length, 2, -1 do
-  --   ret = string.char(0xFF & (value >> 8 * (i - 1))) .. ret
-  -- end
-  -- return ret
   return utils.serialize_int(value, length, false, false)
 end
 
@@ -159,7 +148,7 @@ local function lock_state_handler(driver, device, value, zb_rx)
     local mn_id = "Id3A"
     local setup_id = "006"
     local product_id = ""
-    local res, err = security.get_aqara_secret(device.zigbee_eui, locks_pub_key, "", mn_id, setup_id,
+    local res, _ = security.get_aqara_secret(device.zigbee_eui, locks_pub_key, "", mn_id, setup_id,
       product_id)
     if res then
       print(res)

@@ -14,8 +14,6 @@ components:
     version: 1
   - id: stse.lockCredentialInfo
     version: 1
-  - id: stse.lockSystemInfo
-    version: 1
   categories:
   - name: SmartLock
 metadata:

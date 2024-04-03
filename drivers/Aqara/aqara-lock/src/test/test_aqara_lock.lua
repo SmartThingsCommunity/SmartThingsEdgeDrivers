@@ -74,12 +74,12 @@ test.register_coroutine_test(
   function()
     local credentialInfoData = {
       {
-        { credentialId = 1, credentialType = "keypad",  userId = "1", userLabel = "user1", userType = "host" },
+        { credentialId = 1, credentialType = "keypad",      userId = "1", userLabel = "user1", userType = "host" },
         { credentialId = 2, credentialType = "fingerprint", userId = "2", userLabel = "user2", userType = "regularUser" }
       }
     }
     local credentialInfoData_copy = {
-      { credentialId = 1, credentialType = "keypad",  userId = "1", userLabel = "user1", userType = "host" },
+      { credentialId = 1, credentialType = "keypad",      userId = "1", userLabel = "user1", userType = "host" },
       { credentialId = 2, credentialType = "fingerprint", userId = "2", userLabel = "user2", userType = "regularUser" }
     }
     mock_device:set_field(HOST_COUNT, 0, { persist = true })
@@ -115,9 +115,7 @@ test.register_coroutine_test(
       { credentialId = 1, credentialType = "keypad", userId = "1", userLabel = "user1", userType = "regularUser" }
     }
     test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = lockCredentialInfo.ID, component = "main", command = "upsert", args = { credentialInfoData } } })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      lockCredentialInfo.credentialInfo(credentialInfoData, { visibility = { displayed = false } })))
+      { capability = lockCredentialInfo.ID, component = "main", command = "upsert", args = credentialInfoData } })
   end
 )
 

@@ -20,7 +20,7 @@ credential_utils.update_remote_control_status = function(driver, device, added)
     end
     host_cnt = host_cnt + 1
   else
-    host_cnt = host_cnt - 1
+    if host_cnt > 0 then host_cnt = host_cnt - 1 end
 
     if host_cnt == 0 then
       device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
@@ -50,24 +50,15 @@ credential_utils.upsert_credential_info = function(driver, device, command)
   local credentialInfoTable = utils.deep_copy(device:get_latest_state("main", lockCredentialInfo.ID,
     lockCredentialInfo.credentialInfo.NAME, {}))
 
-  for _, credentialinfo in ipairs(command.args.credentialInfo) do
-    local exist = false
-    for i = 1, #credentialInfoTable, 1 do
-      if credentialInfoTable[i].credentialId == credentialinfo.credentialId then
-        credentialInfoTable[i] = utils.deep_copy(credentialinfo)
-        exist = true
-        break
-      end
-    end
-
-    if exist == false then
-      if credentialinfo.userType == "host" then
-        credential_utils.update_remote_control_status(driver, device, true)
-      end
-
-      table.insert(credentialInfoTable, credentialinfo)
-    end
+  if #credentialInfoTable > 0 then
+    credentialInfoTable = utils.update(credentialInfoTable, command.args.credentialInfo);
   end
+
+  if credential_utils.is_exist_host(device) == false then
+    credential_utils.update_remote_control_status(driver, device, true)
+  end
+
+  credentialInfoTable = utils.merge(credentialInfoTable, command.args.credentialInfo)
 
   device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(credentialInfoTable),
     { visibility = { displayed = false } }))
@@ -117,10 +108,6 @@ credential_utils.delete_credential = function(driver, device, command)
   device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(credentialInfoTable),
     { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
-end
-
-credential_utils.update_system_version = function(driver, device, command)
-  local version = command.args.version
 end
 
 credential_utils.find_userLabel = function(driver, device, value)
