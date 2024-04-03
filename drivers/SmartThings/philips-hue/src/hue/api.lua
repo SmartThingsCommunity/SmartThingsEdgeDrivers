@@ -29,9 +29,20 @@ local ControlMessageBuilders = {
   end
 }
 
+local function try_send(instance, message)
+  if not instance._ctrl_tx then
+    log.error(st_utils.stringify_table(message, "Couldn't send the followings due to closed transmit channel", false))
+  end
+
+  local success, err = pcall(instance._ctrl_tx.send, instance._ctrl_tx, message)
+  if not success then
+    log.error(string.format("Failed to transmit Hue Control Message: %s", err))
+  end
+end
+
 local function do_shutdown(instance)
   if instance._running then
-    instance._ctrl_tx:send(ControlMessageBuilders.Shutdown())
+    try_send(instance, ControlMessageBuilders.Shutdown())
     instance._running = false
   end
 end
@@ -178,7 +189,7 @@ end
 
 function PhilipsHueApi:update_connection(hub_base_url, api_key)
   local msg = ControlMessageBuilders.Update(hub_base_url, api_key)
-  self._ctrl_tx:send(msg)
+  try_send(self, msg)
 end
 
 ---@return table|nil response REST response, nil if error
@@ -187,7 +198,7 @@ local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Get(path, reply_tx);
-  instance._ctrl_tx:send(msg)
+  try_send(instance, msg)
   local recv, err = reply_rx:receive()
   if err ~= nil then
     instance.client:close_socket()
@@ -202,7 +213,7 @@ local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Put(path, payload, reply_tx);
-  instance._ctrl_tx:send(msg)
+  try_send(instance, msg)
   local recv, err = reply_rx:receive()
   if err ~= nil then
     instance.client:close_socket()

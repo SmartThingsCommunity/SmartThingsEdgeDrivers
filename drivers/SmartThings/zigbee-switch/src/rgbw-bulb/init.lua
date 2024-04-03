@@ -78,7 +78,8 @@ local RGBW_BULB_FINGERPRINTS = {
     ["E1G-G8E"] = true,
     ["E11-U3E"] = true,
     ["E11-U2E"] = true,
-    ["E1F-N5E"] = true
+    ["E1F-N5E"] = true,
+    ["E23-N13"] = true
   },
   ["Neuhaus Lighting Group"] = {
     ["ZBT-ExtendedColor"] = true

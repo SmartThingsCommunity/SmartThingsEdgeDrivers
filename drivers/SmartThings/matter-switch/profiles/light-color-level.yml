@@ -6,6 +6,10 @@ components:
     version: 1
   - id: switchLevel
     version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
   - id: colorTemperature
     version: 1
   - id: colorControl
@@ -16,6 +20,3 @@ components:
     version: 1
   categories:
   - name: Light
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-rgbw-color-bulb-2580K-7050K

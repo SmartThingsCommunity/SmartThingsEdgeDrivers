@@ -30,7 +30,8 @@ local function connect(client)
     port = 443
     use_ssl = true
   end
-
+  
+  if client.base_url.port ~= port then port = client.base_url.port end
   local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
 
   if sock == nil then
@@ -143,6 +144,38 @@ local function parse_chunked_response(original_response, sock)
   return full_response
 end
 
+local function recv_additional_response(original_response, sock)
+  local full_response = Response.new(original_response.status, nil)
+  local headers = original_response:get_headers()
+  local content_length_str = headers:get_one("Content-Length")
+  local content_length = nil
+  local bytes_read = 0
+  if content_length_str then
+    content_length = math.tointeger(content_length_str)
+  end
+
+  local next_recv, next_err, partial
+
+  repeat
+    next_recv, next_err, partial = sock:receive(content_length - bytes_read)
+
+    if next_recv ~= nil and #next_recv >= 1 then
+      full_response:append_body(next_recv)
+      bytes_read = bytes_read + #next_recv
+    end
+
+    if partial ~= nil and #partial >= 1 then
+      full_response:append_body(partial)
+      bytes_read = bytes_read + #partial
+    end
+  until next_err == "closed" or bytes_read >= content_length
+
+  full_response._received_body = true
+  full_response._parsed_headers = true
+
+  return full_response
+end
+
 local function handle_response(sock)
   if api_version >= 9 then
     local response, err = Response.tcp_source(sock)
@@ -157,7 +190,9 @@ local function handle_response(sock)
   if initial_recv ~= nil then
     local headers = initial_recv:get_headers()
 
-    if headers and headers:get_one("Transfer-Encoding") == "chunked" then
+    if headers:get_one("Content-Length") then
+      full_response = recv_additional_response(initial_recv, sock)
+    elseif headers and headers:get_one("Transfer-Encoding") == "chunked" then
       local response, err = parse_chunked_response(initial_recv, sock)
       if err ~= nil then
         return nil, err
@@ -267,7 +302,7 @@ RestClient.__index = RestClient
 
 function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.authority, socket_builder)
   local ret, err = client:get(url_table.path, additional_headers)
   client:shutdown()
   return ret, err
@@ -275,7 +310,7 @@ end
 
 function RestClient.one_shot_post(full_url, body, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host, socket_builder)
+  local client = RestClient.new(url_table.scheme .. "://" .. url_table.authority, socket_builder)
   local ret, err = client:post(url_table.path, body, additional_headers)
   client:shutdown()
   return ret, err
