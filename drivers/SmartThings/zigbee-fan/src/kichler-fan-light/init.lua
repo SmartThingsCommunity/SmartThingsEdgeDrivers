@@ -134,7 +134,7 @@ local function info_changed(driver, device, event, args)
       local time_difference = os.difftime(current_fandirection_time, send_fandirection_time) or 0
       if time_difference >= 10 or send_fandirection_time == 0 then
         device:send(FanControl.attributes.FanMode:write(device, 6))
-        device:set_field('FANDIRECTION_SENDTIME', current_fandirection_time, {persist = true})
+        device:set_field('FANDIRECTION_SENDTIME', current_fandirection_time, {persist = false})
       end
     end
   end
