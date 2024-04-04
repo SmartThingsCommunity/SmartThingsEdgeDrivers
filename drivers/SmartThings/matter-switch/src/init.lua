@@ -417,7 +417,7 @@ local level_bounds_handler_factory = function(minOrMax)
       device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
       return
     end
-    level = utils.round(ib.data.value / 254.0 * 100)
+    local level = utils.round(ib.data.value / 254.0 * 100)
     -- If the device supports the lighting feature, the minimum level should be 1
     if lighting_support and level == 0 then
       level = 1
