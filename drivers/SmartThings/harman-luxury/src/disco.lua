@@ -32,11 +32,8 @@ local function try_add_device(driver, device_dni, device_params)
   end
 
   update_device_discovery_cache(driver, device_dni, device_params, token)
-  if driver:try_create_device(driver.datastore.discovery_cache[device_dni].device_info) == 1 then
-    return true
-  else
-    return false
-  end
+  driver:try_create_device(driver.datastore.discovery_cache[device_dni].device_info)
+  return true
 end
 
 function Discovery.set_device_field(driver, device)
