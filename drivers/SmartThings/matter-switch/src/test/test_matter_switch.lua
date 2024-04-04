@@ -591,7 +591,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min color temp attribute outside of range",
+  "Min color temperature outside of range, capability not sent",
   {
     {
       channel = "matter",
@@ -608,11 +608,6 @@ test.register_message_test(
         mock_device.id,
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 555)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 30000}))
     }
   }
 )
@@ -645,14 +640,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min level attribute at low end of capability range",
+  "Min level attribute outside of range, capability not sent",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, 1, 3) -- Use a value of 3 for a capbility value of 1, the lowest it can be without being 0.
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, 1, 0)
       }
     },
     {
@@ -662,38 +657,6 @@ test.register_message_test(
         mock_device.id,
         clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 10)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 1, maximum = 4}))
-    }
-  }
-)
-
-test.register_message_test(
-  "Max level attribute for outside of range",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, 1, 5)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 255)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 2, maximum = 100}))
     }
   }
 )

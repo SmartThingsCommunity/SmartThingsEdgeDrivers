@@ -30,7 +30,6 @@ local COLOR_TEMPERATURE_KELVIN_MAX = 30000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1
 local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
-local SWITCH_LEVEL_MAX = 254
 local SWITCH_LEVEL_LIGHTING_MIN = 1
 
 local SWITCH_INITIALIZED = "__switch_intialized"
@@ -384,15 +383,13 @@ local mired_bounds_handler_factory = function(minOrMax)
     if ib.data.value == nil then
       return
     end
-    local color_temp_mireds = ib.data.value
-    -- The data type max for mireds is 65535 and so there is no need to check
-    -- whether the mireds value is too high to be within the lower bound of
-    -- the capability range.
-    if (color_temp_mireds < COLOR_TEMPERATURE_MIRED_MIN) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d mired outside of supported capability range", color_temp_mireds))
-      color_temp_mireds = COLOR_TEMPERATURE_MIRED_MIN
+    -- The data type max for mireds is 65535 and so there is no need to check whether the mireds
+    -- value is too high to be within the lower bound of the capability range.
+    if ib.data.value < COLOR_TEMPERATURE_MIRED_MIN then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d mired outside of supported capability range", ib.data.value))
+      return
     end
-    local temp_in_kelvin = mired_to_kelvin(color_temp_mireds)
+    local temp_in_kelvin = mired_to_kelvin(ib.data.value)
     set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
     local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
     local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
@@ -400,7 +397,7 @@ local mired_bounds_handler_factory = function(minOrMax)
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d mired that is not lower than the reported max color temperature %d mired", min, max))
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
       end
       set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id, nil)
       set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id, nil)
@@ -413,21 +410,18 @@ local level_bounds_handler_factory = function(minOrMax)
     if ib.data.value == nil then
       return
     end
-    local current_level = ib.data.value
     local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
-    -- The data type for level is unsigned and so there is no need to check
-    -- whether the level value is less than 0, however if the lighting feature
-    -- is supported then we should check if the reported level is less than 1.
-    if ((tbl_contains(lighting_endpoints, ib.endpoint_id) and current_level < SWITCH_LEVEL_LIGHTING_MIN) or current_level > SWITCH_LEVEL_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a min or max switch level %d mired outside of supported capability range", ib.data.value))
-      if (minOrMax == LEVEL_MIN) then
-        current_level = SWITCH_LEVEL_LIGHTING_MIN
-      else
-        current_level = SWITCH_LEVEL_MAX
-      end
+    local lighting_support = tbl_contains(lighting_endpoints, ib.endpoint_id)
+    -- If the lighting feature is supported then we should check if the reported level is at least 1.
+    if lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN then
+      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
+      return
     end
-    -- Convert level from given range of 0-254 to range of 0-100.
-    local level = utils.round(current_level / 254.0 * 100)
+    level = utils.round(ib.data.value / 254.0 * 100)
+    -- If the device supports the lighting feature, the minimum level should be 1
+    if lighting_support and level == 0 then
+      level = 1
+    end
     set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
     local min = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
     local max = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
