@@ -43,7 +43,7 @@ local function write_attr_res_handler(driver, device, zb_rx)
     -- for unoccupied timer
     device:set_field(aqara_utils.PREF_FREQUENCY_KEY, value, { persist = true })
     -- update ui
-    device:emit_event(detectionFrequency.detectionFrequency(value))
+    device:emit_event(detectionFrequency.detectionFrequency(value, {visibility = {displayed = false}}))
   elseif key == PREF_SENSITIVITY_KEY then
     -- sensitivity adjustment
 
@@ -80,10 +80,13 @@ end
 
 local function added_handler(self, device)
   device:emit_event(capabilities.motionSensor.motion.inactive())
-  device:emit_event(detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT))
+  device:emit_event(detectionFrequency.detectionFrequency(aqara_utils.PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}}))
   device:emit_event(sensitivityAdjustment.sensitivityAdjustment.Medium())
   device:emit_event(capabilities.battery.battery(100))
+end
 
+local function do_configure(self, device)
+  device:configure()
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
     aqara_utils.PRIVATE_ATTRIBUTE_ID,
     aqara_utils.MFG_CODE, data_types.Uint8, 1))
@@ -92,7 +95,8 @@ end
 local aqara_high_precision_motion_handler = {
   NAME = "Aqara High Precision Motion Handler",
   lifecycle_handlers = {
-    added = added_handler
+    added = added_handler,
+    doConfigure = do_configure
   },
   capability_handlers = {
     [sensitivityAdjustment.ID] = {

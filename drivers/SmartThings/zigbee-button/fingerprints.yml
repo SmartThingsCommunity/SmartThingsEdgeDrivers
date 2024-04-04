@@ -4,6 +4,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.remote.b1acn02
     deviceProfileName: one-button-battery
+  - id: "LUMI/lumi.remote.acn003"
+    deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.acn003
+    deviceProfileName: one-button-battery
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN

@@ -22,7 +22,7 @@ local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("switch-color-level.yml"),
+  profile = t_utils.get_profile_definition("light-color-level-illuminance-motion.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -34,7 +34,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1}  -- RootNode
       }
     },
     {
@@ -47,47 +47,49 @@ local mock_device = test.mock_device.build_test_matter_device({
           feature_map = 0, --u32 bitmap
         },
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
-      },
-      device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
-      }
-    }
-  }
-})
-
-local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("switch-color-level.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 1,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
+        {device_type_id = 0x010C, device_type_revision = 1}  -- ColorTemperatureLight
+      }
+    },
+    {
+      endpoint_id = 2,
+      clusters = {
+        {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0106, device_type_revision = 1}  -- LightSensor
+      }
+    },
+    {
+      endpoint_id = 3,
+      clusters = {
+        {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0107, device_type_revision = 1}  -- OccupancySensor
       }
     }
   }
 })
 
-local cluster_subscribe_list = {
-  clusters.OnOff.attributes.OnOff,
-  clusters.LevelControl.attributes.CurrentLevel,
-  clusters.ColorControl.attributes.CurrentHue,
-  clusters.ColorControl.attributes.CurrentSaturation,
-  clusters.ColorControl.attributes.CurrentX,
-  clusters.ColorControl.attributes.CurrentY,
-  clusters.ColorControl.attributes.ColorTemperatureMireds,
-}
 
 local function test_init()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.IlluminanceMeasurement.attributes.MeasuredValue,
+    clusters.OccupancySensing.attributes.Occupancy
+  }
+  -- Set __bounds_checked to bypass the setpoint limit reads so they do not need
+  -- to be checked in the init function.
+  mock_device:set_field("__bounds_checked", true, {persist = true})
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -96,53 +98,30 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  local limit_read = clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read()
-  limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
-  limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
-  limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
-  test.socket.matter:__expect_send({mock_device.id, limit_read})
-
   test.mock_device.add_test_device(mock_device)
-
-  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_no_hue_sat))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
-
-  limit_read = clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read()
-  limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
-  limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
-  limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
-  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, limit_read})
-
-  test.mock_device.add_test_device(mock_device_no_hue_sat)
 end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "On command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switch", component = "main", command = "on", args = { } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, 1)
-      }
-    }
-  }
+	"On command should send the appropriate commands",
+	{
+		{
+			channel = "capability",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				{ capability = "switch", component = "main", command = "on", args = { } }
+			}
+		},
+		{
+			channel = "matter",
+			direction = "send",
+			message = {
+				mock_device.id,
+				clusters.OnOff.server.commands.On(mock_device, 1)
+			}
+		}
+	}
 )
 
 test.register_message_test(
@@ -168,32 +147,32 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Set level command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, math.floor(20/100.0 * 254), 20, 0 ,0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 1)
-      }
-    },
+	"Set level command should send the appropriate commands",
+	{
+		{
+			channel = "capability",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				{ capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
+			}
+		},
+		{
+			channel = "matter",
+			direction = "send",
+			message = {
+				mock_device.id,
+				clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, math.floor(20/100.0 * 254), 20, 0 ,0)
+			}
+		},
+		{
+			channel = "matter",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 1)
+			}
+		},
     {
       channel = "matter",
       direction = "receive",
@@ -202,11 +181,11 @@ test.register_message_test(
         clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
       }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
-    },
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
+		},
     {
       channel = "matter",
       direction = "receive",
@@ -215,87 +194,31 @@ test.register_message_test(
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, true)
       }
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+		}
+	}
 )
 
 test.register_message_test(
-  "Current level reports should generate appropriate events",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
-    },
-  }
-)
-
-test.register_message_test(
-  "Set color command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device_no_hue_sat, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.saturation(72))
-    }
-  }
+	"Current level reports should generate appropriate events",
+	{
+		{
+			channel = "matter",
+			direction = "receive",
+			message = {
+				mock_device.id,
+				clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
+			}
+		},
+		{
+			channel = "capability",
+			direction = "send",
+			message = mock_device:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+		},
+	}
 )
 
 local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
@@ -564,55 +487,52 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min and max color temperature attributes set capability constraint",
+  "Illuminance reports should generate correct messages",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 153)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 555)
+        clusters.IlluminanceMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 2, 21370)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
+      message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
     }
   }
 )
 
 test.register_message_test(
-  "Min and max level attributes set capability constraint",
+  "Occupancy reports should generate correct messages",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, 1, 5)
+        clusters.OccupancySensing.attributes.Occupancy:build_test_report_data(mock_device, 3, 1)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
     },
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 10)
+        clusters.OccupancySensing.attributes.Occupancy:build_test_report_data(mock_device, 3, 0)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 2, maximum = 4}))
+      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
   }
 )

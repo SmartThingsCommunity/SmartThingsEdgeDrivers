@@ -100,6 +100,10 @@ local function test_init()
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
   }
+
+  -- Set __bounds_checked to bypass the setpoint limit reads so they do not need
+  -- to be checked in the init function.
+  mock_device:set_field("__bounds_checked", true, {persist = true})
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -238,22 +242,22 @@ test.register_message_test(
 )
 
 test.register_message_test(
-	"Current level reports should generate appropriate events",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child1_ep, 50)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
-		},
-	}
+  "Current level reports should generate appropriate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child1_ep, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+  }
 )
 
 test.register_message_test(
