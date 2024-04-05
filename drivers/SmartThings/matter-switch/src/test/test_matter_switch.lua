@@ -598,7 +598,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 32)
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 50)
       }
     },
     {
@@ -607,6 +607,28 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 555)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Max color temperature outside of range, capability not sent",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 153)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 1100)
       }
     }
   }
@@ -640,7 +662,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min level attribute outside of range, capability not sent",
+  "Min level attribute outside of range for lighting feature device (min level = 1), capability not sent",
   {
     {
       channel = "matter",
