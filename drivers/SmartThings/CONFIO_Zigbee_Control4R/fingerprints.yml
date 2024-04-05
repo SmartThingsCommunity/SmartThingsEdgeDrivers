@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "CONFIO Labs/CLC4R"
+    deviceLabel: CONFIO Switch
+    manufacturer: CONFIO Labs
+    model: CLC4R
+    deviceProfileName: four-switch
