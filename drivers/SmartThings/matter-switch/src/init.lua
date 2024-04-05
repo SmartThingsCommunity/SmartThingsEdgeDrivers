@@ -25,9 +25,9 @@ local RECEIVED_X = "receivedX"
 local RECEIVED_Y = "receivedY"
 local HUESAT_SUPPORT = "huesatSupport"
 local MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
--- These values are taken from the min/max definined in the colorTemperature capability
-local COLOR_TEMPERATURE_KELVIN_MAX = 30000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1
+-- These values are a "sanity check" to check that values we are getting are reasonable
+local COLOR_TEMPERATURE_KELVIN_MAX = 15000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1000
 local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 local SWITCH_LEVEL_LIGHTING_MIN = 1
@@ -362,7 +362,7 @@ end
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of supported capability range", ib.data.value))
+      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
@@ -383,10 +383,8 @@ local mired_bounds_handler_factory = function(minOrMax)
     if ib.data.value == nil then
       return
     end
-    -- The data type max for mireds is 65535 and so there is no need to check whether the mireds
-    -- value is too high to be within the lower bound of the capability range.
-    if ib.data.value < COLOR_TEMPERATURE_MIRED_MIN then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d mired outside of supported capability range", ib.data.value))
+    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
     local temp_in_kelvin = mired_to_kelvin(ib.data.value)
@@ -419,7 +417,7 @@ local level_bounds_handler_factory = function(minOrMax)
     end
     -- Convert level from given range of 0-254 to range of 0-100.
     local level = utils.round(ib.data.value / 254.0 * 100)
-    -- If the device supports the lighting feature, the minimum level should be 1
+    -- If the device supports the lighting feature, the minimum capability level should be 1 so we do not send a 0 value for the level attribute
     if lighting_support and level == 0 then
       level = 1
     end
