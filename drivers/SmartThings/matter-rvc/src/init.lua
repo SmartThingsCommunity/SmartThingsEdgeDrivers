@@ -22,6 +22,10 @@ local log = require "log"
 -- Attempting to switch the RVC Run Mode from a mode without the Idle mode tag to another non-Idle mode SHALL NOT be
 -- allowed and the ChangeToModeResponse command SHALL have the StatusCode field set to the InvalidInMode value in that
 -- case.
+-- State Machine Rules 2. RVC Clean Mode - Mode Change Restrictions
+-- This cluster SHALL NOT permit changing its mode while the RVC Run Mode cluster’s CurrentMode attribute is set to a
+-- mode without the Idle mode tag. The ChangeToModeResponse command SHALL have the StatusCode field set to the
+-- InvalidInMode value if this restriction prevents a mode change.
 local DEFAULT_MODE = 0
 local RVC_RUN_MODE_SUPPORTED_MODES = "__rvc_run_mode_supported_modes"
 local RVC_CLEAN_MODE_SUPPORTED_MODES = "__rvc_clean_mode_supported_modes"
@@ -169,6 +173,20 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
         mode
       )
       device:emit_component_event(component, capabilities.mode.supportedModes(filtered_labels))
+
+      -- State Machine Rules 2. RVC Clean Mode - Mode Change Restrictions
+      local is_idle = is_idle_mode(device, RVC_RUN_MODE_SUPPORTED_MODES, i, clusters.RvcRunMode.types.ModeTag.IDLE)
+      local component = device.profile.components["cleanMode"]
+      if is_idle then
+        local labels_of_rvc_clean_mode = get_labels_of_supported_modes(device,
+          RVC_CLEAN_MODE_SUPPORTED_MODES,
+          clusters.RvcCleanMode.ID,
+          clusters.RvcCleanMode.attributes.SupportedModes.ID,
+          response)
+        device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_rvc_clean_mode))
+      else
+        device:emit_component_event(component, capabilities.mode.supportedModes({}))
+      end
       break
     end
   end
