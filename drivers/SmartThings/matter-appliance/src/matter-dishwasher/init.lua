@@ -21,8 +21,26 @@ local utils = require "st.utils"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 
+local OPERATIONAL_STATE_COMMAND_MAP = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Stop.ID] = "stop",
+  [clusters.OperationalState.commands.Start.ID] = "start",
+  [clusters.OperationalState.commands.Resume.ID] = "resume",
+}
+
 local supportedTemperatureLevels = {}
 local dishwasherModeSupportedModes = {}
+
+-- helper functions
+local function key_exists(array, key)
+  for k, _ in pairs(array) do
+    if k == key then
+      return true
+    end
+  end
+  return false
+end
+--------------------------------------------------------------------------
 
 local function device_init(driver, device)
   device:subscribe()
@@ -144,6 +162,21 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
   end
 end
 
+local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
+  log.info_with({ hub_logs = true },
+    string.format("operational_state_accepted_command_list_attr_handler: %s", ib.data.elements))
+
+  local accepted_command_list = {}
+  for _, accepted_command in ipairs(ib.data.elements) do
+    local accepted_command_id = accepted_command.value
+    if key_exists(OPERATIONAL_STATE_COMMAND_MAP, accepted_command_id) then
+      log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
+      table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
+    end
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedSelectableStates(accepted_command_list))
+end
+
 local function operational_state_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
@@ -236,6 +269,7 @@ local matter_dishwasher_handler = {
         [clusters.DishwasherAlarm.attributes.State.ID] = dishwasher_alarm_attr_handler,
       },
       [clusters.OperationalState.ID] = {
+        [clusters.OperationalState.attributes.AcceptedCommandList.ID] = operational_state_accepted_command_list_attr_handler,
         [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
         [clusters.OperationalState.attributes.OperationalError.ID] = operational_error_attr_handler,
       },

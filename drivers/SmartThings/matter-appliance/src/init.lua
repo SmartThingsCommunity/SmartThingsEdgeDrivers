@@ -43,6 +43,7 @@ local subscribed_attributes = {
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels,
   },
   [capabilities.operationalState.ID] = {
+    clusters.OperationalState.attributes.AcceptedCommandList,
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
   },
