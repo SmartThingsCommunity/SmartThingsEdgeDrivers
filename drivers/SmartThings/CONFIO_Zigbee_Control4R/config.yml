@@ -1,5 +1,0 @@
-name: 'Zigbee Control4R'
-packageKey: 'CONFIO Zigbee Control4R'
-description: '4Relay Devices for CONFIO'
-permissions:
-  zigbee: {}
