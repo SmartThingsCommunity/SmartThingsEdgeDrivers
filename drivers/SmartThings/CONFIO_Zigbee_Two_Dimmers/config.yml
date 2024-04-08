@@ -1,0 +1,5 @@
+name: 'Zigbee Two Dimmers'
+packageKey: 'CONFIO Zigbee Two Dimmers'
+description: 'DIMMING Devices for CONFIO'
+permissions:
+  zigbee: {}
