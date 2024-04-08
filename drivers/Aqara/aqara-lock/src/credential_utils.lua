@@ -37,8 +37,7 @@ credential_utils.sync_all_credential_info = function(driver, device, command)
       credential_utils.update_remote_control_status(driver, device, true)
     end
   end
-  device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(command.args.credentialInfo),
-    { visibility = { displayed = false } }))
+  device:emit_event(lockCredentialInfo.credentialInfo(command.args.credentialInfo, { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
 end
 
@@ -60,8 +59,7 @@ credential_utils.upsert_credential_info = function(driver, device, command)
 
   credentialInfoTable = utils.merge(credentialInfoTable, command.args.credentialInfo)
 
-  device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(credentialInfoTable),
-    { visibility = { displayed = false } }))
+  device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
 end
 
@@ -83,8 +81,7 @@ credential_utils.delete_user = function(driver, device, command)
     end
   end
 
-  device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(credentialInfoTable),
-    { visibility = { displayed = false } }))
+  device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
 end
 
@@ -105,8 +102,7 @@ credential_utils.delete_credential = function(driver, device, command)
     end
   end
 
-  device:emit_event(lockCredentialInfo.credentialInfo(utils.deep_copy(credentialInfoTable),
-    { visibility = { displayed = false } }))
+  device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
 end
 

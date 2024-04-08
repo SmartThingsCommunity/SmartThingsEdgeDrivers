@@ -24,6 +24,8 @@ local SHARED_KEY = "__shared_key"
 local CLOUD_PUBLIC_KEY = "__cloud_public_key"
 
 local function my_secret_data_handler(driver, device, secret_info)
+  if secret_info.secret_kind ~= "aqara" then return end
+
   local shared_key = secret_info.shared_key
   local cloud_public_key = secret_info.cloud_public_key
 
@@ -39,13 +41,17 @@ local function my_secret_data_handler(driver, device, secret_info)
   end
 end
 
-local function device_added(self, device)
+local function remoteControlShow(device)
   if credential_utils.is_exist_host(device) then
     device:emit_event(remoteControlStatus.remoteControlEnabled('true', { visibility = { displayed = false } }))
   else
     credential_utils.set_host_count(device, 0)
     device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
   end
+end
+
+local function device_added(self, device)
+  remoteControlShow(device)
   device:emit_event(Battery.battery(100))
   device:emit_event(TamperAlert.tamper.clear({ visibility = { displayed = false } }))
   device:emit_event(Lock.lock.locked())
@@ -64,11 +70,7 @@ local function event_lock_handler(driver, device, evt_name, evt_value)
   if evt_value == 1 then
     device:emit_event(Lock.lock(evt_name))
     device:emit_event(TamperAlert.tamper.clear())
-    if credential_utils.is_exist_host(device) then
-      device:emit_event(remoteControlStatus.remoteControlEnabled('true', { visibility = { displayed = false } }))
-    else
-      device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-    end
+    remoteControlShow(device)
   end
 end
 
@@ -109,27 +111,19 @@ local METHOD = {
   NO_USE = ""
 }
 
-local HANDLERS = {
-  LOCK_HANDLER = event_lock_handler,
-  DOOR_HANDLER = event_door_handler,
-  UNLOCK_HANDLER = event_unlock_handler,
-  BATTERY_HANDLER = event_battery_handler,
-  TAMPER_ALERT_HANDLER = event_tamper_alert_handler
-}
-
 local resource_id = {
-  ["13.31.85"] = { event_name = METHOD.LOCKED, event_handler = HANDLERS.LOCK_HANDLER },
-  ["13.17.85"] = { event_name = METHOD.NOT_FULLY_LOCKED, event_handler = HANDLERS.DOOR_HANDLER },
-  ["13.48.85"] = { event_name = METHOD.MANUAL, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.51.85"] = { event_name = METHOD.MANUAL, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.42.85"] = { event_name = METHOD.FINGERPRINT, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.43.85"] = { event_name = METHOD.KEYPAD, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.44.85"] = { event_name = METHOD.RFID, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.45.85"] = { event_name = METHOD.BLUETOOTH, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.90.85"] = { event_name = METHOD.COMMAND, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.46.85"] = { event_name = METHOD.KEYPAD, event_handler = HANDLERS.UNLOCK_HANDLER },
-  ["13.56.85"] = { event_name = METHOD.NO_USE, event_handler = HANDLERS.BATTERY_HANDLER },
-  ["13.32.85"] = { event_name = METHOD.NO_USE, event_handler = HANDLERS.TAMPER_ALERT_HANDLER }
+  ["13.31.85"] = { event_name = METHOD.LOCKED, event_handler = event_lock_handler },
+  ["13.17.85"] = { event_name = METHOD.NOT_FULLY_LOCKED, event_handler = event_door_handler },
+  ["13.48.85"] = { event_name = METHOD.MANUAL, event_handler = event_unlock_handler },
+  ["13.51.85"] = { event_name = METHOD.MANUAL, event_handler = event_unlock_handler },
+  ["13.42.85"] = { event_name = METHOD.FINGERPRINT, event_handler = event_unlock_handler },
+  ["13.43.85"] = { event_name = METHOD.KEYPAD, event_handler = event_unlock_handler },
+  ["13.44.85"] = { event_name = METHOD.RFID, event_handler = event_unlock_handler },
+  ["13.45.85"] = { event_name = METHOD.BLUETOOTH, event_handler = event_unlock_handler },
+  ["13.90.85"] = { event_name = METHOD.COMMAND, event_handler = event_unlock_handler },
+  ["13.46.85"] = { event_name = METHOD.KEYPAD, event_handler = event_unlock_handler },
+  ["13.56.85"] = { event_name = METHOD.NO_USE, event_handler = event_battery_handler },
+  ["13.32.85"] = { event_name = METHOD.NO_USE, event_handler = event_tamper_alert_handler }
 }
 
 local function request_generate_shared_key(device)
@@ -184,20 +178,24 @@ local function send_msg(device, funcA, funcB, funcC, op_code, length, value)
     request_generate_shared_key(device)
   else
     local payload = toHex(funcA, 1) .. toHex(funcB, 1) .. toHex(funcC, 2) .. toHex(length, 1) .. toHex(value, length)
-    seq_num = seq_num + 1
-    local text = "\x00" .. toHex(op_code, 1) .. toHex(seq_num, 1) .. payload
-    serial_num = serial_num + 1
-    local raw_data = "\x5B" .. toHex(string.len(text), 1) .. toHex(serial_num, 2) .. text
+    local text = "\x00" .. toHex(op_code, 1) .. toHex(seq_num+1, 1) .. payload
+    local raw_data = "\x5B" .. toHex(string.len(text), 1) .. toHex(serial_num+1, 2) .. text
     for i = 1, 4 - (string.len(raw_data) % 4) do
       raw_data = raw_data .. "\x00"
     end
 
     local opts = { cipher = "aes256-ecb", padding = false }
     local raw_key = base64.decode(shared_key)
-    local result = security.encrypt_bytes(raw_data, raw_key, opts)
-    local msg = "\x93" .. result
-    device:send(cluster_base.write_manufacturer_specific_attribute(device,
-      PRI_CLU, PRI_ATTR, MFG_CODE, data_types.OctetString, msg))
+    if raw_key ~= nil then
+      local result = security.encrypt_bytes(raw_data, raw_key, opts)
+      if result ~= nil then
+        local msg = "\x93" .. result
+        device:send(cluster_base.write_manufacturer_specific_attribute(device,
+          PRI_CLU, PRI_ATTR, MFG_CODE, data_types.OctetString, msg))
+        seq_num = seq_num + 1
+        serial_num = serial_num + 1
+      end
+    end
   end
 end
 
