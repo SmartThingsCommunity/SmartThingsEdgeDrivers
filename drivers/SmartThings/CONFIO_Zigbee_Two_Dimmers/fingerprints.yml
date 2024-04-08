@@ -1,6 +1,0 @@
-zigbeeManufacturer:
-  - id: "CONFIO Labs/CL2CD"
-    deviceLabel: CONFIO Dimmer
-    manufacturer: CONFIO Labs
-    model: CL2CD
-    deviceProfileName: two-switch-level
