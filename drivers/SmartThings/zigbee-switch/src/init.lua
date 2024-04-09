@@ -19,7 +19,9 @@ local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+local ColorControl = clusters.ColorControl
 local preferences = require "preferences"
+local color_bounds = require "color_bounds"
 
 local function info_changed(self, device, event, args)
   preferences.update_preferences(self, device, args)
@@ -38,6 +40,8 @@ local do_configure = function(self, device)
     device:send(SimpleMetering.attributes.Divisor:read(device))
     device:send(SimpleMetering.attributes.Multiplier:read(device))
   end
+
+  color_bounds.check_bounds_if_applicable(device)
 end
 
 local function component_to_endpoint(device, component_id)
@@ -90,7 +94,6 @@ local zigbee_switch_driver_template = {
     require("rexense"),
     require("sinope"),
     require("sinope-dimmer"),
-    require("zigbee-dimmer-power-energy"),
     require("zigbee-metering-plug-power-consumption-report"),
     require("jasco"),
     require("multi-switch-no-master"),
@@ -110,6 +113,14 @@ local zigbee_switch_driver_template = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure
+  },
+  zigbee_handlers = {
+    attr = {
+      [ColorControl.ID] = {
+        [ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = color_bounds.mired_bounds_handler_factory(color_bounds.MIN), -- max mireds = min kelvin
+        [ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = color_bounds.mired_bounds_handler_factory(color_bounds.MAX)  -- min mireds = max kelvin
+      }
+    }
   }
 }
 

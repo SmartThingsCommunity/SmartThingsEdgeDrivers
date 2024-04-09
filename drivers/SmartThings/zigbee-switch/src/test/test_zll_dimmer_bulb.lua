@@ -69,17 +69,9 @@ test.register_coroutine_test(
         Level.attributes.CurrentLevel:configure_reporting(mock_device, 1, 3600, 1)
       }
     )
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
-)
-
-test.register_coroutine_test(
-  "Added lifecycle should be handlded",
-  function()
-    test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
