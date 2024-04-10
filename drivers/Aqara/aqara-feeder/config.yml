@@ -1,5 +1,4 @@
 name: 'Aqara Feeder'
 packageKey: 'aqara-feeder'
 permissions:
-  aqara-provisioning: {}
   zigbee: {}
