@@ -32,7 +32,7 @@ zigbeeManufacturer:
     deviceProfileName: basic-switch
   #Confio
   - id: "CONFIO_Labs/CLC4R"
-    deviceLabel: Confio switch 1
+    deviceLabel: Confio Switch 1
     manufacturer: CONFIO_Labs
     model: CLC4R
     deviceProfileName: basic-switch    
