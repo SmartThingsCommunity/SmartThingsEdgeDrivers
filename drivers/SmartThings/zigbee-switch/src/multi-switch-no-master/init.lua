@@ -15,7 +15,6 @@ local st_device = require "st.device"
 local utils = require "st.utils"
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
-  { mfr = "CONFIO_Labs", model = "CLC4R", children = 3 },
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
   { mfr = "DAWON_DNS", model = "PM-S240R-ZB", children = 1 },
   { mfr = "DAWON_DNS", model = "PM-S250-ZB", children = 1 },
