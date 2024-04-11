@@ -31,11 +31,6 @@ zigbeeManufacturer:
     model: SLA01
     deviceProfileName: basic-switch
   #Confio
-  - id: "CONFIO_Labs/CLC4R"
-    deviceLabel: Confio Switch 1
-    manufacturer: CONFIO_Labs
-    model: CLC4R
-    deviceProfileName: basic-switch
   - id: "CONFIO_Labs/CL2CD"
     deviceLabel: CONFIO Dimmer
     manufacturer: CONFIO_Labs
