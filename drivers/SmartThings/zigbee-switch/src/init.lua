@@ -83,6 +83,7 @@ local zigbee_switch_driver_template = {
     capabilities.motionSensor
   },
   sub_drivers = {
+    require("confio"),
     require("hanssem"),
     require("aqara"),
     require("aqara-light"),
