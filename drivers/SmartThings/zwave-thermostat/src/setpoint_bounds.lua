@@ -8,6 +8,12 @@ local setpoint_bounds = {}
 setpoint_bounds.HEATING = "_HEATING"
 setpoint_bounds.COOLING = "_COOLING"
 
+setpoint_bounds.setpoint_capabilites_report_handler_factory = function(coolingOrHeating)
+  return function(self, device, value)
+    print("setpoint_capabilites_report_handler_factory: Device reported a "..coolingOrHeating.." setpoint of"..value)
+  end
+end
+
 local color_bounds = {}
 
 local SANITY_CHECK_MIN_KELVIN = 1
