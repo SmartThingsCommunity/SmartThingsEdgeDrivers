@@ -27,6 +27,7 @@ local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({version
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
+local SetpointBounds = require "setpoint_bounds"
 
 local function device_added(driver, device)
   if device:supports_capability_by_id(capabilities.thermostatMode.ID) and
