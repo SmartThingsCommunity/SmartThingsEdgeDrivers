@@ -32,8 +32,8 @@ local SetpointBounds = require "setpoint_bounds"
 local function device_supports_thermostat_setpoint(device)
   return (
     (
-      device:supports_capability_by_id(capabilities.capabilities.thermostatCoolingSetpoint.ID) or
-      device:supports_capability_by_id(capabilities.capabilities.thermostatHeatingSetpoint.ID)
+      device:supports_capability_by_id(capabilities.thermostatCoolingSetpoint.ID) or
+      device:supports_capability_by_id(capabilities.thermostatHeatingSetpoint.ID)
     ) and
     device:is_cc_supported(cc.THERMOSTAT_SETPOINT)
   )
