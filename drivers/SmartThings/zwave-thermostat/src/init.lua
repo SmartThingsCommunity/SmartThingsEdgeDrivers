@@ -110,6 +110,13 @@ local driver_template = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.HEATING_1)
     }
   },
+  zwave_handlers = {
+    [cc.THERMOSTAT_SETPOINT] = {
+      [ThermostatSetpoint.CAPABILITIES_REPORT] = function()
+        print("Running ThermostatSetpoint.CAPABILITIES_REPORT handler")
+      end
+    }
+  },
   lifecycle_handlers = {
     added = device_added
   },
