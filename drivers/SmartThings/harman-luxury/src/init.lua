@@ -120,8 +120,9 @@ end
 local function check_for_updates(device)
   log.trace(string.format("%s, checking if device values changed", device.device_network_id))
   local ip = device:get_field(const.IP)
-  local changes, _ = api.InvokeGetUpdates(ip)
-  if changes then
+  local changes, err = api.InvokeGetUpdates(ip)
+  -- check if changes is empty
+  if not err then
     log.debug(string.format("changes: %s", st_utils.stringify_table(changes)))
     if type(changes) ~= "table" then
       log.warn("check_for_updates: Received value was not a table (JSON). Likely an error occured")
@@ -181,6 +182,10 @@ local function check_for_updates(device)
                             audioTrackData.supportedTrackControlCommands) or {"nextTrack", "previousTrack"})
         device:emit_event(capabilities.audioTrackData.totalTime(audioTrackData.totalTime or 0))
       end
+      -- check for a audio track data change
+      if changes["elapsedTime"] then
+        device:emit_event(capabilities.audioTrackData.elapsedTime(changes["elapsedTime"]))
+      end
       -- check for a media presets change
       if changes["mediaPresets"] and type(changes["mediaPresets"].presets) == "table" then
         device:emit_event(capabilities.mediaPresets.presets(changes["mediaPresets"].presets))
@@ -219,6 +224,13 @@ end
 local function device_init(driver, device)
   log.info(string.format("Initiating device: %s", device.label))
 
+  local device_ip = device:get_field(const.IP)
+  local device_dni = device.device_network_id
+  if driver.datastore.discovery_cache[device_dni] then
+    log.warn("set unsaved device field")
+    discovery.set_device_field(driver, device)
+  end
+
   -- set supported default media playback commands
   device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands(
                       {capabilities.mediaPlayback.commands.play.NAME, capabilities.mediaPlayback.commands.pause.NAME,
@@ -228,8 +240,8 @@ local function device_init(driver, device)
                        capabilities.mediaTrackControl.commands.previousTrack.NAME}))
 
   -- set supported input sources
-  device:emit_event(capabilities.mediaInputSource.supportedInputSources(
-                      {"HDMI", "aux", "bluetooth", "digital", "wifi"}))
+  local supportedInputSources, _ = api.GetSupportedInputSources(device_ip)
+  device:emit_event(capabilities.mediaInputSource.supportedInputSources(supportedInputSources))
 
   -- set supported keypad inputs
   device:emit_event(capabilities.keypadInput.supportedKeyCodes(
@@ -237,7 +249,6 @@ local function device_init(driver, device)
                        "NUMBER1", "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8",
                        "NUMBER9"}))
 
-  local device_ip = device:get_field(const.IP)
   log.trace(string.format("device IP: %s", device_ip))
 
   create_check_for_updates_thread(device)
@@ -301,7 +312,9 @@ end
 
 local function device_added(driver, device)
   log.info(string.format("Device added: %s", device.label))
-  discovery.set_device_field(device)
+  discovery.set_device_field(driver, device)
+  local device_dni = device.device_network_id
+  discovery.joined_device[device_dni] = nil
   -- ensuring device is initialised
   device_init(driver, device)
 end
@@ -397,6 +410,14 @@ end, const.HEALTH_TIMER)
 ----------------------------------------------------------
 -- main
 ----------------------------------------------------------
+
+-- initialise data store for Harman Luxury driver
+
+if driver.datastore.discovery_cache == nil then
+  driver.datastore.discovery_cache = {}
+end
+
+-- start driver run loop
 
 log.info("Starting Harman Luxury run loop")
 driver:run()
