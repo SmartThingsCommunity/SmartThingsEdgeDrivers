@@ -3,6 +3,11 @@ local clusters = require "st.zigbee.zcl.clusters"
 local ColorControl = clusters.ColorControl
 local utils = require "st.utils"
 
+local setpoint_bounds = {}
+
+setpoint_bounds.HEATING = "_HEATING"
+setpoint_bounds.COOLING = "_COOLING"
+
 local color_bounds = {}
 
 local SANITY_CHECK_MIN_KELVIN = 1
@@ -46,4 +51,4 @@ color_bounds.check_bounds_if_applicable = function(device)
   end
 end
 
-return color_bounds
+return setpoint_bounds
