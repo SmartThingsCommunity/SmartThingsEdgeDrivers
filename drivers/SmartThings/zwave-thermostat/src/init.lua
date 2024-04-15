@@ -88,6 +88,10 @@ local function set_setpoint_factory(setpoint_type)
   end
 end
 
+local function setpoint_capabilites_report(driver, device, cmd)
+  print("Running setpoint_capabilites_report handler")
+end
+
 local driver_template = {
   supported_capabilities = {
     capabilities.temperatureAlarm,
@@ -112,9 +116,7 @@ local driver_template = {
   },
   zwave_handlers = {
     [cc.THERMOSTAT_SETPOINT] = {
-      [ThermostatSetpoint.CAPABILITIES_REPORT] = function()
-        print("Running ThermostatSetpoint.CAPABILITIES_REPORT handler")
-      end
+      [ThermostatSetpoint.CAPABILITIES_REPORT] = setpoint_capabilites_report
     }
   },
   lifecycle_handlers = {
