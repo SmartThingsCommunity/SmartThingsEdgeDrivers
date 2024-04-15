@@ -61,8 +61,8 @@ end
 
 local function set_field_supported_modes_from_response(device, field_prefix, cluster_id, attribute_id, response)
   for _, rb in ipairs(response.info_blocks) do
-    if rb.info_block.attribute_id == cluster_id and
-      rb.info_block.cluster_id == attribute_id and
+    if rb.info_block.attribute_id == attribute_id and
+      rb.info_block.cluster_id == cluster_id and
       rb.info_block.data.elements ~= nil then
       set_field_supported_modes(device, field_prefix, rb.info_block.data.elements)
       break
