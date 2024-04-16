@@ -9,6 +9,8 @@ local Fields = require "fields"
 local HueApi = require "hue.api"
 local utils = require "utils"
 
+local LightDiscovery = require "disco.light_disco"
+
 local SERVICE_TYPE = "_hue._tcp"
 local DOMAIN = "local"
 
@@ -18,19 +20,22 @@ local DOMAIN = "local"
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
-  light_state_disco_cache = {},
+  device_state_disco_cache = {},
   ServiceType = SERVICE_TYPE,
   Domain = DOMAIN,
   discovery_active = false
 }
 
 local supported_resource_types = {
-  light = true
+  light = LightDiscovery.process_discovered_light
 }
 
+local function is_device_service_supported(svc_info)
+  return type(supported_resource_types[svc_info.rtype or ""]) == "function"
+end
+
 -- "forward declarations"
-local discovered_bridge_callback, discovered_device_callback, is_device_service_supported,
-process_discovered_light
+local discovered_bridge_callback, discovered_device_callback
 
 ---comment
 ---@param driver HueDriver
@@ -59,9 +64,13 @@ function HueDiscovery.discover(driver, _, should_continue)
     end
 
     HueDiscovery.do_mdns_scan(driver)
-    HueDiscovery.search_for_bridges(driver, computed_mac_addresses, function(hue_driver, bridge_ip, bridge_id)
-      discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_identifier_to_device_map)
-    end)
+    HueDiscovery.search_for_bridges(
+      driver,
+      computed_mac_addresses,
+      function(hue_driver, bridge_ip, bridge_id)
+        discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_identifier_to_device_map)
+      end
+    )
     socket.sleep(1.0)
   end
   HueDiscovery.discovery_active = false
@@ -101,12 +110,16 @@ function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
     HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
 
-  HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
+  HueDiscovery.search_bridge_for_supported_devices(
+    driver,
+    bridge_id,
+    HueDiscovery.disco_api_instances[bridge_id],
     function(hue_driver, svc_info, device_info)
       discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
     end,
     "[Discovery: " ..
-    (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge re-scan]",
+    (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") ..
+    " bridge re-scan]",
     true
   )
 end
@@ -137,12 +150,16 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
           utils.labeled_socket_builder((known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge"))
         )
 
-    HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, HueDiscovery.disco_api_instances[bridge_id],
+    HueDiscovery.search_bridge_for_supported_devices(
+      driver,
+      bridge_id,
+      HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
         discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
       end,
       "[Discovery: " ..
-      (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") .. " bridge scan]"
+      (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") ..
+      " bridge scan]"
     )
     return
   end
@@ -213,6 +230,8 @@ end
 ---@param bridge_id string
 ---@param api_instance PhilipsHueApi
 ---@param callback fun(driver: HueDriver, svc_info: table, device_data: table)
+---@param log_prefix string?
+---@param do_delete boolean?
 function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api_instance, callback, log_prefix, do_delete)
   local prefix = ""
   if type(log_prefix) == "string" and #log_prefix > 0 then prefix = log_prefix .. " " end
@@ -237,11 +256,13 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
         device_is_joined_to_bridge[device_data.id] = true
-        log.info_with({ hub_logs = true }, string.format(
+        log.info_with(
+          { hub_logs = true }, string.format(
           prefix ..
           "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
           svc_info.rid, svc_info.rtype, device_data.id, device_data.id_v1, device_data.metadata.name
-        ))
+          )
+        )
         if type(callback) == "function" then
           callback(driver, svc_info, device_data)
         else
@@ -280,99 +301,25 @@ discovered_device_callback = function(driver, bridge_id, svc_info, device_info, 
   local v1_dni = bridge_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
   local edge_dni = svc_info.rid or ""
   if known_identifier_to_device_map[v1_dni] or known_identifier_to_device_map[edge_dni] then return end
-  if svc_info.rtype == "light" then
-    process_discovered_light(driver, bridge_id, svc_info.rid, device_info, known_identifier_to_device_map)
-  end
-end
 
----@param driver HueDriver
----@param bridge_id string
----@param resource_id string
----@param device_info table
----@param known_identifier_to_device_map table<string,HueDevice>
-process_discovered_light = function(driver, bridge_id, resource_id, device_info, known_identifier_to_device_map)
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then
     log.warn("No API instance for bridge_id ", bridge_id)
     return
   end
 
-  local light_resource, err, _ = api_instance:get_light_by_id(resource_id)
-  if err ~= nil or not light_resource then
-    log.error_with({ hub_logs = true },
-      string.format("Error getting light info for %s: %s", device_info.product_data.product_name,
-        (err or "unexpected nil in error position")))
-    return
-  end
-
-  if light_resource.errors and #light_resource.errors > 0 then
-    log.error_with({ hub_logs = true }, "Errors found in API response:")
-    for idx, err in ipairs(light_resource.errors) do
-      log.error_with({ hub_logs = true }, st_utils.stringify_table(err, "Error " .. idx, true))
-    end
-    return
-  end
-
-  for _, light in ipairs(light_resource.data or {}) do
-    local profile_ref
-
-    if light.color then
-      if light.color_temperature then
-        profile_ref = "white-and-color-ambiance"
-      else
-        profile_ref = "legacy-color"
-      end
-    elseif light.color_temperature then
-      profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
-    elseif light.dimming then
-      profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
-    else
-      log.warn(
-        string.format(
-          "Light resource [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance device, currently unsupported"
-          ,
-          resource_id
-        )
-      )
-      goto continue
-    end
-
-    local bridge_device = known_identifier_to_device_map[bridge_id]
-
-    local create_device_msg = {
-      type = "EDGE_CHILD",
-      label = light.metadata.name,
-      vendor_provided_label = device_info.product_data.product_name,
-      profile = profile_ref,
-      manufacturer = device_info.product_data.manufacturer_name,
-      model = device_info.product_data.model_id,
-      parent_device_id = bridge_device.id,
-      parent_assigned_child_key = light.id,
-    }
-
-    HueDiscovery.light_state_disco_cache[light.id] = {
-      hue_provided_name = light.metadata.name,
-      id = light.id,
-      on = light.on,
-      color = light.color,
-      dimming = light.dimming,
-      color_temperature = light.color_temperature,
-      mode = light.mode,
-      parent_device_id = bridge_device.id,
-      hue_device_id = light.owner.rid,
-      hue_device_data = device_info
-    }
-
-    driver:try_create_device(create_device_msg)
-    -- rate limit ourself.
-    socket.sleep(0.1)
-    ::continue::
-  end
+  supported_resource_types[svc_info.rtype](
+    driver,
+    bridge_id,
+    api_instance,
+    svc_info.rid,
+    device_info,
+    HueDiscovery.device_state_disco_cache,
+    known_identifier_to_device_map
+  )
 end
 
-is_device_service_supported = function(svc_info)
-  return supported_resource_types[svc_info.rtype or ""]
-end
+
 
 function HueDiscovery.do_mdns_scan(driver)
   local bridge_netinfo = driver.datastore.bridge_netinfo

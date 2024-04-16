@@ -471,7 +471,7 @@ local function migrate_light(driver, device, parent_device_id, hue_light_descrip
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
-      Discovery.light_state_disco_cache[(device:get_field(Fields.RESOURCE_ID))]
+      Discovery.device_state_disco_cache[(device:get_field(Fields.RESOURCE_ID))]
 
   if not (api_instance and bridge_device and bridge_device:get_field(Fields._INIT)
         and driver.joined_bridges[bridge_id] and light_resource) then
@@ -595,7 +595,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
   local child_key = device.parent_assigned_child_key
   local device_light_resource_id = resource_id or child_key
 
-  local light_info_known = (Discovery.light_state_disco_cache[device_light_resource_id] ~= nil)
+  local light_info_known = (Discovery.device_state_disco_cache[device_light_resource_id] ~= nil)
   if not light_info_known then
     log.info(
       string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
@@ -661,7 +661,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
 
     for _, light in ipairs(light_resource.data or {}) do
       if device_light_resource_id == light.id then
-        Discovery.light_state_disco_cache[light.id] = {
+        Discovery.device_state_disco_cache[light.id] = {
           hue_provided_name = light.metadata.name,
           id = light.id,
           on = light.on,
@@ -698,7 +698,7 @@ light_added = function(driver, device, parent_device_id, resource_id)
     return
   end
 
-  local light_info = Discovery.light_state_disco_cache[device_light_resource_id]
+  local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
   local minimum_dimming = 2
 
   if light_info.dimming and light_info.dimming.min_dim_level then minimum_dimming = light_info.dimming.min_dim_level end
@@ -978,7 +978,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
                     parent_assigned_child_key = add_data.id,
                   }
 
-                  Discovery.light_state_disco_cache[add_data.id] = {
+                  Discovery.device_state_disco_cache[add_data.id] = {
                     hue_provided_name = add_data.metadata.name,
                     id = add_data.id,
                     on = add_data.on,
@@ -1233,7 +1233,7 @@ cosock.spawn(function()
 
     for light_dni, light_device in pairs(strays) do
       local light_rid = stray_dni_to_rid[light_dni]
-      local cached_light_description = Discovery.light_state_disco_cache[light_rid]
+      local cached_light_description = Discovery.device_state_disco_cache[light_rid]
       if cached_light_description then
         table.insert(dnis_to_remove, light_dni)
         migrate_light(driver, light_device, bridge_device_uuid, cached_light_description)
@@ -1339,10 +1339,10 @@ cosock.spawn(function()
                   hue_device_id = light.owner.rid,
                   hue_device_data = device_data
                 }
-                if not Discovery.light_state_disco_cache[light.id] then
+                if not Discovery.device_state_disco_cache[light.id] then
                   log.info(string.format("Caching previously unknown light service description for %s",
                     device_data.metadata.name))
-                  Discovery.light_state_disco_cache[light.id] = light_resource_description
+                  Discovery.device_state_disco_cache[light.id] = light_resource_description
                 end
               end
             end
