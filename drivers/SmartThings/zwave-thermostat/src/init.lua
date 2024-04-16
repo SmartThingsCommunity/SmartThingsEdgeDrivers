@@ -104,12 +104,13 @@ local function set_setpoint_factory(setpoint_type)
 end
 
 local function setpoint_capabilites_report(driver, device, cmd)
-  local function concrete_setpoint_temperature(precision, size, value)
+  local function concrete_setpoint_temperature(precision, value)
     --- MADFIXME -- Perform the actual conversion
-    return value
+    local result = value / (10 ^ precision)
+    return result
   end
-  local function celsius_setpoint_temperature(precision, size, value, scale)
-    local concrete_temperature = concrete_setpoint_temperature(precision, size, value)
+  local function celsius_setpoint_temperature(precision, value, scale)
+    local concrete_temperature = concrete_setpoint_temperature(precision, value)
     if (scale == ThermostatSetpoint.scale.FAHRENHEIT) then
       return utils.f_to_c(concrete_temperature)
     else
@@ -118,8 +119,8 @@ local function setpoint_capabilites_report(driver, device, cmd)
   end
   local args = cmd.args
   --- MADFIXME - Verify scale1 is associated with min_value and scale2 is associated with max_value
-  local min_temp_c = celsius_setpoint_temperature(args.precision1, args.size1, args.min_value, args.scale1)
-  local max_temp_c = celsius_setpoint_temperature(args.precision2, args.size2, args.max_value, args.scale2)
+  local min_temp_c = celsius_setpoint_temperature(args.precision1, args.min_value, args.scale1)
+  local max_temp_c = celsius_setpoint_temperature(args.precision2, args.max_value, args.scale2)
 
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     {

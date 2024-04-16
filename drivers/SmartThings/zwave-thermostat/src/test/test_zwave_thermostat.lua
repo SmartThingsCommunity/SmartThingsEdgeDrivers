@@ -408,14 +408,14 @@ test.register_message_test(
           ThermostatSetpointV3:CapabilitiesReport(
             {
               setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-              size1 = 2,
+              size1 = 4,
               scale1 = ThermostatSetpoint.scale.CELSIUS,
-              precision1 = 1,
-              min_value = 0,
-              size2 = 2,
+              precision1 = 2,
+              min_value = 722,
+              size2 = 4,
               scale2 = ThermostatSetpoint.scale.CELSIUS,
               precision2 = 1,
-              max_value = 1
+              max_value = 272
             }
           )
         )
@@ -428,7 +428,7 @@ test.register_message_test(
         capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
           {
             unit = 'C',
-            value = {minimum = 0.0, maximum = 1.0}
+            value = {minimum = 7.22, maximum = 27.2}
           }
         )
     )
