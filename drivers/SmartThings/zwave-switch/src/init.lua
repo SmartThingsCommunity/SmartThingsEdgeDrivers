@@ -162,7 +162,7 @@ local driver_template = {
     lazy_load_if_possible("zooz-zen-30-dimmer-relay"),
     lazy_load_if_possible("multichannel-device"),
     lazy_load_if_possible("aeotec-smart-switch"),
-    lazy_load_if_possible("aeotec-aeotec-heavy-duty")
+    lazy_load_if_possible("aeotec-heavy-duty")
   },
   lifecycle_handlers = {
     init = device_init,
