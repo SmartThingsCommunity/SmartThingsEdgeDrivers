@@ -227,6 +227,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HS6SW3A-W-EF-3.0
     deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6ESK-W-EF-3.0"
+    deviceLabel: "HEIMAN Outlet"
+    manufacturer: HEIMAN
+    model: HS6ESK-W-EF-3.0
+    deviceProfileName: basic-plug
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
@@ -2181,6 +2186,16 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  - id: sengled/E23-N13
+    deviceLabel: Sengled Multicolor par38
+    manufacturer: sengled
+    model: E23-N13
+    deviceProfileName: rgbw-bulb
+  - id: "sengled/E23-N11"
+    deviceLabel: Sengled Light par38
+    manufacturer: sengled
+    model: E23-N11
+    deviceProfileName: on-off-level
   # Wall Hero
   - id: "WALL HERO/ACL-401S4I"
     deviceLabel: 四位智能开关面板 1 

@@ -135,7 +135,13 @@ local ZLL_DIMMER_BULB_FINGERPRINTS = {
 }
 
 local function can_handle_zll_dimmer_bulb(opts, driver, device)
-  return (ZLL_DIMMER_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
+  local can_handle = (ZLL_DIMMER_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
+  if can_handle then
+    local subdriver = require("zll-dimmer-bulb")
+    return true, subdriver
+  else
+    return false
+  end
 end
 
 local function do_configure(driver, device)

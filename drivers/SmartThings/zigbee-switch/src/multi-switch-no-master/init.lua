@@ -55,10 +55,9 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
 
 local function is_multi_switch_no_master(opts, driver, device)
   for _, fingerprint in ipairs(MULTI_SWITCH_NO_MASTER_FINGERPRINTS) do
-    if device:get_manufacturer() == nil and device:get_model() == fingerprint.model then
-      return true
-    elseif device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+    if device:get_model() == fingerprint.model and (device:get_manufacturer() == nil or device:get_manufacturer() == fingerprint.mfr) then
+      local subdriver = require("multi-switch-no-master")
+      return true, subdriver
     end
   end
   return false

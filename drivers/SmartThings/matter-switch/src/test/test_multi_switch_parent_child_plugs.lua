@@ -18,14 +18,14 @@ local capabilities = require "st.capabilities"
 
 local clusters = require "st.matter.clusters"
 
-local child_profile = t_utils.get_profile_definition("switch-binary.yml")
+local child_profile = t_utils.get_profile_definition("plug-binary.yml")
 local parent_ep = 10
 local child1_ep = 20
 local child2_ep = 30
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  profile = t_utils.get_profile_definition("plug-binary.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -46,7 +46,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
       }
     },
     {
@@ -55,7 +55,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
       }
     },
     {
@@ -64,7 +64,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
       }
     },
   }
@@ -98,7 +98,7 @@ local function test_init()
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 2",
-    profile = "switch-binary",
+    profile = "plug-binary",
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child1_ep)
   })
@@ -106,7 +106,7 @@ local function test_init()
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 3",
-    profile = "switch-binary",
+    profile = "plug-binary",
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
   })

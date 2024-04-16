@@ -65,9 +65,6 @@ test.register_coroutine_test(
   "Handle added lifecycle",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
-      data_types.Uint8, 0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.audioMute.mute.unmuted()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", selfCheck.selfCheckState.idle()))
@@ -75,6 +72,33 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PRIVATE_CLUSTER_ID)
+    })
+
+    local config_attr_message = zigbee_test_utils.build_attr_config(mock_device,
+      PRIVATE_CLUSTER_ID, PRIVATE_SMOKE_ZONE_STATUS_ATTRIBUTE_ID, 0x0001, 0x0E10, data_types.Uint16, 0x0001)
+    test.socket.zigbee:__expect_send({mock_device.id, config_attr_message})
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+      data_types.Uint8, 0x01) })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
 
 
 test.register_coroutine_test(
