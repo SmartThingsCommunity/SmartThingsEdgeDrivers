@@ -55,7 +55,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = child1_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
         {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
@@ -66,7 +66,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = child2_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
       },
       device_types = {
@@ -100,6 +100,9 @@ local function test_init()
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
   }
+  -- Set __bounds_checked to bypass the setpoint limit reads so they do not need
+  -- to be checked in the init function.
+  mock_device:set_field("__bounds_checked", true, {persist = true})
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -383,6 +386,81 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
+    }
+  }
+)
+
+test.register_message_test(
+  "Min and max level attributes set capability constraint for child devices",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, child1_ep, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, child1_ep, 254)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 1, maximum = 100}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, child2_ep, 127)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, child2_ep, 203)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 50, maximum = 80}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Min and max color temp attributes set capability constraint for child devices",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, child2_ep, 153)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, child2_ep, 555)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
   }
 )

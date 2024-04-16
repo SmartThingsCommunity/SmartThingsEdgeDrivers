@@ -90,6 +90,13 @@ local function temperature_handler(device, temperature)
   -- Value is in tenths of a degree so divide by 10.
   -- tempEventVal = ((float)attrVal.int16Val) / 10.0 + tempOffsetVal
   -- tempOffset is handled outside of the driver
+
+  -- if temperature > 32767, this represents a negative number in int16 data types
+  -- Apply 'two's complement' to temperature value
+  if temperature > 32767 then
+    temperature = temperature - 65536
+  end
+
   local tempDivisor = 10.0
   local tempCelsius = temperature / tempDivisor
   device:emit_event(capabilities.temperatureMeasurement.temperature({value = tempCelsius, unit = "C"}))

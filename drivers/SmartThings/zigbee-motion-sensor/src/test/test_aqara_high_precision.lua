@@ -69,11 +69,26 @@ test.register_coroutine_test(
       sensitivityAdjustment.sensitivityAdjustment.Medium()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.battery.battery(100)))
+  end
+)
 
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
+    })
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
         ,
         data_types.Uint8, 1) })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 

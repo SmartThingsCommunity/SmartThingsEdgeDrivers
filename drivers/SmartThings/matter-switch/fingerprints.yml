@@ -268,6 +268,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x0405
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "AiDot/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: AiDot Smart Light Bulb A19 RGBT
+    vendorId: 0x1168
+    productId: 0x03f8
+    deviceProfileName: light-color-level-1800K-6500K
 
 #WiZ
   - id: "WiZ A19"

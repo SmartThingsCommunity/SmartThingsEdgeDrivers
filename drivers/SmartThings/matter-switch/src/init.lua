@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
+local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
@@ -23,12 +24,13 @@ local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
 local RECEIVED_Y = "receivedY"
 local HUESAT_SUPPORT = "huesatSupport"
-local CONVERSION_CONSTANT = 1000000
--- These values are taken from the min/max definined in the colorTemperature capability
-local COLOR_TEMPERATURE_KELVIN_MAX = 30000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1
-local COLOR_TEMPERATURE_MIRED_MAX = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
-local COLOR_TEMPERATURE_MIRED_MIN = CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+local MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
+-- These values are a "sanity check" to check that values we are getting are reasonable
+local COLOR_TEMPERATURE_KELVIN_MAX = 15000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1000
+local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
+local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+local SWITCH_LEVEL_LIGHTING_MIN = 1
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 -- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
@@ -37,6 +39,13 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 -- in the device table for devices that joined prior to this transition, and it
 -- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local BOUNDS_CHECKED = "__bounds_checked"
+local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
+local COLOR_TEMP_MIN = "__color_temp_min"
+local COLOR_TEMP_MAX = "__color_temp_max"
+local LEVEL_BOUND_RECEIVED = "__level_bound_received"
+local LEVEL_MIN = "__level_min"
+local LEVEL_MAX = "__level_max"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -54,8 +63,26 @@ local device_type_profile_map = {
 }
 local detect_matter_thing
 
+local function get_field_for_endpoint(device, field, endpoint)
+  return device:get_field(string.format("%s_%d", field, endpoint))
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
 local function convert_huesat_st_to_matter(val)
   return math.floor((val * 0xFE) / 100.0 + 0.5)
+end
+
+local function mired_to_kelvin(value)
+  if value == 0 then -- shouldn't happen, but has
+    value = 1
+    log.warn(string.format("Received a color temperature of 0 mireds. Using a color temperature of 1 mired to avoid divide by zero"))
+  end
+  -- we divide inside the rounding and multiply outside of it because we expect these
+  -- bounds to be multiples of 100
+  return utils.round((MIRED_KELVIN_CONVERSION_CONSTANT / value) / 100) * 100
 end
 
 --- component_to_endpoint helper function to handle situations where
@@ -186,6 +213,22 @@ local function device_init(driver, device)
     device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_find_child(find_child)
     device:subscribe()
+
+    if not device:get_field(BOUNDS_CHECKED) then
+      local limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      if device:supports_capability(capabilities.colorTemperature) then
+        limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
+        limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read())
+      end
+      if device:supports_capability(capabilities.switchLevel) then
+        limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
+        limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
+      end
+      if #limit_read.info_blocks ~= 0 then
+        device:send(limit_read)
+      end
+      device:set_field(BOUNDS_CHECKED, true)
+    end
   end
 end
 
@@ -270,7 +313,7 @@ end
 
 local function handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local temp_in_mired = utils.round(CONVERSION_CONSTANT/cmd.args.temperature)
+  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/cmd.args.temperature)
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
@@ -319,19 +362,77 @@ end
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of supported capability range", ib.data.value))
+      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp = utils.round(CONVERSION_CONSTANT/ib.data.value)
+    local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
     local temp_device = find_child(device, ib.endpoint_id) or device
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
-      most_recent_temp <= utils.round(CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp >= utils.round(CONVERSION_CONSTANT/(ib.data.value + 1)) then
+      most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value - 1)) and
+      most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value + 1)) then
         temp = most_recent_temp
     end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
+  end
+end
+
+local mired_bounds_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+      return
+    end
+    local temp_in_kelvin = mired_to_kelvin(ib.data.value)
+    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
+    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
+      end
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id, nil)
+    end
+  end
+end
+
+local level_bounds_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
+    local lighting_support = tbl_contains(lighting_endpoints, ib.endpoint_id)
+    -- If the lighting feature is supported then we should check if the reported level is at least 1.
+    if lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN then
+      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
+      return
+    end
+    -- Convert level from given range of 0-254 to range of 0-100.
+    local level = utils.round(ib.data.value / 254.0 * 100)
+    -- If the device supports the lighting feature, the minimum capability level should be 1 so we do not send a 0 value for the level attribute
+    if lighting_support and level == 0 then
+      level = 1
+    end
+    set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
+    local min = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min, maximum = max} }))
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min level value %d that is not lower than the reported max level value %d", min, max))
+      end
+      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id, nil)
+    end
   end
 end
 
@@ -411,7 +512,9 @@ local matter_driver_template = {
         [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
       },
       [clusters.LevelControl.ID] = {
-        [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler
+        [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
+        [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler_factory(LEVEL_MAX),
+        [clusters.LevelControl.attributes.MinLevel.ID] = level_bounds_handler_factory(LEVEL_MIN),
       },
       [clusters.ColorControl.ID] = {
         [clusters.ColorControl.attributes.CurrentHue.ID] = hue_attr_handler,
@@ -420,6 +523,8 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
+        [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MIN), -- max mireds = min kelvin
+        [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MAX), -- min mireds = max kelvin
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
