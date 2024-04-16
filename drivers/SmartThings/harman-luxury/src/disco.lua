@@ -8,13 +8,13 @@ local devices = require "devices"
 local const = require "constants"
 
 local Discovery = {
-  cached_devices = {},
+  joined_device = {},
 }
 
-local function update_device_discovery_cache(dni, params, token)
+local function update_device_discovery_cache(driver, dni, params, token)
   log.info(string.format("update_device_discovery_cache for device dni: dni=%s, ip=%s", dni, params.ip))
   local device_info = devices.get_device_info(dni, params)
-  Discovery.cached_devices[dni] = {
+  driver.datastore.discovery_cache[dni] = {
     ip = params.ip,
     device_info = device_info,
     credential = token,
@@ -28,16 +28,17 @@ local function try_add_device(driver, device_dni, device_params)
 
   if err then
     log.error(string.format("failed to get credential token for dni=%s, ip=%s", device_dni, device_params.ip))
-    return
+    return false
   end
 
-  update_device_discovery_cache(device_dni, device_params, token)
-  driver:try_create_device(Discovery.cached_devices[device_dni].device_info)
+  update_device_discovery_cache(driver, device_dni, device_params, token)
+  driver:try_create_device(driver.datastore.discovery_cache[device_dni].device_info)
+  return true
 end
 
-function Discovery.set_device_field(device)
+function Discovery.set_device_field(driver, device)
   log.info(string.format("set_device_field : dni=%s", device.device_network_id))
-  local device_cache_value = Discovery.cached_devices[device.device_network_id]
+  local device_cache_value = driver.datastore.discovery_cache[device.device_network_id]
 
   -- persistent fields
   device:set_field(const.STATUS, true, {
@@ -81,20 +82,21 @@ local function discovery_device(driver)
 
   log.debug("\n\n--- Checking if devices are known or not ---\n")
   for dni, params in pairs(params_table) do
-    log.info(string.format("discovery_device dni=%s, ip=%s", dni, params.ip))
-    if not known_devices or not known_devices[dni] then
+    if next(known_devices) == nil or not known_devices[dni] then
       unknown_discovered_devices[dni] = params
+      log.info(string.format("discovery_device unknown dni=%s, ip=%s", dni, params.ip))
     else
       known_discovered_devices[dni] = params
+      log.info(string.format("discovery_device known dni=%s, ip=%s", dni, params.ip))
     end
   end
 
   log.debug("\n\n--- Update devices cache ---\n")
   for dni, params in pairs(known_discovered_devices) do
     log.trace(string.format("known dni=%s, ip=%s", dni, params.ip))
-    if Discovery.cached_devices[dni] then
-      update_device_discovery_cache(dni, params)
-      Discovery.set_device_field(known_devices[dni])
+    if Discovery.joined_device[dni] then
+      update_device_discovery_cache(driver, dni, params)
+      Discovery.set_device_field(driver, known_devices[dni])
     end
   end
 
@@ -102,8 +104,10 @@ local function discovery_device(driver)
     log.debug("\n\n--- Try to create unkown devices ---\n")
     for dni, ip in pairs(unknown_discovered_devices) do
       log.trace(string.format("unknown dni=%s, ip=%s", dni, ip))
-      if not Discovery.cached_devices[dni] then
-        try_add_device(driver, dni, params_table[dni])
+      if not Discovery.joined_device[dni] then
+        if try_add_device(driver, dni, params_table[dni]) then
+          Discovery.joined_device[dni] = true
+        end
       end
     end
   end
