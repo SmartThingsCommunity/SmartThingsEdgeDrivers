@@ -25,6 +25,7 @@ local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({v
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({version=2})
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
+local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=3})
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 local SetpointBounds = require "setpoint_bounds"
@@ -49,7 +50,7 @@ local function device_added(driver, device)
     device:send(ThermostatFanMode:SupportedGet({}))
   end
   if device_supports_thermostat_setpoint(device) then
-    device:send(ThermostatSetpoint:CapabilitiesGet({}))
+    device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
   end
   device:refresh()
 end
