@@ -396,6 +396,39 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Thermostat heating setpoint capability reports should be handled. ",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              size1 = 2,
+              scale1 = ThermostatSetpoint.scale.CELSIUS,
+              precision1 = 1,
+              min_value = 0,
+              size2 = 2,
+              scale2 = ThermostatSetpoint.scale.CELSIUS,
+              precision2 = 1,
+              max_value = 1
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.heating())
+    }
+  }
+)
+
 test.register_coroutine_test(
   "Setting the thermostat fan mode should generate the appropriate commands",
   function()
