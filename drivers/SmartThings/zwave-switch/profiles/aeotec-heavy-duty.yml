@@ -1,0 +1,126 @@
+name: aeotec-heavy-duty
+components:
+- id: main
+  label: "Switch"
+  capabilities:
+  - id: switch
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch
+preferences:
+  - title: "3. Overload Protection"
+    name: overloadProtection
+    description: "Determines if Load is turned off if more then 39.5A current is used for more than 5 seconds."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disable"
+        1: "Enable"
+      default: 0
+  - title: "20. Output power after power restore"
+    name: ledAfterPower
+    description: "Determines what happens to the output state after a power restoration"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Last Status"
+        1: "Always On"
+        2: "Always Off"
+      default: 0
+  - title: "80. Automatic Report Type"
+    name: autoReportType
+    description: "Determines what type of report is sent by HDSS when status changes by hub or button press"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Nothing"
+        1: "hail CC"
+        2: "basic CC Report"
+      default: 2
+  - title: "90. Enable/Disable Threshold Report"
+    name: powerThreshold
+    description: "Disable or Enable Threshold reporting"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disable"
+        1: "Enable"
+      default: 0
+  - title: "101. Group 1 Sensors"
+    name: group1Sensors
+    description: "Group 1 sensor reports."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 15
+      default: 12
+  - title: "102. Group 2 Sensors"
+    name: group2Sensors
+    description: "Group 2 sensor reports."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 15
+      default: 0
+  - title: "103. Group 3 Sensors"
+    name: group3Sensors
+    description: "Group 3 sensor reports."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 15
+      default: 0
+  - title: "111. Group 1 sensor report time"
+    name: group1Time
+    description: "set timed report of Group 1 sensor in seconds"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 86400
+      default: 300
+  - title: "112. Group 2 sensor report time"
+    name: group2Time
+    description: "set timed report of Group 2 sensor in second"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 86400
+      default: 3600
+  - title: "113. Group 3 sensor report time"
+    name: group3Time
+    description: "set timed report of Group 3 sensor in second"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 86400
+      default: 3600
+  - title: "Association Group 1: Lifeline"
+    name: assocGroup1
+    description: "Enter a comma delimited list of hex IDs to be sent general notifications (5 node max)"
+    required: true
+    preferenceType: string
+    definition:
+      stringType: text
+      default: ""
