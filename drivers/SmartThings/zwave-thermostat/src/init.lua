@@ -28,7 +28,6 @@ local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")(
 local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=3})
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
-local SetpointBounds = require "setpoint_bounds"
 
 local function device_supports_thermostat_setpoint(device)
   return (
