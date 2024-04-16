@@ -1,0 +1,21 @@
+name: aqara-lock-battery
+components:
+- id: main
+  capabilities:
+  - id: lock
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: remoteControlStatus
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: stse.lockCredentialInfo
+    version: 1
+  categories:
+  - name: SmartLock
+metadata:
+  mnmn: "SolutionsEngineering"
+  vid: "SmartThings-smartthings-Aqara_K100"
