@@ -51,6 +51,7 @@ local function device_added(driver, device)
   end
   if device_supports_thermostat_setpoint(device) then
     device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
   end
   device:refresh()
 end

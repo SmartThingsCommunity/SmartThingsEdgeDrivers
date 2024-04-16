@@ -149,6 +149,14 @@ test.register_message_test(
         ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
       )
     },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
+      )
+    },
     table.unpack(refresh_commands)
   },
   {
