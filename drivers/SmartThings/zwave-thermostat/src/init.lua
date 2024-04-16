@@ -105,7 +105,6 @@ end
 
 local function setpoint_capabilites_report(driver, device, cmd)
   local function concrete_setpoint_temperature(precision, value)
-    --- MADFIXME -- Perform the actual conversion
     local result = value / (10 ^ precision)
     return result
   end
