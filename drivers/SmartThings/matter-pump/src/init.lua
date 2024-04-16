@@ -18,32 +18,30 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
-local pumpOperationModeId = "insideimage13541.pumpOperationMode2"
-local pumpOperationMode = capabilities[pumpOperationModeId]
-local pumpControlModeId = "insideimage13541.pumpControlMode"
-local pumpControlMode = capabilities[pumpControlModeId]
+local pumpOperationMode = capabilities.pumpOperationMode
+local pumpControlMode = capabilities.pumpControlMode
 
 local PUMP_OPERATION_MODE_MAP = {
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.operationMode.Normal,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.operationMode.Minimum,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.operationMode.Maximum,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = pumpOperationMode.operationMode.Local,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.operationMode.normal,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.operationMode.minimum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.operationMode.maximum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = pumpOperationMode.operationMode.localSetting,
 }
 
 local PUMP_CURRENT_OPERATION_MODE_MAP = {
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.currentOperationMode.Normal,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.currentOperationMode.Minimum,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.currentOperationMode.Maximum,
-  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = pumpOperationMode.operationMode.Local,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.NORMAL]  = pumpOperationMode.currentOperationMode.normal,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MINIMUM] = pumpOperationMode.currentOperationMode.minimum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.MAXIMUM] = pumpOperationMode.currentOperationMode.maximum,
+  [clusters.PumpConfigurationAndControl.types.OperationModeEnum.LOCAL]   = "pumpOperationMode.operationMode.localSetting",
 }
 
 local PUMP_CONTROL_MODE_MAP = {
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_SPEED]         = pumpControlMode.controlMode.constantspeed,
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_PRESSURE]      = pumpControlMode.controlMode.constantpressure,
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.PROPORTIONAL_PRESSURE]  = pumpControlMode.controlMode.proportionalpressure,
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_FLOW]          = pumpControlMode.controlMode.constantflow,
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_TEMPERATURE]   = pumpControlMode.controlMode.constanttemperature,
-  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.AUTOMATIC]              = pumpControlMode.controlMode.automatic,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_SPEED]         = pumpControlMode.currentControlMode.constantSpeed,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_PRESSURE]      = pumpControlMode.currentControlMode.constantPressure,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.PROPORTIONAL_PRESSURE]  = pumpControlMode.currentControlMode.proportionalPressure,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_FLOW]          = pumpControlMode.currentControlMode.constantFlow,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.CONSTANT_TEMPERATURE]   = pumpControlMode.currentControlMode.constantTemperature,
+  [clusters.PumpConfigurationAndControl.types.ControlModeEnum.AUTOMATIC]              = pumpControlMode.currentControlMode.automatic,
 }
 
 local subscribed_attributes = {
@@ -53,11 +51,11 @@ local subscribed_attributes = {
   [capabilities.switchLevel.ID] = {
     clusters.LevelControl.attributes.CurrentLevel
   },
-  [pumpOperationModeId]={
+  [capabilities.pumpOperationMode.ID]={
     clusters.PumpConfigurationAndControl.attributes.OperationMode,
     clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode,
   },
-  [pumpControlModeId]={
+  [capabilities.pumpControlMode.ID]={
     clusters.PumpConfigurationAndControl.attributes.EffectiveControlMode,
   },
 }
@@ -123,30 +121,30 @@ local function do_configure(driver, device)
     log.warn_with({hub_logs=true}, "Device does not support pump configuration and control cluster")
   end
 
-  local supported_op_modes = {pumpOperationMode.operationMode.Normal.NAME}
+  local supported_op_modes = {pumpOperationMode.operationMode.normal.NAME}
   local supported_control_modes = {}
   if #prsconst_eps > 0 then
-    table.insert(supported_control_modes, pumpControlMode.controlMode.constantpressure.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantPressure.NAME)
   end
   if #prscomp_eps > 0 then
-    table.insert(supported_control_modes, pumpControlMode.controlMode.proportionalpressure.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.proportionalPressure.NAME)
   end
   if #spd_eps > 0 then
-    table.insert(supported_op_modes, pumpOperationMode.operationMode.Minimum.NAME)
-    table.insert(supported_op_modes, pumpOperationMode.operationMode.Maximum.NAME)
-    table.insert(supported_control_modes, pumpControlMode.controlMode.constantspeed.NAME)
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.minimum.NAME)
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.maximum.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantSpeed.NAME)
   end
   if #flw_eps > 0 then
-    table.insert(supported_control_modes, pumpControlMode.controlMode.constantflow.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantFlow.NAME)
   end
   if #temp_eps > 0 then
-    table.insert(supported_control_modes, pumpControlMode.controlMode.constanttemperature.NAME)
+    table.insert(supported_control_modes, pumpControlMode.controlMode.constantTemperature.NAME)
   end
   if #auto_eps > 0 then
     table.insert(supported_control_modes, pumpControlMode.controlMode.automatic.NAME)
   end
   if #local_eps > 0 then
-    table.insert(supported_op_modes, pumpOperationMode.operationMode.Local.NAME)
+    table.insert(supported_op_modes, pumpOperationMode.operationMode.localSetting.NAME)
   end
 
   device:emit_event_for_endpoint(pump_eps, pumpOperationMode.supportedOperationModes(supported_op_modes))
@@ -170,14 +168,17 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function operation_mode_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! operation_mode_handler: %d !!!!!!!!!!!!!", ib.data.value))
   device:emit_event_for_endpoint(ib.endpoint_id, PUMP_OPERATION_MODE_MAP[ib.data.value]())
 end
 
 local function effective_operation_mode_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! effective_operation_mode_handler: %d !!!!!!!!!!!!!", ib.data.value))
   device:emit_event_for_endpoint(ib.endpoint_id, PUMP_CURRENT_OPERATION_MODE_MAP[ib.data.value]())
 end
 
 local function effective_control_mode_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! effective_control_mode_handler: %d !!!!!!!!!!!!!", ib.data.value))
   device:emit_event_for_endpoint(ib.endpoint_id, PUMP_CONTROL_MODE_MAP[ib.data.value]())
 end
 
@@ -245,15 +246,15 @@ local matter_driver_template = {
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_level,
     },
-    [pumpOperationModeId] = {
-      [pumpOperationMode.commands.setOperationMode.NAME] = set_operation_mode,
+    [capabilities.pumpOperationMode.ID] = {
+      [capabilities.pumpOperationMode.commands.setOperationMode.NAME] = set_operation_mode,
     },
   },
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
-    pumpOperationMode,
-    pumpControlMode,
+    capabilities.pumpOperationMode,
+    capabilities.pumpControlMode,
   },
 }
 

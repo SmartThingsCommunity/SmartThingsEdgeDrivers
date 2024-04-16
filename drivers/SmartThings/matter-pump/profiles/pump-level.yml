@@ -6,9 +6,9 @@ components:
     version: 1
   - id: switchLevel
     version: 1
-  - id: insideimage13541.pumpOperationMode2
+  - id: pumpOperationMode
     version: 1
-  - id: insideimage13541.pumpControlMode
+  - id: pumpControlMode
     version: 1
   - id: refresh
     version: 1
