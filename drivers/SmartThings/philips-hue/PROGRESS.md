@@ -8,10 +8,10 @@ Tracking TODOs for this refactor in this file; this is mostly to allow for creat
 
 #### Tasks
 
-- [ ] Convert supported resources map to a map of handlers instead of boolean
-- [ ] Move handlers to their own file
-- [ ] Rename the "light_state_disco_cache" key to be service type agnostic
-- [ ] Update the `discovered_device_callback` function to allow for other device types
+- [x] Convert supported resources map to a map of handlers instead of boolean ✅ 2024-04-16
+- [x] Move handlers to their own file ✅ 2024-04-16
+- [x] Rename the "light_state_disco_cache" key to be service type agnostic ✅ 2024-04-16
+- [x] Update the `discovered_device_callback` function to allow for other device types ✅ 2024-04-16
 
 ### Capability Handlers
 
