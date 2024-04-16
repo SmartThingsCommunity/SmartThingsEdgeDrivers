@@ -19,6 +19,7 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
+local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 3 })
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 3 })
 local zw = require "st.zwave"
@@ -138,6 +139,14 @@ test.register_message_test(
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
         ThermostatFanMode:SupportedGet({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
       )
     },
     table.unpack(refresh_commands)
