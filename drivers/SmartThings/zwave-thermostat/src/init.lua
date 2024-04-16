@@ -125,7 +125,7 @@ local function setpoint_capabilites_report(driver, device, cmd)
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     {
       -- MAXFIXME - Should be 'C'
-      unit = 'F',
+      unit = 'C',
       value = {minimum = 40, maximum = 80}
     }
   ))

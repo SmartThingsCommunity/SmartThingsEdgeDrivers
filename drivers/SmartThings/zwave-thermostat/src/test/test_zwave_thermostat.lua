@@ -427,7 +427,7 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
           {
-            unit = 'F',
+            unit = 'C',
             value = {minimum = 40, maximum = 80}
           }
         )
