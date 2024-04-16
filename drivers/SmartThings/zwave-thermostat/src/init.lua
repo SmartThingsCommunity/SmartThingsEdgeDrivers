@@ -117,7 +117,7 @@ local function setpoint_capabilites_report(driver, device, cmd)
     end
   end
   local args = cmd.args
-  --- MADFIXME - Verify scale1 is associated with min_value and scale2 is associated with max_value
+  --- FIXME - MAD - Verify scale1 is associated with min_value and scale2 is associated with max_value
   local min_temp_c = celsius_setpoint_temperature(args.precision1, args.min_value, args.scale1)
   local max_temp_c = celsius_setpoint_temperature(args.precision2, args.max_value, args.scale2)
 
