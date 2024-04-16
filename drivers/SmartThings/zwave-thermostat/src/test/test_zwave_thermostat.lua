@@ -428,7 +428,7 @@ test.register_message_test(
         capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
           {
             unit = 'C',
-            value = {minimum = 40, maximum = 80}
+            value = {minimum = 0.0, maximum = 1.0}
           }
         )
     )

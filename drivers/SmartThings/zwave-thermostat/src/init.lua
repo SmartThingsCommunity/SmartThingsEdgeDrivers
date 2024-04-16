@@ -105,7 +105,7 @@ end
 
 local function setpoint_capabilites_report(driver, device, cmd)
   local function concrete_setpoint_temperature(precision, size, value)
-    --- MADFIXME
+    --- MADFIXME -- Perform the actual conversion
     return value
   end
   local function celsius_setpoint_temperature(precision, size, value, scale)
@@ -121,12 +121,10 @@ local function setpoint_capabilites_report(driver, device, cmd)
   local min_temp_c = celsius_setpoint_temperature(args.precision1, args.size1, args.min_value, args.scale1)
   local max_temp_c = celsius_setpoint_temperature(args.precision2, args.size2, args.max_value, args.scale2)
 
-  -- MADFIXME - Send the capability message
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     {
-      -- MAXFIXME - Should be 'C'
       unit = 'C',
-      value = {minimum = 40, maximum = 80}
+      value = {minimum = min_temp_c, maximum = max_temp_c}
     }
   ))
 end
