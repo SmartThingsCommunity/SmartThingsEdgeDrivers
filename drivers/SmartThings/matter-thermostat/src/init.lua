@@ -389,8 +389,7 @@ local function set_setpoint(setpoint)
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
     if setpoint_type == "Heat" then
-      local min = heating_setpoint_range["minimum"]
-      local max = heating_setpoint_range["maximum"]
+      local min, max = heating_setpoint_range["minimum"], heating_setpoint_range["maximum"]
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -408,8 +407,7 @@ local function set_setpoint(setpoint)
         return
       end
     else
-      local min = cooling_setpoint_range["minimum"]
-      local max = cooling_setpoint_range["maximum"]
+      local min, max = cooling_setpoint_range["minimum"], cooling_setpoint_range["maximum"]
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -437,6 +435,9 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
+    if val >= 40 then -- assume this is a fahrenheit value
+      val = utils.f_to_c(val)
+    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
     local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
@@ -458,6 +459,9 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
+    if val >= 40 then -- assume this is a fahrenheit value
+      val = utils.f_to_c(val)
+    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
     local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
