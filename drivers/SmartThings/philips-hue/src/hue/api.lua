@@ -5,6 +5,9 @@ local json = require "st.json"
 local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
+
+local HueDeviceTypes = require "hue_device_types"
+
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
@@ -267,28 +270,41 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   return table.unpack(recv, 1, recv.n)
 end
 
-function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
+function PhilipsHueApi:get_all_reprs_for_rtype(rtype) return do_get(self, string.format("/clip/v2/resource/%s", string.lower(tostring(rtype)))) end
 
-function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
+function PhilipsHueApi:get_rtype_by_rid(rtype, rid)
+  return do_get(
+    self,
+    string.format(
+      "/clip/v2/resource/%s/%s",
+      string.lower(tostring(rtype)),
+      string.lower(tostring(rid))
+    )
+  )
+end
 
-function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
+function PhilipsHueApi:get_lights() return self:get_all_reprs_for_rtype(HueDeviceTypes.LIGHT) end
 
-function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
+function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device") end
+
+function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") end
+
+function PhilipsHueApi:get_rooms() return self:get_all_reprs_for_rtype("room") end
 
 function PhilipsHueApi:get_light_by_id(light_resource_id)
-  return do_get(self, string.format("/clip/v2/resource/light/%s", light_resource_id))
+  return self:get_rtype_by_rid(HueDeviceTypes.LIGHT, light_resource_id)
 end
 
 function PhilipsHueApi:get_device_by_id(hue_device_id)
-  return do_get(self, string.format("/clip/v2/resource/device/%s", hue_device_id))
+  return self:get_rtype_by_rid("device", hue_device_id)
 end
 
 function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
-  return do_get(self, string.format("/clip/v2/resource/zigbee_connectivity/%s", zigbee_resource_id))
+  return self:get_rtype_by_rid("zigbee_connectivity", zigbee_resource_id)
 end
 
 function PhilipsHueApi:get_room_by_id(id)
-  return do_get(self, string.format("/clip/v2/resource/room/%s", id))
+  return self:get_rtype_by_rid("room", id)
 end
 
 function PhilipsHueApi:set_light_on_state(id, on)

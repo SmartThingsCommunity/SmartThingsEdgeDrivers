@@ -8,6 +8,8 @@ local utils = require "utils"
 
 local M = {}
 
+local device_type_refresh_handlers_map = {}
+
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 function M.do_refresh_all_for_bridge(driver, bridge_device)
@@ -23,29 +25,14 @@ function M.do_refresh_all_for_bridge(driver, bridge_device)
       local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
 
       local conn_status, conn_rest_err = hue_api:get_connectivity_status()
-      local light_status, light_rest_err = hue_api:get_lights()
 
-      if conn_rest_err ~= nil or light_rest_err ~= nil then
+      if conn_rest_err ~= nil or not conn_status then
         bridge_device.log.error(
           string.format(
-            "Couldn't refresh devices connected to bridge.\n" ..
-            "get_connectivity_status error? %s\n" ..
-            "get_lights error? %s\n",
-            conn_rest_err,
-            light_rest_err
-          )
-        )
-        return
-      end
-
-      if (not conn_status) or (not light_status) then
-        bridge_device.log.warn(
-          string.format(
-            "Received empty status payloads with no errors while refreshing, aborting refresh handler.\n" ..
-            "Connectivity status nil? %s\n" ..
-            "Light status nil? %s\n",
-            (conn_status == nil),
-            (light_status == nil)
+            "Couldn't refresh device connectivity status for children of bridge [%s].\n" ..
+            "get_connectivity_status error? %s\n",
+            (bridge_device and bridge_device.label) or "Unknown Bridge",
+            conn_rest_err
           )
         )
         return
@@ -56,30 +43,43 @@ function M.do_refresh_all_for_bridge(driver, bridge_device)
         return
       end
 
-      if light_status.errors and #light_status.errors > 0 then
-        bridge_device.log.error("Errors in light status payload: " .. st_utils.stringify_table(light_status.errors))
-        return
-      end
-
       local conn_status_cache = {}
-      local light_status_cache = {}
 
       for _, zigbee_status in ipairs(conn_status.data) do
         conn_status_cache[zigbee_status.owner.rid] = zigbee_status
       end
 
-      for _, light_status in ipairs(light_status.data) do
-        light_status_cache[light_status.owner.rid] = light_status
-      end
-
+      local statuses_by_device_type = {}
       for _, device in ipairs(child_devices) do
         local device_type = device:get_field(Fields.DEVICE_TYPE)
-        if device_type == "light" then
-          M.do_refresh_light(driver, device, conn_status_cache, light_status_cache)
+        -- Query for the states of all devices for a device type for a given child device,
+        -- but only the first time we encounter a device type. We cache them since we're refreshing
+        -- everything.
+        if
+            type(device_type_refresh_handlers_map[device_type]) == "function" and
+            statuses_by_device_type[device_type] == nil
+        then
+          local reprs, rest_err = hue_api:get_all_reprs_for_rtype(device_type)
+          if reprs ~= nil and rest_err == nil then
+            local cached_states = {}
+            for _, repr_state in ipairs(reprs.data) do
+              cached_states[repr_state.owner.rid] = repr_state
+            end
+            statuses_by_device_type[device_type] = cached_states
+          else
+            log.error("Error refreshing all for resource type [%s]", device_type)
+          end
         end
+        M.handler_for_device_type(device_type)(
+          driver,
+          device,
+          conn_status_cache,
+          statuses_by_device_type[device_type]
+        )
       end
     end,
-    string.format("Refresh All Child Devices for Hue Bridge [%s]", (bridge_device and bridge_device.label) or "Unknown Bridge")
+    string.format("Refresh All Child Devices for Hue Bridge [%s]",
+      (bridge_device and bridge_device.label) or "Unknown Bridge")
   )
 end
 
@@ -241,11 +241,6 @@ function M.do_refresh_light(driver, light_device, conn_status_cache, light_statu
   until success or count >= num_attempts
 end
 
-local device_type_handlers_map = {}
-
-device_type_handlers_map[HueDeviceTypes.BRIDGE] = M.do_refresh_all_for_bridge
-device_type_handlers_map[HueDeviceTypes.LIGHT] = M.do_refresh_light
-
 local function noop_refresh_handler(driver, device, ...)
   local label = (device and device.label) or "Unknown Device Name"
   local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
@@ -253,7 +248,9 @@ local function noop_refresh_handler(driver, device, ...)
 end
 
 function M.handler_for_device_type(device_type)
-  return device_type_handlers_map[device_type] or noop_refresh_handler
+  return device_type_refresh_handlers_map[device_type] or noop_refresh_handler
 end
 
+device_type_refresh_handlers_map[HueDeviceTypes.BRIDGE] = M.do_refresh_all_for_bridge
+device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = M.do_refresh_light
 return M
