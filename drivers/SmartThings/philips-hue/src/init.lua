@@ -17,36 +17,32 @@
 --  Improvements to be made:
 --
 --  ===============================================================================================
+local Driver = require "st.driver"
+
 local cosock = require "cosock"
 local log = require "log"
-
 local capabilities = require "st.capabilities"
-local Driver = require "st.driver"
 local json = require "st.json"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
+local Consts = require "consts"
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "fields"
-local handlers = require "handlers"
 local HueApi = require "hue.api"
-local HueColorUtils = require "hue.cie_utils"
+
+local attribute_emitters = require "handlers.attribute_emitters"
+local command_handlers = require "handlers.commands"
 local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
-
-local syncCapabilityId = "samsungim.hueSyncMode"
-local hueSyncMode = capabilities[syncCapabilityId]
 
 local StrayDeviceMessageTypes = {
   FoundBridge = "FOUND_BRIDGE",
   NewStrayLight = "NEW_STRAY_LIGHT",
 }
-
---- minimum colortemp value from Hue
-local DEFAULT_MIREK = 153
 
 -- "forward declare" some functions
 local _initialize, bridge_added, light_added, init_light, init_bridge
@@ -65,116 +61,12 @@ local function safe_wrap_handler(handler)
   end
 end
 
-local refresh_handler = safe_wrap_handler(handlers.refresh_handler)
-local switch_on_handler = safe_wrap_handler(handlers.switch_on_handler)
-local switch_off_handler = safe_wrap_handler(handlers.switch_off_handler)
-local switch_level_handler = safe_wrap_handler(handlers.switch_level_handler)
-local set_color_handler = safe_wrap_handler(handlers.set_color_handler)
-local set_color_temp_handler = safe_wrap_handler(handlers.set_color_temp_handler)
-
----@param light_device HueChildDevice
----@param light table
-local function emit_light_status_events(light_device, light)
-  if light_device ~= nil then
-    if light.status then
-      if light.status == "connected" then
-        light_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
-        light_device:online()
-        light_device:set_field(Fields.IS_ONLINE, true)
-      elseif light.status == "connectivity_issue" then
-        light_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
-        light_device:set_field(Fields.IS_ONLINE, false)
-        light_device:offline()
-        return
-      end
-    end
-
-    if light_device:get_field(Fields.IS_ONLINE) ~= true then
-      return
-    end
-
-    if light.mode then
-      light_device:emit_event(hueSyncMode.mode(light.mode))
-    end
-
-    if light.on and light.on.on then
-      light_device:emit_event(capabilities.switch.switch.on())
-    elseif light.on and not light.on.on then
-      light_device:emit_event(capabilities.switch.switch.off())
-    end
-
-    if light.dimming then
-      local adjusted_level = st_utils.round(st_utils.clamp_value(light.dimming.brightness, 1, 100))
-      if utils.is_nan(adjusted_level) then
-        light_device.log.warn(
-          string.format(
-            "Non numeric value %s computed for switchLevel Attribute Event, ignoring.",
-            adjusted_level
-          )
-        )
-      else
-        light_device:emit_event(capabilities.switchLevel.level(adjusted_level))
-      end
-    end
-
-    if light.color_temperature then
-      local mirek = DEFAULT_MIREK
-      if light.color_temperature.mirek_valid then
-        mirek = light.color_temperature.mirek
-      end
-      local min = light_device:get_field(Fields.MIN_KELVIN) or HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE
-      local kelvin = math.floor(
-        st_utils.clamp_value(handlers.mirek_to_kelvin(mirek), min, HueApi.MAX_TEMP_KELVIN)
-      )
-      if utils.is_nan(kelvin) then
-        light_device.log.warn(
-          string.format(
-            "Non numeric value %s computed for colorTemperature Attribute Event, ignoring.",
-            kelvin
-          )
-        )
-      else
-        light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
-      end
-    end
-
-    if light.color then
-      light_device:set_field(Fields.GAMUT, light.color.gamut, { persist = true })
-      local r, g, b = HueColorUtils.safe_xy_to_rgb(light.color.xy, light.color.gamut)
-      local hue, sat, _ = st_utils.rgb_to_hsv(r, g, b)
-      -- We sent a command where hue == 100 and wrapped the value to 0, reverse that here
-      if light_device:get_field(Fields.WRAPPED_HUE) == true and (hue + .05 >= 1 or hue - .05 <= 0) then
-        hue = 1
-        light_device:set_field(Fields.WRAPPED_HUE, false)
-      end
-
-      local adjusted_hue = st_utils.clamp_value(st_utils.round(hue * 100), 0, 100)
-      local adjusted_sat = st_utils.clamp_value(st_utils.round(sat * 100), 0, 100)
-
-      if utils.is_nan(adjusted_hue) then
-        light_device.log.warn(
-          string.format(
-            "Non numeric value %s computed for colorControl.hue Attribute Event, ignoring.",
-            adjusted_hue
-          )
-        )
-      else
-        light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
-      end
-
-      if utils.is_nan(adjusted_sat) then
-        light_device.log.warn(
-          string.format(
-            "Non numeric value %s computed for colorControl.saturation Attribute Event, ignoring.",
-            adjusted_sat
-          )
-        )
-      else
-        light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
-      end
-    end
-  end
-end
+local refresh_handler = safe_wrap_handler(command_handlers.refresh_handler)
+local switch_on_handler = safe_wrap_handler(command_handlers.switch_on_handler)
+local switch_off_handler = safe_wrap_handler(command_handlers.switch_off_handler)
+local switch_level_handler = safe_wrap_handler(command_handlers.switch_level_handler)
+local set_color_handler = safe_wrap_handler(command_handlers.set_color_handler)
+local set_color_temp_handler = safe_wrap_handler(command_handlers.set_color_temp_handler)
 
 ---@param driver HueDriver
 ---@param device HueBridgeDevice
@@ -719,6 +611,10 @@ light_added = function(driver, device, parent_device_id, resource_id)
   refresh_handler(driver, device)
 end
 
+---@param driver HueDriver
+---@param bridge_device HueBridgeDevice
+---@param bridge_url string
+---@param api_key string
 local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key)
   if not bridge_device:get_field(Fields.EVENT_SOURCE) then
     log.info_with({ hub_logs = true }, "Creating SSE EventSource for bridge " ..
@@ -853,7 +749,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
               end
               local light_device = driver.light_id_to_device[light_resource_id]
               if light_device ~= nil  and light_device.id ~= nil then
-                driver.emit_light_status_events(light_device, update_data)
+                attribute_emitters.emit_light_attribute_events(light_device, update_data)
               end
             end
           elseif event.type == "delete" then
@@ -1122,9 +1018,9 @@ init_light = function(driver, device)
   local caps = device.profile.components.main.capabilities
   if caps.colorTemperature then
     if caps.colorControl then
-      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
+      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
     else
-      device:set_field(Fields.MIN_KELVIN, HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
+      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
     end
   end
   local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or
@@ -1524,17 +1420,6 @@ local hue = Driver("hue",
     api_key_to_bridge_id = {},
     stray_bulb_tx = stray_bulb_tx,
     _lights_pending_refresh = {},
-    emit_light_status_events = function(light_device, light_table)
-      if light_device == nil or (light_device and light_device.id == nil) then
-        log.warn("Tried to emit light status event for device that has been deleted")
-        return
-      end
-      local success, result = pcall(emit_light_status_events, light_device, light_table)
-      if not success then
-        log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", result))
-      end
-      return result
-    end,
     do_hue_light_delete = function(driver, device)
       if type(driver.try_delete_device) ~= "function" then
         local _log = device.log or log

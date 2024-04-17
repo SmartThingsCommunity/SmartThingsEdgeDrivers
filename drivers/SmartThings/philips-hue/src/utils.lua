@@ -5,6 +5,11 @@ local utils = {}
 
 local MAC_ADDRESS_STR_LEN = 12
 
+
+function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
+
+function utils.mirek_to_kelvin(mirek) return 1000000 / mirek end
+
 function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
 end
