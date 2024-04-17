@@ -22,22 +22,9 @@ local AttributeEmitters = {}
 local device_type_emitter_map = {}
 
 ---@param light_device HueChildDevice
----@param light_repr HueLightInfo|HueZigbeeInfo
+---@param light_repr HueLightInfo
 local function _emit_light_events_inner(light_device, light_repr)
   if light_device ~= nil then
-    if light_repr.status then
-      if light_repr.status == "connected" then
-        light_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
-        light_device:online()
-        light_device:set_field(Fields.IS_ONLINE, true)
-      elseif light_repr.status == "connectivity_issue" then
-        light_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
-        light_device:set_field(Fields.IS_ONLINE, false)
-        light_device:offline()
-        return
-      end
-    end
-
     if light_device:get_field(Fields.IS_ONLINE) ~= true then
       return
     end
@@ -137,29 +124,108 @@ function AttributeEmitters.connectivity_update(child_device, zigbee_status)
   end
 end
 
+function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, sensor_info)
+  if sensor_device == nil or (sensor_device and sensor_device.id == nil) then
+    log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if sensor_info.power_state then
+    log.debug(true, "emit power")
+    sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
+  end
+
+  if sensor_info.tamper_reports then
+    log.debug(true, "emit tamper")
+    local num_reports = #sensor_info.tamper_reports
+    local not_tampered = 0
+    for _, tamper in ipairs(sensor_info.tamper_reports) do
+      if tamper.state == "not_tampered" then
+        not_tampered = not_tampered + 1
+      end
+    end
+
+    if not_tampered == num_reports then
+      sensor_device:emit_event(capabilities.tamperAlert.tamper.clear())
+    else
+      sensor_device:emit_event(capabilities.tamperAlert.tamper.detected())
+    end
+  end
+
+  if sensor_info.contact_report then
+    log.debug(true, "emit contact")
+    if sensor_info.contact_report.state == "contact" then
+      sensor_device:emit_event(capabilities.contactSensor.contact.closed())
+    else
+      sensor_device:emit_event(capabilities.contactSensor.contact.open())
+    end
+  end
+end
+
+function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, sensor_info)
+  if sensor_device == nil or (sensor_device and sensor_device.id == nil) then
+    log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if sensor_info.power_state then
+    log.debug(true, "emit power")
+    sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
+  end
+
+  if sensor_info.temperature and sensor_info.temperature.temperature_valid then
+    log.debug(true, "emit temp")
+    sensor_device:emit_event(capabilities.temperatureMeasurement.temperature({
+      value = sensor_info.temperature.temperature,
+      unit = "C"
+    }))
+  end
+
+  if sensor_info.light and sensor_info.light.light_level_valid then
+    log.debug(true, "emit light")
+    -- From the Hue docs: Light level in 10000*log10(lux) +1
+    local raw_light_level = sensor_info.light.light_level
+    -- Convert from the Hue value to lux
+    local lux = st_utils.round(10^((raw_light_level - 1) / 10000))
+    sensor_device:emit_event(capabilities.illuminanceMeasurement.illuminance(lux))
+  end
+
+  if sensor_info.motion and sensor_info.motion.motion_valid then
+    log.debug(true, "emit motion")
+    if sensor_info.motion.motion then
+      sensor_device:emit_event(capabilities.motionSensor.motion.active())
+    else
+      sensor_device:emit_event(capabilities.motionSensor.motion.inactive())
+    end
+  end
+end
+
 ---@param light_device HueChildDevice
 ---@param light_repr table
 function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
-    log.warn("Tried to emit light status event for device that has been deleted")
+    log.warn(true, "Tried to emit light status event for device that has been deleted")
     return
   end
   local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)
   if not success then
-    log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
+    log.error_with({ hub_logs = true, on = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
   end
 end
 
-local function noop_event_emitter(driver, device, ...)
+local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
   local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
-  log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
+  log.warn(true, string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
 function AttributeEmitters.emitter_for_device_type(device_type)
   return device_type_emitter_map[device_type] or noop_event_emitter
 end
 
+-- TODO: Generalize this like the other handlers, and maybe even separate out non-primary services
 device_type_emitter_map[HueDeviceTypes.LIGHT] = AttributeEmitters.emit_light_attribute_events
+device_type_emitter_map[HueDeviceTypes.MOTION] = AttributeEmitters.emit_motion_sensor_attribute_events
+device_type_emitter_map[HueDeviceTypes.CONTACT] = AttributeEmitters.emit_contact_sensor_attribute_events
 
 return AttributeEmitters
