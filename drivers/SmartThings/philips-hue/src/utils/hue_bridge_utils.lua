@@ -68,7 +68,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         while true do
           if scanned then break end
           connectivity_status, rest_err = bridge_api:get_connectivity_status()
-          if rest_err ~= nil then
+          if rest_err ~= nil or not connectivity_status then
             log.error(string.format("Couldn't query Hue Bridge %s for zigbee connectivity status for child devices: %s",
               bridge_device.label, st_utils.stringify_table(rest_err, "Rest Error", true)))
             goto continue

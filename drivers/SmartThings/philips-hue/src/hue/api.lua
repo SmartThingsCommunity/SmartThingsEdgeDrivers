@@ -285,12 +285,15 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
 end
 
 ---@param rtype string
----@return HueResourceResponse<HueResourceInfo>|HueResourceResponse<HueResourceInfo>|nil
+---@return HueResourceResponse<HueResourceInfo>|nil
+---@return string? err nil on success
 function PhilipsHueApi:get_all_reprs_for_rtype(rtype) return do_get(self, string.format("/clip/v2/resource/%s", string.lower(tostring(rtype)))) end
 
+---@generic T: HueResourceInfo
 ---@param rtype string
 ---@param rid string
----@return HueResourceResponse<HueResourceInfo>|HueResourceResponse<HueResourceInfo>|nil
+---@return HueResourceResponse<T>|nil
+---@return string? err nil on success
 function PhilipsHueApi:get_rtype_by_rid(rtype, rid)
   return do_get(
     self,
@@ -302,34 +305,83 @@ function PhilipsHueApi:get_rtype_by_rid(rtype, rid)
   )
 end
 
----@return HueResourceResponse<HueLightInfo>
-function PhilipsHueApi:get_lights() return self:get_all_reprs_for_rtype(HueDeviceTypes.LIGHT) --[[@as HueResourceResponse<HueLightInfo>]] end
+---@return HueResourceResponse<HueLightInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_lights() return self:get_all_reprs_for_rtype(HueDeviceTypes.LIGHT) end
 
----@return HueResourceResponse<HueDeviceInfo>
-function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device") --[[@as HueResourceResponse<HueDeviceInfo>]] end
+---@return HueResourceResponse<HueDeviceInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device") end
 
----@return HueResourceResponse<HueZigbeeInfo>
-function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") --[[@as HueResourceResponse<HueZigbeeInfo>]] end
+---@return HueResourceResponse<HueZigbeeInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") end
 
 function PhilipsHueApi:get_rooms() return self:get_all_reprs_for_rtype("room") end
 
 ---@param light_resource_id string
----@return HueResourceResponse<HueLightInfo>
+---@return HueResourceResponse<HueLightInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_light_by_id(light_resource_id)
-  return self:get_rtype_by_rid(HueDeviceTypes.LIGHT, light_resource_id) --[[@as HueResourceResponse<HueLightInfo>]]
+  return self:get_rtype_by_rid(HueDeviceTypes.LIGHT, light_resource_id)
 end
 
 ---@param hue_device_id string
----@return HueResourceResponse<HueDeviceInfo>
+---@return HueResourceResponse<HueDeviceInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_device_by_id(hue_device_id)
-  return self:get_rtype_by_rid("device", hue_device_id) --[[@as HueResourceResponse<HueDeviceInfo>]]
+  return self:get_rtype_by_rid("device", hue_device_id)
 end
 
 ---@param zigbee_resource_id string
----@return HueResourceResponse<HueZigbeeInfo>
+---@return HueResourceResponse<HueZigbeeInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
-  return self:get_rtype_by_rid("zigbee_connectivity", zigbee_resource_id) --[[@as HueResourceResponse<HueZigbeeInfo>]]
+  return self:get_rtype_by_rid("zigbee_connectivity", zigbee_resource_id)
 end
+
+---@param contact_resource_id string
+---@return HueResourceResponse<HueContactInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_contact_by_id(contact_resource_id)
+  return self:get_rtype_by_rid("contact", contact_resource_id)
+end
+
+---@param motion_resource_id string
+---@return HueResourceResponse<HueMotionInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_motion_by_id(motion_resource_id)
+  return self:get_rtype_by_rid("motion", motion_resource_id)
+end
+
+---@param device_power_resource_id string
+---@return HueResourceResponse<HuePowerLevelInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_device_power_by_id(device_power_resource_id)
+  return self:get_rtype_by_rid("device_power", device_power_resource_id)
+end
+
+---@param tamper_resource_id string
+---@return HueResourceResponse<HueTamperInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_tamper_by_id(tamper_resource_id)
+  return self:get_rtype_by_rid("tamper", tamper_resource_id)
+end
+
+---@param temperature_resource_id string
+---@return HueResourceResponse<HueTemperatureInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_temperature_by_id(temperature_resource_id)
+  return self:get_rtype_by_rid("temperature", temperature_resource_id)
+end
+
+---@param light_level_resource_id string
+---@return HueResourceResponse<HueLightLevelInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_light_level_by_id(light_level_resource_id)
+  return self:get_rtype_by_rid("light_level", light_level_resource_id)
+end
+
 
 function PhilipsHueApi:get_room_by_id(id)
   return self:get_rtype_by_rid("room", id)
