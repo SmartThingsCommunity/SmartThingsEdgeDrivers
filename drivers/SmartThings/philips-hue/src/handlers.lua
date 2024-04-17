@@ -409,7 +409,7 @@ end
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 local function do_refresh_all_for_bridge(driver, bridge_device)
-  local child_devices = bridge_device:get_child_list() --[=[@as HueChildDevice[]]=]
+  local child_devices = bridge_device:get_child_list()
 
   if not bridge_device:get_field(Fields._INIT) then
     log.warn("Bridge for lights not yet initialized, can't refresh yet.")

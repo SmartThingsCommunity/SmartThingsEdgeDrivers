@@ -1,0 +1,39 @@
+# Refactor Progress
+
+Tracking TODOs for this refactor in this file; this is mostly to allow for creating the draft/WIP PR that the other main PR's will land on. This will will be dropped from history when the refactor is done.
+
+## Sections
+
+### Discovery
+
+#### Tasks
+
+- [ ] Convert supported resources map to a map of handlers instead of boolean
+- [ ] Move handlers to their own file
+- [ ] Rename the "light_state_disco_cache" key to be service type agnostic
+- [ ] Update the `discovered_device_callback` function to allow for other device types
+
+### Capability Handlers
+
+#### Tasks
+
+- [ ] Create a table of handlers for dispatching refactors by device type
+- [ ] Fix `refresh_all_for_bridge` to remove assumptions that all child devices are lights
+
+### Driver (init.lua) Refactors
+
+#### Tasks
+
+- [ ] Extract lifecycle handlers to their own module(s)
+- [ ] Extract attribute event emitters to their own module(s)
+- [ ] Refactor Stray Light Handler to be a general Stray Device Handler
+- [ ] Refactor SSE `onmessage` callback to remove light-specific assumptions
+  - [ ] `update` messages are hard coded to emit light events with no checks
+  - [ ] `add` message handling rejects non-light devices instead of being written to be extensible
+
+### Miscellaneous/Custodial
+
+#### Tasks
+
+- [ ] Update all doc strings that claim we only support bridges and lights
+- [ ] Update any dangling utility methods/variables/symbols that use "light" when they should use "device"
