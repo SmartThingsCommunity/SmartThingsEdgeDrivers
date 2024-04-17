@@ -23,7 +23,6 @@
 --- @field public datastore table persistent store
 --- @field public api_key_to_bridge_id table<string,string>
 --- @field public update_bridge_netinfo fun(self: HueDriver, bridge_id: string, bridge_info: HueBridgeInfo)
---- @field public emit_light_status_events fun(light_device: HueChildDevice, light: table)
 --- @field public get_device_by_dni fun(self: HueDriver, device_network_id: string, force_refresh?: boolean): HueDevice|nil
 --- @field public do_hue_light_delete fun(self: HueDriver, light_device: HueDevice)
 --- @field public get_device_info fun(self: HueDriver, device_id: string, force_refresh: boolean?): HueDevice?

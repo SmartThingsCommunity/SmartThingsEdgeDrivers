@@ -4,6 +4,7 @@ local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
+local attribute_emitters = require "handlers.attribute_emitters"
 local utils = require "utils"
 
 local M = {}
@@ -117,7 +118,7 @@ function M.do_refresh_light(driver, light_device, conn_status_cache, light_statu
         if light_info.color ~= nil and light_info.color.gamut then
           light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
         end
-        driver.emit_light_status_events(light_device, light_info)
+        attribute_emitters.emit_light_attribute_events(light_device, light_info)
         do_light_request = false
       end
     end
@@ -228,7 +229,7 @@ function M.do_refresh_light(driver, light_device, conn_status_cache, light_statu
             if light_info.color ~= nil and light_info.color.gamut then
               light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
             end
-            driver.emit_light_status_events(light_device, light_info)
+            attribute_emitters.emit_light_attribute_events(light_device, light_info)
             success = true
           end
         end
