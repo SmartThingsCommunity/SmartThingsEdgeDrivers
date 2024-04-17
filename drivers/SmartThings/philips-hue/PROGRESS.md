@@ -17,7 +17,7 @@ Tracking TODOs for this refactor in this file; this is mostly to allow for creat
 
 #### Tasks
 
-- [ ] Create a table of handlers for dispatching refactors by device type
+- [x] Create a table of handlers for dispatching refreshes by device type
 - [ ] Fix `refresh_all_for_bridge` to remove assumptions that all child devices are lights
 
 ### Driver (init.lua) Refactors
