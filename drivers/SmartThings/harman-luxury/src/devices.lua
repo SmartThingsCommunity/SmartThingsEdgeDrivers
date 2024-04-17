@@ -6,13 +6,15 @@ local const = require "constants"
 
 local Devices = {}
 
-local supported_devices = {"L75ms", "L42ms", "AVR5"}
-
+local supported_devices = {"L75ms", "L42ms", "MA510", "MA710", "MA7100HP", "MA9100HP"}
 local MNID = "0BE8"
 local SetupID = {
   L75ms = "602",
   L42ms = "603",
-  AVR5 = "604",
+  MA510 = "604",
+  MA710 = "605",
+  MA7100HP = "606",
+  MA9100HP = "607",
 }
 
 local devices_model_info = {
@@ -26,10 +28,25 @@ local devices_model_info = {
     manufacturer = "JBL",
     model = "L42ms",
   },
-  [SetupID.AVR5] = {
-    profile = "harman-luxury",
-    manufacturer = "ARCAM",
-    model = "AVR5",
+  [SetupID.MA510] = {
+    profile = "maX10",
+    manufacturer = "JBL",
+    model = "MA510",
+  },
+  [SetupID.MA710] = {
+    profile = "maX10",
+    manufacturer = "JBL",
+    model = "MA710",
+  },
+  [SetupID.MA7100HP] = {
+    profile = "maX10",
+    manufacturer = "JBL",
+    model = "MA7100HP",
+  },
+  [SetupID.MA9100HP] = {
+    profile = "maX10",
+    manufacturer = "JBL",
+    model = "MA9100HP",
   },
 }
 
