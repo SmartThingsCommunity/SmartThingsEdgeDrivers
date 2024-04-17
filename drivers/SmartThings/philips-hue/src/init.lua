@@ -70,6 +70,8 @@ local switch_on_handler = safe_wrap_handler(handlers.switch_on_handler)
 local switch_off_handler = safe_wrap_handler(handlers.switch_off_handler)
 local switch_level_handler = safe_wrap_handler(handlers.switch_level_handler)
 local set_color_handler = safe_wrap_handler(handlers.set_color_handler)
+local set_color_hue_handler = safe_wrap_handler(handlers.set_color_hue_handler)
+local set_color_saturation_handler = safe_wrap_handler(handlers.set_color_saturation_handler)
 local set_color_temp_handler = safe_wrap_handler(handlers.set_color_temp_handler)
 
 ---@param light_device HueChildDevice
@@ -1509,6 +1511,8 @@ local hue = Driver("hue",
       },
       [capabilities.colorControl.ID] = {
         [capabilities.colorControl.commands.setColor.NAME] = set_color_handler,
+        [capabilities.colorControl.commands.setHue.NAME] = set_color_hue_handler,
+        [capabilities.colorControl.commands.setSaturation.NAME] = set_color_saturation_handler,
       },
       [capabilities.colorTemperature.ID] = {
         [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,

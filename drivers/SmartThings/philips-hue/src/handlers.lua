@@ -166,6 +166,28 @@ local function do_color_action(driver, device, args)
   end
 end
 
+-- Function to allow changes to "setHue" attribute to Philips Hue light devices
+---@param driver HueDriver
+---@param device HueChildDevice
+local function do_setHue_action(driver, device, args)
+
+  -- Use existing 'saturation' value for device or set to 0 and pass arg values to function 'do_color_action'
+  local currentSaturation = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME) or 0
+  args.args.color.saturation = currentSaturation
+  do_color_action(driver, device, args)
+end
+
+-- Function to allow changes to "setSaturation" attribute to Philips Hue light devices
+---@param driver HueDriver
+---@param device HueChildDevice
+local function do_setSaturation_action(driver, device, args)
+
+  -- Use existing 'hue' value for device or set to 0 and pass arg values to function 'do_color_action'
+  local currentHue = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) or 0
+  args.args.color.hue = currentHue
+  do_color_action(driver, device, args)
+end
+
 function handlers.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
 function handlers.mirek_to_kelvin(mirek) return 1000000 / mirek end
@@ -247,6 +269,20 @@ end
 function handlers.set_color_temp_handler(driver, device, args)
   do_color_temp_action(driver, device, args)
 end
+
+---@param driver HueDriver
+---@param device HueChildDevice
+function handlers.set_color_hue_handler(driver, device, args)
+  do_setHue_action(driver, device, args)
+end
+
+
+---@param driver HueDriver
+---@param device HueChildDevice
+function handlers.set_color_saturation_handler(driver, device, args)
+  do_setSaturation_action(driver, device, args)
+end
+
 
 ---@param driver HueDriver
 ---@param light_device HueChildDevice
