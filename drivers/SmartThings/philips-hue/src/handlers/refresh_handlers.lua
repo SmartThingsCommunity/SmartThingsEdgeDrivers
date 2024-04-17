@@ -4,6 +4,7 @@ local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
+local SensorUtils = require "utils.hue_motion_sensor_utils"
 local attribute_emitters = require "handlers.attribute_emitters"
 local utils = require "utils"
 
@@ -150,6 +151,65 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
   )
 end
 
+-- TODO: Refresh handlers need to be optimized/generalized for devices with multiple services
+function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip_zigbee)
+  local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
+  local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(bridge_id)
+
+  if not bridge_device then
+    log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
+    return
+  end
+
+  if not bridge_device:get_field(Fields._INIT) then
+    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    driver._devices_pending_refresh[sensor_device.id] = sensor_device
+    return
+  end
+
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
+  if skip_zigbee ~= true then
+    _refresh_zigbee(sensor_device, hue_api)
+  end
+
+  local sensor_info, err = SensorUtils.get_all_service_states(HueDeviceTypes.MOTION, hue_api, hue_device_id, bridge_id)
+  if err then
+    log.error(string.format("Error refreshing motion sensor %s: %s", (sensor_device and sensor_device.label), err))
+  end
+
+  attribute_emitters.emitter_for_device_type(HueDeviceTypes.MOTION)(sensor_device, sensor_info)
+end
+
+function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, skip_zigbee)
+  local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
+  local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(bridge_id)
+
+  if not bridge_device then
+    log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
+    return
+  end
+
+  if not bridge_device:get_field(Fields._INIT) then
+    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    driver._devices_pending_refresh[sensor_device.id] = sensor_device
+    return
+  end
+
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
+  if skip_zigbee ~= true then
+    _refresh_zigbee(sensor_device, hue_api)
+  end
+
+  local sensor_info, err = SensorUtils.get_all_service_states(HueDeviceTypes.CONTACT, hue_api, hue_device_id, bridge_id)
+  if err then
+    log.error(string.format("Error refreshing contact sensor %s: %s", (sensor_device and sensor_device.label), err))
+  end
+
+  attribute_emitters.emitter_for_device_type(HueDeviceTypes.CONTACT)(sensor_device, sensor_info)
+end
+
 ---@param driver HueDriver
 ---@param light_device HueChildDevice
 ---@param light_status_cache table|nil
@@ -257,6 +317,9 @@ function RefreshHandlers.handler_for_device_type(device_type)
   return device_type_refresh_handlers_map[device_type] or noop_refresh_handler
 end
 
+-- TODO: Generalize this like the other handlers, and maybe even separate out non-primary services
 device_type_refresh_handlers_map[HueDeviceTypes.BRIDGE] = RefreshHandlers.do_refresh_all_for_bridge
 device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = RefreshHandlers.do_refresh_light
+device_type_refresh_handlers_map[HueDeviceTypes.MOTION] = RefreshHandlers.do_refresh_motion_sensor
+device_type_refresh_handlers_map[HueDeviceTypes.CONTACT] = RefreshHandlers.do_refresh_contact_sensor
 return RefreshHandlers
