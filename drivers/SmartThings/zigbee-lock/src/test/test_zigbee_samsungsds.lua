@@ -112,6 +112,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Not Fully Locked status reporting should not be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, DoorLock.attributes.LockState:build_test_attr_report(mock_device,
+                                                                                         DoorLockState.NOT_FULLY_LOCKED) }
+      }
+    }
+)
+
+test.register_message_test(
     "Lock operation event reporting should be handled",
     {
       {
