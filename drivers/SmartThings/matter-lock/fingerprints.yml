@@ -1,4 +1,10 @@
 matterManufacturer:
+#Aqara
+  - id: 4447/10242
+    deviceLabel: Aqara Smart Lock U200
+    vendorId: 0x115F
+    productId: 0x2802
+    deviceProfileName: lock-without-codes
 #Nuki
   - id: "Nuki Smart Lock Pro"
     deviceLabel: Nuki Smart Lock Pro
