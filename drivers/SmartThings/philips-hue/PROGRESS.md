@@ -25,7 +25,7 @@ Tracking TODOs for this refactor in this file; this is mostly to allow for creat
 #### Tasks
 
 - [ ] Extract lifecycle handlers to their own module(s)
-- [ ] Extract attribute event emitters to their own module(s)
+- [x] Extract attribute event emitters to their own module(s) ✅ 2024-04-17
 - [ ] Refactor Stray Light Handler to be a general Stray Device Handler
 - [ ] Refactor SSE `onmessage` callback to remove light-specific assumptions
   - [ ] `update` messages are hard coded to emit light events with no checks

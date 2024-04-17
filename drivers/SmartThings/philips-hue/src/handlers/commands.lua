@@ -2,9 +2,11 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local st_utils = require "st.utils"
 
+local Consts = require "consts"
 local Fields = require "fields"
-local HueApi = require "hue.api"
 local HueColorUtils = require "hue.cie_utils"
+
+local utils = require "utils"
 
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -193,10 +195,6 @@ local function do_setSaturation_action(driver, device, args)
   do_color_action(driver, device, args)
 end
 
-function handlers.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
-
-function handlers.mirek_to_kelvin(mirek) return 1000000 / mirek end
-
 ---@param driver HueDriver
 ---@param device HueChildDevice
 local function do_color_temp_action(driver, device, args)
@@ -228,9 +226,9 @@ local function do_color_temp_action(driver, device, args)
     return
   end
 
-  local min = device:get_field(Fields.MIN_KELVIN) or HueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE
-  local clamped_kelvin = st_utils.clamp_value(kelvin, min, HueApi.MAX_TEMP_KELVIN)
-  local mirek = math.floor(handlers.kelvin_to_mirek(clamped_kelvin))
+  local min = device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+  local clamped_kelvin = st_utils.clamp_value(kelvin, min, Consts.MAX_TEMP_KELVIN)
+  local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
 
   local resp, err = hue_api:set_light_color_temp(light_id, mirek)
 
@@ -271,12 +269,6 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.set_color_temp_handler(driver, device, args)
-  do_color_temp_action(driver, device, args)
-end
-
----@param driver HueDriver
----@param device HueChildDevice
 function handlers.set_hue_handler(driver, device, args)
   do_setHue_action(driver, device, args)
 end
@@ -285,6 +277,12 @@ end
 ---@param device HueChildDevice
 function handlers.set_saturation_handler(driver, device, args)
   do_setSaturation_action(driver, device, args)
+end
+
+---@param driver HueDriver
+---@param device HueChildDevice
+function handlers.set_color_temp_handler(driver, device, args)
+  do_color_temp_action(driver, device, args)
 end
 
 local refresh_handlers = require "handlers.refresh_handlers"

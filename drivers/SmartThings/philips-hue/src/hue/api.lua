@@ -60,9 +60,6 @@ local PhilipsHueApi = {}
 PhilipsHueApi.__index = PhilipsHueApi
 
 PhilipsHueApi.MIN_CLIP_V2_SWVERSION = 1948086000
-PhilipsHueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE = 2000
-PhilipsHueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE = 2200
-PhilipsHueApi.MAX_TEMP_KELVIN = 6500
 PhilipsHueApi.APPLICATION_KEY_HEADER = APPLICATION_KEY_HEADER
 
 local function retry_fn(retry_attempts)
