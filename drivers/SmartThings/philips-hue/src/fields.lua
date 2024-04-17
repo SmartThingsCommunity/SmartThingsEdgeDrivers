@@ -5,7 +5,7 @@
 --- @field MODEL_ID string Bridge model ID
 --- @field BRIDGE_ID string The unique identifier for the bridge (found during discovery)
 --- @field BRIDGE_SW_VERSION string The SW Version of the bridge to determine if it supports CLIP V2
---- @field DEVICE_TYPE string Field on all Hue devices that indicates type (currently either "brige" or "light")
+--- @field DEVICE_TYPE string Field on all Hue devices that indicates type, maps to a Hue service rtype.
 --- @field BRIDGE_API string Transient field that holds the HueAPI instance for the bridge
 --- @field MIN_DIMMING string Minimum dimming/brightness value accepted by a light
 --- @field EVENT_SOURCE string Field on a bridge that stores a handle to the SSE EventSource client.

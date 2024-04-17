@@ -1,7 +1,50 @@
 --- @meta
 
+---@class HueSseEvent
+---@field id string
+---@field type string
+---@field data HueResourceInfo[]
+
+---@class HueServiceInfo
+---@field public rid string
+---@field public rtype HueDeviceTypes
+
+---@class HueResourceInfo
+---@field public metadata { name: string, [string]: any}
+---@field public id string
+---@field public id_v1 string?
+---@field public type HueDeviceTypes
+---@field public owner HueServiceInfo?
+---@field public hue_provided_name string
+---@field public hue_device_data table
+
+---@class HueZigbeeInfo: HueResourceInfo
+---@field public status string
+
+---@class HueDeviceInfo: HueResourceInfo
+---@field public services HueServiceInfo[]
+---@field public product_data { [string]: string }
+
+---@class HueColorCoords
+---@field public x number
+---@field public y number
+
+---@class HueGamut
+---@field public red HueColorCoords
+---@field public green HueColorCoords
+---@field public blue HueColorCoords
+
+---@class HueLightInfo: HueResourceInfo
+---@field public hue_device_id string
+---@field public parent_device_id string
+---@field public on { on: boolean }
+---@field public color { xy: HueColorCoords, gamut: HueGamut, gamut_type: string }
+---@field public dimming { brightness: number, min_dim_level: number }
+---@field public color_temperature { mirek: number?, mirek_valid: boolean}
+---@field public mode string
+
 --- Hue Bridge Info as returned by the unauthenticated API endpoint `/api/config`
---- @class HueBridgeInfo
+--- @class HueBridgeInfo: { [string]: any }
 --- @field public name string
 --- @field public datastoreversion string
 --- @field public swversion string
@@ -14,22 +57,6 @@
 --- @field public starterkitid string
 --- @field public ip string|nil
 
---- @class HueDriver:Driver
---- @field public ignored_bridges table<string,boolean>
---- @field public joined_bridges table<string,boolean>
---- @field public light_id_to_device table<string,HueChildDevice>
---- @field public device_rid_to_light_rid table<string,string>
---- @field public stray_bulb_tx table cosock channel
---- @field public datastore table persistent store
---- @field public api_key_to_bridge_id table<string,string>
---- @field public update_bridge_netinfo fun(self: HueDriver, bridge_id: string, bridge_info: HueBridgeInfo)
---- @field public emit_light_status_events fun(light_device: HueChildDevice, light: table)
---- @field public get_device_by_dni fun(self: HueDriver, device_network_id: string, force_refresh?: boolean): HueDevice|nil
---- @field public do_hue_light_delete fun(self: HueDriver, light_device: HueDevice)
---- @field public get_device_info fun(self: HueDriver, device_id: string, force_refresh: boolean?): HueDevice?
---- @field public check_hue_repr_for_capability_support fun(hue_repr: table, capability_id: string): boolean
---- @field public _lights_pending_refresh table<string,HueChildDevice>
-
 --- @class HueDevice:st.Device
 --- @field public label string
 --- @field public id string
@@ -39,9 +66,10 @@
 --- @field public manufacturer string
 --- @field public model string
 --- @field public vendor_provided_label string
---- @field public data table|nil migration data for a migrated device
 --- @field public log table device-scoped logging module
 --- @field public profile table
+--- @field public data nil|{ username: string, bulbId: string } migration data for a migrated device
+--- @field public get_child_list fun(self: HueBridgeDevice): HueChildDevice[]
 --- @field public get_field fun(self: HueDevice, key: string):any
 --- @field public set_field fun(self: HueDevice, key: string, value: any, args?: table)
 --- @field public emit_event fun(self: HueDevice, event: any)
