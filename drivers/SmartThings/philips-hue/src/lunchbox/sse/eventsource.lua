@@ -245,6 +245,7 @@ local function connecting_action(source)
     if type(source._sock_builder) == "function" then
       source._sock = source._sock_builder()
     else
+      local err = nil
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
@@ -280,7 +281,12 @@ local function connecting_action(source)
     request = request:add_header("Last-Event-ID", last_event_id)
   end
 
-  local _, err, _ = send_stream_start_request(request:serialize(), source._sock)
+  local request_string, ser_err = request:serialize()
+  if ser_err or not request_string then
+    return nil, ser_err
+  end
+
+  local _, err, _ = send_stream_start_request(request_string, source._sock)
 
   if err ~= nil then
     return nil, err

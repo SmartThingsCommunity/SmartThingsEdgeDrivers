@@ -190,7 +190,7 @@ local function execute_request(client, request, retry_fn)
   end
 
   -- send output
-  local _bytes_sent, send_err, _idx = nil, nil, 0
+  local bytes_sent, send_err, _idx = nil, nil, 0
   -- recv output
   local response, recv_err, partial = nil, nil, nil
   -- return values
@@ -203,7 +203,7 @@ local function execute_request(client, request, retry_fn)
     local retry = should_retry()
     if current_state == RestCallStates.SEND then
       backoff = utils.backoff_builder(60, 1, 0.1)
-      _bytes_sent, send_err, _idx = send_request(client, request)
+      bytes_sent, send_err, _idx = send_request(client, request)
 
       if not send_err then
         current_state = RestCallStates.RECEIVE

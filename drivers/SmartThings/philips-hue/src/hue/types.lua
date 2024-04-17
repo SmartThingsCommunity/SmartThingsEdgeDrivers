@@ -42,6 +42,7 @@
 --- @field public data table|nil migration data for a migrated device
 --- @field public log table device-scoped logging module
 --- @field public profile table
+--- @field public get_child_list fun(self: HueBridgeDevice): HueChildDevice[]
 --- @field public get_field fun(self: HueDevice, key: string):any
 --- @field public set_field fun(self: HueDevice, key: string, value: any, args?: table)
 --- @field public emit_event fun(self: HueDevice, event: any)
