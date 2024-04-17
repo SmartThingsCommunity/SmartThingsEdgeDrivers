@@ -1,11 +1,20 @@
 ---@enum HueDeviceTypes
 local HueDeviceTypes = {
   BRIDGE = "bridge",
-  LIGHT = "light"
+  CONTACT = "contact",
+  DEVICE_POWER = "device_power",
+  LIGHT = "light",
+  LIGHT_LEVEL = "light_level",
+  MOTION = "motion",
+  TAMPER = "tamper",
+  TEMPERATURE = "temperature",
+  ZIGBEE_CONNECTIVITY = "zigbee_connectivity"
 }
 
 local PrimaryDeviceTypes = {
-  [HueDeviceTypes.LIGHT] = true
+  [HueDeviceTypes.CONTACT] = true,
+  [HueDeviceTypes.LIGHT] = true,
+  [HueDeviceTypes.MOTION] = true
 }
 
 ---@type table<string,HueDeviceTypes>

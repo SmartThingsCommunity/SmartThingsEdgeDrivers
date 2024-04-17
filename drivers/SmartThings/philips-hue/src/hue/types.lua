@@ -43,6 +43,29 @@
 ---@field public color_temperature { mirek: number?, mirek_valid: boolean}
 ---@field public mode string
 
+---@class HueMotionInfo: HueResourceInfo
+---@field public enabled boolean
+---@field public motion { motion: boolean, motion_valid: boolean, motion_report: { motion: true, changed: string } }
+
+---@class HuePowerLevelInfo: HueResourceInfo
+---@field public power_state { battery_state: string, battery_level: number}
+
+---@class HueTemperatureInfo: HueResourceInfo
+---@field public enabled boolean
+---@field public temperature { temperature: number, temperature_valid: boolean, temperature_report: { temperature: number, changed: string } }
+
+---@class HueLightLevelInfo: HueResourceInfo
+---@field public enabled boolean
+---@field public light { light_level: number, light_level_valid: boolean, light_level_report: { light_level: number, changed: string } }
+
+---@class HueContactInfo: HueResourceInfo
+---@field public enabled boolean
+---@field public contact_report { changed: string, state: string }
+
+--- Note that the tamper representation uses an array for its reports. Not sure why this is.
+---@class HueTamperInfo: HueResourceInfo
+---@field public tamper_reports { changed: string, source: string, state: string }[]
+
 --- Hue Bridge Info as returned by the unauthenticated API endpoint `/api/config`
 --- @class HueBridgeInfo: { [string]: any }
 --- @field public name string
