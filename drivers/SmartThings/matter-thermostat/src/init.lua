@@ -49,6 +49,7 @@ local WIND_MODE_MAP = {
 
 local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
+local FAN_DEVICE_TYPE_ID = 0x002B
 
 local setpoint_limit_device_field = {
   MIN_HEAT = "MIN_HEAT",
@@ -157,22 +158,15 @@ local function info_changed(driver, device, event, args)
   device:subscribe()
 end
 
-local function is_matter_rac(driver, device)
+local function get_device_type(driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
       if dt.device_type_id == RAC_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-  return false
-end
-
-local function is_matter_ap(driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == AP_DEVICE_TYPE_ID then
-        return true
+        return RAC_DEVICE_TYPE_ID
+      elseif dt.device_type_id == AP_DEVICE_TYPE_ID then
+        return AP_DEVICE_TYPE_ID
+      elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
+        return FAN_DEVICE_TYPE_ID
       end
     end
   end
@@ -190,11 +184,14 @@ local function do_configure(driver, device)
   local hepa_filter_eps = device:get_endpoints(clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = device:get_endpoints(clusters.ActivatedCarbonFilterMonitoring.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
-  if is_matter_rac(driver, device) then
+  if device_type == RAC_DEVICE_TYPE_ID then
     log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
-  elseif is_matter_ap(driver, device) then
+  elseif device_type == FAN_DEVICE_TYPE_ID then
+    log.warn_with({hub_logs=true}, "Fan supports only one profile")
+  elseif device_type == AP_DEVICE_TYPE_ID then
     -- currently no profile switching for Air Purifier
     profile_name = "air-purifier"
     if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
