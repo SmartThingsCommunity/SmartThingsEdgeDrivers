@@ -1,6 +1,6 @@
 matterManufacturer:
 #Aqara
-  - id: 4447/10242
+  - id: "4447/10242"
     deviceLabel: Aqara Smart Lock U200
     vendorId: 0x115F
     productId: 0x2802
