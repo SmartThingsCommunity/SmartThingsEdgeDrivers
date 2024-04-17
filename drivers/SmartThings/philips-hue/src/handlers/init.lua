@@ -1,12 +1,11 @@
+local capabilities = require "st.capabilities"
+local log = require "log"
+local st_utils = require "st.utils"
+
 local Fields = require "fields"
 local HueApi = require "hue.api"
 local HueColorUtils = require "hue.cie_utils"
-local log = require "log"
-local utils = require "utils"
 
-local cosock = require "cosock"
-local capabilities = require "st.capabilities"
-local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
@@ -253,7 +252,7 @@ local refresh_handlers = require "handlers.refresh_handlers"
 ---@param driver HueDriver
 ---@param device HueDevice
 function handlers.refresh_handler(driver, device, cmd)
-  refresh_handlers.handler_for_device_type(Fields.DEVICE_TYPE)(driver, device, cmd)
+  refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
 end
 
 return handlers
