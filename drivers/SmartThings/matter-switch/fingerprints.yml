@@ -2076,6 +2076,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xEEE2
     deviceProfileName: switch-binary
+  - id: "5020/53251"
+    deviceLabel: Zemismart Led Light Strip Driver
+    vendorId: 0x139C
+    productId: 0xD003
+    deviceProfileName: light-color-level-2000K-7000K
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
