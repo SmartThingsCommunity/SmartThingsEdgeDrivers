@@ -64,6 +64,19 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        ,
+        data_types.Uint8, 1) })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
 test.register_message_test(
   "Reported water should be handled: wet",
   {
