@@ -101,14 +101,14 @@ local function test_in_progress_event_handler(driver, device, ib, response)
     if ib.data.value then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.tested())
     else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smokeDetector.smoke.clear())
+      device:send(clusters.SmokeCoAlarm.attributes.SmokeState:read(device))
     end
   end
   if device:supports_capability(capabilities.carbonMonoxideDetector) then
     if ib.data.value then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
     else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+      device:send(clusters.SmokeCoAlarm.attributes.COState:read(device))
     end
   end
 end
