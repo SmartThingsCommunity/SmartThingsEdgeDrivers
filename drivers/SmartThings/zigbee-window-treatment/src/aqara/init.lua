@@ -160,6 +160,8 @@ end
 
 local function do_configure(self, device)
   device:configure()
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
+    aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
   device:send(Basic.attributes.ApplicationVersion:read(device))
   device:send(Groups.server.commands.RemoveAllGroups(device))
   do_refresh(self, device)
