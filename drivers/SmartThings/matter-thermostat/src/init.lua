@@ -21,15 +21,15 @@ local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
 local THERMOSTAT_MODE_MAP = {
-  [clusters.Thermostat.types.SystemModeEnum.OFF]            = capabilities.thermostatMode.thermostatMode.off,
-  [clusters.Thermostat.types.SystemModeEnum.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
-  [clusters.Thermostat.types.SystemModeEnum.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
-  [clusters.Thermostat.types.SystemModeEnum.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
-  [clusters.Thermostat.types.SystemModeEnum.EMERGENCY_HEAT] = capabilities.thermostatMode.thermostatMode.emergencyheat,
-  [clusters.Thermostat.types.SystemModeEnum.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
-  [clusters.Thermostat.types.SystemModeEnum.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
-  [clusters.Thermostat.types.SystemModeEnum.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
-  [clusters.Thermostat.types.SystemModeEnum.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
+  [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
+  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
+  [clusters.Thermostat.types.ThermostatSystemMode.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
+  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
+  [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEAT] = capabilities.thermostatMode.thermostatMode.emergencyheat,
+  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
+  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
+  [clusters.Thermostat.types.ThermostatSystemMode.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
+  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
