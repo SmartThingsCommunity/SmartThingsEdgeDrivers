@@ -5,7 +5,7 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2002
     deviceProfileName: contact-battery
-  - id: 4447/8195
+  - id: "4447/8195"
     deviceLabel: Aqara Motion and Light Sensor P2
     vendorId: 0x115F
     productId: 0x2003
