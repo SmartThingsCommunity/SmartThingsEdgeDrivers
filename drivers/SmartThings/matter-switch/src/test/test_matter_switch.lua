@@ -80,11 +80,15 @@ local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
 local cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
   clusters.ColorControl.attributes.CurrentHue,
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
   clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
 }
 
 local function test_init()
@@ -96,13 +100,6 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  local limit_read = clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read()
-  limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
-  limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
-  limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
-  test.socket.matter:__expect_send({mock_device.id, limit_read})
-
   test.mock_device.add_test_device(mock_device)
 
   subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
@@ -112,13 +109,6 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
-
-  limit_read = clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read()
-  limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
-  limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
-  limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
-  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, limit_read})
-
   test.mock_device.add_test_device(mock_device_no_hue_sat)
 end
 test.set_test_init_function(test_init)
