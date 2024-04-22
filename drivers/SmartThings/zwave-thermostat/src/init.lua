@@ -107,9 +107,14 @@ local function setpoint_capabilites_report(driver, device, cmd)
   local min_temp_c = args.min_value
   local max_temp_c = args.max_value
 
+  local scale = 'C'
+  if args.scale1 == ThermostatSetpoint.scale.FAHRENHEIT then
+    scale = 'F'
+  end
+
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     {
-      unit = 'C',
+      unit = scale,
       value = {minimum = min_temp_c, maximum = max_temp_c}
     }
   ))

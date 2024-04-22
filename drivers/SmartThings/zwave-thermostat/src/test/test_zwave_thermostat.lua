@@ -428,6 +428,36 @@ test.register_message_test(
           }
         )
     )
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              scale1 = ThermostatSetpoint.scale.FAHRENHEIT,
+              min_value = 44.9,
+              scale2 = ThermostatSetpoint.scale.FAHRENHEIT,
+              max_value = 80.9
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+          {
+            unit = 'F',
+            value = {minimum = 44.9, maximum = 80.9}
+          }
+        )
+    )
     }
   }
 )
