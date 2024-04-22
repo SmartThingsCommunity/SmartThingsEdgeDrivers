@@ -408,14 +408,10 @@ test.register_message_test(
           ThermostatSetpointV3:CapabilitiesReport(
             {
               setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-              size1 = 4,
               scale1 = ThermostatSetpoint.scale.CELSIUS,
-              precision1 = 2,
-              min_value = 722,
-              size2 = 4,
+              min_value = 7.22,
               scale2 = ThermostatSetpoint.scale.CELSIUS,
-              precision2 = 1,
-              max_value = 272
+              max_value = 27.2
             }
           )
         )

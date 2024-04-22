@@ -103,22 +103,10 @@ local function set_setpoint_factory(setpoint_type)
 end
 
 local function setpoint_capabilites_report(driver, device, cmd)
-  local function concrete_setpoint_temperature(precision, value)
-    local result = value / (10 ^ precision)
-    return result
-  end
-  local function celsius_setpoint_temperature(precision, value, scale)
-    local concrete_temperature = concrete_setpoint_temperature(precision, value)
-    if (scale == ThermostatSetpoint.scale.FAHRENHEIT) then
-      return utils.f_to_c(concrete_temperature)
-    else
-      return concrete_temperature
-    end
-  end
   local args = cmd.args
   --- FIXME - MAD - Verify scale1 is associated with min_value and scale2 is associated with max_value
-  local min_temp_c = celsius_setpoint_temperature(args.precision1, args.min_value, args.scale1)
-  local max_temp_c = celsius_setpoint_temperature(args.precision2, args.max_value, args.scale2)
+  local min_temp_c = args.min_value
+  local max_temp_c = args.max_value
 
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     {
