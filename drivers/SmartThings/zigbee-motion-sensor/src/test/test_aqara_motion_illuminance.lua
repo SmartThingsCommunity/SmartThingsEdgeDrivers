@@ -26,7 +26,11 @@ test.add_package_capability("detectionFrequency.yaml")
 local detectionFrequency = capabilities["stse.detectionFrequency"]
 
 local PowerConfiguration = clusters.PowerConfiguration
+local PREF_FREQUENCY_KEY = "prefFrequency"
 local PREF_FREQUENCY_VALUE_DEFAULT = 60
+local PREF_CHANGED_KEY = "prefChangedKey"
+local PREF_CHANGED_VALUE = "prefChangedValue"
+local FREQUENCY_ATTRIBUTE_ID = 0x0102
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MOTION_ILLUMINANCE_ATTRIBUTE_ID = 0x0112
@@ -112,6 +116,22 @@ test.register_coroutine_test(
     test.mock_time.advance_time(detect_duration)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.motionSensor.motion.inactive()))
+  end
+)
+
+test.register_coroutine_test(
+  "Handle detection frequency capability",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+    { capability = "stse.detectionFrequency", component = "main", command = "setDetectionFrequency", args = {60} } })
+
+    mock_device:set_field(PREF_CHANGED_KEY, PREF_FREQUENCY_KEY)
+    mock_device:set_field(PREF_CHANGED_VALUE, PREF_FREQUENCY_VALUE_DEFAULT)
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID, MFG_CODE
+        , data_types.Uint8, PREF_FREQUENCY_VALUE_DEFAULT)
+    })
   end
 )
 
