@@ -104,7 +104,6 @@ end
 
 local function setpoint_capabilites_report(driver, device, cmd)
   local args = cmd.args
-  --- FIXME - MAD - Verify scale1 is associated with min_value and scale2 is associated with max_value
   local min_temp_c = args.min_value
   local max_temp_c = args.max_value
 
