@@ -397,7 +397,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Thermostat heating setpoint capability reports should be handled. ",
+  "Thermostat heating setpoint capability reports should be sent to the capabilities channel.",
   {
     {
       channel = "zwave",
