@@ -112,7 +112,14 @@ local function setpoint_capabilites_report(driver, device, cmd)
     scale = 'F'
   end
 
-  device:emit_event_for_endpoint(cmd.src_channel, capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+  local capability_constructor = nil
+  if args.setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 then
+    capability_constructor = capabilities.thermostatHeatingSetpoint.heatingSetpointRange
+  else
+    capability_constructor = capabilities.thermostatCoolingSetpoint.coolingSetpointRange
+  end
+
+  device:emit_event_for_endpoint(cmd.src_channel, capability_constructor(
     {
       unit = scale,
       value = {minimum = min_temp_c, maximum = max_temp_c}
