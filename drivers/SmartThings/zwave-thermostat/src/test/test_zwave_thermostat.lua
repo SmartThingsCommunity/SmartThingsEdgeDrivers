@@ -463,7 +463,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Thermostat heating setpoint capability reports should be sent to the capabilities channel.",
+  "Thermostat cooling setpoint capability reports should be sent to the capabilities channel.",
   {
     {
       channel = "zwave",
@@ -473,7 +473,7 @@ test.register_message_test(
         zw_test_utilities.zwave_test_build_receive_command(
           ThermostatSetpointV3:CapabilitiesReport(
             {
-              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
               scale1 = ThermostatSetpoint.scale.CELSIUS,
               min_value = 7.22,
               scale2 = ThermostatSetpoint.scale.CELSIUS,
@@ -487,7 +487,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+        capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
           {
             unit = 'C',
             value = {minimum = 7.22, maximum = 27.2}
@@ -503,7 +503,7 @@ test.register_message_test(
         zw_test_utilities.zwave_test_build_receive_command(
           ThermostatSetpointV3:CapabilitiesReport(
             {
-              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
               scale1 = ThermostatSetpoint.scale.FAHRENHEIT,
               min_value = 44.9,
               scale2 = ThermostatSetpoint.scale.FAHRENHEIT,
@@ -517,7 +517,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+        capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
           {
             unit = 'F',
             value = {minimum = 44.9, maximum = 80.9}
