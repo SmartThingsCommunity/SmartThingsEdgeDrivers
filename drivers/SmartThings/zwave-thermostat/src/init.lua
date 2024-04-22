@@ -104,8 +104,8 @@ end
 
 local function setpoint_capabilites_report(driver, device, cmd)
   local args = cmd.args
-  local min_temp_c = args.min_value
-  local max_temp_c = args.max_value
+  local min_temp = args.min_value
+  local max_temp = args.max_value
 
   local scale = 'C'
   if args.scale1 == ThermostatSetpoint.scale.FAHRENHEIT then
@@ -122,7 +122,7 @@ local function setpoint_capabilites_report(driver, device, cmd)
   device:emit_event_for_endpoint(cmd.src_channel, capability_constructor(
     {
       unit = scale,
-      value = {minimum = min_temp_c, maximum = max_temp_c}
+      value = {minimum = min_temp, maximum = max_temp}
     }
   ))
 end
