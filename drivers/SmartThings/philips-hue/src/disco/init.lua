@@ -52,21 +52,15 @@ function HueDiscovery.discover(driver, _, should_continue)
 
   while should_continue() do
     local known_identifier_to_device_map = {}
-    local computed_mac_addresses = {}
     for _, device in ipairs(driver:get_devices()) do
       -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
-      local dni = device.parent_assigned_child_key or device.device_network_id
-      known_identifier_to_device_map[dni] = device
-      local ipv4 = device:get_field(Fields.IPV4);
-      if ipv4 then
-        computed_mac_addresses[ipv4] = dni
-      end
+      local hue_identifier = utils.get_hue_rid(device) or device.device_network_id
+      known_identifier_to_device_map[hue_identifier] = device
     end
 
     HueDiscovery.do_mdns_scan(driver)
     HueDiscovery.search_for_bridges(
       driver,
-      computed_mac_addresses,
       function(hue_driver, bridge_ip, bridge_id)
         discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_identifier_to_device_map)
       end
@@ -79,9 +73,8 @@ end
 
 ---comment
 ---@param driver HueDriver
----@param computed_mac_addresses table<string,string>
 ---@param callback fun(driver: HueDriver, ip: string, id: string)
-function HueDiscovery.search_for_bridges(driver, computed_mac_addresses, callback)
+function HueDiscovery.search_for_bridges(driver, callback)
   local scanned_bridges = driver.datastore.bridge_netinfo or {}
   for bridge_id, bridge_info in pairs(scanned_bridges) do
     if type(callback) == "function" and bridge_info ~= nil then
@@ -101,8 +94,8 @@ function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
   local known_identifier_to_device_map = {}
   for _, device in ipairs(driver:get_devices()) do
     -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
-    local dni = device.parent_assigned_child_key or device.device_network_id
-    known_identifier_to_device_map[dni] = device
+    local hue_identifier = utils.get_hue_rid(device) or device.device_network_id
+    known_identifier_to_device_map[hue_identifier] = device
   end
 
   local known_bridge_device = known_identifier_to_device_map[bridge_id]
@@ -299,8 +292,8 @@ end
 ---@param known_identifier_to_device_map table<string,HueDevice>
 discovered_device_callback = function(driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
   local v1_dni = bridge_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
-  local edge_dni = svc_info.rid or ""
-  if known_identifier_to_device_map[v1_dni] or known_identifier_to_device_map[edge_dni] then return end
+  local v2_resource_id = svc_info.rid or ""
+  if known_identifier_to_device_map[v1_dni] or known_identifier_to_device_map[v2_resource_id] then return end
 
   local api_instance = HueDiscovery.disco_api_instances[bridge_id]
   if not api_instance then

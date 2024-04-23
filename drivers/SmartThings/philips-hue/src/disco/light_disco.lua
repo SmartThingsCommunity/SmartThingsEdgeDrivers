@@ -62,7 +62,7 @@ function M.process_discovered_light(driver, bridge_id, api_instance, resource_id
       manufacturer = device_info.product_data.manufacturer_name,
       model = device_info.product_data.model_id,
       parent_device_id = bridge_device.id,
-      parent_assigned_child_key = light.id,
+      parent_assigned_child_key = string.format("%s:%s", light.type, light.id)
     }
 
     device_state_disco_cache[light.id] = {

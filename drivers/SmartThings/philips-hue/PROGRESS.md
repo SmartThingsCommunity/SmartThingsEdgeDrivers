@@ -25,6 +25,7 @@ Tracking TODOs for this refactor in this file; this is mostly to allow for creat
 #### Tasks
 
 - [ ] Extract lifecycle handlers to their own module(s)
+  - [x] 2024-04-18 Update: Initial code review missed that `is_*_bridge` and `is_*_light` calls in `utils` were implemented such that the check for light was based on failing the check for bridge. So those need to be fixed as well.  ✅ 2024-04-22
 - [x] Extract attribute event emitters to their own module(s) ✅ 2024-04-17
 - [ ] Refactor Stray Light Handler to be a general Stray Device Handler
 - [ ] Refactor SSE `onmessage` callback to remove light-specific assumptions

@@ -74,11 +74,7 @@ local function migrate_bridge(driver, device)
   log.info_with({ hub_logs = true },
     string.format("Migrate Bridge for device %s", (device.label or device.id or "unknown device")))
   local api_key = device.data.username
-  local ipv4 = device.data.ip
   local device_dni = device.device_network_id
-
-  local known_macs = {}
-  known_macs[ipv4] = device_dni
 
   log.info(
     string.format("Rediscovering bridge for migrated device %s", (device.label or device.id or "unknown device")))
@@ -94,7 +90,7 @@ local function migrate_bridge(driver, device)
             (device.label or device.id or "unknown device")
           )
         )
-        Discovery.search_for_bridges(driver, known_macs, function(hue_driver, bridge_ip, bridge_id)
+        Discovery.search_for_bridges(driver, function(hue_driver, bridge_ip, bridge_id)
           if bridge_id ~= device_dni then return end
 
           log.info(
@@ -256,7 +252,6 @@ bridge_added = function(driver, device)
   local bridge_info = driver.datastore.bridge_netinfo[device_bridge_id]
 
   if not bridge_info then
-    local known_macs = {}
     cosock.spawn(
       function()
         local backoff_generator = utils.backoff_builder(10, 0.1, 0.1)
@@ -270,7 +265,7 @@ bridge_added = function(driver, device)
               (device.label or device.id or "unknown device")
             )
           )
-          Discovery.search_for_bridges(driver, known_macs, function(driver, bridge_ip, bridge_id)
+          Discovery.search_for_bridges(driver, function(driver, bridge_ip, bridge_id)
             if bridge_id ~= device_bridge_id then return end
 
             log.info(string.format(
@@ -482,8 +477,7 @@ end
 light_added = function(driver, device, parent_device_id, resource_id)
   log.info(
     string.format("Light Added for device %s", (device.label or device.id or "unknown device")))
-  local child_key = device.parent_assigned_child_key
-  local device_light_resource_id = resource_id or child_key
+  local device_light_resource_id = resource_id or utils.get_hue_rid(device)
 
   local light_info_known = (Discovery.device_state_disco_cache[device_light_resource_id] ~= nil)
   if not light_info_known then
@@ -869,7 +863,7 @@ local function do_bridge_network_init(driver, bridge_device, bridge_url, api_key
                     manufacturer = new_device_info.product_data.manufacturer_name,
                     model = new_device_info.product_data.model_id,
                     parent_device_id = bridge_device.id,
-                    parent_assigned_child_key = add_data.id,
+                    parent_assigned_child_key = string.format("%s:%s", add_data.type, add_data.id)
                   }
 
                   Discovery.device_state_disco_cache[add_data.id] = {
@@ -1023,8 +1017,11 @@ init_light = function(driver, device)
       device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
     end
   end
-  local device_light_resource_id = device:get_field(Fields.RESOURCE_ID) or device.parent_assigned_child_key or
-      device.device_network_id
+  local device_light_resource_id =
+    device:get_field(Fields.RESOURCE_ID) or
+    utils.get_hue_rid(device) or
+    device.device_network_id
+
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
   if not driver.light_id_to_device[device_light_resource_id] then
     driver.light_id_to_device[device_light_resource_id] = device
@@ -1244,7 +1241,7 @@ cosock.spawn(function()
             for stray_dni, stray_light in pairs(stray_lights) do
               local matching_v1_id = stray_light.data and stray_light.data.bulbId and
                   stray_light.data.bulbId == device_data.id_v1:gsub("/lights/", "")
-              local matching_uuid = stray_light.parent_assigned_child_key == svc_info.rid or
+              local matching_uuid = utils.get_hue_rid(stray_light) == svc_info.rid or
                   stray_light.device_network_id == svc_info.rid
 
               if matching_v1_id or matching_uuid then
