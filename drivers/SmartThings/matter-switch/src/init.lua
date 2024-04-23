@@ -38,6 +38,7 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 -- in the device table for devices that joined prior to this transition, and it
 -- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
@@ -149,6 +150,13 @@ local function initialize_switch(driver, device)
     end
   end
 
+  if num_server_eps > 1  then
+    -- If the device is a parent child device, then set the find_child function on init.
+    -- This is persisted because initialize switch is only run once, but find_child function should be set
+    -- on each driver init.
+    device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  end
+
   device:set_field(SWITCH_INITIALIZED, true)
   -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
@@ -209,7 +217,9 @@ local function device_init(driver, device)
     end
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-    device:set_find_child(find_child)
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      device:set_find_child(find_child)
+    end
     device:subscribe()
   end
 end
