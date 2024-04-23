@@ -15,7 +15,8 @@ local utils = require "utils"
 local syncCapabilityId = "samsungim.hueSyncMode"
 local hueSyncMode = capabilities[syncCapabilityId]
 
-local M = {}
+---@class AttributeEmitters
+local AttributeEmitters = {}
 
 local device_type_emitter_map = {}
 
@@ -126,7 +127,7 @@ end
 
 ---@param light_device HueChildDevice
 ---@param light_repr table
-function M.emit_light_attribute_events(light_device, light_repr)
+function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
     log.warn("Tried to emit light status event for device that has been deleted")
     return
@@ -144,10 +145,10 @@ local function noop_event_emitter(driver, device, ...)
   log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
-function M.emitter_for_device_type(device_type)
+function AttributeEmitters.emitter_for_device_type(device_type)
   return device_type_emitter_map[device_type] or noop_event_emitter
 end
 
-device_type_emitter_map[HueDeviceTypes.LIGHT] = M.emit_light_attribute_events
+device_type_emitter_map[HueDeviceTypes.LIGHT] = AttributeEmitters.emit_light_attribute_events
 
-return M
+return AttributeEmitters

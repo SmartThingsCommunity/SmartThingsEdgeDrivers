@@ -7,13 +7,14 @@ local HueDeviceTypes = require "hue_device_types"
 local attribute_emitters = require "handlers.attribute_emitters"
 local utils = require "utils"
 
-local M = {}
+---@class RefreshHandlers
+local RefreshHandlers = {}
 
 local device_type_refresh_handlers_map = {}
 
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
-function M.do_refresh_all_for_bridge(driver, bridge_device)
+function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
   cosock.spawn(
     function()
       local child_devices = bridge_device:get_child_list()
@@ -71,7 +72,7 @@ function M.do_refresh_all_for_bridge(driver, bridge_device)
             log.error("Error refreshing all for resource type [%s]", device_type)
           end
         end
-        M.handler_for_device_type(device_type)(
+        RefreshHandlers.handler_for_device_type(device_type)(
           driver,
           device,
           conn_status_cache,
@@ -88,7 +89,7 @@ end
 ---@param light_device HueChildDevice
 ---@param conn_status_cache table|nil
 ---@param light_status_cache table|nil
-function M.do_refresh_light(driver, light_device, conn_status_cache, light_status_cache)
+function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cache, light_status_cache)
   local light_resource_id = light_device:get_field(Fields.RESOURCE_ID)
   local hue_device_id = light_device:get_field(Fields.HUE_DEVICE_ID)
 
@@ -248,10 +249,10 @@ local function noop_refresh_handler(driver, device, ...)
   log.warn(string.format("Received Refresh capability for unknown device [%s] type [%s], ignoring", label, device_type))
 end
 
-function M.handler_for_device_type(device_type)
+function RefreshHandlers.handler_for_device_type(device_type)
   return device_type_refresh_handlers_map[device_type] or noop_refresh_handler
 end
 
-device_type_refresh_handlers_map[HueDeviceTypes.BRIDGE] = M.do_refresh_all_for_bridge
-device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = M.do_refresh_light
-return M
+device_type_refresh_handlers_map[HueDeviceTypes.BRIDGE] = RefreshHandlers.do_refresh_all_for_bridge
+device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = RefreshHandlers.do_refresh_light
+return RefreshHandlers

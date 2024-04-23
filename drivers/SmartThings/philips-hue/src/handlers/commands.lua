@@ -12,7 +12,8 @@ local utils = require "utils"
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
-local handlers = {}
+---@class CommandHandlers
+local CommandHandlers = {}
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
@@ -217,31 +218,31 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.switch_on_handler(driver, device, args)
+function CommandHandlers.switch_on_handler(driver, device, args)
   do_switch_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.switch_off_handler(driver, device, args)
+function CommandHandlers.switch_off_handler(driver, device, args)
   do_switch_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.switch_level_handler(driver, device, args)
+function CommandHandlers.switch_level_handler(driver, device, args)
   do_switch_level_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.set_color_handler(driver, device, args)
+function CommandHandlers.set_color_handler(driver, device, args)
   do_color_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.set_color_temp_handler(driver, device, args)
+function CommandHandlers.set_color_temp_handler(driver, device, args)
   do_color_temp_action(driver, device, args)
 end
 
@@ -249,8 +250,8 @@ local refresh_handlers = require "handlers.refresh_handlers"
 
 ---@param driver HueDriver
 ---@param device HueDevice
-function handlers.refresh_handler(driver, device, cmd)
+function CommandHandlers.refresh_handler(driver, device, cmd)
   refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
 end
 
-return handlers
+return CommandHandlers
