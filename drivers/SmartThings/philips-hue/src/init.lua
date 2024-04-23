@@ -27,7 +27,6 @@ local st_utils = require "st.utils"
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
-local Consts = require "consts"
 local Discovery = require "disco"
 local Fields = require "fields"
 local HueApi = require "hue.api"
