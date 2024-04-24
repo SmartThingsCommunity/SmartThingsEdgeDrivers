@@ -11,11 +11,11 @@ components:
   - id: battery
     version: 1
   - id: firmwareUpdate
-    version: 1    
+    version: 1
   - id: refresh
-    version: 1    
+    version: 1
   categories:
   - name: SmokeDetector
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: b61c7b6b-10ab-34d7-9bd5-3c0912ce129f
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Smoke_Detector

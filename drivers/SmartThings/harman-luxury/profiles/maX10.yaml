@@ -1,0 +1,29 @@
+name: maX10
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: audioVolume
+    version: 1
+  - id: audioTrackData
+    version: 1
+  - id: mediaPresets
+    version: 1
+  - id: mediaPlayback
+    version: 1
+  - id: mediaTrackControl
+    version: 1
+  - id: mediaInputSource
+    version: 1
+  - id: audioNotification 
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Speaker
+preferences:
+- preferenceId: certifiedpreferences.doNotDisturbPlayback
+  explicit: true

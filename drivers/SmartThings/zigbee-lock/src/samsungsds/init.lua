@@ -30,8 +30,6 @@ local function handle_lock_state(driver, device, value, zb_rx)
     device:emit_event(Lock.lock.locked())
   elseif value.value == DoorLock.attributes.LockState.UNLOCKED then
     device:emit_event(Lock.lock.unlocked())
-  else
-    device:emit_event(Lock.lock.unknown())
   end
 end
 
@@ -52,7 +50,7 @@ local function unlock_cmd_handler(driver, device, command)
 end
 
 local function lock_cmd_handler(driver, device, command)
-  --do nothing in lock command handler
+  -- do nothing in lock command handler
 end
 
 local refresh = function(driver, device, cmd)
