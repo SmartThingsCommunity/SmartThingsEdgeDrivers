@@ -2191,6 +2191,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/dimmer/switch"
+    deviceLabel: Matter Dimmer Switch
+    deviceTypes:
+      - id: 0x0104 # Dimmer Switch
+    deviceProfileName: switch-level
 
 matterThing:
   - id: SmartThings/MatterThing
