@@ -172,8 +172,11 @@ end
 local function do_setHue_action(driver, device, args)
 
   -- Use existing 'saturation' value for device or set to 0 and pass arg values to function 'do_color_action'
-  local currentSaturation = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME) or 0
-  args.args.color.saturation = currentSaturation
+  local currentSaturation = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME, 0)
+  args.args.color = {
+    hue = args.args.hue,
+    saturation = currentSaturation
+  }
   do_color_action(driver, device, args)
 end
 
@@ -183,8 +186,11 @@ end
 local function do_setSaturation_action(driver, device, args)
 
   -- Use existing 'hue' value for device or set to 0 and pass arg values to function 'do_color_action'
-  local currentHue = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) or 0
-  args.args.color.hue = currentHue
+  local currentHue = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME, 0)
+  args.args.color = {
+    hue = currentHue,
+    saturation = args.args.saturation
+  }
   do_color_action(driver, device, args)
 end
 
@@ -272,14 +278,14 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.set_color_hue_handler(driver, device, args)
+function handlers.set_hue_handler(driver, device, args)
   do_setHue_action(driver, device, args)
 end
 
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
-function handlers.set_color_saturation_handler(driver, device, args)
+function handlers.set_saturation_handler(driver, device, args)
   do_setSaturation_action(driver, device, args)
 end
 
