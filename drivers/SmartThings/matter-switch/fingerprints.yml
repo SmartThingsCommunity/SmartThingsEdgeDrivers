@@ -273,7 +273,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03f8
     deviceProfileName: light-color-level-1800K-6500K
-
+  - id: "4456/1011"
+    deviceLabel: Smart Light Bulb A60
+    vendorId: 0x1168
+    productId: 0x03F3
+    deviceProfileName: light-color-level-1800K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
