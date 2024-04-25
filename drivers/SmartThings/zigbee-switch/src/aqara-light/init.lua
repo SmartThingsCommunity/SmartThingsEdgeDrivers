@@ -19,7 +19,8 @@ local FINGERPRINTS = {
 local function is_aqara_products(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("aqara-light")
+      return true, subdriver
     end
   end
   return false

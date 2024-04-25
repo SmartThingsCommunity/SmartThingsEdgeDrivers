@@ -38,7 +38,8 @@ local SWITCH_POWER_FINGERPRINTS = {
 local function can_handle_zigbee_switch_power(opts, driver, device)
   for _, fingerprint in ipairs(SWITCH_POWER_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("zigbee-switch-power")
+      return true, subdriver
     end
   end
   return false
