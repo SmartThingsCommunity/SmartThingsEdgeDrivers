@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local socket = require "cosock.socket"
 
 local mdns = require "st.mdns"
@@ -9,14 +9,19 @@ local Fields = require "fields"
 local HueApi = require "hue.api"
 local utils = require "utils"
 
-local LightDiscovery = require "disco.light_disco"
-
 local SERVICE_TYPE = "_hue._tcp"
 local DOMAIN = "local"
+
+---@class DiscoveredChildDeviceHandler
+---@field public handle_discovered_device fun(driver: HueDriver, bridge_id: string, api_instance: PhilipsHueApi, resource_id: string, device_service_info: table, device_state_disco_cache: table<string, table>, st_metadata_callback: fun(driver: HueDriver, metadata: table)?)
 
 -- This `api_keys` table is an in-memory fall-back table. It gets overwritten
 -- with a reference to a driver datastore table before the Driver's `run` loop
 -- can get spun up in `init.lua`.
+---@class HueDiscovery
+---@field public api_keys table<string,string>
+---@field public disco_api_instances table<string,PhilipsHueApi>
+---@field public device_state_disco_cache table<string,table<string,any>>
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
@@ -26,105 +31,49 @@ local HueDiscovery = {
   discovery_active = false
 }
 
-local supported_resource_types = {
-  light = LightDiscovery.process_discovered_light
-}
-
-local function is_device_service_supported(svc_info)
-  return type(supported_resource_types[svc_info.rtype or ""]) == "function"
-end
-
--- "forward declarations"
-local discovered_bridge_callback, discovered_device_callback
+-- Lazy-load the discovered device handlers so we only load the code we need
+---@type table<string,DiscoveredChildDeviceHandler>
+local discovered_device_handlers = utils.lazy_handler_loader("disco")
 
 ---comment
+---@param svc_info HueServiceInfo
+---@return boolean
+local function is_device_service_supported(svc_info)
+  return discovered_device_handlers[svc_info.rtype or ""] ~= nil
+end
+
 ---@param driver HueDriver
----@param _ table
----@param should_continue function
-function HueDiscovery.discover(driver, _, should_continue)
-  if HueDiscovery.discovery_active then
-    log.info("Hue discovery already in progress, ignoring new discovery request")
+---@param bridge_id string
+---@param svc_info HueServiceInfo
+---@param device_info table
+local function discovered_device_callback(driver, bridge_id, svc_info, device_info)
+  local v1_dni = bridge_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
+  local v2_resource_id = svc_info.rid or ""
+  if driver:get_device_by_dni(v1_dni) or driver.hue_identifier_to_device_record[v2_resource_id] then return end
+
+  local api_instance = HueDiscovery.disco_api_instances[bridge_id]
+  if not api_instance then
+    log.warn("No API instance for bridge_id ", bridge_id)
     return
   end
 
-  log.info_with({ hub_logs = true }, "Starting Hue discovery")
-  HueDiscovery.discovery_active = true
-
-  while should_continue() do
-    local known_identifier_to_device_map = {}
-    for _, device in ipairs(driver:get_devices()) do
-      -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
-      local hue_identifier = utils.get_hue_rid(device) or device.device_network_id
-      known_identifier_to_device_map[hue_identifier] = device
-    end
-
-    HueDiscovery.do_mdns_scan(driver)
-    HueDiscovery.search_for_bridges(
-      driver,
-      function(hue_driver, bridge_ip, bridge_id)
-        discovered_bridge_callback(hue_driver, bridge_ip, bridge_id, known_identifier_to_device_map)
-      end
-    )
-    socket.sleep(1.0)
-  end
-  HueDiscovery.discovery_active = false
-  log.info_with({ hub_logs = true }, "Ending Hue discovery")
-end
-
----comment
----@param driver HueDriver
----@param callback fun(driver: HueDriver, ip: string, id: string)
-function HueDiscovery.search_for_bridges(driver, callback)
-  local scanned_bridges = driver.datastore.bridge_netinfo or {}
-  for bridge_id, bridge_info in pairs(scanned_bridges) do
-    if type(callback) == "function" and bridge_info ~= nil then
-      callback(driver, bridge_info.ip, bridge_id)
-    else
-      log.warn(
-        "Argument passed in `callback` position for "
-        .. "`HueDiscovery.search_for_bridges` is not a function"
-      )
-    end
-  end
-end
-
-function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
-  if driver.ignored_bridges[bridge_id] then return end
-
-  local known_identifier_to_device_map = {}
-  for _, device in ipairs(driver:get_devices()) do
-    -- the bridge won't have a parent assigned key so we give that boolean short circuit preference
-    local hue_identifier = utils.get_hue_rid(device) or device.device_network_id
-    known_identifier_to_device_map[hue_identifier] = device
-  end
-
-  local known_bridge_device = known_identifier_to_device_map[bridge_id]
-  if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
-    HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
-  end
-
-  HueDiscovery.search_bridge_for_supported_devices(
+  HueDiscovery.handle_discovered_child_device(
     driver,
     bridge_id,
-    HueDiscovery.disco_api_instances[bridge_id],
-    function(hue_driver, svc_info, device_info)
-      discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
-    end,
-    "[Discovery: " ..
-    (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") ..
-    " bridge re-scan]",
-    true
+    api_instance,
+    svc_info,
+    device_info
   )
 end
 
+-- "forward declarations"
 ---@param driver HueDriver
 ---@param bridge_ip string
 ---@param bridge_id string
----@param known_identifier_to_device_map table<string,HueDevice>
-discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identifier_to_device_map)
+local function discovered_bridge_callback(driver, bridge_ip, bridge_id)
   if driver.ignored_bridges[bridge_id] then return end
 
-  local known_bridge_device = known_identifier_to_device_map[bridge_id]
+  local known_bridge_device = driver:get_device_by_dni(bridge_id)
   if known_bridge_device and known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
     HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
   end
@@ -148,7 +97,7 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
       bridge_id,
       HueDiscovery.disco_api_instances[bridge_id],
       function(hue_driver, svc_info, device_info)
-        discovered_device_callback(hue_driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
+        discovered_device_callback(hue_driver, bridge_id, svc_info, device_info)
       end,
       "[Discovery: " ..
       (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") ..
@@ -219,10 +168,79 @@ discovered_bridge_callback = function(driver, bridge_ip, bridge_id, known_identi
   end
 end
 
+---comment
+---@param driver HueDriver
+---@param _ table
+---@param should_continue function
+function HueDiscovery.discover(driver, _, should_continue)
+  if HueDiscovery.discovery_active then
+    log.info("Hue discovery already in progress, ignoring new discovery request")
+    return
+  end
+
+  log.info_with({ hub_logs = true }, "Starting Hue discovery")
+  HueDiscovery.discovery_active = true
+
+  while should_continue() do
+    HueDiscovery.do_mdns_scan(driver)
+    HueDiscovery.search_for_bridges(
+      driver,
+      function(hue_driver, bridge_ip, bridge_id)
+        discovered_bridge_callback(hue_driver, bridge_ip, bridge_id)
+      end
+    )
+    socket.sleep(1.0)
+  end
+  HueDiscovery.discovery_active = false
+  log.info_with({ hub_logs = true }, "Ending Hue discovery")
+end
+
+---@param driver HueDriver
+---@param callback fun(driver: HueDriver, ip: string, id: string)
+function HueDiscovery.search_for_bridges(driver, callback)
+  local scanned_bridges = driver.datastore.bridge_netinfo or {}
+  for bridge_id, bridge_info in pairs(scanned_bridges) do
+    if type(callback) == "function" and bridge_info ~= nil then
+      callback(driver, bridge_info.ip, bridge_id)
+    else
+      log.warn(
+        "Argument passed in `callback` position for "
+        .. "`HueDiscovery.search_for_bridges` is not a function"
+      )
+    end
+  end
+end
+
+---@param driver HueDriver
+---@param bridge_id string
+function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_id)
+  if driver.ignored_bridges[bridge_id] then return end
+
+  local known_bridge_device = driver:get_device_by_dni(bridge_id)
+  if known_bridge_device then
+    if known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) then
+      HueDiscovery.api_keys[bridge_id] = known_bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER)
+    end
+
+    HueDiscovery.search_bridge_for_supported_devices(
+      driver,
+      bridge_id,
+      HueDiscovery.disco_api_instances[bridge_id],
+      function(hue_driver, svc_info, device_info)
+        discovered_device_callback(hue_driver, bridge_id, svc_info, device_info)
+      end,
+      "[Discovery: " ..
+      (known_bridge_device.label or bridge_id or known_bridge_device.id or "unknown bridge") ..
+      " bridge re-scan]",
+      true
+    )
+  end
+end
+
 ---@param driver HueDriver
 ---@param bridge_id string
 ---@param api_instance PhilipsHueApi
----@param callback fun(driver: HueDriver, svc_info: table, device_data: table)
+---@param callback fun(driver: HueDriver, svc_info: HueServiceInfo, device_data: table)
 ---@param log_prefix string?
 ---@param do_delete boolean?
 function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api_instance, callback, log_prefix, do_delete)
@@ -248,6 +266,8 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
   for _, device_data in ipairs(devices.data or {}) do
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
+        driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
+        driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
         device_is_joined_to_bridge[device_data.id] = true
         log.info_with(
           { hub_logs = true }, string.format(
@@ -269,7 +289,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
   end
 
   if do_delete then
-    for _, device in ipairs(driver:get_devices()) do ---@cast device HueDevice
+    for _, device in ipairs(driver:get_devices()) do
       -- We're only interested in processing child/non-bridge devices here.
       if utils.is_bridge(driver, device) then goto continue end
       local not_known_to_bridge = device_is_joined_to_bridge[device:get_field(Fields.HUE_DEVICE_ID) or ""]
@@ -287,33 +307,22 @@ end
 
 ---@param driver HueDriver
 ---@param bridge_id string
+---@param api_instance PhilipsHueApi
 ---@param svc_info table
 ---@param device_info table
----@param known_identifier_to_device_map table<string,HueDevice>
-discovered_device_callback = function(driver, bridge_id, svc_info, device_info, known_identifier_to_device_map)
-  local v1_dni = bridge_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
-  local v2_resource_id = svc_info.rid or ""
-  if known_identifier_to_device_map[v1_dni] or known_identifier_to_device_map[v2_resource_id] then return end
-
-  local api_instance = HueDiscovery.disco_api_instances[bridge_id]
-  if not api_instance then
-    log.warn("No API instance for bridge_id ", bridge_id)
-    return
-  end
-
-  supported_resource_types[svc_info.rtype](
+function HueDiscovery.handle_discovered_child_device(driver, bridge_id, api_instance, svc_info, device_info)
+  discovered_device_handlers[svc_info.rtype].handle_discovered_device(
     driver,
     bridge_id,
     api_instance,
     svc_info.rid,
     device_info,
     HueDiscovery.device_state_disco_cache,
-    known_identifier_to_device_map
+    driver.try_create_device
   )
 end
 
-
-
+---@param driver HueDriver
 function HueDiscovery.do_mdns_scan(driver)
   local bridge_netinfo = driver.datastore.bridge_netinfo
   local mdns_responses, err = mdns.discover(HueDiscovery.ServiceType, HueDiscovery.Domain)
@@ -385,6 +394,7 @@ function HueDiscovery.do_mdns_scan(driver)
       end
     end
 
+    ---@type boolean?
     local update_needed = false
     if not utils.deep_table_eq((bridge_netinfo[bridge_id] or {}), bridge_info) then
       bridge_netinfo[bridge_id] = bridge_info

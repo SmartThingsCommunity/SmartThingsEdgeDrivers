@@ -1,8 +1,10 @@
+---@enum HueDeviceTypes
 local HueDeviceTypes = {
   BRIDGE = "bridge",
   LIGHT = "light"
 }
 
+---@type table<string,HueDeviceTypes>
 local bimap = {}
 
 for key, val in pairs(HueDeviceTypes) do

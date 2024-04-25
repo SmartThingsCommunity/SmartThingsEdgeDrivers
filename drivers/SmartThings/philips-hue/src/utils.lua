@@ -1,10 +1,34 @@
-local log = require "log"
+local log = require "logjam"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
 
----@class hue.utils
+---@class utils
 local utils = {}
+
+function utils.lazy_handler_loader(parent_module)
+  local nils = {}
+  return setmetatable(
+  {},
+  {
+    __index = function(tbl, key)
+      if nils[key] then return nil end
+      if rawget(tbl, key) == nil then
+        local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
+        if success then
+          rawset(tbl, key, mod)
+        else
+          nils[key] = true
+          return nil
+        end
+      end
+
+      return rawget(tbl, key)
+    end
+  }
+)
+
+end
 
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
@@ -89,7 +113,7 @@ function utils.parse_parent_assigned_key(device)
   if not rid then
     return false, "parent-assigned child key not in the correct format", nil
   end
-  return true, rid, rtype
+  return true, rid, (rtype or HueDeviceTypes.LIGHT)
 end
 
 --- Determine whether or not a string is a valid MAC Address.
@@ -150,6 +174,15 @@ end
 ---@return string? resource_id the Hue RID, or nil on error
 ---@return string? err
 function utils.get_hue_rid(device)
+  local resource_id = device:get_field(Fields.RESOURCE_ID)
+  if resource_id then
+    return resource_id
+  end
+
+  if utils.is_dth_light(device) then
+    return nil, string.format("Can't get the Hue RID of migrated DTH light %s that hasn't completed migration", device.label)
+  end
+
   local success, rid, _ = utils.parse_parent_assigned_key(device)
   if success and rid then
     return rid
@@ -223,7 +256,7 @@ end
 --- Only checked during `added` callback, or as a later
 --- fallback check in the chain of booleans used in `is_bridge`.
 ---
----@see hue.utils.is_bridge
+---@see utils.is_bridge
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_bridge(device)
@@ -236,7 +269,7 @@ end
 --- Only checked during `added` callback, or as a later
 --- fallback check in the chain of booleans used in `is_bridge`.
 ---
----@see hue.utils.is_bridge
+---@see utils.is_bridge
 ---@param device HueDevice
 ---@return boolean
 function utils.is_edge_light(device)
@@ -259,16 +292,21 @@ end
 ---@param device HueDevice
 ---@return boolean
 function utils.is_dth_light(device)
+  if string.find(device.device_network_id, "/") then
+    return true
+  end
+
   return device.data ~= nil
       and device.data.bulbId ~= nil
       and device.data.username ~= nil
 end
 
--- build a exponential backoff time value generator
---
--- max: the maximum wait interval (not including `rand factor`)
--- inc: the rate at which to exponentially back off
--- rand: a randomization range of (-rand, rand) to be added to each interval
+--- build a exponential backoff time value generator
+---
+---@param max number the maximum wait interval (not including `rand factor`)
+---@param inc number the rate at which to exponentially back off
+---@param rand number a randomization range of (-rand, rand) to be added to each interval
+---@return fun(): number backoff generator function that returns a growing backoff each time it's called based on the params
 function utils.backoff_builder(max, inc, rand)
   local count = 0
   inc = inc or 1
@@ -289,8 +327,10 @@ function utils.backoff_builder(max, inc, rand)
   end
 end
 
+---Wrapper around the socket builder pattern that prepends log messages with a label
+---@param label string?
+---@return fun(host: string, port: number|string, wrap_ssl: boolean?) sock_builder
 function utils.labeled_socket_builder(label)
-  local log = require "log"
   local socket = require "cosock.socket"
   local ssl = require "cosock.ssl"
 
@@ -305,7 +345,7 @@ function utils.labeled_socket_builder(label)
         "%sCreating TCP socket for Hue REST Connection", label
       )
     )
-    local _ = nil
+
     local sock, err = socket.tcp()
 
     if err ~= nil or (not sock) then
@@ -317,7 +357,7 @@ function utils.labeled_socket_builder(label)
         "%sSetting TCP socket timeout for Hue REST Connection", label
       )
     )
-    _, err = sock:settimeout(60)
+    err = select(2, sock:settimeout(60))
     if err ~= nil then
       return nil, "settimeout error: " .. err
     end
@@ -327,7 +367,7 @@ function utils.labeled_socket_builder(label)
         "%sConnecting TCP socket for Hue REST Connection", label
       )
     )
-    _, err = sock:connect(host, port)
+    err = select(2, sock:connect(host, port))
     if err ~= nil then
       return nil, "Connect error: " .. err
     end
@@ -337,7 +377,7 @@ function utils.labeled_socket_builder(label)
         "%sSet Keepalive for TCP socket for Hue REST Connection", label
       )
     )
-    _, err = sock:setoption("keepalive", true)
+    err = select(2, sock:setoption("keepalive", true))
     if err ~= nil then
       return nil, "Setoption error: " .. err
     end
@@ -358,7 +398,7 @@ function utils.labeled_socket_builder(label)
           "%sPerforming SSL handshake for for Hue REST Connection", label
         )
       )
-      _, err = sock:dohandshake()
+      err = select(2, sock:dohandshake())
       if err ~= nil then
         return nil, "Error with SSL handshake: " .. err
       end
@@ -376,6 +416,9 @@ end
 
 --- From https://gist.github.com/sapphyrus/fd9aeb871e3ce966cc4b0b969f62f539
 --- MIT licensed
+---@param tbl1 table<any,any>
+---@param tbl2 table<any,any>
+---@return boolean
 function utils.deep_table_eq(tbl1, tbl2)
   if tbl1 == tbl2 then
     return true

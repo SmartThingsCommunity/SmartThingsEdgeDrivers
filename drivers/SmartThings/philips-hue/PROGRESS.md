@@ -39,3 +39,4 @@ Tracking TODOs for this refactor in this file; this is mostly to allow for creat
 - [ ] Refactor fresh handlers to be a single generic refresh handler, which is only possible once all of the above is complete.
 - [ ] Update all doc strings that claim we only support bridges and lights
 - [ ] Update any dangling utility methods/variables/symbols that use "light" when they should use "device"
+- [ ] Normalize modules to all use `<dir>/init.lua` instead of `<mod>.lua` as a sibling to `<dir>`.

@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "log"
+local log = require "logjam"
 local json = require "st.json"
 local st_utils = require "st.utils"
 
@@ -7,6 +7,7 @@ local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "fields"
 local HueApi = require "hue.api"
+local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local attribute_emitters = require "handlers.attribute_emitters"
@@ -39,7 +40,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         string.format("Event Source Connection for Hue Bridge \"%s\" established, marking online", bridge_device.label))
       bridge_device:online()
 
-      local bridge_api = bridge_device:get_field(Fields.BRIDGE_API)
+      local bridge_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
       cosock.spawn(function()
         -- We don't want to do a scan if we're already in a discovery loop,
         -- because the event source connection will open if a bridge is discovered
@@ -50,6 +51,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         if not Discovery.discovery_active then
           Discovery.scan_bridge_and_update_devices(driver, bridge_device:get_field(Fields.BRIDGE_ID))
         end
+        ---@type table<string,HueChildDevice>
         local child_device_map = {}
         local children = bridge_device:get_child_list()
         local _log = bridge_device.log or log
@@ -98,11 +100,11 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   child_device_map[hue_device_id] = nil
                 else
                   if status.status == "connected" then
-                    child_device.log.info_with({hub_logs=true}, "Marking Online after SSE Reconnect")
+                    child_device.log.info_with({ hub_logs = true }, "Marking Online after SSE Reconnect")
                     child_device:online()
                     child_device:set_field(Fields.IS_ONLINE, true)
                   elseif status.status == "connectivity_issue" then
-                    child_device.log.info_with({hub_logs=true}, "Marking Offline after SSE Reconnect")
+                    child_device.log.info_with({ hub_logs = true }, "Marking Offline after SSE Reconnect")
                     child_device:set_field(Fields.IS_ONLINE, false)
                     child_device:offline()
                   end
@@ -131,6 +133,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
       if msg and msg.data then
         local json_result = table.pack(pcall(json.decode, msg.data))
         local success = table.remove(json_result, 1)
+        ---@type HueSseEvent[], string?
         local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
@@ -147,24 +150,37 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         for _, event in ipairs(events) do
           if event.type == "update" then
             for _, update_data in ipairs(event.data) do
-              --- for a regular message from a light doing something normal,
-              --- you get the resource id of the light service for that device in
-              --- the data field
-              local light_resource_id = update_data.id
+              local light_resource_ids = {}
               if update_data.type == "zigbee_connectivity" and update_data.owner ~= nil then
-                --- zigbee connectivity messages sometimes emit with the device as the owner
-                light_resource_id = driver.device_rid_to_light_rid[update_data.owner.rid]
+                for rid, rtype in pairs(driver.services_for_device_rid[update_data.owner.rid] or {}) do
+                  if rtype == HueDeviceTypes.LIGHT then
+                    log.debug(true, string.format("Adding RID %s to light_resource_ids", rid))
+                    table.insert(light_resource_ids, rid)
+                  end
+                end
+              else
+                --- for a regular message from a light doing something normal,
+                --- you get the resource id of the light service for that device in
+                --- the data field
+                table.insert(light_resource_ids, update_data.id)
               end
-              local light_device = driver.light_id_to_device[light_resource_id]
-              if light_device ~= nil  and light_device.id ~= nil then
-                attribute_emitters.emit_light_attribute_events(light_device, update_data)
+              for _, light_resource_id in ipairs(light_resource_ids) do
+                log.debug(true, string.format("Looking for device record for %s", light_resource_id))
+                for id, device_record in pairs(driver.hue_identifier_to_device_record) do
+                  log.debug(true, string.format("Hue ID: %s, Device: %s", id, device_record.label))
+                end
+                local light_device = driver.hue_identifier_to_device_record[light_resource_id]
+                if light_device ~= nil and light_device.id ~= nil then
+                  log.debug(true, "emitting event for zigbee connectivity")
+                  attribute_emitters.emit_light_attribute_events(light_device, update_data)
+                end
               end
             end
           elseif event.type == "delete" then
             for _, delete_data in ipairs(event.data) do
               if delete_data.type == "light" then
                 local light_resource_id = delete_data.id
-                local light_device = driver.light_id_to_device[light_resource_id]
+                local light_device = driver.hue_identifier_to_device_record[light_resource_id]
                 if light_device ~= nil and light_device.id ~= nil then
                   log.info(
                     string.format(
@@ -181,6 +197,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
           elseif event.type == "add" then
             for _, add_data in ipairs(event.data) do
               if add_data.type == "light" and add_data.owner and add_data.owner.rtype == "device" then
+                ---@cast add_data HueLightInfo
                 log.info(
                   string.format(
                     "New light added to Hue Bridge \"%s\", light properties: \"%s\"",
@@ -189,7 +206,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                 )
 
                 cosock.spawn(function()
-                  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+                  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
                   if hue_api == nil then
                     local _log = bridge_device.log or log
                     _log.warn("No Hue API instance available for new light event.")
@@ -202,7 +219,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   if rest_err ~= nil then
                     log.error(
                       string.format(
-                         "Error getting device information for new light \"%s\" with device RID %s: %s",
+                        "Error getting device information for new light \"%s\" with device RID %s: %s",
                         add_data.metadata.name,
                         hue_device_rid,
                         st_utils.stringify_table(rest_err)
@@ -235,7 +252,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   end
 
                   if new_device_info == nil then
-                    log.warn("Couldn't get all device info for new light, unable to join. Try using Scan Nearby to find new Hue lights.")
+                    log.warn(
+                    "Couldn't get all device info for new light, unable to join. Try using Scan Nearby to find new Hue lights.")
                     return
                   end
 
@@ -316,7 +334,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
   for _, id in ipairs(ids_to_remove) do
     driver._lights_pending_refresh[id] = nil
   end
-  driver.stray_bulb_tx:send({
+  driver.stray_device_tx:send({
     type = StrayDeviceHelper.MessageTypes.FoundBridge,
     driver = driver,
     device = bridge_device

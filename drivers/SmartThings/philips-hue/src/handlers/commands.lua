@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Consts = require "consts"
@@ -17,6 +17,7 @@ local CommandHandlers = {}
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_switch_action(driver, device, args)
   local on = args.command == "on"
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
@@ -29,10 +30,10 @@ local function do_switch_action(driver, device, args)
     return
   end
 
-  local light_id = device:get_field(Fields.RESOURCE_ID)
-  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+  local light_id = utils.get_hue_rid(device)
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
 
-  if not (light_id or hue_api) then
+  if not (light_id and hue_api) then
     log.warn(
       string.format(
         "Could not get a proper light resource ID or API instance for %s" ..
@@ -61,6 +62,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_switch_level_action(driver, device, args)
   local level = st_utils.clamp_value(args.args.level, 1, 100)
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
@@ -73,10 +75,10 @@ local function do_switch_level_action(driver, device, args)
     return
   end
 
-  local light_id = device:get_field(Fields.RESOURCE_ID)
-  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+  local light_id = utils.get_hue_rid(device)
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
 
-  if not (light_id or hue_api) then
+  if not (light_id and hue_api) then
     log.warn(
       string.format(
         "Could not get a proper light resource ID or API instance for %s" ..
@@ -120,6 +122,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_color_action(driver, device, args)
   local hue, sat = (args.args.color.hue / 100), (args.args.color.saturation / 100)
   if hue == 1 then -- 0 and 360 degrees are equivalent in HSV, but not in our conversion function
@@ -136,10 +139,10 @@ local function do_color_action(driver, device, args)
     return
   end
 
-  local light_id = device:get_field(Fields.RESOURCE_ID)
-  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+  local light_id = utils.get_hue_rid(device)
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
 
-  if not (light_id or hue_api) then
+  if not (light_id and hue_api) then
     log.warn(
       string.format(
         "Could not get a proper light resource ID or API instance for %s" ..
@@ -198,6 +201,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_color_temp_action(driver, device, args)
   local kelvin = args.args.temperature
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
@@ -210,10 +214,10 @@ local function do_color_temp_action(driver, device, args)
     return
   end
 
-  local light_id = device:get_field(Fields.RESOURCE_ID)
-  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+  local light_id = utils.get_hue_rid(device)
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
 
-  if not (light_id or hue_api) then
+  if not (light_id and hue_api) then
     log.warn(
       string.format(
         "Could not get a proper light resource ID or API instance for %s" ..
@@ -246,42 +250,49 @@ end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.switch_on_handler(driver, device, args)
   do_switch_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.switch_off_handler(driver, device, args)
   do_switch_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.switch_level_handler(driver, device, args)
   do_switch_level_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.set_color_handler(driver, device, args)
   do_color_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.set_hue_handler(driver, device, args)
   do_setHue_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.set_saturation_handler(driver, device, args)
   do_setSaturation_action(driver, device, args)
 end
 
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 function CommandHandlers.set_color_temp_handler(driver, device, args)
   do_color_temp_action(driver, device, args)
 end
@@ -290,6 +301,7 @@ local refresh_handlers = require "handlers.refresh_handlers"
 
 ---@param driver HueDriver
 ---@param device HueDevice
+---@param cmd table?
 function CommandHandlers.refresh_handler(driver, device, cmd)
   refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
 end

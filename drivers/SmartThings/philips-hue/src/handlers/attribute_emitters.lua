@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -18,10 +18,11 @@ local hueSyncMode = capabilities[syncCapabilityId]
 ---@class AttributeEmitters
 local AttributeEmitters = {}
 
+---@type { [HueDeviceTypes]: fun(device: HueDevice, ...)}
 local device_type_emitter_map = {}
 
 ---@param light_device HueChildDevice
----@param light_repr table
+---@param light_repr HueLightInfo|HueZigbeeInfo
 local function _emit_light_events_inner(light_device, light_repr)
   if light_device ~= nil then
     if light_repr.status then
@@ -132,11 +133,10 @@ function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
     log.warn("Tried to emit light status event for device that has been deleted")
     return
   end
-  local success, result = pcall(_emit_light_events_inner, light_device, light_repr)
+  local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)
   if not success then
-    log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", result))
+    log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
   end
-  return result
 end
 
 local function noop_event_emitter(driver, device, ...)

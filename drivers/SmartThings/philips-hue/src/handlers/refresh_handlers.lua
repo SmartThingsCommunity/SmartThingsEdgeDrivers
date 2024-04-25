@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Fields = require "fields"
@@ -10,6 +10,7 @@ local utils = require "utils"
 ---@class RefreshHandlers
 local RefreshHandlers = {}
 
+---@type table<HueDeviceTypes,fun(driver: HueDriver, device: HueDevice, ...)>
 local device_type_refresh_handlers_map = {}
 
 ---@param driver HueDriver
@@ -90,8 +91,18 @@ end
 ---@param conn_status_cache table|nil
 ---@param light_status_cache table|nil
 function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cache, light_status_cache)
-  local light_resource_id = light_device:get_field(Fields.RESOURCE_ID)
+  local light_resource_id = utils.get_hue_rid(light_device)
   local hue_device_id = light_device:get_field(Fields.HUE_DEVICE_ID)
+
+  if not (light_resource_id and hue_device_id) then
+    log.error(
+      string.format(
+        "Could not get light_resource_id or hue_device_id for light %s",
+        (light_device and light_device.label) or "unknown light"
+      )
+    )
+    return
+  end
 
   local do_zigbee_request = true
   local do_light_request = true
@@ -139,7 +150,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cach
     return
   end
 
-  local hue_api = bridge_device:get_field(Fields.BRIDGE_API)
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
   local success = not (do_light_request or do_zigbee_request)
   local count = 0
   local num_attempts = 3

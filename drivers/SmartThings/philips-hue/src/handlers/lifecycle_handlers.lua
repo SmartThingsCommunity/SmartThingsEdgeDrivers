@@ -1,42 +1,22 @@
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Fields = require "fields"
+local HueDeviceTypes = require "hue_device_types"
 local utils = require "utils"
 
 -- Lazy-load the lifecycle handlers so we only load the code we need
-local inner_handlers = setmetatable(
-  {},
-  {
-    __index = function(tbl, key)
-      if rawget(tbl, key) == nil then
-        rawset(tbl, key, require(string.format("handlers.lifecycle_handlers.%s", key)))
-      end
-
-      return rawget(tbl, key)
-    end
-  }
-)
+local inner_handlers = utils.lazy_handler_loader("handlers.lifecycle_handlers")
 
 -- Lazy-load the migration handlers so we only load the code we need
-local migration_handlers = setmetatable(
-  {},
-  {
-    __index = function(tbl, key)
-      if rawget(tbl, key) == nil then
-        rawset(tbl, key, require(string.format("handlers.migration_handlers.%s", key)))
-      end
-
-      return rawget(tbl, key)
-    end
-  }
-)
+local migration_handlers = utils.lazy_handler_loader("handlers.migration_handlers")
 
 ---@class LifecycleHandlers
 local LifecycleHandlers = {}
 
 ---@param driver HueDriver
 ---@param device HueDevice
+---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_init(driver, device, ...)
   local device_type = device:get_field(Fields.DEVICE_TYPE)
   log.info(
@@ -50,6 +30,7 @@ end
 
 ---@param driver HueDriver
 ---@param device HueDevice
+---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_added(driver, device, ...)
   log.info(
     string.format("device_added for device %s", (device.label or device.id or "unknown device"))
@@ -58,6 +39,13 @@ function LifecycleHandlers.device_added(driver, device, ...)
     LifecycleHandlers.migrate_device(driver, device, ...)
   else
     local device_type = utils.determine_device_type(device)
+    if device_type ~= HueDeviceTypes.BRIDGE then
+      ---@cast device HueChildDevice
+      local resource_id = utils.get_hue_rid(device)
+      if resource_id then
+        driver.hue_identifier_to_device_record[resource_id] = device
+      end
+    end
     if not inner_handlers[device_type] then
       log.warn(
         st_utils.stringify_table(device,
@@ -88,6 +76,7 @@ end
 ---@param device HueDevice
 ---@param event string?
 ---@param _args table? unused
+---@param ... any additional arguments
 function LifecycleHandlers.initialize_device(driver, device, event, _args, ...)
   local maybe_device = driver:get_device_by_dni(device.device_network_id)
   if not (

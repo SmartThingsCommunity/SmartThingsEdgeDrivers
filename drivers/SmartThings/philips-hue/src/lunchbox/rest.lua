@@ -52,7 +52,7 @@ end
 
 ---comment
 ---@param client RestClient
----@param request Request
+---@param request HttpMessage
 ---@return integer? bytes_sent
 ---@return string? err_msg
 ---@return integer idx
@@ -70,6 +70,10 @@ local function send_request(client, request)
   return bytes, err, idx
 end
 
+---@param original_response Response
+---@param sock table
+---@return Response?
+---@return string? err
 local function parse_chunked_response(original_response, sock)
   local ChunkedTransferStates = {
     EXPECTING_CHUNK_LENGTH = "ExpectingChunkLength",
@@ -81,8 +85,8 @@ local function parse_chunked_response(original_response, sock)
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
   local original_body, err = original_response:get_body()
-  if type(original_body) ~= "string" or err ~= nil then
-    return original_body, (err or "unexpected nil in error position")
+  if original_body == nil or err ~= nil then
+    return nil, (err or "unexpected nil in error position")
   end
   local next_chunk_bytes = tonumber(original_body, 16)
   local next_chunk_body = ""
@@ -143,6 +147,10 @@ local function parse_chunked_response(original_response, sock)
   return full_response
 end
 
+---@param sock table
+---@return Response|nil
+---@return string? err
+---@return string? partial
 local function handle_response(sock)
   if api_version >= 9 then
     local response, err = Response.tcp_source(sock)
@@ -173,6 +181,12 @@ local function handle_response(sock)
   end
 end
 
+---@param client RestClient
+---@param request HttpMessage
+---@param retry_fn nil|fun(): boolean
+---@return Response? response nil on error
+---@return string? err nil on success
+---@return string? partial
 local function execute_request(client, request, retry_fn)
   if not client._active then
     return nil, "Called `execute request` on a terminated REST Client", nil
@@ -302,6 +316,12 @@ function RestClient:update_base_url(new_url)
   self.base_url = lb_utils.force_url_table(new_url)
 end
 
+---@param path string
+---@param additional_headers table<string,string>
+---@param retry_fn nil|fun(): boolean
+---@return Response? the response, nil on error
+---@return string? err error, nil on success
+---@return string? partial
 function RestClient:get(path, additional_headers, retry_fn)
   local request = Request.new("GET", path, nil):add_header(
                     "user-agent", "smartthings-lua-edge-driver"

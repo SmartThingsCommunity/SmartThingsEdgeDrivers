@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "log"
+local log = require "logjam"
 
 local Discovery = require "disco"
 local Fields = require "fields"
@@ -9,6 +9,8 @@ local utils = require "utils"
 
 local BridgeLifecycleHandlers = {}
 
+---@param driver HueDriver
+---@param device HueBridgeDevice
 function BridgeLifecycleHandlers.added(driver, device)
   log.info_with({ hub_logs = true },
     string.format("Bridge Added for device %s", (device.label or device.id or "unknown device")))
@@ -93,10 +95,13 @@ function BridgeLifecycleHandlers.added(driver, device)
   end
 end
 
+---@param driver HueDriver
+---@param device HueBridgeDevice
 function BridgeLifecycleHandlers.init(driver, device)
   log.info(
     string.format("Init Bridge for device %s", (device.label or device.id or "unknown device")))
   local device_bridge_id = device:get_field(Fields.BRIDGE_ID)
+  ---@type PhilipsHueApi
   local bridge_manager = device:get_field(Fields.BRIDGE_API) or Discovery.disco_api_instances[device_bridge_id]
 
   local ip = device:get_field(Fields.IPV4)

@@ -1,10 +1,12 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
 local Fields = require "fields"
 local StrayDeviceHelper = require "stray_device_helper"
+
+local utils = require "utils"
 
 ---@class LightMigrationHandler
 local LightMigrationHandler = {}
@@ -13,7 +15,7 @@ local LightMigrationHandler = {}
 ---@param device HueChildDevice
 ---@param lifecycle_handlers LifecycleHandlers
 ---@param parent_device_id string?
----@param hue_light_description table?
+---@param hue_light_description HueLightInfo?
 function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, parent_device_id, hue_light_description)
   local api_key = device.data.username
   local v1_id = device.data.bulbId
@@ -34,10 +36,11 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
     bridge_device = driver:get_device_by_dni(bridge_id)
   end
 
+  ---@type PhilipsHueApi
   local api_instance = (bridge_device and bridge_device:get_field(Fields.BRIDGE_API))
       or (bridge_device and Discovery.disco_api_instances[bridge_device.device_network_id])
   local light_resource = hue_light_description or
-      Discovery.device_state_disco_cache[(device:get_field(Fields.RESOURCE_ID))]
+      Discovery.device_state_disco_cache[utils.get_hue_rid(device) or v1_id] --[[@as HueLightInfo]]
 
   if not (api_instance and bridge_device and bridge_device:get_field(Fields._INIT)
         and driver.joined_bridges[bridge_id] and light_resource) then
@@ -65,8 +68,8 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
       driver.joined_bridges[bridge_id],
       bridge_dni
     ))
-    driver.stray_bulb_tx:send({
-      type = StrayDeviceHelper.MessageTypes.NewStrayLight,
+    driver.stray_device_tx:send({
+      type = StrayDeviceHelper.MessageTypes.NewStrayDevice,
       driver = driver,
       device = device
     })

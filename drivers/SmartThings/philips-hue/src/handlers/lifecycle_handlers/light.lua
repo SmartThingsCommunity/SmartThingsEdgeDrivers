@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
 
@@ -6,6 +6,7 @@ local Consts = require "consts"
 local Discovery = require "disco"
 local Fields = require "fields"
 local HueApi = require "hue.api"
+local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
@@ -21,6 +22,15 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   log.info(
     string.format("Light Added for device %s", (device.label or device.id or "unknown device")))
   local device_light_resource_id = resource_id or utils.get_hue_rid(device)
+  if not device_light_resource_id then
+    log.error(
+      string.format(
+        "Could not determine the Hue Resource ID for added light %s",
+        (device and device.label) or "unknown light"
+      )
+    )
+    return
+  end
 
   local light_info_known = (Discovery.device_state_disco_cache[device_light_resource_id] ~= nil)
   if not light_info_known then
@@ -50,14 +60,15 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     if not (Discovery.api_keys[bridge_id or {}] or key) then
       log.warn(
         "Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
-      driver.stray_bulb_tx:send({
-        type = StrayDeviceHelper.MessageTypes.NewStrayLight,
+      driver.stray_device_tx:send({
+        type = StrayDeviceHelper.MessageTypes.NewStrayDevice,
         driver = driver,
         device = device
       })
       return
     end
 
+    ---@type PhilipsHueApi
     local api_instance =
         parent_bridge:get_field(Fields.BRIDGE_API) or Discovery.disco_api_instances[bridge_id]
 
@@ -117,14 +128,15 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     log.warn(string.format(
       "Couldn't get light info for %s, marking as \"stray\"", (device.label or device.id or "unknown device")
     ))
-    driver.stray_bulb_tx:send({
-      type = StrayDeviceHelper.MessageTypes.NewStrayLight,
+    driver.stray_device_tx:send({
+      type = StrayDeviceHelper.MessageTypes.NewStrayDevice,
       driver = driver,
       device = device
     })
     return
   end
 
+  ---@type HueLightInfo
   local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
   local minimum_dimming = 2
 
@@ -142,7 +154,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   device:set_field(Fields._ADDED, true, { persist = true })
   device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
 
-  driver.light_id_to_device[device_light_resource_id] = device
+  driver.hue_identifier_to_device_record[device_light_resource_id] = device
 
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   refresh_handler(driver, device)
@@ -162,16 +174,16 @@ function LightLifecycleHandlers.init(driver, device)
     end
   end
   local device_light_resource_id =
-      device:get_field(Fields.RESOURCE_ID) or
       utils.get_hue_rid(device) or
       device.device_network_id
 
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
-  if not driver.light_id_to_device[device_light_resource_id] then
-    driver.light_id_to_device[device_light_resource_id] = device
+  if not driver.hue_identifier_to_device_record[device_light_resource_id] then
+    driver.hue_identifier_to_device_record[device_light_resource_id] = device
   end
-  if not driver.device_rid_to_light_rid[hue_device_id] then
-    driver.device_rid_to_light_rid[hue_device_id] = device_light_resource_id
+  local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
+  if not svc_rids_for_device[device_light_resource_id] then
+    svc_rids_for_device[device_light_resource_id] = HueDeviceTypes.LIGHT
   end
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
