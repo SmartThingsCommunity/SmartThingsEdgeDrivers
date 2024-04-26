@@ -171,12 +171,6 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
-#Linkind
-  - id: "4456/1024"
-    deviceLabel: Smart Plug
-    vendorId: 0x1168
-    productId: 0x0400
-    deviceProfileName: plug-binary
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -278,7 +272,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03f8
     deviceProfileName: light-color-level-1800K-6500K
-
+  - id: "4456/1024"
+    deviceLabel: Smart Plug
+    vendorId: 0x1168
+    productId: 0x0400
+    deviceProfileName: plug-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
