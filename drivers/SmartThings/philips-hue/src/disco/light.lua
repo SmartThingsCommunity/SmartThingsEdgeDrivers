@@ -29,7 +29,13 @@ local function join_light(driver, light, device_service_info, parent_device_id, 
     return
   end
 
-  local device_name = light.metadata.name
+  local device_name
+  if light.metadata.name == device_service_info.metadata.name then
+    device_name = device_service_info.metadata.name
+  else
+    device_name = string.format("%s %s", device_service_info.metadata.name, light.metadata.name)
+  end
+
   local parent_assigned_child_key = string.format("%s:%s", light.type, light.id)
 
   local st_metadata = {
@@ -86,16 +92,15 @@ local function handle_compound_light(
   ---@type HueLightInfo[]
   local all_lights = {}
   local main_light_resource_id
-  for idx, svc in ipairs(services) do
+  for _, svc in ipairs(services) do
     local light_resource, err, _ = api_instance:get_light_by_id(svc.rid)
     if not light_resource or (light_resource and #light_resource.errors > 0) or err then
       log.error(string.format("Couldn't get light resource for rid %s, skipping", svc.rid))
       goto continue
     end
     table.insert(all_lights, light_resource.data[1])
-    if light_resource.data[1].id_v1 and light_resource.data[1].id_v1 == device_service_info.id_v1 then
-      main_light_resource_id = light_resource.data[1].id_v1
-      break
+    if light_resource.data[1].service_id and light_resource.data[1].service_id == 1 then
+      main_light_resource_id = light_resource.data[1].id
     end
     ::continue::
   end
@@ -123,7 +128,7 @@ local function handle_compound_light(
       end
     else
       table.insert(grandchild_lights, {
-        device = light,
+        waiting_resource_info = light,
         join_callback = function(driver, waiting_info, parent_device)
           get_light_state_table_and_update_cache(waiting_info, parent_device.id, device_service_info, cache)
           join_light(

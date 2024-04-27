@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
@@ -68,6 +68,7 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
       driver.joined_bridges[bridge_id],
       bridge_dni
     ))
+    device:set_field(Fields.RETRY_MIGRATION, true, { persist = false })
     driver.stray_device_tx:send({
       type = StrayDeviceHelper.MessageTypes.NewStrayDevice,
       driver = driver,
@@ -139,6 +140,7 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
     vendor_provided_label = light_resource.hue_device_data.product_data.product_name,
   }
   device:try_update_metadata(new_metadata)
+  device:set_field(Fields.RETRY_MIGRATION, false, { persist = false })
 
   log.info(string.format(
     "Migration to CLIPV2 for %s complete, going through onboarding flow again",
