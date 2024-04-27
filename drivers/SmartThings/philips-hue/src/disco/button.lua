@@ -121,10 +121,16 @@ function M.handle_discovered_device(
       )
       return
     end
+
     local button_profile_ref = ""
-    if button_description.num_buttons == 4 then
+    -- For Philips Hue Smart Button device which contains only 1 button
+    if button_description.num_buttons == 1 then
+      button_profile_ref = "HueSmartButton"
+      -- For Philips Hue Dimmer Remote which contains 4 buttons
+    elseif button_description.num_buttons == 4 then
       button_profile_ref = "4-button-remote"
     end
+
     local bridge_device = driver:get_device_by_dni(bridge_id) or {}
     local st_metadata = {
       type = "EDGE_CHILD",

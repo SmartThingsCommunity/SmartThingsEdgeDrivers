@@ -13,7 +13,8 @@ local HueDeviceTypes = {
 }
 
 local SupportedNumberOfButtons = {
-  [4] = true
+  [1] = true, -- For Philips Hue Smart Button device which contains only 1 button
+  [4] = true, -- For Philips Hue Dimmer Remote which contains 4 buttons
 }
 
 local PrimaryDeviceTypes = {
