@@ -1,4 +1,4 @@
-name: HueSmartButton
+name: single-button
 components:
   - id: main
     capabilities:

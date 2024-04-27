@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local socket = require "cosock".socket
 local st_utils = require "st.utils"
 
@@ -7,13 +7,14 @@ local HueDeviceTypes = require "hue_device_types"
 ---@class DiscoveredContactSensorHandler: DiscoveredChildDeviceHandler
 local M = {}
 
+---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param device_service_info HueDeviceInfo
----@param bridge_id string
+---@param bridge_network_id string
 ---@param cache table?
 ---@return table<string,any>? description nil on error
 ---@return string? err nil on success
-local function _do_update(api_instance, device_service_info, bridge_id, cache)
+local function _do_update(driver, api_instance, device_service_info, bridge_network_id, cache)
   local rid_by_rtype = {}
   for _, svc in ipairs(device_service_info.services) do
     rid_by_rtype[svc.rtype] = svc.rid
@@ -29,10 +30,11 @@ local function _do_update(api_instance, device_service_info, bridge_id, cache)
   if battery_err then return nil, battery_err end
 
   local resource_id = rid_by_rtype[HueDeviceTypes.CONTACT]
+  local bridge_device = driver:get_device_by_dni(bridge_network_id) --[[@as HueBridgeDevice]]
   local contact_sensor_description = {
     hue_provided_name = device_service_info.metadata.name,
     id = resource_id,
-    parent_device_id = bridge_id,
+    parent_device_id = bridge_device.id,
     hue_device_id = device_service_info.id,
     hue_device_data = device_service_info,
   }
@@ -63,13 +65,14 @@ local function _do_update(api_instance, device_service_info, bridge_id, cache)
   return contact_sensor_description
 end
 
+---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param device_service_id string
----@param bridge_id string
+---@param bridge_network_id string
 ---@param cache table?
 ---@return table<string,any>? description nil on error
 ---@return string? err nil on success
-function M.update_state_for_all_device_services(api_instance, device_service_id, bridge_id, cache)
+function M.update_state_for_all_device_services(driver, api_instance, device_service_id, bridge_network_id, cache)
   log.debug("----------- Calling REST API")
   local device_service_info, err = api_instance:get_device_by_id(device_service_id)
   if err or not (device_service_info and device_service_info.data) then
@@ -78,24 +81,24 @@ function M.update_state_for_all_device_services(api_instance, device_service_id,
   end
 
   log.debug("------------ _do_update")
-  return _do_update(api_instance, device_service_info.data[1], bridge_id, cache)
+  return _do_update(driver, api_instance, device_service_info.data[1], bridge_network_id, cache)
 end
 
 ---@param driver HueDriver
----@param bridge_id string
+---@param bridge_network_id string
 ---@param api_instance PhilipsHueApi
----@param resource_id string
+---@param primary_services table<HueDeviceTypes,HueServiceInfo[]>
 ---@param device_service_info HueDeviceInfo
 ---@param device_state_disco_cache table<string, table>
 ---@param st_metadata_callback fun(driver: HueDriver, metadata: table)?
 function M.handle_discovered_device(
-    driver, bridge_id, api_instance,
-    resource_id, device_service_info,
+    driver, bridge_network_id, api_instance,
+    primary_services, device_service_info,
     device_state_disco_cache, st_metadata_callback
 )
   local err = select(2,
     _do_update(
-      api_instance, device_service_info, bridge_id, device_state_disco_cache
+      driver, api_instance, device_service_info, bridge_network_id, device_state_disco_cache
     )
   )
   if err then
@@ -104,7 +107,8 @@ function M.handle_discovered_device(
   end
 
   if type(st_metadata_callback) == "function" then
-    local bridge_device = driver:get_device_by_dni(bridge_id) or {}
+    local resource_id = primary_services[HueDeviceTypes.CONTACT][1].rid
+    local bridge_device = driver:get_device_by_dni(bridge_network_id) or {}
     local st_metadata = {
       type = "EDGE_CHILD",
       label = device_service_info.metadata.name,
