@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local socket = require "cosock".socket
 local st_utils = require "st.utils"
 
@@ -69,7 +69,7 @@ end
 ---@param cache table?
 ---@return table<string,any>? description nil on error
 ---@return string? err nil on success
-function M.update_all_services_for_sensor(api_instance, device_service_id, bridge_id, cache)
+function M.update_state_for_all_device_services(api_instance, device_service_id, bridge_id, cache)
   log.debug("----------- Calling REST API")
   local device_service_info, err = api_instance:get_device_by_id(device_service_id)
   if err or not (device_service_info and device_service_info.data) then

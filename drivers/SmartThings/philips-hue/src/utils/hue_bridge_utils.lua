@@ -147,6 +147,9 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         end
 
         for _, event in ipairs(events) do
+          -- TODO as mentioned in a paired TODO in utils.lua, we could try to add special-case handling
+          -- here to detect batched button releases. This would let us support multi-press capability
+          -- events.
           if event.type == "update" then
             for _, update_data in ipairs(event.data) do
               log.debug(true, "Received update event with type " .. update_data.type)
