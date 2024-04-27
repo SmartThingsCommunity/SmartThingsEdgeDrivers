@@ -4,7 +4,7 @@ local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
-local SensorUtils = require "utils.hue_motion_sensor_utils"
+local MultiServiceDeviceUtils = require "utils.hue_multi_service_device_utils"
 local attribute_emitters = require "handlers.attribute_emitters"
 local utils = require "utils"
 
@@ -150,6 +150,37 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
       (bridge_device and bridge_device.label) or "Unknown Bridge")
   )
 end
+-- TODO: [Rule of three](https://en.wikipedia.org/wiki/Rule_of_three_(computer_programming)), this can be generalized.
+-- At this point I'm pretty confident that we can actually just have a single generic
+-- "refresh device" function and a "refresh all devices" function.
+function RefreshHandlers.do_refresh_button(driver, button_device, _, skip_zigbee)
+  local hue_device_id = button_device:get_field(Fields.HUE_DEVICE_ID)
+  local bridge_id = button_device.parent_device_id or button_device:get_field(Fields.PARENT_DEVICE_ID)
+  local bridge_device = driver:get_device_info(bridge_id)
+
+  if not bridge_device then
+    log.warn("Couldn't get Hue bridge for light " .. (button_device.label or button_device.id or "unknown device"))
+    return
+  end
+
+  if not bridge_device:get_field(Fields._INIT) then
+    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    driver._devices_pending_refresh[button_device.id] = button_device
+    return
+  end
+
+  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
+  if skip_zigbee ~= true then
+    _refresh_zigbee(button_device, hue_api)
+  end
+
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.BUTTON, hue_api, hue_device_id, bridge_id)
+  if err then
+    log.error(string.format("Error refreshing motion sensor %s: %s", (button_device and button_device.label), err))
+  end
+
+  attribute_emitters.emitter_for_device_type(HueDeviceTypes.BUTTON)(button_device, sensor_info)
+end
 
 -- TODO: Refresh handlers need to be optimized/generalized for devices with multiple services
 function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip_zigbee)
@@ -173,7 +204,7 @@ function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip
     _refresh_zigbee(sensor_device, hue_api)
   end
 
-  local sensor_info, err = SensorUtils.get_all_service_states(HueDeviceTypes.MOTION, hue_api, hue_device_id, bridge_id)
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.MOTION, hue_api, hue_device_id, bridge_id)
   if err then
     log.error(string.format("Error refreshing motion sensor %s: %s", (sensor_device and sensor_device.label), err))
   end
@@ -202,7 +233,7 @@ function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, ski
     _refresh_zigbee(sensor_device, hue_api)
   end
 
-  local sensor_info, err = SensorUtils.get_all_service_states(HueDeviceTypes.CONTACT, hue_api, hue_device_id, bridge_id)
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.CONTACT, hue_api, hue_device_id, bridge_id)
   if err then
     log.error(string.format("Error refreshing contact sensor %s: %s", (sensor_device and sensor_device.label), err))
   end
@@ -319,7 +350,8 @@ end
 
 -- TODO: Generalize this like the other handlers, and maybe even separate out non-primary services
 device_type_refresh_handlers_map[HueDeviceTypes.BRIDGE] = RefreshHandlers.do_refresh_all_for_bridge
+device_type_refresh_handlers_map[HueDeviceTypes.BUTTON] = RefreshHandlers.do_refresh_button
+device_type_refresh_handlers_map[HueDeviceTypes.CONTACT] = RefreshHandlers.do_refresh_contact_sensor
 device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = RefreshHandlers.do_refresh_light
 device_type_refresh_handlers_map[HueDeviceTypes.MOTION] = RefreshHandlers.do_refresh_motion_sensor
-device_type_refresh_handlers_map[HueDeviceTypes.CONTACT] = RefreshHandlers.do_refresh_contact_sensor
 return RefreshHandlers

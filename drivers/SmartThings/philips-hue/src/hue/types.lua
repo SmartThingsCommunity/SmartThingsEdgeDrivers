@@ -58,6 +58,10 @@
 ---@field public enabled boolean
 ---@field public light { light_level: number, light_level_valid: boolean, light_level_report: { light_level: number, changed: string } }
 
+---@class HueButtonInfo: HueResourceInfo
+---@field public metadata { control_id: integer }
+---@field public button { repeat_interval: integer, last_event: string?, button_report: { updated: string, event: string }?, event_values: string[] }
+
 ---@class HueContactInfo: HueResourceInfo
 ---@field public enabled boolean
 ---@field public contact_report { changed: string, state: string }

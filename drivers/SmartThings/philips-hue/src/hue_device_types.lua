@@ -1,6 +1,7 @@
 ---@enum HueDeviceTypes
 local HueDeviceTypes = {
   BRIDGE = "bridge",
+  BUTTON = "button",
   CONTACT = "contact",
   DEVICE_POWER = "device_power",
   LIGHT = "light",
@@ -11,7 +12,12 @@ local HueDeviceTypes = {
   ZIGBEE_CONNECTIVITY = "zigbee_connectivity"
 }
 
+local SupportedNumberOfButtons = {
+  [4] = true
+}
+
 local PrimaryDeviceTypes = {
+  [HueDeviceTypes.BUTTON] = true,
   [HueDeviceTypes.CONTACT] = true,
   [HueDeviceTypes.LIGHT] = true,
   [HueDeviceTypes.MOTION] = true
@@ -30,6 +36,10 @@ end
 
 function HueDeviceTypes.is_valid_device_type(device_type_str)
   return bimap[device_type_str] ~= nil
+end
+
+function HueDeviceTypes.supports_button_configuration(button_description)
+  return SupportedNumberOfButtons[button_description.num_buttons]
 end
 
 return HueDeviceTypes

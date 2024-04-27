@@ -124,6 +124,60 @@ function AttributeEmitters.connectivity_update(child_device, zigbee_status)
   end
 end
 
+function AttributeEmitters.emit_button_attribute_events(button_device, button_info)
+  if button_device == nil or (button_device and button_device.id == nil) then
+    log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if button_info.power_state then
+    log.debug(true, "emit power")
+    button_device:emit_event(
+      capabilities.battery.battery(
+        st_utils.clamp_value(button_info.power_state.battery_level, 0, 100)
+      )
+    )
+  end
+
+  local button_idx_map = button_device:get_field(Fields.BUTTON_INDEX_MAP)
+  if not button_idx_map then
+    log.error(
+      string.format(
+        "Button ID to Button Index map lost, " ..
+        "cannot find componenet to emit attribute event on for button [%s]",
+        (button_device and button_device.lable) or "unknown button"
+      )
+    )
+  end
+
+  local idx = button_idx_map[button_info.id] or 1
+  local component_idx
+  if idx == 1 then
+    component_idx = "main"
+  else
+    component_idx = string.format("button%s", idx)
+  end
+
+  local button_report = button_info.button.button_report or { event = "" }
+
+  if button_report.event == "long_press" and not button_device:get_field("button_held") then
+    button_device:set_field("button_held", true)
+    button_device.profile.components[component_idx]:emit_event(
+      capabilities.button.button.held({state_change = true})
+    )
+  end
+
+  if button_report.event == "long_release" and button_device:get_field("button_held") then
+    button_device:set_field("button_held", false)
+  end
+
+  if button_report.event == "short_release" and not button_device:get_field("button_held") then
+    button_device.profile.components[component_idx]:emit_event(
+      capabilities.button.button.pushed({state_change = true})
+    )
+  end
+end
+
 function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, sensor_info)
   if sensor_device == nil or (sensor_device and sensor_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")
@@ -224,8 +278,9 @@ function AttributeEmitters.emitter_for_device_type(device_type)
 end
 
 -- TODO: Generalize this like the other handlers, and maybe even separate out non-primary services
+device_type_emitter_map[HueDeviceTypes.BUTTON] = AttributeEmitters.emit_button_attribute_events
+device_type_emitter_map[HueDeviceTypes.CONTACT] = AttributeEmitters.emit_contact_sensor_attribute_events
 device_type_emitter_map[HueDeviceTypes.LIGHT] = AttributeEmitters.emit_light_attribute_events
 device_type_emitter_map[HueDeviceTypes.MOTION] = AttributeEmitters.emit_motion_sensor_attribute_events
-device_type_emitter_map[HueDeviceTypes.CONTACT] = AttributeEmitters.emit_contact_sensor_attribute_events
 
 return AttributeEmitters

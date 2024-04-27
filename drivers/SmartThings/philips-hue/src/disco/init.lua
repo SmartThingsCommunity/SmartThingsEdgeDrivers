@@ -270,7 +270,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
       if is_device_service_supported(svc_info) then
         driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
         driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
-        if HueDeviceTypes.can_join_device_for_service(svc_info.rtype) then
+        if HueDeviceTypes.can_join_device_for_service(svc_info.rtype) and primary_device_service == nil then
           primary_device_service = svc_info
           device_is_joined_to_bridge[device_data.id] = true
         end
