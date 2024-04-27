@@ -340,6 +340,13 @@ function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
   return self:get_rtype_by_rid("zigbee_connectivity", zigbee_resource_id)
 end
 
+---@param button_resource_id string
+---@return HueResourceResponse<HueButtonInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_button_by_id(button_resource_id)
+  return self:get_rtype_by_rid("button", button_resource_id)
+end
+
 ---@param contact_resource_id string
 ---@return HueResourceResponse<HueContactInfo>?
 ---@return string? err nil on success
