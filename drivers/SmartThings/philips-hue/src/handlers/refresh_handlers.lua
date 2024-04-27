@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Fields = require "fields"
@@ -85,7 +85,7 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
       local child_devices = bridge_device:get_child_list()
 
       if not bridge_device:get_field(Fields._INIT) then
-        log.warn("Bridge for lights not yet initialized, can't refresh yet.")
+        log.warn("Bridge for devices not yet initialized, can't refresh yet.")
         return
       end
 
@@ -153,18 +153,23 @@ end
 -- TODO: [Rule of three](https://en.wikipedia.org/wiki/Rule_of_three_(computer_programming)), this can be generalized.
 -- At this point I'm pretty confident that we can actually just have a single generic
 -- "refresh device" function and a "refresh all devices" function.
+---@param driver HueDriver
+---@param button_device HueChildDevice
+---@param _ any
+---@param skip_zigbee boolean
+---@return table<string, any>?
 function RefreshHandlers.do_refresh_button(driver, button_device, _, skip_zigbee)
   local hue_device_id = button_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = button_device.parent_device_id or button_device:get_field(Fields.PARENT_DEVICE_ID)
   local bridge_device = utils.get_hue_bridge_for_device(driver, button_device, bridge_id)
 
   if not bridge_device then
-    log.warn("Couldn't get Hue bridge for light " .. (button_device.label or button_device.id or "unknown device"))
+    log.warn("Couldn't get Hue bridge for button device " .. (button_device.label or button_device.id or "unknown device"))
     return
   end
 
   if not bridge_device:get_field(Fields._INIT) then
-    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    log.warn("Bridge for button device not yet initialized, can't refresh yet.")
     driver._devices_pending_refresh[button_device.id] = button_device
     return
   end
@@ -180,21 +185,27 @@ function RefreshHandlers.do_refresh_button(driver, button_device, _, skip_zigbee
   end
 
   attribute_emitters.emitter_for_device_type(HueDeviceTypes.BUTTON)(button_device, sensor_info)
+  return sensor_info
 end
 
 -- TODO: Refresh handlers need to be optimized/generalized for devices with multiple services
+---@param driver HueDriver
+---@param sensor_device HueChildDevice
+---@param _ any
+---@param skip_zigbee boolean
+---@return table<string, any>?
 function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip_zigbee)
   local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
   local bridge_device = utils.get_hue_bridge_for_device(driver, sensor_device, bridge_id)
 
   if not bridge_device then
-    log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
+    log.warn("Couldn't get Hue bridge for motion_sensor " .. (sensor_device.label or sensor_device.id or "unknown device"))
     return
   end
 
   if not bridge_device:get_field(Fields._INIT) then
-    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    log.warn("Bridge for motion_sensor not yet initialized, can't refresh yet.")
     driver._devices_pending_refresh[sensor_device.id] = sensor_device
     return
   end
@@ -210,20 +221,26 @@ function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip
   end
 
   attribute_emitters.emitter_for_device_type(HueDeviceTypes.MOTION)(sensor_device, sensor_info)
+  return sensor_info
 end
 
+---@param driver HueDriver
+---@param sensor_device HueChildDevice
+---@param _ any
+---@param skip_zigbee boolean
+---@return table<string, any>?
 function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, skip_zigbee)
   local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
   local bridge_device = utils.get_hue_bridge_for_device(driver, sensor_device, bridge_id)
 
   if not bridge_device then
-    log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
+    log.warn("Couldn't get Hue bridge for contact sensor " .. (sensor_device.label or sensor_device.id or "unknown device"))
     return
   end
 
   if not bridge_device:get_field(Fields._INIT) then
-    log.warn("Bridge for light not yet initialized, can't refresh yet.")
+    log.warn("Bridge for contact sensor not yet initialized, can't refresh yet.")
     driver._devices_pending_refresh[sensor_device.id] = sensor_device
     return
   end
@@ -239,12 +256,14 @@ function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, ski
   end
 
   attribute_emitters.emitter_for_device_type(HueDeviceTypes.CONTACT)(sensor_device, sensor_info)
+  return sensor_info
 end
 
 ---@param driver HueDriver
 ---@param light_device HueChildDevice
 ---@param light_status_cache table|nil
 ---@param skip_zigbee boolean?
+---@return HueLightInfo? light_info
 function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cache, skip_zigbee)
   local light_resource_id = utils.get_hue_rid(light_device)
   local hue_device_id = light_device:get_field(Fields.HUE_DEVICE_ID)
@@ -326,7 +345,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
               light_device:set_field(Fields.GAMUT, light_info.color.gamut_type, { persist = true })
             end
             attribute_emitters.emit_light_attribute_events(light_device, light_info)
-            success = true
+            return light_info
           end
         end
       end
@@ -335,7 +354,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
     if not success then
       cosock.socket.sleep(backoff_generator())
     end
-  until success or count >= num_attempts
+  until count >= num_attempts
 end
 
 local function noop_refresh_handler(driver, device, ...)
