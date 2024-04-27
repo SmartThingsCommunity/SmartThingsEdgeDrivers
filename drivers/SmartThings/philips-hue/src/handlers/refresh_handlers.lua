@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Fields = require "fields"
@@ -156,7 +156,7 @@ end
 function RefreshHandlers.do_refresh_button(driver, button_device, _, skip_zigbee)
   local hue_device_id = button_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = button_device.parent_device_id or button_device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(bridge_id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, button_device, bridge_id)
 
   if not bridge_device then
     log.warn("Couldn't get Hue bridge for light " .. (button_device.label or button_device.id or "unknown device"))
@@ -174,7 +174,7 @@ function RefreshHandlers.do_refresh_button(driver, button_device, _, skip_zigbee
     _refresh_zigbee(button_device, hue_api)
   end
 
-  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.BUTTON, hue_api, hue_device_id, bridge_id)
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(driver, HueDeviceTypes.BUTTON, hue_api, hue_device_id, bridge_device.device_network_id)
   if err then
     log.error(string.format("Error refreshing motion sensor %s: %s", (button_device and button_device.label), err))
   end
@@ -186,7 +186,7 @@ end
 function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip_zigbee)
   local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(bridge_id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, sensor_device, bridge_id)
 
   if not bridge_device then
     log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
@@ -204,7 +204,7 @@ function RefreshHandlers.do_refresh_motion_sensor(driver, sensor_device, _, skip
     _refresh_zigbee(sensor_device, hue_api)
   end
 
-  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.MOTION, hue_api, hue_device_id, bridge_id)
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(driver, HueDeviceTypes.MOTION, hue_api, hue_device_id, bridge_device.device_network_id)
   if err then
     log.error(string.format("Error refreshing motion sensor %s: %s", (sensor_device and sensor_device.label), err))
   end
@@ -215,7 +215,7 @@ end
 function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, skip_zigbee)
   local hue_device_id = sensor_device:get_field(Fields.HUE_DEVICE_ID)
   local bridge_id = sensor_device.parent_device_id or sensor_device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(bridge_id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, sensor_device, bridge_id)
 
   if not bridge_device then
     log.warn("Couldn't get Hue bridge for light " .. (sensor_device.label or sensor_device.id or "unknown device"))
@@ -233,7 +233,7 @@ function RefreshHandlers.do_refresh_contact_sensor(driver, sensor_device, _, ski
     _refresh_zigbee(sensor_device, hue_api)
   end
 
-  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(HueDeviceTypes.CONTACT, hue_api, hue_device_id, bridge_id)
+  local sensor_info, err = MultiServiceDeviceUtils.get_all_service_states(driver, HueDeviceTypes.CONTACT, hue_api, hue_device_id, bridge_device.device_network_id)
   if err then
     log.error(string.format("Error refreshing contact sensor %s: %s", (sensor_device and sensor_device.label), err))
   end
@@ -274,7 +274,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
   end
 
   local bridge_id = light_device.parent_device_id or light_device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(bridge_id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, light_device, bridge_id)
 
   if not bridge_device then
     log.warn("Couldn't get Hue bridge for light " .. (light_device.label or light_device.id or "unknown device"))
