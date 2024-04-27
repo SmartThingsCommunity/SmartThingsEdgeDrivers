@@ -354,4 +354,5 @@ device_type_refresh_handlers_map[HueDeviceTypes.BUTTON] = RefreshHandlers.do_ref
 device_type_refresh_handlers_map[HueDeviceTypes.CONTACT] = RefreshHandlers.do_refresh_contact_sensor
 device_type_refresh_handlers_map[HueDeviceTypes.LIGHT] = RefreshHandlers.do_refresh_light
 device_type_refresh_handlers_map[HueDeviceTypes.MOTION] = RefreshHandlers.do_refresh_motion_sensor
+
 return RefreshHandlers
