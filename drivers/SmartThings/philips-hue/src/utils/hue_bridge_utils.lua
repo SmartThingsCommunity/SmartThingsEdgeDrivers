@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "logjam"
+local log = require "log"
 local json = require "st.json"
 local st_utils = require "st.utils"
 

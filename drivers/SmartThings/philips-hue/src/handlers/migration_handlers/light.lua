@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
@@ -29,7 +29,7 @@ function LightMigrationHandler.migrate(driver, device, lifecycle_handlers, paren
 
   local bridge_device = nil
   if parent_device_id ~= nil then
-    bridge_device = driver:get_device_info(parent_device_id, false)
+    bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
   end
 
   if not bridge_device then
