@@ -89,10 +89,9 @@ local function _setup_forced_strays(forced_stray_types)
 end
 
 function hue_debug.enable_dbg_config(template, config)
-  assert(__DBG == nil and template.__running ~= true, "enable_dbg_config must be called before driver run and only once")
-  config = config or {}
-  __DBG = config
+  assert(template.__running ~= true, "enable_dbg_config must be called before driver run and only once")
 
+  config = config or {}
   if config.delay_bridges then
     _setup_delayed_bridges(template, config.bridge_delay_time or 10)
   end

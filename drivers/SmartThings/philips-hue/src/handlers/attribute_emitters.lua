@@ -125,6 +125,17 @@ local function _emit_light_events_inner(light_device, light_repr)
   end
 end
 
+function AttributeEmitters.connectivity_update(child_device, zigbee_status)
+  if zigbee_status.status == "connected" then
+    child_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
+    child_device:online()
+    child_device:set_field(Fields.IS_ONLINE, true)
+  elseif zigbee_status.status == "connectivity_issue" then
+    child_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
+    child_device:set_field(Fields.IS_ONLINE, false)
+    child_device:offline()
+  end
+end
 
 ---@param light_device HueChildDevice
 ---@param light_repr table

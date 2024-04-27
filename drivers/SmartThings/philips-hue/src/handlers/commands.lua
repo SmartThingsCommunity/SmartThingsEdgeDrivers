@@ -174,6 +174,7 @@ end
 -- Function to allow changes to "setHue" attribute to Philips Hue light devices
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_setHue_action(driver, device, args)
 
   -- Use existing 'saturation' value for device or set to 0 and pass arg values to function 'do_color_action'
@@ -188,6 +189,7 @@ end
 -- Function to allow changes to "setSaturation" attribute to Philips Hue light devices
 ---@param driver HueDriver
 ---@param device HueChildDevice
+---@param args table
 local function do_setSaturation_action(driver, device, args)
 
   -- Use existing 'hue' value for device or set to 0 and pass arg values to function 'do_color_action'

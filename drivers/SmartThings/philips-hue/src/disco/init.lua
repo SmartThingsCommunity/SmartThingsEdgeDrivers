@@ -7,6 +7,8 @@ local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueApi = require "hue.api"
+local HueDeviceTypes = require "hue_device_types"
+
 local utils = require "utils"
 
 local SERVICE_TYPE = "_hue._tcp"
@@ -263,27 +265,31 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
 
   local device_is_joined_to_bridge = {}
   for _, device_data in ipairs(devices.data or {}) do
+    local primary_device_service
     for _, svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
         driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
         driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
-        device_is_joined_to_bridge[device_data.id] = true
-        log.info_with(
-          { hub_logs = true }, string.format(
-          prefix ..
-          "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
-          svc_info.rid, svc_info.rtype, device_data.id, device_data.id_v1, device_data.metadata.name
-          )
-        )
-        if type(callback) == "function" then
-          callback(driver, svc_info, device_data)
-        else
-          log.warn(
-            prefix .. "Argument passed in `callback` position for "
-            .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
-          )
+        if HueDeviceTypes.can_join_device_for_service(svc_info.rtype) then
+          primary_device_service = svc_info
+          device_is_joined_to_bridge[device_data.id] = true
         end
       end
+    end
+    if primary_device_service and type(callback) == "function" then
+      log.info_with(
+        { hub_logs = true }, string.format(
+        prefix ..
+        "Processing supported svc [rid: %s | type: %s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
+        primary_device_service.rid, primary_device_service.rtype, device_data.id, device_data.id_v1, device_data.metadata.name
+        )
+      )
+      callback(driver, primary_device_service, device_data)
+    else
+      log.warn(
+        prefix .. "Argument passed in `callback` position for "
+        .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
+      )
     end
   end
 
@@ -297,7 +303,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
       local is_child_of_bridge = parent_bridge_device and (parent_bridge_device:get_field(Fields.BRIDGE_ID) == bridge_id)
       if parent_bridge_device and is_child_of_bridge and not not_known_to_bridge and device.id then
         device.log.info(string.format("Device is no longer joined to Hue Bridge %q, deleting", parent_bridge_device.label))
-        driver:do_hue_light_delete(device)
+        driver:do_hue_child_delete(device)
       end
       ::continue::
     end

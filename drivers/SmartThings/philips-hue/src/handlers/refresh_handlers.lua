@@ -13,6 +13,69 @@ local RefreshHandlers = {}
 ---@type table<HueDeviceTypes,fun(driver: HueDriver, device: HueDevice, ...)>
 local device_type_refresh_handlers_map = {}
 
+local function _refresh_zigbee(device, hue_api, zigbee_status)
+  local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
+  local zigbee_resource_id
+  if not zigbee_status then
+    local rest_resp, rest_err = hue_api:get_device_by_id(hue_device_id)
+    if rest_err ~= nil then
+      log.error_with({ hub_logs = true }, rest_err)
+      return
+    end
+
+    if rest_resp ~= nil then
+      if #rest_resp.errors > 0 then
+        for _, err in ipairs(rest_resp.errors) do
+          log.error_with({ hub_logs = true }, "Error in Hue API response: " .. err.description)
+        end
+        return
+      end
+
+      for _, hue_device in ipairs(rest_resp.data) do
+        for _, svc_info in ipairs(hue_device.services or {}) do
+          if svc_info.rtype == "zigbee_connectivity" then
+            zigbee_resource_id = svc_info.rid
+          end
+        end
+      end
+    end
+
+    if zigbee_resource_id ~= nil then
+      rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
+      if rest_err ~= nil then
+        log.error_with({ hub_logs = true }, rest_err)
+        return
+      end
+
+      if rest_resp ~= nil then
+        if #rest_resp.errors > 0 then
+          for _, err in ipairs(rest_resp.errors) do
+            log.error_with({ hub_logs = true }, "Error in Hue API response: " .. err.description)
+          end
+          return
+        end
+
+        for _, zigbee_svc in ipairs(rest_resp.data) do
+          if zigbee_svc.owner and zigbee_svc.owner.rid == hue_device_id then
+            zigbee_status = zigbee_svc
+            break
+          end
+        end
+      end
+    end
+  end
+
+  if zigbee_status.status == "connected" then
+    device.log.debug(string.format("Zigbee Status for %s is connected", device.label))
+    device:online()
+    device:set_field(Fields.IS_ONLINE, true)
+  else
+    device.log.debug(string.format("Zigbee Status for %s is not connected", device.label))
+    device:set_field(Fields.IS_ONLINE, false)
+    device:offline()
+  end
+end
+
 ---@param driver HueDriver
 ---@param bridge_device HueBridgeDevice
 function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
@@ -73,11 +136,12 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
             log.error("Error refreshing all for resource type [%s]", device_type)
           end
         end
+        _refresh_zigbee(device, hue_api, conn_status_cache[device:get_field(Fields.HUE_DEVICE_ID)])
         RefreshHandlers.handler_for_device_type(device_type)(
           driver,
           device,
-          conn_status_cache,
-          statuses_by_device_type[device_type]
+          statuses_by_device_type[device_type],
+          true
         )
       end
     end,
@@ -88,9 +152,9 @@ end
 
 ---@param driver HueDriver
 ---@param light_device HueChildDevice
----@param conn_status_cache table|nil
 ---@param light_status_cache table|nil
-function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cache, light_status_cache)
+---@param skip_zigbee boolean?
+function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cache, skip_zigbee)
   local light_resource_id = utils.get_hue_rid(light_device)
   local hue_device_id = light_device:get_field(Fields.HUE_DEVICE_ID)
 
@@ -103,25 +167,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cach
     )
     return
   end
-
-  local do_zigbee_request = true
   local do_light_request = true
-
-  if type(conn_status_cache) == "table" then
-    local zigbee_status = conn_status_cache[hue_device_id]
-    if zigbee_status ~= nil and zigbee_status.status ~= nil then
-      do_zigbee_request = false
-      if zigbee_status.status == "connected" then
-        light_device.log.debug(string.format("Zigbee Status for %s is connected", light_device.label))
-        light_device:online()
-        light_device:set_field(Fields.IS_ONLINE, true)
-      else
-        light_device.log.debug(string.format("Zigbee Status for %s is not connected", light_device.label))
-        light_device:set_field(Fields.IS_ONLINE, false)
-        light_device:offline()
-      end
-    end
-  end
 
   if type(light_status_cache) == "table" then
     local light_info = light_status_cache[hue_device_id]
@@ -146,15 +192,18 @@ function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cach
 
   if not bridge_device:get_field(Fields._INIT) then
     log.warn("Bridge for light not yet initialized, can't refresh yet.")
-    driver._lights_pending_refresh[light_device.id] = light_device
+    driver._devices_pending_refresh[light_device.id] = light_device
     return
   end
 
   local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
-  local success = not (do_light_request or do_zigbee_request)
+  if skip_zigbee ~= true then
+    _refresh_zigbee(light_device, hue_api)
+  end
+
+  local success = not (do_light_request)
   local count = 0
   local num_attempts = 3
-  local zigbee_resource_id
   local rest_resp, rest_err
   local backoff_generator = utils.backoff_builder(10, 0.1, 0.1)
   --- this loop is a rate-limit dodge.
@@ -165,62 +214,6 @@ function RefreshHandlers.do_refresh_light(driver, light_device, conn_status_cach
   --- the information for the light that we expect to getting the info for.
   repeat
     count = count + 1
-    if do_zigbee_request then
-      rest_resp, rest_err = hue_api:get_device_by_id(hue_device_id)
-      if rest_err ~= nil then
-        log.error_with({ hub_logs = true }, rest_err)
-        goto continue
-      end
-
-      if rest_resp ~= nil then
-        if #rest_resp.errors > 0 then
-          for _, err in ipairs(rest_resp.errors) do
-            log.error_with({ hub_logs = true }, "Error in Hue API response: " .. err.description)
-          end
-          goto continue
-        end
-
-        for _, hue_device in ipairs(rest_resp.data) do
-          for _, svc_info in ipairs(hue_device.services or {}) do
-            if svc_info.rtype == "zigbee_connectivity" then
-              zigbee_resource_id = svc_info.rid
-            end
-          end
-        end
-      end
-
-      if zigbee_resource_id ~= nil then
-        rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
-        if rest_err ~= nil then
-          log.error_with({ hub_logs = true }, rest_err)
-          goto continue
-        end
-
-        if rest_resp ~= nil then
-          if #rest_resp.errors > 0 then
-            for _, err in ipairs(rest_resp.errors) do
-              log.error_with({ hub_logs = true }, "Error in Hue API response: " .. err.description)
-            end
-            goto continue
-          end
-
-          for _, zigbee_svc in ipairs(rest_resp.data) do
-            if zigbee_svc.owner and zigbee_svc.owner.rid == hue_device_id then
-              if zigbee_svc.status and zigbee_svc.status == "connected" then
-                light_device.log.debug(string.format("Zigbee Status for %s is connected", light_device.label))
-                light_device:online()
-                light_device:set_field(Fields.IS_ONLINE, true)
-              else
-                light_device.log.debug(string.format("Zigbee Status for %s is not connected", light_device.label))
-                light_device:set_field(Fields.IS_ONLINE, false)
-                light_device:offline()
-              end
-            end
-          end
-        end
-      end
-    end
-
     if do_light_request and light_device:get_field(Fields.IS_ONLINE) then
       rest_resp, rest_err = hue_api:get_light_by_id(light_resource_id)
       if rest_err ~= nil then

@@ -7,7 +7,6 @@ local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "fields"
 local HueApi = require "hue.api"
-local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local attribute_emitters = require "handlers.attribute_emitters"
@@ -137,7 +136,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
-          log.error_with({ hub_logs = true },
+          log.error_with({ hub_logs = true, },
             "Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
           return
         end
@@ -150,47 +149,51 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         for _, event in ipairs(events) do
           if event.type == "update" then
             for _, update_data in ipairs(event.data) do
-              local light_resource_ids = {}
+              log.debug(true, "Received update event with type " .. update_data.type)
+              local resource_ids = {}
               if update_data.type == "zigbee_connectivity" and update_data.owner ~= nil then
                 for rid, rtype in pairs(driver.services_for_device_rid[update_data.owner.rid] or {}) do
-                  if rtype == HueDeviceTypes.LIGHT then
-                    log.debug(string.format("Adding RID %s to light_resource_ids", rid))
-                    table.insert(light_resource_ids, rid)
+                  if driver.hue_identifier_to_device_record[rid] then
+                    log.debug(string.format("Adding RID %s to resource_ids", rid))
+                    table.insert(resource_ids, rid)
                   end
                 end
               else
                 --- for a regular message from a light doing something normal,
                 --- you get the resource id of the light service for that device in
                 --- the data field
-                table.insert(light_resource_ids, update_data.id)
+                table.insert(resource_ids, update_data.id)
               end
-              for _, light_resource_id in ipairs(light_resource_ids) do
-                log.debug(string.format("Looking for device record for %s", light_resource_id))
-                for id, device_record in pairs(driver.hue_identifier_to_device_record) do
-                  log.debug(string.format("Hue ID: %s, Device: %s", id, device_record.label))
-                end
-                local light_device = driver.hue_identifier_to_device_record[light_resource_id]
-                if light_device ~= nil and light_device.id ~= nil then
-                  log.debug("emitting event for zigbee connectivity")
-                  attribute_emitters.emit_light_attribute_events(light_device, update_data)
+              for _, resource_id in ipairs(resource_ids) do
+                log.debug(true, string.format("Looking for device record for %s", resource_id))
+                local child_device = driver.hue_identifier_to_device_record[resource_id]
+                if child_device ~= nil and child_device.id ~= nil then
+                  if update_data.type == "zigbee_connectivity" then
+                    log.debug("emitting event for zigbee connectivity")
+                    attribute_emitters.connectivity_update(child_device, update_data)
+                  else
+                    local device_type = utils.determine_device_type(child_device)
+                    log.debug(true, st_utils.stringify_table({device_type = device_type, update_data}, "updating", true))
+                    attribute_emitters.emitter_for_device_type(device_type)(child_device, update_data)
+                  end
                 end
               end
             end
           elseif event.type == "delete" then
             for _, delete_data in ipairs(event.data) do
               if delete_data.type == "light" then
-                local light_resource_id = delete_data.id
-                local light_device = driver.hue_identifier_to_device_record[light_resource_id]
-                if light_device ~= nil and light_device.id ~= nil then
+                local resource_id = delete_data.id
+                local child_device = driver.hue_identifier_to_device_record[resource_id]
+                if child_device ~= nil and child_device.id ~= nil then
                   log.info(
                     string.format(
                       "Light device \"%s\" was deleted from hue bridge %s",
-                      (light_device.label or light_device.id or "unknown device"),
+                      (child_device.label or child_device.id or "unknown device"),
                       (bridge_device.label or bridge_device.device_network_id or bridge_device.id or "unknown bridge")
                     )
                   )
-                  light_device.log.trace("Attempting to delete Device UUID " .. tostring(light_device.id))
-                  driver:do_hue_light_delete(light_device)
+                  child_device.log.trace("Attempting to delete Device UUID " .. tostring(child_device.id))
+                  driver:do_hue_child_delete(child_device)
                 end
               end
             end
@@ -324,15 +327,15 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
   end
   bridge_device:set_field(Fields._INIT, true, { persist = false })
   local ids_to_remove = {}
-  for id, light_device in ipairs(driver._lights_pending_refresh) do
-    local bridge_id = light_device.parent_device_id or bridge_device:get_field(Fields.PARENT_DEVICE_ID)
+  for id, device in ipairs(driver._devices_pending_refresh) do
+    local bridge_id = device.parent_device_id or bridge_device:get_field(Fields.PARENT_DEVICE_ID)
     if bridge_id == bridge_device.id then
       table.insert(ids_to_remove, id)
-      command_handlers.refresh_handler(driver, light_device)
+      command_handlers.refresh_handler(driver, device)
     end
   end
   for _, id in ipairs(ids_to_remove) do
-    driver._lights_pending_refresh[id] = nil
+    driver._devices_pending_refresh[id] = nil
   end
   driver.stray_device_tx:send({
     type = StrayDeviceHelper.MessageTypes.FoundBridge,

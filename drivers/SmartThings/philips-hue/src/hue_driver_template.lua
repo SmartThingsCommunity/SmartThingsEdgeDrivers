@@ -68,7 +68,7 @@ local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_colo
 --- @field public stray_device_tx table cosock channel
 --- @field public datastore HueDriverDatastore persistent store
 --- @field public api_key_to_bridge_id table<string,string>
---- @field public _lights_pending_refresh table<string,HueChildDevice>
+--- @field public _devices_pending_refresh table<string,HueChildDevice>
 --- @field public get_devices fun(self: HueDriver): HueChildDevice[]
 --- @field public get_device_info fun(self: HueDriver, device_id: string, force_refresh: boolean?): HueDevice?
 local HueDriver = {}
@@ -107,7 +107,7 @@ function HueDriver.new_driver_template(dbg_config)
     -- the API key as the map key.
     api_key_to_bridge_id = {},
     stray_device_tx = stray_device_tx,
-    _lights_pending_refresh = {}
+    _devices_pending_refresh = {}
   }
 
   -- What's going on here is that a driver template can't utilize metatables, because the metatable
@@ -180,7 +180,7 @@ function HueDriver:get_device_by_dni(dni, force_refresh)
 end
 
 ---@param device HueDevice
-function HueDriver:do_hue_light_delete(device)
+function HueDriver:do_hue_child_delete(device)
   if type(self.try_delete_device) ~= "function" then
     local _log = device.log or log
     _log.warn("Requesting device delete on API version that doesn't support it. Marking device offline.")

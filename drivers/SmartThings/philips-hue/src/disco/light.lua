@@ -75,16 +75,10 @@ function M.handle_discovered_device(
         goto continue
       end
 
-      local parent_assigned_child_key
       local device_name = light.metadata.name
-      if __DBG and __DBG.emulate_dth_ids then
-        device_name = "DTH_" .. device_name
-        parent_assigned_child_key = st_utils.generate_uuid_v4()
-      else
-        parent_assigned_child_key = string.format("%s:%s", light.type, light.id)
-      end
+      local parent_assigned_child_key = string.format("%s:%s", light.type, light.id)
 
-      local create_device_msg = {
+      local st_metadata = {
         type = "EDGE_CHILD",
         label = device_name,
         vendor_provided_label = device_service_info.product_data.product_name,
@@ -95,7 +89,7 @@ function M.handle_discovered_device(
         parent_assigned_child_key = parent_assigned_child_key
       }
 
-      driver:try_create_device(create_device_msg)
+      st_metadata_callback(driver, st_metadata)
       -- rate limit ourself.
       socket.sleep(0.1)
     end
