@@ -10,6 +10,7 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local button_disco = require "disco.button"
+local hue_multi_service_device_utils = require "utils.hue_multi_service_device_utils"
 local utils = require "utils"
 
 ---@class ButtonLifecycleHandlers
@@ -104,7 +105,7 @@ end
 function ButtonLifecycleHandlers.init(driver, device)
   log.info(
     string.format("Init Button for device %s", (device and device.label or device.id or "unknown button")))
-
+  device:set_field(Fields.IS_MULTI_SERVICE, true, { persist = true })
   local device_button_resource_id =
       utils.get_hue_rid(device) or
       device.device_network_id
@@ -122,13 +123,9 @@ function ButtonLifecycleHandlers.init(driver, device)
     local parent_bridge = utils.get_hue_bridge_for_device(
       driver, device, device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
     )
-    local api_instance = (parent_bridge and parent_bridge:get_field(Fields.BRIDGE_API)) or
-    Discovery.api_keys[(parent_bridge and parent_bridge.device_network_id) or ""]
+    local api_instance = (parent_bridge and parent_bridge:get_field(Fields.BRIDGE_API))
 
-    if not (parent_bridge and api_instance) then
-      log.warn(string.format("Button %s parent bridge not ready, queuing refresh", device and device.label))
-      driver._devices_pending_refresh[device.id] = device
-    else
+    if parent_bridge and api_instance then
       button_info, err = button_disco.update_state_for_all_device_services(
         driver,
         api_instance,
@@ -150,31 +147,14 @@ function ButtonLifecycleHandlers.init(driver, device)
       end
     end
   end
-  local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
-  if button_info and button_info.num_buttons == nil and not svc_rids_for_device[button_info.id]
-  then
-    svc_rids_for_device[button_info.id] = HueDeviceTypes.BUTTON
+  if not button_info then
+    log.warn(string.format("Button %s parent bridge not ready, queuing refresh", device and device.label))
+    driver._devices_pending_refresh[device.id] = device
+  else
+    hue_multi_service_device_utils.update_multi_service_device_maps(
+      driver, device, hue_device_id, button_info, HueDeviceTypes.BUTTON
+    )
   end
-
-  if button_info and button_info.num_buttons then
-    for var = 1, (button_info.num_buttons or 1) do
-      local button_id_key = string.format("button%s_id", var)
-      local button_id = button_info[button_id_key]
-      svc_rids_for_device[button_id] = HueDeviceTypes.BUTTON
-    end
-  end
-
-  if button_info and not svc_rids_for_device[button_info.power_id] then
-    svc_rids_for_device[button_info.power_id] = HueDeviceTypes.DEVICE_POWER
-  end
-
-  driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
-  log.debug(st_utils.stringify_table(driver.services_for_device_rid[hue_device_id], "svcs for device rid", true))
-  for rid, _ in pairs(driver.services_for_device_rid[hue_device_id]) do
-    log.debug(string.format("Button %s mapping to [%s]", device.label, rid))
-    driver.hue_identifier_to_device_record[rid] = device
-  end
-
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     refresh_handler(driver, device)

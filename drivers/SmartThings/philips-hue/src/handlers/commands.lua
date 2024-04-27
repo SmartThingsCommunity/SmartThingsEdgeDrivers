@@ -1,10 +1,10 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Consts = require "consts"
 local Fields = require "fields"
-local HueColorUtils = require "hue.cie_utils"
+local HueColorUtils = require "utils.cie_utils"
 
 local utils = require "utils"
 
@@ -304,8 +304,9 @@ local refresh_handlers = require "handlers.refresh_handlers"
 ---@param driver HueDriver
 ---@param device HueDevice
 ---@param cmd table?
+---@return table? refreshed_device_info
 function CommandHandlers.refresh_handler(driver, device, cmd)
-  refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
+  return refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
 end
 
 return CommandHandlers
