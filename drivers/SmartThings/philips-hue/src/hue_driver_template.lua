@@ -1,7 +1,8 @@
 local Driver = require "st.driver"
 
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local cosock = require "cosock"
+local log = require "log"
 
 local Discovery = require "disco"
 local Fields = require "fields"
@@ -65,6 +66,7 @@ local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_colo
 --- @field public joined_bridges table<string,boolean>
 --- @field public hue_identifier_to_device_record table<string,HueChildDevice>
 --- @field public services_for_device_rid table<string,table<string,string>> Map the device resource ID to another map that goes from service rid to service rtype
+--- @field public waiting_grandchildren table<string,{ waiting_resource_info: HueResourceInfo, join_callback: fun(driver: HueDriver, waiting_resource_info: HueResourceInfo, parent_device: HueChildDevice)}[]>?
 --- @field public stray_device_tx table cosock channel
 --- @field public datastore HueDriverDatastore persistent store
 --- @field public api_key_to_bridge_id table<string,string>
@@ -133,16 +135,44 @@ function HueDriver:run()
   Driver.run(self)
 end
 
----@param bridge_id string
+---@param grandchild_devices { waiting_resource_info: HueResourceInfo, join_callback: fun(driver: HueDriver, waiting_resource_info: HueResourceInfo, parent_device: HueChildDevice)}[]
+---@param waiting_for string
+function HueDriver:queue_grandchild_device_for_join(grandchild_devices, waiting_for)
+  self.waiting_grandchildren = self.waiting_grandchildren or {}
+
+  for _, waiting_info in ipairs(grandchild_devices) do
+    self.waiting_grandchildren[waiting_for] = self.waiting_grandchildren[waiting_for] or {}
+    table.insert(self.waiting_grandchildren[waiting_for], waiting_info)
+  end
+end
+
+---@param new_device HueChildDevice
+function HueDriver:check_waiting_grandchildren_for_device(new_device)
+  if not self.waiting_grandchildren then
+    return
+  end
+  local rid = utils.get_hue_rid(new_device)
+  for _, waiting in pairs(self.waiting_grandchildren[rid or ""] or {}) do
+    local waiting_info = waiting.waiting_resource_info
+    local join_callback = waiting.join_callback
+    if type(join_callback) == "function" then
+      cosock.spawn(function()
+        join_callback(self, waiting_info, new_device)
+      end)
+    end
+  end
+end
+
+---@param bridge_network_id string
 ---@param bridge_info HueBridgeInfo
-function HueDriver:update_bridge_netinfo(bridge_id, bridge_info)
-  if self.joined_bridges[bridge_id] then
-    local bridge_device = self:get_device_by_dni(bridge_id) --[[@as HueBridgeDevice]]
+function HueDriver:update_bridge_netinfo(bridge_network_id, bridge_info)
+  if self.joined_bridges[bridge_network_id] then
+    local bridge_device = self:get_device_by_dni(bridge_network_id) --[[@as HueBridgeDevice]]
     if not bridge_device then
       log.warn_with({ hub_logs = true },
         string.format(
           "Couldn't locate bridge device for joined bridge with DNI %s",
-          bridge_id
+          bridge_network_id
         )
       )
       return
@@ -151,7 +181,7 @@ function HueDriver:update_bridge_netinfo(bridge_id, bridge_info)
     if bridge_info.ip ~= bridge_device:get_field(Fields.IPV4) then
       bridge_utils.update_bridge_fields_from_info(self, bridge_info, bridge_device)
       local maybe_api_client = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
-      local maybe_api_key = bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) or Discovery.api_keys[bridge_id]
+      local maybe_api_key = bridge_device:get_field(HueApi.APPLICATION_KEY_HEADER) or Discovery.api_keys[bridge_network_id]
       local maybe_event_source = bridge_device:get_field(Fields.EVENT_SOURCE)
       local bridge_url = "https://" .. bridge_info.ip
 

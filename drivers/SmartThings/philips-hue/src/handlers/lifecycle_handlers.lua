@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
@@ -53,11 +53,21 @@ function LifecycleHandlers.device_added(driver, device, ...)
       local resource_state_known = (Discovery.device_state_disco_cache[resource_id] ~= nil)
       log.info(
         string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
-      local parent_bridge = driver:get_device_info(device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
+
+      local parent_bridge = utils.get_hue_bridge_for_device(
+        driver, device, device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+      )
 
       local key = parent_bridge and parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER)
       local bridge_ip = parent_bridge and parent_bridge:get_field(Fields.IPV4)
       local bridge_id = parent_bridge and parent_bridge:get_field(Fields.BRIDGE_ID)
+      log.trace(true,
+        st_utils.stringify_table(
+          {parent_bridge and parent_bridge.label, key, bridge_ip, bridge_id},
+          "device added bridge deets",
+          true
+        )
+      )
       if not (bridge_ip and bridge_id and resource_state_known and (Discovery.api_keys[bridge_id or {}] or key)) then
         log.warn(true,
           "Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")

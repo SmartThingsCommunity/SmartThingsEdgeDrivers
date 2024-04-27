@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -44,7 +44,8 @@ function utils.safe_wrap_handler(handler)
     end
     local success, result = pcall(handler, driver, device, ...)
     if not success then
-      log.error_with({ hub_logs = true }, string.format("Failed to invoke capability command handler. Reason: %s", result))
+      log.error_with({ hub_logs = true },
+        string.format("Failed to invoke capability command handler. Reason: %s", result))
     end
     return result
   end
@@ -60,7 +61,7 @@ function utils.mirek_to_kelvin(mirek) return 1000000 / mirek end
 -- the data as it unpacks it; it just dispatches each event in the batch as it encounters it.
 -- We could implement 2x-6x press if we add some smarts to the SSE stream handling.
 function utils.get_supported_button_values(event_values)
-  local values = {"pushed"}
+  local values = { "pushed" }
   for _, event_value in ipairs(event_values) do
     if event_value == "long_press" then
       table.insert(values, "held")
@@ -212,7 +213,8 @@ function utils.get_hue_rid(device)
   end
 
   if utils.is_dth_light(device) then
-    return nil, string.format("Can't get the Hue RID of migrated DTH light %s that hasn't completed migration", device.label)
+    return nil,
+        string.format("Can't get the Hue RID of migrated DTH light %s that hasn't completed migration", device.label)
   end
 
   local success, rid, _ = utils.parse_parent_assigned_key(device)
@@ -221,11 +223,11 @@ function utils.get_hue_rid(device)
   end
 
   return
-    nil,
-    string.format(
-      "error establishing Hue RID from parent assigned key [%s]",
-      (device and device.parent_assigned_child_key) or "Parent Assigned Key Not Available"
-    )
+      nil,
+      string.format(
+        "error establishing Hue RID from parent assigned key [%s]",
+        (device and device.parent_assigned_child_key) or "Parent Assigned Key Not Available"
+      )
 end
 
 --- Get the HueDeviceType value for a device. If available on the device field, then it
@@ -266,11 +268,11 @@ function utils.determine_device_type(device)
   end
 
   return
-    nil,
-    string.format(
-      "Couldn't determine device type for device %s",
-      (device and device.label) or "Unknown Device"
-    )
+      nil,
+      string.format(
+        "Couldn't determine device type for device %s",
+        (device and device.label) or "Unknown Device"
+      )
 end
 
 --- Attempts an exhaustive check of all the ways a device
@@ -280,9 +282,9 @@ end
 ---@return boolean is_bridge true if the device record represents a Hue Bridge
 function utils.is_bridge(driver, device)
   return (device:get_field(Fields.DEVICE_TYPE) == "bridge")
-    or (driver.datastore.bridge_netinfo[device.device_network_id] ~= nil)
-    or utils.is_edge_bridge(device) or utils.is_dth_light(device)
-    or (device.parent_assigned_child_key == nil)
+      or (driver.datastore.bridge_netinfo[device.device_network_id] ~= nil)
+      or utils.is_edge_bridge(device) or utils.is_dth_light(device)
+      or (device.parent_assigned_child_key == nil)
 end
 
 --- Only checked during `added` callback, or as a later
@@ -293,9 +295,9 @@ end
 ---@return boolean
 function utils.is_edge_bridge(device)
   return
-  device.device_network_id and
-  utils.is_valid_mac_addr_string(device.device_network_id) and
-  not (device.data and device.data.username)
+      device.device_network_id and
+      utils.is_valid_mac_addr_string(device.device_network_id) and
+      not (device.data and device.data.username)
 end
 
 --- Only checked during `added` callback, or as a later
@@ -306,9 +308,9 @@ end
 ---@return boolean
 function utils.is_edge_light(device)
   return
-  device.parent_assigned_child_key ~= nil and
-  not utils.is_valid_mac_addr_string(device.device_network_id) and
-  not (device.data and device.data.username and device.data.bulbId)
+      device.parent_assigned_child_key ~= nil and
+      not utils.is_valid_mac_addr_string(device.device_network_id) and
+      not (device.data and device.data.username and device.data.bulbId)
 end
 
 --- Only checked during `added` callback
@@ -331,6 +333,35 @@ function utils.is_dth_light(device)
   return device.data ~= nil
       and device.data.bulbId ~= nil
       and device.data.username ~= nil
+end
+
+--- Get the Hue Bridge for a Device; useful when you don't know if you have a child
+--- or a grandchild device and you need to walk up the family tree. Will return the
+--- passed argument if the argument is a bridge.
+---@param driver HueDriver
+---@param device HueDevice
+---@param parent_device_id string?
+---@return HueBridgeDevice? bridge_device
+function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
+  log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
+  if utils.is_bridge(driver, device) then
+    log.trace(string.format("------------------------- %s is a bridge", device.label))
+    return device --[[ @as HueBridgeDevice ]]
+  end
+
+  local parent_device_id = parent_device_id or device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+  local parent_device = driver:get_device_info(parent_device_id)
+  if not parent_device then
+    log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
+    return nil
+  end
+
+  log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
+  if parent_device and utils.is_bridge(driver, parent_device) then
+    return parent_device --[[ @as HueBridgeDevice ]]
+  end
+
+  return utils.get_hue_bridge_for_device(driver, parent_device)
 end
 
 --- build a exponential backoff time value generator
