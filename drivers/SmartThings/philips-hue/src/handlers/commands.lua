@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Consts = require "consts"
@@ -21,7 +21,7 @@ local CommandHandlers = {}
 local function do_switch_action(driver, device, args)
   local on = args.command == "on"
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, id)
 
   if not bridge_device then
     log.warn(
@@ -66,7 +66,7 @@ end
 local function do_switch_level_action(driver, device, args)
   local level = st_utils.clamp_value(args.args.level, 1, 100)
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, id)
 
   if not bridge_device then
     log.warn(
@@ -130,7 +130,7 @@ local function do_color_action(driver, device, args)
     device:set_field(Fields.WRAPPED_HUE, true)
   end
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, id)
 
   if not bridge_device then
     log.warn(
@@ -207,7 +207,7 @@ end
 local function do_color_temp_action(driver, device, args)
   local kelvin = args.args.temperature
   local id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
-  local bridge_device = driver:get_device_info(id)
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, id)
 
   if not bridge_device then
     log.warn(

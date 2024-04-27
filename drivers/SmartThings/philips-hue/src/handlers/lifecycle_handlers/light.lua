@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
 
@@ -36,8 +36,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   if not light_info_known then
     log.info(
       string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
-    local parent_bridge = driver:get_device_info(parent_device_id or device.parent_device_id or
-      device:get_field(Fields.PARENT_DEVICE_ID))
+    local parent_bridge = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
     if not parent_bridge then
       log.error_with({ hub_logs = true }, string.format(
         "Device %s added with parent UUID of %s but could not find a device with that UUID in the driver",
@@ -107,7 +106,7 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
           dimming = light.dimming,
           color_temperature = light.color_temperature,
           mode = light.mode,
-          parent_device_id = parent_bridge.id,
+          parent_device_id = parent_device_id or device.parent_device_id,
           hue_device_id = light.owner.rid,
           hue_device_data = {
             product_data = {
@@ -190,6 +189,7 @@ function LightLifecycleHandlers.init(driver, device)
     refresh_handler(driver, device)
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
+  driver:check_waiting_grandchildren_for_device(device)
 end
 
 return LightLifecycleHandlers

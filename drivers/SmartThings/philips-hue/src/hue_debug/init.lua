@@ -1,6 +1,6 @@
 local st_utils = require "st.utils"
 
-local log = require "logjam"
+local log = require "log"
 local utils = require "utils"
 
 local Discovery = require "disco"
