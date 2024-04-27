@@ -64,10 +64,12 @@ function M.handle_discovered_device(
         profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
       elseif light.dimming then
         profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
+      elseif light.on then  -- Case for plug which uses same category as 'light'
+        profile_ref = "plug"
       else
         log.warn(
           string.format(
-            "Light resource [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance device, currently unsupported"
+            "Light resource [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance/Plug device, currently unsupported"
             ,
             resource_id
           )
