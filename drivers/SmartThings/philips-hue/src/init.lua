@@ -19,7 +19,7 @@
 --  ===============================================================================================
 local Driver = require "st.driver"
 
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string

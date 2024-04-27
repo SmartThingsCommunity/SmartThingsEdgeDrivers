@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local refresh_handler = require("handlers.commands").refresh_handler
@@ -81,7 +81,9 @@ function ContactLifecycleHandlers.init(driver, device)
   sensor_info = Discovery.device_state_disco_cache[device_sensor_resource_id]
   if not sensor_info then
     log.debug("no sensor info")
-    local parent_bridge = driver:get_device_info(device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
+    local parent_bridge = utils.get_hue_bridge_for_device(
+      driver, device, device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
+    )
     local api_instance = (parent_bridge and parent_bridge:get_field(Fields.BRIDGE_API)) or Discovery.api_keys[(parent_bridge and parent_bridge.device_network_id) or ""]
 
     if not (parent_bridge and api_instance) then
@@ -89,6 +91,7 @@ function ContactLifecycleHandlers.init(driver, device)
       driver._devices_pending_refresh[device.id] = device
     else
       sensor_info, err = contact_sensor_disco.update_state_for_all_device_services(
+        driver,
         api_instance,
         hue_device_id,
         parent_bridge.device_network_id,
