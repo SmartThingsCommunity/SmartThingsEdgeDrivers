@@ -55,7 +55,7 @@ function ButtonLifecycleHandlers.added(driver, device, parent_device_id, resourc
     button_rid_to_index_map[button_info.id] = 1
   end
 
-  if button_info.num_buttons and button_info.num_buttons > 1 then
+  if button_info.num_buttons then
     for var = 1, button_info.num_buttons do
       local button_key = string.format("button%s", var)
       local button_id_key = string.format("%s_id", button_key)
@@ -149,14 +149,12 @@ function ButtonLifecycleHandlers.init(driver, device)
     end
   end
   local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
-  if button_info and
-      (button_info.num_buttons == nil or button_info.num_buttons == 1) and
-      not svc_rids_for_device[button_info.id]
+  if button_info and button_info.num_buttons == nil and not svc_rids_for_device[button_info.id]
   then
     svc_rids_for_device[button_info.id] = HueDeviceTypes.BUTTON
   end
 
-  if button_info and button_info.num_buttons and button_info.num_buttons > 1 then
+  if button_info and button_info.num_buttons then
     for var = 1, (button_info.num_buttons or 1) do
       local button_id_key = string.format("button%s_id", var)
       local button_id = button_info[button_id_key]

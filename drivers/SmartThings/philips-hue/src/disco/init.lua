@@ -24,6 +24,9 @@ local DOMAIN = "local"
 ---@field public api_keys table<string,string>
 ---@field public disco_api_instances table<string,PhilipsHueApi>
 ---@field public device_state_disco_cache table<string,table<string,any>>
+---@field public ServiceType string
+---@field public Domain string
+---@field public discovery_active boolean
 local HueDiscovery = {
   api_keys = {},
   disco_api_instances = {},
@@ -266,7 +269,8 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_id, api
   local device_is_joined_to_bridge = {}
   for _, device_data in ipairs(devices.data or {}) do
     local primary_device_service
-    for _, svc_info in ipairs(device_data.services or {}) do
+    for _,
+    svc_info in ipairs(device_data.services or {}) do
       if is_device_service_supported(svc_info) then
         driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
         driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
