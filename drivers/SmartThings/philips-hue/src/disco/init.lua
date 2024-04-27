@@ -47,44 +47,6 @@ local function is_device_service_supported(svc_info)
   return discovered_device_handlers[svc_info.rtype or ""] ~= nil
 end
 
----@param driver HueDriver
----@param bridge_network_id string
----@param primary_services table<HueDeviceTypes,HueServiceInfo[]> array of services that *can* map to device records. Multi-buttons wouldn't do so, but compound lights would.
----@param device_info table
-local function discovered_device_callback(driver, bridge_network_id, primary_services, device_info)
-  local v1_dni = bridge_network_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
-  local primary_service_type = HueDeviceTypes.determine_main_service_rtype(device_info, primary_services)
-  if not primary_service_type then
-    log.error(
-      string.format(
-        "Couldn't determine primary service type for device %s, unable to join",
-        (device_info.metadata.name)
-      )
-    )
-    return
-  end
-
-  for _, svc_info in ipairs(primary_services[primary_service_type]) do
-    local v2_resource_id = svc_info.rid or ""
-    if driver:get_device_by_dni(v1_dni) or driver.hue_identifier_to_device_record[v2_resource_id] then return end
-  end
-
-  local api_instance = HueDiscovery.disco_api_instances[bridge_network_id]
-  if not api_instance then
-    log.warn("No API instance for bridge_network_id ", bridge_network_id)
-    return
-  end
-
-  HueDiscovery.handle_discovered_child_device(
-    driver,
-    primary_service_type,
-    bridge_network_id,
-    api_instance,
-    primary_services,
-    device_info
-  )
-end
-
 -- "forward declarations"
 ---@param driver HueDriver
 ---@param bridge_ip string
@@ -114,9 +76,7 @@ local function discovered_bridge_callback(driver, bridge_ip, bridge_network_id)
       driver,
       bridge_network_id,
       HueDiscovery.disco_api_instances[bridge_network_id],
-      function(hue_driver, svc_info, device_info)
-        discovered_device_callback(hue_driver, bridge_network_id, svc_info, device_info)
-      end,
+      HueDiscovery.handle_discovered_child_device,
       "[Discovery: " ..
       (known_bridge_device.label or bridge_network_id or known_bridge_device.id or "unknown bridge") ..
       " bridge scan]"
@@ -244,9 +204,7 @@ function HueDiscovery.scan_bridge_and_update_devices(driver, bridge_network_id)
       driver,
       bridge_network_id,
       HueDiscovery.disco_api_instances[bridge_network_id],
-      function(hue_driver, svc_info, device_info)
-        discovered_device_callback(hue_driver, bridge_network_id, svc_info, device_info)
-      end,
+      HueDiscovery.handle_discovered_child_device,
       "[Discovery: " ..
       (known_bridge_device.label or bridge_network_id or known_bridge_device.id or "unknown bridge") ..
       " bridge re-scan]",
@@ -258,7 +216,7 @@ end
 ---@param driver HueDriver
 ---@param bridge_network_id string
 ---@param api_instance PhilipsHueApi
----@param callback fun(driver: HueDriver, svc_info: HueServiceInfo, device_data: table)
+---@param callback fun(driver: HueDriver, bridge_network_id: string, primary_services: table<HueDeviceTypes,HueServiceInfo[]>, device_data: table)
 ---@param log_prefix string?
 ---@param do_delete boolean?
 function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network_id, api_instance, callback, log_prefix, do_delete)
@@ -282,41 +240,8 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network
 
   local device_is_joined_to_bridge = {}
   for _, device_data in ipairs(devices.data or {}) do
-    local primary_device_services = {}
-    for _,
-    svc_info in ipairs(device_data.services or {}) do
-      if is_device_service_supported(svc_info) then
-        driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
-        driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
-        if HueDeviceTypes.can_join_device_for_service(svc_info.rtype) then
-          local services_for_type = primary_device_services[svc_info.rtype] or {}
-          table.insert(services_for_type, svc_info)
-          primary_device_services[svc_info.rtype] = services_for_type
-          device_is_joined_to_bridge[device_data.id] = true
-        end
-      end
-    end
-    if next(primary_device_services) then
-      if type(callback) == "function" then
-        log.info_with(
-          { hub_logs = true },
-          string.format(
-            prefix ..
-            "Processing supported services [%s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
-            st_utils.stringify_table(primary_device_services), device_data.id, device_data.id_v1, device_data.metadata.name
-          )
-        )
-        callback(driver, primary_device_services, device_data)
-      else
-        log.warn(
-          prefix .. "Argument passed in `callback` position for "
-          .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
-        )
-      end
-    else
-      log.warn(string.format("No primary services for %s", device_data.metadata.name))
-      log.warn(st_utils.stringify_table(device_data.services, "services", true))
-    end
+    device_is_joined_to_bridge[device_data.id] =
+        HueDiscovery.process_device_service(driver, bridge_network_id, device_data, callback, log_prefix)
   end
 
   if do_delete then
@@ -337,12 +262,87 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network
 end
 
 ---@param driver HueDriver
----@param primary_service_type HueDeviceTypes
 ---@param bridge_network_id string
----@param api_instance PhilipsHueApi
+---@param device_data HueDeviceInfo
+---@param callback fun(driver: HueDriver, bridge_network_id: string, primary_services: table<HueDeviceTypes,HueServiceInfo[]>, device_data: table, bridge_device: HueBridgeDevice?)?
+---@param log_prefix string?
+---@param bridge_device HueBridgeDevice?
+---@return boolean device_joined_to_bridge true if device was sent through the join process
+function HueDiscovery.process_device_service(driver, bridge_network_id, device_data, callback, log_prefix, bridge_device)
+  local prefix = ""
+  if type(log_prefix) == "string" and #log_prefix > 0 then prefix = log_prefix .. " " end
+  local primary_device_services = {}
+
+  local device_joined_to_bridge = false
+  for _,
+  svc_info in ipairs(device_data.services or {}) do
+    if is_device_service_supported(svc_info) then
+      driver.services_for_device_rid[device_data.id] = driver.services_for_device_rid[device_data.id] or {}
+      driver.services_for_device_rid[device_data.id][svc_info.rid] = svc_info.rtype
+      if HueDeviceTypes.can_join_device_for_service(svc_info.rtype) then
+        local services_for_type = primary_device_services[svc_info.rtype] or {}
+        table.insert(services_for_type, svc_info)
+        primary_device_services[svc_info.rtype] = services_for_type
+        device_joined_to_bridge = true
+      end
+    end
+  end
+  if next(primary_device_services) then
+    if type(callback) == "function" then
+      log.info_with(
+        { hub_logs = true },
+        string.format(
+          prefix ..
+          "Processing supported services [%s] for Hue device [v2_id: %s | v1_id: %s], with Hue provided name: %s",
+          st_utils.stringify_table(primary_device_services), device_data.id, device_data.id_v1, device_data.metadata.name
+        )
+      )
+      callback(driver, bridge_network_id, primary_device_services, device_data, bridge_device)
+    else
+      log.warn(
+        prefix .. "Argument passed in `callback` position for "
+        .. "`HueDiscovery.search_bridge_for_supported_devices` is not a function"
+      )
+    end
+  else
+    log.warn(string.format("No primary services for %s", device_data.metadata.name))
+    log.warn(st_utils.stringify_table(device_data.services, "services", true))
+  end
+
+  return device_joined_to_bridge
+end
+
+---@param driver HueDriver
+---@param bridge_network_id string
 ---@param primary_services table<HueDeviceTypes,HueServiceInfo[]> array of services that *can* map to device records. Multi-buttons wouldn't do so, but compound lights would.
 ---@param device_info table
-function HueDiscovery.handle_discovered_child_device(driver, primary_service_type, bridge_network_id, api_instance, primary_services, device_info)
+---@param bridge_device HueBridgeDevice? If the parent bridge is known, it can be passed in here
+function HueDiscovery.handle_discovered_child_device(driver, bridge_network_id, primary_services, device_info, bridge_device)
+  local v1_dni = bridge_network_id .. "/" .. (device_info.id_v1 or "UNKNOWN"):gsub("/lights/", "")
+  local primary_service_type = HueDeviceTypes.determine_main_service_rtype(device_info, primary_services)
+  if not primary_service_type then
+    log.error(
+      string.format(
+        "Couldn't determine primary service type for device %s, unable to join",
+        (device_info.metadata.name)
+      )
+    )
+    return
+  end
+
+  for _, svc_info in ipairs(primary_services[primary_service_type]) do
+    local v2_resource_id = svc_info.rid or ""
+    if driver:get_device_by_dni(v1_dni) or driver.hue_identifier_to_device_record[v2_resource_id] then return end
+  end
+
+  local api_instance =
+      (bridge_device and bridge_device:get_field(Fields.BRIDGE_API)) or
+      HueDiscovery.disco_api_instances[bridge_network_id]
+  if not api_instance then
+    log.warn("No API instance for bridge_network_id ", bridge_network_id)
+    return
+  end
+
   discovered_device_handlers[primary_service_type].handle_discovered_device(
     driver,
     bridge_network_id,

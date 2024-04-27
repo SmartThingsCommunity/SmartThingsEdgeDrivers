@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "log"
+local log = require "logjam"
 local json = require "st.json"
 local st_utils = require "st.utils"
 
@@ -7,12 +7,14 @@ local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
 local Fields = require "fields"
 local HueApi = require "hue.api"
+local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local attribute_emitters = require "handlers.attribute_emitters"
 local command_handlers = require "handlers.commands"
 local lifecycle_handlers = require "handlers.lifecycle_handlers"
 
+local hue_multi_service_device_utils = require "utils.hue_multi_service_device_utils"
 local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
 
@@ -162,8 +164,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   end
                 end
               else
-                --- for a regular message from a light doing something normal,
-                --- you get the resource id of the light service for that device in
+                --- for a regular message from a device doing something normal,
+                --- you get the resource id of the device service for that device in
                 --- the data field
                 table.insert(resource_ids, update_data.id)
               end
@@ -184,13 +186,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           elseif event.type == "delete" then
             for _, delete_data in ipairs(event.data) do
-              if delete_data.type == "light" then
+              if HueDeviceTypes.can_join_device_for_service(delete_data.type) then
                 local resource_id = delete_data.id
                 local child_device = driver.hue_identifier_to_device_record[resource_id]
                 if child_device ~= nil and child_device.id ~= nil then
                   log.info(
                     string.format(
-                      "Light device \"%s\" was deleted from hue bridge %s",
+                      "Device \"%s\" was deleted from hue bridge %s",
                       (child_device.label or child_device.id or "unknown device"),
                       (bridge_device.label or bridge_device.device_network_id or bridge_device.id or "unknown bridge")
                     )
@@ -202,122 +204,24 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
             end
           elseif event.type == "add" then
             for _, add_data in ipairs(event.data) do
-              if add_data.type == "light" and add_data.owner and add_data.owner.rtype == "device" then
-                ---@cast add_data HueLightInfo
+              if add_data.type == "device" then
                 log.info(
                   string.format(
-                    "New light added to Hue Bridge \"%s\", light properties: \"%s\"",
+                    "New device added to Hue Bridge \"%s\", device properties: \"%s\"",
                     bridge_device.label, json.encode(add_data)
                   )
                 )
-
+                --- Move handling the add off the SSE thread
                 cosock.spawn(function()
-                  local hue_api = bridge_device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
-                  if hue_api == nil then
-                    local _log = bridge_device.log or log
-                    _log.warn("No Hue API instance available for new light event.")
-                    return
-                  end
-
-                  local hue_device_rid = add_data.owner.rid
-                  local rest_resp, rest_err = hue_api:get_device_by_id(hue_device_rid)
-
-                  if rest_err ~= nil then
-                    log.error(
-                      string.format(
-                        "Error getting device information for new light \"%s\" with device RID %s: %s",
-                        add_data.metadata.name,
-                        hue_device_rid,
-                        st_utils.stringify_table(rest_err)
-                      )
-                    )
-                    return
-                  end
-
-                  if rest_resp == nil then
-                    log.error("REST Response while handling New Light Event unexpectedly nil without error message")
-                    return
-                  end
-
-                  if rest_resp.errors and #rest_resp.errors > 0 then
-                    for _, hue_error in ipairs(rest_resp.errors) do
-                      log.error_with({ hub_logs = true }, "Error in Hue API response: " .. hue_error.description)
-                    end
-                    return
-                  end
-
-                  local new_device_info = nil
-                  for _, hue_device in ipairs(rest_resp.data or {}) do
-                    for _, svc_info in ipairs(hue_device.services or {}) do
-                      if svc_info.rtype == "light" and svc_info.rid == add_data.id then
-                        new_device_info = hue_device
-                        break
-                      end
-                    end
-                    if new_device_info ~= nil then break end
-                  end
-
-                  if new_device_info == nil then
-                    log.warn(
-                    "Couldn't get all device info for new light, unable to join. Try using Scan Nearby to find new Hue lights.")
-                    return
-                  end
-
-                  log.info(
-                    string.format(
-                      "Adding light \"%s\"",
-                      add_data.metadata.name
-                    )
+                  ---@cast add_data HueDeviceInfo
+                  Discovery.process_device_service(
+                    driver,
+                    bridge_device.device_network_id,
+                    add_data,
+                    Discovery.handle_discovered_child_device,
+                    "New Device Event",
+                    bridge_device
                   )
-
-                  local profile_ref
-
-                  if add_data.color then
-                    if add_data.color_temperature then
-                      profile_ref = "white-and-color-ambiance"
-                    else
-                      profile_ref = "legacy-color"
-                    end
-                  elseif add_data.color_temperature then
-                    profile_ref = "white-ambiance" -- all color temp products support `white` (dimming)
-                  elseif add_data.dimming then
-                    profile_ref = "white"          -- `white` refers to dimmable and includes filament bulbs
-                  else
-                    log.warn(
-                      string.format(
-                        "Light resource [%s] does not seem to be A White/White-Ambiance/White-Color-Ambiance device, currently unsupported"
-                        ,
-                        add_data.id
-                      )
-                    )
-                    return
-                  end
-
-                  local create_device_msg = {
-                    type = "EDGE_CHILD",
-                    label = add_data.metadata.name,
-                    vendor_provided_label = new_device_info.product_data.product_name,
-                    profile = profile_ref,
-                    manufacturer = new_device_info.product_data.manufacturer_name,
-                    model = new_device_info.product_data.model_id,
-                    parent_device_id = bridge_device.id,
-                    parent_assigned_child_key = string.format("%s:%s", add_data.type, add_data.id)
-                  }
-
-                  Discovery.device_state_disco_cache[add_data.id] = {
-                    hue_provided_name = add_data.metadata.name,
-                    id = add_data.id,
-                    on = add_data.on,
-                    color = add_data.color,
-                    dimming = add_data.dimming,
-                    color_temperature = add_data.color_temperature,
-                    mode = add_data.mode,
-                    parent_device_id = bridge_device.id,
-                    hue_device_id = add_data.owner.rid,
-                    hue_device_data = new_device_info
-                  }
-
-                  driver:try_create_device(create_device_msg)
                 end, "New Device Event Task")
               end
             end
@@ -331,10 +235,18 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
   bridge_device:set_field(Fields._INIT, true, { persist = false })
   local ids_to_remove = {}
   for id, device in ipairs(driver._devices_pending_refresh) do
-    local bridge_id = device.parent_device_id or bridge_device:get_field(Fields.PARENT_DEVICE_ID)
+    local parent_bridge = utils.get_hue_bridge_for_device(driver, device)
+    local bridge_id = parent_bridge and parent_bridge.id
     if bridge_id == bridge_device.id then
       table.insert(ids_to_remove, id)
-      command_handlers.refresh_handler(driver, device)
+      local refresh_info = command_handlers.refresh_handler(driver, device)
+      if refresh_info and device:get_field(Fields.IS_MULTI_SERVICE) then
+        local hue_device_type = utils.determine_device_type(device)
+        local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
+        hue_multi_service_device_utils.update_multi_service_device_maps(
+          driver, device, hue_device_id, refresh_info, hue_device_type
+        )
+      end
     end
   end
   for _, id in ipairs(ids_to_remove) do
