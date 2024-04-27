@@ -16,6 +16,7 @@ local Fields = {
   BRIDGE_API = "bridge_api",
   BRIDGE_ID = "bridgeid",
   BRIDGE_SW_VERSION = "swversion",
+  BUTTON_INDEX_MAP = "button_rid_to_index",
   DEVICE_TYPE = "devicetype",
   EVENT_SOURCE = "eventsource",
   GAMUT = "gamut",

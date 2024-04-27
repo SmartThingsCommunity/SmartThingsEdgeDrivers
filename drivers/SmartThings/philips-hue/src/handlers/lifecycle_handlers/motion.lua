@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local refresh_handler = require("handlers.commands").refresh_handler
@@ -90,7 +90,7 @@ function MotionLifecycleHandlers.init(driver, device)
       driver._devices_pending_refresh[device.id] = device
     else
       log.debug("--------------------- update all start")
-      sensor_info, err = motion_sensor_disco.update_all_services_for_sensor(
+      sensor_info, err = motion_sensor_disco.update_state_for_all_device_services(
         api_instance,
         hue_device_id,
         parent_bridge.device_network_id,
