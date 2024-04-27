@@ -29,15 +29,7 @@ local Discovery = require "disco"
 local HueDriverTemplate = require "hue_driver_template"
 
 --- @type HueDriver
-local hue = Driver("hue", HueDriverTemplate.new_driver_template(
-  {
-    -- enable_debug = true,
-    -- delay_bridges = true,
-    -- force_stray_for_device_type = {
-    --   "light"
-    -- }
-  }
-))
+local hue = Driver("hue", HueDriverTemplate.new_driver_template())
 
 if hue.datastore["bridge_netinfo"] == nil then
   hue.datastore["bridge_netinfo"] = {}

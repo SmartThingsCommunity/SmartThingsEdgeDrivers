@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local socket = require "cosock".socket
 local st_utils = require "st.utils"
 
@@ -7,6 +7,7 @@ local HueDeviceTypes = require "hue_device_types"
 ---@class DiscoveredContactSensorHandler: DiscoveredChildDeviceHandler
 local M = {}
 
+-- TODO This should be generalizable to all "sensors", including buttons.
 ---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param device_service_info HueDeviceInfo
@@ -15,6 +16,7 @@ local M = {}
 ---@return table<string,any>? description nil on error
 ---@return string? err nil on success
 local function _do_update(driver, api_instance, device_service_info, bridge_network_id, cache)
+  log.debug("------------ _do_update")
   local rid_by_rtype = {}
   for _, svc in ipairs(device_service_info.services) do
     rid_by_rtype[svc.rtype] = svc.rid
@@ -55,6 +57,12 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
     contact_sensor_description.tamper_reports = tamper.data[1].tamper_reports
   end
 
+  contact_sensor_description.sensor_list = {
+    id = HueDeviceTypes.CONTACT,
+    power_id = HueDeviceTypes.DEVICE_POWER,
+    tamper_id = HueDeviceTypes.TAMPER
+  }
+
   if type(cache) == "table" then
     cache[resource_id] = contact_sensor_description
     if device_service_info.id_v1 then
@@ -80,7 +88,6 @@ function M.update_state_for_all_device_services(driver, api_instance, device_ser
     return
   end
 
-  log.debug("------------ _do_update")
   return _do_update(driver, api_instance, device_service_info.data[1], bridge_network_id, cache)
 end
 

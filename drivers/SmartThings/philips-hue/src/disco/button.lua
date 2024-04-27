@@ -7,6 +7,7 @@ local HueDeviceTypes = require "hue_device_types"
 ---@class DiscoveredButtonHandler: DiscoveredChildDeviceHandler
 local M = {}
 
+-- TODO This should be generalizable to all "sensors", including buttons.
 ---@param driver HueDriver
 ---@param api_instance PhilipsHueApi
 ---@param device_service_info HueDeviceInfo
@@ -15,6 +16,7 @@ local M = {}
 ---@return table<string,any>? description nil on error
 ---@return string? err nil on success
 local function _do_update(driver, api_instance, device_service_info, bridge_network_id, cache)
+  log.debug("------------ _do_update")
   local rid_by_rtype = {}
   local button_services = {}
   local num_buttons = 0
@@ -34,7 +36,8 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
     parent_device_id = bridge_device.id,
     hue_device_id = device_service_info.id,
     hue_device_data = device_service_info,
-    num_buttons = num_buttons
+    num_buttons = num_buttons,
+    sensor_list = { power_id = HueDeviceTypes.DEVICE_POWER }
   }
 
   for _, button_rid in ipairs(button_services) do
@@ -51,6 +54,8 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
       if control_id == 1 then
         button_remote_description.id = button_repr.data[1].id
       end
+
+      button_remote_description.sensor_list[button_id_key] = HueDeviceTypes.BUTTON
     end
   end
 
@@ -87,7 +92,6 @@ function M.update_state_for_all_device_services(driver, api_instance, device_ser
     return
   end
 
-  log.debug("------------ _do_update")
   return _do_update(driver, api_instance, device_service_info.data[1], bridge_network_id, cache)
 end
 
@@ -122,7 +126,7 @@ function M.handle_discovered_device(
       return
     end
 
-    local button_profile_ref = ""
+    local button_profile_ref
     -- For Philips Hue Smart Button or single switch In-Wall Switch module which contains only 1 button
     if button_description.num_buttons == 1 then
       button_profile_ref = "single-button"
@@ -132,6 +136,15 @@ function M.handle_discovered_device(
     -- For Philips Hue Dimmer Remote and Tap Dial, which contains 4 buttons
     elseif button_description.num_buttons == 4 then
       button_profile_ref = "4-button-remote"
+    else
+      log.error(
+        string.format(
+          "Do not currently have a profile for device %s with %s buttons, skipping device create",
+          device_service_info.metadata.name,
+          button_description.num_buttons
+        )
+      )
+      return
     end
 
     local bridge_device = driver:get_device_by_dni(bridge_network_id) or {}

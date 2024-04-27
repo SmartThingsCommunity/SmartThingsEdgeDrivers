@@ -22,12 +22,14 @@ local Fields = {
   GAMUT = "gamut",
   HUE_DEVICE_ID = "hue_device_id",
   IPV4 = "ipv4",
+  IS_ONLINE = "is_online",
+  IS_MULTI_SERVICE = "is_multi_service",
   MIN_DIMMING = "mindim",
   MIN_KELVIN = "mintemp",
   MODEL_ID = "modelid",
-  IS_ONLINE = "is_online",
   PARENT_DEVICE_ID = "parent_device_id_local",
   RESOURCE_ID = "rid",
+  RETRY_MIGRATION = "retry_migration",
   WRAPPED_HUE = "_wrapped_hue"
 }
 
