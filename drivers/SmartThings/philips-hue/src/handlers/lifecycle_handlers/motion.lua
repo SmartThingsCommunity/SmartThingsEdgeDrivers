@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local refresh_handler = require("handlers.commands").refresh_handler
@@ -9,6 +9,7 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local motion_sensor_disco = require "disco.motion"
+local hue_multi_service_device_utils = require "utils.hue_multi_service_device_utils"
 local utils = require "utils"
 
 ---@class MotionLifecycleHandlers
@@ -67,7 +68,7 @@ end
 function MotionLifecycleHandlers.init(driver, device)
   log.info(
     string.format("Init Motion Sensor for device %s", (device and device.label or device.id or "unknown sensor")))
-
+  device:set_field(Fields.IS_MULTI_SERVICE, true, { persist = true })
   local device_sensor_resource_id =
       utils.get_hue_rid(device) or
       device.device_network_id
@@ -85,12 +86,9 @@ function MotionLifecycleHandlers.init(driver, device)
     local parent_bridge = utils.get_hue_bridge_for_device(
       driver, device, device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
     )
-    local api_instance = (parent_bridge and parent_bridge:get_field(Fields.BRIDGE_API)) or Discovery.api_keys[(parent_bridge and parent_bridge.device_network_id) or ""]
+    local api_instance = (parent_bridge and parent_bridge:get_field(Fields.BRIDGE_API))
 
-    if not (parent_bridge and api_instance) then
-      log.warn(string.format("Motion Sensor %s parent bridge not ready, queuing refresh", device and device.label))
-      driver._devices_pending_refresh[device.id] = device
-    else
+    if parent_bridge and api_instance then
       log.debug("--------------------- update all start")
       sensor_info, err = motion_sensor_disco.update_state_for_all_device_services(
         driver,
@@ -114,25 +112,14 @@ function MotionLifecycleHandlers.init(driver, device)
       end
     end
   end
-  sensor_info = sensor_info
-  local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
-  if sensor_info and not svc_rids_for_device[sensor_info.id] then
-    svc_rids_for_device[sensor_info.id] = HueDeviceTypes.MOTION
+  if not sensor_info then
+    log.warn(string.format("Motion Sensor %s parent bridge not ready, queuing refresh", device and device.label))
+    driver._devices_pending_refresh[device.id] = device
+  else
+    hue_multi_service_device_utils.update_multi_service_device_maps(
+      driver, device, hue_device_id, sensor_info, HueDeviceTypes.CONTACT
+    )
   end
-  if sensor_info and not svc_rids_for_device[sensor_info.power_id] then
-    svc_rids_for_device[sensor_info.power_id] = HueDeviceTypes.DEVICE_POWER
-  end
-  if sensor_info and not svc_rids_for_device[sensor_info.temperature_id] then
-    svc_rids_for_device[sensor_info.temperature_id] = HueDeviceTypes.TEMPERATURE
-  end
-  if sensor_info and not svc_rids_for_device[sensor_info.light_level_id] then
-    svc_rids_for_device[sensor_info.light_level_id] = HueDeviceTypes.LIGHT_LEVEL
-  end
-  driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
-  for rid, _ in pairs(driver.services_for_device_rid[hue_device_id]) do
-    driver.hue_identifier_to_device_record[rid] = device
-  end
-  log.debug(st_utils.stringify_table(driver.hue_identifier_to_device_record, "hue_ids_map", true))
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     refresh_handler(driver, device)
