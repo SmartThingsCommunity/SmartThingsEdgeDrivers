@@ -4,30 +4,50 @@ local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
 
 ---@class utils
-local utils = {}
+local utils = {
+  _lazy_loaders = {}
+}
 
 function utils.lazy_handler_loader(parent_module)
+  if utils._lazy_loaders[parent_module] then
+    return utils._lazy_loaders[parent_module]
+  end
   local nils = {}
-  return setmetatable(
-  {},
-  {
-    __index = function(tbl, key)
-      if nils[key] then return nil end
-      if rawget(tbl, key) == nil then
-        local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
-        if success then
-          rawset(tbl, key, mod)
-        else
-          nils[key] = true
-          return nil
+  local loader = setmetatable(
+    {},
+    {
+      __index = function(tbl, key)
+        if nils[key] then return nil end
+        if rawget(tbl, key) == nil then
+          local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
+          if success then
+            rawset(tbl, key, mod)
+          else
+            nils[key] = true
+            return nil
+          end
         end
+
+        return rawget(tbl, key)
       end
+    }
+  )
+  utils._lazy_loaders[parent_module] = loader
+  return loader
+end
 
-      return rawget(tbl, key)
+function utils.safe_wrap_handler(handler)
+  return function(driver, device, ...)
+    if device == nil or (device and device.id == nil) then
+      log.warn("Tried to handle capability command for device that has been deleted")
+      return
     end
-  }
-)
-
+    local success, result = pcall(handler, driver, device, ...)
+    if not success then
+      log.error_with({ hub_logs = true }, string.format("Failed to invoke capability command handler. Reason: %s", result))
+    end
+    return result
+  end
 end
 
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end

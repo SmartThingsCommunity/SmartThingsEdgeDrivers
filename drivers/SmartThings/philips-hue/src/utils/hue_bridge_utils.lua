@@ -154,7 +154,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
               if update_data.type == "zigbee_connectivity" and update_data.owner ~= nil then
                 for rid, rtype in pairs(driver.services_for_device_rid[update_data.owner.rid] or {}) do
                   if rtype == HueDeviceTypes.LIGHT then
-                    log.debug(true, string.format("Adding RID %s to light_resource_ids", rid))
+                    log.debug(string.format("Adding RID %s to light_resource_ids", rid))
                     table.insert(light_resource_ids, rid)
                   end
                 end
@@ -165,13 +165,13 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                 table.insert(light_resource_ids, update_data.id)
               end
               for _, light_resource_id in ipairs(light_resource_ids) do
-                log.debug(true, string.format("Looking for device record for %s", light_resource_id))
+                log.debug(string.format("Looking for device record for %s", light_resource_id))
                 for id, device_record in pairs(driver.hue_identifier_to_device_record) do
-                  log.debug(true, string.format("Hue ID: %s, Device: %s", id, device_record.label))
+                  log.debug(string.format("Hue ID: %s, Device: %s", id, device_record.label))
                 end
                 local light_device = driver.hue_identifier_to_device_record[light_resource_id]
                 if light_device ~= nil and light_device.id ~= nil then
-                  log.debug(true, "emitting event for zigbee connectivity")
+                  log.debug("emitting event for zigbee connectivity")
                   attribute_emitters.emit_light_attribute_events(light_device, update_data)
                 end
               end

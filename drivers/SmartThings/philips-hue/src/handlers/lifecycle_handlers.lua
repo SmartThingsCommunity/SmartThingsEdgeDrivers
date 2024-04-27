@@ -1,8 +1,12 @@
 local log = require "logjam"
 local st_utils = require "st.utils"
 
+local Discovery = require "disco"
 local Fields = require "fields"
+local HueApi = require "hue.api"
 local HueDeviceTypes = require "hue_device_types"
+local StrayDeviceHelper = require "stray_device_helper"
+
 local utils = require "utils"
 
 -- Lazy-load the lifecycle handlers so we only load the code we need
@@ -45,6 +49,25 @@ function LifecycleHandlers.device_added(driver, device, ...)
       if resource_id then
         driver.hue_identifier_to_device_record[resource_id] = device
       end
+
+      local resource_state_known = (Discovery.device_state_disco_cache[resource_id] ~= nil)
+      log.info(
+        string.format("Querying device info for parent of %s", (device.label or device.id or "unknown device")))
+      local parent_bridge = driver:get_device_info(device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID))
+
+      local key = parent_bridge and parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER)
+      local bridge_ip = parent_bridge and parent_bridge:get_field(Fields.IPV4)
+      local bridge_id = parent_bridge and parent_bridge:get_field(Fields.BRIDGE_ID)
+      if not (bridge_ip and bridge_id and resource_state_known and (Discovery.api_keys[bridge_id or {}] or key)) then
+        log.warn(true,
+          "Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
+        driver.stray_device_tx:send({
+          type = StrayDeviceHelper.MessageTypes.NewStrayDevice,
+          driver = driver,
+          device = device
+        })
+        return
+      end
     end
     if not inner_handlers[device_type] then
       log.warn(
@@ -57,10 +80,22 @@ function LifecycleHandlers.device_added(driver, device, ...)
   end
 end
 
+local valid_migration_kwargs = {
+  "force_migrate_type"
+}
 function LifecycleHandlers.migrate_device(driver, device, ...)
-  if utils.is_dth_bridge(device) then
+  local migration_kwargs = select(-1, ...)
+  local opts = {}
+  if type(migration_kwargs) == "table" then
+    for _, key in ipairs(valid_migration_kwargs) do
+      if migration_kwargs[key] then
+        opts[key] = migration_kwargs[key]
+      end
+    end
+  end
+  if utils.is_dth_bridge(device) or opts.force_migrate_type == HueDeviceTypes.BRIDGE then
     migration_handlers.bridge.migrate(driver, device, LifecycleHandlers, ...)
-  elseif utils.is_dth_light(device) then
+  elseif utils.is_dth_light(device) or opts.force_migrate_type == HueDeviceTypes.LIGHT then
     migration_handlers.light.migrate(driver, device, LifecycleHandlers, ...)
     -- Don't do a refresh if it's a migration
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })

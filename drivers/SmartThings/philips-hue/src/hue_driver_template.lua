@@ -1,3 +1,5 @@
+local Driver = require "st.driver"
+
 local capabilities = require "st.capabilities"
 local log = require "logjam"
 
@@ -10,21 +12,7 @@ local command_handlers = require "handlers.commands"
 local lifecycle_handlers = require "handlers.lifecycle_handlers"
 
 local bridge_utils = require "utils.hue_bridge_utils"
-
-local function _safe_wrap_handler(handler)
-  return function(driver, device, ...)
-    if device == nil or (device and device.id == nil) then
-      log.warn("Tried to handle capability command for device that has been deleted")
-      return
-    end
-    local success, result = pcall(handler, driver, device, ...)
-    if not success then
-      log.error_with({ hub_logs = true }, string.format("Failed to invoke capability command handler. Reason: %s", result))
-    end
-    return result
-  end
-end
-
+local utils = require "utils"
 
 ---@param driver HueDriver
 ---@param device HueDevice
@@ -52,19 +40,19 @@ end
 local disco = Discovery.discover
 
 -- Lifecycle Handlers
-local added = _safe_wrap_handler(lifecycle_handlers.initialize_device)
-local init = _safe_wrap_handler(lifecycle_handlers.initialize_device)
-local removed = _safe_wrap_handler(_remove)
+local added = utils.safe_wrap_handler(lifecycle_handlers.initialize_device)
+local init = utils.safe_wrap_handler(lifecycle_handlers.initialize_device)
+local removed = utils.safe_wrap_handler(_remove)
 
 -- Capability Command Handlers
-local refresh_handler = _safe_wrap_handler(command_handlers.refresh_handler)
-local switch_on_handler = _safe_wrap_handler(command_handlers.switch_on_handler)
-local switch_off_handler = _safe_wrap_handler(command_handlers.switch_off_handler)
-local switch_level_handler = _safe_wrap_handler(command_handlers.switch_level_handler)
-local set_color_handler = _safe_wrap_handler(command_handlers.set_color_handler)
-local set_hue_handler = _safe_wrap_handler(command_handlers.set_hue_handler)
-local set_saturation_handler = _safe_wrap_handler(command_handlers.set_saturation_handler)
-local set_color_temp_handler = _safe_wrap_handler(command_handlers.set_color_temp_handler)
+local refresh_handler = utils.safe_wrap_handler(command_handlers.refresh_handler)
+local switch_on_handler = utils.safe_wrap_handler(command_handlers.switch_on_handler)
+local switch_off_handler = utils.safe_wrap_handler(command_handlers.switch_off_handler)
+local switch_level_handler = utils.safe_wrap_handler(command_handlers.switch_level_handler)
+local set_color_handler = utils.safe_wrap_handler(command_handlers.set_color_handler)
+local set_hue_handler = utils.safe_wrap_handler(command_handlers.set_hue_handler)
+local set_saturation_handler = utils.safe_wrap_handler(command_handlers.set_saturation_handler)
+local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_color_temp_handler)
 
 --- @class HueDriverDatastore
 --- @field public bridge_netinfo table<string,HueBridgeInfo>
@@ -85,7 +73,7 @@ local set_color_temp_handler = _safe_wrap_handler(command_handlers.set_color_tem
 --- @field public get_device_info fun(self: HueDriver, device_id: string, force_refresh: boolean?): HueDevice?
 local HueDriver = {}
 
-function HueDriver.new_driver_template()
+function HueDriver.new_driver_template(dbg_config)
   local stray_device_tx = StrayDeviceHelper.spawn()
   local template = {
     discovery = disco,
@@ -132,7 +120,17 @@ function HueDriver.new_driver_template()
     template[k] = v
   end
 
+  if type(dbg_config) == "table" and dbg_config.enable_debug then
+    local hue_debug = require "hue_debug"
+    hue_debug.enable_dbg_config(template, dbg_config)
+  end
+
   return template
+end
+
+function HueDriver:run()
+  self.__running = true
+  Driver.run(self)
 end
 
 ---@param bridge_id string

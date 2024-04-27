@@ -7,10 +7,11 @@ function logjam.log(opts, level, ...)
   end
 end
 
-for level_key, val in pairs(log) do
+for field_key, level_key in pairs(log) do
   if
-      string.find(level_key, "LOG_LEVEL_") and
-      type(log[val]) == "function"
+      string.find(field_key, "LOG_LEVEL_") and
+      type(level_key) == "string" and
+      type(log[level_key]) == "function"
   then
     local level_with_key = string.format("%s_with", level_key)
     logjam[level_key] = function(...)

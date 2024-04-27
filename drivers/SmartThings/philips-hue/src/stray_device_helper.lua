@@ -1,13 +1,15 @@
 local cosock = require "cosock"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
 local Fields = require "fields"
 local HueApi = require "hue.api"
+local HueDeviceTypes = require "hue_device_types"
 
-local lifecycle_handlers = require "handlers.lifecycle_handlers"
 local utils = require "utils"
+
+local lazy_handlers = utils.lazy_handler_loader("handlers")
 
 ---@class StrayDeviceHelper
 local StrayDeviceHelper = {}
@@ -34,7 +36,7 @@ function StrayDeviceHelper.process_strays(driver, strays, bridge_device_uuid)
     local cached_device_description = Discovery.device_state_disco_cache[device_rid]
     if cached_device_description then
       table.insert(dnis_to_remove, device.device_network_id)
-      lifecycle_handlers.migrate_device(driver, device, bridge_device_uuid, cached_device_description)
+      lazy_handlers.lifecycle_handlers.migrate_device(driver, device, bridge_device_uuid, cached_device_description, {force_migrate_type = HueDeviceTypes.LIGHT})
     end
     ::continue::
   end

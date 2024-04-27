@@ -81,7 +81,6 @@ local function discovered_bridge_callback(driver, bridge_ip, bridge_id)
   if known_bridge_device ~= nil
       and driver.joined_bridges[bridge_id]
       and HueDiscovery.api_keys[bridge_id]
-      and known_bridge_device:get_field(Fields._INIT)
   then
     log.info_with({ hub_logs = true }, string.format("Scanning bridge %s for devices...", bridge_id))
 
