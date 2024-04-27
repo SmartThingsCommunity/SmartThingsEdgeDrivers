@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -130,7 +130,7 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
     return
   end
 
-  if button_info.power_state then
+  if button_info.power_state and type(button_info.power_state.battery_level) == "number" then
     log.debug(true, "emit power")
     button_device:emit_event(
       capabilities.battery.battery(
@@ -158,7 +158,7 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
     component_idx = string.format("button%s", idx)
   end
 
-  local button_report = button_info.button.button_report or { event = "" }
+  local button_report = (button_info.button and button_info.button.button_report) or { event = "" }
 
   if button_report.event == "long_press" and not button_device:get_field("button_held") then
     button_device:set_field("button_held", true)
@@ -184,7 +184,7 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
     return
   end
 
-  if sensor_info.power_state then
+  if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
     log.debug(true, "emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
@@ -222,7 +222,7 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
     return
   end
 
-  if sensor_info.power_state then
+  if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
     log.debug(true, "emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
