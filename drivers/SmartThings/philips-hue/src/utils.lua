@@ -50,6 +50,23 @@ function utils.safe_wrap_handler(handler)
   end
 end
 
+-- TODO: The Hue API itself doesn't have events for multipresses, however, it will
+-- emit batched "short release" eventsource on the SSE stream if they're close together.
+-- Right now the SSE stream handling is a relatively dumb pass-through that doesn't inspect
+-- the data as it unpacks it; it just dispatches each event in the batch as it encounters it.
+-- We could implement 2x-6x press if we add some smarts to the SSE stream handling.
+function utils.get_supported_button_values(event_values)
+  local values = {"pushed"}
+  for _, event_value in ipairs(event_values) do
+    if event_value == "long_press" then
+      table.insert(values, "held")
+      break
+    end
+  end
+
+  return values
+end
+
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
 function utils.mirek_to_kelvin(mirek) return 1000000 / mirek end
