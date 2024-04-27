@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -7,7 +7,7 @@ st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
 local Fields = require "fields"
-local HueColorUtils = require "hue.cie_utils"
+local HueColorUtils = require "utils.cie_utils"
 local HueDeviceTypes = require "hue_device_types"
 
 local utils = require "utils"
@@ -114,11 +114,11 @@ end
 
 function AttributeEmitters.connectivity_update(child_device, zigbee_status)
   if zigbee_status.status == "connected" then
-    child_device.log.info_with({hub_logs=true}, "Light status event, marking device online")
+    child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device online")
     child_device:online()
     child_device:set_field(Fields.IS_ONLINE, true)
   elseif zigbee_status.status == "connectivity_issue" then
-    child_device.log.info_with({hub_logs=true}, "Light status event, marking device offline")
+    child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device offline")
     child_device:set_field(Fields.IS_ONLINE, false)
     child_device:offline()
   end
@@ -148,6 +148,7 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
         (button_device and button_device.lable) or "unknown button"
       )
     )
+    return
   end
 
   local idx = button_idx_map[button_info.id] or 1
@@ -191,18 +192,18 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
 
   if sensor_info.tamper_reports then
     log.debug(true, "emit tamper")
-    local num_reports = #sensor_info.tamper_reports
-    local not_tampered = 0
+    local tampered = false
     for _, tamper in ipairs(sensor_info.tamper_reports) do
-      if tamper.state == "not_tampered" then
-        not_tampered = not_tampered + 1
+      if tamper.state == "tampered" then
+        tampered = true
+        break
       end
     end
 
-    if not_tampered == num_reports then
-      sensor_device:emit_event(capabilities.tamperAlert.tamper.clear())
-    else
+    if tampered then
       sensor_device:emit_event(capabilities.tamperAlert.tamper.detected())
+    else
+      sensor_device:emit_event(capabilities.tamperAlert.tamper.clear())
     end
   end
 

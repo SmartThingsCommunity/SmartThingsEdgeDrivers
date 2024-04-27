@@ -13,6 +13,7 @@
 ---@field public metadata { name: string, [string]: any}
 ---@field public id string
 ---@field public id_v1 string?
+---@field public service_id? integer
 ---@field public type HueDeviceTypes
 ---@field public owner HueServiceInfo?
 ---@field public hue_provided_name string

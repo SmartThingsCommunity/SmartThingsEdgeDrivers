@@ -1,4 +1,4 @@
-local log = require "log"
+local log = require "logjam"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
@@ -8,6 +8,31 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
+
+local function check_parent_assigned_child_key(device)
+  local device_type = utils.determine_device_type(device)
+  local device_rid = utils.get_hue_rid(device)
+
+  if type(device_type) == "string" and type(device_rid) == "string" then
+    local expected_parent_assigned_child_key = string.format("%s:%s", device_type, device_rid)
+    if expected_parent_assigned_child_key ~= device.parent_assigned_child_key then
+      log.debug(
+        string.format(
+          "\n\nDevice [%s] had parent-assigned child key of %s but expected %s, requesting metadata update\n\n",
+          (device and device.label) or "unknown device",
+          device.parent_assigned_child_key,
+          expected_parent_assigned_child_key
+        )
+      )
+      -- updating parent_assigned_child_key in metadata isn't supported
+      -- on Lua Libs API versions before 11.
+      if require("version").api <= 10 then
+        return
+      end
+      device:try_update_metadata({ parent_assigned_child_key = expected_parent_assigned_child_key })
+    end
+  end
+end
 
 -- Lazy-load the lifecycle handlers so we only load the code we need
 local inner_handlers = utils.lazy_handler_loader("handlers.lifecycle_handlers")
@@ -61,13 +86,7 @@ function LifecycleHandlers.device_added(driver, device, ...)
       local key = parent_bridge and parent_bridge:get_field(HueApi.APPLICATION_KEY_HEADER)
       local bridge_ip = parent_bridge and parent_bridge:get_field(Fields.IPV4)
       local bridge_id = parent_bridge and parent_bridge:get_field(Fields.BRIDGE_ID)
-      log.trace(true,
-        st_utils.stringify_table(
-          {parent_bridge and parent_bridge.label, key, bridge_ip, bridge_id},
-          "device added bridge deets",
-          true
-        )
-      )
+
       if not (bridge_ip and bridge_id and resource_state_known and (Discovery.api_keys[bridge_id or {}] or key)) then
         log.warn(true,
           "Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
@@ -132,8 +151,14 @@ function LifecycleHandlers.initialize_device(driver, device, event, _args, ...)
     driver.datastore.dni_to_device_id[device.device_network_id] = device.id
   end
 
+  if device:get_field(Fields.RETRY_MIGRATION) then
+    LifecycleHandlers.migrate_device(driver, device, ...)
+    return
+  end
+
   log.info(
     string.format("_initialize handling event %s for device %s", event, (device.label or device.id or "unknown device")))
+
   if not device:get_field(Fields._ADDED) then
     log.debug(
       string.format(
@@ -148,6 +173,9 @@ function LifecycleHandlers.initialize_device(driver, device, event, _args, ...)
         "_INIT for device %s not set while _initialize is handling %s, performing device init lifecycle operations",
         (device.label or device.id or "unknown device"), event))
     LifecycleHandlers.device_init(driver, device, ...)
+    if not utils.is_bridge(driver, device) then
+      check_parent_assigned_child_key(device)
+    end
   end
 end
 
