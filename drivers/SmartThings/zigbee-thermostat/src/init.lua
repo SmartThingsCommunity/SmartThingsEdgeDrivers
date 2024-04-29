@@ -205,6 +205,10 @@ local do_refresh = function(self, device)
     Thermostat.attributes.ControlSequenceOfOperation,
     Thermostat.attributes.ThermostatRunningState,
     Thermostat.attributes.SystemMode,
+    Thermostat.attributes.MinHeatSetpointLimit,
+    Thermostat.attributes.MaxHeatSetpointLimit,
+    Thermostat.attributes.MinCoolSetpointLimit,
+    Thermostat.attributes.MaxCoolSetpointLimit,
     FanControl.attributes.FanModeSequence,
     FanControl.attributes.FanMode,
     PowerConfiguration.attributes.BatteryVoltage,
@@ -224,6 +228,8 @@ end
 
 local device_added = function(self, device)
   do_refresh(self, device)
+  print(Thermostat.attributes)
+  print(ThermostatHeatingSetpoint.attributes)
 end
 
 local zigbee_thermostat_driver = {
