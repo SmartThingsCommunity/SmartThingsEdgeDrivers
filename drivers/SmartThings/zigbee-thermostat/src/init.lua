@@ -228,8 +228,6 @@ end
 
 local device_added = function(self, device)
   do_refresh(self, device)
-  print(Thermostat.attributes)
-  print(ThermostatHeatingSetpoint.attributes)
 end
 
 local zigbee_thermostat_driver = {

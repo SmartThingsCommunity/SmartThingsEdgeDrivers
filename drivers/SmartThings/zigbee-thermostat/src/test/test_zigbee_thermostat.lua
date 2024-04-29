@@ -558,6 +558,38 @@ test.register_message_test(
         direction = "send",
         message = {
           mock_device.id,
+          Thermostat.attributes.MinHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinCoolSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxCoolSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
           FanControl.attributes.FanModeSequence:read(mock_device)
         }
       },
@@ -642,6 +674,38 @@ test.register_message_test(
         message = {
           mock_device.id,
           Thermostat.attributes.SystemMode:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinCoolSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxCoolSetpointLimit:read(mock_device)
         }
       },
       {
