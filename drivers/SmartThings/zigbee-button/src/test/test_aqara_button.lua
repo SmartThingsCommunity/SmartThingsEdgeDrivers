@@ -61,6 +61,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device_e1)
   test.mock_device.add_test_device(mock_device_t1)
+  zigbee_test_utils.init_noop_health_check_timer()
 end
 
 test.set_test_init_function(test_init)
@@ -69,12 +70,6 @@ test.register_coroutine_test(
   "Handle added lifecycle -- e1",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_e1.id, "added" })
-
-    test.socket.zigbee:__expect_send({ mock_device_e1.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device_e1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE,
-    data_types.Uint8, 2) })
-
-
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
@@ -86,16 +81,65 @@ test.register_coroutine_test(
   "Handle added lifecycle -- t1",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_t1.id, "added" })
-
-    test.socket.zigbee:__expect_send({ mock_device_t1.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device_t1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE,
-    data_types.Uint8, 1) })
-
-
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.battery.battery(100)))
+  end
+)
+
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle -- e1",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_e1.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device_e1.id,
+      zigbee_test_utils.build_bind_request(mock_device_e1, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_e1.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device_e1, 30, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_e1.id,
+      zigbee_test_utils.build_bind_request(mock_device_e1, zigbee_test_utils.mock_hub_eui, MULTISTATE_INPUT_CLUSTER_ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_e1.id,
+      zigbee_test_utils.build_attr_config(mock_device_e1, MULTISTATE_INPUT_CLUSTER_ID, PRESENT_ATTRIBUTE_ID, 0x0003, 0x1C20, data_types.Uint16, 0x0001)
+    })
+    test.socket.zigbee:__expect_send({ mock_device_e1.id,
+     cluster_base.write_manufacturer_specific_attribute(mock_device_e1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE,
+     data_types.Uint8, 2) })
+     mock_device_e1:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+
+test.register_coroutine_test(
+  "Handle doConfigure lifecycle -- t1",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_t1.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({
+      mock_device_t1.id,
+      zigbee_test_utils.build_bind_request(mock_device_t1, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_t1.id,
+      PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device_t1, 30, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_t1.id,
+      zigbee_test_utils.build_bind_request(mock_device_t1, zigbee_test_utils.mock_hub_eui, MULTISTATE_INPUT_CLUSTER_ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device_t1.id,
+      zigbee_test_utils.build_attr_config(mock_device_t1, MULTISTATE_INPUT_CLUSTER_ID, PRESENT_ATTRIBUTE_ID, 0x0003, 0x1C20, data_types.Uint16, 0x0001)
+    })
+    test.socket.zigbee:__expect_send({ mock_device_t1.id,
+     cluster_base.write_manufacturer_specific_attribute(mock_device_t1, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE,
+     data_types.Uint8, 1) })
+     mock_device_t1:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
