@@ -29,16 +29,6 @@ local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint"
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
-local function device_supports_thermostat_setpoint(device)
-  return (
-    (
-      device:supports_capability_by_id(capabilities.thermostatCoolingSetpoint.ID) or
-      device:supports_capability_by_id(capabilities.thermostatHeatingSetpoint.ID)
-    ) and
-    device:is_cc_supported(cc.THERMOSTAT_SETPOINT)
-  )
-end
-
 local function device_added(driver, device)
   if device:supports_capability_by_id(capabilities.thermostatMode.ID) and
     device:is_cc_supported(cc.THERMOSTAT_MODE) then
@@ -48,9 +38,13 @@ local function device_added(driver, device)
     device:is_cc_supported(cc.THERMOSTAT_FAN_MODE) then
     device:send(ThermostatFanMode:SupportedGet({}))
   end
-  if device_supports_thermostat_setpoint(device) then
-    device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
-    device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+  if device:is_cc_supported(cc.THERMOSTAT_SETPOINT) then
+    if device:supports_capability_by_id(capabilities.thermostatCoolingSetpoint.ID) then
+      device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    end
+    if device:supports_capability_by_id(capabilities.thermostatHeatingSetpoint.ID) then
+      device:send(ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    end
   end
   device:refresh()
 end
