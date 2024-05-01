@@ -164,6 +164,63 @@ local thermostat_mode_setter = function(mode_name)
   end
 end
 
+local thermostat_setpoint_min_cool = nil
+local thermostat_setpoint_max_cool = nil
+local thermostat_setpoint_min_heat = nil
+local thermostat_setpoint_max_heat = nil
+
+local emit_cool_setpoint_bounds_event = function (device)
+  device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
+      {
+        unit = 'C',
+        value = {minimum = thermostat_setpoint_min_cool, maximum = thermostat_setpoint_max_cool}
+      }
+    )
+  )
+  thermostat_setpoint_min_cool = nil
+  thermostat_setpoint_max_cool = nil
+end
+
+local emit_heat_setpoint_bounds_event = function (device)
+  device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+      {
+        unit = 'C',
+        value = {minimum = thermostat_setpoint_min_heat, maximum = thermostat_setpoint_max_heat}
+      }
+    )
+  )
+  thermostat_setpoint_min_heat = nil
+  thermostat_setpoint_max_heat = nil
+end
+
+local thermostat_setpoint_cool_min_handler = function(driver, device, setpoint)
+  thermostat_setpoint_min_cool = setpoint.value
+  if thermostat_setpoint_min_cool and thermostat_setpoint_max_cool then
+      emit_cool_setpoint_bounds_event(device)
+  end
+end
+
+local thermostat_setpoint_cool_max_handler = function(driver, device, setpoint)
+  thermostat_setpoint_max_cool = setpoint.value
+  if thermostat_setpoint_min_cool and thermostat_setpoint_max_cool then
+      emit_cool_setpoint_bounds_event(device)
+  end
+end
+
+local thermostat_setpoint_heat_min_handler = function(driver, device, setpoint)
+  thermostat_setpoint_min_heat = setpoint.value
+  if thermostat_setpoint_min_heat and thermostat_setpoint_max_heat then
+      emit_heat_setpoint_bounds_event(device)
+  end
+end
+
+local thermostat_setpoint_heat_max_handler = function(driver, device, setpoint)
+  thermostat_setpoint_max_heat = setpoint.value
+  if thermostat_setpoint_min_heat and thermostat_setpoint_max_heat then
+      emit_heat_setpoint_bounds_event(device)
+  end
+end
+
 local set_thermostat_fan_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(FAN_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
@@ -252,7 +309,11 @@ local zigbee_thermostat_driver = {
         [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler,
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
         [Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
-        [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler
+        [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = thermostat_setpoint_heat_min_handler,
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = thermostat_setpoint_heat_max_handler,
+        [Thermostat.attributes.MinCoolSetpointLimit.ID] = thermostat_setpoint_cool_min_handler,
+        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = thermostat_setpoint_cool_max_handler,
       },
       [FanControl.ID] = {
         [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
