@@ -184,7 +184,7 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedSelectableStates(accepted_command_list))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list))
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
@@ -267,21 +267,30 @@ local function handle_laundry_washer_rinse_mode(driver, device, cmd)
   end
 end
 
-local function handle_set_operating_state(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_set_operating_state state: %s", cmd.args.operationalState))
-
+local function handle_operational_state_start(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local state = cmd.args.operationalState
-  if state == "start" then
-    device:send(clusters.OperationalState.server.commands.Start(device, endpoint_id))
-  elseif state == "stop" then
-    device:send(clusters.OperationalState.server.commands.Stop(device, endpoint_id))
-  elseif state == "resume" then
-    device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
-  elseif state == "pause" then
-    device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
-  end
+  device:send(clusters.OperationalState.server.commands.Start(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
+local function handle_operational_state_stop(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.OperationalState.server.commands.Stop(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
+local function handle_operational_state_resume(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
+local function handle_operational_state_pause(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
@@ -328,7 +337,10 @@ local matter_laundry_washer_handler = {
       [capabilities.laundryWasherRinseMode.commands.setRinseMode.NAME] = handle_laundry_washer_rinse_mode,
     },
     [capabilities.operationalState.ID] = {
-      [capabilities.operationalState.commands.setOperationalState.NAME] = handle_set_operating_state,
+      [capabilities.operationalState.commands.start.NAME] = handle_operational_state_start,
+      [capabilities.operationalState.commands.stop.NAME] = handle_operational_state_stop,
+      [capabilities.operationalState.commands.pause.NAME] = handle_operational_state_pause,
+      [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume,
     },
   },
   can_handle = is_matter_laundry_washer,
