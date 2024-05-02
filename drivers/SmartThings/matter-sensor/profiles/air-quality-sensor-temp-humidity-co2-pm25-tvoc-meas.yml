@@ -1,4 +1,4 @@
-name: air-quality-sensor-common
+name: air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas
 components:
   - id: main
     capabilities:
