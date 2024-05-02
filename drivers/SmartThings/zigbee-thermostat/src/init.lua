@@ -196,28 +196,28 @@ local emit_heat_setpoint_bounds_event = function (device)
   device:set_field(SETPOINT_MAX_HEAT, nil)
 end
 
-local thermostat_setpoint_cool_min_handler = function(driver, device, setpoint)
+local thermostat_setpoint_min_cool_handler = function(driver, device, setpoint)
   device:set_field(SETPOINT_MIN_COOL, setpoint.value)
   if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
       emit_cool_setpoint_bounds_event(device)
   end
 end
 
-local thermostat_setpoint_cool_max_handler = function(driver, device, setpoint)
+local thermostat_setpoint_max_cool_handler = function(driver, device, setpoint)
   device:set_field(SETPOINT_MAX_COOL, setpoint.value)
   if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
       emit_cool_setpoint_bounds_event(device)
   end
 end
 
-local thermostat_setpoint_heat_min_handler = function(driver, device, setpoint)
+local thermostat_setpoint_min_heat_handler = function(driver, device, setpoint)
   device:set_field(SETPOINT_MIN_HEAT, setpoint.value)
   if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
       emit_heat_setpoint_bounds_event(device)
   end
 end
 
-local thermostat_setpoint_heat_max_handler = function(driver, device, setpoint)
+local thermostat_setpoint_max_heat_handler = function(driver, device, setpoint)
   device:set_field(SETPOINT_MAX_HEAT, setpoint.value)
   if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
       emit_heat_setpoint_bounds_event(device)
@@ -313,10 +313,10 @@ local zigbee_thermostat_driver = {
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
         [Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
         [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler,
-        [Thermostat.attributes.MinHeatSetpointLimit.ID] = thermostat_setpoint_heat_min_handler,
-        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = thermostat_setpoint_heat_max_handler,
-        [Thermostat.attributes.MinCoolSetpointLimit.ID] = thermostat_setpoint_cool_min_handler,
-        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = thermostat_setpoint_cool_max_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = thermostat_setpoint_min_heat_handler,
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = thermostat_setpoint_max_heat_handler,
+        [Thermostat.attributes.MinCoolSetpointLimit.ID] = thermostat_setpoint_min_cool_handler,
+        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = thermostat_setpoint_max_cool_handler,
       },
       [FanControl.ID] = {
         [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
