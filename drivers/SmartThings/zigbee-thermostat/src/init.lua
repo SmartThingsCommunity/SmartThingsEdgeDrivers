@@ -45,6 +45,11 @@ local RelativeHumidity          = capabilities.relativeHumidityMeasurement
 local BAT_MIN = 50.0
 local BAT_MAX = 65.0
 
+local SETPOINT_MIN_COOL = "setpoint_min_cool"
+local SETPOINT_MAX_COOL = "setpoint_max_cool"
+local SETPOINT_MIN_HEAT = "setpoint_min_heat"
+local SETPOINT_MAX_HEAT = "setpoint_max_heat"
+
 local THERMOSTAT_MODE_MAP = {
   [ThermostatSystemMode.OFF]               = ThermostatMode.thermostatMode.off,
   [ThermostatSystemMode.AUTO]              = ThermostatMode.thermostatMode.auto,
@@ -164,59 +169,57 @@ local thermostat_mode_setter = function(mode_name)
   end
 end
 
-local thermostat_setpoint_min_cool = nil
-local thermostat_setpoint_max_cool = nil
-local thermostat_setpoint_min_heat = nil
-local thermostat_setpoint_max_heat = nil
 
 local emit_cool_setpoint_bounds_event = function (device)
   device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
       {
         unit = 'C',
-        value = {minimum = thermostat_setpoint_min_cool, maximum = thermostat_setpoint_max_cool}
+        value = {minimum = device:get_field(SETPOINT_MIN_COOL),
+                 maximum = device:get_field(SETPOINT_MAX_COOL)}
       }
     )
   )
-  thermostat_setpoint_min_cool = nil
-  thermostat_setpoint_max_cool = nil
+  device:set_field(SETPOINT_MIN_COOL, nil)
+  device:set_field(SETPOINT_MAX_COOL, nil)
 end
 
 local emit_heat_setpoint_bounds_event = function (device)
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
       {
         unit = 'C',
-        value = {minimum = thermostat_setpoint_min_heat, maximum = thermostat_setpoint_max_heat}
+        value = {minimum = device:get_field(SETPOINT_MIN_HEAT),
+                 maximum = device:get_field(SETPOINT_MAX_HEAT)}
       }
     )
   )
-  thermostat_setpoint_min_heat = nil
-  thermostat_setpoint_max_heat = nil
+  device:set_field(SETPOINT_MIN_HEAT, nil)
+  device:set_field(SETPOINT_MAX_HEAT, nil)
 end
 
 local thermostat_setpoint_cool_min_handler = function(driver, device, setpoint)
-  thermostat_setpoint_min_cool = setpoint.value
-  if thermostat_setpoint_min_cool and thermostat_setpoint_max_cool then
+  device:set_field(SETPOINT_MIN_COOL, setpoint.value)
+  if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
       emit_cool_setpoint_bounds_event(device)
   end
 end
 
 local thermostat_setpoint_cool_max_handler = function(driver, device, setpoint)
-  thermostat_setpoint_max_cool = setpoint.value
-  if thermostat_setpoint_min_cool and thermostat_setpoint_max_cool then
+  device:set_field(SETPOINT_MAX_COOL, setpoint.value)
+  if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
       emit_cool_setpoint_bounds_event(device)
   end
 end
 
 local thermostat_setpoint_heat_min_handler = function(driver, device, setpoint)
-  thermostat_setpoint_min_heat = setpoint.value
-  if thermostat_setpoint_min_heat and thermostat_setpoint_max_heat then
+  device:set_field(SETPOINT_MIN_HEAT, setpoint.value)
+  if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
       emit_heat_setpoint_bounds_event(device)
   end
 end
 
 local thermostat_setpoint_heat_max_handler = function(driver, device, setpoint)
-  thermostat_setpoint_max_heat = setpoint.value
-  if thermostat_setpoint_min_heat and thermostat_setpoint_max_heat then
+  device:set_field(SETPOINT_MAX_HEAT, setpoint.value)
+  if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
       emit_heat_setpoint_bounds_event(device)
   end
 end
