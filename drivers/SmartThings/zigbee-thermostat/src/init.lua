@@ -196,31 +196,29 @@ local emit_heat_setpoint_bounds_event = function (device)
   device:set_field(SETPOINT_MAX_HEAT, nil)
 end
 
-local thermostat_setpoint_min_cool_handler = function(driver, device, setpoint)
-  device:set_field(SETPOINT_MIN_COOL, setpoint.value)
-  if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
-      emit_cool_setpoint_bounds_event(device)
-  end
-end
+local setpoint_limit_handler_factory = function(handled_attribute)
 
-local thermostat_setpoint_max_cool_handler = function(driver, device, setpoint)
-  device:set_field(SETPOINT_MAX_COOL, setpoint.value)
-  if device:get_field(SETPOINT_MIN_COOL) and device:get_field(SETPOINT_MAX_COOL) then
-      emit_cool_setpoint_bounds_event(device)
-  end
-end
+  local paired_attributes = {
+    [SETPOINT_MIN_HEAT] = SETPOINT_MAX_HEAT,
+    [SETPOINT_MAX_HEAT] = SETPOINT_MIN_HEAT,
+    [SETPOINT_MIN_COOL] = SETPOINT_MAX_COOL,
+    [SETPOINT_MAX_COOL] = SETPOINT_MIN_COOL
+  }
 
-local thermostat_setpoint_min_heat_handler = function(driver, device, setpoint)
-  device:set_field(SETPOINT_MIN_HEAT, setpoint.value)
-  if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
-      emit_heat_setpoint_bounds_event(device)
-  end
-end
+  local paired_attribute = paired_attributes[handled_attribute]
+  local event_emit_function = nil
 
-local thermostat_setpoint_max_heat_handler = function(driver, device, setpoint)
-  device:set_field(SETPOINT_MAX_HEAT, setpoint.value)
-  if device:get_field(SETPOINT_MIN_HEAT) and device:get_field(SETPOINT_MAX_HEAT) then
-      emit_heat_setpoint_bounds_event(device)
+  if handled_attribute == SETPOINT_MIN_HEAT or handled_attribute == SETPOINT_MAX_HEAT then
+    event_emit_function = emit_heat_setpoint_bounds_event
+  else
+    event_emit_function = emit_cool_setpoint_bounds_event
+  end
+
+  return function(driver, device, setpoint)
+    device:set_field(handled_attribute, setpoint.value)
+    if device:get_field(paired_attribute) and device:get_field(handled_attribute) then
+      event_emit_function(device)
+    end
   end
 end
 
@@ -313,10 +311,10 @@ local zigbee_thermostat_driver = {
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
         [Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
         [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler,
-        [Thermostat.attributes.MinHeatSetpointLimit.ID] = thermostat_setpoint_min_heat_handler,
-        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = thermostat_setpoint_max_heat_handler,
-        [Thermostat.attributes.MinCoolSetpointLimit.ID] = thermostat_setpoint_min_cool_handler,
-        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = thermostat_setpoint_max_cool_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MIN_HEAT),
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MAX_HEAT),
+        [Thermostat.attributes.MinCoolSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MIN_COOL),
+        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MAX_COOL),
       },
       [FanControl.ID] = {
         [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
