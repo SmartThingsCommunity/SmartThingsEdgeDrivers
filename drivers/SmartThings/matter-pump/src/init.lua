@@ -18,6 +18,8 @@ local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+local IS_LOCAL_OVERRIDE = "__is_local_override"
+
 local pumpOperationMode = capabilities.pumpOperationMode
 local pumpControlMode = capabilities.pumpControlMode
 
@@ -182,7 +184,10 @@ end
 local function effective_operation_mode_handler(driver, device, ib, response)
   local modeEnum = clusters.PumpConfigurationAndControl.types.OperationModeEnum
   local supported_control_modes = {}
-  set_supported_op_mode(driver, device)
+  local local_override = device:get_field(IS_LOCAL_OVERRIDE)
+  if not local_override then
+    set_supported_op_mode(driver, device)
+  end
   if ib.data.value == modeEnum.NORMAL then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.normal())
     set_supported_control_mode(driver, device)
@@ -204,12 +209,14 @@ end
 
 local function pump_status_handler(driver, device, ib, response)
   if ib.data.value == clusters.PumpConfigurationAndControl.types.PumpStatusBitmap.LOCAL_OVERRIDE then
+    device:set_field(IS_LOCAL_OVERRIDE, true, {persist = true})
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.localSetting())
     local supported_op_modes = {}
     local supported_control_modes = {}
     device:emit_event_for_endpoint(pump_eps, pumpOperationMode.supportedOperationModes(supported_op_modes))
     device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == clusters.PumpConfigurationAndControl.types.PumpStatusBitmap.RUNNING then
+    device:set_field(IS_LOCAL_OVERRIDE, false, {persist = true})
     device:send(clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode:read(device))
   end
 end
