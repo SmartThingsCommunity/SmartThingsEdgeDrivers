@@ -170,7 +170,7 @@ local thermostat_mode_setter = function(mode_name)
 end
 
 
-local emit_cool_setpoint_bounds_event = function (device)
+local emit_cool_setpoint_limits_event = function (device)
   device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
       {
         unit = 'C',
@@ -183,7 +183,7 @@ local emit_cool_setpoint_bounds_event = function (device)
   device:set_field(SETPOINT_MAX_COOL, nil)
 end
 
-local emit_heat_setpoint_bounds_event = function (device)
+local emit_heat_setpoint_limits_event = function (device)
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
       {
         unit = 'C',
@@ -209,9 +209,9 @@ local setpoint_limit_handler_factory = function(handled_attribute)
   local event_emit_function = nil
 
   if handled_attribute == SETPOINT_MIN_HEAT or handled_attribute == SETPOINT_MAX_HEAT then
-    event_emit_function = emit_heat_setpoint_bounds_event
+    event_emit_function = emit_heat_setpoint_limits_event
   else
-    event_emit_function = emit_cool_setpoint_bounds_event
+    event_emit_function = emit_cool_setpoint_limits_event
   end
 
   return function(driver, device, setpoint)
