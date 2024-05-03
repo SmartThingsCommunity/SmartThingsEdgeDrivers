@@ -35,7 +35,7 @@ local FINGERPRINTS = {
 
 local function can_handle(opts, driver, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.model, nil) then return true end
+    if device:id_match(fingerprint.mfr, nil, fingerprint.model) then return true end
   end
   return false
 end
