@@ -407,4 +407,34 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "Correct contact events should be generated when device is mounted on garage door",
+  function()
+    test.socket.device_lifecycle():__queue_receive({mock_device.id, "init"})
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
+        {
+            preferences = {
+              ["certifiedpreferences.garageSensor"] = true
+            }
+        }
+    ))
+    test.wait_for_events()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_three_axis_report_message(mock_device, "\xF6\xFF\x04\xFC\x9D\xFF")
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({-10, -1020, -99})) )
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_three_axis_report_message(mock_device, "\x8C\xFF\xFC\xFF\xC6\xFC")
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({-116, -4, -826})) )
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
+  end
+)
+
 test.run_registered_tests()
