@@ -203,7 +203,7 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
-  - id:"4442/73"
+  - id: "4442/73"
     deviceLabel: Essentials Outdoor Lights
     vendorId: 0x115A
     productId: 0x0049
