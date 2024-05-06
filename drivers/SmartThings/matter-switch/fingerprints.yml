@@ -139,7 +139,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
-
+#Legrand
+  - id: "4129/3"
+    deviceLabel: Smart Lights Smart Plug
+    vendorId: 0x1021
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
