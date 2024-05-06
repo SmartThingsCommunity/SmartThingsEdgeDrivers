@@ -203,6 +203,11 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
+  - id:"4442/73"
+    deviceLabel: Essentials Outdoor Lights
+    vendorId: 0x115A
+    productId: 0x0049
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
