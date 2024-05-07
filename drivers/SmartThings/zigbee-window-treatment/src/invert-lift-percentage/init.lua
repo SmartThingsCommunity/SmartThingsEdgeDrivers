@@ -100,6 +100,7 @@ local ikea_window_treatment = {
     return device:get_manufacturer() == "IKEA of Sweden" or
       device:get_manufacturer() == "Smartwings" or
       device:get_manufacturer() == "Insta GmbH"
+      device:get_manufacturer() == "Screen Innovations"
   end
 }
 
