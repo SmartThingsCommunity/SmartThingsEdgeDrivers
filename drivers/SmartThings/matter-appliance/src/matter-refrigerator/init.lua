@@ -159,23 +159,35 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
 end
 
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
+  local component = device.profile.components["main"]
   local refrigeratorTccModeSupportedModes = {}
+  if ib.endpoint_id == 1 then
+    component = device.profile.components["refrigerator"]
+  elseif ib.endpoint_id == 2 then
+    component = device.profile.components["freezer"]
+  end
   for _, mode in ipairs(ib.data.elements) do
     table.insert(refrigeratorTccModeSupportedModes, mode.elements.label.value)
   end
   refrigeratorTccModeSupportedModesMap[ib.endpoint_id] = refrigeratorTccModeSupportedModes
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(refrigeratorTccModeSupportedModes))
+  device:emit_component_event(component, capabilities.mode.supportedModes(refrigeratorTccModeSupportedModes))
 end
 
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
 
+  local component = device.profile.components["main"]
   local currentMode = ib.data.value
   local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ib.endpoint_id]
+  if ib.endpoint_id == 2 then
+    component = device.profile.components["refrigerator"]
+  elseif ib.endpoint_id == 3 then
+    component = device.profile.components["freezer"]
+  end
   for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
     if i - 1 == currentMode then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+      device:emit_component_event(component, capabilities.mode.mode(mode))
       break
     end
   end
@@ -193,14 +205,20 @@ local function temp_event_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
   string.format("temp_event_handler: %s", ib.data.value))
 
+  local component = device.profile.components["main"]
   local temp = 0
   local unit = "C"
+  if ib.endpoint_id == 2 then
+    component = device.profile.components["refrigerator"]
+  elseif ib.endpoint_id == 3 then
+    component = device.profile.components["freezer"]
+  end
   if ib.data.value == nil then
     temp = 0
   else
     temp = ib.data.value / 100.0
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  device:emit_component_event(component, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
 end
 
 -- Capability Handlers --
