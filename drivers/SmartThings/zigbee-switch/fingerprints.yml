@@ -122,17 +122,17 @@ zigbeeManufacturer:
     model: lumi.switch.n1aeu1
     deviceProfileName: aqara-switch-power
   - id: "LUMI/lumi.switch.n2aeu1"
-    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker)
+    deviceLabel: Aqara Smart Wall Switch H1 EU (With Neutral, Double Rocker)
     manufacturer: LUMI
     model: lumi.switch.n2aeu1
     deviceProfileName: aqara-switch-power
   - id: "LUMI/lumi.switch.l1aeu1"
-    deviceLabel: Aqara Smart Wall Switch H1 (No Neutral, Single Rocker)
+    deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Single Rocker)
     manufacturer: LUMI
     model: lumi.switch.l1aeu1
     deviceProfileName: aqara-switch-no-power
   - id: "LUMI/lumi.switch.l2aeu1"
-    deviceLabel: Aqara Smart Wall Switch H1 (No Neutral, Double Rocker)
+    deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker)
     manufacturer: LUMI
     model: lumi.switch.l2aeu1
     deviceProfileName: aqara-switch-no-power    
