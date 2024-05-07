@@ -29,22 +29,22 @@ local devices_model_info = {
     model = "L42ms",
   },
   [SetupID.MA510] = {
-    profile = "maX10",
+    profile = "jbl-ma-avr-series",
     manufacturer = "JBL",
     model = "MA510",
   },
   [SetupID.MA710] = {
-    profile = "maX10",
+    profile = "jbl-ma-avr-series",
     manufacturer = "JBL",
     model = "MA710",
   },
   [SetupID.MA7100HP] = {
-    profile = "maX10",
+    profile = "jbl-ma-avr-series",
     manufacturer = "JBL",
     model = "MA7100HP",
   },
   [SetupID.MA9100HP] = {
-    profile = "maX10",
+    profile = "jbl-ma-avr-series",
     manufacturer = "JBL",
     model = "MA9100HP",
   },

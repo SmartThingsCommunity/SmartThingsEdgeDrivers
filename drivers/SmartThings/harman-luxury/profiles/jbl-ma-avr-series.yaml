@@ -1,4 +1,4 @@
-name: maX10
+name: jbl-ma-avr-series
 components:
 - id: main
   capabilities:
