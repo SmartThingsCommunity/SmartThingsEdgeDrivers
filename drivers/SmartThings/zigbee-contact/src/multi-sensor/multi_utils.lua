@@ -138,7 +138,7 @@ multi_utils.convert_to_signedInt16 = function(byte1, byte2)
   local finalValue
   local swapped = (byte2 << 8) | byte1
   local sign_mask = 0x8000
-  local int16mask = 0xFF
+  local int16mask = 0xFFFF
   local isNegative = (swapped & sign_mask) >> 15
 
   if(isNegative == 1) then
