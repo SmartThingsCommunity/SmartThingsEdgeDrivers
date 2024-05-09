@@ -54,12 +54,17 @@ local function test_init()
     clusters.Thermostat.attributes.LocalTemperature,
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
     clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ThermostatRunningState,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.Thermostat.attributes.LocalTemperature,
     clusters.PowerSource.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -70,14 +75,8 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
-  local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
-  read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-  read_limits:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
-  read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-  read_limits:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-  read_limits:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
-  read_limits:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
-  test.socket.matter:__expect_send({mock_device.id, read_limits})
+  local read_setpoint_deadband = clusters.Thermostat.attributes.MinSetpointDeadBand:read()
+  test.socket.matter:__expect_send({mock_device.id, read_setpoint_deadband})
 
   test.mock_device.add_test_device(mock_device)
 end

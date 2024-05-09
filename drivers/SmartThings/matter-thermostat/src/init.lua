@@ -36,7 +36,7 @@ local THERMOSTAT_OPERATING_MODE_MAP = {
 }
 
 local setpoint_limit_device_field = {
-  BOUNDS_CHECKED = "BOUNDS_CHECKED",
+  MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
   MIN_HEAT = "MIN_HEAT",
   MAX_HEAT = "MAX_HEAT",
   MIN_COOL = "MIN_COOL",
@@ -49,7 +49,9 @@ local setpoint_limit_device_field = {
 local subscribed_attributes = {
   [capabilities.temperatureMeasurement.ID] = {
     clusters.Thermostat.attributes.LocalTemperature,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue
+    clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
   },
   [capabilities.relativeHumidityMeasurement.ID] = {
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -66,10 +68,14 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.thermostatCoolingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
   },
   [capabilities.thermostatHeatingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
   },
   [capabilities.battery.ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining
@@ -107,37 +113,15 @@ local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 
-  if not device:get_field(setpoint_limit_device_field.BOUNDS_CHECKED) then
-    local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
-    local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
+  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-    local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-
-    --Query setpoint limits if needed
-    local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_HEAT) == nil then
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read())
-    end
-    if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_HEAT) == nil then
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-    end
-    if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_COOL) == nil then
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
-    end
-    if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_COOL) == nil then
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-    end
+    --Query min setpoint deadband if needed
     if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
       setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-    end
-    if #temp_eps ~= 0 then
-      setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read())
-      setpoint_limit_read:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read())
-    end
-    if #setpoint_limit_read.info_blocks ~= 0 then
       device:send(setpoint_limit_read)
     end
-    device:set_field(setpoint_limit_device_field.BOUNDS_CHECKED, true)
+    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
   end
 end
 
