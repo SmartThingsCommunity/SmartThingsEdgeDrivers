@@ -47,11 +47,11 @@ end
 local function create_child_devices(driver, device)
   local children_amount = get_children_amount(device)
   for i = 2, children_amount + 1, 1 do
-    local name
+    local device_name_without_number = string.sub(device.label, 0, -2)
     if i == 5 then
-      name = "Confio Switch All OnOff"
+      local name = string.format("%sAll OnOff", device_name_without_number)
     else
-      name = "Confio Switch " .. i
+      local name = string.format("%s%d", device_name_without_number, i)
     end
     if find_child(device, i) == nil then
       local metadata = {
@@ -67,6 +67,7 @@ local function create_child_devices(driver, device)
   end
   device:refresh()
 end
+
 
 local function switch_All_On_Off_handler(driver, device, command)
   local ep_num = 1
