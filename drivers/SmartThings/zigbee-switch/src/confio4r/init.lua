@@ -48,10 +48,11 @@ local function create_child_devices(driver, device)
   local children_amount = get_children_amount(device)
   for i = 2, children_amount + 1, 1 do
     local device_name_without_number = string.sub(device.label, 0, -2)
+    local name 
     if i == 5 then
-      local name = string.format("%sAll OnOff", device_name_without_number)
+      name = string.format("%sAll OnOff", device_name_without_number)
     else
-      local name = string.format("%s%d", device_name_without_number, i)
+      name = string.format("%s%d", device_name_without_number, i)
     end
     if find_child(device, i) == nil then
       local metadata = {
