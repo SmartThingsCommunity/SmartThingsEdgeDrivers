@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "Confio/CT1CCZB"
+    deviceLabel: Confio Single Curtain
+    manufacturer: Confio
+    model: CT1CCZB
+    deviceProfileName: window-treatment-confio
+  - id: "Confio/CT2CCZB"
+    deviceLabel: Confio Dual Curtain 1
+    manufacturer: Confio
+    model: CT2CCZB
+    deviceProfileName: window-treatment-confio
   - id: "Vimar/xx594-roller-shutter"
     deviceLabel: Vimar Smart Roller Shutter
     manufacturer: Vimar
