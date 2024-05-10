@@ -88,7 +88,12 @@ local function handleReply(func_name, u, sink, code, valLocationFunc)
     end
     return nil, err
   else -- UNKNOWN VALUE
-    local err = string.format("Error in %s: Unknown return value: code: %s, sink: %s", func_name, code, sink)
+    local err
+    if string.find(code, "timeout") then
+      err = string.format("Error in %s: Connection timeout", func_name)
+    else
+      err = string.format("Error in %s: Unknown return value: code: %s, sink: %s", func_name, code, sink)
+    end
     log.error(err)
     return nil, err
   end
