@@ -15,7 +15,6 @@
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
-local data_types = require "st.zigbee.data_types"
 
 local ep_num = 5
 
@@ -51,16 +50,16 @@ local function device_init (driver, device)
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
   end
-  profile_type = "window-treatment-confio"
+  local profile_type = "window-treatment-confio"
   local label = "Confio Dual Curtain 2"
   if not device:get_child_by_parent_assigned_key("switch6") then
   local metadata = {
     type = "EDGE_CHILD",
-    label = label,                              
-    profile = profile_type,                     
-    parent_device_id = device.id,               
-    parent_assigned_child_key = "switch6",     
-    vendor_provided_label = profile_type        
+    label = label,
+    profile = profile_type,
+    parent_device_id = device.id,
+    parent_assigned_child_key = "switch6",
+    vendor_provided_label = profile_type
   }
   driver:try_create_device(metadata)
   end
@@ -99,7 +98,7 @@ local function window_shade_set_level_handler(driver, device, command)
       elseif level > 0 and level < 100 then
         device:emit_event(window_shade.partially_open())
         device:emit_event(window_shadeLevel.shadeLevel(level))
-      end       
+      end
     end
   end
 end
@@ -107,7 +106,7 @@ end
 local function open_handler(driver, device, command)
   if device.network_type ~= "DEVICE_EDGE_CHILD" then  ---- device (is NO Child device)
     local current_level = device:get_latest_state(command.component, capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
-    if current_level ~= 100 then 
+    if current_level ~= 100 then
       device:emit_event(capabilities.windowShade.windowShade.opening())
       device:send_to_component(command.component, WindowCovering.server.commands.UpOrOpen(device))
     end
@@ -125,14 +124,14 @@ end
 local function close_handler(driver, device, command)
   if device.network_type ~= "DEVICE_EDGE_CHILD" then  ---- device (is NO Child device)
     local current_level = device:get_latest_state(command.component, capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
-    if current_level ~= 0 then  
+    if current_level ~= 0 then
       device:emit_event(capabilities.windowShade.windowShade.closing())
       device:send_to_component(command.component, WindowCovering.server.commands.DownOrClose(device))
     end
   else
     local parent_device = device:get_parent_device()
     local component = device.parent_assigned_child_key
-    if component ~= "main" then  
+    if component ~= "main" then
       device:emit_event(capabilities.windowShade.windowShade.closed())
       parent_device:send_to_component(component, WindowCovering.server.commands.GoToLiftPercentage(parent_device, 0))
       device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
@@ -141,7 +140,7 @@ local function close_handler(driver, device, command)
 end
 
 local function pause_handler(driver, device, command)
-  if device.network_type ~= "DEVICE_EDGE_CHILD" then  ---- device (is NO Child device)  
+  if device.network_type ~= "DEVICE_EDGE_CHILD" then---- device (is NO Child device)
     device:send_to_component(command.component, WindowCovering.server.commands.Stop(device))
     device:emit_event(capabilities.windowShade.windowShade.partially_open())
   else
