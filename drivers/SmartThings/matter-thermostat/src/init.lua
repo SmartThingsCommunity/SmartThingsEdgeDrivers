@@ -19,6 +19,7 @@ local im = require "st.matter.interaction_model"
 
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local version = require "version"
 
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
@@ -198,7 +199,9 @@ end
 
 local temp_attr_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
+    -- Return if no data or RPC version < 4 (unit conversion for temperature
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
       return
     end
     local temp = ib.data.value / 100.0
@@ -357,30 +360,12 @@ local function set_setpoint(setpoint)
       {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE}
     ) > 0
 
-    local cached_cooling_range_val, cooling_setpoint_range = device:get_latest_state(
-      cmd.component, capabilities.thermostatCoolingSetpoint.ID,
-      capabilities.thermostatCoolingSetpoint.coolingSetpointRange.NAME,
-      { minimum = 0, maximum = 100 }, { unit = "F", value = { minimum = 0, maximum = 100 } }
-    )
-    if cooling_setpoint_range and cooling_setpoint_range.unit == "F" then
-      cached_cooling_range_val["minimum"] = utils.f_to_c(cached_cooling_range_val["minimum"])
-      cached_cooling_range_val["maximum"] = utils.f_to_c(cached_cooling_range_val["maximum"])
-    end
-    local cached_heating_range_val, heating_setpoint_range = device:get_latest_state(
-      cmd.component, capabilities.thermostatHeatingSetpoint.ID,
-      capabilities.thermostatHeatingSetpoint.heatingSetpointRange.NAME,
-      { minimum = 0, maximum = 100 }, { unit = "F", value = { minimum = 0, maximum = 100 } }
-    )
-    if heating_setpoint_range and heating_setpoint_range.unit == "F" then
-      cached_heating_range_val["minimum"] = utils.f_to_c(cached_heating_range_val["minimum"])
-      cached_heating_range_val["maximum"] = utils.f_to_c(cached_heating_range_val["maximum"])
-    end
-
     --Check setpoint limits for the device
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
     if setpoint_type == "Heat" then
-      local min, max = heating_setpoint_range["value"]["minimum"], heating_setpoint_range["value"]["maximum"]
+      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or 0
+      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or 100
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -398,7 +383,8 @@ local function set_setpoint(setpoint)
         return
       end
     else
-      local min, max = cooling_setpoint_range["value"]["minimum"], cooling_setpoint_range["value"]["maximum"]
+      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or 0
+      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or 100
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -422,7 +408,9 @@ end
 
 local heating_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
+    -- Return if no data or RPC version < 4 (unit conversion for heating setpoint
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
       return
     end
     local val = ib.data.value / 100.0
@@ -446,7 +434,9 @@ end
 
 local cooling_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
+    -- Return if no data or RPC version < 4 (unit conversion for cooling setpoint
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
       return
     end
     local val = ib.data.value / 100.0
