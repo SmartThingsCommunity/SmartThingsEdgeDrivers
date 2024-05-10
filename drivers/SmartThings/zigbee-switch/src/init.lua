@@ -119,7 +119,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
     lazy_load_if_possible("confio4r"),
-    lazy_load_if_possible("confio-dimmer")    
+    lazy_load_if_possible("confio-dimmer")
   },
   lifecycle_handlers = {
     init = device_init,
