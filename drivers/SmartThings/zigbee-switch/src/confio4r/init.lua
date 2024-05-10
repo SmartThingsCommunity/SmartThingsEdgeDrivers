@@ -48,7 +48,7 @@ local function create_child_devices(driver, device)
   local children_amount = get_children_amount(device)
   for i = 2, children_amount + 1, 1 do
     local device_name_without_number = string.sub(device.label, 0, -2)
-    local name 
+    local name
     if i == 5 then
       name = string.format("%sAll OnOff", device_name_without_number)
     else
@@ -87,7 +87,7 @@ local function switch_All_On_Off_handler(driver, device, command)
   end
 end
 
-local function switch_on_handler(driver, device, command)   
+local function switch_on_handler(driver, device, command)
   device:send_to_component(command.component, zcl_clusters.OnOff.server.commands.On(device))
   device:emit_event(capabilities.switch.switch.on())
   local str = tostring(device)
@@ -95,7 +95,7 @@ local function switch_on_handler(driver, device, command)
   if value_in_brackets == "05" then
     switch_All_On_Off_handler(driver, device, "All On")
   end
-end        
+end
 
 local function switch_off_handler(driver, device, command)
   device:send_to_component(command.component, zcl_clusters.OnOff.server.commands.Off(device))
