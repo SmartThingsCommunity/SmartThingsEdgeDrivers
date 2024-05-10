@@ -16,7 +16,6 @@ local stDevice = require "st.device"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 
-local OnOff = zcl_clusters.OnOff
 local Level = zcl_clusters.Level
 
 local FINGERPRINTS = {
@@ -65,10 +64,10 @@ local function create_child_devices(driver, device)
   device:refresh()
 end
 
-local function switch_on_handler(driver, device, command)   
+local function switch_on_handler(driver, device, command)
   device:send_to_component(command.component, Level.server.commands.MoveToLevelWithOnOff(device, 254))
   device:emit_event(capabilities.switch.switch.on())
-end        
+end
 
 local function switch_off_handler(driver, device, command)
   device:send_to_component(command.component, Level.server.commands.MoveToLevelWithOnOff(device, 1))
