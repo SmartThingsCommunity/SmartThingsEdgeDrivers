@@ -1,0 +1,38 @@
+name: refrigerator-freezer-tn-tl
+components:
+- id: main
+  capabilities:
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
+    version: 1
+  - id: contactSensor # Refrigerator Alarm
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: refrigerator # First endpoint
+  capabilities:
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
+    version: 1
+  - id: temperatureSetpoint # Temperature Control / TN
+    version: 1
+    config:
+      values:
+        - key: "temperatureSetpoint.value"
+          range: [ 0, 100 ]
+  - id: temperatureMeasurement # Temperature Measurement
+    version: 1
+  categories:
+  - name: Refrigerator
+- id: freezer # Second endpoint
+  capabilities:
+  - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
+    version: 1
+  - id: temperatureLevel # Temperature Control / TL
+    version: 1
+  - id: temperatureMeasurement # Temperature Measurement
+    version: 1
+  categories:
+  - name: Refrigerator

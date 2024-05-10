@@ -109,7 +109,9 @@ local function do_configure(driver, device)
     device:try_update_metadata({profile = profile_name})
   elseif refrigerator.can_handle({}, driver, device) then
     local profile_name = "refrigerator-freezer"
-    if #tn_eps > 0 then
+    if #tn_eps > 0 and #tl_eps > 0 then
+      profile_name = profile_name .. "-tn" .. "-tl"
+    elseif #tn_eps > 0 then
       profile_name = profile_name .. "-tn"
     elseif #tl_eps > 0 then
       profile_name = profile_name .. "-tl"
