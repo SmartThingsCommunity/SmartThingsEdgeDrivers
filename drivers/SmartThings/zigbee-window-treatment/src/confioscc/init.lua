@@ -16,7 +16,7 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 
-local ep_ini = 7 
+local ep_ini = 7
 
 local function component_to_endpoint(device, component_id)
   ep_ini = 7
@@ -48,8 +48,8 @@ local function driver_switched(driver,device)
 end
 
 local function window_shade_level_cmd_handler(driver, device, command)
-  local window_shade = capabilities.windowShade.windowShade  
-  local window_shadeLevel = capabilities.windowShadeLevel  
+  local window_shade = capabilities.windowShade.windowShade
+  local window_shadeLevel = capabilities.windowShadeLevel
   local level = command.args.shadeLevel
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
   if level == 0 or level == 100 then
@@ -58,7 +58,7 @@ local function window_shade_level_cmd_handler(driver, device, command)
   elseif level > 0 and level < 100 then
     device:emit_event(window_shade.partially_open())
     device:emit_event(window_shadeLevel.shadeLevel(level))
-  end  
+  end
 end
 
 local function pause_handler(driver, device, command)
@@ -76,7 +76,7 @@ end
 
 local function close_handler(driver, device, command)
   local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
-  if current_level ~= 0 then  
+  if current_level ~= 0 then
     device:emit_event(capabilities.windowShade.windowShade.closing())
     device:send_to_component(command.component, WindowCovering.server.commands.DownOrClose(device))
   end
@@ -94,10 +94,10 @@ local confioscc_handler = {
       [capabilities.windowShade.commands.open.NAME] = open_handler,
       [capabilities.windowShade.commands.close.NAME] = close_handler,
       [capabilities.windowShade.commands.pause.NAME] = pause_handler
-    },   
+    },
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd_handler
-    }  
+    }
   },
   can_handle = function(opts, driver, device, ...)
     return device:get_model() == "CT1CCZB"
