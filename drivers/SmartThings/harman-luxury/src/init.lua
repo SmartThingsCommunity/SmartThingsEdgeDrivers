@@ -17,22 +17,12 @@ local const = require "constants"
 -- Device Functions
 ----------------------------------------------------------
 
-local function stop_check_for_updates_thread(device)
-  local current_timer = device:get_field(const.UPDATE_TIMER)
-  if current_timer ~= nil then
-    log.info(string.format("create_check_for_updates_thread: dni=%s, remove old timer", device.device_network_id))
-    device.thread:cancel_timer(current_timer)
-  end
-end
-
 local function device_removed(_, device)
-  log.info("Device removed")
-  -- cancel timers
-  stop_check_for_updates_thread(device)
+  local device_dni = device.device_network_id
+  log.info(string.format("Device removed - dni=\"%s\"", device_dni))
 end
 
 local function goOffline(device)
-  stop_check_for_updates_thread(device)
   if device:get_field(const.STATUS) then
     device:emit_event(capabilities.switch.switch.off())
     device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
@@ -210,15 +200,25 @@ local function check_for_updates(device)
   end
 end
 
-local function create_check_for_updates_thread(device)
-  -- stop old timer if one exists
-  stop_check_for_updates_thread(device)
+local function check_for_updates_manager(driver)
+  -- get all available devices
+  local devices = driver:get_devices()
 
-  log.info(string.format("create_check_for_updates_thread: dni=%s", device.device_network_id))
-  local new_timer = device.thread:call_on_schedule(const.UPDATE_INTERVAL, function()
-    check_for_updates(device)
-  end, "value_updates_timer")
-  device:set_field(const.UPDATE_TIMER, new_timer)
+  -- loop all devices and update them using polling
+  if next(devices) ~= nil then
+    for _, device in pairs(devices) do
+      local state = device:get_field(const.STATUS)
+      local device_dni = device.device_network_id
+      if state then
+        log.debug(string.format("polling values update for \"%s\"", device_dni))
+        check_for_updates(device)
+      else
+        log.debug(string.format("skipping polling values update for \"%s\" as it's offline", device_dni))
+      end
+    end
+  else
+    log.trace("No Harman Luxury devices to poll")
+  end
 end
 
 local function device_init(driver, device)
@@ -250,8 +250,6 @@ local function device_init(driver, device)
                        "NUMBER9"}))
 
   log.trace(string.format("device IP: %s", device_ip))
-
-  create_check_for_updates_thread(device)
 
   refresh(driver, device)
 end
@@ -406,6 +404,13 @@ log.info("create health_check_timer for Harman Luxury devices")
 driver:call_on_schedule(const.HEALTH_CHEACK_INTERVAL, function()
   update_connection(driver)
 end, const.HEALTH_TIMER)
+
+-- create driver values update routine
+
+log.info("create_check_for_updates_manager for Harman Luxury devices")
+driver:call_on_schedule(const.UPDATE_INTERVAL, function()
+  check_for_updates_manager(driver)
+end, const.UPDATE_TIMER)
 
 ----------------------------------------------------------
 -- main
