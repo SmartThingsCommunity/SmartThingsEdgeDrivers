@@ -37,17 +37,23 @@ end
 local function match_profile(device)
   local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
   local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
+  local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
 
-  local profile_name = "smoke-co-battery" -- Fallback to largest profile
-
-  if #smoke_eps > 0 and #co_eps == 0 then
+  if #smoke_eps > 0 and #co_eps > 0 and #temp_eps > 0 and #humidity_eps > 0 then
+    -- Device supports smoke and CO alarm and humidity and temperature
+    device:try_update_metadata({profile = "smoke-co-battery-temperature-humidity"})
+  elseif #smoke_eps > 0 and #co_eps > 0 then
+    -- Device supports smoke and CO alarm
+    device:try_update_metadata({profile = "smoke-co-battery"})
+  elseif #smoke_eps > 0 and #co_eps == 0 then
     -- Device supports smoke but not CO alarm
-    profile_name = "smoke-battery"
+    device:try_update_metadata({profile = "smoke-battery"})
+  elseif #smoke_eps == 0 and #co_eps > 0 then
+    -- Device supports smoke but not CO alarm
+    device:try_update_metadata({profile = "co-battery"})
   end
-  -- TODO: Add the elseif arm with CO but not smoke, and possibly
-  -- other combinations without battery, CO detection vs concentration etc as devices show up
-
-  device:try_update_metadata({profile = profile_name})
+  -- TODO: Possibly add other combinations without battery, CO detection vs concentration etc as devices show up
   -- TODO: Persist the "profile_matched" field in driver datastore
 end
 
