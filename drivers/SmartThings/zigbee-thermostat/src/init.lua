@@ -45,11 +45,6 @@ local RelativeHumidity          = capabilities.relativeHumidityMeasurement
 local BAT_MIN = 50.0
 local BAT_MAX = 65.0
 
-local SETPOINT_MIN_COOL = "setpoint_min_cool"
-local SETPOINT_MAX_COOL = "setpoint_max_cool"
-local SETPOINT_MIN_HEAT = "setpoint_min_heat"
-local SETPOINT_MAX_HEAT = "setpoint_max_heat"
-
 local THERMOSTAT_MODE_MAP = {
   [ThermostatSystemMode.OFF]               = ThermostatMode.thermostatMode.off,
   [ThermostatSystemMode.AUTO]              = ThermostatMode.thermostatMode.auto,
@@ -169,54 +164,38 @@ local thermostat_mode_setter = function(mode_name)
   end
 end
 
+local setpoint_limit_handler_factory = function(min_or_max, heat_or_cool)
 
-local emit_cool_setpoint_limits_event = function (device)
-  device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
-      {
-        unit = 'C',
-        value = {minimum = device:get_field(SETPOINT_MIN_COOL),
-                 maximum = device:get_field(SETPOINT_MAX_COOL)}
-      }
-    )
-  )
-  device:set_field(SETPOINT_MIN_COOL, nil)
-  device:set_field(SETPOINT_MAX_COOL, nil)
-end
-
-local emit_heat_setpoint_limits_event = function (device)
-  device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
-      {
-        unit = 'C',
-        value = {minimum = device:get_field(SETPOINT_MIN_HEAT),
-                 maximum = device:get_field(SETPOINT_MAX_HEAT)}
-      }
-    )
-  )
-  device:set_field(SETPOINT_MIN_HEAT, nil)
-  device:set_field(SETPOINT_MAX_HEAT, nil)
-end
-
-local setpoint_limit_handler_factory = function(handled_attribute)
-
-  local paired_attributes = {
-    [SETPOINT_MIN_HEAT] = SETPOINT_MAX_HEAT,
-    [SETPOINT_MAX_HEAT] = SETPOINT_MIN_HEAT,
-    [SETPOINT_MIN_COOL] = SETPOINT_MAX_COOL,
-    [SETPOINT_MAX_COOL] = SETPOINT_MIN_COOL
-  }
-
-  local paired_attribute = paired_attributes[handled_attribute]
-  local event_emit_function = emit_cool_setpoint_limits_event
-
-  if handled_attribute == SETPOINT_MIN_HEAT or handled_attribute == SETPOINT_MAX_HEAT then
-    event_emit_function = emit_heat_setpoint_limits_event
+  local field = 'setpoint_' .. min_or_max .. '_' .. heat_or_cool
+  local paired_field = nil
+  if min_or_max == 'min' then
+    paired_field = 'setpoint_max_' .. heat_or_cool
+  else
+    paired_field = 'setpoint_min_' .. heat_or_cool
   end
 
   return function(driver, device, setpoint)
     local celsius_value =  setpoint.value / 100.0
-    device:set_field(handled_attribute, celsius_value)
-    if device:get_field(paired_attribute) and device:get_field(handled_attribute) then
-      event_emit_function(device)
+    device:set_field(field, celsius_value)
+    if device:get_field(field) and device:get_field(paired_field) then
+
+      local event_constructor = capabilities.thermostatHeatingSetpoint.heatingSetpointRange
+      if heat_or_cool == 'cool' then
+        event_constructor = capabilities.thermostatCoolingSetpoint.coolingSetpointRange
+      end
+
+      device:emit_event(event_constructor(
+        {
+          unit = 'C',
+          value = {
+            minimum = device:get_field('setpoint_min_' .. heat_or_cool),
+            maximum = device:get_field('setpoint_max_' .. heat_or_cool)
+          }
+        }
+      ))
+
+      device:set_field(field, nil)
+      device:set_field(paired_field, nil)
     end
   end
 end
@@ -310,10 +289,10 @@ local zigbee_thermostat_driver = {
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
         [Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
         [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler,
-        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MIN_HEAT),
-        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MAX_HEAT),
-        [Thermostat.attributes.MinCoolSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MIN_COOL),
-        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = setpoint_limit_handler_factory(SETPOINT_MAX_COOL),
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler_factory('min', 'heat'),
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler_factory('max', 'heat'),
+        [Thermostat.attributes.MinCoolSetpointLimit.ID] = setpoint_limit_handler_factory('min', 'cool'),
+        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = setpoint_limit_handler_factory('max', 'cool'),
       },
       [FanControl.ID] = {
         [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
