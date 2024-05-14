@@ -12,3 +12,6 @@ components:
     version: 1
   categories:
   - name: Irrigation
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-pump-level
