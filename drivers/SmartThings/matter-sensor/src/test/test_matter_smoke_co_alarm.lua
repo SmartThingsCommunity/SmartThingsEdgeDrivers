@@ -20,7 +20,7 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("smoke-co-battery.yml"),
+  profile = t_utils.get_profile_definition("smoke-co-alarm-battery-temperature-humidity.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -43,6 +43,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
       },
 	  device_types = {
         {device_type_id = 0x0076, device_type_revision = 1} -- Smoke CO Alarm
@@ -72,7 +73,7 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-  mock_device:expect_metadata_update({ profile = "smoke-co-battery" })
+  mock_device:expect_metadata_update({ profile = "smoke-co-alarm-battery-temperature-humidity" })
 end
 
 test.set_test_init_function(test_init)

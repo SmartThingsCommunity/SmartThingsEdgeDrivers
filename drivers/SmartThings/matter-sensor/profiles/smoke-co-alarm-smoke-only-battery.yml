@@ -1,14 +1,12 @@
-name: co-battery
+name: smoke-co-alarm-smoke-only-battery
 components:
 - id: main
   capabilities:
-  - id: carbonMonoxideDetector
-    version: 1
-  - id: carbonMonoxideMeasurement
-    version: 1
-  - id: batteryLevel
+  - id: smokeDetector
     version: 1
   - id: hardwareFault
+    version: 1
+  - id: batteryLevel
     version: 1
   - id: refresh
     version: 1

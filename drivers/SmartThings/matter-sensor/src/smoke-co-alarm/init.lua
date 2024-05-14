@@ -21,6 +21,7 @@ local log = require "log"
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
+local PROFILE_MATCHED = "__profile_matched"
 
 local function is_matter_smoke_co_alarm(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
@@ -37,29 +38,38 @@ end
 local function match_profile(device)
   local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
   local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
 
-  if #smoke_eps > 0 and #co_eps > 0 and #temp_eps > 0 and #humidity_eps > 0 then
-    -- Device supports smoke and CO alarm and humidity and temperature
-    device:try_update_metadata({profile = "smoke-co-battery-temperature-humidity"})
-  elseif #smoke_eps > 0 and #co_eps > 0 then
-    -- Device supports smoke and CO alarm
-    device:try_update_metadata({profile = "smoke-co-battery"})
+  local profile_name = "smoke-co-alarm"
+  if #smoke_eps == 0 and #co_eps == 0 then
+    log.warn_with({hub_logs=true}, "Alarm does not support smoke or CO detection. No matching profile")
+    return
   elseif #smoke_eps > 0 and #co_eps == 0 then
-    -- Device supports smoke but not CO alarm
-    device:try_update_metadata({profile = "smoke-battery"})
-  elseif #smoke_eps == 0 and #co_eps > 0 then
-    -- Device supports smoke but not CO alarm
-    device:try_update_metadata({profile = "co-battery"})
+    profile_name = profile_name .. "-smoke-only"
+  elseif #co_eps > 0 and #smoke_eps == 0 then
+    profile_name = profile_name .. "-co-only"
   end
-  -- TODO: Possibly add other combinations without battery, CO detection vs concentration etc as devices show up
-  -- TODO: Persist the "profile_matched" field in driver datastore
+  if #battery_eps > 0 then
+    profile_name = profile_name .. "-battery"
+  end
+  if #temp_eps > 0 then
+    profile_name = profile_name .. "-temperature"
+  end
+  if #humidity_eps > 0 then
+    profile_name = profile_name .. "-humidity"
+  end
+
+  log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
+  device:set_field(PROFILE_MATCHED, 1)
 end
 
 local function device_init(driver, device)
-  -- TODO: Check the "profile_matched" field in driver datastore
-  match_profile(device)
+  if not device:get_field(PROFILE_MATCHED) then
+    match_profile(device)
+  end
   device:subscribe()
 end
 
