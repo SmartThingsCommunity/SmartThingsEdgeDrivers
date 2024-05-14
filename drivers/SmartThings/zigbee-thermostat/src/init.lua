@@ -167,11 +167,9 @@ end
 local setpoint_limit_handler_factory = function(min_or_max, heat_or_cool)
 
   local field = 'setpoint_' .. min_or_max .. '_' .. heat_or_cool
-  local paired_field = nil
+  local paired_field = 'setpoint_min_' .. heat_or_cool
   if min_or_max == 'min' then
     paired_field = 'setpoint_max_' .. heat_or_cool
-  else
-    paired_field = 'setpoint_min_' .. heat_or_cool
   end
 
   return function(driver, device, setpoint)
