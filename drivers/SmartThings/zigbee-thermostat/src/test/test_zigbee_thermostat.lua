@@ -150,13 +150,13 @@ test.register_message_test(
         channel = "zigbee",
         direction = "receive",
         message = { mock_device.id, Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device,
-                                                                                                        10)}
+                                                                                                        1000)}
       },
       {
         channel = "zigbee",
         direction = "receive",
         message = { mock_device.id, Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device,
-                                                                                                        35)}
+                                                                                                        3500)}
       },
       {
         channel = "capability",
@@ -164,7 +164,7 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
           {
             unit = 'C',
-            value = {minimum = 10, maximum = 35}
+            value = {minimum = 10.0, maximum = 35.0}
           }
         ))
       }
@@ -178,13 +178,13 @@ test.register_message_test(
         channel = "zigbee",
         direction = "receive",
         message = { mock_device.id, Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device,
-                                                                                                        10)}
+                                                                                                        1000)}
       },
       {
         channel = "zigbee",
         direction = "receive",
         message = { mock_device.id, Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device,
-                                                                                                        35)}
+                                                                                                        3500)}
       },
       {
         channel = "capability",
@@ -192,7 +192,7 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
           {
             unit = 'C',
-            value = {minimum = 10, maximum = 35}
+            value = {minimum = 10.0, maximum = 35.0}
           }
         ))
       }

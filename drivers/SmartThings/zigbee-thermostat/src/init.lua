@@ -213,7 +213,8 @@ local setpoint_limit_handler_factory = function(handled_attribute)
   end
 
   return function(driver, device, setpoint)
-    device:set_field(handled_attribute, setpoint.value)
+    local celsius_value =  setpoint.value / 100.0
+    device:set_field(handled_attribute, celsius_value)
     if device:get_field(paired_attribute) and device:get_field(handled_attribute) then
       event_emit_function(device)
     end
