@@ -2086,7 +2086,7 @@ matterManufacturer:
     productId: 0xD001
     deviceProfileName: light-color-level
   - id: "5020/53250"
-    deviceLabel: Zemismart bulb
+    deviceLabel: Zemismart Bulb
     vendorId: 0x139C
     productId: 0xD002
     deviceProfileName: light-color-level
