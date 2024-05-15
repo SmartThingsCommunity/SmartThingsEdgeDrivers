@@ -1,5 +1,4 @@
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
@@ -269,7 +268,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Test profile change on init for onoff parent cluster as client and onoff child as server",
+  "Test profile change on init for onoff device when parent and child are both server",
   function()
   end,
   { test_init = test_init_parent_child_switch_types }
