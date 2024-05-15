@@ -2081,7 +2081,7 @@ matterManufacturer:
     productId: 0xEEE2
     deviceProfileName: switch-binary
   - id: "5020/53249"
-    deviceLabel: Zemismart downlight
+    deviceLabel: Zemismart Downlight
     vendorId: 0x139C
     productId: 0xD001
     deviceProfileName: light-color-level
