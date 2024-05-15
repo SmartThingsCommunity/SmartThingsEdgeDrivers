@@ -74,19 +74,23 @@ local function device_init(driver, device)
   end
 end
 
+local function do_configure(self, device)
+  device:configure()
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+    MFG_CODE, data_types.Uint8, 1))
+end
+
 local function added_handler(self, device)
   device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
   device:emit_event(detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, {visibility = {displayed = false}}))
   device:emit_event(capabilities.battery.battery(100))
-
-  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
-    MFG_CODE, data_types.Uint8, 1))
 end
 
 local aqara_illuminance_handler = {
   NAME = "Aqara Illuminance Handler",
   lifecycle_handlers = {
     init = device_init,
+    doConfigure = do_configure,
     added = added_handler
   },
   capability_handlers = {
