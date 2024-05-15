@@ -23,7 +23,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: Speaker
+  - name: Receiver
 preferences:
 - preferenceId: certifiedpreferences.doNotDisturbPlayback
   explicit: true
