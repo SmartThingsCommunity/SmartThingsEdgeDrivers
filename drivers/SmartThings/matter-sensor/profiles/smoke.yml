@@ -1,4 +1,4 @@
-name: smoke-co-alarm-smoke-only-battery
+name: smoke
 components:
 - id: main
   capabilities:

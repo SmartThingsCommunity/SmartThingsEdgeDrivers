@@ -35,33 +35,71 @@ local function is_matter_smoke_co_alarm(opts, driver, device)
   return false
 end
 
+local tbl_contains = function(t, val)
+  for _, v in pairs(t) do
+    if v == val then
+      return true
+    end
+  end
+  return false
+end
+
+local supported_profiles =
+{
+  "co",
+  "co-COmeas",
+  "smoke",
+  "smoke-co-COmeas",
+  "smoke-co-temp-humidity-COmeas"
+}
+
 local function match_profile(device)
   local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
   local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local CO_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local CO_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
 
-  local profile_name = "smoke-co-alarm"
-  if #smoke_eps == 0 and #co_eps == 0 then
-    log.warn_with({hub_logs=true}, "Alarm does not support smoke or CO detection. No matching profile")
-    return
-  elseif #smoke_eps > 0 and #co_eps == 0 then
-    profile_name = profile_name .. "-smoke-only"
-  elseif #co_eps > 0 and #smoke_eps == 0 then
-    profile_name = profile_name .. "-co-only"
+  local profile_name = ""
+
+  -- battery and hardware fault are mandatory
+  if #smoke_eps > 0 then
+    profile_name = profile_name .. "-smoke"
   end
-  if #battery_eps > 0 then
-    profile_name = profile_name .. "-battery"
+  if #co_eps > 0 then
+    profile_name = profile_name .. "-co"
   end
   if #temp_eps > 0 then
-    profile_name = profile_name .. "-temperature"
+    profile_name = profile_name .. "-temp"
   end
   if #humidity_eps > 0 then
     profile_name = profile_name .. "-humidity"
   end
+  if #CO_meas_eps > 0 then
+    profile_name = profile_name .. "-COmeas"
+  end
+  if #CO_level_eps > 0 then
+    profile_name = profile_name .. "-COlevel"
+  end
 
-  log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  -- remove leading "-"
+  profile_name = string.sub(profile_name, 2)
+
+  if tbl_contains(supported_profiles, profile_name) then
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  else
+    log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s.", profile_name))
+    profile_name = ""
+    if #smoke_eps > 0 and #co_eps > 0 then
+      profile_name = "smoke-co-battery"
+    elseif #smoke_eps > 0 and #co_eps == 0 then
+      profile_name = "smoke-battery"
+    elseif #co_eps > 0 and #smoke_eps == 0 then
+      profile_name = "co-battery"
+    end
+    log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
+  end
   device:try_update_metadata({profile = profile_name})
   device:set_field(PROFILE_MATCHED, 1)
 end

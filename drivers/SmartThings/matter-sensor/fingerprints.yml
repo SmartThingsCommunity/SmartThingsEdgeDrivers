@@ -136,4 +136,4 @@ matterGeneric:
     deviceLabel: Matter Smoke/CO Alarm
     deviceTypes:
       - id: 0x0076
-    deviceProfileName: smoke-co-alarm-battery
+    deviceProfileName: smoke-co-battery
