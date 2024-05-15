@@ -163,20 +163,23 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
-  -- Light Switch device type but implement the On Off cluster as sServer (which is against the spec
-  -- for this device type). By default, we do not support On/Off Light Switch because by spec these
-  -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
-  -- does not have a generic fingerprint and will join as a matter-thing. However, we have
-  -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
-  -- is a workaround for those devices.
+  -- The case where num_server_eps > 0 is a workaround for devices that have a
+  -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+  -- for this device type). By default, we do not support Light Switch device types because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+  -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+  -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+  -- workaround for those devices.
   if num_server_eps > 0 and detect_matter_thing(device) == true then
     local id = 0
     for _,ep in ipairs(device.endpoints) do
       -- main_endpoint only supports server cluster by definition of get_endpoints()
       if main_endpoint == ep.endpoint_id then
         for _, dt in ipairs(ep.device_types) do
-          id = math.max(id, dt.device_type_id)
+          -- no device type that is not in the switch subset should be considered.
+          if (dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+            id = math.max(id, dt.device_type_id)
+          end
         end
         break
       end
