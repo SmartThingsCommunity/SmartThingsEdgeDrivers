@@ -2091,7 +2091,7 @@ matterManufacturer:
     productId: 0xD002
     deviceProfileName: light-color-level
   - id: "5020/53251"
-    deviceLabel: Zemismart Led Light Strip Driver
+    deviceLabel: Zemismart LED Light Strip Driver
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
