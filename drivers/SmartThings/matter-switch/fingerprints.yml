@@ -4,8 +4,8 @@ matterManufacturer:
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
-    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
-    
+    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -68,7 +68,7 @@ matterManufacturer:
     deviceLabel: Cync Full Color 6 Inch Wafer
     vendorId: 0x1339
     productId: 0x00AF
-    deviceProfileName: light-color-level-2000K-7000K  
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/181"
     deviceLabel: Cync 6 Inch High Ceiling Wafer
     vendorId: 0x1339
@@ -128,12 +128,12 @@ matterManufacturer:
     deviceLabel: Cync Indoor Light Strip 16ft
     vendorId: 0x1339
     productId: 0x006E
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/123"
     deviceLabel: Cync Indoor Light Strip 32ft
     vendorId: 0x1339
     productId: 0x007B
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339
@@ -230,7 +230,7 @@ matterManufacturer:
     deviceLabel: Yeelight Smart Lamp
     vendorId: 0x1312
     productId: 0x01
-    deviceProfileName: light-level-colorTemperature-2710k-6500k
+    deviceProfileName: yeelight-light-level-colorTemperature-2710k-6500k
 
 # Sengled
 # Not WWST Certified: As of the device's software release of "780014029", the device reports itself with device type of 0x10C,

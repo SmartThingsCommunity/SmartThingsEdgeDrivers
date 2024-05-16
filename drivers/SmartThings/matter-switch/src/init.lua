@@ -27,8 +27,8 @@ local MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 -- These values are a "sanity check" to check that values we are getting are reasonable
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
-local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT / COLOR_TEMPERATURE_KELVIN_MIN
+local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT / COLOR_TEMPERATURE_KELVIN_MAX
 local SWITCH_LEVEL_LIGHTING_MIN = 1
 
 local SWITCH_INITIALIZED = "__switch_intialized"
@@ -166,7 +166,7 @@ local function initialize_switch(driver, device)
   -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
   -- is a workaround for those devices.
   if num_server_eps > 0 and detect_matter_thing(device) == true then
-    device:try_update_metadata({profile = "switch-binary"})
+    device:try_update_metadata({ profile = "switch-binary" })
   end
 end
 
@@ -182,7 +182,7 @@ local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
-       return component
+      return component
     end
   end
   return "main"
@@ -210,8 +210,8 @@ local function device_init(driver, device)
     -- device if it has already been previously initialized as an MCD device.
     -- Also, do not attempt a profile switch for a bridge device.
     if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
-       not device:get_field(SWITCH_INITIALIZED) and
-       not detect_bridge(device) then
+        not device:get_field(SWITCH_INITIALIZED) and
+        not detect_bridge(device) then
       -- create child devices as needed for multi-switch devices
       initialize_switch(driver, device)
     end
@@ -243,8 +243,8 @@ end
 
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
-  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
+  local level = math.floor(cmd.args.level / 100.0 * 254)
+  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0, 0)
   device:send(req)
 end
 
@@ -267,7 +267,7 @@ local OPTIONS_OVERRIDE = 0x01
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req
-  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
+  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, { feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION })
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
     local sat = convert_huesat_st_to_matter(cmd.args.color.saturation)
@@ -281,19 +281,19 @@ end
 
 local function handle_set_hue(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
+  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, { feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION })
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
     local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
     device:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
- end
+  end
 end
 
 local function handle_set_saturation(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
+  local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, { feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION })
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
     local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
@@ -305,7 +305,7 @@ end
 
 local function handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/cmd.args.temperature)
+  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / cmd.args.temperature)
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
@@ -354,17 +354,17 @@ end
 local function temp_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+      device.log.warn_with({ hub_logs = true }, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
+    local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / ib.data.value)
     local temp_device = find_child(device, ib.endpoint_id) or device
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
-      most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value + 1)) then
-        temp = most_recent_temp
+        most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (ib.data.value - 1)) and
+        most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (ib.data.value + 1)) then
+      temp = most_recent_temp
     end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
   end
@@ -376,21 +376,21 @@ local mired_bounds_handler_factory = function(minOrMax)
       return
     end
     if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+      device.log.warn_with({ hub_logs = true }, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
     local temp_in_kelvin = mired_to_kelvin(ib.data.value)
-    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
-    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
+    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED .. minOrMax, ib.endpoint_id, temp_in_kelvin)
+    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED .. COLOR_TEMP_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED .. COLOR_TEMP_MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = { minimum = min, maximum = max } }))
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
+        device.log.warn_with({ hub_logs = true }, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
       end
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id, nil)
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED .. COLOR_TEMP_MAX, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED .. COLOR_TEMP_MIN, ib.endpoint_id, nil)
     end
   end
 end
@@ -400,11 +400,11 @@ local level_bounds_handler_factory = function(minOrMax)
     if ib.data.value == nil then
       return
     end
-    local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
+    local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, { feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING })
     local lighting_support = tbl_contains(lighting_endpoints, ib.endpoint_id)
     -- If the lighting feature is supported then we should check if the reported level is at least 1.
     if lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN then
-      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
+      device.log.warn_with({ hub_logs = true }, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
       return
     end
     -- Convert level from given range of 0-254 to range of 0-100.
@@ -413,17 +413,17 @@ local level_bounds_handler_factory = function(minOrMax)
     if lighting_support and level == 0 then
       level = 1
     end
-    set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
-    local min = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
+    set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED .. minOrMax, ib.endpoint_id, level)
+    local min = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED .. LEVEL_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED .. LEVEL_MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min, maximum = max} }))
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = { minimum = min, maximum = max } }))
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min level value %d that is not lower than the reported max level value %d", min, max))
+        device.log.warn_with({ hub_logs = true }, string.format("Device reported a min level value %d that is not lower than the reported max level value %d", min, max))
       end
-      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id, nil)
-      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED .. LEVEL_MAX, ib.endpoint_id, nil)
+      set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED .. LEVEL_MIN, ib.endpoint_id, nil)
     end
   end
 end
@@ -582,8 +582,9 @@ local matter_driver_template = {
     capabilities.motionSensor,
     capabilities.illuminanceMeasurement
   },
-    sub_drivers = {
+  sub_drivers = {
     require("eve-energy"),
+    require("yeelight")
   }
 }
 
@@ -597,5 +598,5 @@ function detect_matter_thing(device)
 end
 
 local matter_driver = MatterDriver("matter-switch", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
+log.info_with({ hub_logs = true }, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()
