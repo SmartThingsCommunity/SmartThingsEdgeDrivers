@@ -22,6 +22,11 @@ local log = require "log"
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
 
+local version = require "version"
+if version.api < 10 then
+  clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+end
+
 local function is_matter_smoke_co_alarm(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do

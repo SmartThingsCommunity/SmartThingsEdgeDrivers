@@ -1,0 +1,20 @@
+local types_mt = {}
+types_mt.__types_cache = {}
+types_mt.__index = function(self, key)
+  if types_mt.__types_cache[key] == nil then
+    types_mt.__types_cache[key] = require("AirQuality.types." .. key)
+  end
+  return types_mt.__types_cache[key]
+end
+
+local AirQualityTypes = {}
+
+setmetatable(AirQualityTypes, types_mt)
+
+local status, aliases = pcall(require, "st.matter.clusters.aliases.AirQuality.types")
+if status then
+  aliases:add_to_class(AirQualityTypes)
+end
+
+return AirQualityTypes
+

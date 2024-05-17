@@ -21,6 +21,18 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
 
+clusters.AirQuality = require "AirQuality"
+clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-quality-sensor-level.yml"),
   manufacturer_info = {

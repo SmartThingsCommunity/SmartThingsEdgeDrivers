@@ -20,6 +20,23 @@ local utils = require "st.utils"
 local log = require "log"
 local AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
 
+local version = require "version"
+
+-- Include driver-side definitions when lua libs api version is < 10
+if version.api < 10 then
+  clusters.AirQuality = require "AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+end
+
 local function is_matter_air_quality_sensor(opts, driver, device)
     for _, ep in ipairs(device.endpoints) do
       for _, dt in ipairs(ep.device_types) do
