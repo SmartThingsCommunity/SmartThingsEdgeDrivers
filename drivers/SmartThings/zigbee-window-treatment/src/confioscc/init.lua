@@ -100,7 +100,7 @@ local confioscc_handler = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "CT1CCZB"
+    return device:get_model() == "CTCCZB"
   end
 }
 
