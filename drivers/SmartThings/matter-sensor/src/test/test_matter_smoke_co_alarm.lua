@@ -18,6 +18,7 @@ local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
+clusters.SmokeCoAlarm = require "SmokeCoAlarm"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("smoke-co-temp-humidity-comeas.yml"),

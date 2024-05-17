@@ -15,9 +15,17 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 local utils = require "st.utils"
+
+local version = require "version"
+if version.api < 10 then
+  clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
+  clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
+  clusters.TemperatureControl = require "TemperatureControl"
+end
 
 local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
@@ -87,7 +95,7 @@ local function is_matter_refrigerator(opts, driver, device)
 end
 
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
-  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
@@ -112,7 +120,7 @@ end
 
 local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
-    local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+    local tn_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
     if #tn_eps == 0 then
       log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
       return
@@ -125,7 +133,7 @@ local function setpoint_limit_handler(limit_field)
 end
 
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
-  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
@@ -143,7 +151,7 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
 end
 
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
-  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
@@ -161,6 +169,9 @@ end
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
   local refrigeratorTccModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
+    if version.api < 10 then
+      clusters.RefrigeratorAndTemperatureControlledCabinetMode.types.ModeOptionStruct:augment_type(mode)
+    end
     table.insert(refrigeratorTccModeSupportedModes, mode.elements.label.value)
   end
   refrigeratorTccModeSupportedModesMap[ib.endpoint_id] = refrigeratorTccModeSupportedModes
@@ -219,7 +230,7 @@ local function handle_refrigerator_tcc_mode(driver, device, cmd)
 end
 
 local function handle_temperature_setpoint(driver, device, cmd)
-  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tn_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
@@ -246,7 +257,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
     return
   end
-  
+
   local ep = component_to_endpoint(device, cmd.component)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end

@@ -15,9 +15,18 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 local utils = require "st.utils"
+
+local version = require "version"
+if version.api < 10 then
+  clusters.LaundryWasherControls = require "LaundryWasherControls"
+  clusters.LaundryWasherMode = require "LaundryWasherMode"
+  clusters.OperationalState = require "OperationalState"
+  clusters.TemperatureControl = require "TemperatureControl"
+end
 
 local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
@@ -67,7 +76,7 @@ local function is_matter_laundry_washer(opts, driver, device)
 end
 
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
-  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
@@ -85,7 +94,7 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
 end
 
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
-  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
@@ -104,6 +113,9 @@ end
 local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
   laundryWasherModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
+    if version.api < 10 then
+      clusters.LaundryWasherMode.types.ModeOptionStruct:augment_type(mode)
+    end
     log.info(string.format("Inserting supported washer mode: %s", mode.elements.label.value))
     table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
   end
@@ -201,6 +213,9 @@ local function operational_state_attr_handler(driver, device, ib, response)
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
+  if version.api < 10 then
+    clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
+  end
   log.info_with({ hub_logs = true },
     string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
 
