@@ -21,6 +21,11 @@ local utils = require "st.utils"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 
+clusters.DishwasherAlarm = require "DishwasherAlarm"
+clusters.DishwasherMode = require "DishwasherMode"
+clusters.OperationalState = require "OperationalState"
+clusters.TemperatureControl = require "TemperatureControl"
+
 local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Pause.ID] = "pause",
   [clusters.OperationalState.commands.Stop.ID] = "stop",

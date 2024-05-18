@@ -24,6 +24,15 @@ local dishwasher = require("matter-dishwasher")
 local laundryWasher = require("matter-laundry-washer")
 local refrigerator = require("matter-refrigerator")
 
+clusters.DishwasherAlarm = require "DishwasherAlarm"
+clusters.DishwasherMode = require "DishwasherMode"
+clusters.LaundryWasherControls = require "LaundryWasherControls"
+clusters.LaundryWasherMode = require "LaundryWasherMode"
+clusters.OperationalState = require "OperationalState"
+clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
+clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
+clusters.TemperatureControl = require "TemperatureControl"
+
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",

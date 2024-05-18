@@ -19,6 +19,11 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+clusters.OperationalState = require "OperationalState"
+clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
+clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
+clusters.TemperatureControl = require "TemperatureControl"
+
 local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
 
@@ -246,7 +251,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
     return
   end
-  
+
   local ep = component_to_endpoint(device, cmd.component)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end

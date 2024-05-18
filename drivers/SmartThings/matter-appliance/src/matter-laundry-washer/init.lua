@@ -19,6 +19,11 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local utils = require "st.utils"
 
+clusters.LaundryWasherControls = require "LaundryWasherControls"
+clusters.LaundryWasherMode = require "LaundryWasherMode"
+clusters.OperationalState = require "OperationalState"
+clusters.TemperatureControl = require "TemperatureControl"
+
 local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
 local LAUNDRY_WASHER_RINSE_MODE_MAP = {
