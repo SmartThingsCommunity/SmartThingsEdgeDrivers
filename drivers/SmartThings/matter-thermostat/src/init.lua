@@ -20,6 +20,12 @@ local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+-- Include driver-side definitions when lua libs api version is < 10
+-- if version.api < 10 then
+  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+-- end
+
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
   [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
