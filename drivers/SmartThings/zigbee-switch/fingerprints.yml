@@ -77,7 +77,7 @@ zigbeeManufacturer:
     model: lumi.switch.b1laus01
     deviceProfileName: basic-switch
   - id: "LUMI/lumi.switch.b2laus01"
-    deviceLabel: Aqara Smart Wall Switch (No Neutral, Double Rocker) 1
+    deviceLabel: Aqara Smart Wall Switch (No Neutral, Double Rocker)
     manufacturer: LUMI
     model: lumi.switch.b2laus01
     deviceProfileName: aqara-switch-child
@@ -87,12 +87,12 @@ zigbeeManufacturer:
     model: lumi.switch.n1acn1
     deviceProfileName: aqara-switch-power
   - id: "LUMI/lumi.switch.n2acn1"
-    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker) 1
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Double Rocker)
     manufacturer: LUMI
     model: lumi.switch.n2acn1
     deviceProfileName: aqara-switch-power
   - id: "LUMI/lumi.switch.n3acn1"
-    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker) 1
+    deviceLabel: Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker)
     manufacturer: LUMI
     model: lumi.switch.n3acn1
     deviceProfileName: aqara-switch-power
@@ -101,6 +101,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.switch.n0agl1
     deviceProfileName: aqara-switch-module
+  - id: "LUMI/lumi.switch.l0agl1"
+    deviceLabel: Aqara Single Switch Module T1 (No Neutral)
+    manufacturer: LUMI
+    model: lumi.switch.l0agl1
+    deviceProfileName: aqara-switch-module-no-power
   - id: "LUMI/lumi.switch.n0acn2"
     deviceLabel: Aqara Single Switch Module T1 (With Neutral)
     manufacturer: LUMI
