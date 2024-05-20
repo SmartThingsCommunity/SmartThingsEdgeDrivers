@@ -42,12 +42,14 @@ local DIMMING_LIGHT_FINGERPRINTS = {
   {mfr = "sengled", model = "E11-U21U31"},                    -- Sengled Element Touch
   {mfr = "sengled", model = "E13-A21"},                       -- Sengled LED Flood Light
   {mfr = "sengled", model = "E11-N1G"},                       -- Sengled Smart LED Vintage Edison Bulb
+  {mfr = "sengled", model = "E23-N11"},                       -- Sengled Element Classic par38
   {mfr = "Leviton", model = "DL6HD"},   -- Leviton Dimmer Switch
   {mfr = "Leviton", model = "DL3HL"},   -- Leviton Lumina RF Plug-In Dimmer
   {mfr = "Leviton", model = "DL1KD"},   -- Leviton Lumina RF Dimmer Switch
   {mfr = "Leviton", model = "ZSD07"},   -- Leviton Lumina RF 0-10V Dimming Wall Switch
   {mfr = "MRVL", model = "MZ100"},
-  {mfr = "CREE", model = "Connected A-19 60W Equivalent"}
+  {mfr = "CREE", model = "Connected A-19 60W Equivalent"},
+  {mfr = "Insta GmbH", model = "NEXENTRO Dimming Actuator"}
 }
 
 local DIMMING_LIGHT_CONFIGURATION = {
@@ -74,7 +76,8 @@ local DIMMING_LIGHT_CONFIGURATION = {
 local function can_handle_zigbee_dimming_light(opts, driver, device)
   for _, fingerprint in ipairs(DIMMING_LIGHT_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("zigbee-dimming-light")
+      return true, subdriver
     end
   end
   return false

@@ -1,4 +1,4 @@
-import os, subprocess, requests, json, time, yaml
+import os, subprocess, requests, json, time, yaml, csv
 
 BRANCH = os.environ.get('BRANCH')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
@@ -10,6 +10,10 @@ print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
 branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
 ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
+if not ENVIRONMENT_URL:
+  print("No environment url specified, aborting.")
+  exit(0)
+
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
 CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
 if not CHANNEL_ID:
@@ -30,6 +34,29 @@ print(ENVIRONMENT_URL)
 driver_updates = []
 drivers_updated = []
 uploaded_drivers = {}
+
+## do translations here
+LOCALE = os.environ.get('LOCALE')
+if LOCALE:
+  LOCALE = LOCALE.lower()
+
+  current_path = os.path.dirname(__file__)
+  localization_dir = os.path.join(current_path, "localizations")
+  localization_file = os.path.join(localization_dir, LOCALE+".csv")
+  slash_escape = str.maketrans({"/": r"\/", "(": r"\(", ")": r"\)"})
+  if os.path.isfile(localization_file):
+    print("Localizing from english to "+LOCALE+" using "+str(localization_file))
+    with open(localization_file) as csvfile:
+      reader = csv.reader(csvfile)
+      for row in reader:
+        print("en: "+row[0]+" "+LOCALE+": "+row[1])
+        subprocess.run(
+          "find . -name 'fingerprints.yml' | xargs sed -i -E 's/deviceLabel ?: \"?"+row[0].translate(slash_escape)+"\"?/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
+          shell=True,
+          cwd=os.path.dirname(current_path)
+        )
+
+    subprocess.run("git status", shell=True)
 
 # Get drivers currently on the channel
 response = requests.get(
@@ -93,7 +120,7 @@ for partner in partners:
       retries = 0
       while not os.path.exists(driver+".zip") and retries < 5:
         try:
-          subprocess.run(["zip -r ../"+driver+".zip config.yml fingerprints.yml search-parameters.y*ml $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True, check=True)
+          subprocess.run(["zip -r ../"+driver+".zip config.yml fingerprints.yml search-parameters.y*ml $(find . -name \"*.pem\") $(find . -name \"*.crt\") $(find profiles -name \"*.y*ml\") $(find . -name \"*.lua\") -x \"*test*\""], cwd=driver, shell=True, capture_output=True, check=True)
         except subprocess.CalledProcessError as error:
           print(error.stderr)
         retries += 1

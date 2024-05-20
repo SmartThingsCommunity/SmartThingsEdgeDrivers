@@ -72,7 +72,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))

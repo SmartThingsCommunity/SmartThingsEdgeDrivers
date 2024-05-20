@@ -5,6 +5,9 @@ local json = require "st.json"
 local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: table, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local APPLICATION_KEY_HEADER = "hue-application-key"
 
@@ -26,18 +29,30 @@ local ControlMessageBuilders = {
   end
 }
 
+local function try_send(instance, message)
+  if not instance._ctrl_tx then
+    log.error(st_utils.stringify_table(message, "Couldn't send the followings due to closed transmit channel", false))
+  end
+
+  local success, err = pcall(instance._ctrl_tx.send, instance._ctrl_tx, message)
+  if not success then
+    log.error(string.format("Failed to transmit Hue Control Message: %s", err))
+  end
+end
+
 local function do_shutdown(instance)
   if instance._running then
-    instance._ctrl_tx:send(ControlMessageBuilders.Shutdown())
+    try_send(instance, ControlMessageBuilders.Shutdown())
     instance._running = false
   end
 end
 
 --- Phillips Hue REST API Module
 --- @class PhilipsHueApi
---- @field private client RestClient
---- @field private headers table<string,string>
---- @field private _ctrl_tx table
+--- @field public headers table<string,string>
+--- @field package client RestClient
+--- @field package _ctrl_tx table
+--- @field package _running boolean
 local PhilipsHueApi = {}
 PhilipsHueApi.__index = PhilipsHueApi
 
@@ -138,13 +153,15 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
 
         local path, reply_tx = msg.path, msg.reply_tx
         if msg._type == ControlMessageTypes.Get then
+          local get_resp, get_err, partial = self.client:get(path, self.headers, retry_fn(5))
           reply_tx:send(
-            table.pack(process_rest_response(self.client:get(path, self.headers, retry_fn(5), rest_err_callback)))
+            table.pack(process_rest_response(get_resp, get_err, partial, rest_err_callback))
           )
         elseif msg._type == ControlMessageTypes.Put then
           local payload = msg.payload
+          local put_resp, put_err, partial = self.client:put(path, payload, self.headers, retry_fn(5))
           reply_tx:send(
-            table.pack(process_rest_response(self.client:put(path, payload, self.headers, retry_fn(5), rest_err_callback)))
+            table.pack(process_rest_response(put_resp, put_err, partial, rest_err_callback))
           )
         end
       else
@@ -172,14 +189,16 @@ end
 
 function PhilipsHueApi:update_connection(hub_base_url, api_key)
   local msg = ControlMessageBuilders.Update(hub_base_url, api_key)
-  self._ctrl_tx:send(msg)
+  try_send(self, msg)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Get(path, reply_tx);
-  instance._ctrl_tx:send(msg)
+  try_send(instance, msg)
   local recv, err = reply_rx:receive()
   if err ~= nil then
     instance.client:close_socket()
@@ -188,11 +207,13 @@ local function do_get(instance, path)
   return table.unpack(recv, 1, recv.n)
 end
 
+---@return table|nil response REST response, nil if error
+---@return nil|string error nil on success
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Put(path, payload, reply_tx);
-  instance._ctrl_tx:send(msg)
+  try_send(instance, msg)
   local recv, err = reply_rx:receive()
   if err ~= nil then
     instance.client:close_socket()
@@ -254,8 +275,16 @@ function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/r
 
 function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
 
-function PhilipsHueApi:get_light_by_id(id)
-  return do_get(self, string.format("/clip/v2/resource/light/%s", id))
+function PhilipsHueApi:get_light_by_id(light_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/light/%s", light_resource_id))
+end
+
+function PhilipsHueApi:get_device_by_id(hue_device_id)
+  return do_get(self, string.format("/clip/v2/resource/device/%s", hue_device_id))
+end
+
+function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
+  return do_get(self, string.format("/clip/v2/resource/zigbee_connectivity/%s", zigbee_resource_id))
 end
 
 function PhilipsHueApi:get_room_by_id(id)

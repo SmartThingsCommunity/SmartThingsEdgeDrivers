@@ -20,6 +20,12 @@ local capabilities = require "st.capabilities"
 
 local utils = require "st.utils"
 
+-- TODO: the IAS Zone changes should be replaced after supporting functions are included in the lua libs
+local do_init = function(driver, device)
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+end
+
 local function samjin_battery_percentage_handler(driver, device, raw_value, zb_rx)
   local raw_percentage = raw_value.value - (200 - raw_value.value) / 2
   local percentage = utils.clamp_value(utils.round(raw_percentage / 2), 0, 100)
@@ -28,6 +34,9 @@ end
 
 local samjin_driver = {
   NAME = "Samjin Sensor",
+  lifecycle_handlers = {
+    init = do_init
+  },
   zigbee_handlers = {
     attr = {
       [PowerConfiguration.ID] = {

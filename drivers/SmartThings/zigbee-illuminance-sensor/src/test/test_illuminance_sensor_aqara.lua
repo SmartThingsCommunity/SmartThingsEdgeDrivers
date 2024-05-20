@@ -62,17 +62,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.illuminanceMeasurement.illuminance(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE)))
+      detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
-        , data_types.Uint8, 1) })
   end
 )
 
 test.register_coroutine_test(
-  "Configure should configure all necessary attributes",
+  "Handle doConfigure lifecycle",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -100,6 +96,11 @@ test.register_coroutine_test(
         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
       }
     )
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        , data_types.Uint8, 1) })
+
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

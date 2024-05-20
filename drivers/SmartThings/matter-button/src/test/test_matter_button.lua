@@ -8,18 +8,18 @@ local button_attr = capabilities.button.button
 --mock the actual device
 local mock_device = test.mock_device.build_test_matter_device(
   {
-    profile = t_utils.get_profile_definition("button-profile.yml"),
-    manufacture_info = {vendor_id = 0x0000, product_id = 0x0000},
+    profile = t_utils.get_profile_definition("button-battery.yml"),
+    manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     endpoints = {
     {
       endpoint_id = 1,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
-          --feature_map = 14,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
           cluster_type = "SERVER"
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"}
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
       },
     },
   },
@@ -32,10 +32,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
   clusters.Switch.server.events.ShortRelease,
-  clusters.Switch.server.events.LongRelease,
   clusters.Switch.server.events.MultiPressComplete,
-  clusters.Switch.server.attributes.MultiPressMax,
-  clusters.Switch.server.attributes.CurrentPosition
 }
 
 local function test_init()
@@ -45,6 +42,9 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
@@ -68,6 +68,7 @@ test.register_message_test(
   }
 }
 )
+
 test.register_message_test(
   "Handle single press sequence, with hold", {
   {
@@ -129,6 +130,12 @@ test.register_message_test(
         mock_device, 1, {previous_position = 1}
       )
     }
+  },
+  { -- this is a double event because the test device in this test shouldn't support the above event
+    -- but we handle it anyway
+    channel = "capability",
+    direction = "send",
+    message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
   },
   }
 )
@@ -194,7 +201,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.button.supportedButtonValues({"pushed", "held", "double"}, {visibility = {displayed = false}}))
+        capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
     },
   }
 )
@@ -215,13 +222,13 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.button.supportedButtonValues({"pushed", "held", "double", "pushed_3x"}, {visibility = {displayed = false}}))
+        capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x"}, {visibility = {displayed = false}}))
     },
   }
 )
 
 test.register_message_test(
-  "Receiving a max press attribute of greater than 6 should not emit event", {
+  "Receiving a max press attribute of greater than 6 should only emit up to pushed_6x", {
     {
       channel = "matter",
       direction = "receive",
@@ -231,7 +238,13 @@ test.register_message_test(
           mock_device, 1, 7
         )
       },
-    }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
+    },
   }
 )
 
@@ -247,7 +260,8 @@ test.register_message_test(
       )
     }
   },
-  {
+  { -- again, on a device that reports that it supports double press, this event
+    -- will not be generated. See a multi-button test file for that case
     channel = "capability",
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
@@ -258,7 +272,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 2}
+        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0}
       )
     }
   },
@@ -283,7 +297,8 @@ test.register_message_test(
       )
     }
   },
-  {
+  { -- again, on a device that reports that it supports double press, this event
+    -- will not be generated. See a multi-button test file for that case
     channel = "capability",
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
@@ -294,14 +309,14 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 4}
+        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 4, previous_position = 0}
       )
     }
   },
   {
     channel = "capability",
     direction = "send",
-    message = mock_device:generate_test_message("main", button_attr.pushed_4x())
+    message = mock_device:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
   },
 
 }

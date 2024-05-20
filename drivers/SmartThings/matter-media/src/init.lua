@@ -22,7 +22,30 @@ local MatterDriver = require "st.matter.driver"
 
 local VOLUME_STEP = 5
 
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then --0 is the matter RootNode endpoint
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
+local function component_to_endpoint(device, component_name)
+  -- if this is a speaker device/component, look for endpoint that supports level control (volume)
+  if device:supports_capability(capabilities.audioVolume, component_name) then
+    return find_default_endpoint(device, clusters.LevelControl.ID)
+  else
+    return find_default_endpoint(device, clusters.MediaPlayback.ID)
+  end
+end
+
 local function device_init(driver, device)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
 end
 

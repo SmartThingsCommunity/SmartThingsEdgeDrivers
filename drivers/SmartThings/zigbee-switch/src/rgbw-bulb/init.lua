@@ -78,7 +78,8 @@ local RGBW_BULB_FINGERPRINTS = {
     ["E1G-G8E"] = true,
     ["E11-U3E"] = true,
     ["E11-U2E"] = true,
-    ["E1F-N5E"] = true
+    ["E1F-N5E"] = true,
+    ["E23-N13"] = true
   },
   ["Neuhaus Lighting Group"] = {
     ["ZBT-ExtendedColor"] = true
@@ -92,7 +93,13 @@ local RGBW_BULB_FINGERPRINTS = {
 }
 
 local function can_handle_rgbw_bulb(opts, driver, device)
-  return (RGBW_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
+  local can_handle = (RGBW_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
+  if can_handle then
+    local subdriver = require("rgbw-bulb")
+    return true, subdriver
+  else
+    return false
+  end
 end
 
 local function do_refresh(driver, device)

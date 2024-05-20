@@ -112,6 +112,18 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Not Fully Locked status reporting should not be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, DoorLock.attributes.LockState:build_test_attr_report(mock_device,
+                                                                                         DoorLockState.NOT_FULLY_LOCKED) }
+      }
+    }
+)
+
+test.register_message_test(
     "Lock operation event reporting should be handled",
     {
       {
@@ -1345,6 +1357,19 @@ test.register_coroutine_test(
         mock_device.id,
         zigbee_test_utils.build_tx_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "1235")
       })
+      test.wait_for_events()
+    end
+)
+
+test.register_coroutine_test(
+    "Handle Lock cmd",
+    function()
+      test.socket.capability:__queue_receive(
+          {
+            mock_device.id,
+            { capability = "lock", component = "main", command = "lock", args = {} }
+          }
+      )
       test.wait_for_events()
     end
 )

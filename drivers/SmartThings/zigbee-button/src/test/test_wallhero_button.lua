@@ -315,7 +315,8 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
     test.wait_for_events()
-
+    test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, Scenes.ID, Scenes.server.commands.RecallScene.ID, 0x0000, "\x05\x00\x00\x00\x05\x00", 0x1F) })
+    test.wait_for_events()
   end
 )
 

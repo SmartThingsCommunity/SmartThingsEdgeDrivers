@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.remote.b1acn02"
+    deviceLabel: Aqara Wireless Mini Switch T1
+    manufacturer: LUMI
+    model: lumi.remote.b1acn02
+    deviceProfileName: one-button-battery
+  - id: "LUMI/lumi.remote.acn003"
+    deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.acn003
+    deviceProfileName: one-button-battery
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
@@ -42,6 +52,11 @@ zigbeeManufacturer:
   - id: "KE/TRADFRIopenclose"
     deviceLabel: IKEA Remote Control
     manufacturer: KE
+    model: TRADFRI open/close remote
+    deviceProfileName: two-buttons-battery
+  - id: "02KE/TRADFRIopenclose"
+    deviceLabel: IKEA Remote Control
+    manufacturer: "\x02KE"
     model: TRADFRI open/close remote
     deviceProfileName: two-buttons-battery
   - id: "CentraLite/3450-L"
@@ -164,6 +179,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSB22BZ
     deviceProfileName: one-button-battery
+  - id: Samsung/SAMSUNG-ITM-Z-005
+    deviceLabel: ITM Switch
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-005
+    deviceProfileName: SLED-three-buttons  
   # # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: 语音场景(4寸）面板
