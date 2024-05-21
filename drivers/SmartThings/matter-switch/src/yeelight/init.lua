@@ -89,12 +89,15 @@ local function sat_attr_handler(driver, device, ib, response)
 end
 
 local function lighting_effect_cap_handler(driver, device, cmd)
+  local effectId = data_types.validate_or_build_type(LIGHTING_EFFECT_ID[cmd.args.stateControl], data_types.Uint64, "effectId")
+  effectId.field_id = 1
+
   device:send(
     cluster_base.build_cluster_command(
       driver,
       device,
       {
-        ["effectId"] = data_types.validate_or_build_type(LIGHTING_EFFECT_ID[cmd.args.stateControl], data_types.Uint64, "effectId")
+        ["effectId"] = effectId
       },
       0x02,
       PRIVATE_CLUSTER_ID,
