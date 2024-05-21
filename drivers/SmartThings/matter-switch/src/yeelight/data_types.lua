@@ -16,11 +16,13 @@ local UintABC = require "st.matter.data_types.base_defs.UintABC"
 local data_types = require("st.matter.data_types")
 
 local mt = UintABC.new_mt({ NAME = "Uint64", ID = 0x07, SUBTYPES = { "Uint8", "Uint16", "Uint32" } }, 8)
-function mt._index:check_if_valid(val)
-    if math.type(val) ~= "integer" then
-        error(string.format("%s value must be an integer", self.NAME), 2)
+
+mt.__index.check_if_valid = function(self, int_val)
+    if math.type(int_val) ~= "integer" then
+      error(string.format("%s value must be an integer", self.NAME), 2)
     end
 end
+
 
 local Uint64 = {}
 setmetatable(Uint64, mt)
