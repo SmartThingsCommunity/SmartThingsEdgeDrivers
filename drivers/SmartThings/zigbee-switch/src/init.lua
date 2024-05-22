@@ -117,7 +117,9 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("ge-link-bulb"),
     lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
-    lazy_load_if_possible("wallhero")
+    lazy_load_if_possible("wallhero"),
+    lazy_load_if_possible("confio4r"),
+    lazy_load_if_possible("confio-dimmer")
   },
   lifecycle_handlers = {
     init = device_init,
