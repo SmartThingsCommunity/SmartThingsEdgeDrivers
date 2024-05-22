@@ -11,7 +11,6 @@ Check all that apply
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactor
-- [ ] Documentation change
 
 # Checklist
 
@@ -20,7 +19,7 @@ Check all that apply
 - [ ] I have verified my changes by testing with a device or have communicated a plan for testing
 - [ ] I am adding new behavior, such as adding a sub-driver, and have added and run new unit tests to cover the new behavior
 
-# Description
+# Description of Change
 
 
 # Summary of Completed Tests
