@@ -1,0 +1,6 @@
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'releases/**'
