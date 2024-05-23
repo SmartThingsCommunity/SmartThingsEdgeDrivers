@@ -172,7 +172,7 @@ local function initialize_switch(driver, device)
   -- workaround for those devices.
   if num_server_eps > 0 and detect_matter_thing(device) == true then
     local id = 0
-    for _,ep in ipairs(device.endpoints) do
+    for _, ep in ipairs(device.endpoints) do
       -- main_endpoint only supports server cluster by definition of get_endpoints()
       if main_endpoint == ep.endpoint_id then
         for _, dt in ipairs(ep.device_types) do
