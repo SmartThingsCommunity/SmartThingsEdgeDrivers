@@ -139,7 +139,22 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
-
+#Legrand
+  - id: "4129/3"
+    deviceLabel: Smart Lights Smart Plug
+    vendorId: 0x1021
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "4129/4"
+    deviceLabel: Smart Lights Outdoor Plug
+    vendorId: 0x1021
+    productId: 0x0004
+    deviceProfileName: plug-binary
+  - id: "4129/7"
+    deviceLabel: Radiant Smart Receptacle
+    vendorId: 0x1021
+    productId: 0x0007
+    deviceProfileName: plug-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -273,7 +288,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03f8
     deviceProfileName: light-color-level-1800K-6500K
-
+  - id: "4456/1011"
+    deviceLabel: Smart Light Bulb A60
+    vendorId: 0x1168
+    productId: 0x03F3
+    deviceProfileName: light-color-level-1800K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19

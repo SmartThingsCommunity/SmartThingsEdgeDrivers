@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
@@ -39,7 +38,7 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 -- in the device table for devices that joined prior to this transition, and it
 -- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-local BOUNDS_CHECKED = "__bounds_checked"
+local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
@@ -53,13 +52,19 @@ local COLOR_TEMP_LIGHT_DEVICE_TYPE_ID = 0x010C
 local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
 local ON_OFF_PLUG_DEVICE_TYPE_ID = 0x010A
 local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
+local ON_OFF_SWITCH_ID = 0x0103
+local ON_OFF_DIMMER_SWITCH_ID = 0x0104
+local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
   [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
   [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
   [ON_OFF_PLUG_DEVICE_TYPE_ID] = "plug-binary",
-  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level"
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level",
+  [ON_OFF_SWITCH_ID] = "switch-binary",
+  [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
 local detect_matter_thing
 
@@ -125,7 +130,6 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-
   -- Since we do not support bindings at the moment, we only want to count On/Off
   -- clusters that have been implemented as server. This can be removed when we have
   -- support for bindings.
@@ -151,16 +155,39 @@ local function initialize_switch(driver, device)
     end
   end
 
+  if num_server_eps > 1  then
+    -- If the device is a parent child device, then set the find_child function on init.
+    -- This is persisted because initialize switch is only run once, but find_child function should be set
+    -- on each driver init.
+    device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  end
+
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
+  -- The case where num_server_eps > 0 is a workaround for devices that have a
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
-  -- for this device type). By default, we do not support On/Off Light Switch because by spec these
-  -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
-  -- does not have a generic fingerprint and will join as a matter-thing. However, we have
-  -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
-  -- is a workaround for those devices.
+  -- for this device type). By default, we do not support Light Switch device types because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+  -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+  -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+  -- workaround for those devices.
   if num_server_eps > 0 and detect_matter_thing(device) == true then
-    device:try_update_metadata({profile = "switch-binary"})
+    local id = 0
+    for _, ep in ipairs(device.endpoints) do
+      -- main_endpoint only supports server cluster by definition of get_endpoints()
+      if main_endpoint == ep.endpoint_id then
+        for _, dt in ipairs(ep.device_types) do
+          -- no device type that is not in the switch subset should be considered.
+          if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+            id = math.max(id, dt.device_type_id)
+          end
+        end
+        break
+      end
+    end
+
+    if device_type_profile_map[id] ~= nil then
+      device:try_update_metadata({profile = device_type_profile_map[id]})
+    end
   end
 end
 
@@ -211,24 +238,10 @@ local function device_init(driver, device)
     end
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-    device:set_find_child(find_child)
-    device:subscribe()
-
-    if not device:get_field(BOUNDS_CHECKED) then
-      local limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      if device:supports_capability(capabilities.colorTemperature) then
-        limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read())
-        limit_read:merge(clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read())
-      end
-      if device:supports_capability(capabilities.switchLevel) then
-        limit_read:merge(clusters.LevelControl.attributes.MinLevel:read())
-        limit_read:merge(clusters.LevelControl.attributes.MaxLevel:read())
-      end
-      if #limit_read.info_blocks ~= 0 then
-        device:send(limit_read)
-      end
-      device:set_field(BOUNDS_CHECKED, true)
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      device:set_find_child(find_child)
     end
+    device:subscribe()
   end
 end
 
@@ -540,7 +553,9 @@ local matter_driver_template = {
       clusters.OnOff.attributes.OnOff
     },
     [capabilities.switchLevel.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
     },
     [capabilities.colorControl.ID] = {
       clusters.ColorControl.attributes.CurrentHue,
@@ -550,6 +565,8 @@ local matter_driver_template = {
     },
     [capabilities.colorTemperature.ID] = {
       clusters.ColorControl.attributes.ColorTemperatureMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
     },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
