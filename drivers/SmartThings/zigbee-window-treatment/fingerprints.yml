@@ -108,7 +108,16 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Blinds Actuator
     deviceProfileName: window-treatment-profile
-
+  - id: "Confio/CTCCZB"
+    deviceLabel: Confio Single Curtain
+    manufacturer: Confio
+    model: CTCCZB
+    deviceProfileName: window-treatment-confio
+  - id: "Confio/CT2CCZB"
+    deviceLabel: Confio Dual Curtain 1
+    manufacturer: Confio
+    model: CT2CCZB
+    deviceProfileName: window-treatment-confio
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
