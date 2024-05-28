@@ -1,6 +1,7 @@
 name: refrigerator-freezer-tl
 components:
 - id: main
+  label: Main
   capabilities:
   - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
@@ -13,6 +14,7 @@ components:
   categories:
   - name: Refrigerator
 - id: refrigerator # First endpoint
+  label: Refrigerator
   capabilities:
   - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
@@ -23,6 +25,7 @@ components:
   categories:
   - name: Refrigerator
 - id: freezer # Second endpoint
+  label: Freezer
   capabilities:
   - id: mode # Refrigerator And Temperature Controlled Cabinet Mode
     version: 1
