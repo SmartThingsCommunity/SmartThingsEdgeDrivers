@@ -66,11 +66,9 @@ local subscribed_attributes = {
     clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
   },
-  [capabilities.fineDustSensor.ID] = {
+  [capabilities.dustSensor.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.dustSensor.ID] = {
     clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
   },
@@ -133,9 +131,11 @@ local function configure(driver, device)
      #pm10_eps > 0 or #radon_eps > 0 then
       -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
       device:try_update_metadata({profile = "air-quality-sensor"})
+      log.info_with({hub_logs=true}, string.format("Updating device profile to air-quality-sensor."))
   elseif #humidity_eps > 0 or #temp_eps > 0 or #CO2_eps > 0 or #pm2_5_eps > 0 or #tvoc_eps > 0 then
     -- device supports one or more of the common clusters, so switch to a more limited profile
     device:try_update_metadata({profile = "air-quality-sensor-common"})
+    log.info_with({hub_logs=true}, string.format("Updating device profile to air-quality-sensor-common."))
   else
     -- device only supports air quality at this point
     --device:try_update_metadata({profile = "air-quality-sensor-AQI-only"})
@@ -178,7 +178,6 @@ local unit_default = {
   [capabilities.ozoneMeasurement.NAME] = units.PPM,
   [capabilities.formaldehydeMeasurement.NAME] = units.PPM,
   [capabilities.veryFineDustSensor.NAME] = units.UGM3,
-  [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
   [capabilities.tvocMeasurement.NAME] = units.PPM
@@ -325,8 +324,8 @@ local matter_air_quality_sensor_handler = {
         [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
       },
       [clusters.Pm25ConcentrationMeasurement.ID] = {
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, units.UGM3),
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.fineDustSensor.NAME),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.dustSensor.NAME, capabilities.dustSensor.fineDustLevel, units.UGM3),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.dustSensor.NAME),
         [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
       },
       [clusters.Pm10ConcentrationMeasurement.ID] = {

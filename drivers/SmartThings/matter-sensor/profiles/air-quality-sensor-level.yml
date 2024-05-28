@@ -28,8 +28,6 @@ components:
         version: 1
       - id: veryFineDustHealthConcern
         version: 1
-      - id: fineDustSensor
-        version: 1
       - id: fineDustHealthConcern
         version: 1
       - id: dustSensor

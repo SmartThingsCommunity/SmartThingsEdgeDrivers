@@ -18,11 +18,9 @@ components:
         version: 1
       - id: formaldehydeMeasurement
         version: 1
-      - id: veryFineDustSensor
-        version: 1
-      - id: fineDustSensor
-        version: 1
       - id: dustSensor
+        version: 1
+      - id: veryFineDustSensor
         version: 1
       - id: radonMeasurement
         version: 1

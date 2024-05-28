@@ -220,11 +220,9 @@ local matter_driver_template = {
       clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
     },
-    [capabilities.fineDustSensor.ID] = {
+    [capabilities.dustSensor.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-    },
-    [capabilities.dustSensor.ID] = {
       clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
     },
