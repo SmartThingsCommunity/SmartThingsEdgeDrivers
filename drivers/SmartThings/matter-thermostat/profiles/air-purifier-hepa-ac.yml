@@ -1,6 +1,7 @@
 name: air-purifier-hepa-ac
 components:
 - id: main
+  label: Main
   capabilities:
   - id: airPurifierFanMode
     version: 1
@@ -11,6 +12,7 @@ components:
   categories:
   - name: AirPurifier
 - id: hepaFilter
+  label: Hepa filter
   capabilities:
   - id: filterState
     version: 1
@@ -19,6 +21,7 @@ components:
   categories:
   - name: AirPurifier
 - id: activatedCarbonFilter
+  label: Activated carbon filter
   capabilities:
   - id: filterState
     version: 1
