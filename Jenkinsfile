@@ -43,6 +43,7 @@ pipeline {
           currentBuild.displayName = "#" + currentBuild.number + " " + env.BRANCH
           currentBuild.description = "Drivers changed: " + env.CHANGED_DRIVERS
         }
+        sh 'git config --global --add safe.directory "*"'
         sh 'git clean -xfd'
         sh 'apt-get update'
         sh 'apt-get install zip -y'

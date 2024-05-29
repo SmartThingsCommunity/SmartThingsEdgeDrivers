@@ -16,18 +16,28 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local stDevice = require "st.device"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 
 local Scenes = zcl_clusters.Scenes
+local PRIVATE_CLUSTER_ID = 0x0006
+local PRIVATE_ATTRIBUTE_ID = 0x6000
+local MFG_CODE = 0x1235
 
 local FINGERPRINTS = {
   { mfr = "WALL HERO", model = "ACL-401S4I", switches = 4, buttons = 0 },
-  { mfr = "WALL HERO", model = "ACL-401S8I", switches = 4, buttons = 4 }
+  { mfr = "WALL HERO", model = "ACL-401S8I", switches = 4, buttons = 4 },
+  { mfr = "WALL HERO", model = "ACL-401S3I", switches = 3, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401S2I", switches = 2, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401S1I", switches = 1, buttons = 0 },
+  { mfr = "WALL HERO", model = "ACL-401ON", switches = 1, buttons = 0 }
 }
 
 local function can_handle_wallhero_switch(opts, driver, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("wallhero")
+      return true, subdriver
     end
   end
   return false
@@ -90,6 +100,22 @@ local function device_added(driver, device)
   end
 end
 
+local function device_info_changed(driver, device, event, args)
+  local preferences = device.preferences
+  local old_preferences = args.old_st_store.preferences
+  local value_map = { [true] = 0x00,[false] = 0x01 }
+  if preferences ~= nil then
+    local id = "stse.turnOffIndicatorLight"
+    local old_value = old_preferences[id]
+    local value = preferences[id]
+    if value ~= nil and value ~= old_value  then
+      value = value_map[value]
+      local message = cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, value)
+      device:send(message)
+    end
+  end
+end
+
 local function device_init(driver, device, event)
   device:set_find_child(find_child)
 end
@@ -104,7 +130,8 @@ local wallheroswitch = {
   NAME = "Zigbee Wall Hero Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = device_init
+    init = device_init,
+    infoChanged = device_info_changed
   },
   zigbee_handlers = {
     cluster = {

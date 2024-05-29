@@ -1,0 +1,19 @@
+name: cube-t1-pro
+components:
+  - id: main
+    capabilities:
+      - id: stse.cubeAction
+        version: 1
+      - id: stse.cubeFace
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_CubeT1Pro

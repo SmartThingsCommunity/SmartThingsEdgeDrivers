@@ -136,7 +136,11 @@ end
 
 function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
   local ip = device:get_field("ip")
-  -- Audio Notification working fine when checked through routine. Need to confirm later for any issue whether ST app expect any emit_event here
+  local mute_status = command.getMute(ip)
+  if mute_status.muted ~= "off" then
+     --unmute before playig notification
+     command.unmute(ip)
+  end
   command.play_streaming_uri(ip, cmd.args.uri)
 end
 

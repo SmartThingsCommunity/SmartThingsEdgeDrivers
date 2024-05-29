@@ -4,11 +4,37 @@ matterManufacturer:
     deviceLabel: Eve MotionBlinds
     vendorId: 0x130A
     productId: 0x55
-    deviceProfileName: window-covering-profile
+    deviceProfileName: window-covering-battery
+#Zemismart
+  - id: "Zemismart MT01 Slide Curtain"
+    deviceLabel: Zemismart MT01 Slide Curtain
+    vendorId: 0x139C
+    productId: 0xFFFE
+    deviceProfileName: window-covering
+  - id: "5020/65376"
+    deviceLabel: Zemismart MT25B Roller Motor
+    vendorId: 0x139C
+    productId: 0xFF60
+    deviceProfileName: window-covering 
+  - id: "5020/65296"
+    deviceLabel: Zemismart MT82 Smart Curtain
+    vendorId: 0x139C
+    productId: 0xFF10
+    deviceProfileName: window-covering
+  - id: "5020/65301"
+    deviceLabel: Zemismart MT25A Thread Roller Motor
+    vendorId: 0x139C
+    productId: 0xFF15
+    deviceProfileName: window-covering
+  - id: "5020/65535"
+    deviceLabel: Zemismart ZM25M Matter Roller Motor
+    vendorId: 0x139C
+    productId: 0xFFFF
+    deviceProfileName: window-covering
 
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
     deviceTypes:
       - id: 0x0202 # Window Covering
-    deviceProfileName: window-covering-profile
+    deviceProfileName: window-covering

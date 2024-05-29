@@ -1,0 +1,27 @@
+name: light-color-level-illuminance-motion-1000K-15000K
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: colorTemperature
+    version: 1
+    config:
+      values:
+        - key: "colorTemperature.value"
+          range: [ 1000, 15000 ]
+  - id: colorControl
+    version: 1
+  - id: motionSensor
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light
+

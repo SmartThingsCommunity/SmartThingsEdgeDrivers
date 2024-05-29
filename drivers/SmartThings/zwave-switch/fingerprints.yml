@@ -784,11 +784,11 @@ zwaveManufacturer:
     productType: 0x1801
     productId: 0x1000
     deviceProfileName: metering-switch
-  - id: 0086/004E
-    deviceLabel: Aeotec Switch
+  - id: "Aeotec/Heavy Duty"
+    deviceLabel: Aeotec Heavy Duty
     manufacturerId: 0x0086
     productId: 0x004E
-    deviceProfileName: metering-switch
+    deviceProfileName: aeotec-heavy-duty
   - id: 0258/0003/0087
     deviceLabel: NEO Coolcam Outlet
     manufacturerId: 0x0258
@@ -898,6 +898,19 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+#Shelly/Qubino
+  - id: 1120/2/137
+    deviceLabel: Wave Plug UK
+    manufacturerId: 0x0460
+    productId: 0x0089
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/136
+    deviceLabel: Wave Plug US
+    manufacturerId: 0x0460
+    productId: 0x0088
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

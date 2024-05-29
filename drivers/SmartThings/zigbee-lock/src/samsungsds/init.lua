@@ -30,8 +30,6 @@ local function handle_lock_state(driver, device, value, zb_rx)
     device:emit_event(Lock.lock.locked())
   elseif value.value == DoorLock.attributes.LockState.UNLOCKED then
     device:emit_event(Lock.lock.unlocked())
-  else
-    device:emit_event(Lock.lock.unknown())
   end
 end
 
@@ -49,6 +47,10 @@ local function unlock_cmd_handler(driver, device, command)
           SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND,
           SAMSUNG_SDS_MFR_CODE,
           "\x10\x04\x31\x32\x33\x35"))
+end
+
+local function lock_cmd_handler(driver, device, command)
+  -- do nothing in lock command handler
 end
 
 local refresh = function(driver, device, cmd)
@@ -95,7 +97,8 @@ local samsung_sds_driver = {
       [capabilities.refresh.commands.refresh.NAME] = refresh
     },
     [capabilities.lock.ID] = {
-      [capabilities.lock.commands.unlock.NAME] = unlock_cmd_handler
+      [capabilities.lock.commands.unlock.NAME] = unlock_cmd_handler,
+      [capabilities.lock.commands.lock.NAME] = lock_cmd_handler
     }
   },
   lifecycle_handlers = {
