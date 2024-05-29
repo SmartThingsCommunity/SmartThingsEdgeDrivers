@@ -1,4 +1,11 @@
 matterManufacturer:
+#ThirdReality
+  - id: "ThirdReality/WiFi"
+    deviceLabel: THIRDREALITY Night Light
+    vendorId: 0x1407
+    productId: 0x1088
+    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
+    
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -20,8 +27,68 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x5E
     deviceProfileName: power-energy-powerConsumption
+  - id: "Eve/Energy/OutletUS"
+    deviceLabel: Eve Energy Outlet
+    vendorId: 0x130A
+    productId: 0x69
+    deviceProfileName: power-energy-powerConsumption
+  - id: "4874/106"
+    deviceLabel: Eve Energy Switzerland
+    vendorId: 0x130A
+    productId: 0x006A
+    deviceProfileName: power-energy-powerConsumption
+  - id: "4874/107"
+    deviceLabel: Eve Energy Outdoor
+    vendorId: 0x130A
+    productId: 0x006B
+    deviceProfileName: power-energy-powerConsumption
 
 #GE
+  - id: "4921/177"
+    deviceLabel: Cync Full Color 2 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00B1
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/44"
+    deviceLabel: Cync Full Color 3 Inch Puck
+    vendorId: 0x1339
+    productId: 0x002C
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/174"
+    deviceLabel: Cync Full Color 4 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00AE
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/180"
+    deviceLabel: Cync 4 Inch High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0x00B4
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/175"
+    deviceLabel: Cync Full Color 6 Inch Wafer
+    vendorId: 0x1339
+    productId: 0x00AF
+    deviceProfileName: light-color-level-2000K-7000K  
+  - id: "4921/181"
+    deviceLabel: Cync 6 Inch High Ceiling Wafer
+    vendorId: 0x1339
+    productId: 0x00B5
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/41"
+    deviceLabel: Cync Full Color Undercabinet 12 Inch
+    vendorId: 0x1339
+    productId: 0x0029
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/42"
+    deviceLabel: Cync Full Color Undercabinet 18 Inch
+    vendorId: 0x1339
+    productId: 0x002A
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/43"
+    deviceLabel: Cync Full Color Undercabinet 24 Inch
+    vendorId: 0x1339
+    productId: 0x002B
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "GELightingSavant/Bulb/A19"
     deviceLabel: Cync Full Color A19
     vendorId: 0x1339
@@ -32,6 +99,93 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0xAC
     deviceProfileName: plug-binary
+  - id: "4921/46"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x002E
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/98"
+    deviceLabel: Cync Full Color Globe
+    vendorId: 0x1339
+    productId: 0x0062
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/171"
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0x00AB
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/97"
+    deviceLabel: Cync Full Color ST19
+    vendorId: 0x1339
+    productId: 0x0061
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/104"
+    deviceLabel: Cync Full Color PAR38
+    vendorId: 0x1339
+    productId: 0x0068
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/110"
+    deviceLabel: Cync Indoor Light Strip 16ft
+    vendorId: 0x1339
+    productId: 0x006E
+    deviceProfileName: light-color-level-2000K-7000K 
+  - id: "4921/123"
+    deviceLabel: Cync Indoor Light Strip 32ft
+    vendorId: 0x1339
+    productId: 0x007B
+    deviceProfileName: light-color-level-2000K-7000K 
+  - id: "4921/111"
+    deviceLabel: Cync Outdoor Plug
+    vendorId: 0x1339
+    productId: 0x006F
+    deviceProfileName: plug-binary
+#Legrand
+  - id: "4129/3"
+    deviceLabel: Smart Lights Smart Plug
+    vendorId: 0x1021
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "4129/4"
+    deviceLabel: Smart Lights Outdoor Plug
+    vendorId: 0x1021
+    productId: 0x0004
+    deviceProfileName: plug-binary
+  - id: "4129/7"
+    deviceLabel: Radiant Smart Receptacle
+    vendorId: 0x1021
+    productId: 0x0007
+    deviceProfileName: plug-binary
+#Lifx
+  - id: "5155/169"
+    deviceLabel: LIFX Color (A21)
+    vendorId: 0x1423
+    productId: 0x00A9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/171"
+    deviceLabel: LIFX Spot
+    vendorId: 0x1423
+    productId: 0x00AB
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/173"
+    deviceLabel: LIFX Path (Round)
+    vendorId: 0x1423
+    productId: 0x00AD
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/174"
+    deviceLabel: LIFX Path (Square)
+    vendorId: 0x1423
+    productId: 0x00AE
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/175"
+    deviceLabel: LIFX Color (PAR38)
+    vendorId: 0x1423
+    productId: 0x00AF
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/176"
+    deviceLabel: LIFX Ceiling
+    vendorId: 0x1423
+    productId: 0x00B0
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
 
 #Nanoleaf
   - id: "Nanoleaf NL53"
@@ -64,6 +218,16 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
+ - id: "4442/72"
+    deviceLabel: Essentials Indoor Lights
+    vendorId: 0x115A
+    productId: 0x0048
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/73"
+    deviceLabel: Essentials Outdoor Lights
+    vendorId: 0x115A
+    productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -129,7 +293,16 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x0405
     deviceProfileName: light-color-level-1800K-6500K
-
+  - id: "AiDot/Smart/Light/Bulb/A19/RGBTW"
+    deviceLabel: AiDot Smart Light Bulb A19 RGBT
+    vendorId: 0x1168
+    productId: 0x03f8
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1011"
+    deviceLabel: Smart Light Bulb A60
+    vendorId: 0x1168
+    productId: 0x03F3
+    deviceProfileName: light-color-level-1800K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -1932,7 +2105,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
-
+  - id: "5020/61154"
+    deviceLabel: Zemismart Inline Module
+    vendorId: 0x139C
+    productId: 0xEEE2
+    deviceProfileName: switch-binary
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
 #fingerprints work for bridges joined prior to hubs being able to support them

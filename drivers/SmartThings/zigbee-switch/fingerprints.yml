@@ -111,6 +111,31 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "Aqara/lumi.light.acn014"
+    deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
+    manufacturer: Aqara
+    model: lumi.light.acn014
+    deviceProfileName: aqara-led-bulb
+  - id: "LUMI/lumi.switch.n1aeu1"
+    deviceLabel: Aqara Smart Wall Switch H1 EU (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.n1aeu1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.n2aeu1"
+    deviceLabel: Aqara Smart Wall Switch H1 EU (With Neutral, Double Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.n2aeu1
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.l1aeu1"
+    deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.l1aeu1
+    deviceProfileName: aqara-switch-no-power
+  - id: "LUMI/lumi.switch.l2aeu1"
+    deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.l2aeu1
+    deviceProfileName: aqara-switch-no-power    
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
@@ -222,6 +247,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HS6SW3A-W-EF-3.0
     deviceProfileName: basic-switch
+  - id: "HEIMAN/HS6ESK-W-EF-3.0"
+    deviceLabel: "HEIMAN Outlet"
+    manufacturer: HEIMAN
+    model: HS6ESK-W-EF-3.0
+    deviceProfileName: basic-plug
   - id: "HEIMAN/E_Socket"
     deviceLabel: "HEIMAN Outlet"
     manufacturer: HEIMAN
@@ -2176,6 +2206,16 @@ zigbeeManufacturer:
     model: ROB_200-011-0
     deviceLabel: ROBB SMARRT Zigbee dimmer 2-wire
     deviceProfileName: light-level-power-energy
+  - id: sengled/E23-N13
+    deviceLabel: Sengled Multicolor par38
+    manufacturer: sengled
+    model: E23-N13
+    deviceProfileName: rgbw-bulb
+  - id: "sengled/E23-N11"
+    deviceLabel: Sengled Light par38
+    manufacturer: sengled
+    model: E23-N11
+    deviceProfileName: on-off-level
   # Wall Hero
   - id: "WALL HERO/ACL-401S4I"
     deviceLabel: 四位智能开关面板 1 

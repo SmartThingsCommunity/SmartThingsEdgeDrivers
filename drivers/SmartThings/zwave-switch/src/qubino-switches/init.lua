@@ -52,7 +52,11 @@ local function getDeviceProfile(device, isTemperatureSensorOnboard)
 end
 
 local function can_handle_qubino_flush_relay(opts, driver, device, cmd, ...)
-  return device:id_match(constants.QUBINO_MFR)
+  if device:id_match(constants.QUBINO_MFR) then
+    local subdriver = require("qubino-switches")
+    return true, subdriver
+  end
+  return false
 end
 
 local function add_temperature_sensor_if_needed(device)

@@ -32,7 +32,11 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
-  { mfr = "LUMI", model = "lumi.switch.b2laus01" }
+  { mfr = "LUMI", model = "lumi.switch.b2laus01" },
+  { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.l2aeu1" }
 }
 
 local preference_map = {
@@ -131,7 +135,8 @@ local preference_map = {
 local function is_aqara_products(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
+      local subdriver = require("aqara")
+      return true, subdriver
     end
   end
   return false
@@ -141,6 +146,8 @@ local function private_mode_handler(driver, device, value, zb_rx)
   device:set_field(PRIVATE_MODE, value.value, { persist = true })
 
   if value.value ~= 1 then
+    device:send(cluster_base.write_manufacturer_specific_attribute(device,
+      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
     device:send(SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(device, 900, 3600, 1)) -- minimal interval : 15min
     device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, { persist = true })
     device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, { persist = true })
@@ -224,8 +231,6 @@ local function device_added(driver, device)
   device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
   device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
 
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01)) -- private
 end
 
 local aqara_switch_handler = {

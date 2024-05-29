@@ -86,14 +86,15 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }))
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send({
       mock_device.id,
       {
         capability_id = "stse.deviceInitialization", component_id = "main",
         attribute_id = "supportedInitializedState",
-        state = { value = { "notInitialized", "initializing", "initialized" } }
+        state = { value = { "notInitialized", "initializing", "initialized" } },
+        visibility = { displayed = false }
       }
     })
     test.socket.capability:__expect_send(

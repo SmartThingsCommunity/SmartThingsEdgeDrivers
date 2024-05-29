@@ -90,6 +90,13 @@ local function temperature_handler(device, temperature)
   -- Value is in tenths of a degree so divide by 10.
   -- tempEventVal = ((float)attrVal.int16Val) / 10.0 + tempOffsetVal
   -- tempOffset is handled outside of the driver
+
+  -- if temperature > 32767, this represents a negative number in int16 data types
+  -- Apply 'two's complement' to temperature value
+  if temperature > 32767 then
+    temperature = temperature - 65536
+  end
+
   local tempDivisor = 10.0
   local tempCelsius = temperature / tempDivisor
   device:emit_event(capabilities.temperatureMeasurement.temperature({value = tempCelsius, unit = "C"}))
@@ -139,7 +146,19 @@ local function xyz_handler(driver, device, zb_rx)
   local x = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(1), zb_rx.body.zcl_body.body_bytes:byte(2))
   local y = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(3), zb_rx.body.zcl_body.body_bytes:byte(4))
   local z = multi_utils.convert_to_signedInt16(zb_rx.body.zcl_body.body_bytes:byte(5), zb_rx.body.zcl_body.body_bytes:byte(6))
-  multi_utils.handle_three_axis_report(device, x, y, z)
+  device:emit_event(capabilities.threeAxis.threeAxis({value = {x, y, z}}))
+  if device.preferences["certifiedpreferences.garageSensor"] then
+    -- The sensor is mounted on the garage door vertically. Unlike the newer sensors, the z-axis is parallel to the ground
+    -- when the door is closed and perpendicular to the ground when the door is open. This is why we are using custom handling
+    -- instead of multi_utils.handle_three_axis_report. The values here were the same used in the original Groovy DTH
+    -- and in the protocol handler.
+    local abs_z = math.abs(z)
+    if abs_z > 825 then
+      device:emit_event(capabilities.contactSensor.contact.open())
+    elseif abs_z < 100 then
+      device:emit_event(capabilities.contactSensor.contact.closed())
+    end
+  end
 end
 
 local smartsense_multi = {

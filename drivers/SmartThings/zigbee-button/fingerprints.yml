@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.remote.b1acn02"
+    deviceLabel: Aqara Wireless Mini Switch T1
+    manufacturer: LUMI
+    model: lumi.remote.b1acn02
+    deviceProfileName: one-button-battery
+  - id: "LUMI/lumi.remote.acn003"
+    deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.acn003
+    deviceProfileName: one-button-battery
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
@@ -42,6 +52,11 @@ zigbeeManufacturer:
   - id: "KE/TRADFRIopenclose"
     deviceLabel: IKEA Remote Control
     manufacturer: KE
+    model: TRADFRI open/close remote
+    deviceProfileName: two-buttons-battery
+  - id: "02KE/TRADFRIopenclose"
+    deviceLabel: IKEA Remote Control
+    manufacturer: "\x02KE"
     model: TRADFRI open/close remote
     deviceProfileName: two-buttons-battery
   - id: "CentraLite/3450-L"
