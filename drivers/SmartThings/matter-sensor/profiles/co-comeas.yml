@@ -1,9 +1,7 @@
-name: smoke-co-COmeas
+name: co-comeas
 components:
 - id: main
   capabilities:
-  - id: smokeDetector
-    version: 1
   - id: carbonMonoxideDetector
     version: 1
   - id: carbonMonoxideMeasurement

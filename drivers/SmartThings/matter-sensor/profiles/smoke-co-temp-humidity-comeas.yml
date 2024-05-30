@@ -1,8 +1,14 @@
-name: co-COmeas
+name: smoke-co-temp-humidity-comeas
 components:
 - id: main
   capabilities:
+  - id: smokeDetector
+    version: 1
   - id: carbonMonoxideDetector
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
     version: 1
   - id: carbonMonoxideMeasurement
     version: 1

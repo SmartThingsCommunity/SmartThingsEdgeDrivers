@@ -47,10 +47,10 @@ end
 local supported_profiles =
 {
   "co",
-  "co-COmeas",
+  "co-comeas",
   "smoke",
-  "smoke-co-COmeas",
-  "smoke-co-temp-humidity-COmeas"
+  "smoke-co-comeas",
+  "smoke-co-temp-humidity-comeas"
 }
 
 local function match_profile(device)
@@ -58,8 +58,8 @@ local function match_profile(device)
   local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
   local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local CO_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local CO_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local co_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local co_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
 
   local profile_name = ""
 
@@ -76,11 +76,11 @@ local function match_profile(device)
   if #humidity_eps > 0 then
     profile_name = profile_name .. "-humidity"
   end
-  if #CO_meas_eps > 0 then
-    profile_name = profile_name .. "-COmeas"
+  if #co_meas_eps > 0 then
+    profile_name = profile_name .. "-comeas"
   end
-  if #CO_level_eps > 0 then
-    profile_name = profile_name .. "-COlevel"
+  if #co_level_eps > 0 then
+    profile_name = profile_name .. "-colevel"
   end
 
   -- remove leading "-"
