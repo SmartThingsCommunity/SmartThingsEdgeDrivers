@@ -37,7 +37,8 @@ local zigbee_window_treatment_driver_template = {
     require("axis"),
     require("yoolax"),
     require("hanssem"),
-    require("confioscc") },
+    require("confioscc"),
+    require("confiodcc") },
   lifecycle_handlers = {
     added = added_handler
   }
