@@ -116,7 +116,7 @@ local function open_handler(driver, device, command)
     if component ~= "main" then
       device:emit_event(capabilities.windowShade.windowShade.open())
       parent_device:send_to_component(component, WindowCovering.server.commands.GoToLiftPercentage(parent_device, 100))
-      device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))    
+      device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
     end
   end
 end
