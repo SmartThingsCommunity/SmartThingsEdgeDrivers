@@ -218,7 +218,7 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
- - id: "4442/72"
+  - id: "4442/72"
     deviceLabel: Essentials Indoor Lights
     vendorId: 0x115A
     productId: 0x0048
@@ -303,6 +303,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03F3
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/A19/CCT"
+    deviceLabel: Smart Light Bulb A19 CCT
+    vendorId: 0x1168
+    productId: 0x03f9
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
