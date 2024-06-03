@@ -593,6 +593,9 @@ local matter_lock_driver = {
     capabilities.tamperAlert,
     capabilities.battery,
   },
+  sub_drivers = {
+    require("aqara-lock"),
+  },
   lifecycle_handlers = {init = device_init, added = device_added},
 }
 
