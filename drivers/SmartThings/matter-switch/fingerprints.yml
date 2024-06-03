@@ -2105,6 +2105,22 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xEEE2
     deviceProfileName: switch-binary
+  - id: "5020/53249"
+    deviceLabel: Zemismart Downlight
+    vendorId: 0x139C
+    productId: 0xD001
+    deviceProfileName: light-color-level
+  - id: "5020/53250"
+    deviceLabel: Zemismart Bulb
+    vendorId: 0x139C
+    productId: 0xD002
+    deviceProfileName: light-color-level
+  - id: "5020/53251"
+    deviceLabel: Zemismart LED Light Strip Driver
+    vendorId: 0x139C
+    productId: 0xD003
+    deviceProfileName: light-color-level
+
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
