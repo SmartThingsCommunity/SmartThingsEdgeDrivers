@@ -19,6 +19,7 @@ local im = require "st.matter.interaction_model"
 
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local version = require "version"
 
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
@@ -36,17 +37,22 @@ local THERMOSTAT_OPERATING_MODE_MAP = {
 }
 
 local setpoint_limit_device_field = {
+  MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
   MIN_HEAT = "MIN_HEAT",
   MAX_HEAT = "MAX_HEAT",
   MIN_COOL = "MIN_COOL",
   MAX_COOL = "MAX_COOL",
   MIN_DEADBAND = "MIN_DEADBAND",
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
 }
 
 local subscribed_attributes = {
   [capabilities.temperatureMeasurement.ID] = {
     clusters.Thermostat.attributes.LocalTemperature,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue
+    clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
   },
   [capabilities.relativeHumidityMeasurement.ID] = {
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -63,15 +69,27 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.thermostatCoolingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
   },
   [capabilities.thermostatHeatingSetpoint.ID] = {
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
   },
   [capabilities.battery.ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining
   }
 }
+
+local function get_field_for_endpoint(device, field, endpoint)
+  return device:get_field(string.format("%s_%d", field, endpoint))
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -95,6 +113,17 @@ end
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
+
+  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
+    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+    --Query min setpoint deadband if needed
+    if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+      device:send(setpoint_limit_read)
+    end
+    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -114,7 +143,6 @@ end
 local function do_configure(driver, device)
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
-  local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
@@ -153,28 +181,8 @@ local function do_configure(driver, device)
   else
     log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
   end
-
-  --Query setpoint limits if needed
-  local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read())
-  end
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-  end
-  if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-  end
-  if #setpoint_limit_read.info_blocks ~= 0 then
-    device:send(setpoint_limit_read)
-  end
 end
+
 
 local function device_added(driver, device)
   device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
@@ -186,6 +194,30 @@ local function temp_event_handler(attribute)
     local temp = ib.data.value / 100.0
     local unit = "C"
     device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
+  end
+end
+
+local temp_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    -- Return if no data or RPC version < 4 (unit conversion for temperature
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
+      return
+    end
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp)
+    local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
   end
 end
 
@@ -374,11 +406,55 @@ local function set_setpoint(setpoint)
   end
 end
 
-local function setpoint_limit_handler(limit_field)
+local heating_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
+    -- Return if no data or RPC version < 4 (unit conversion for heating setpoint
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
+      return
+    end
     local val = ib.data.value / 100.0
-    log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
-    device:set_field(limit_field, val, { persist = true })
+    if val >= 40 then -- assume this is a fahrenheit value
+      val = utils.f_to_c(val)
+    end
+    device:set_field(minOrMax, val)
+    local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
+    local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_HEAT, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_HEAT, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
+      end
+    end
+  end
+end
+
+local cooling_setpoint_limit_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    -- Return if no data or RPC version < 4 (unit conversion for cooling setpoint
+    -- range capability is only supported for RPC >= 4)
+    if ib.data.value == nil or version.rpc < 4 then
+      return
+    end
+    local val = ib.data.value / 100.0
+    if val >= 40 then -- assume this is a fahrenheit value
+      val = utils.f_to_c(val)
+    end
+    device:set_field(minOrMax, val)
+    local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
+    local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_COOL, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_COOL, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
+      end
+    end
   end
 end
 
@@ -410,10 +486,10 @@ local matter_driver_template = {
         [clusters.Thermostat.attributes.SystemMode.ID] = system_mode_handler,
         [clusters.Thermostat.attributes.ThermostatRunningState.ID] = running_state_handler,
         [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = sequence_of_operation_handler,
-        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_HEAT),
-        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_HEAT),
-        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_COOL),
-        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_COOL),
+        [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = heating_setpoint_limit_handler_factory(setpoint_limit_device_field.MIN_HEAT),
+        [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = heating_setpoint_limit_handler_factory(setpoint_limit_device_field.MAX_HEAT),
+        [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = cooling_setpoint_limit_handler_factory(setpoint_limit_device_field.MIN_COOL),
+        [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = cooling_setpoint_limit_handler_factory(setpoint_limit_device_field.MAX_COOL),
         [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = min_deadband_limit_handler,
       },
       [clusters.FanControl.ID] = {
@@ -422,6 +498,8 @@ local matter_driver_template = {
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(setpoint_limit_device_field.MAX_TEMP),
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
