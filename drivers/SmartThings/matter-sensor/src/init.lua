@@ -200,25 +200,46 @@ local matter_driver_template = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.carbonDioxideMeasurement.ID] = {
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.nitrogenDioxideMeasurement.ID] = {
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
     },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.ozoneMeasurement.ID] = {
       clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
       clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.formaldehydeMeasurement.ID] = {
       clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
       clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.veryFineDustSensor.ID] = {
       clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.dustSensor.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
@@ -226,13 +247,22 @@ local matter_driver_template = {
       clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.radonMeasurement.ID] = {
       clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
       clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.tvocMeasurement.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.smokeDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.SmokeState,

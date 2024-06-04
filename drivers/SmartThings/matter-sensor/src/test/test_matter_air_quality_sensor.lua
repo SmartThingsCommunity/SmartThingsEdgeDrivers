@@ -22,7 +22,7 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-quality-sensor-level.yml"),
+  profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-all-level-all-meas.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -43,16 +43,16 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.NitrogenDioxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.OzoneConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.FormaldehydeConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.Pm1ConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.RadonConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.NitrogenDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.OzoneConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.FormaldehydeConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.Pm1ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.RadonConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
       },
       device_types = {
         {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
@@ -62,7 +62,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_common = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-quality-sensor-common.yml"),
+  profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -83,15 +83,55 @@ local mock_device_common = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
+        {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
       },
       device_types = {
         {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
       }
     }
   }
+})
+
+local mock_device_level = test.mock_device.build_test_matter_device({
+    profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-all-level.yml"),
+    manufacturer_info = {
+        vendor_id = 0x0000,
+        product_id = 0x0000,
+    },
+    endpoints = {
+        {
+            endpoint_id = 0,
+            clusters = {
+                {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
+            },
+            device_types = {
+                {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+            }
+        },
+        {
+            endpoint_id = 1,
+            clusters = {
+                {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
+                {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+                {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+                {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.NitrogenDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.OzoneConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.FormaldehydeConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.Pm1ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.RadonConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+                {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
+            },
+            device_types = {
+                {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
+            }
+        }
+    }
 })
 
 local function test_init()
@@ -109,41 +149,71 @@ local function test_init()
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.carbonDioxideMeasurement.ID] = {
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.nitrogenDioxideMeasurement] = {
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
     },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.ozoneMeasurement] = {
       clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
       clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.formaldehydeMeasurement.ID] = {
       clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
       clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.veryFineDustSensor.ID] = {
       clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.fineDustSensor.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.dustSensor.ID] = {
       clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.radonMeasurement.ID] = {
       clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
       clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.tvocMeasurement.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
     }
   }
   local subscribe_request = nil
@@ -199,6 +269,63 @@ local function test_init_common()
 
   test.socket.matter:__expect_send({mock_device_common.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_common)
+end
+
+local function test_init_level()
+  local subscribed_attributes = {
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
+    }
+  }
+  local subscribe_request = nil
+  for _, attributes in pairs(subscribed_attributes) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_level)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_level))
+      end
+    end
+  end
+
+  test.socket.matter:__expect_send({mock_device_level.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_level)
 end
 
 test.register_message_test(
@@ -327,6 +454,24 @@ test.register_coroutine_test(
     )
     test.socket.matter:__queue_receive({
       mock_device.id,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+          mock_device, 1, clusters.NitrogenDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
+      )
+    })
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern.good())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+          mock_device, 1, clusters.OzoneConcentrationMeasurement.types.LevelValueEnum.MEDIUM
+      )
+    })
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.ozoneHealthConcern.moderate())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
       clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
         mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.types.LevelValueEnum.MEDIUM
       )
@@ -370,6 +515,24 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.dustHealthConcern.dustHealthConcern.hazardous())
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+          mock_device, 1, clusters.RadonConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.radonHealthConcern.radonHealthConcern.hazardous())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+          mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.tvocHealthConcern.tvocHealthConcern.hazardous())
+    )
   end
 )
 
@@ -387,7 +550,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-    mock_device:expect_metadata_update({ profile = "air-quality-sensor" })
+    mock_device:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-all-level-all-meas" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -406,10 +569,30 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device_common.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_common.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_common.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-    mock_device_common:expect_metadata_update({ profile = "air-quality-sensor-common" })
+    mock_device_common:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas" })
     mock_device_common:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_common }
+)
+
+test.register_coroutine_test(
+  "Configure should read units from device and profile change as needed",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_level.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_level.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    mock_device_level:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-all-level" })
+    mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_level }
 )
 
 test.run_registered_tests()
