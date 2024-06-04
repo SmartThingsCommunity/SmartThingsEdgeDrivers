@@ -6,6 +6,8 @@ components:
     version: 1
   - id: battery
     version: 1
+  - id: lockAlarm
+    version: 1
   - id: tamperAlert
     version: 1
   - id: remoteControlStatus
@@ -13,6 +15,8 @@ components:
   - id: firmwareUpdate
     version: 1
   - id: stse.lockCredentialInfo
+    version: 1
+  - id: stse.antiLockStatus
     version: 1
   categories:
   - name: SmartLock
