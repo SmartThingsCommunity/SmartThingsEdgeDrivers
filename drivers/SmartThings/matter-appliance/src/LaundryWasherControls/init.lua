@@ -1,4 +1,3 @@
-local cluster_base = require "st.matter.cluster_base"
 local LaundryWasherControlsServerAttributes = require "LaundryWasherControls.server.attributes"
 local LaundryWasherControlsTypes = require "LaundryWasherControls.types"
 

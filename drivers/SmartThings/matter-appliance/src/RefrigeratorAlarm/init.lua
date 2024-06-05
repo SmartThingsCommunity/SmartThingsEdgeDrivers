@@ -1,4 +1,3 @@
-local cluster_base = require "st.matter.cluster_base"
 local RefrigeratorAlarmServerAttributes = require "RefrigeratorAlarm.server.attributes"
 local RefrigeratorAlarmTypes = require "RefrigeratorAlarm.types"
 

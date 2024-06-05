@@ -1,4 +1,3 @@
-local cluster_base = require "st.matter.cluster_base"
 local OperationalStateTypes = require "OperationalState.types"
 
 local OperationalState = {}

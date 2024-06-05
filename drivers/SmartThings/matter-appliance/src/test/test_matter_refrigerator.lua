@@ -15,9 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local data_types = require "st.matter.data_types"
-local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
 

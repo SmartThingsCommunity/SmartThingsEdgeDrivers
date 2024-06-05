@@ -1,10 +1,7 @@
-local MatterDriver = require "st.matter.driver"
 local clusters = require "st.matter.clusters"
 
 local log = require "log"
 local utils = require "st.utils"
-
-local embedded_cluster_utils = {}
 
 local version = require "version"
 if version.api < 10 then

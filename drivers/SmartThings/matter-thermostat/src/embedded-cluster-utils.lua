@@ -1,4 +1,3 @@
-local MatterDriver = require "st.matter.driver"
 local clusters = require "st.matter.clusters"
 
 local log = require "log"
