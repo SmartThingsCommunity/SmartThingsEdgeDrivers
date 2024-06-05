@@ -2,7 +2,9 @@ local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
 local AlarmMap = {}
-local new_mt = UintABC.new_mt({NAME = "AlarmMap", ID = data_types.name_to_id_map["Uint32"]}, 4)
+-- Note: the name here is intentionally set to Uint32 to maintain backwards compatibility
+-- with how types were handled in api < 10.
+local new_mt = UintABC.new_mt({NAME = "Uint32", ID = data_types.name_to_id_map["Uint32"]}, 4)
 
 AlarmMap.BASE_MASK = 0xFFFF
 AlarmMap.DOOR_OPEN = 0x0001

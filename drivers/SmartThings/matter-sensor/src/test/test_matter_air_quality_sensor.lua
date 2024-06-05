@@ -116,7 +116,7 @@ local mock_device_level = test.mock_device.build_test_matter_device({
         {
             endpoint_id = 0,
             clusters = {
-                {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
+                {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
             },
             device_types = {
                 {device_type_id = 0x0016, device_type_revision = 1} -- RootNode

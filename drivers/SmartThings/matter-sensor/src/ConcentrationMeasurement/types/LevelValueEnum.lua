@@ -2,7 +2,9 @@ local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
 local LevelValueEnum = {}
-local new_mt = UintABC.new_mt({NAME = "LevelValueEnum", ID = data_types.name_to_id_map["Uint8"]}, 1)
+-- Note: the name here is intentionally set to Uint8 to maintain backwards compatibility
+-- with how types were handled in api < 10.
+local new_mt = UintABC.new_mt({NAME = "Uint8", ID = data_types.name_to_id_map["Uint8"]}, 1)
 new_mt.__index.pretty_print = function(self)
   local name_lookup = {
     [self.UNKNOWN] = "UNKNOWN",
