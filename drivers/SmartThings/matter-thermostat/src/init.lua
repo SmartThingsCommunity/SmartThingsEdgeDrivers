@@ -317,6 +317,9 @@ local function do_configure(driver, device)
   local hepa_filter_eps = device:get_endpoints(clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = device:get_endpoints(clusters.ActivatedCarbonFilterMonitoring.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+
+  --harrison
+  local aqs_eps = device:get_endpoints(clusters.AirQuality.ID)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
@@ -336,6 +339,13 @@ local function do_configure(driver, device)
     end
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
+    end
+    if #aqs_eps > 0 then
+      profile_name = profile_name .. "-aq-sens"
+      local measurement_name = create_air_quality_hex_bitmap(device)
+      if measurement_name ~= "" then
+        profile_name = profile_name .. "-" .. measurement_name
+      end
     end
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
@@ -367,9 +377,13 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-nobattery"
     end
 
-    -- harrison
-    local measurement_name = create_air_quality_bitmap(device)
-    profile_name = profile_name .. measurement_name
+    if #aqs_eps > 0 then
+      profile_name = profile_name .. "-aq-sens"
+      local measurement_name = create_air_quality_hex_bitmap(device)
+      if measurement_name ~= "" then
+        profile_name = profile_name .. "-" .. measurement_name
+      end
+    end
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
