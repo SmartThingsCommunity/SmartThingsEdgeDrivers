@@ -10,7 +10,6 @@ local lockCredentialInfo = capabilities["stse.lockCredentialInfo"]
 test.add_package_capability("lockCredentialInfo.yaml")
 local Battery = capabilities.battery
 local Lock = capabilities.lock
-local TamperAlert = capabilities.tamperAlert
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0xFFF3
@@ -48,8 +47,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      TamperAlert.tamper("clear", { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Lock.lock("locked")))
   end
 )
@@ -63,8 +60,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       remoteControlStatus.remoteControlEnabled('true', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      TamperAlert.tamper("clear", { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Lock.lock("locked")))
   end
 )

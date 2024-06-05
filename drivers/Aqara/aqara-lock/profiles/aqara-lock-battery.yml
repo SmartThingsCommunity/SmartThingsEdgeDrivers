@@ -8,8 +8,6 @@ components:
     version: 1
   - id: lockAlarm
     version: 1
-  - id: tamperAlert
-    version: 1
   - id: remoteControlStatus
     version: 1
   - id: firmwareUpdate

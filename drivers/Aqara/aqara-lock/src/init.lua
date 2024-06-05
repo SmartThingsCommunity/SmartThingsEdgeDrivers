@@ -13,7 +13,6 @@ local antiLockStatus = capabilities["stse.antiLockStatus"]
 local Battery = capabilities.battery
 local Lock = capabilities.lock
 local LockAlarm = capabilities.lockAlarm
-local TamperAlert = capabilities.tamperAlert
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0xFFF3
@@ -56,7 +55,6 @@ local function device_added(self, device)
   remoteControlShow(device)
   device:emit_event(Battery.battery(100))
   device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
-  device:emit_event(TamperAlert.tamper.clear({ visibility = { displayed = false } }))
   device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = {displayed = false}}))
   device:emit_event(Lock.lock.locked())
   credential_utils.save_data(self)
