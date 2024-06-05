@@ -3,17 +3,13 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 local device_management = require "st.zigbee.device_management"
-local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 local utils = require "st.utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 local PowerConfiguration = clusters.PowerConfiguration
-local ShadeConfiguration = clusters.ShadeConfiguration
 
 -- manufacturer specific cluster details
-local MFG_CODE = 0x1228
 local CUS_CLU = 0xFCCC
 local RUN_DIR_ATTR = 0x0012
 
@@ -75,12 +71,12 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   -- when the device is in idle
   if running_direction == motor_states.IDLE then
     if level == 0 then
-      event = capabilities.windowShade.windowShade.open() --Bug #16054 
+      event = capabilities.windowShade.windowShade.open() --Bug #16054
     elseif level == 100 then
       event = capabilities.windowShade.windowShade.closed() --Bug #16054
     else
       event = capabilities.windowShade.windowShade.partially_open()
-    end  
+    end
   end
 
   -- update status
@@ -97,7 +93,7 @@ local function running_direction_attr_handler(driver, device, value, zb_rx)
   local status = value.value
   if status == 1 then
     running_direction = motor_states.OPENING
-  elseif status == 2 then 
+  elseif status == 2 then
     running_direction = motor_states.CLOSING
   else
     running_direction = motor_states.IDLE
@@ -133,7 +129,7 @@ local function battery_perc_attr_handler(driver, device, value, zb_rx)
   converted_value = utils.round(converted_value)
   -- update battery percentage only motor is in idle state --Bug #16055
   if running_direction == motor_states.IDLE then
-    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, 
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
       capabilities.battery.battery(utils.clamp_value(converted_value, 0, 100)))
   end
 end

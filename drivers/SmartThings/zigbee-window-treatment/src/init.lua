@@ -36,7 +36,7 @@ local zigbee_window_treatment_driver_template = {
     require("rooms-beautiful"),
     require("axis"),
     require("yoolax"),
-    require("hanssem"), 
+    require("hanssem"),
     require("screen-innovations")},
   lifecycle_handlers = {
     added = added_handler

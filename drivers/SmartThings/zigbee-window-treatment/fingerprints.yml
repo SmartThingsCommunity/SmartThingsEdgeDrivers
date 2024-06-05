@@ -114,7 +114,6 @@ zigbeeManufacturer:
     model: WM25/L-Z
     deviceProfileName: window-treatment-screeninnovations
 
-
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment
