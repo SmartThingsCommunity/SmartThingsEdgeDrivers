@@ -21,16 +21,16 @@ local log = require "log"
 local AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
 
 local function is_matter_air_quality_sensor(opts, driver, device)
-    for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == AIR_QUALITY_SENSOR_DEVICE_TYPE_ID then
-          return true
-        end
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == AIR_QUALITY_SENSOR_DEVICE_TYPE_ID then
+        return true
       end
     end
-
-    return false
   end
+
+  return false
+end
 
 local subscribed_attributes = {
   [capabilities.airQualityHealthConcern.ID] = {
@@ -132,6 +132,60 @@ local common_optional_clusters = {
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID
 }
 
+-- TemperatureMeasurement and RelativeHumidityMeasurement are clusters included in 
+-- Air Quality Sensor that are not included in this bitmap for legacy reasons.
+local AIR_QUALITY_BIT_MAP = {
+  [capabilities.airQualityHealthConcern.ID]       = {0, {clusters.AirQuality}},
+  [capabilities.carbonDioxideMeasurement.ID]      = {1, {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.carbonDioxideHealthConcern.ID]    = {2, {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.carbonMonoxideMeasurement.ID]     = {3, {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.carbonMonoxideHealthConcern.ID]   = {4, {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.dustSensor.ID]                    = {5, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.dustHealthConcern.ID]             = {6, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustSensor.ID]                = {7, {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustHealthConcern.ID]         = {8, {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.formaldehydeMeasurement.ID]       = {9, {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.formaldehydeHealthConcern.ID]     = {10, {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideHealthConcern.ID]  = {11, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideMeasurement.ID]    = {12, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.ozoneHealthConcern.ID]            = {13, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.ozoneMeasurement.ID]              = {14, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.radonHealthConcern.ID]            = {15, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.radonMeasurement.ID]              = {16, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.tvocHealthConcern.ID]             = {17, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.tvocMeasurement.ID]               = {18, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.veryFineDustHealthConcern.ID]     = {19, {clusters.Pm1ConcentrationMeasurement}},
+  [capabilities.veryFineDustSensor.ID]            = {20, {clusters.Pm1ConcentrationMeasurement}},
+}
+
+local function create_air_quality_hex_bitmap(device)
+  local bitmap = 0
+  for cap_id, map in pairs(AIR_QUALITY_BIT_MAP) do
+    local has_necessary_attributes = true
+    for _, cluster in ipairs(map[2]) do
+      -- air quality is mandatory, so it will always be included
+      if cluster.ID ~= clusters.AirQuality.ID then
+        -- capability describes either a HealthConcern or Measurement/Sensor
+        local attr_eps = 0
+        if (cap_id:match("HealthConcern$")) then
+          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION})
+        elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
+          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT})
+        end
+        if attr_eps == 0 then
+          has_necessary_attributes = false
+          break
+        end
+      end
+    end
+    if has_necessary_attributes then
+      bitmap = bitmap | (1 << map[1])
+    end
+  end
+  local hex_bitmap = string.format("%x", bitmap)
+  return hex_bitmap
+end
+
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -161,33 +215,13 @@ local function configure(driver, device)
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
 
-  -- check to see if device can switch to a more limited profile based on cluster support
   local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local co_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local co_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local co2_level_eps = device:get_endpoints(clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local co2_meas_eps = device:get_endpoints(clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local no2_level_eps = device:get_endpoints(clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local no2_meas_eps = device:get_endpoints(clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local ozone_level_eps = device:get_endpoints(clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local ozone_meas_eps = device:get_endpoints(clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local formaldehyde_level_eps = device:get_endpoints(clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local formaldehyde_meas_eps = device:get_endpoints(clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm1_level_eps = device:get_endpoints(clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm1_meas_eps = device:get_endpoints(clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm2_5_level_eps = device:get_endpoints(clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm2_5_meas_eps = device:get_endpoints(clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm10_level_eps = device:get_endpoints(clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm10_meas_eps = device:get_endpoints(clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local radon_level_eps = device:get_endpoints(clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local radon_meas_eps = device:get_endpoints(clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local tvoc_level_eps = device:get_endpoints(clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local tvoc_meas_eps = device:get_endpoints(clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
 
   local profile_name = "air-quality-sensor"
-  local level_indication_support = ""
-  local numeric_measurement_support = ""
+
+  local hex_aq_bitmap = create_air_quality_hex_bitmap(device)
+  profile_name = "air-quality-sensor-" .. hex_aq_bitmap
 
   if #temp_eps > 0 then
     profile_name = profile_name .. "-temp"
@@ -195,97 +229,29 @@ local function configure(driver, device)
   if #humidity_eps > 0 then
     profile_name = profile_name .. "-humidity"
   end
-  if #co_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-co"
-  end
-  if #co2_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-co2"
-  end
-  if #no2_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-no2"
-  end
-  if #ozone_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-ozone"
-  end
-  if #formaldehyde_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-formaldehyde"
-  end
-  if #pm1_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-pm1"
-  end
-  if #pm2_5_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-pm25"
-  end
-  if #pm10_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-pm10"
-  end
-  if #radon_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-radon"
-  end
-  if #tvoc_level_eps > 0 then
-    level_indication_support = level_indication_support .. "-tvoc"
-  end
-  -- If all endpoints are supported, use '-all' in the profile name so that it
-  -- remains under the profile name character limit
-  if level_indication_support == "-co-co2-no2-ozone-formaldehyde-pm1-pm25-pm10-radon-tvoc" then
-    level_indication_support = "-all"
-  end
-  if level_indication_support ~= "" then
-    profile_name = profile_name .. level_indication_support .. "-level"
-  end
 
-  if #co_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-co"
-  end
-  if #co2_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-co2"
-  end
-  if #no2_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-no2"
-  end
-  if #ozone_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-ozone"
-  end
-  if #formaldehyde_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-formaldehyde"
-  end
-  if #pm1_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-pm1"
-  end
-  if #pm2_5_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-pm25"
-  end
-  if #pm10_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-pm10"
-  end
-  if #radon_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-radon"
-  end
-  if #tvoc_meas_eps > 0 then
-    numeric_measurement_support = numeric_measurement_support .. "-tvoc"
-  end
-  -- If all endpoints are supported, use '-all' in the profile name so that it
-  -- remains under the profile name character limit
-  if numeric_measurement_support == "-co-co2-no2-ozone-formaldehyde-pm1-pm25-pm10-radon-tvoc" then
-    numeric_measurement_support = "-all"
-  end
-  if numeric_measurement_support ~= "" then
-    profile_name = profile_name .. numeric_measurement_support .. "-meas"
-  end
-
+  -- can only be accessed if the built profile name does not exist in or
+  -- supported_profiles table
   if not tbl_contains(supported_profiles, profile_name) then
     log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s", profile_name))
     profile_name = ""
-    if #co_meas_eps > 0 or #no2_meas_eps > 0 or #ozone_meas_eps > 0 or #formaldehyde_meas_eps > 0 or
-        #pm1_meas_eps > 0 or #pm10_meas_eps > 0 or #radon_meas_eps > 0 then
-        -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
-      profile_name = "air-quality-sensor-temp-humidity-all-meas"
-    elseif #humidity_eps > 0 or #temp_eps > 0 or #co2_meas_eps > 0 or #pm2_5_meas_eps > 0 or #tvoc_meas_eps > 0 then
-      -- device supports one or more of the common clusters, so switch to a more limited profile
-      profile_name = "air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas"
-    else
-      -- device only supports air quality at this point
-      profile_name = "air-quality-sensor"
+
+    local best_fit_profile_found = false
+
+    -- checks if device supports a cluster only supported in the catch-all
+    -- bits are for measurements of no2, co, radon, formaldehyde, ozone, 
+    -- pm1, or pm10
+    local check_bits = {3, 12, 14, 9, 20, 5, 16}
+    for bit in check_bits do
+      if (hex_aq_bitmap >> bit) & 1 == 1 then
+        best_fit_profile_found = true
+        profile_name = "air-quality-sensor-15522b-temp-humidity"
+        break
+      end
+    end
+    -- this is currently our next-smallest choice of profile
+    if not best_fit_profile_found then
+      profile_name = "air-quality-sensor-40023-temp-humidity"
     end
   end
   log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))

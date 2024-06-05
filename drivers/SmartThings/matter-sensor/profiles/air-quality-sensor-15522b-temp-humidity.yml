@@ -1,4 +1,4 @@
-name: air-quality-sensor-temp-humidity-all-level
+name: air-quality-sensor-15522b-temp-humidity
 components:
   - id: main
     capabilities:
@@ -8,25 +8,23 @@ components:
         version: 1
       - id: relativeHumidityMeasurement
         version: 1
-      - id: nitrogenDioxideHealthConcern
+      - id: nitrogenDioxideMeasurement
         version: 1
-      - id: ozoneHealthConcern
+      - id: ozoneMeasurement
         version: 1
-      - id: carbonMonoxideHealthConcern
+      - id: carbonMonoxideMeasurement
         version: 1
-      - id: carbonDioxideHealthConcern
+      - id: carbonDioxideMeasurement
         version: 1
-      - id: formaldehydeHealthConcern
+      - id: formaldehydeMeasurement
         version: 1
-      - id: veryFineDustHealthConcern
+      - id: veryFineDustSensor
         version: 1
-      - id: fineDustHealthConcern
+      - id: dustSensor
         version: 1
-      - id: dustHealthConcern
+      - id: radonMeasurement
         version: 1
-      - id: radonHealthConcern
-        version: 1
-      - id: tvocHealthConcern
+      - id: tvocMeasurement
         version: 1
       - id: refresh
         version: 1

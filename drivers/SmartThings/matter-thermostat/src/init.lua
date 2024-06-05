@@ -47,9 +47,13 @@ local WIND_MODE_MAP = {
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
-local RAC_DEVICE_TYPE_ID = 0x0072
-local AP_DEVICE_TYPE_ID = 0x002D
-local FAN_DEVICE_TYPE_ID = 0x002B
+-- harrison
+-- TODO: make a map of all supported clusters
+-- local AIR_QUALITY_MEASUREMENTS_MAP = {}
+
+local RAC_DEVICE_TYPE_ID = 0x0072 -- Room Air Conditioner
+local AP_DEVICE_TYPE_ID = 0x002D  -- Air Purifier
+local FAN_DEVICE_TYPE_ID = 0x002B -- Fan
 
 local setpoint_limit_device_field = {
   MIN_HEAT = "MIN_HEAT",
@@ -111,8 +115,146 @@ local subscribed_attributes = {
   [capabilities.filterStatus.ID] = {
     clusters.HepaFilterMonitoring.attributes.ChangeIndication,
     clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
-  }
+  },
+  [capabilities.airQualityHealthConcern.ID] = {
+    clusters.AirQuality.attributes.AirQuality
+  },
+  [capabilities.carbonMonoxideMeasurement.ID] = {
+    clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.carbonMonoxideHealthConcern.ID] = {
+    clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.carbonDioxideMeasurement.ID] = {
+    clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.carbonDioxideHealthConcern.ID] = {
+    clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.nitrogenDioxideMeasurement.ID] = {
+    clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
+  },
+  [capabilities.nitrogenDioxideHealthConcern.ID] = {
+    clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.ozoneMeasurement.ID] = {
+    clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
+  },
+  [capabilities.ozoneHealthConcern.ID] = {
+    clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.formaldehydeMeasurement.ID] = {
+    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.formaldehydeHealthConcern.ID] = {
+    clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.veryFineDustSensor.ID] = {
+    clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.veryFineDustHealthConcern.ID] = {
+    clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.fineDustSensor.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.fineDustHealthConcern.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.dustSensor.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.dustHealthConcern.ID] = {
+    clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.radonMeasurement.ID] = {
+    clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.radonHealthConcern.ID] = {
+    clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.tvocMeasurement.ID] = {
+    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+  },
+  [capabilities.tvocHealthConcern.ID] = {
+    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
+  },
 }
+
+-- TemperatureMeasurement and RelativeHumidityMeasurement are clusters included in 
+-- Air Quality Sensor that are not included in this bitmap for legacy reasons.
+local AIR_QUALITY_BIT_MAP = {
+  [capabilities.airQualityHealthConcern.ID]       = {0, {clusters.AirQuality}},
+  [capabilities.carbonDioxideMeasurement.ID]      = {1, {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.carbonDioxideHealthConcern.ID]    = {2, {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.carbonMonoxideMeasurement.ID]     = {3, {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.carbonMonoxideHealthConcern.ID]   = {4, {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.dustSensor.ID]                    = {5, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.dustHealthConcern.ID]             = {6, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustSensor.ID]                = {7, {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustHealthConcern.ID]         = {8, {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.formaldehydeMeasurement.ID]       = {9, {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.formaldehydeHealthConcern.ID]     = {10, {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideHealthConcern.ID]  = {11, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideMeasurement.ID]    = {12, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.ozoneHealthConcern.ID]            = {13, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.ozoneMeasurement.ID]              = {14, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.radonHealthConcern.ID]            = {15, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.radonMeasurement.ID]              = {16, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.tvocHealthConcern.ID]             = {17, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.tvocMeasurement.ID]               = {18, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.veryFineDustHealthConcern.ID]     = {19, {clusters.Pm1ConcentrationMeasurement}},
+  [capabilities.veryFineDustSensor.ID]            = {20, {clusters.Pm1ConcentrationMeasurement}},
+}
+
+local function create_air_quality_bitmap(device)
+  local bitmap = 0x0
+  for cap_id, map in pairs(AIR_QUALITY_BIT_MAP) do
+    print(cap_id)
+    local has_necessary_attributes = true
+    for _, cluster in ipairs(map[2]) do
+      -- air quality is mandatory, so it will always be included
+      if cluster.ID ~= clusters.AirQuality.ID then
+        -- capability describes either a HealthConcern or Measurement
+        local attr_eps = 0
+        if (cap_id:match("HealthConcern$")) then
+          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION})
+        elseif (cap_id:match("Measurement$")) then
+          print(cluster.ID)
+          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT})
+          print("$$")
+        end
+        print("AAA3")
+        if attr_eps == 0 then
+          has_necessary_attributes = false
+          break
+        end
+        print("AAA2")
+      end
+      print("AAA1")
+    end
+    if has_necessary_attributes then
+      bitmap = bitmap | (1 << map[1])
+    end
+    print("AAA4")
+  end
+  local string_bitmap = "-air-quality-sensor-" .. tostring(bitmap)
+  print("@@")
+  print(string_bitmap)
+  return string_bitmap
+end
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -140,6 +282,8 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
+  print("!!!")
+  create_air_quality_bitmap(device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
@@ -174,6 +318,9 @@ local function get_device_type(driver, device)
 end
 
 local function do_configure(driver, device)
+
+  local measurement_name = create_air_quality_bitmap(device)
+
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.COOLING})
   local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.AUTOMODE})
@@ -232,6 +379,10 @@ local function do_configure(driver, device)
     if #battery_eps == 0 then
       profile_name = profile_name .. "-nobattery"
     end
+
+    -- harrison
+    local measurement_name = create_air_quality_bitmap(device)
+    profile_name = profile_name .. measurement_name
 
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
