@@ -234,6 +234,11 @@ local function handle_switch_off(driver, device, cmd)
   device:send(req)
 end
 
+
+-- harrison
+-- we need a way to maximum and minimum attribute setting by manufacturer
+-- currently, 254 is default "maximum". we need to replace this with attribute if it is there
+-- MinLevel and MaxLevel
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level / 100.0 * 254)

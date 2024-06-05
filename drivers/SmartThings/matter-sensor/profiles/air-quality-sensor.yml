@@ -1,4 +1,4 @@
-name: air-quality-sensor-1
+name: air-quality-sensor
 components:
   - id: main
     capabilities:

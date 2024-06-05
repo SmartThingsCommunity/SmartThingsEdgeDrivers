@@ -76,70 +76,11 @@ local function check_for_battery(device)
   device:set_field(BATTERY_CHECKED, 1, {persist = true})
 end
 
--- TemperatureMeasurement and RelativeHumidityMeasurement are clusters included in 
--- Air Quality Sensor that are not included in this bitmap for legacy reasons.
-local AIR_QUALITY_BIT_MAP = {
-  [capabilities.airQualityHealthConcern.ID]       = {0, {clusters.AirQuality}},
-  [capabilities.carbonDioxideMeasurement.ID]      = {1, {clusters.CarbonDioxideConcentrationMeasurement}},
-  [capabilities.carbonDioxideHealthConcern.ID]    = {2, {clusters.CarbonDioxideConcentrationMeasurement}},
-  [capabilities.carbonMonoxideMeasurement.ID]     = {3, {clusters.CarbonMonoxideConcentrationMeasurement}},
-  [capabilities.carbonMonoxideHealthConcern.ID]   = {4, {clusters.CarbonMonoxideConcentrationMeasurement}},
-  [capabilities.dustSensor.ID]                    = {5, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.dustHealthConcern.ID]             = {6, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.fineDustSensor.ID]                = {7, {clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.fineDustHealthConcern.ID]         = {8, {clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.formaldehydeMeasurement.ID]       = {9, {clusters.FormaldehydeConcentrationMeasurement}},
-  [capabilities.formaldehydeHealthConcern.ID]     = {10, {clusters.FormaldehydeConcentrationMeasurement}},
-  [capabilities.nitrogenDioxideHealthConcern.ID]  = {11, {clusters.NitrogenDioxideConcentrationMeasurement}},
-  [capabilities.nitrogenDioxideMeasurement.ID]    = {12, {clusters.NitrogenDioxideConcentrationMeasurement}},
-  [capabilities.ozoneHealthConcern.ID]            = {13, {clusters.OzoneConcentrationMeasurement}},
-  [capabilities.ozoneMeasurement.ID]              = {14, {clusters.OzoneConcentrationMeasurement}},
-  [capabilities.radonHealthConcern.ID]            = {15, {clusters.RadonConcentrationMeasurement}},
-  [capabilities.radonMeasurement.ID]              = {16, {clusters.RadonConcentrationMeasurement}},
-  [capabilities.tvocHealthConcern.ID]             = {17, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
-  [capabilities.tvocMeasurement.ID]               = {18, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
-  [capabilities.veryFineDustHealthConcern.ID]     = {19, {clusters.Pm1ConcentrationMeasurement}},
-  [capabilities.veryFineDustSensor.ID]            = {20, {clusters.Pm1ConcentrationMeasurement}},
-}
-
-local function create_air_quality_bitmap(device)
-  print("!!")
-  local bitmap = 0
-  for cap_id, map in AIR_QUALITY_BIT_MAP do
-    local has_necessary_attributes = true
-    for cluster in map[2] do
-      -- air quality is mandatory, so it will always be included
-      if cluster.ID ~= "AirQuality" then
-        -- capability describes either a HealthConcern or Measurement
-        local attr_eps = 0
-        if (cap_id:match("HealthConcern$")) then
-          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION})
-        elseif (cap_id:match("Measurement$")) then
-          attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT})
-        end
-        if attr_eps == 0 then
-          has_necessary_attributes = false
-          break
-        end
-      end
-    end
-    if has_necessary_attributes then
-      bitmap =  bitmap | (1 << map[1])
-    end
-  end
-  local string_bitmap = "-air-quality-sensor-" .. tostring(bitmap)
-  print("@@")
-  print(string_bitmap)
-  return string_bitmap
-end
-
 local function device_init(driver, device)
-  print("##")
   log.info("device init")
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
   end
-  create_air_quality_bitmap(device)
   device:subscribe()
 end
 

@@ -1,4 +1,4 @@
-name: air-quality-sensor-1fff7f-temp-humidity
+name: air-quality-sensor-temp-humidity-all-level-all-meas
 components:
   - id: main
     capabilities:
