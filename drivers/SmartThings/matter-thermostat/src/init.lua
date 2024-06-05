@@ -196,64 +196,54 @@ local subscribed_attributes = {
 -- TemperatureMeasurement and RelativeHumidityMeasurement are clusters included in 
 -- Air Quality Sensor that are not included in this bitmap for legacy reasons.
 local AIR_QUALITY_BIT_MAP = {
-  [capabilities.airQualityHealthConcern.ID]       = {0, {clusters.AirQuality}},
-  [capabilities.carbonDioxideMeasurement.ID]      = {1, {clusters.CarbonDioxideConcentrationMeasurement}},
-  [capabilities.carbonDioxideHealthConcern.ID]    = {2, {clusters.CarbonDioxideConcentrationMeasurement}},
-  [capabilities.carbonMonoxideMeasurement.ID]     = {3, {clusters.CarbonMonoxideConcentrationMeasurement}},
-  [capabilities.carbonMonoxideHealthConcern.ID]   = {4, {clusters.CarbonMonoxideConcentrationMeasurement}},
-  [capabilities.dustSensor.ID]                    = {5, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.dustHealthConcern.ID]             = {6, {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.fineDustSensor.ID]                = {7, {clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.fineDustHealthConcern.ID]         = {8, {clusters.Pm25ConcentrationMeasurement}},
-  [capabilities.formaldehydeMeasurement.ID]       = {9, {clusters.FormaldehydeConcentrationMeasurement}},
-  [capabilities.formaldehydeHealthConcern.ID]     = {10, {clusters.FormaldehydeConcentrationMeasurement}},
-  [capabilities.nitrogenDioxideHealthConcern.ID]  = {11, {clusters.NitrogenDioxideConcentrationMeasurement}},
-  [capabilities.nitrogenDioxideMeasurement.ID]    = {12, {clusters.NitrogenDioxideConcentrationMeasurement}},
-  [capabilities.ozoneHealthConcern.ID]            = {13, {clusters.OzoneConcentrationMeasurement}},
-  [capabilities.ozoneMeasurement.ID]              = {14, {clusters.OzoneConcentrationMeasurement}},
-  [capabilities.radonHealthConcern.ID]            = {15, {clusters.RadonConcentrationMeasurement}},
-  [capabilities.radonMeasurement.ID]              = {16, {clusters.RadonConcentrationMeasurement}},
-  [capabilities.tvocHealthConcern.ID]             = {17, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
-  [capabilities.tvocMeasurement.ID]               = {18, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
-  [capabilities.veryFineDustHealthConcern.ID]     = {19, {clusters.Pm1ConcentrationMeasurement}},
-  [capabilities.veryFineDustSensor.ID]            = {20, {clusters.Pm1ConcentrationMeasurement}},
+  [capabilities.carbonMonoxideHealthConcern.ID]   = {0 , {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.carbonMonoxideMeasurement.ID]     = {1 , {clusters.CarbonMonoxideConcentrationMeasurement}},
+  [capabilities.carbonDioxideMeasurement.ID]      = {2 , {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.carbonDioxideHealthConcern.ID]    = {3 , {clusters.CarbonDioxideConcentrationMeasurement}},
+  [capabilities.dustHealthConcern.ID]             = {4 , {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.dustSensor.ID]                    = {5 , {clusters.Pm10ConcentrationMeasurement, clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustSensor.ID]                = {6 , {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.fineDustHealthConcern.ID]         = {7 , {clusters.Pm25ConcentrationMeasurement}},
+  [capabilities.formaldehydeMeasurement.ID]       = {8 , {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.formaldehydeHealthConcern.ID]     = {9 , {clusters.FormaldehydeConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideHealthConcern.ID]  = {10, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.nitrogenDioxideMeasurement.ID]    = {11, {clusters.NitrogenDioxideConcentrationMeasurement}},
+  [capabilities.ozoneHealthConcern.ID]            = {12, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.ozoneMeasurement.ID]              = {13, {clusters.OzoneConcentrationMeasurement}},
+  [capabilities.radonHealthConcern.ID]            = {14, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.radonMeasurement.ID]              = {15, {clusters.RadonConcentrationMeasurement}},
+  [capabilities.tvocHealthConcern.ID]             = {16, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.tvocMeasurement.ID]               = {17, {clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement}},
+  [capabilities.veryFineDustHealthConcern.ID]     = {18, {clusters.Pm1ConcentrationMeasurement}},
+  [capabilities.veryFineDustSensor.ID]            = {19, {clusters.Pm1ConcentrationMeasurement}},
 }
 
-local function create_air_quality_bitmap(device)
-  local bitmap = 0x0
+local function create_air_quality_hex_bitmap(device)
+  local bitmap = 0
   for cap_id, map in pairs(AIR_QUALITY_BIT_MAP) do
-    print(cap_id)
     local has_necessary_attributes = true
     for _, cluster in ipairs(map[2]) do
       -- air quality is mandatory, so it will always be included
       if cluster.ID ~= clusters.AirQuality.ID then
-        -- capability describes either a HealthConcern or Measurement
+        -- capability describes either a HealthConcern or Measurement/Sensor
         local attr_eps = 0
         if (cap_id:match("HealthConcern$")) then
           attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION})
-        elseif (cap_id:match("Measurement$")) then
-          print(cluster.ID)
+        elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
           attr_eps = device:get_endpoints(cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT})
-          print("$$")
         end
-        print("AAA3")
         if attr_eps == 0 then
           has_necessary_attributes = false
           break
         end
-        print("AAA2")
       end
-      print("AAA1")
     end
     if has_necessary_attributes then
       bitmap = bitmap | (1 << map[1])
     end
-    print("AAA4")
   end
-  local string_bitmap = "-air-quality-sensor-" .. tostring(bitmap)
-  print("@@")
-  print(string_bitmap)
-  return string_bitmap
+  local hex_bitmap = string.format("%x", bitmap)
+  return hex_bitmap
 end
 
 local function find_default_endpoint(device, cluster)
@@ -282,8 +272,6 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
-  print("!!!")
-  create_air_quality_bitmap(device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
@@ -319,8 +307,6 @@ end
 
 local function do_configure(driver, device)
 
-  local measurement_name = create_air_quality_bitmap(device)
-
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.COOLING})
   local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.AUTOMODE})
@@ -351,6 +337,7 @@ local function do_configure(driver, device)
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
     end
+
     log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif #thermo_eps == 1 then

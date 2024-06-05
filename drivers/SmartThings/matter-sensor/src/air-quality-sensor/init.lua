@@ -200,8 +200,7 @@ local function create_air_quality_name(device)
       end
     end
   end
-  local names = {meas_name, level_name}
-  return names
+  return meas_name, level_name
 end
 
 local function device_init(driver, device)
@@ -244,13 +243,8 @@ local function configure(driver, device)
   if #humidity_eps > 0 then
     profile_name = profile_name .. "-humidity"
   end
-  print("!!")
-  local names = create_air_quality_name(device)
-  local meas_name = names[1]
-  local level_name = names[2]
-  print("##")
-  print(meas_name)
-  print(level_name)
+
+  local meas_name, level_name = create_air_quality_name(device)
 
   if level_name == "-co-co2-no2-ozone-formaldehyde-pm1-pm25-pm10-radon-tvoc" then
     level_name = "-all-level"
@@ -265,8 +259,7 @@ local function configure(driver, device)
   end
 
   profile_name = profile_name .. level_name .. meas_name
-  print("@@")
-  print(profile_name)
+
   -- can only be accessed if the built profile name does not exist in or
   -- supported_profiles table
   if not tbl_contains(supported_profiles, profile_name) then
