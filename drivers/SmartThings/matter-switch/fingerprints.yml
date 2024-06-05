@@ -223,6 +223,16 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/72"
+    deviceLabel: Essentials Indoor Lights
+    vendorId: 0x115A
+    productId: 0x0048
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/73"
+    deviceLabel: Essentials Outdoor Lights
+    vendorId: 0x115A
+    productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -2100,6 +2110,22 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xEEE2
     deviceProfileName: switch-binary
+  - id: "5020/53249"
+    deviceLabel: Zemismart Downlight
+    vendorId: 0x139C
+    productId: 0xD001
+    deviceProfileName: light-color-level
+  - id: "5020/53250"
+    deviceLabel: Zemismart Bulb
+    vendorId: 0x139C
+    productId: 0xD002
+    deviceProfileName: light-color-level
+  - id: "5020/53251"
+    deviceLabel: Zemismart LED Light Strip Driver
+    vendorId: 0x139C
+    productId: 0xD003
+    deviceProfileName: light-color-level
+
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
