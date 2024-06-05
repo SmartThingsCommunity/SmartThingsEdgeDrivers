@@ -42,6 +42,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x006B
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/93"
+    deviceLabel: Eve Light Switch
+    vendorId: 0x130A
+    productId: 0x005D
+    deviceProfileName: switch-binary 
 
 #GE
   - id: "4921/177"
