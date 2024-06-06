@@ -394,7 +394,6 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
   return function(driver, device, ib, response)
     local reporting_unit = device:get_field(capability_name.."_unit")
 
-    -- if reporting_unit is nil, initial value is not updated.
     if reporting_unit == nil then
       reporting_unit = unit_default[capability_name]
       device:set_field(capability_name.."_unit", reporting_unit, {persist = true})

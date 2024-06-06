@@ -146,14 +146,16 @@ local mock_device_level = test.mock_device.build_test_matter_device({
 
 local function test_init()
   local subscribed_attributes = {
-    [capabilities.airQualityHealthConcern.ID] = {
-      clusters.AirQuality.attributes.AirQuality
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
-    },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.carbonMonoxideMeasurement.ID] = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
@@ -169,14 +171,14 @@ local function test_init()
     [capabilities.carbonDioxideHealthConcern.ID] = {
       clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
     },
-    [capabilities.nitrogenDioxideMeasurement] = {
+    [capabilities.nitrogenDioxideMeasurement.ID] = {
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit
     },
     [capabilities.nitrogenDioxideHealthConcern.ID] = {
       clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
     },
-    [capabilities.ozoneMeasurement] = {
+    [capabilities.ozoneMeasurement.ID] = {
       clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
       clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit
     },
@@ -197,14 +199,12 @@ local function test_init()
     [capabilities.veryFineDustHealthConcern.ID] = {
       clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
     },
-    [capabilities.fineDustSensor.ID] = {
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-    },
     [capabilities.fineDustHealthConcern.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.dustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
       clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
     },
@@ -224,7 +224,7 @@ local function test_init()
     },
     [capabilities.tvocHealthConcern.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
-    }
+    },
   }
   local subscribe_request = nil
   for _, attributes in pairs(subscribed_attributes) do
@@ -244,27 +244,29 @@ test.set_test_init_function(test_init)
 
 local function test_init_common()
   local subscribed_attributes = {
-    [capabilities.airQualityHealthConcern.ID] = {
-      clusters.AirQuality.attributes.AirQuality
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
-    },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.carbonDioxideMeasurement.ID] = {
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
-    [capabilities.fineDustSensor.ID] = {
+    [capabilities.dustSensor.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
     },
     [capabilities.tvocMeasurement.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
-    }
+    },
   }
   local subscribe_request = nil
   for _, attributes in pairs(subscribed_attributes) do
@@ -287,7 +289,9 @@ local function test_init_level()
       clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -408,17 +412,6 @@ test.register_message_test(
   }
 )
 
-test.register_coroutine_test(
-  "Measured value reports should not generate events if there is not a stored unit",
-  function()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-      )
-    })
-  end
-)
 
 test.register_coroutine_test(
   "Measured value reports should generate events if there is a stored unit",

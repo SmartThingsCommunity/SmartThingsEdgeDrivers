@@ -50,7 +50,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
       },
-	  device_types = {
+      device_types = {
         {device_type_id = 0x0076, device_type_revision = 1} -- Smoke CO Alarm
       }
     }
@@ -64,6 +64,8 @@ local cluster_subscribe_list = {
   clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
   clusters.SmokeCoAlarm.attributes.BatteryAlert,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
@@ -84,212 +86,212 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-	"Test smoke state handler",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+  "Test smoke state handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
+      }
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.SmokeState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
-	}
+  }
 )
 
 test.register_message_test(
-	"Test CO state handler",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+  "Test CO state handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.NORMAL)
+      }
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.COState:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.SmokeState.CRITICAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     }
-	}
+  }
 )
 
 test.register_message_test(
-	"Test battery alert handler",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.NORMAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal())
+  "Test battery alert handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.NORMAL)
+      }
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.WARNING)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal())
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.CRITICAL)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.WARNING)
+      }
     },
-	}
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.CRITICAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+    },
+  }
 )
 
 test.register_message_test(
-	"Test test in progress handler",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.TestInProgress:build_test_report_data(mock_device, 1, true)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
+  "Test test in progress handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.TestInProgress:build_test_report_data(mock_device, 1, true)
+      }
     },
     {
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.TestInProgress:build_test_report_data(mock_device, 1, false)
-			}
-		},
-    {
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
     },
     {
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.TestInProgress:build_test_report_data(mock_device, 1, false)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {mock_device.id, clusters.SmokeCoAlarm.attributes.SmokeState:read(mock_device)},
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {mock_device.id, clusters.SmokeCoAlarm.attributes.COState:read(mock_device)}
     }
-	}
+  }
 )
 
 test.register_message_test(
-	"Test hardware fault alert handler",
-	{
-		{
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.HardwareFaultAlert:build_test_report_data(mock_device, 1, true)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+  "Test hardware fault alert handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.HardwareFaultAlert:build_test_report_data(mock_device, 1, true)
+      }
     },
     {
-			channel = "matter",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				clusters.SmokeCoAlarm.attributes.HardwareFaultAlert:build_test_report_data(mock_device, 1, false)
-			}
-		},
-		{
-			channel = "capability",
-			direction = "send",
-			message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.HardwareFaultAlert:build_test_report_data(mock_device, 1, false)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     }
-	}
+  }
 )
 
 test.register_message_test(
