@@ -21,7 +21,6 @@ local clusters = require "st.matter.clusters"
 clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
 clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
 clusters.TemperatureControl = require "TemperatureControl"
-clusters.Te = require "OperationalState"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("refrigerator-freezer-tn-tl.yml"),

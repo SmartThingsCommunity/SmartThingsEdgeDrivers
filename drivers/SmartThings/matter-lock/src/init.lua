@@ -24,6 +24,9 @@ local lock_utils = require "lock_utils"
 
 local INITIAL_COTA_INDEX = 1
 
+-- add this defintions for locks to work on older lua libs
+local UNLATCHED_STATE = 0x3
+
 --- If a device needs a cota credential this function attempts to set the credential
 --- at the index provided. The set_credential_response_handler handles all failures
 --- and retries with the appropriate index when necessary.
@@ -78,7 +81,7 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
-    [LockState.UNLATCHED] = attr.unlocked(), -- Fully unlocked with latch pulled
+    [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled
   }
 
   if ib.data.value ~= nil then

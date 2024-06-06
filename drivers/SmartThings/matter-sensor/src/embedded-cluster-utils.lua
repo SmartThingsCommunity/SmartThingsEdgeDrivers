@@ -31,6 +31,7 @@ local embedded_clusters = {
   [clusters.OzoneConcentrationMeasurement.ID] = clusters.OzoneConcentrationMeasurement,
   [clusters.Pm1ConcentrationMeasurement.ID] = clusters.Pm1ConcentrationMeasurement,
   [clusters.Pm10ConcentrationMeasurement.ID] = clusters.Pm10ConcentrationMeasurement,
+  [clusters.Pm25ConcentrationMeasurement.ID] = clusters.Pm25ConcentrationMeasurement,
   [clusters.RadonConcentrationMeasurement.ID] = clusters.RadonConcentrationMeasurement,
   [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement,
   [clusters.SmokeCoAlarm.ID] = clusters.SmokeCoAlarm,
