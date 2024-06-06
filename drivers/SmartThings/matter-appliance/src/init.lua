@@ -16,9 +16,22 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 local utils = require "st.utils"
+
+local version = require "version"
+if version.api < 10 then
+  clusters.DishwasherAlarm = require "DishwasherAlarm"
+  clusters.DishwasherMode = require "DishwasherMode"
+  clusters.LaundryWasherControls = require "LaundryWasherControls"
+  clusters.LaundryWasherMode = require "LaundryWasherMode"
+  clusters.OperationalState = require "OperationalState"
+  clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
+  clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
+  clusters.TemperatureControl = require "TemperatureControl"
+end
 
 local dishwasher = require("matter-dishwasher")
 local laundryWasher = require("matter-laundry-washer")
@@ -83,8 +96,8 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
-  local tl_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if dishwasher.can_handle({}, driver, device) then
     local profile_name = "dishwasher"
     if #tn_eps > 0 and #tl_eps > 0 then
@@ -161,7 +174,7 @@ local function on_off_attr_handler(driver, device, ib, response)
 end
 
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
-  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
@@ -184,7 +197,7 @@ end
 
 local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
-    local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+    local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
     if #tn_eps == 0 then
       log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
       return
@@ -209,7 +222,7 @@ local function handle_switch_off(driver, device, cmd)
 end
 
 local function handle_temperature_setpoint(driver, device, cmd)
-  local tn_eps = device:get_endpoints(clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return

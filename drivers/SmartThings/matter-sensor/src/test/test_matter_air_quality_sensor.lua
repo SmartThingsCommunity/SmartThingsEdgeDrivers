@@ -21,6 +21,18 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
 
+clusters.AirQuality = require "AirQuality"
+clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-all-level-all-meas.yml"),
   manufacturer_info = {
@@ -31,7 +43,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
@@ -71,7 +83,7 @@ local mock_device_common = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
@@ -104,7 +116,7 @@ local mock_device_level = test.mock_device.build_test_matter_device({
         {
             endpoint_id = 0,
             clusters = {
-                {cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER"},
+                {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
             },
             device_types = {
                 {device_type_id = 0x0016, device_type_revision = 1} -- RootNode

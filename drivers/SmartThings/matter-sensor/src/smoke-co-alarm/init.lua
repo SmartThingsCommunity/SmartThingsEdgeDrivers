@@ -16,12 +16,18 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
 local PROFILE_MATCHED = "__profile_matched"
+
+local version = require "version"
+if version.api < 10 then
+  clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+end
 
 local function is_matter_smoke_co_alarm(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
@@ -54,12 +60,12 @@ local supported_profiles =
 }
 
 local function match_profile(device)
-  local smoke_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
-  local co_eps = device:get_endpoints(clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
-  local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local co_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local co_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local smoke_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
+  local co_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
+  local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
+  local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
+  local co_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local co_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
 
   local profile_name = ""
 
@@ -114,7 +120,7 @@ end
 local function info_changed(self, device, event, args)
   if device.preferences then
     if device.preferences["certifiedpreferences.smokeSensorSensitivity"] ~= args.old_st_store.preferences["certifiedpreferences.smokeSensorSensitivity"] then
-      local eps = device:get_endpoints(clusters.SmokeCoAlarm.ID)
+      local eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID)
       if #eps > 0 then
         local smokeSensorSensitivity = device.preferences["certifiedpreferences.smokeSensorSensitivity"]
         if smokeSensorSensitivity == "0" then -- High

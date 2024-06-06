@@ -16,9 +16,28 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 local AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
+
+local version = require "version"
+
+-- Include driver-side definitions when lua libs api version is < 10
+local version = require "version"
+if version.api < 10 then
+  clusters.AirQuality = require "AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+end
 
 local function is_matter_air_quality_sensor(opts, driver, device)
     for _, ep in ipairs(device.endpoints) do
@@ -162,28 +181,28 @@ local function configure(driver, device)
   end
 
   -- check to see if device can switch to a more limited profile based on cluster support
-  local temp_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local co_level_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local co_meas_eps = device:get_endpoints(clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local co2_level_eps = device:get_endpoints(clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local co2_meas_eps = device:get_endpoints(clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local no2_level_eps = device:get_endpoints(clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local no2_meas_eps = device:get_endpoints(clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local ozone_level_eps = device:get_endpoints(clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local ozone_meas_eps = device:get_endpoints(clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local formaldehyde_level_eps = device:get_endpoints(clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local formaldehyde_meas_eps = device:get_endpoints(clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm1_level_eps = device:get_endpoints(clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm1_meas_eps = device:get_endpoints(clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm2_5_level_eps = device:get_endpoints(clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm2_5_meas_eps = device:get_endpoints(clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local pm10_level_eps = device:get_endpoints(clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local pm10_meas_eps = device:get_endpoints(clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local radon_level_eps = device:get_endpoints(clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local radon_meas_eps = device:get_endpoints(clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
-  local tvoc_level_eps = device:get_endpoints(clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
-  local tvoc_meas_eps = device:get_endpoints(clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
+  local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
+  local co_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local co_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonMonoxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local co2_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local co2_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.CarbonDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.CarbonDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local no2_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local no2_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.NitrogenDioxideConcentrationMeasurement.ID, {feature_bitmap = clusters.NitrogenDioxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local ozone_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local ozone_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.OzoneConcentrationMeasurement.ID, {feature_bitmap = clusters.OzoneConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local formaldehyde_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local formaldehyde_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.FormaldehydeConcentrationMeasurement.ID, {feature_bitmap = clusters.FormaldehydeConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local pm1_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local pm1_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm1ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm1ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local pm2_5_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local pm2_5_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm25ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm25ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local pm10_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local pm10_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.Pm10ConcentrationMeasurement.ID, {feature_bitmap = clusters.Pm10ConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local radon_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local radon_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.RadonConcentrationMeasurement.ID, {feature_bitmap = clusters.RadonConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
+  local tvoc_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
+  local tvoc_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
 
   local profile_name = "air-quality-sensor"
   local level_indication_support = ""

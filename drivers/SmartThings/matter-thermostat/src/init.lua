@@ -15,17 +15,28 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 local im = require "st.matter.interaction_model"
 
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+
+-- Include driver-side definitions when lua libs api version is < 10
+local version = require "version"
+if version.api < 10 then
+  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+  -- new modes add in Matter 1.2
+  clusters.Thermostat.types.ThermostatSystemMode.DRY = 0x8
+  clusters.Thermostat.types.ThermostatSystemMode.SLEEP = 0x9
+end
 
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
   [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
   [clusters.Thermostat.types.ThermostatSystemMode.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
   [clusters.Thermostat.types.ThermostatSystemMode.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEAT] = capabilities.thermostatMode.thermostatMode.emergencyheat,
+  [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING] = capabilities.thermostatMode.thermostatMode.emergencyheat,
   [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
   [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
   [clusters.Thermostat.types.ThermostatSystemMode.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
@@ -116,7 +127,7 @@ local subscribed_attributes = {
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(cluster)
+  local eps = embedded_cluster_utils.get_endpoints(device, cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
@@ -174,16 +185,17 @@ local function get_device_type(driver, device)
 end
 
 local function do_configure(driver, device)
-  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.HEATING})
-  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.COOLING})
-  local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.AUTOMODE})
+  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
+  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
+  local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.WIND})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.ThermostatFeature.WIND})
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local hepa_filter_eps = device:get_endpoints(clusters.HepaFilterMonitoring.ID)
-  local ac_filter_eps = device:get_endpoints(clusters.ActivatedCarbonFilterMonitoring.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  -- use get_endpoints for embedded clusters
+  local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
@@ -325,7 +337,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- or not the device supports emergency heat or fan only
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
 
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.Feature.auto})
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
   if #auto > 0 then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
@@ -621,7 +633,7 @@ local function set_setpoint(setpoint)
     end
     local is_auto_capable = #device:get_endpoints(
       clusters.Thermostat.ID,
-      {feature_bitmap = clusters.Thermostat.types.Feature.AUTOMODE}
+      {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE}
     ) > 0
 
     --Check setpoint limits for the device
@@ -740,9 +752,9 @@ end
 local function set_wind_mode(driver, device, cmd)
   local wind_mode = 0
   if cmd.args.windMode == capabilities.windMode.windMode.sleepWind.NAME then
-    wind_mode = clusters.FanControl.types.WindBitmap.SLEEP_WIND
+    wind_mode = clusters.FanControl.types.WindSupportMask.SLEEP_WIND
   elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
-    wind_mode = clusters.FanControl.types.WindBitmap.NATURAL_WIND
+    wind_mode = clusters.FanControl.types.WindSupportMask.NATURAL_WIND
   end
   device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), wind_mode))
 end

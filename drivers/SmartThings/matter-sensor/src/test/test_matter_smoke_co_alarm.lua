@@ -18,6 +18,12 @@ local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
+clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+local version = require "version"
+if version.api < 10 then
+  clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("smoke-co-temp-humidity-comeas.yml"),
@@ -40,7 +46,6 @@ local mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.SmokeCoAlarm.ID, cluster_type = "SERVER", feature_map = clusters.SmokeCoAlarm.types.Feature.CO_ALARM | clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},

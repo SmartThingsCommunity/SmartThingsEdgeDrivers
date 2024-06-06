@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
@@ -67,7 +68,7 @@ local subscribed_attributes = {
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(cluster)
+  local eps = embedded_cluster_utils.get_endpoints(device, cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
@@ -104,8 +105,8 @@ local function info_changed(driver, device, event, args)
 end
 
 local function set_supported_op_mode(driver, device)
-  local spd_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_SPEED})
-  local local_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.LOCAL_OPERATION})
+  local spd_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_SPEED})
+  local local_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.LOCAL_OPERATION})
   local supported_op_modes = {pumpOperationMode.operationMode.normal.NAME}
   if #spd_eps > 0 then
     table.insert(supported_op_modes, pumpOperationMode.operationMode.minimum.NAME)
@@ -118,12 +119,12 @@ local function set_supported_op_mode(driver, device)
 end
 
 local function set_supported_control_mode(driver, device)
-  local spd_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_SPEED})
-  local prsconst_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_PRESSURE})
-  local prscomp_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.COMPENSATED_PRESSURE})
-  local flw_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_FLOW})
-  local temp_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_TEMPERATURE})
-  local auto_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.AUTOMATIC})
+  local spd_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_SPEED})
+  local prsconst_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_PRESSURE})
+  local prscomp_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.COMPENSATED_PRESSURE})
+  local flw_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_FLOW})
+  local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.CONSTANT_TEMPERATURE})
+  local auto_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID, {feature_bitmap = clusters.PumpConfigurationAndControl.types.Feature.AUTOMATIC})
   local supported_control_modes = {}
   if #spd_eps > 0 then
     table.insert(supported_control_modes, pumpControlMode.controlMode.constantSpeed.NAME)
@@ -147,8 +148,8 @@ local function set_supported_control_mode(driver, device)
 end
 
 local function do_configure(driver, device)
-  local pump_eps = device:get_endpoints(clusters.PumpConfigurationAndControl.ID)
-  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+  local pump_eps = embedded_cluster_utils.get_endpoints(device, clusters.PumpConfigurationAndControl.ID)
+  local level_eps = embedded_cluster_utils.get_endpoints(device, clusters.LevelControl.ID)
   local profile_name = "pump"
   if #pump_eps == 1 then
     if #level_eps > 0 then

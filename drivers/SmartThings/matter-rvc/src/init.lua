@@ -15,8 +15,18 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local utils = require "st.utils"
 
 local log = require "log"
+
+-- Include driver-side definitions when lua libs api version is < 10
+local version = require "version"
+if version.api < 10 then
+  clusters.RvcCleanMode = require "RvcCleanMode"
+  clusters.RvcOperationalState = require "RvcOperationalState"
+  clusters.RvcRunMode = require "RvcRunMode"
+  clusters.OperationalState = require "OperationalState"
+end
 
 -- State Machine Rules 1. RVC Run Mode - Mode Change Restrictions
 -- Attempting to switch the RVC Run Mode from a mode without the Idle mode tag to another non-Idle mode SHALL NOT be
@@ -52,7 +62,11 @@ end
 local function set_field_supported_modes(device, field_prefix, supported_modes)
   local labels_field = string.format("%s_labels", field_prefix)
   local labels_of_supported_modes = {}
+  log.info_with({hub_logs = true}, string.format("Supported modes: %s", utils.stringify_table(supported_modes)))
   for i, mode in ipairs(supported_modes) do
+    if version.api < 10 then
+      clusters.RvcRunMode.types.ModeOptionStruct:augment_type(mode)
+    end
     table.insert(labels_of_supported_modes, mode.elements.label.value)
     set_field_mode_tags_of_supported_mode(device, field_prefix, i, mode.elements.mode_tags)
   end
@@ -241,6 +255,9 @@ local function rvc_operational_state_attr_handler(driver, device, ib, response)
 end
 
 local function rvc_operational_error_attr_handler(driver, device, ib, response)
+  if version.api < 10 then
+    clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
+  end
   log.info_with({ hub_logs = true },
     string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
 

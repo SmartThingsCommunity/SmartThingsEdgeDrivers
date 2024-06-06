@@ -17,6 +17,9 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
+clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
+clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
   manufacturer_info = {
