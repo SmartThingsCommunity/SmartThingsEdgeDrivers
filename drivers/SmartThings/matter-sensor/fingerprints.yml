@@ -112,3 +112,28 @@ matterGeneric:
       - id: 0x0107 # Occupancy Sensor
       - id: 0x0015 # Contact Sensor
     deviceProfileName: motion-contact-battery
+  - id: "matter/air-quality-sensor"
+    deviceLabel: Matter Air Quality Sensor
+    deviceTypes:
+      - id: 0x002C
+    deviceProfileName: air-quality-sensor
+  - id: "matter/air-quality-tuo"
+    deviceLabel: Tuo Air Quality
+    deviceTypes:
+      - id: 0x002C # Air Quality
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0305 # Pressure Sensor
+    deviceProfileName: air-quality-tuo
+  - id: "matter/temp-tuo"
+    deviceLabel: Tuo Temp Sensor
+    deviceTypes:
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0305 # Pressure Sensor
+    deviceProfileName: air-quality-tuo
+  - id: "matter/smoke-co-alarm"
+    deviceLabel: Matter Smoke/CO Alarm
+    deviceTypes:
+      - id: 0x0076
+    deviceProfileName: smoke-co-battery
