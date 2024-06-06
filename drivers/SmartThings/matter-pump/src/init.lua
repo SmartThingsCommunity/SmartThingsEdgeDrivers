@@ -193,13 +193,13 @@ local function effective_operation_mode_handler(driver, device, ib, response)
     set_supported_control_mode(driver, device)
   elseif ib.data.value == modeEnum.MINIMUM then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.minimum())
-    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id, pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == modeEnum.MAXIMUM then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.maximum())
-    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id, pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == modeEnum.LOCAL then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.localSetting())
-    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id, pumpControlMode.supportedControlModes(supported_control_modes))
   end
 end
 
