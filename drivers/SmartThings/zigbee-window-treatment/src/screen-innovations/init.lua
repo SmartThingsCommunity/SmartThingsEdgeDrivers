@@ -13,20 +13,17 @@ local PowerConfiguration = clusters.PowerConfiguration
 local CUS_CLU = 0xFCCC
 local RUN_DIR_ATTR = 0x0012
 
-
-local motor_states = {
-  IDLE = 0,
-  OPENING = 1,
-  CLOSING = 2
-}
-local running_direction = motor_states.IDLE
+local MOTOR_STATE = "motorState"
+local MOTOR_STATE_IDLE = "idle"
+local MOTOR_STATE_OPENING = "opening"
+local MOTOR_STATE_CLOSING = "closing"
 
 -----------------------------------------------------------------
 -- local functions
 -----------------------------------------------------------------
 
--- this is update_device_info
-local function update_device_info (device)
+-- this is do_refresh
+local do_refresh = function(self, device)
   device:send(WindowCovering.attributes.CurrentPositionLiftPercentage:read(device))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
   device:send(Basic.attributes.PowerSource:read(device))
@@ -47,10 +44,12 @@ local function window_shade_preset_cmd(driver, device, command)
 end
 
 -- this is device_added
-local function device_added(driver, device)
+local function device_added(self, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+  -- initialize motor state
+  device:set_field(MOTOR_STATE, MOTOR_STATE_IDLE)
   device.thread:call_with_delay(3, function(d)
-    update_device_info(device)
+    do_refresh(self, device)
   end)
 end
 
@@ -58,18 +57,19 @@ end
 local function current_position_attr_handler(driver, device, value, zb_rx)
   local level = value.value --Bug #16054
   local event = nil
+  local motor_state_value = device:get_field(MOTOR_STATE) or MOTOR_STATE_IDLE
 
   -- when the device is in action
-  if running_direction == motor_states.OPENING then
+  if motor_state_value == MOTOR_STATE_OPENING then
     event = capabilities.windowShade.windowShade.opening()
   end
 
-  if running_direction == motor_states.CLOSING then
+  if motor_state_value == MOTOR_STATE_CLOSING then
     event = capabilities.windowShade.windowShade.closing()
   end
 
   -- when the device is in idle
-  if running_direction == motor_states.IDLE then
+  if motor_state_value == MOTOR_STATE_IDLE then
     if level == 0 then
       event = capabilities.windowShade.windowShade.open() --Bug #16054
     elseif level == 100 then
@@ -92,11 +92,11 @@ end
 local function running_direction_attr_handler(driver, device, value, zb_rx)
   local status = value.value
   if status == 1 then
-    running_direction = motor_states.OPENING
+    device:set_field(MOTOR_STATE, MOTOR_STATE_OPENING)
   elseif status == 2 then
-    running_direction = motor_states.CLOSING
+    device:set_field(MOTOR_STATE, MOTOR_STATE_CLOSING)
   else
-    running_direction = motor_states.IDLE
+    device:set_field(MOTOR_STATE, MOTOR_STATE_IDLE)
   end
 end
 
@@ -113,22 +113,17 @@ local function do_configure(self, device)
 
   -- read elements
   device.thread:call_with_delay(3, function(d)
-    device:send(Basic.attributes.ApplicationVersion:read(device))
-    update_device_info(device)
+    do_refresh(self, device)
   end)
-end
-
--- this is do_refresh
-local do_refresh = function(self, device)
-  update_device_info(device)
 end
 
 -- this is battery_perc_attr_handler
 local function battery_perc_attr_handler(driver, device, value, zb_rx)
   local converted_value = value.value / 2
   converted_value = utils.round(converted_value)
+  local motor_state_value = device:get_field(MOTOR_STATE) or ""
   -- update battery percentage only motor is in idle state --Bug #16055
-  if running_direction == motor_states.IDLE then
+  if motor_state_value == MOTOR_STATE_IDLE then
     device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
       capabilities.battery.battery(utils.clamp_value(converted_value, 0, 100)))
   end
