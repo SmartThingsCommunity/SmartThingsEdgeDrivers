@@ -69,9 +69,6 @@ test.register_coroutine_test(
   "Handle added lifecycle",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-    cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
-      data_types.Uint8, 0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.gasDetector.gas.clear()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.audioMute.mute.unmuted()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", sensitivityAdjustment.sensitivityAdjustment.High()))
@@ -83,7 +80,24 @@ test.register_coroutine_test(
 
 
 test.register_coroutine_test(
-  "gasDetector report should be handled",
+  "Handle doConfigure lifecycle",
+  function()
+    local build_attr_message = zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PRIVATE_CLUSTER_ID)
+    local config_attr_message = zigbee_test_utils.build_attr_config(mock_device,
+      PRIVATE_CLUSTER_ID, PRIVATE_GAS_ZONE_STATUS_ATTRIBUTE_ID, 0x0001, 0x0E10, data_types.Uint16, 0x0001)
+    local write_attr_messge = cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+      data_types.Uint8, 0x01)
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__expect_send({mock_device.id, build_attr_message})
+    test.socket.zigbee:__expect_send({mock_device.id, config_attr_message})
+    test.socket.zigbee:__expect_send({mock_device.id, write_attr_messge})
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+
+test.register_coroutine_test(
+  "gasDetector report should be handled, gas detected",
   function()
     local attr_report_data = {
       { PRIVATE_GAS_ZONE_STATUS_ATTRIBUTE_ID, data_types.Uint16.ID, 0x0001 }
@@ -97,7 +111,20 @@ test.register_coroutine_test(
   end
 )
 
-
+test.register_coroutine_test(
+  "gasDetector report should be handled, gas cleared",
+  function()
+    local attr_report_data = {
+      { PRIVATE_GAS_ZONE_STATUS_ATTRIBUTE_ID, data_types.Uint16.ID, 0x0000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.gasDetector.gas.clear()))
+  end
+)
 
 test.register_coroutine_test(
   "audioMute report should be handled",
@@ -114,7 +141,20 @@ test.register_coroutine_test(
   end
 )
 
-
+test.register_coroutine_test(
+  "audioMute report should be handled, unmute",
+  function()
+    local attr_report_data = {
+      { PRIVATE_MUTE_ATTRIBUTE_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.audioMute.mute.unmuted()))
+  end
+)
 
 test.register_coroutine_test(
   "Capability on command should be handled : device mute",
@@ -185,7 +225,20 @@ test.register_coroutine_test(
   end
 )
 
-
+test.register_coroutine_test(
+  "lifetime report should be handled, normal",
+  function()
+    local attr_report_data = {
+      { PRIVATE_LIFE_TIME_ATTRIBUTE_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      lifeTimeReport.lifeTimeState.normal()))
+  end
+)
 
 test.register_coroutine_test(
   "sensitivityAdjustment report should be handled",

@@ -79,11 +79,15 @@ local function test_init()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
     clusters.IlluminanceMeasurement.attributes.MeasuredValue,
     clusters.OccupancySensing.attributes.Occupancy
   }

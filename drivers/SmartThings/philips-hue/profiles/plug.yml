@@ -1,0 +1,12 @@
+name: plug
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: samsungim.hueSyncMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartPlug
