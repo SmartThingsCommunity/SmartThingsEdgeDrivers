@@ -182,10 +182,9 @@ local function on_off_attr_handler(driver, device, ib, response)
 end
 
 local function level_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
+  if ib.data.value then
       local max_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
       local level = math.floor((ib.data.value / max_level * 100) + 0.5)
-      -- local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
 end
@@ -239,70 +238,38 @@ local tbl_contains = function(t, val)
   return false
 end
 
--- local level_bounds_handler_factory = function(min_or_max_val)
---   return function(driver, device, ib, response)
---     -- if there is no reported level, return
---     if ib.data.value == nil then
---       return
---     end
-
---     -- find lighting endpoints to see if Lighting is supported here
---     local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
---     local lighting_supported = tbl_contains(lighting_endpoints, ib.endpoint_id)
-
---     -- per the spec, MinLevel must be >= 1 if Lighting is supported
---     local level_received = ib.data.value
---     if lighting_supported and level_received < SWITCH_LEVEL_LIGHTING_MIN then
---       level_received = 1
---     end
-
---     -- set the recieved, perhaps edited level for the endpoint
---     device:set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..min_or_max_val, ib.endpoint_id, level_received)
-
---     -- -- get max and min levels and set capabilities if both are defined
---     -- local max_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
---     -- local min_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
---     -- if min_level and max_level then
---     --   if min_level < max_level then
---     --     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min_level, maximum = max_level} }))
---     --   else
---     --     device.log.warn_with({hub_logs = true}, string.format(
---     --       "Device reported a min level value %d that is not lower than the reported max level value %d", min_level, max_level)
---     --     )
---     --   end
---     -- end
---   end
--- end
-
-local level_bounds_handler_factory = function(minOrMax)
-  return function(driver, device, ib, response)
-    if ib.data.value == nil then
+local level_bounds_handler = function(a_min_or_max_val)
+  return function(driver, device, ib, response)   
+    -- if there is no reported level (ib.data.value), return
+    if not ib.data.value then
       return
     end
-    local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
-    local lighting_support = tbl_contains(lighting_endpoints, ib.endpoint_id)
-    -- If the lighting feature is supported then we should check if the reported level is at least 1.
-    if lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN then
-      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
-      return
+
+    -- find lighting endpoints to see if Lighting is supported here
+    local lighting_eps = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
+    local lighting_is_supported = tbl_contains(lighting_eps, ib.endpoint_id)
+
+    -- per the spec, MinLevel must be >= 1 if Lighting is supported
+    local level_received = ib.data.value
+    if lighting_is_supported and level_received < SWITCH_LEVEL_LIGHTING_MIN then
+      level_received = SWITCH_LEVEL_LIGHTING_MIN
     end
-    -- Convert level from given range of 0-254 to range of 0-100.
-    -- local level = utils.round(ib.data.value / 254.0 * 100)
-    local level = ib.data.value
-    -- If the device supports the lighting feature, the minimum capability level should be 1 so we do not send a 0 value for the level attribute
-    if lighting_support and level == 0 then
-      level = 1
+
+    -- set the recieved, perhaps edited level for the endpoint
+    device:set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..a_min_or_max_val, ib.endpoint_id, level_received)
+
+    -- get max and min levels and set capabilities if both are defined
+    local max_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
+    local min_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
+    if min_level and max_level then
+      if min_level < max_level then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min_level, maximum = max_level} }))
+      else
+        device.log.warn_with({hub_logs = true}, string.format(
+          "Device reported a min level value %d that is not lower than the reported max level value %d", min_level, max_level)
+        )
+      end
     end
-    driver:set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
-    -- local min = driver:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
-    -- local max = driver:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
-    -- if min ~= nil and max ~= nil then
-    --   if min < max then
-    --     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min, maximum = max} }))
-    --   else
-    --     device.log.warn_with({hub_logs = true}, string.format("Device reported a min level value %d that is not lower than the reported max level value %d", min, max))
-    --   end
-    -- end
   end
 end
 
@@ -366,8 +333,8 @@ local matter_driver_template = {
       },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
-        [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler_factory(LEVEL_MAX),
-        [clusters.LevelControl.attributes.MinLevel.ID] = level_bounds_handler_factory(LEVEL_MIN),
+        [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler(LEVEL_MAX),
+        [clusters.LevelControl.attributes.MinLevel.ID] = level_bounds_handler(LEVEL_MIN),
       },
         [clusters.PumpConfigurationAndControl.ID] = {
         [clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode.ID] = effective_operation_mode_handler,
