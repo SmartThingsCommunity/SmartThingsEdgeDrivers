@@ -117,8 +117,8 @@ local devices = {
   SHELLY_WAVE_2PM_AND_PRO = {
     MATCHING_MATRIX = {
       mfrs = 0x0460,
-      product_ids = {0x0081, 0x008D},
-      product_types = 0x0002,
+      product_types = {0x0081, 0x008D},
+      product_ids = 0x0002,
       children = 1
     },
     CONFIGURATION = {
@@ -128,8 +128,8 @@ local devices = {
   SHELLY_WAVE_PRO_2 = {
     MATCHING_MATRIX = {
       mfrs = 0x0460,
-      product_ids = 0x008C,
-      product_types = 0x0002,
+      product_types = 0x008C,
+      product_ids = 0x0002,
       children = 1
     },
     CONFIGURATION = {

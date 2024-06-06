@@ -23,8 +23,8 @@ local t_utils = require "integration_test.utils"
 local profile = t_utils.get_profile_definition("metering-switch.yml")
 
 local SHELLY_MANUFACTURER_ID = 0x0460
-local SHELLY_PRODUCT_TYPE = 0x0002
-local SHELLY_PRODUCT_ID = 0x008D
+local SHELLY_PRODUCT_TYPE = 0x008D
+local SHELLY_PRODUCT_ID = 0x0002
 
 local switch_multicomponent_endpoints = {
   { -- ep 1 (parent)
