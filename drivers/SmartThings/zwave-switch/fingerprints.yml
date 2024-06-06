@@ -914,56 +914,56 @@ zwaveManufacturer:
   - id: 1120/2/129
     deviceLabel: Wave 2PM 1
     manufacturerId: 0x0460
-    productId: 0x0081
-    productType: 0x0002
+    productType: 0x0081
+.   productId: 0x0002
     deviceProfileName: metering-switch
   - id: 1120/2/131
     deviceLabel: Wave 1
     manufacturerId: 0x0460
-    productId: 0x0083
-    productType: 0x0002
-    deviceProfileName: switch-binary 
+    productType: 0x0083
+.   productId: 0x0002
+    deviceProfileName: switch-binary
   - id: 1120/2/132
     deviceLabel: Wave 1PM
     manufacturerId: 0x0460
-    productId: 0x0084
-    productType: 0x0002
+    productType: 0x0084
+.   productId: 0x0002
     deviceProfileName: metering-switch
   - id: 1120/2/138
     deviceLabel: Wave Pro 1
     manufacturerId: 0x0460
-    productId: 0x008A
-    productType: 0x0002
+    productType: 0x008A
+.   productId: 0x0002
     deviceProfileName: switch-binary
   - id: 1120/2/139
     deviceLabel: Wave Pro 1PM
     manufacturerId: 0x0460
-    productId: 0x008B
-    productType: 0x0002
+    productType: 0x008B
+.   productId: 0x0002
     deviceProfileName: metering-switch
   - id: 1120/2/140
     deviceLabel: Wave Pro 2 1
     manufacturerId: 0x0460
-    productId: 0x008C
-    productType: 0x0002
+    productType: 0x008C
+.   productId: 0x0002
     deviceProfileName: switch-binary
   - id: 1120/2/141
     deviceLabel: Wave Pro 2PM 1
     manufacturerId: 0x0460
-    productId: 0x008D
-    productType: 0x0002
+    productType: 0x008D
+.   productId: 0x0002
     deviceProfileName: metering-switch
   - id: 1120/2/142
     deviceLabel: Wave 1 Mini
     manufacturerId: 0x0460
-    productId: 0x008E
-    productType: 0x0002
+    productType: 0x008E
+.   productId: 0x0002
     deviceProfileName: switch-binary
   - id: 1120/2/143
     deviceLabel: Wave 1PM Mini
     manufacturerId: 0x0460
-    productId: 0x008F
-    productType: 0x0002
+    productType: 0x008F
+.   productId: 0x0002
     deviceProfileName: metering-switch
 zwaveGeneric:
   - id: "GenericSwitch/1"
