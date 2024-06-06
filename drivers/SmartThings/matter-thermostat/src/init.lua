@@ -317,11 +317,10 @@ local function do_configure(driver, device)
   local hepa_filter_eps = device:get_endpoints(clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = device:get_endpoints(clusters.ActivatedCarbonFilterMonitoring.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-
-  --harrison
   local aqs_eps = device:get_endpoints(clusters.AirQuality.ID)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
+  
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if device_type == RAC_DEVICE_TYPE_ID then
     log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
