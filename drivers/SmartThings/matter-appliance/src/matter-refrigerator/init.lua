@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
@@ -48,7 +47,6 @@ local function endpoint_to_component(device, ep)
 end
 
 local function component_to_endpoint(device, component_name)
-  local map = endpointToComponentMap
   for ep, component in pairs(endpointToComponentMap) do
     if component == component_name then return ep end
   end
@@ -204,7 +202,7 @@ local function temp_event_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
   string.format("temp_event_handler: %s", ib.data.value))
 
-  local temp = 0
+  local temp
   local unit = "C"
   if ib.data.value == nil then
     temp = 0
@@ -239,7 +237,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local value = cmd.args.setpoint
-  local cached_temp_val, temp_setpoint = device:get_latest_state(
+  local _, temp_setpoint = device:get_latest_state(
     cmd.component, capabilities.temperatureSetpoint.ID,
     capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
     0, { value = 0, unit = "C" }

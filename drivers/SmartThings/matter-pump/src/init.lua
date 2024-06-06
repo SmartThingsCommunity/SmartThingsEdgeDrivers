@@ -17,7 +17,6 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local MatterDriver = require "st.matter.driver"
-local utils = require "st.utils"
 
 local IS_LOCAL_OVERRIDE = "__is_local_override"
 
@@ -115,7 +114,7 @@ local function set_supported_op_mode(driver, device)
   if #local_eps > 0 then
     table.insert(supported_op_modes, pumpOperationMode.operationMode.localSetting.NAME)
   end
-  device:emit_event_for_endpoint(pump_eps, pumpOperationMode.supportedOperationModes(supported_op_modes))
+  device:emit_event(pumpOperationMode.supportedOperationModes(supported_op_modes))
 end
 
 local function set_supported_control_mode(driver, device)
@@ -144,7 +143,7 @@ local function set_supported_control_mode(driver, device)
   if #auto_eps > 0 then
     table.insert(supported_control_modes, pumpControlMode.controlMode.automatic.NAME)
   end
-  device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
+  device:emit_event(pumpControlMode.supportedControlModes(supported_control_modes))
 end
 
 local function do_configure(driver, device)
@@ -194,13 +193,13 @@ local function effective_operation_mode_handler(driver, device, ib, response)
     set_supported_control_mode(driver, device)
   elseif ib.data.value == modeEnum.MINIMUM then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.minimum())
-    device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == modeEnum.MAXIMUM then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.maximum())
-    device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == modeEnum.LOCAL then
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.localSetting())
-    device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event_for_endpoint(ib.endpoint_id,, pumpControlMode.supportedControlModes(supported_control_modes))
   end
 end
 
@@ -214,8 +213,8 @@ local function pump_status_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, pumpOperationMode.currentOperationMode.localSetting())
     local supported_op_modes = {}
     local supported_control_modes = {}
-    device:emit_event_for_endpoint(pump_eps, pumpOperationMode.supportedOperationModes(supported_op_modes))
-    device:emit_event_for_endpoint(pump_eps, pumpControlMode.supportedControlModes(supported_control_modes))
+    device:emit_event(pumpOperationMode.supportedOperationModes(supported_op_modes))
+    device:emit_event(pumpControlMode.supportedControlModes(supported_control_modes))
   elseif ib.data.value == clusters.PumpConfigurationAndControl.types.PumpStatusBitmap.RUNNING then
     device:set_field(IS_LOCAL_OVERRIDE, false, {persist = true})
     device:send(clusters.PumpConfigurationAndControl.attributes.EffectiveOperationMode:read(device))
@@ -288,7 +287,6 @@ local matter_driver_template = {
         [clusters.PumpConfigurationAndControl.attributes.PumpStatus.ID] = pump_status_handler,
       },
     },
-    fallback = matter_handler,
   },
   subscribed_attributes = subscribed_attributes,
   capability_handlers = {

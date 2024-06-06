@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
@@ -20,8 +19,6 @@ local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
 local AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
-
-local version = require "version"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -142,13 +139,6 @@ local units_required = {
   clusters.Pm10ConcentrationMeasurement,
   clusters.RadonConcentrationMeasurement,
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement
-}
-
-local common_optional_clusters = {
-  clusters.RelativeHumidityMeasurement.ID,
-  clusters.CarbonDioxideConcentrationMeasurement.ID,
-  clusters.Pm25ConcentrationMeasurement.ID,
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID
 }
 
 local function device_init(driver, device)
@@ -294,7 +284,6 @@ local function configure(driver, device)
 
   if not tbl_contains(supported_profiles, profile_name) then
     log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s", profile_name))
-    profile_name = ""
     if #co_meas_eps > 0 or #no2_meas_eps > 0 or #ozone_meas_eps > 0 or #formaldehyde_meas_eps > 0 or
         #pm1_meas_eps > 0 or #pm10_meas_eps > 0 or #radon_meas_eps > 0 then
         -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
@@ -453,7 +442,6 @@ local matter_air_quality_sensor_handler = {
   NAME = "matter-air-quality-sensor",
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
     doConfigure = configure
   },
   matter_handlers = {

@@ -231,7 +231,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local value = cmd.args.setpoint
-  local cached_temp_val, temp_setpoint = device:get_latest_state(
+  local _, temp_setpoint = device:get_latest_state(
     cmd.component, capabilities.temperatureSetpoint.ID,
     capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
     0, { value = 0, unit = "C" }

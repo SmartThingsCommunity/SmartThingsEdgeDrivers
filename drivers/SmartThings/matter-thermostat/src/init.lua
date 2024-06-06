@@ -20,7 +20,6 @@ local im = require "st.matter.interaction_model"
 
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
-local version = require "version"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -387,14 +386,6 @@ local function sequence_of_operation_handler(driver, device, ib, response)
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.emergencyheat.NAME)
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(supported_modes))
-end
-
-local function setpoint_limit_handler(limit_field)
-  return function(driver, device, ib, response)
-    local val = ib.data.value / 100.0
-    log.info("Setting " .. limit_field .. " to " .. string.format("%s", val))
-    device:set_field(limit_field, val, { persist = true })
-  end
 end
 
 local function min_deadband_limit_handler(driver, device, ib, response)
@@ -785,7 +776,7 @@ local function thermostat_fan_mode_setter(mode_name)
 end
 
 local function set_fan_mode(driver, device, cmd)
-  local fan_mode_id = nil
+  local fan_mode_id
   if cmd.args.fanMode == "off" then
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   elseif cmd.args.fanMode == "low" then
@@ -805,7 +796,7 @@ local function set_fan_mode(driver, device, cmd)
 end
 
 local function set_air_purifier_fan_mode(driver, device, cmd)
-  local fan_mode_id = nil
+  local fan_mode_id
   if cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME then
     fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
   elseif cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.sleep.NAME then

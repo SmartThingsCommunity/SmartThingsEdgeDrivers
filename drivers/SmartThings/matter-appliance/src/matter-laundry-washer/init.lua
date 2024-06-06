@@ -12,13 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
-local utils = require "st.utils"
 
 local version = require "version"
 if version.api < 10 then
@@ -106,7 +104,6 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   for _, tempLevel in ipairs(ib.data.elements) do
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
-  local component = device.profile.components["temperatureLevel"]
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
 end
 
@@ -139,7 +136,7 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
       return
     end
   end
-  log.warn(string.format("Washer mode %s not found in supported washer modes", spinSpeed.value))
+  log.warn(string.format("Washer mode %s not found in supported washer modes", currentMode))
 end
 
 local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
@@ -162,7 +159,7 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
       return
     end
   end
-  log.warn(string.format("Spin speed %s not found in supported speed modes", spinSpeed.value))
+  log.warn(string.format("Spin speed %s not found in supported speed modes", spinSpeedCurrent))
 end
 
 local function laundry_washer_controls_number_of_rinses_attr_handler(driver, device, ib, response)

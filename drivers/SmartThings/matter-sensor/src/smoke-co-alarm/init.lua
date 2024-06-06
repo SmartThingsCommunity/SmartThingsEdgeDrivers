@@ -12,10 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local utils = require "st.utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"

@@ -12,13 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
-local utils = require "st.utils"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 local version = require "version"

@@ -1,7 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
-local utils = require "st.utils"
 
 local LevelValue = {
   ID = 0x000A,
