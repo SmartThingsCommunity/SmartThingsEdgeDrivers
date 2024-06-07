@@ -11,7 +11,7 @@ components:
   - id: hardwareFault
     version: 1
   - id: firmwareUpdate
-        version: 1
+    version: 1
   - id: refresh
     version: 1
   categories:
