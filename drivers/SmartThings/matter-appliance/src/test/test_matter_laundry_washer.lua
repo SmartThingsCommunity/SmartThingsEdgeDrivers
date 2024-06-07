@@ -18,8 +18,6 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
-local version = require "version"
-
 clusters.LaundryWasherControls = require "LaundryWasherControls"
 clusters.LaundryWasherMode = require "LaundryWasherMode"
 clusters.OperationalState = require "OperationalState"
@@ -96,28 +94,24 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
--- This unit test has a dependency on an updated capability definition not included in 52 lua libs.
--- To prevent errors in CI, we will just ignore this unit test until CI uses updated lua libs
-if version.api >= 10 then
-  test.register_message_test(
-    "Operational state should generate correct messages",
+test.register_message_test(
+  "Operational state should generate correct messages",
+  {
     {
-      {
-        channel = "matter",
-        direction = "receive",
-        message = {
-          mock_device.id,
-          clusters.OperationalState.server.attributes.OperationalState:build_test_report_data(mock_device, 1, clusters.OperationalState.types.OperationalStateEnum.STOPPED)
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.operationalState.operationalState.stopped())
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OperationalState.server.attributes.OperationalState:build_test_report_data(mock_device, 1, clusters.OperationalState.types.OperationalStateEnum.STOPPED)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.operationalState.operationalState.stopped())
     }
-  )
-end
+  }
+)
 
 test.register_message_test(
   "Laundry washer rinse mode should generate correct messages",

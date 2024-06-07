@@ -18,8 +18,6 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
-local version = require "version"
-
 clusters.DishwasherAlarm = require "DishwasherAlarm"
 clusters.DishwasherMode = require "DishwasherMode"
 clusters.OperationalState = require "OperationalState"
@@ -99,7 +97,6 @@ test.set_test_init_function(test_init)
 
 -- This test requires an updated capability definition that does not exist in older lua libs
 -- Therefore, we will skip this test in CI until newer lua libs are used in the CI
-if version.api >= 10 then
 test.register_message_test(
   "Operational state should generate correct messages",
   {
@@ -118,6 +115,5 @@ test.register_message_test(
     }
   }
 )
-end
 
 test.run_registered_tests()
