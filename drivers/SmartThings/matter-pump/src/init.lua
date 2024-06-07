@@ -277,9 +277,12 @@ local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local max_level = get_field_for_endpoint(device, LEVEL_MAX, endpoint_id) or DEFAULT_MAX_LEVEL
   local min_level = get_field_for_endpoint(device, LEVEL_MIN, endpoint_id) or DEFAULT_MIN_LEVEL
+  log.info_with({hub_logs=true}, string.format("getting cmd.args.level: %s.", tostring(cmd.args.level)))
   local level = math.floor((cmd.args.level - min_level) / (max_level - min_level) * MAX_CAP_SWITCH_LEVEL)
   level = math.max(level, MIN_CAP_SWITCH_LEVEL)
+  log.info_with({hub_logs=true}, string.format("getting level: %s.", tostring(level)))
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
+  log.info_with(req)
   device:send(req)
 end
 
