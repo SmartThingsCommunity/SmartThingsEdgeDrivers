@@ -120,7 +120,7 @@ if version.api >= 10 then
 end
 
 test.register_message_test(
-  "Operational state should generate correct messages",
+  "Laundry washer rinse mode should generate correct messages",
   {
     {
       channel = "capability",
