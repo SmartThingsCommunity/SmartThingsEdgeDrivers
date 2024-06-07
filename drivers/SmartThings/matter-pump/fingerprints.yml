@@ -3,4 +3,4 @@ matterGeneric:
     deviceLabel: Matter Pump
     deviceTypes:
       - id: 0x0303
-    deviceProfileName: pump
+    deviceProfileName: pump-level
