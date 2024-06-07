@@ -1,4 +1,4 @@
-name: window-treatment-screeninnovations
+name: window-treatment-powerSource
 components:
   - id: main
     capabilities:
@@ -13,6 +13,8 @@ components:
       - id: refresh
         version: 1
       - id: powerSource
+        version: 1
+      - id: firmwareUpdate
         version: 1
     categories:
       - name: Blind

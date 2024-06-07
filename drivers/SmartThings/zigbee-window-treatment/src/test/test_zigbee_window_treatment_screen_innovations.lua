@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
-      profile = t_utils.get_profile_definition("window-treatment-screeninnovations.yml"),
+      profile = t_utils.get_profile_definition("window-treatment-powerSource.yml"),
       fingerprinted_endpoint_id = 0x01,
       zigbee_endpoints = {
         [1] = {
@@ -177,6 +177,71 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Basic.attributes.PowerSource:read(mock_device)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "doConfigure should generate expected messages",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, WindowCovering.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(mock_device, 0, 600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, WindowCovering.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(mock_device, 1, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 1, 3600, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Basic.ID)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Basic.attributes.PowerSource:configure_reporting(mock_device, 1, 3600)
+    })
+
+    -- read values after delay
+    test.mock_time.advance_time(3)
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)

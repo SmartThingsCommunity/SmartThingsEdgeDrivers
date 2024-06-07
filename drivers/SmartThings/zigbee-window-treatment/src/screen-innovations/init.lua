@@ -1,3 +1,17 @@
+-- Copyright 2024 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 -- require st provided libraries
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -32,14 +46,14 @@ end
 -- this is window_shade_level_cmd
 local function window_shade_level_cmd(driver, device, command)
   local go_to_level = command.args.shadeLevel
-  -- send levels without inverting as: 0% closed (i.e., open) to 100% closed (Bug #16054)
+  -- send levels without inverting as: 0% closed (i.e., open) to 100% closed
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, go_to_level))
 end
 
 -- this is window_shade_preset_cmd
 local function window_shade_preset_cmd(driver, device, command)
   local go_to_level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
-  -- send levels without inverting as: 0% closed (i.e., open) to 100% closed (Bug #16054)
+  -- send levels without inverting as: 0% closed (i.e., open) to 100% closed
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, go_to_level))
 end
 
@@ -55,7 +69,7 @@ end
 
 -- this is current_position_attr_handler
 local function current_position_attr_handler(driver, device, value, zb_rx)
-  local level = value.value --Bug #16054
+  local level = value.value
   local event = nil
   local motor_state_value = device:get_field(MOTOR_STATE) or MOTOR_STATE_IDLE
 
@@ -71,9 +85,9 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   -- when the device is in idle
   if motor_state_value == MOTOR_STATE_IDLE then
     if level == 0 then
-      event = capabilities.windowShade.windowShade.open() --Bug #16054
+      event = capabilities.windowShade.windowShade.open()
     elseif level == 100 then
-      event = capabilities.windowShade.windowShade.closed() --Bug #16054
+      event = capabilities.windowShade.windowShade.closed()
     else
       event = capabilities.windowShade.windowShade.partially_open()
     end
@@ -122,7 +136,7 @@ local function battery_perc_attr_handler(driver, device, value, zb_rx)
   local converted_value = value.value / 2
   converted_value = utils.round(converted_value)
   local motor_state_value = device:get_field(MOTOR_STATE) or ""
-  -- update battery percentage only motor is in idle state --Bug #16055
+  -- update battery percentage only motor is in idle state
   if motor_state_value == MOTOR_STATE_IDLE then
     device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value,
       capabilities.battery.battery(utils.clamp_value(converted_value, 0, 100)))
