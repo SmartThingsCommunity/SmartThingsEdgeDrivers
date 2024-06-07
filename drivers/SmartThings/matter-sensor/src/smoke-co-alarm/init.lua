@@ -96,11 +96,11 @@ local function match_profile(device)
     log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s.", profile_name))
     profile_name = ""
     if #smoke_eps > 0 and #co_eps > 0 then
-      profile_name = "smoke-co-battery"
+      profile_name = "smoke-co"
     elseif #smoke_eps > 0 and #co_eps == 0 then
-      profile_name = "smoke-battery"
+      profile_name = "smoke"
     elseif #co_eps > 0 and #smoke_eps == 0 then
-      profile_name = "co-battery"
+      profile_name = "co"
     end
     log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
   end

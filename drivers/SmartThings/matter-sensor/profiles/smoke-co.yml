@@ -1,12 +1,14 @@
-name: smoke-battery
+name: smoke-co
 components:
 - id: main
   capabilities:
   - id: smokeDetector
     version: 1
-  - id: hardwareFault
+  - id: carbonMonoxideDetector
     version: 1
   - id: batteryLevel
+    version: 1
+  - id: hardwareFault
     version: 1
   - id: refresh
     version: 1
