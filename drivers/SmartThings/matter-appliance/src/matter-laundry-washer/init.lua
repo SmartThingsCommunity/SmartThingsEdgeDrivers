@@ -76,10 +76,10 @@ end
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
   local temperatureLevel = ib.data.value
@@ -94,10 +94,10 @@ end
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
   supportedTemperatureLevels = {}
@@ -123,7 +123,7 @@ local function laundry_washer_supported_modes_attr_handler(driver, device, ib, r
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
@@ -149,7 +149,7 @@ local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, 
 end
 
 local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_controls_spin_speed_current_attr_handler spinSpeedCurrent: %s", ib.data.value))
 
   local spinSpeedCurrent = ib.data.value
@@ -163,33 +163,33 @@ local function laundry_washer_controls_spin_speed_current_attr_handler(driver, d
 end
 
 local function laundry_washer_controls_number_of_rinses_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_controls_number_of_rinses_attr_handler numberOfRinses: %s", ib.data.value))
 
   device:emit_event_for_endpoint(ib.endpoint_id, LAUNDRY_WASHER_RINSE_MODE_MAP[ib.data.value]())
 end
 
 local function laundry_washer_controls_supported_rinses_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_controls_supported_rinses_attr_handler: %s", ib.data.elements))
 
   laundryWasherControlsSupportedRinses = {}
   for _, numberOfRinses in ipairs(ib.data.elements) do
-    log.info_with({ hub_logs = true }, string.format("numberOfRinses: %s => %s", numberOfRinses.value, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME))
+    device.log.info_with({ hub_logs = true }, string.format("numberOfRinses: %s => %s", numberOfRinses.value, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME))
     table.insert(laundryWasherControlsSupportedRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME)
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(laundryWasherControlsSupportedRinses))
 end
 
 local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("operational_state_accepted_command_list_attr_handler: %s", ib.data.elements))
 
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
     if key_exists(OPERATIONAL_STATE_COMMAND_MAP, accepted_command_id) then
-      log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
+      device.log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
@@ -197,7 +197,7 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
@@ -213,7 +213,7 @@ local function operational_error_attr_handler(driver, device, ib, response)
   if version.api < 10 then
     clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
 
   local operationalError = ib.data.elements.error_state_id.value
@@ -228,7 +228,7 @@ end
 
 -- Capability Handlers --
 local function handle_laundry_washer_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_laundry_washer_mode[%s] mode: %s", cmd.component, cmd.args.mode))
 
   local ENDPOINT = 1
@@ -241,7 +241,7 @@ local function handle_laundry_washer_mode(driver, device, cmd)
 end
 
 local function handle_temperature_level(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
   local ENDPOINT = 1
@@ -254,7 +254,7 @@ local function handle_temperature_level(driver, device, cmd)
 end
 
 local function handle_laundry_washer_spin_speed(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
 
   local ENDPOINT = 1
@@ -267,7 +267,7 @@ local function handle_laundry_washer_spin_speed(driver, device, cmd)
 end
 
 local function handle_laundry_washer_rinse_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_laundry_washer_rinse_mode rinseMode: %s", cmd.args.rinseMode))
 
   local ENDPOINT = 1

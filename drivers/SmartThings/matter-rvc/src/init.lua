@@ -62,7 +62,7 @@ end
 local function set_field_supported_modes(device, field_prefix, supported_modes)
   local labels_field = string.format("%s_labels", field_prefix)
   local labels_of_supported_modes = {}
-  log.info_with({hub_logs = true}, string.format("Supported modes: %s", utils.stringify_table(supported_modes)))
+  device.log.info_with({hub_logs = true}, string.format("Supported modes: %s", utils.stringify_table(supported_modes)))
   for i, mode in ipairs(supported_modes) do
     if version.api < 10 then
       clusters.RvcRunMode.types.ModeOptionStruct:augment_type(mode)
@@ -166,7 +166,7 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("rvc_run_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local current_mode = ib.data.value
@@ -215,7 +215,7 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("rvc_clean_mode_current_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
@@ -234,7 +234,7 @@ local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, resp
 end
 
 local function rvc_operational_state_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("rvc_operational_state_attr_handler operationalState: %s", ib.data.value))
 
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
@@ -258,7 +258,7 @@ local function rvc_operational_error_attr_handler(driver, device, ib, response)
   if version.api < 10 then
     clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("rvc_operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
 
   local operationalError = ib.data.elements.error_state_id.value
@@ -289,7 +289,7 @@ end
 
 -- Capability Handlers --
 local function handle_robot_cleaner_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
   local ENDPOINT = 1

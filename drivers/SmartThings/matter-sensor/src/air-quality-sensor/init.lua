@@ -283,7 +283,7 @@ local function configure(driver, device)
   end
 
   if not tbl_contains(supported_profiles, profile_name) then
-    log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s", profile_name))
+    device.log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s", profile_name))
     if #co_meas_eps > 0 or #no2_meas_eps > 0 or #ozone_meas_eps > 0 or #formaldehyde_meas_eps > 0 or
         #pm1_meas_eps > 0 or #pm10_meas_eps > 0 or #radon_meas_eps > 0 then
         -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
@@ -296,7 +296,7 @@ local function configure(driver, device)
       profile_name = "air-quality-sensor"
     end
   end
-  log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
 

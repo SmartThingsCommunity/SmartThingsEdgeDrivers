@@ -227,9 +227,9 @@ local function do_configure(driver, device)
   local profile_name = "thermostat"
   --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if device_type == RAC_DEVICE_TYPE_ID then
-    log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
+    device.log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
   elseif device_type == FAN_DEVICE_TYPE_ID then
-    log.warn_with({hub_logs=true}, "Fan supports only one profile")
+    device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
   elseif device_type == AP_DEVICE_TYPE_ID then
     -- currently no profile switching for Air Purifier
     profile_name = "air-purifier"
@@ -243,7 +243,7 @@ local function do_configure(driver, device)
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
     end
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif #thermo_eps == 1 then
     if #humidity_eps > 0 and #fan_eps > 0 then
@@ -255,7 +255,7 @@ local function do_configure(driver, device)
     end
 
     if #heat_eps == 0 and #cool_eps == 0 then
-      log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
+      device.log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
       return
     elseif #heat_eps > 0 and #cool_eps == 0 then
       profile_name = profile_name .. "-heating-only"
@@ -272,14 +272,14 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-nobattery"
     end
 
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif #fan_eps == 1 then
     profile_name = "fan"
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   else
-    log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
+    device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
   end
 end
 

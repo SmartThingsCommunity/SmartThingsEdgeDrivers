@@ -44,7 +44,7 @@ function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)
       local embedded_cluster = embedded_clusters[cluster_id]
       local opts = opts or {}
       if utils.table_size(opts) > 1 then
-        log.warn_with({hub_logs = true}, "Invalid options for get_endpoints")
+        device.log.warn_with({hub_logs = true}, "Invalid options for get_endpoints")
         return
       end
       local clus_has_features = function(clus, feature_bitmap)

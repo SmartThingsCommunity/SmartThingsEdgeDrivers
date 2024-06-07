@@ -99,10 +99,10 @@ end
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
@@ -124,7 +124,7 @@ local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
     local tn_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
     if #tn_eps == 0 then
-      log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
       return
     end
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
@@ -137,10 +137,10 @@ end
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
   local temperatureLevel = ib.data.value
@@ -155,10 +155,10 @@ end
 local function supported_temperature_levels_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
   supportedTemperatureLevels = {}
@@ -203,7 +203,7 @@ local function refrigerator_alarm_attr_handler(driver, device, ib, response)
 end
 
 local function temp_event_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
   string.format("temp_event_handler: %s", ib.data.value))
 
   local temp
@@ -234,10 +234,10 @@ end
 local function handle_temperature_setpoint(driver, device, cmd)
   local tn_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
   end
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local value = cmd.args.setpoint
@@ -265,7 +265,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
 end
 
 local function handle_temperature_level(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
   local ep = component_to_endpoint(device, cmd.component)

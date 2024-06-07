@@ -91,9 +91,9 @@ local function match_profile(device)
   profile_name = string.sub(profile_name, 2)
 
   if tbl_contains(supported_profiles, profile_name) then
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   else
-    log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s.", profile_name))
+    device.log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s.", profile_name))
     profile_name = ""
     if #smoke_eps > 0 and #co_eps > 0 then
       profile_name = "smoke-co"
@@ -102,7 +102,7 @@ local function match_profile(device)
     elseif #co_eps > 0 and #smoke_eps == 0 then
       profile_name = "co"
     end
-    log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
   end
   device:try_update_metadata({profile = profile_name})
   device:set_field(PROFILE_MATCHED, 1)

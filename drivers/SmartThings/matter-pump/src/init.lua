@@ -156,10 +156,10 @@ local function do_configure(driver, device)
     else
       profile_name = profile_name .. "-only"
     end
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   else
-    log.warn_with({hub_logs=true}, "Device does not support pump configuration and control cluster")
+    device.log.warn_with({hub_logs=true}, "Device does not support pump configuration and control cluster")
   end
   set_supported_op_mode(driver, device)
   set_supported_control_mode(driver, device)
