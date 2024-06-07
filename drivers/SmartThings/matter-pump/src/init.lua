@@ -20,10 +20,12 @@ local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
 local IS_LOCAL_OVERRIDE = "__is_local_override"
-local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
-local SWITCH_LEVEL_LIGHTING_MIN = 1
+local DEFAULT_MAX_LEVEL = 254
+local DEFAULT_MIN_LEVEL = 0
+local MIN_CAP_SWITCH_LEVEL = 1 -- we don't want 0% to be a reasonable request.
+local MAX_CAP_SWITCH_LEVEL = 100
 
 local pumpOperationMode = capabilities.pumpOperationMode
 local pumpControlMode = capabilities.pumpControlMode
@@ -71,6 +73,15 @@ local subscribed_attributes = {
     clusters.PumpConfigurationAndControl.attributes.EffectiveControlMode,
   },
 }
+
+local function get_field_for_endpoint(device, field, endpoint)
+  return device:get_field(string.format("%s_%d", field, endpoint))
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -183,8 +194,10 @@ end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value then
-      local max_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
-      local level = math.floor((ib.data.value / max_level * 100) + 0.5)
+      local max_level = get_field_for_endpoint(device, LEVEL_MAX, ib.endpoint_id) or DEFAULT_MAX_LEVEL
+      local min_level = get_field_for_endpoint(device, LEVEL_MIN, ib.endpoint_id) or DEFAULT_MIN_LEVEL
+      local level = math.floor((ib.data.value - min_level) / (max_level - min_level) * MAX_CAP_SWITCH_LEVEL)
+      level = math.max(level, MIN_CAP_SWITCH_LEVEL)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
 end
@@ -229,47 +242,21 @@ local function pump_status_handler(driver, device, ib, response)
   end
 end
 
-local tbl_contains = function(t, val)
-  for _, v in pairs(t) do
-    if v == val then
-      return true
-    end
-  end
-  return false
-end
-
+-- takes in a_min_or_max_val as a key identifier for max/min level value
 local level_bounds_handler = function(a_min_or_max_val)
-  return function(driver, device, ib, response)   
-    -- if there is no reported level (ib.data.value), return
+  return function(driver, device, ib, response)
+
+    -- if there is no reported max/min level (ib.data.value), return
     if not ib.data.value then
       return
     end
 
-    -- find lighting endpoints to see if Lighting is supported here
-    local lighting_eps = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
-    local lighting_is_supported = tbl_contains(lighting_eps, ib.endpoint_id)
-
-    -- per the spec, MinLevel must be >= 1 if Lighting is supported
-    local level_received = ib.data.value
-    if lighting_is_supported and level_received < SWITCH_LEVEL_LIGHTING_MIN then
-      level_received = SWITCH_LEVEL_LIGHTING_MIN
-    end
-
     -- set the recieved, perhaps edited level for the endpoint
-    device:set_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..a_min_or_max_val, ib.endpoint_id, level_received)
+    set_field_for_endpoint(device, a_min_or_max_val, ib.endpoint_id, ib.data.value)
 
-    -- get max and min levels and set capabilities if both are defined
-    local max_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MAX, ib.endpoint_id)
-    local min_level = device:get_field_for_endpoint(device, LEVEL_BOUND_RECEIVED..LEVEL_MIN, ib.endpoint_id)
-    if min_level and max_level then
-      if min_level < max_level then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min_level, maximum = max_level} }))
-      else
-        device.log.warn_with({hub_logs = true}, string.format(
-          "Device reported a min level value %d that is not lower than the reported max level value %d", min_level, max_level)
-        )
-      end
-    end
+    -- we want this to occur every time the device is initialized; where else can this go?
+    -- minimum allowable percent to appear on the capability is 1%, not 0%
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = MIN_CAP_SWITCH_LEVEL, maximum = MAX_CAP_SWITCH_LEVEL} }))
   end
 end
 
@@ -287,9 +274,11 @@ local function handle_switch_off(driver, device, cmd)
 end
 
 local function handle_set_level(driver, device, cmd)
-  -- device:subscribe()
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level / 100.0 * 254)
+  local max_level = get_field_for_endpoint(device, LEVEL_MAX, endpoint_id) or DEFAULT_MAX_LEVEL
+  local min_level = get_field_for_endpoint(device, LEVEL_MIN, endpoint_id) or DEFAULT_MIN_LEVEL
+  local level = math.floor((cmd.args.level - min_level) / (max_level - min_level) * MAX_CAP_SWITCH_LEVEL)
+  level = math.max(level, MIN_CAP_SWITCH_LEVEL)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
   device:send(req)
 end
