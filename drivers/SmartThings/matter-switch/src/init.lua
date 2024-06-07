@@ -75,6 +75,78 @@ local device_type_profile_map = {
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
   [GENERIC_SWITCH_ID] = "button"
 }
+
+local device_type_attribute_map = {
+  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+  },
+  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [ON_OFF_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [ON_OFF_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [GENERIC_SWITCH_ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
+  }
+}
 local detect_matter_thing
 
 local START_BUTTON_PRESS = "__start_button_press"
@@ -198,6 +270,17 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
+      for _, attr in pairs(device_type_attribute_map[id]) do
+        if id == GENERIC_SWITCH_ID then
+          if attr == clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_attribute(attr)
+          else
+            device:add_subscribed_event(attr)
+          end
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
     end
   end
   -- default to "switch-binary" if no profile is found
@@ -269,11 +352,10 @@ local function initialize_switch(driver, device)
     -- that have been implemented as server. This can be removed when we have
     -- support for bindings.
     local num_switch_server_eps = 0
-    local num_button_server_eps = 0
     local main_endpoint = find_default_endpoint(device)
 
     for _, ep in ipairs(all_eps) do
-      if device:supports_server_cluster(clusters.Switch.ID, ep) then
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) or device:supports_server_cluster(clusters.Switch.ID, ep) then
         -- Configure MCD for button endpoints
         if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
           if ep ~= main_endpoint then
@@ -287,10 +369,10 @@ local function initialize_switch(driver, device)
             component_map["main"] = ep
           end
           component_map_used = true
-        else -- Create child devices for non-main button endpoints
-          num_button_server_eps = num_button_server_eps + 1
+        else -- Create child devices for non-main switch endpoints
+          num_switch_server_eps = num_switch_server_eps + 1
           if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-            local name = string.format("%s %d", device.label, num_button_server_eps)
+            local name = string.format("%s %d", device.label, num_switch_server_eps)
             local child_profile = assign_child_profile(device, ep)
             driver:try_create_device(
                 {
@@ -305,25 +387,6 @@ local function initialize_switch(driver, device)
             current_component_number = current_component_number + 1
             parent_child_device = true
           end
-        end
-      elseif device:supports_server_cluster(clusters.OnOff.ID, ep) then
-        -- Create child devices for non-main switch endpoints
-        num_switch_server_eps = num_switch_server_eps + 1
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local name = string.format("%s %d", device.label, num_switch_server_eps)
-          local child_profile = assign_child_profile(device, ep)
-          driver:try_create_device(
-              {
-                type = "EDGE_CHILD",
-                label = name,
-                profile = child_profile,
-                parent_device_id = device.id,
-                parent_assigned_child_key = string.format("%d", ep),
-                vendor_provided_label = name
-              }
-          )
-          current_component_number = current_component_number + 1
-          parent_child_device = true
         end
       end
     end
@@ -355,10 +418,13 @@ local function initialize_switch(driver, device)
       end
 
       if new_profile then
+        if #switch_eps > 0 then
+          new_profile = new_profile .. "-switch"
+        end
         device:try_update_metadata({profile = new_profile})
       end
     else
-      -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
+      -- The case where num_server_eps > 0 is a workaround for devices that have a
       -- Light Switch device type but implement the On Off cluster as server (which is against the spec
       -- for this device type). By default, we do not support Light Switch device types because by spec these
       -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
@@ -589,10 +655,7 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = device
-    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
-      temp_device = find_child(device, ib.endpoint_id) or device
-    end
+    local temp_device = find_child(device, ib.endpoint_id) or device
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
@@ -804,9 +867,6 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
   end
-
-  -- call device init in case init is not called after added due to device caching
-  device_init(driver, device)
 end
 
 local matter_driver_template = {
