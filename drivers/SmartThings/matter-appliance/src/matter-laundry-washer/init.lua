@@ -46,17 +46,6 @@ local laundryWasherModeSupportedModes = {}
 local laundryWasherControlsSpinSpeeds = {}
 local laundryWasherControlsSupportedRinses = {}
 
--- helper functions
-local function key_exists(array, key)
-  for k, _ in pairs(array) do
-    if k == key then
-      return true
-    end
-  end
-  return false
-end
---------------------------------------------------------------------------
-
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -188,7 +177,7 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
-    if key_exists(OPERATIONAL_STATE_COMMAND_MAP, accepted_command_id) then
+    if OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id] ~= nil then
       device.log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end

@@ -379,7 +379,7 @@ local conversion_tables = {
 local function unit_conversion(value, from_unit, to_unit)
   local conversion_function = conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
-    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversionfrom %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
+    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
     return 1
   end
 

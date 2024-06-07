@@ -37,17 +37,6 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
 local supportedTemperatureLevels = {}
 local dishwasherModeSupportedModes = {}
 
--- helper functions
-local function key_exists(array, key)
-  for k, _ in pairs(array) do
-    if k == key then
-      return true
-    end
-  end
-  return false
-end
---------------------------------------------------------------------------
-
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -127,7 +116,7 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
     string.format("dishwasher_alarm_attr_handler state: %s", ib.data.value))
 
   local isWaterFlowRateAlarm = false
-  local isContacSensorAlarm = false
+  local isContactSensorAlarm = false
   local isTemperatureAlarm = false
   local isWaterFlowVolumeAlarm = false
 
@@ -142,7 +131,7 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
   end
   if state & clusters.DishwasherAlarm.types.AlarmMap.DOOR_ERROR > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
-    isContacSensorAlarm = true
+    isContactSensorAlarm = true
   end
   if state & clusters.DishwasherAlarm.types.AlarmMap.TEMP_TOO_LOW > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.freeze())
@@ -160,7 +149,7 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
   if not isWaterFlowRateAlarm then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.normal())
   end
-  if not isContacSensorAlarm then
+  if not isContactSensorAlarm then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
   end
   if not isTemperatureAlarm then
@@ -178,7 +167,7 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
-    if key_exists(OPERATIONAL_STATE_COMMAND_MAP, accepted_command_id) then
+    if OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id] ~= nil then
       device.log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end

@@ -1,4 +1,4 @@
-name: air-quality-tuo
+name: air-quality-temp-humidity-pressure-tvoc-meas
 components:
   - id: main
     capabilities:
