@@ -34,21 +34,24 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP",
 }
 
-local endpointToComponentMap = {}
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local refrigeratorTccModeSupportedModesMap = {}
 local supportedTemperatureLevels = {}
 
 local function endpoint_to_component(device, ep)
-  local map = endpointToComponentMap
-  if map[ep] and device.profile.components[map[ep]] then
-    return map[ep]
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+       return component
+    end
   end
   return "main"
 end
 
-local function component_to_endpoint(device, component_name)
-  for ep, component in pairs(endpointToComponentMap) do
-    if component == component_name then return ep end
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
   end
   return 1
 end
@@ -73,10 +76,11 @@ local function device_added(driver, device)
   table.sort(cabinet_eps)
 
   if #cabinet_eps > 1 then
-    endpointToComponentMap = { -- This is just a guess for now
-      [cabinet_eps[1]] = "refrigerator",
-      [cabinet_eps[2]] = "freezer"
+    local componentToEndpointMap = { -- This is just a guess for now
+      ["refrigerator"] = cabinet_eps[1],
+      ["freezer"] = cabinet_eps[2]
     }
+    device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, {persist = true})
   end
 end
 
@@ -177,11 +181,11 @@ local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib,
 end
 
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
-  local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ib.endpoint_id]
+  local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ib.endpoint_id] or {}
   for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
     if i - 1 == currentMode then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
@@ -214,11 +218,11 @@ end
 
 -- Capability Handlers --
 local function handle_refrigerator_tcc_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
+  device.log.info_with({ hub_logs = true },
     string.format("handle_refrigerator_tcc_mode mode: %s", cmd.args.mode))
 
   local ep = component_to_endpoint(device, cmd.component)
-  local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ep]
+  local refrigeratorTccModeSupportedModes = refrigeratorTccModeSupportedModesMap[ep] or {}
   for i, mode in ipairs(refrigeratorTccModeSupportedModes) do
     if cmd.args.mode == mode then
       device:send(clusters.RefrigeratorAndTemperatureControlledCabinetMode.commands.ChangeToMode(device, ep, i - 1))
