@@ -1,4 +1,4 @@
-name: air-quality-sensor-temp-humidity-all-meas
+name: aqs-temp-humidity-co2-pm25-tvoc-meas
 components:
   - id: main
     capabilities:
@@ -8,21 +8,9 @@ components:
         version: 1
       - id: relativeHumidityMeasurement
         version: 1
-      - id: nitrogenDioxideMeasurement
-        version: 1
-      - id: ozoneMeasurement
-        version: 1
-      - id: carbonMonoxideMeasurement
-        version: 1
       - id: carbonDioxideMeasurement
         version: 1
-      - id: formaldehydeMeasurement
-        version: 1
-      - id: veryFineDustSensor
-        version: 1
       - id: dustSensor
-        version: 1
-      - id: radonMeasurement
         version: 1
       - id: tvocMeasurement
         version: 1

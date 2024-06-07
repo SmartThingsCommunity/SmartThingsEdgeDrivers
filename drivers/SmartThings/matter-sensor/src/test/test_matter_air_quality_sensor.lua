@@ -32,7 +32,7 @@ clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
 clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-all-level-all-meas.yml"),
+  profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -72,7 +72,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_common = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas.yml"),
+  profile = t_utils.get_profile_definition("aqs-temp-humidity-co2-pm25-tvoc-meas.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -105,7 +105,7 @@ local mock_device_common = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_level = test.mock_device.build_test_matter_device({
-    profile = t_utils.get_profile_definition("air-quality-sensor-temp-humidity-all-level.yml"),
+    profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level.yml"),
     manufacturer_info = {
         vendor_id = 0x0000,
         product_id = 0x0000,
@@ -553,7 +553,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-    mock_device:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-all-level-all-meas" })
+    mock_device:expect_metadata_update({ profile = "aqs-temp-humidity-all-level-all-meas" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -572,7 +572,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device_common.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_common.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_common.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-    mock_device_common:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas" })
+    mock_device_common:expect_metadata_update({ profile = "aqs-temp-humidity-co2-pm25-tvoc-meas" })
     mock_device_common:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_common }
@@ -592,7 +592,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device_level.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_level.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
     test.socket.matter:__expect_send({mock_device_level.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-    mock_device_level:expect_metadata_update({ profile = "air-quality-sensor-temp-humidity-all-level" })
+    mock_device_level:expect_metadata_update({ profile = "aqs-temp-humidity-all-level" })
     mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_level }

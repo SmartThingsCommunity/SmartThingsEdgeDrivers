@@ -156,12 +156,12 @@ end
 
 local supported_profiles =
 {
-  "air-quality-sensor",
-  "air-quality-sensor-temp-humidity-all-level-all-meas",
-  "air-quality-sensor-temp-humidity-all-level",
-  "air-quality-sensor-temp-humidity-all-meas",
-  "air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas",
-  "air-quality-sensor-temp-humidity-tvoc-level-pm25-meas",
+  "aqs",
+  "aqs-temp-humidity-all-level-all-meas",
+  "aqs-temp-humidity-all-level",
+  "aqs-temp-humidity-all-meas",
+  "aqs-temp-humidity-co2-pm25-tvoc-meas",
+  "aqs-temp-humidity-tvoc-level-pm25-meas",
 }
 
 local function configure(driver, device)
@@ -194,7 +194,7 @@ local function configure(driver, device)
   local tvoc_level_eps = embedded_cluster_utils.get_endpoints(device, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.LEVEL_INDICATION})
   local tvoc_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, {feature_bitmap = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT})
 
-  local profile_name = "air-quality-sensor"
+  local profile_name = "aqs"
   local level_indication_support = ""
   local numeric_measurement_support = ""
 
@@ -286,14 +286,12 @@ local function configure(driver, device)
     device.log.warn_with({hub_logs=true}, string.format("No matching profile for device. Tried to use profile %s", profile_name))
     if #co_meas_eps > 0 or #no2_meas_eps > 0 or #ozone_meas_eps > 0 or #formaldehyde_meas_eps > 0 or
         #pm1_meas_eps > 0 or #pm10_meas_eps > 0 or #radon_meas_eps > 0 then
-        -- device supports a cluster that is only currently in the 'air-quality-sensor' profile
-      profile_name = "air-quality-sensor-temp-humidity-all-meas"
+      profile_name = "aqs-temp-humidity-all-meas"
     elseif #humidity_eps > 0 or #temp_eps > 0 or #co2_meas_eps > 0 or #pm2_5_meas_eps > 0 or #tvoc_meas_eps > 0 then
-      -- device supports one or more of the common clusters, so switch to a more limited profile
-      profile_name = "air-quality-sensor-temp-humidity-co2-pm25-tvoc-meas"
+      profile_name = "aqs-temp-humidity-co2-pm25-tvoc-meas"
     else
       -- device only supports air quality at this point
-      profile_name = "air-quality-sensor"
+      profile_name = "aqs"
     end
   end
   device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))

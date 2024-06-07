@@ -1,4 +1,4 @@
-name: air-quality-sensor-level
+name: aqs-level
 components:
   - id: main
     capabilities:
@@ -39,7 +39,7 @@ components:
       - id: tvocMeasurement
         version: 1
       - id: firmwareUpdate
-    version: 1
+        version: 1
       - id: refresh
         version: 1
     categories:

@@ -1,4 +1,4 @@
-name: air-quality-sensor-temp-humidity-tvoc-level-pm25-meas
+name: aqs-temp-humidity-tvoc-level-pm25-meas
 components:
   - id: main
     capabilities:

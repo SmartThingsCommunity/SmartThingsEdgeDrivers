@@ -116,7 +116,7 @@ matterGeneric:
     deviceLabel: Matter Air Quality Sensor
     deviceTypes:
       - id: 0x002C
-    deviceProfileName: air-quality-sensor
+    deviceProfileName: aqs
   - id: "matter/smoke-co-alarm"
     deviceLabel: Matter Smoke/CO Alarm
     deviceTypes:
