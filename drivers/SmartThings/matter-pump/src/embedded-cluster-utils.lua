@@ -1,6 +1,4 @@
 local clusters = require "st.matter.clusters"
-
-local log = require "log"
 local utils = require "st.utils"
 
 -- Include driver-side definitions when lua libs api version is < 10

@@ -16,8 +16,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
-local log = require "log"
-
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
 local PROFILE_MATCHED = "__profile_matched"

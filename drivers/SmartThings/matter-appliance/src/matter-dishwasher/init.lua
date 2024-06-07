@@ -16,8 +16,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
-local log = require "log"
-
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 local version = require "version"
 if version.api < 10 then
