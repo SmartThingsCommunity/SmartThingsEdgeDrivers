@@ -29,6 +29,7 @@ end
 local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
 
+local SUPPORTED_TEMP_LEVEL = "supportedTemperatureLevels"
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",
@@ -36,7 +37,6 @@ local setpoint_limit_device_field = {
 
 local endpointToComponentMap = {}
 local refrigeratorTccModeSupportedModesMap = {}
-local supportedTemperatureLevels = {}
 
 local function endpoint_to_component(device, ep)
   local map = endpointToComponentMap
@@ -140,7 +140,8 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
   local temperatureLevel = ib.data.value
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+  local stl = device:get_field(SUPPORTED_TEMP_LEVEL)
+  for i, tempLevel in ipairs(stl) do
     if i - 1 == temperatureLevel then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
       break
@@ -154,14 +155,14 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
-    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
-
-  supportedTemperatureLevels = {}
+  local stl = {}
   for _, tempLevel in ipairs(ib.data.elements) do
-    table.insert(supportedTemperatureLevels, tempLevel.value)
+    log.info_with({ hub_logs = true },
+      string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
+    table.insert(stl, tempLevel.value)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  device:set_field(SUPPORTED_TEMP_LEVEL, stl, { persist = true })
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(stl))
 end
 
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
@@ -261,11 +262,12 @@ local function handle_temperature_setpoint(driver, device, cmd)
 end
 
 local function handle_temperature_level(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
-
   local ep = component_to_endpoint(device, cmd.component)
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+  log.info_with({ hub_logs = true },
+    string.format("handle_temperature_level: %s(%d)", cmd.args.temperatureLevel, ep))
+
+  local stl = device:get_field(SUPPORTED_TEMP_LEVEL)
+  for i, tempLevel in ipairs(stl) do
     if cmd.args.temperatureLevel == tempLevel then
       device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, nil, i - 1))
       return
