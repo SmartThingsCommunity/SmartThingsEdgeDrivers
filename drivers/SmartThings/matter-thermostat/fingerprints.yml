@@ -1,3 +1,16 @@
+matterManufacturer:
+  - id: "matter/samsung-room-air-conditioner"
+    deviceLabel: Samsung Room Air Conditioner
+    vendorId: 0x10e1
+    productId: 0x1023
+    deviceProfileName: room-air-conditioner
+
+  - id: "Leedarson AiDot Air Purifier"
+    deviceLabel: AiDot Air Purifier
+    vendorId: 0x1396
+    productId: 0x0043A
+    deviceProfileName: air-purifier-hepa
+
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
@@ -47,3 +60,18 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
     deviceProfileName: thermostat-humidity-fan
+  - id: "matter/room-air-conditioner"
+    deviceLabel: Matter Room Air Conditioner
+    deviceTypes:
+      - id: 0x0072
+    deviceProfileName: room-air-conditioner
+  - id: "matter/fan"
+    deviceLabel: Matter Fan
+    deviceTypes:
+      - id: 0x002B
+    deviceProfileName: fan
+  - id: "matter/air-purifier"
+    deviceLabel: Matter Air Purifier
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+    deviceProfileName: air-purifier-hepa-ac-wind
