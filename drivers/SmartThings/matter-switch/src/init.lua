@@ -894,7 +894,9 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
     capabilities.motionSensor,
-    capabilities.illuminanceMeasurement
+    capabilities.illuminanceMeasurement,
+    capabilities.button,
+    capabilities.battery
   },
   sub_drivers = {
     require("eve-energy"),
