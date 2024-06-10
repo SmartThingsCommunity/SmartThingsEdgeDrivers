@@ -26,12 +26,6 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xFF15
     deviceProfileName: window-covering
-  - id: "5020/65535"
-    deviceLabel: Zemismart ZM25M Matter Roller Motor
-    vendorId: 0x139C
-    productId: 0xFFFF
-    deviceProfileName: window-covering
-
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering
