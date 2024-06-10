@@ -12,9 +12,9 @@ attributes:
           title: Anti-Lock status
           type: string
           enum:
-            - enabled
-            - disabled
-            - unknown
+            - "enabled"
+            - "disabled"
+            - "unknown"
       additionalProperties: false
       required:
         - value
