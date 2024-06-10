@@ -1,0 +1,10 @@
+name: air-quality-sensor
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: AirQualityDetector

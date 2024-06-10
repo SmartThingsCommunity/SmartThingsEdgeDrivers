@@ -1,0 +1,4 @@
+name: 'Matter RVC'
+packageKey: 'matter-rvc'
+permissions:
+  matter: {}

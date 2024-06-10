@@ -295,7 +295,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}))
     },
     {
       channel = "matter",
@@ -308,7 +308,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "heat"}))
     },
     {
       channel = "matter",
@@ -321,7 +321,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool"}))
     },
   }
 )
@@ -340,7 +340,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}))
     },
 		{
       channel = "matter",
@@ -358,7 +358,7 @@ test.register_message_test(
 		{
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto", "emergency heat"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat", "emergency heat"}))
     }
   }
 )

@@ -1,0 +1,17 @@
+name: pump-only
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: pumpOperationMode
+    version: 1
+  - id: pumpControlMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Irrigation
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-pump-level
