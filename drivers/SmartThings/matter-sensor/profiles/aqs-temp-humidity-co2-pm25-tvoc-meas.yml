@@ -10,7 +10,7 @@ components:
         version: 1
       - id: carbonDioxideMeasurement
         version: 1
-      - id: dustSensor
+      - id: fineDustSensor
         version: 1
       - id: tvocMeasurement
         version: 1

@@ -297,6 +297,10 @@ local matter_driver_template = {
     [capabilities.fineDustHealthConcern.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
     },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
     [capabilities.dustSensor.ID] = {
       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,

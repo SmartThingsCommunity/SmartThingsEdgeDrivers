@@ -334,6 +334,7 @@ local unit_default = {
   [capabilities.ozoneMeasurement.NAME] = units.PPM,
   [capabilities.formaldehydeMeasurement.NAME] = units.PPM,
   [capabilities.veryFineDustSensor.NAME] = units.UGM3,
+  [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
   [capabilities.tvocMeasurement.NAME] = units.PPM
@@ -400,6 +401,11 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
     if reporting_unit then
       local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
       device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
+
+      -- handle case where device profile supports both fineDustLevel and dustLevel
+      if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = unit_strings[target_unit]}))
+      end
     end
   end
 end
@@ -480,8 +486,8 @@ local matter_air_quality_sensor_handler = {
         [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
       },
       [clusters.Pm25ConcentrationMeasurement.ID] = {
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.dustSensor.NAME, capabilities.dustSensor.fineDustLevel, units.UGM3),
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.dustSensor.NAME),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, units.UGM3),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.fineDustSensor.NAME),
         [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
       },
       [clusters.Pm10ConcentrationMeasurement.ID] = {
