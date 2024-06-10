@@ -408,7 +408,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.airQualityHealthConcern.hazardous())
-    }
+    },
   }
 )
 
@@ -431,7 +431,59 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = 18, unit = "ppm"}))
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.dustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.dustSensor.dustLevel({value = 18, unit = "μg/m^3"}))
+    )
   end
+)
+
+test.register_coroutine_test(
+  "PM25 reports work for profile with only fineDustLevel capability",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device_common.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device_common, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device_common.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device_common, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_common:generate_test_message("main", capabilities.fineDustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
+    )
+  end,
+  { test_init = test_init_common }
 )
 
 test.register_coroutine_test(
