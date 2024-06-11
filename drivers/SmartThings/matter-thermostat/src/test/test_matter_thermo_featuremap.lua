@@ -30,13 +30,13 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {
           cluster_id = clusters.Thermostat.ID,
@@ -46,6 +46,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -64,7 +67,7 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1}  -- RootNode
       }
     },
     {
@@ -78,6 +81,9 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
           feature_map=2, -- Cool feature only.
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -96,7 +102,7 @@ local mock_device_no_battery = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -109,6 +115,9 @@ local mock_device_no_battery = test.mock_device.build_test_matter_device({
           feature_map=2, -- Cool feature only.
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -118,11 +127,16 @@ local cluster_subscribe_list = {
   clusters.Thermostat.attributes.LocalTemperature,
   clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
   clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,
@@ -132,25 +146,40 @@ local cluster_subscribe_list_simple = {
   clusters.Thermostat.attributes.LocalTemperature,
   clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
   clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   clusters.PowerSource.attributes.BatPercentRemaining,
 }
 local cluster_subscribe_list_no_battery = {
   clusters.Thermostat.attributes.LocalTemperature,
   clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
   clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
 }
 
 local function test_init()
+  -- Set MIN_SETPOINT_DEADBAND_CHECKED bypass the setpoint limit read so it does not need
+  -- to be checked in the init function.
+  mock_device:set_field("MIN_SETPOINT_DEADBAND_CHECKED", 1, {persist = true})
+  mock_device_simple:set_field("MIN_SETPOINT_DEADBAND_CHECKED", 1, {persist = true})
+  mock_device_no_battery:set_field("MIN_SETPOINT_DEADBAND_CHECKED", 1, {persist = true})
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -183,9 +212,6 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
-    read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-    test.socket.matter:__expect_send({mock_device.id, read_limits})
     --TODO why does provisiong state get added in the do configure event handle, but not the refres?
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -211,9 +237,6 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
-    local read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
-    read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-    test.socket.matter:__expect_send({mock_device_simple.id, read_limits})
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -223,9 +246,6 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event no battery support",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_no_battery.id, "doConfigure" })
-    local read_limits = clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read()
-    read_limits:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-    test.socket.matter:__expect_send({mock_device_no_battery.id, read_limits})
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
     mock_device_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
