@@ -1,4 +1,4 @@
-name: lock-nocodes-nobattery
+name: lock-nocodes-nobattery-lockAlarm
 components:
 - id: main
   capabilities:
