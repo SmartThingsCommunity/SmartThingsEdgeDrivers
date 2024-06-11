@@ -17,9 +17,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version=1 })
 
 local FINGERPRINTS = {
-  {mfr = 0x0086, prodId = 0x0060},
-  {mfr = 0x0371, prodId = 0x00AF},
-  {mfr = 0x0371, prodId = 0x0017}
+  {mfr = 0x0086, prodId = 0x0060}
 }
 
 local function can_handle(opts, driver, device, ...)
