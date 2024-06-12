@@ -182,7 +182,7 @@ local setpoint_cmd_handler = function(driver, device, cmd)
     -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
     local p2 = last_setpointTemp & 0xFF
     local p3 = last_setpointTemp >> 8
-    local type = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.heat.NAME) or 'eco'
+    local type = 0x00 -- eco
 
     if mode == ThermostatMode.thermostatMode.heat.NAME then
       -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
@@ -212,9 +212,29 @@ end
 -- temperature setpoint handler
 local handle_set_setpoint = function(driver, device, command)
   local value = command.args.setpoint
+  local type = 0x00 -- default eco
 
-  -- write new setpoint
-  device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, value * 100))
+  local mode = device:get_latest_state("main", ThermostatMode.ID, ThermostatMode.thermostatMode.NAME, 'eco')
+
+  if mode == ThermostatMode.thermostatMode.heat.NAME then
+    -- Setpoint type "1": the actuator will make a large movement to minimize reaction time to UI
+    type = 0x01
+  elseif mode == ThermostatMode.thermostatMode.eco.NAME then
+    -- Setpoint type "0": the behavior will be the same as setting the attribute "Occupied Heating Setpoint" to the same value
+    type = 0x00
+  end
+
+  -- prepare setpoint for correct 4 char dec format
+  local setpointTemp = math.floor(value * 100)
+
+  -- convert setpoint value into bytes e.g. 25.5 -> 2550 -> \x09\xF6 -> \xF6\x09
+  local p2 = setpointTemp & 0xFF
+  local p3 = setpointTemp >> 8
+
+  -- send thermostat setpoint command
+  local payload = string.char(type, p2, p3)
+  device:send(cluster_base.build_manufacturer_specific_command(device, Thermostat.ID, THERMOSTAT_SETPOINT_CMD_ID,
+    MFG_CODE, payload))
 
   -- turn thermostat ventile on
   turn_switch_on(driver, device)
