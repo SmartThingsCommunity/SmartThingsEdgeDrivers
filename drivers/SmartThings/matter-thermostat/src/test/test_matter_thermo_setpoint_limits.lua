@@ -30,7 +30,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -44,6 +44,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
