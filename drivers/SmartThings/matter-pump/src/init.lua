@@ -65,6 +65,10 @@ local subscribed_attributes = {
   },
 }
 
+local function test_function()
+  print("Do nothing, this is just a test")
+end
+
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = embedded_cluster_utils.get_endpoints(device, cluster)
