@@ -285,4 +285,87 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Temperature reports should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Relative humidity reports should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RelativeHumidityMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Test fan mode handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.OFF)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("off"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("low"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("high"))
+    },
+  }
+)
+
 test.run_registered_tests()

@@ -18,11 +18,6 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
-clusters.RvcCleanMode = require "RvcCleanMode"
-clusters.RvcOperationalState = require "RvcOperationalState"
-clusters.RvcRunMode = require "RvcRunMode"
-clusters.OperationalState = require "OperationalState"
-
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("rvc.yml"),
   manufacturer_info = {
@@ -100,5 +95,147 @@ test.register_message_test(
     }
   }
 )
+
+local mode_tag_idle = clusters.RvcRunMode.types.ModeTagStruct.init(clusters.RvcRunMode.types.ModeTagStruct, {mfg_code=1, value=0x4000})
+local mode_tag_cleaning = clusters.RvcRunMode.types.ModeTagStruct.init(clusters.RvcRunMode.types.ModeTagStruct, {mfg_code=1, value=0x4001})
+
+test.register_message_test(
+  "Supported run mode should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcRunMode.attributes.SupportedModes:build_test_report_data(mock_device, 1, {{label = "Quick", mode=0, mode_tags = {mode_tag_cleaning}}, {label = "Idle", mode=0, mode_tags = {mode_tag_idle}}})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("runMode", capabilities.mode.supportedModes({value={"Quick", "Idle"}}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Run mode should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcRunMode.attributes.SupportedModes:build_test_report_data(mock_device, 1, {{label = "Quick", mode=0, mode_tags = {mode_tag_cleaning}}, {label = "Idle", mode=1, mode_tags = {mode_tag_idle}}})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("runMode", capabilities.mode.supportedModes({value={"Quick", "Idle"}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(mock_device, 1, 1)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("runMode", capabilities.mode.mode("Idle"))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("runMode", capabilities.mode.supportedModes({value={"Quick", "Idle"}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("cleanMode", capabilities.mode.supportedModes({value={}}))
+    },
+  }
+)
+
+local mode_tag_deep_clean = clusters.RvcRunMode.types.ModeTagStruct.init(clusters.RvcRunMode.types.ModeTagStruct, {mfg_code=1, value=0x4000})
+local mode_tag_vacuum = clusters.RvcRunMode.types.ModeTagStruct.init(clusters.RvcRunMode.types.ModeTagStruct, {mfg_code=1, value=0x4001})
+test.register_message_test(
+  "Supported clean mode should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcCleanMode.attributes.SupportedModes:build_test_report_data(mock_device, 1, {{label = "Deep Clean", mode=0, mode_tags = {mode_tag_deep_clean}}, {label = "Vacuum", mode=0, mode_tags = {mode_tag_vacuum}}})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("cleanMode", capabilities.mode.supportedModes({value={"Deep Clean", "Vacuum"}}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Clean mode should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcCleanMode.attributes.SupportedModes:build_test_report_data(mock_device, 1, {{label = "Deep Clean", mode=0, mode_tags = {mode_tag_deep_clean}}, {label = "Vacuum", mode=0, mode_tags = {mode_tag_vacuum}}})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("cleanMode", capabilities.mode.supportedModes({value={"Deep Clean", "Vacuum"}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcCleanMode.attributes.CurrentMode:build_test_report_data(mock_device, 1, 1)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("cleanMode", capabilities.mode.mode("Vacuum"))
+    }
+  }
+)
+
+
+local operational_state_error = clusters.OperationalState.types.ErrorStateStruct.init(
+  clusters.OperationalState.types.ErrorStateStruct, {error_state_id=clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME, error_state_label="", error_state_details=""}
+)
+
+test.register_message_test(
+  "Operational error should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.RvcOperationalState.attributes.OperationalError:build_test_report_data(mock_device, 1, operational_state_error )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.robotCleanerOperatingState.operatingState.unableToStartOrResume())
+    },
+  }
+)
+
 
 test.run_registered_tests()

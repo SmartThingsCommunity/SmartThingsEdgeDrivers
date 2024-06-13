@@ -36,7 +36,7 @@ end
 -- This cluster SHALL NOT permit changing its mode while the RVC Run Mode cluster’s CurrentMode attribute is set to a
 -- mode without the Idle mode tag. The ChangeToModeResponse command SHALL have the StatusCode field set to the
 -- InvalidInMode value if this restriction prevents a mode change.
-local DEFAULT_MODE = 0
+local DEFAULT_MODE = "Idle"
 local RVC_RUN_MODE_SUPPORTED_MODES = "__rvc_run_mode_supported_modes"
 local RVC_CLEAN_MODE_SUPPORTED_MODES = "__rvc_clean_mode_supported_modes"
 
