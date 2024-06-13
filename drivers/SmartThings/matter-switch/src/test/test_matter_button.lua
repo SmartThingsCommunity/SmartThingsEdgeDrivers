@@ -31,7 +31,10 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = clusters.PowerSource.ID,
           cluster_type = "SERVER",
           feature_map = clusters.PowerSource.types.Feature.BATTERY
-        }
+        },
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
       }
     }
   }

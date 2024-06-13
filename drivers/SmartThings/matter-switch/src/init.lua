@@ -32,7 +32,7 @@ local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPE
 local SWITCH_LEVEL_LIGHTING_MIN = 1
 
 local SWITCH_INITIALIZED = "__switch_intialized"
--- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
+-- COMPONENT_TO_ENDPOINT_MAP is here only to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
 -- to join all matter-switch devices as parent-child. This value will only exist
 -- in the device table for devices that joined prior to this transition, and it
@@ -55,6 +55,7 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local GENERIC_SWITCH_ID = 0x000F
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -65,6 +66,7 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [GENERIC_SWITCH_ID] = "button"
 }
 local detect_matter_thing
 
