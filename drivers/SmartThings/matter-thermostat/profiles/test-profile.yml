@@ -35,6 +35,10 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
   categories:
   - name: AirPurifier
 - id: hepaFilter
@@ -43,10 +47,6 @@ components:
   - id: filterState
     version: 1
   - id: filterStatus
-    version: 1
-  - id: firmwareUpdate
-    version: 1
-  - id: refresh
     version: 1
   categories:
   - name: AirPurifier
