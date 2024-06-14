@@ -1,5 +1,5 @@
 local cosock = require "cosock"
-local log = require "logjam"
+local log = require "log"
 local json = require "st.json"
 local st_utils = require "st.utils"
 
@@ -154,7 +154,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
           -- events.
           if event.type == "update" then
             for _, update_data in ipairs(event.data) do
-              log.debug(true, "Received update event with type " .. update_data.type)
+              log.debug("Received update event with type " .. update_data.type)
               local resource_ids = {}
               if update_data.type == "zigbee_connectivity" and update_data.owner ~= nil then
                 for rid, rtype in pairs(driver.services_for_device_rid[update_data.owner.rid] or {}) do
@@ -170,7 +170,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                 table.insert(resource_ids, update_data.id)
               end
               for _, resource_id in ipairs(resource_ids) do
-                log.debug(true, string.format("Looking for device record for %s", resource_id))
+                log.debug(string.format("Looking for device record for %s", resource_id))
                 local child_device = driver.hue_identifier_to_device_record[resource_id]
                 if child_device ~= nil and child_device.id ~= nil then
                   if update_data.type == "zigbee_connectivity" then
@@ -178,7 +178,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     attribute_emitters.connectivity_update(child_device, update_data)
                   else
                     local device_type = utils.determine_device_type(child_device)
-                    log.debug(true, st_utils.stringify_table({device_type = device_type, update_data}, "updating", true))
+                    log.debug(st_utils.stringify_table({device_type = device_type, update_data}, "updating", true))
                     attribute_emitters.emitter_for_device_type(device_type)(child_device, update_data)
                   end
                 end

@@ -49,7 +49,7 @@ local function join_light(driver, light, device_service_info, parent_device_id, 
     parent_assigned_child_key = parent_assigned_child_key
   }
 
-  log.debug(true, st_utils.stringify_table(st_metadata, "light create", true))
+  log.debug(st_utils.stringify_table(st_metadata, "light create", true))
   st_metadata_callback(driver, st_metadata)
   -- rate limit ourself.
   socket.sleep(0.1)
