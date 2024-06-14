@@ -250,6 +250,12 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
+
+  -- for testing purposes
+  local profile_name = "test-profile"
+  device:try_update_metadata({profile = profile_name})
+
+  -- original init
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 
@@ -392,7 +398,7 @@ local function do_configure(driver, device)
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
     end
-    
+
     profile_name = profile_name .. "-thermostat"
     if #humidity_eps > 0 and #fan_eps > 0 then
       profile_name = profile_name .. "-humidity" .. "-fan"
