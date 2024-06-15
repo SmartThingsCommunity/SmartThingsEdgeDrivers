@@ -379,7 +379,10 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = find_child(device, ib.endpoint_id) or device
+    local temp_device = device
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      temp_device = find_child(device, ib.endpoint_id) or device
+    end
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
