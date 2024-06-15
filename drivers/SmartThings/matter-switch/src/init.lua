@@ -513,6 +513,9 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
   end
+
+  -- call device init in case init is not called after added due to device caching
+  device_init(driver, device)
 end
 
 local matter_driver_template = {
