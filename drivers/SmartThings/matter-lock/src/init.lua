@@ -526,8 +526,13 @@ local function device_added(driver, device)
   --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
   device:emit_event(capabilities.lockAlarm.alarm.clear())
-  local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-  if #eps == 0 then
+  local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_eps == 0 then
+    device.log.debug("Device does not support battery. Switching profile.")
+    device:try_update_metadata({profile = "lock-lockalarm-nobattery"})
+  end
+  if #pin_eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
       device.log.debug("Device does not support lockCodes. Switching profile.")
       device:try_update_metadata({profile = "lock-without-codes"})
@@ -538,9 +543,9 @@ local function device_added(driver, device)
   -- intentionally, so only run this if device supports lockCodes in profile.
   elseif device:supports_capability(capabilities.lockCodes) then
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
-    req:merge(DoorLock.attributes.MinPINCodeLength:read(device, eps[1]))
-    req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, eps[1]))
+    req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, pin_eps[1]))
+    req:merge(DoorLock.attributes.MinPINCodeLength:read(device, pin_eps[1]))
+    req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, pin_eps[1]))
     driver:inject_capability_command(device, {
       capability = capabilities.lockCodes.ID,
       command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
@@ -548,12 +553,12 @@ local function device_added(driver, device)
     })
 
     --Device may require pin for remote operation if it supports COTA and PIN features.
-    eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-    if #eps == 0 then
+    pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+    if #pin_eps == 0 then
       device.log.debug("Device will not require PIN for remote operation")
       device:set_field(lock_utils.COTA_CRED, false, {persist = true})
     else
-      req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+      req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, pin_eps[1]))
     end
     device:send(req)
   end
