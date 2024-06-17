@@ -247,8 +247,8 @@ local function handle_temperature_setpoint(driver, device, cmd)
     return
   end
 
-  local ENDPOINT = 1
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, utils.round(value * 100.0), nil))
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, utils.round(value * 100.0), nil))
 end
 
 local matter_driver_template = {

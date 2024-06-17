@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2023 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,43 +18,47 @@ test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
-local mock_device_record = {
-  profile = t_utils.get_profile_definition("lock-without-codes.yml"),
-  manufacturer_info = {vendor_id = 0x101D, product_id = 0x1},
+local mock_device = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock-lockalarm-nobattery.yml"),
+  manufacturer_info = {
+    vendor_id = 0x115f,
+    product_id = 0x2802,
+  },
   endpoints = {
     {
-      endpoint_id = 2,
+      endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
       }
     },
     {
-      endpoint_id = 10,
+      endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.DoorLock.ID, cluster_type = "SERVER", feature_map = 0x0000},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {
+          cluster_id = clusters.DoorLock.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0x0001, --u32 bitmap
+        }
       },
-    },
-  },
-}
-local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
+      device_types = {
+        { device_type_id = 0x000A, device_type_revision = 1 } -- Door Lock
+      }
+    }
+  }
+})
 
 local function test_init()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
-  subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 end
 
 test.set_test_init_function(test_init)
-
---TODO add tests for how we expect cota vs non cota devices
--- to function wrt lock/unlock commands
 
 test.register_message_test(
   "Handle Lock command received from SmartThings.", {
@@ -69,7 +73,7 @@ test.register_message_test(
     {
       channel = "matter",
       direction = "send",
-      message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 10)},
+      message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 1)},
     },
   }
 )
@@ -89,7 +93,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.DoorLock.server.commands.UnlockDoor(mock_device, 10),
+        clusters.DoorLock.server.commands.UnlockDoor(mock_device, 1),
       },
     },
   }
@@ -103,7 +107,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.DoorLock.attributes.LockState:build_test_report_data(
-          mock_device, 10, clusters.DoorLock.attributes.LockState.LOCKED
+          mock_device, 1, clusters.DoorLock.attributes.LockState.LOCKED
         ),
       },
     },
@@ -115,31 +119,8 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
-  "Handle received BatPercentRemaining from device.", {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-          mock_device, 10, 150
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
-      ),
-    },
-  }
-)
-
 local function refresh_commands(dev)
   local req = clusters.DoorLock.attributes.LockState:read(dev)
-  req:merge(clusters.PowerSource.attributes.BatPercentRemaining:read(dev))
   return req
 end
 
@@ -170,14 +151,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 10, {alarm_code = DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED}
+          mock_device, 1, {alarm_code = DlAlarmCode.LOCK_JAMMED}
         ),
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
+      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.unableToLockTheDoor()),
     },
     {
       channel = "matter",
@@ -185,14 +166,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 10, {alarm_code = DlAlarmCode.WRONG_CODE_ENTRY_LIMIT}
+          mock_device, 1, {alarm_code = DlAlarmCode.LOCK_FACTORY_RESET}
         ),
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
+      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.lockFactoryReset()),
     },
     {
       channel = "matter",
@@ -200,14 +181,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 10, {alarm_code = DlAlarmCode.FORCED_USER}
+          mock_device, 1, {alarm_code = DlAlarmCode.WRONG_CODE_ENTRY_LIMIT}
         ),
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
+      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.attemptsExceeded()),
     },
     {
       channel = "matter",
@@ -215,63 +196,40 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 10, {alarm_code = DlAlarmCode.DOOR_FORCED_OPEN}
+          mock_device, 1, {alarm_code = DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED}
         ),
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
+      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.damaged()),
     },
-  }
-)
-
-local lock_operation_event = {
-  lock_operation_type = clusters.DoorLock.types.DlLockOperationType.UNLOCK,
-  operation_source = clusters.DoorLock.types.DlOperationSource.MANUAL,
-}
-test.register_message_test(
-  "Handle clear tamper alert detection.", {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
         clusters.DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 10, {alarm_code = DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED}
+          mock_device, 1, {alarm_code = DlAlarmCode.DOOR_FORCED_OPEN}
         ),
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.DoorLock.events.LockOperation:build_test_event_report(mock_device, 10, lock_operation_event),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()),
+      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.forcedOpeningAttempt()),
     },
   }
 )
 
 test.register_coroutine_test(
-  "Added lifecycle event lock without codes",
+  "Added lifecycle event lock nocodes nobattery",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-    mock_device:expect_metadata_update({ profile = "lock-without-codes" })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
     )
 end
 )
