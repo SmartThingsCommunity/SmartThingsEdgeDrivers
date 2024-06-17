@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
 

@@ -1,0 +1,19 @@
+# in-wall-switch-profile
+name: leviton-ZW15S
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+  - name: "statusLEDmode"
+    title: "Status LED Configuration"
+    description: "0: always off, 254: Status LED ON when load is ON, 255: Status LED ON when load is OFF (locator mode)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 255
