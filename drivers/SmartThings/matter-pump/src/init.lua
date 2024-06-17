@@ -23,7 +23,6 @@ local IS_LOCAL_OVERRIDE = "__is_local_override"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local DEFAULT_MAX_LEVEL = 254
-local DEFAULT_MIN_LEVEL = 0
 local MIN_CAP_SWITCH_LEVEL = 1 -- we don't want 0% to be a reasonable request.
 local MAX_CAP_SWITCH_LEVEL = 100
 
@@ -194,8 +193,7 @@ end
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value then
       local max_level = get_field_for_endpoint(device, LEVEL_MAX, ib.endpoint_id) or DEFAULT_MAX_LEVEL
-      local min_level = get_field_for_endpoint(device, LEVEL_MIN, ib.endpoint_id) or DEFAULT_MIN_LEVEL
-      local level = math.floor(((ib.data.value - min_level) / (max_level - min_level) * MAX_CAP_SWITCH_LEVEL) + 0.5)
+      local level = math.floor((ib.data.value / max_level * MAX_CAP_SWITCH_LEVEL) + 0.5)
       level = math.max(level, MIN_CAP_SWITCH_LEVEL)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
@@ -243,16 +241,13 @@ end
 
 local level_bounds_handler = function(a_min_or_max_val)
   return function(driver, device, ib, response)
-    -- if there is no reported max/min level (ib.data.value), return
-    if not ib.data.value then
-      return
+    if ib.data.value then
+      set_field_for_endpoint(device, a_min_or_max_val, ib.endpoint_id, ib.data.value, {persist = true})
+      local level_min = get_field_for_endpoint(device, LEVEL_MIN, ib.endpoint_id)
+      if level_min then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = level_min, maximum = MAX_CAP_SWITCH_LEVEL} }))
+      end
     end
-    -- set the recieved, perhaps edited level for the endpoint
-    set_field_for_endpoint(device, a_min_or_max_val, ib.endpoint_id, ib.data.value, {persist = true})
-
-    -- we want this to occur every time the device is initialized; where else can this go?
-    -- minimum allowable percent to appear on the capability is 1%, not 0%
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = MIN_CAP_SWITCH_LEVEL, maximum = MAX_CAP_SWITCH_LEVEL} }))
   end
 end
 
@@ -272,9 +267,7 @@ end
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local max_level = get_field_for_endpoint(device, LEVEL_MAX, endpoint_id) or DEFAULT_MAX_LEVEL
-  local min_level = get_field_for_endpoint(device, LEVEL_MIN, endpoint_id) or DEFAULT_MIN_LEVEL
-  local level = math.floor(((max_level - min_level) * cmd.args.level) / (MAX_CAP_SWITCH_LEVEL) + min_level)
-  level = math.max(level, MIN_CAP_SWITCH_LEVEL)
+  local level = math.floor((max_level * cmd.args.level) / (MAX_CAP_SWITCH_LEVEL))
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
   device:send(req)
 end
