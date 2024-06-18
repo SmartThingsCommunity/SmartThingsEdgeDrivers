@@ -1,0 +1,24 @@
+id: stse.valveCalibration
+version: 1
+status: proposed
+name: Valve calibration
+ephemeral: false
+attributes:
+  calibrationState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - calibrationSuccess
+            - calibrationFailure
+            - calibrationPending
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands:
+  startCalibration:
+    name: startCalibration
+    arguments: []
