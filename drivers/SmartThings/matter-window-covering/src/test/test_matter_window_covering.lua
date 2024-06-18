@@ -43,7 +43,6 @@ local mock_device = test.mock_device.build_test_matter_device(
             cluster_revision = 1,
             feature_map = 0,
           },
-          {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002}
         },
       },
@@ -75,7 +74,6 @@ local mock_device_switch_to_battery = test.mock_device.build_test_matter_device(
             cluster_revision = 1,
             feature_map = 0,
           },
-          {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002}
         },
       },
@@ -107,7 +105,6 @@ local mock_device_mains_powered = test.mock_device.build_test_matter_device(
             cluster_revision = 1,
             feature_map = 0,
           },
-          {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0001}
         },
       },
@@ -116,14 +113,12 @@ local mock_device_mains_powered = test.mock_device.build_test_matter_device(
 )
 
 local CLUSTER_SUBSCRIBE_LIST = {
-  clusters.LevelControl.server.attributes.CurrentLevel,
   WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
   WindowCovering.server.attributes.OperationalStatus,
   clusters.PowerSource.server.attributes.BatPercentRemaining
 }
 
 local CLUSTER_SUBSCRIBE_LIST_NO_BATTERY = {
-  clusters.LevelControl.server.attributes.CurrentLevel,
   WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
   WindowCovering.server.attributes.OperationalStatus,
 }
@@ -507,20 +502,6 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
   )
   test.socket.matter:__expect_send(
     {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8000)}
-  )
-end)
-
-test.register_coroutine_test("LevelControl CurrentLevel handler", function()
-  test.socket.matter:__queue_receive(
-    {
-      mock_device.id,
-      clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 10, 100),
-    }
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message(
-      "main", capabilities.windowShadeLevel.shadeLevel(math.floor((100 / 254.0 * 100) + .5))
-    )
   )
 end)
 

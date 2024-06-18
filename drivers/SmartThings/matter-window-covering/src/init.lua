@@ -208,14 +208,6 @@ local function current_status_handler(driver, device, ib, response)
   end
 end
 
-local function level_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    --TODO should we invert this like we do for CurrentLiftPercentage100ths?
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
-  end
-end
-
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
@@ -226,11 +218,6 @@ local matter_driver_template = {
   lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added, infoChanged = info_changed},
   matter_handlers = {
     attr = {
-      --TODO LevelControl may not be needed for certified devices since
-      -- certified should use CurrentPositionLiftPercent100ths attr
-      [clusters.LevelControl.ID] = {
-        [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
-      },
       [clusters.WindowCovering.ID] = {
         --uses percent100ths more often
         [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = current_pos_handler,
@@ -246,8 +233,7 @@ local matter_driver_template = {
       clusters.WindowCovering.attributes.OperationalStatus
     },
     [capabilities.windowShadeLevel.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel,
-      clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths,
+      clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
