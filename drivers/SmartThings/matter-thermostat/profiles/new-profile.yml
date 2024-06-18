@@ -1,4 +1,4 @@
-name: test-profile
+name: new-profile
 components:
 - id: main
   label: Main
