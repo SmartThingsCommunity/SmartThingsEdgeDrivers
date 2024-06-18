@@ -252,7 +252,7 @@ end
 local function device_init(driver, device)
 
   -- for testing purposes
-  local profile_name = "test-profile"
+  local profile_name = "new-profile"
   device:try_update_metadata({profile = profile_name})
 
   -- original init
@@ -438,7 +438,7 @@ local function do_configure(driver, device)
     end
 
     if profile_name == "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" then
-      profile_name = "test-profile"
+      profile_name = "new-profile"
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
