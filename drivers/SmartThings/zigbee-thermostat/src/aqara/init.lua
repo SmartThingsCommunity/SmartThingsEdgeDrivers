@@ -161,9 +161,16 @@ local function thermostat_operating_mode_status_handler(driver, device, value, z
 end
 
 local function valve_status_handler(driver, device, value, zb_rx)
+  local thermostat_mode = device:get_latest_state("main", capabilities.thermostatMode.ID,capabilities.thermostatMode.thermostatMode.NAME)
+
   if value.value == 1 then
-    device:emit_event(capabilities.valve.valve.open())
-    device:emit_event(invisibleCapabilities.invisibleCapabilities({""}))
+    if thermostat_mode == 'manual' then
+      device:emit_event(capabilities.valve.valve.open())
+      device:emit_event(invisibleCapabilities.invisibleCapabilities({""}))
+    elseif thermostat_mode == 'antifreezing' then
+      device:emit_event(capabilities.valve.valve.open())
+      device:emit_event(invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"}))
+    end
   elseif value.value == 0 then
     device:emit_event(capabilities.valve.valve.closed())
     device:emit_event(invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint","stse.valveCalibration","thermostatMode","lock"}))
