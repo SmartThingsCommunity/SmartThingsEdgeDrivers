@@ -1,0 +1,32 @@
+id: stse.hookLockState
+version: 1
+status: proposed
+name: Hook Lock State
+ephemeral: false
+attributes:
+  hookLockState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - unlocked
+            - locked
+            - locking
+            - unlocking
+      additionalProperties: false
+      required:
+        - value
+    enumCommands:
+      - command: hookLock
+        value: locking
+      - command: hookUnlock
+        value: unlocking
+commands:
+  hookLock:
+    name: hookLock
+    arguments: []
+  hookUnlock:
+    name: hookUnlock
+    arguments: []

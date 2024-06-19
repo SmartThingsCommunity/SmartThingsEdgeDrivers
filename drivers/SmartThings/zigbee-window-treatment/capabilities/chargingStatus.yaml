@@ -1,0 +1,23 @@
+id: stse.chargingStatus
+version: 1
+status: proposed
+name: Charging Status
+ephemeral: false
+attributes:
+  chargingStatus:
+    schema:
+      type: object
+      properties:
+        value:
+          title: ChargingStatusType
+          type: string
+          enum:
+            - notCharging
+            - charging
+            - chargingFailure
+            - chargingComplete
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}
