@@ -52,13 +52,19 @@ local COLOR_TEMP_LIGHT_DEVICE_TYPE_ID = 0x010C
 local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
 local ON_OFF_PLUG_DEVICE_TYPE_ID = 0x010A
 local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
+local ON_OFF_SWITCH_ID = 0x0103
+local ON_OFF_DIMMER_SWITCH_ID = 0x0104
+local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
   [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
   [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
   [ON_OFF_PLUG_DEVICE_TYPE_ID] = "plug-binary",
-  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level"
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level",
+  [ON_OFF_SWITCH_ID] = "switch-binary",
+  [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
 local detect_matter_thing
 
@@ -124,7 +130,6 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-
   -- Since we do not support bindings at the moment, we only want to count On/Off
   -- clusters that have been implemented as server. This can be removed when we have
   -- support for bindings.
@@ -158,15 +163,31 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
+  -- The case where num_server_eps > 0 is a workaround for devices that have a
   -- Light Switch device type but implement the On Off cluster as server (which is against the spec
-  -- for this device type). By default, we do not support On/Off Light Switch because by spec these
-  -- devices need bindings to work correctly (On/Off cluster is client in this case), so this device type
-  -- does not have a generic fingerprint and will join as a matter-thing. However, we have
-  -- seen some devices claim to be On/Off Light Switch device type and still implement On/Off server, so this
-  -- is a workaround for those devices.
+  -- for this device type). By default, we do not support Light Switch device types because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+  -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+  -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+  -- workaround for those devices.
   if num_server_eps > 0 and detect_matter_thing(device) == true then
-    device:try_update_metadata({profile = "switch-binary"})
+    local id = 0
+    for _, ep in ipairs(device.endpoints) do
+      -- main_endpoint only supports server cluster by definition of get_endpoints()
+      if main_endpoint == ep.endpoint_id then
+        for _, dt in ipairs(ep.device_types) do
+          -- no device type that is not in the switch subset should be considered.
+          if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+            id = math.max(id, dt.device_type_id)
+          end
+        end
+        break
+      end
+    end
+
+    if device_type_profile_map[id] ~= nil then
+      device:try_update_metadata({profile = device_type_profile_map[id]})
+    end
   end
 end
 
@@ -358,7 +379,10 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = find_child(device, ib.endpoint_id) or device
+    local temp_device = device
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      temp_device = find_child(device, ib.endpoint_id) or device
+    end
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
@@ -489,6 +513,9 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
   end
+
+  -- call device init in case init is not called after added due to device caching
+  device_init(driver, device)
 end
 
 local matter_driver_template = {

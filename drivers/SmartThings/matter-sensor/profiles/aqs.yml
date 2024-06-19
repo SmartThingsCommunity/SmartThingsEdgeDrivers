@@ -1,0 +1,12 @@
+name: aqs
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: AirQualityDetector

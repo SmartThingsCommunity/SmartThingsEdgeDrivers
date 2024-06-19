@@ -58,11 +58,16 @@ local function test_init()
     clusters.Thermostat.attributes.LocalTemperature,
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
     clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ThermostatRunningState,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.Thermostat.attributes.LocalTemperature,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
     clusters.FanControl.attributes.FanMode,
     clusters.FanControl.attributes.FanModeSequence,
@@ -77,7 +82,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-
 end
 test.set_test_init_function(test_init)
 
@@ -291,7 +295,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}))
     },
     {
       channel = "matter",
@@ -304,7 +308,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "heat"}))
     },
     {
       channel = "matter",
@@ -317,7 +321,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool"}))
     },
   }
 )
@@ -336,7 +340,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}))
     },
 		{
       channel = "matter",
@@ -354,7 +358,7 @@ test.register_message_test(
 		{
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto", "emergency heat"}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat", "emergency heat"}))
     }
   }
 )
@@ -609,11 +613,16 @@ local attribute_refresh_list = {
   clusters.Thermostat.attributes.LocalTemperature,
   clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
   clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,

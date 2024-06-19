@@ -17,7 +17,12 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTR_ID = 0xFFF1
 local MFG_CODE = 0x115F
 
-local callback_timer = function(driver, device, cmd)
+local function reload_portion(device)
+  local lastPortion = device:get_latest_state("main", capabilities.feederPortion.ID,
+    capabilities.feederPortion.feedPortion.NAME) or 0
+  device:emit_event(capabilities.feederPortion.feedPortion({ value = lastPortion, unit = "servings" }))
+end
+local callback_feed = function(device)
   return function()
     device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
   end
@@ -64,10 +69,7 @@ end
 -- [[ capability_handlers ]]
 local function do_refresh(driver, device)
   -- refresh
-  local lastPortion = device:get_latest_state("main", capabilities.feederPortion.ID,
-    capabilities.feederPortion.feedPortion.NAME) or 0
-  device:emit_event(capabilities.feederPortion.feedPortion({ value = lastPortion, unit = "servings" },
-    { state_change = true }))
+  reload_portion(device)
   do_payload(device, 8, 0, 2001, OP_REPORT, 1, 0)
   device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
 end
@@ -104,23 +106,25 @@ local function petFeeder_handler(driver, device, value, zb_rx)
   elseif funcID == "14.92.85" then
     -- feed portion
     device:emit_event(capabilities.feederPortion.feedPortion({ value = conv_data(param), unit = "servings" }))
-  elseif funcID == "13.104.85" then
-    local feed_source = device:get_field(FEED_SOURCE)
+  elseif funcID == "13.104.85" and conv_data(param) ~= 0 then
+    local feed_source = device:get_field(FEED_SOURCE) or 0
     if feed_source == 0 then
       device:emit_event(capabilities.feederOperatingState.feederOperatingState("feeding"))
     end
     device:set_field(FEED_SOURCE, 0, { persist = true })
     delete_timer(device)
-    device:set_field(FEED_TIMER, device.thread:call_with_delay(FEED_TIME, callback_timer(driver, device)))
+    device:set_field(FEED_TIMER, device.thread:call_with_delay(FEED_TIME, callback_feed(device)))
+  elseif funcID == "13.11.85" then
+    -- error
+    delete_timer(device)
+    local evt = "idle"
+    if conv_data(param) == 1 then evt = "error" end
+    device:emit_event(capabilities.feederOperatingState.feederOperatingState(evt))
   end
 end
 
 -- [[ lifecycle_handlers ]]
 local function device_added(driver, device)
-  -- private protocol enable
-  device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE, data_types.Uint8, 1))
-  -- init
   do_payload(device, 4, 24, 85, OP_WRITE, 1, 0)
   device:emit_event(capabilities.feederOperatingState.feederOperatingState("idle"))
   device:emit_event(capabilities.feederPortion.feedPortion({ value = 1, unit = "servings" }))
@@ -143,6 +147,10 @@ local function device_info_changed(driver, device, event, args)
 end
 
 local function device_configure(driver, device)
+  -- private protocol enable
+  device:send(cluster_base.write_manufacturer_specific_attribute(device,
+    PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE, data_types.Uint8, 1))
+  do_payload(device, 4, 24, 85, OP_WRITE, 1, 0)
 end
 
 -- [[ Registration ]]
