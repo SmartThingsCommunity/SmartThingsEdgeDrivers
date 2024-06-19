@@ -6,10 +6,6 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
-    config:
-      values:
-        - key: "temperatureSetpoint.value"
-          range: [ 0, 100 ]
   - id: temperatureLevel
     version: 1
   - id: mode
@@ -28,3 +24,6 @@ components:
     version: 1
   categories:
   - name: Dishwasher
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-dishwasher
