@@ -107,6 +107,17 @@ local devices = {
       {grouping_identifier = 1}
     }
   },
+  AEOTEC_TRISENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = { 0x0102 },
+      product_ids = 0x002D
+    },
+    CONFIGURATION = {
+      -- if US model then set scale to Fahrenheit
+      { parameter_number = 24, configuration_value = 1, size = 1 }
+    }
+  },
   AEON_MULTISENSOR = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,
