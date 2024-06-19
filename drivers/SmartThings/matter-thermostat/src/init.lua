@@ -252,7 +252,7 @@ end
 local function device_init(driver, device)
 
   -- for testing purposes
-  local profile_name = "new-profile"
+  local profile_name = "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level"
   device:try_update_metadata({profile = profile_name})
 
   -- original init
