@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local cluster_base = require "st.zigbee.cluster_base"
 local clusters = require "st.zigbee.zcl.clusters"
