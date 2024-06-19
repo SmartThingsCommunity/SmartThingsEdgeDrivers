@@ -42,6 +42,11 @@ local function device_added(driver, device)
     MFG_CODE, data_types.Uint8, 1))
 end
 
+local function do_configure(driver, device)
+  device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+    MFG_CODE, data_types.Uint8, 1))
+end
+
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
 
@@ -55,6 +60,7 @@ local aqara_contact_handler = {
   NAME = "Aqara water leak sensor",
   lifecycle_handlers = {
     init = device_init,
+    doConfigure = do_configure,
     added = device_added
   },
   can_handle = is_aqara_products

@@ -111,6 +111,11 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.attributes.CurrentPositionLiftPercentage:configure_reporting(mock_device, 0, 600, 1)
     })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        ,
+        data_types.Uint8,
+        1) })
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Basic.attributes.ApplicationVersion:read(mock_device)
