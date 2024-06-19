@@ -9,9 +9,10 @@ local utils = require "st.utils"
 
 local remoteControlStatus = capabilities.remoteControlStatus
 local lockCredentialInfo = capabilities["stse.lockCredentialInfo"]
+local antiLockStatus = capabilities["stse.antiLockStatus"]
 local Battery = capabilities.battery
 local Lock = capabilities.lock
-local TamperAlert = capabilities.tamperAlert
+local LockAlarm = capabilities.lockAlarm
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0xFFF3
@@ -53,7 +54,8 @@ end
 local function device_added(self, device)
   remoteControlShow(device)
   device:emit_event(Battery.battery(100))
-  device:emit_event(TamperAlert.tamper.clear({ visibility = { displayed = false } }))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
+  device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = {displayed = false}}))
   device:emit_event(Lock.lock.locked())
   credential_utils.save_data(self)
 end
@@ -67,27 +69,31 @@ local function toHex(value, length)
 end
 
 local function event_lock_handler(driver, device, evt_name, evt_value)
-  if evt_value == 1 then
+  if evt_value == 0x1 then
     device:emit_event(Lock.lock(evt_name))
-    device:emit_event(TamperAlert.tamper.clear())
+    device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
     remoteControlShow(device)
   end
 end
 
 local function event_unlock_handler(driver, device, evt_name, evt_value)
   local id, label
+  if evt_value == 0x80020000 then -- one-time password
+    id = "OTP_STANDALONE"
+    label = nil
+  else
   id, label = credential_utils.find_userLabel(driver, device, evt_value)
+  end
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = id, codeName = label } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(TamperAlert.tamper.clear())
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
 end
 
 local function event_door_handler(driver, device, evt_name, evt_value)
-  if evt_value == 2 then
-    device:emit_event(Lock.lock(evt_name))
-    device:emit_event(TamperAlert.tamper.clear())
-  elseif evt_value == 4 then
-    device:emit_event(TamperAlert.tamper.detected())
+  if evt_value == 0x2 then
+    device:emit_event(LockAlarm.alarm.notClosedForALongTime())
+  elseif evt_value == 0x4 then
+    device:emit_event(LockAlarm.alarm.forcedOpeningAttempt())
   end
 end
 
@@ -95,13 +101,28 @@ local function event_battery_handler(driver, device, evt_name, evt_value)
   device:emit_event(Battery.battery(evt_value))
 end
 
-local function event_tamper_alert_handler(driver, device, evt_name, evt_value)
-  device:emit_event(TamperAlert.tamper.detected())
+local function event_abnormal_status_handler(driver, device, evt_name, evt_value)
+  if evt_value == 0xC0DE1006 then
+    device:emit_event(LockAlarm.alarm.highTemperature())
+  elseif evt_value == 0xC0DE000A then
+    device:emit_event(LockAlarm.alarm.attemptsExceeded({state_change = true}))
+  end
 end
 
+local function event_anti_lock_handler(driver, device, evt_name, evt_value)
+  local evt = "disabled"
+  if evt_value == 0x1 then evt = "enabled" end
+  device:emit_event(antiLockStatus.antiLockStatus(evt))
+end
+local function event_lock_status_handler(driver, device, evt_name, evt_value)
+  if evt_value == 0x1 then
+    device:emit_event(LockAlarm.alarm.unableToLockTheDoor())
+  elseif evt_value == 0xA then
+    device:emit_event(LockAlarm.alarm.damaged())
+  end
+end
 local METHOD = {
   LOCKED = "locked",
-  NOT_FULLY_LOCKED = "not fully locked",
   MANUAL = "manual",
   FINGERPRINT = "fingerprint",
   KEYPAD = "keypad",
@@ -113,7 +134,7 @@ local METHOD = {
 
 local resource_id = {
   ["13.31.85"] = { event_name = METHOD.LOCKED, event_handler = event_lock_handler },
-  ["13.17.85"] = { event_name = METHOD.NOT_FULLY_LOCKED, event_handler = event_door_handler },
+  ["13.17.85"] = { event_name = METHOD.NO_USE, event_handler = event_door_handler },
   ["13.48.85"] = { event_name = METHOD.MANUAL, event_handler = event_unlock_handler },
   ["13.51.85"] = { event_name = METHOD.MANUAL, event_handler = event_unlock_handler },
   ["13.42.85"] = { event_name = METHOD.FINGERPRINT, event_handler = event_unlock_handler },
@@ -123,7 +144,9 @@ local resource_id = {
   ["13.90.85"] = { event_name = METHOD.COMMAND, event_handler = event_unlock_handler },
   ["13.46.85"] = { event_name = METHOD.KEYPAD, event_handler = event_unlock_handler },
   ["13.56.85"] = { event_name = METHOD.NO_USE, event_handler = event_battery_handler },
-  ["13.32.85"] = { event_name = METHOD.NO_USE, event_handler = event_tamper_alert_handler }
+  ["13.32.85"] = { event_name = METHOD.NO_USE, event_handler = event_abnormal_status_handler },
+  ["13.33.85"] = { event_name = METHOD.NO_USE, event_handler = event_anti_lock_handler },
+  ["13.88.85"] = { event_name = METHOD.NO_USE, event_handler = event_lock_status_handler }
 }
 
 local function request_generate_shared_key(device)

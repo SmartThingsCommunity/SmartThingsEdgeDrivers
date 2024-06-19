@@ -24,6 +24,9 @@ local lock_utils = require "lock_utils"
 
 local INITIAL_COTA_INDEX = 1
 
+-- add this defintions for locks to work on older lua libs
+local UNLATCHED_STATE = 0x3
+
 --- If a device needs a cota credential this function attempts to set the credential
 --- at the index provided. The set_credential_response_handler handles all failures
 --- and retries with the appropriate index when necessary.
@@ -78,6 +81,7 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
+    [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled
   }
 
   if ib.data.value ~= nil then
@@ -288,10 +292,24 @@ end
 local function alarm_event_handler(driver, device, ib, response)
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
-  if alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED or alarm_code.value
-    == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT or alarm_code.value == DlAlarmCode.FORCED_USER
-    or alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
-    device:emit_event(capabilities.tamperAlert.tamper.detected())
+  if device:supports_capability(capabilities.lockAlarm) then
+    if alarm_code.value == DlAlarmCode.LOCK_JAMMED then
+      device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor())
+    elseif alarm_code.value == DlAlarmCode.LOCK_FACTORY_RESET then
+      device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset())
+    elseif alarm_code.value == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT then
+      device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded())
+    elseif alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED then
+      device:emit_event(capabilities.lockAlarm.alarm.damaged())
+    elseif alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
+      device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt())
+    end
+  elseif device:supports_capability(capabilities.tamperAlert) then
+    if alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED or alarm_code.value
+      == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT or alarm_code.value == DlAlarmCode.FORCED_USER
+      or alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
+      device:emit_event(capabilities.tamperAlert.tamper.detected())
+    end
   end
 end
 
@@ -366,7 +384,9 @@ end
 local function handle_refresh(driver, device, command)
   -- Note: no endpoint specified indicates a wildcard endpoint
   local req = DoorLock.attributes.LockState:read(device)
-  req:merge(PowerSource.attributes.BatPercentRemaining:read(device))
+  if device:supports_capability(capabilities.battery) then
+    req:merge(PowerSource.attributes.BatPercentRemaining:read(device))
+  end
   device:send(req)
 end
 
@@ -505,6 +525,7 @@ local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
   --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
+  device:emit_event(capabilities.lockAlarm.alarm.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
@@ -513,7 +534,9 @@ local function device_added(driver, device)
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
     end
-  else
+  -- some devices may have lock codes functionality, but may not support it in their profile
+  -- intentionally, so only run this if device supports lockCodes in profile.
+  elseif device:supports_capability(capabilities.lockCodes) then
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
     req:merge(DoorLock.attributes.MinPINCodeLength:read(device, eps[1]))
@@ -571,6 +594,7 @@ local matter_lock_driver = {
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
+    [capabilities.lockAlarm.ID] = {DoorLock.events.DoorLockAlarm},
     [capabilities.lockCodes.ID] = {DoorLock.events.LockUserChange},
   },
   capability_handlers = {

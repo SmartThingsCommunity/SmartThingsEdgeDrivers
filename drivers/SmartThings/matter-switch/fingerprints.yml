@@ -139,7 +139,22 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
-
+#Legrand
+  - id: "4129/3"
+    deviceLabel: Smart Lights Smart Plug
+    vendorId: 0x1021
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "4129/4"
+    deviceLabel: Smart Lights Outdoor Plug
+    vendorId: 0x1021
+    productId: 0x0004
+    deviceProfileName: plug-binary
+  - id: "4129/7"
+    deviceLabel: Radiant Smart Receptacle
+    vendorId: 0x1021
+    productId: 0x0007
+    deviceProfileName: plug-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -171,7 +186,6 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
-
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -203,6 +217,16 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x711
     deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/72"
+    deviceLabel: Essentials Indoor Lights
+    vendorId: 0x115A
+    productId: 0x0048
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/73"
+    deviceLabel: Essentials Outdoor Lights
+    vendorId: 0x115A
+    productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -273,6 +297,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03f8
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1024"
+    deviceLabel: Smart Plug
+    vendorId: 0x1168
+    productId: 0x0400
+    deviceProfileName: plug-binary
   - id: "4456/1011"
     deviceLabel: Smart Light Bulb A60
     vendorId: 0x1168
@@ -2080,6 +2109,22 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xEEE2
     deviceProfileName: switch-binary
+  - id: "5020/53249"
+    deviceLabel: Zemismart Downlight
+    vendorId: 0x139C
+    productId: 0xD001
+    deviceProfileName: light-color-level
+  - id: "5020/53250"
+    deviceLabel: Zemismart Bulb
+    vendorId: 0x139C
+    productId: 0xD002
+    deviceProfileName: light-color-level
+  - id: "5020/53251"
+    deviceLabel: Zemismart LED Light Strip Driver
+    vendorId: 0x139C
+    productId: 0xD003
+    deviceProfileName: light-color-level
+
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic

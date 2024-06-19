@@ -163,6 +163,7 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
+<<<<<<< HEAD
   -- The case where num_server_eps > 0 is a workaround for devices that have the On/Off
   -- Light Switch device type but implement the On Off cluster as sServer (which is against the spec
   -- for this device type). By default, we do not support On/Off Light Switch because by spec these
@@ -177,6 +178,25 @@ local function initialize_switch(driver, device)
       if main_endpoint == ep.endpoint_id then
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
+=======
+  -- The case where num_server_eps > 0 is a workaround for devices that have a
+  -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+  -- for this device type). By default, we do not support Light Switch device types because by spec these
+  -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+  -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+  -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+  -- workaround for those devices.
+  if num_server_eps > 0 and detect_matter_thing(device) == true then
+    local id = 0
+    for _, ep in ipairs(device.endpoints) do
+      -- main_endpoint only supports server cluster by definition of get_endpoints()
+      if main_endpoint == ep.endpoint_id then
+        for _, dt in ipairs(ep.device_types) do
+          -- no device type that is not in the switch subset should be considered.
+          if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+            id = math.max(id, dt.device_type_id)
+          end
+>>>>>>> 69d5cd25f00bf9fa4dd008871c8e3cbc28e0c95a
         end
         break
       end
@@ -376,7 +396,10 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = find_child(device, ib.endpoint_id) or device
+    local temp_device = device
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      temp_device = find_child(device, ib.endpoint_id) or device
+    end
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
@@ -507,6 +530,9 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
   end
+
+  -- call device init in case init is not called after added due to device caching
+  device_init(driver, device)
 end
 
 local matter_driver_template = {
