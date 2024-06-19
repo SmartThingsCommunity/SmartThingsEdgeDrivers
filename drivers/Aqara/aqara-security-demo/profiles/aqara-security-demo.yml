@@ -1,0 +1,6 @@
+name: aqara-security-demo
+components:
+  - id: main
+    capabilities:
+      - id: refresh
+        version: 1

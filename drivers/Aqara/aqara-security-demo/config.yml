@@ -1,0 +1,6 @@
+name: 'Aqara Security Demo'
+packageKey: 'aqara-security-demo'
+permissions:
+  lan: {}
+  discovery: {}
+
