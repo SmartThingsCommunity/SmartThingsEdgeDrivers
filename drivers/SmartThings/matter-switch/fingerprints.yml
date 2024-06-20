@@ -226,6 +226,11 @@ matterManufacturer:
     deviceLabel: Essentials Outdoor Lights
     vendorId: 0x115A
     productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/71"
+    deviceLabel: Smart Holiday String Lights
+    vendorId: 0x115A
+    productId: 0x0047
     deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
