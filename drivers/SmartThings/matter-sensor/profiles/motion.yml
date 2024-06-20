@@ -1,4 +1,4 @@
-name: motion
+name: matter-motion
 components:
 - id: main
   capabilities:
