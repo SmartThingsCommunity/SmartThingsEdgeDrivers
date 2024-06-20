@@ -6,11 +6,14 @@ local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local remoteControlStatus = capabilities.remoteControlStatus
+local antiLockStatus = capabilities["stse.antiLockStatus"]
+test.add_package_capability("antiLockStatus.yaml")
 local lockCredentialInfo = capabilities["stse.lockCredentialInfo"]
 test.add_package_capability("lockCredentialInfo.yaml")
+local lockAlarm = capabilities["lockAlarm"]
+test.add_package_capability("lockAlarm.yaml")
 local Battery = capabilities.battery
 local Lock = capabilities.lock
-local TamperAlert = capabilities.tamperAlert
 
 local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0xFFF3
@@ -49,7 +52,9 @@ test.register_coroutine_test(
       remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      TamperAlert.tamper("clear", { visibility = { displayed = false } })))
+      lockAlarm.alarm.clear({ visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      antiLockStatus.antiLockStatus('unknown', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Lock.lock("locked")))
   end
 )
@@ -64,7 +69,9 @@ test.register_coroutine_test(
       remoteControlStatus.remoteControlEnabled('true', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      TamperAlert.tamper("clear", { visibility = { displayed = false } })))
+      lockAlarm.alarm.clear({ visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      antiLockStatus.antiLockStatus('unknown', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Lock.lock("locked")))
   end
 )

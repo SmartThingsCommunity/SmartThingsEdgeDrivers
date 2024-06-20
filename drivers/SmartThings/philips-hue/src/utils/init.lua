@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
