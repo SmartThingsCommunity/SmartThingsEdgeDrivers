@@ -402,4 +402,21 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+    "Power Source test cases",
+    function()
+        test.socket.zigbee:__queue_receive({ mock_device.id,
+        Basic.attributes.PowerSource:build_test_attr_report(mock_device, 3) })
+        test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.powerSource.powerSource.battery()) )
+
+        test.socket.zigbee:__queue_receive({ mock_device.id,
+        Basic.attributes.PowerSource:build_test_attr_report(mock_device, 2) })
+        test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.powerSource.powerSource.dc()) )
+
+        test.socket.zigbee:__queue_receive({ mock_device.id,
+        Basic.attributes.PowerSource:build_test_attr_report(mock_device, 0) })
+        test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.powerSource.powerSource.unknown()) )
+    end
+)
+
 test.run_registered_tests()
