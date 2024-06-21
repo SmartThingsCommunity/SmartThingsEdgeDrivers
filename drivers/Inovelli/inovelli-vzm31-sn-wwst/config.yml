@@ -1,0 +1,5 @@
+name: 'Inovelli 2-in-1 Blue Series (wwst)'
+description: 'Inovelli driver for the VZM31-SN (2-1 Blue)'
+packageKey: 'inovelli-2-1-blue-wwst'
+permissions:
+  zigbee: {}

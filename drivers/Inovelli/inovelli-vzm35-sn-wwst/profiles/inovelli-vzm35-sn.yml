@@ -1,0 +1,1410 @@
+name: inovelli-vzm35-sn
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
+    - id: fanSpeed
+      version: 1
+    - id: refresh
+      version: 1
+    - id: switchLevel
+      version: 1
+    - id: configuration
+      version: 1
+    categories:
+    - name: Fan
+  - id: button1
+    label: Down Button
+    capabilities:
+    - id: button
+      version: 1
+    categories:
+    - name: RemoteController
+  - id: button2
+    label: Up Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button3
+    label: Config Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button4
+    label: Aux Down Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button5
+    label: Aux Up Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button6
+    label: Aux Config Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - name: "notificationChild"
+    title: "Notification Child Device"
+    description: "Create Separate Child Device for Notification Control"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "Yes": "Yes"
+        "No": "No"
+      default: "No"
+  - name: "notificationType"
+    title: "Notification Effect"
+    description: "This is the notification effect used by the notification child device"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "255": "Clear"
+        "1": "Solid"
+        "2": "Fast Blink"
+        "3": "Slow Blink"
+        "4": "Pulse"
+        "5": "Chase"
+        "6": "Open/Close"
+        "7": "Small-to-Big"
+        "8": "Aurora"
+        "9": "Slow Falling"
+        "10": "Medium Falling"
+        "11": "Fast Falling"
+        "12": "Slow Rising"
+        "13": "Medium Rising"
+        "14": "Fast Rising"
+        "15": "Medium Blink"
+        "16": "Slow Chase"
+        "17": "Fast Chase"
+        "18": "Fast Siren"
+        "19": "Slow Siren"
+      default: 1
+  - name: "parameter258"
+    title: "258. Switch Mode"
+    description: "Use as a Dimmer or an On/Off switch. Ceiling Fan switch mode with neutral installations will have 3-Speeds, whereas if there is no neutral wire present, there will only be 2-Speeds"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Ceiling Fan - Dimmer"
+        "1": "Exhaust Fan - On/Off (default)"
+      default: 1
+  - name: "parameter22"
+    title: "22. Aux Switch Type"
+    description: "Set the Aux switch type. If you are selecting the, \"Smart Aux Switch\", and do not have a neutral wire, you may have to program your switch accordingly. Instructions can be found here: https://inov.li/vzm35snauxnn"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "None (default)"
+        "2": "3-Way Aux Switch"
+      default: 0
+  - name: "parameter52"
+    title: "52. Smart Bulb Mode"
+    description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Smart Bulb Mode"
+      default: 0
+  - name: "parameter1"
+    title: "1. Dimming Speed - Up (Remote)"
+    description: "This changes the speed that the light dims up when controlled from the hub. A setting of 'instant' turns the light immediately on. Increasing the value slows down the transition speed.
+  Default=2.5s"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s (default)"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+      default: 25
+  - name: "parameter2"
+    title: "2. Dimming Speed - Up (Local)"
+    description: "This changes the speed that the light dims up when controlled at the switch. A setting of 'instant' turns the light immediately on. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 1"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 1"
+      default: 127
+  - name: "parameter3"
+    title: "3. Ramp Rate - Off to On (Remote)"
+    description: "This changes the speed that the light turns on when controlled from the hub. A setting of 'instant' turns the light immediately on. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 1"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 1"
+      default: 0
+  - name: "parameter4"
+    title: "4. Ramp Rate - Off to On (Local)"
+    description: "This changes the speed that the light turns on when controlled at the switch. A setting of 'instant' turns the light immediately on. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 3"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 3"
+      default: 127
+  - name: "parameter5"
+    title: "5. Dimming Speed - Down (Remote)"
+    description: "This changes the speed that the light dims down when controlled from the hub. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 1"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 1"
+      default: 127
+  - name: "parameter6"
+    title: "6. Dimming Speed - Down (Local)"
+    description: "This changes the speed that the light dims down when controlled at the switch. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed.
+  Default=Sync with parameter "
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 2"
+      default: 127
+  - name: "parameter7"
+    title: "7. Ramp Rate - On to Off (Remote)"
+    description: "This changes the speed that the light turns off when controlled from the hub. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 3"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 3"
+      default: 127
+  - name: "parameter8"
+    title: "8. Ramp Rate - On to Off (Local)"
+    description: "This changes the speed that the light turns off when controlled at the switch. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed.
+  Default=Sync with parameter 4"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "instant"
+        "5": "500ms"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+        "10": "1.0s"
+        "11": "1.1s"
+        "12": "1.2s"
+        "13": "1.3s"
+        "14": "1.4s"
+        "15": "1.5s"
+        "16": "1.6s"
+        "17": "1.7s"
+        "18": "1.8s"
+        "19": "1.9s"
+        "20": "2.0s"
+        "21": "2.1s"
+        "22": "2.2s"
+        "23": "2.3s"
+        "24": "2.4s"
+        "25": "2.5s"
+        "26": "2.6s"
+        "27": "2.7s"
+        "28": "2.8s"
+        "29": "2.9s"
+        "30": "3.0s"
+        "31": "3.1s"
+        "32": "3.2s"
+        "33": "3.3s"
+        "34": "3.4s"
+        "35": "3.5s"
+        "36": "3.6s"
+        "37": "3.7s"
+        "38": "3.8s"
+        "39": "3.9s"
+        "40": "4.0s"
+        "41": "4.1s"
+        "42": "4.2s"
+        "43": "4.3s"
+        "44": "4.4s"
+        "45": "4.5s"
+        "46": "4.6s"
+        "47": "4.7s"
+        "48": "4.8s"
+        "49": "4.9s"
+        "50": "5.0s"
+        "51": "5.1s"
+        "52": "5.2s"
+        "53": "5.3s"
+        "54": "5.4s"
+        "55": "5.5s"
+        "56": "5.6s"
+        "57": "5.7s"
+        "58": "5.8s"
+        "59": "5.9s"
+        "60": "6.0s"
+        "61": "6.1s"
+        "62": "6.2s"
+        "63": "6.3s"
+        "64": "6.4s"
+        "65": "6.5s"
+        "66": "6.6s"
+        "67": "6.7s"
+        "68": "6.8s"
+        "69": "6.9s"
+        "70": "7.0s"
+        "71": "7.1s"
+        "72": "7.2s"
+        "73": "7.3s"
+        "74": "7.4s"
+        "75": "7.5s"
+        "76": "7.6s"
+        "77": "7.7s"
+        "78": "7.8s"
+        "79": "7.9s"
+        "80": "8.0s"
+        "81": "8.1s"
+        "82": "8.2s"
+        "83": "8.3s"
+        "84": "8.4s"
+        "85": "8.5s"
+        "86": "8.6s"
+        "87": "8.7s"
+        "88": "8.8s"
+        "89": "8.9s"
+        "90": "9.0s"
+        "91": "9.1s"
+        "92": "9.2s"
+        "93": "9.3s"
+        "94": "9.4s"
+        "95": "9.5s"
+        "96": "9.6s"
+        "97": "9.7s"
+        "127": "Sync with parameter 4"
+      default: 127
+  - name: "parameter9"
+    title: "9. Minimum Level"
+    description: "The minimum level that the light can be dimmed. Useful when the user has a light that does not turn on or flickers at a lower level."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 1
+  - name: "parameter10"
+    title: "10. Maximum Level"
+    description: "The maximum level that the light can be dimmed. Useful when the user wants to limit the maximum brighness."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 2
+      maximum: 100
+      default: 100
+  - name: "parameter11"
+    title: "11. Invert Switch"
+    description: "Inverts the orientation of the switch. Useful when the switch is installed upside down. Essentially up becomes down and down becomes up."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "No (default)"
+        "1": "Yes"
+      default: 0
+  - name: "parameter12"
+    title: "12. Auto Off Timer"
+    description: "Automatically turns the switch off after this many seconds. When the switch is turned on a timer is started. When the timer expires the switch turns off.
+  0=Auto Off Disabled."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 32767
+      default: 0
+  - name: "parameter13"
+    title: "13. Default Level (Local)"
+    description: "Default level for the dimmer when turned on at the switch.
+  1-100=Set Level
+  101=Use previous level."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 101
+      default: 101
+  - name: "parameter14"
+    title: "14. Default Level (Remote)"
+    description: "Default level for the dimmer when turned on from the hub.
+  1-100=Set Level
+  101=Use previous level."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 101
+      default: 101
+  - name: "parameter15"
+    title: "15. Level After Power Restored"
+    description: "The level the switch will return to when power is restored after power failure.
+  0=Off
+  1-100=Set Level
+  101=Use previous level."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 101
+  - name: "parameter17"
+    title: "17. Load Level Indicator Timeout"
+    description: "Shows the level that the load is at for x number of seconds after the load is adjusted and then returns to the Default LED state."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Do not display Load Level"
+        "1": "1 Second"
+        "2": "2 Seconds"
+        "3": "3 Seconds"
+        "4": "4 Seconds"
+        "5": "5 Seconds"
+        "6": "6 Seconds"
+        "7": "7 Seconds"
+        "8": "8 Seconds"
+        "9": "9 Seconds"
+        "10": "10 Seconds"
+        "11": "Display Load Level with no timeout"
+      default: 11
+  - name: "parameter50"
+    title: "50. Button Press Delay"
+    description: "Adjust the delay used in scene control. 0=no delay (disables multi-tap scenes), 1=100ms, 2=200ms, 3=300ms, etc."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "0ms"
+        "1": "100ms"
+        "2": "200ms"
+        "3": "300ms"
+        "4": "400ms"
+        "5": "500ms (default)"
+        "6": "600ms"
+        "7": "700ms"
+        "8": "800ms"
+        "9": "900ms"
+      default: 5
+  - name: "parameter53"
+    title: "53. 2x-Tap UP for full brightness"
+    description: "Enable or Disable full brightness on double-tap up."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Enabled"
+      default: 0
+  - name: "parameter54"
+    title: "54. 2x-Tap DOWN for min brightness"
+    description: "Enable or Disable minimum brightness on double-tap down. Firmware 2.11+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Enabled"
+      default: 0
+  - name: "parameter55"
+    title: "55. Double-Tap UP level"
+    description: "When parameter 53 is enabled, this is the level that the switch will go to on double tap up. Firmware 2.14+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 99
+  - name: "parameter56"
+    title: "56. Double-Tap Down level"
+    description: "When parameter 54 is enabled, this is the level that the switch will go to on double tap down. Firmware 2.14+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 1
+  - name: "parameter95"
+    title: "95. LED Indicator Color (w/On)"
+    description: "Set the color of the Full LED Indicator when the load is on."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "7": "Orange"
+        "28": "Lemon"
+        "64": "Lime"
+        "85": "Green"
+        "106": "Teal"
+        "127": "Cyan"
+        "148": "Aqua"
+        "170": "Blue (default)"
+        "190": "Violet"
+        "212": "Magenta"
+        "234": "Pink"
+        "255": "White"
+      default: 170
+  - name: "parameter96"
+    title: "96. LED Indicator Color (w/Off)"
+    description: "Set the color of the Full LED Indicator when the load is off."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "7": "Orange"
+        "28": "Lemon"
+        "64": "Lime"
+        "85": "Green"
+        "106": "Teal"
+        "127": "Cyan"
+        "148": "Aqua"
+        "170": "Blue (default)"
+        "190": "Violet"
+        "212": "Magenta"
+        "234": "Pink"
+        "255": "White"
+      default: 170
+  - name: "parameter97"
+    title: "97. LED Indicator Intensity (w/On)"
+    description: "Set the intensity of the Full LED Indicator when the load is on."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 50
+  - name: "parameter98"
+    title: "98. LED Indicator Intensity (w/Off)"
+    description: "Set the intensity of the Full LED Indicator when the load is off."
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 5
+  - name: "parameter120"
+    title: "120. Single Tap Behavior"
+    description: "Behavior of single tapping the on or off button. Old behavior turns the switch on or off. New behavior cycles through the levels set by P131-133. Firmware 1.05+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Old Behavior (default)"
+        "1": "New Behavior"
+      default: 0
+  - name: "parameter121"
+    title: "121. Advanced Timer Mode"
+    description: "Enable countdown timer mode for use for devices such as a bathroom fan. Firmware 1.05+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Turn On"
+      default: 0
+  - name: "parameter123"
+    title: "123. Aux Switch Unique Scenes"
+    description: "Have unique scene numbers for scenes activated with the aux switch."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Enabled"
+      default: 0
+  - name: "parameter125"
+    title: "125. Binding Default Level"
+    description: "Send on/off with level to bound devices that matches the devices default level. Firmware 2.14+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Enabled"
+      default: 0
+  - name: "parameter129"
+    title: "129. Breeze Mode Configuration"
+    description: "Configuration for breeze mode when enabled. Firmware 1.05+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 4294967295
+      default: 0
+  - name: "parameter130"
+    title: "130. Fan Control Mode"
+    description: "Which mode to use when binding EP3 to a fan module. Firmware 1.05+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Multi Tap"
+        "2": "Cycle"
+      default: 0
+  - name: "parameter131"
+    title: "131. Low Level For Fan Control Mode"
+    description: "Level to send to device bound to EP3 when set to low. Firmware 1.05+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 25
+  - name: "parameter132"
+    title: "132. Med Level For Fan Control Mode"
+    description: "Level to send to device bound to EP3 when set to Medium. Firmware 1.05+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 50
+  - name: "parameter133"
+    title: "133. Hgh Level For Fan Control Mode"
+    description: "Level to send to device bound to EP3 when set to high. Firmware 1.05+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 100
+      default: 100
+  - name: "parameter134"
+    title: "134. LED Color For Fan Control Mode"
+    description: "LED color used to display fan control mode. Firmware 1.05+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "7": "Orange"
+        "28": "Lemon"
+        "64": "Lime"
+        "85": "Green"
+        "106": "Teal"
+        "127": "Cyan"
+        "148": "Aqua"
+        "170": "Blue (default)"
+        "190": "Violet"
+        "212": "Magenta"
+        "234": "Pink"
+        "255": "White"
+      default: 255
+  - name: "parameter256"
+    title: "256. Local Protection"
+    description: "Ability to control switch from the wall."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Local control enabled (default)"
+        "1": "Local control disabled"
+      default: 0
+  - name: "parameter260"
+    title: "260. Firmware Update Indicator"
+    description: "Display firmware update progress on LED Indicator"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "Enabled (default)"
+        "0": "Disabled"
+      default: 1
+  - name: "parameter262"
+    title: "262. Clear Notification w/ 2x Config"
+    description: "Double-Tap the Config button to clear notifications. Firmware 2.05+"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Enabled (default)"
+        "1": "Disabled"
+      default: 0
+  - name: "parameter263"
+    title: "263. LED Level Type"
+    description: "Level display of the LED strip. Firmware 1.03+"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 0
+  - name: "configall"
+    title: "Re-send All Configuration Options"
+    description: "Change this setting (to either option) to force the driver to send all configuration parameters to the device. Usefull if you added the device back to the network following a factory reset / firmware update."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "Yes"
+        "2": "Sure"
+      default: 1
+  - name: "binding1"
+    title: "Bind # 1 - Format: eui/endpoint"
+    description: "example: 040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ""
+  - name: "binding2"
+    title: "Bind # 2 - Format: eui/endpoint"
+    description: "example: 040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ""
+  - name: "binding3"
+    title: "Bind # 3 - Format: eui/endpoint"
+    description: "example: 040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ""
+  - name: "binding4"
+    title: "Bind # 4 - Format: src_ep/eui/dst_ep"
+    description: "example: 2/040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 24
+      stringType: text
+      default: ""
+  - name: "binding5"
+    title: "Bind # 5 - Format: src_ep/eui/dst_ep"
+    description: "example: 2/040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 24
+      stringType: text
+      default: ""
+  - name: "binding6"
+    title: "Bind # 6 - Format: src_ep/eui/dst_ep"
+    description: "example: 2/040D84FFFE05F918/1"
+    required: false
+    preferenceType: string
+    definition:
+      minLength: 0
+      maxLength: 24
+      stringType: text
+      default: ""
+  - name: "groupbinding1"
+    title: "Group Bind # 1"
+    description: "Group #"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 65536
+      default: 0
+  - name: "groupbinding2"
+    title: "Group Bind # 2"
+    description: "Group #"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 65536
+      default: 0
+  - name: "groupbinding3"
+    title: "Group Bind # 3"
+    description: "Group #"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 65536
+      default: 0

@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "Inovelli/VZM31-SN"
+    deviceLabel: "Inovelli 2-in-1 Blue Series"
+    manufacturer: Inovelli
+    model: VZM31-SN
+    deviceProfileName: inovelli-vzm31-sn

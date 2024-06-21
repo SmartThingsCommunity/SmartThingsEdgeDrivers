@@ -1,0 +1,11 @@
+zigbeeManufacturer:
+  - id: "Inovelli/VZM35-SN"
+    deviceLabel: "Inovelli Fan Blue Series"
+    manufacturer: Inovelli
+    model: VZM35-SN
+    deviceProfileName: inovelli-vzm35-sn
+  - id: "Inovelli/VZM35-SN-MG24"
+    deviceLabel: "Inovelli Fan Blue Series"
+    manufacturer: Inovelli
+    model: VZM35-SN-MG24
+    deviceProfileName: inovelli-vzm35-sn

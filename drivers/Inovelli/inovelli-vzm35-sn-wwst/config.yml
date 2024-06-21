@@ -1,0 +1,5 @@
+name: 'Inovelli Fan Blue Series (wwst)'
+description: 'Inovelli drivers for the VZM35-SN (Fan Switch)'
+packageKey: 'inovelli-fan-blue-wwst'
+permissions:
+  zigbee: {}
