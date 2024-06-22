@@ -1,0 +1,24 @@
+name: window-treatment-confio
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1  
+  - id: windowShadeLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1    
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+preferences:
+  - name: "profileType"
+    title: "Child Profile Type"
+    description: "Child Profile Type: DO NOT CHANGE"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "shadeLevel": "window-treatment-confio"
+      default: "shadeLevel"
