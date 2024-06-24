@@ -791,9 +791,9 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
-      [clusters.OnOff.ID] = {
-        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
-      },
+      --[clusters.OnOff.ID] = {
+      --  [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+      --},
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
         [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler_factory(LEVEL_MAX),
