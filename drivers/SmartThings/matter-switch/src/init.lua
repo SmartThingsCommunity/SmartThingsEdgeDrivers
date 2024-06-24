@@ -74,7 +74,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_PROFILE_SUPPORTED = {2, 4, 5, 6, 8}
+local STATIC_PROFILE_SUPPORTED = {2, 4, 6, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 
@@ -228,7 +228,37 @@ local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
 
-  if #switch_eps > 0 then
+  if #switch_eps > 0 and #button_eps > 0 then
+    table.sort(switch_eps)
+    local num_server_eps = 0
+    local main_endpoint = find_default_endpoint(device)
+    for _, ep in ipairs(switch_eps) do
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+        num_server_eps = num_server_eps + 1
+        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+          local name = string.format("%s %d", device.label, current_component_number)
+          driver:try_create_device(
+              {
+                type = "EDGE_CHILD",
+                label = name,
+                profile = "button",
+                parent_device_id = device.id,
+                parent_assigned_child_key = string.format("%02X", ep),
+                vendor_provided_label = name
+              }
+          )
+        end
+      end
+    end
+    if num_server_eps > 1  then
+      -- If the device is a parent child device, then set the find_child function on init.
+      -- This is persisted because initialize switch is only run once, but find_child function should be set
+      -- on each driver init.
+      device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+    end
+    device:set_field(SWITCH_INITIALIZED, true)
+    configure_buttons(device)
+  elseif #switch_eps > 0 then
     table.sort(switch_eps)
     -- Since we do not support bindings at the moment, we only want to count On/Off
     -- clusters that have been implemented as server. This can be removed when we have
@@ -291,7 +321,6 @@ local function initialize_switch(driver, device)
     end
   else -- device is a button
     if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      device.log.debug(#button_eps.." momentary switch endpoints")
       -- find the default/main endpoint, the device with the lowest EP that supports MS
       table.sort(button_eps)
       local main_endpoint = device.MATTER_DEFAULT_ENDPOINT
@@ -299,7 +328,6 @@ local function initialize_switch(driver, device)
         main_endpoint = button_eps[1] -- the endpoint matching to the non-child device
         if button_eps[1] == 0 then main_endpoint = button_eps[2] end -- we shouldn't hit this, but just in case
       end
-      device.log.debug("main button endpoint is "..main_endpoint)
 
       local battery_support = false
       if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
@@ -327,6 +355,7 @@ local function initialize_switch(driver, device)
       local current_component_number = 2
       local component_map = {}
       local component_map_used = false
+      print("CHILD DEVICE CREATION")
       for _, ep in ipairs(button_eps) do -- for each momentary switch endpoint (including main)
         device.log.debug("Configuring endpoint "..ep)
         -- build the mapping of endpoints to components if we have a static profile (multi-component)
@@ -341,6 +370,9 @@ local function initialize_switch(driver, device)
         else -- use parent/child
           if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
             local name = string.format("%s %d", device.label, current_component_number)
+            print("CHILD DEVICE: ", name)
+            print("KEY: ", ep)
+            print("PARENT ID: ", device.id)
             driver:try_create_device(
                 {
                   type = "EDGE_CHILD",
@@ -791,9 +823,9 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
-      --[clusters.OnOff.ID] = {
-      --  [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
-      --},
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+      },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
         [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler_factory(LEVEL_MAX),

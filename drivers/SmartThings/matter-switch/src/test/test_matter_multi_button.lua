@@ -16,6 +16,9 @@ local mock_device = test.mock_device.build_test_matter_device(
     {
       endpoint_id = 0,
       clusters = {},
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
     },
     {
       endpoint_id = 10,
@@ -27,6 +30,9 @@ local mock_device = test.mock_device.build_test_matter_device(
         },
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
       },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
     },
     {
       endpoint_id = 20,
@@ -37,6 +43,9 @@ local mock_device = test.mock_device.build_test_matter_device(
           cluster_type = "SERVER"
         },
       },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
     },
     {
       endpoint_id = 30,
@@ -47,6 +56,9 @@ local mock_device = test.mock_device.build_test_matter_device(
           cluster_type = "SERVER"
         },
       },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
     },
     {
       endpoint_id = 50,
@@ -59,6 +71,9 @@ local mock_device = test.mock_device.build_test_matter_device(
           cluster_type = "SERVER"
         },
       },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
     },
   },
 }
@@ -96,6 +111,7 @@ local function test_init()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 50)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 end
