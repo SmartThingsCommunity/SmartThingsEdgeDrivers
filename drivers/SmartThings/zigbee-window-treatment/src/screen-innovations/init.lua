@@ -32,9 +32,6 @@ local MOTOR_STATE_IDLE = "idle"
 local MOTOR_STATE_OPENING = "opening"
 local MOTOR_STATE_CLOSING = "closing"
 
-local POWER_SOURCE_DC = 0x02
-local POWER_SOURCE_BATTERY = 0x03
-
 -----------------------------------------------------------------
 -- local functions
 -----------------------------------------------------------------
@@ -145,22 +142,6 @@ local function battery_perc_attr_handler(driver, device, value, zb_rx)
   end
 end
 
--- custom power_source_attr_handler
-local function power_source_attr_handler(driver, device, value, zb_rx)
-  local event = nil
-  local power_source = value.value
-
-  if power_source == POWER_SOURCE_DC then
-    event = capabilities.powerSource.powerSource.dc()
-  elseif power_source == POWER_SOURCE_BATTERY then
-    event = capabilities.powerSource.powerSource.battery()
-  else
-    event = capabilities.powerSource.powerSource.unknown()
-  end
-
-  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, event)
-end
-
 -- create the handler object
 local screeninnovations_roller_shade_handler = {
   NAME = "screeninnovations_roller_shade_handler",
@@ -186,9 +167,6 @@ local screeninnovations_roller_shade_handler = {
       },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_perc_attr_handler,
-      },
-      [Basic.ID] = {
-        [Basic.attributes.PowerSource.ID] = power_source_attr_handler,
       },
       [CUS_CLU] = {
         [RUN_DIR_ATTR] = running_direction_attr_handler,

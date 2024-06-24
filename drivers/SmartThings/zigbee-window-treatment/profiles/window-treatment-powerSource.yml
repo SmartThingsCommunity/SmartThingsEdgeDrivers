@@ -8,11 +8,11 @@ components:
         version: 1
       - id: windowShadePreset
         version: 1
+      - id: powerSource
+        version: 1
       - id: battery
         version: 1
       - id: refresh
-        version: 1
-      - id: powerSource
         version: 1
       - id: firmwareUpdate
         version: 1
