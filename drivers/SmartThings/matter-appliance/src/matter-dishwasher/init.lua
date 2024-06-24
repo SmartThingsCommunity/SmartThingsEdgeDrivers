@@ -208,10 +208,10 @@ local function handle_dishwasher_mode(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
 
-  local ENDPOINT = 1
+  local endpoint_id = device:component_to_endpoint(cmd.component)
   for i, mode in ipairs(dishwasherModeSupportedModes) do
     if cmd.args.mode == mode then
-      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, endpoint_id, i - 1))
       return
     end
   end
@@ -221,10 +221,10 @@ local function handle_temperature_level(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
-  local ENDPOINT = 1
+  local endpoint_id = device:component_to_endpoint(cmd.component)
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if cmd.args.temperatureLevel == tempLevel then
-      device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+      device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
       return
     end
   end

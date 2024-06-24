@@ -341,6 +341,34 @@ local devices = {
     PARAMETERS = {
       ledIndicator = {parameter_number = 3, size = 1}
     }
+  },
+  LEVITON_DIMMER = {
+    MATCHING_MATRIX = {
+      mfrs = 0x001D,
+      product_types = 0x0041,
+      product_ids = 0x0002
+    },
+    PARAMETERS = {
+      fadeOnTime = {parameter_number = 1, size = 4},
+      fadeOffTime = {parameter_number = 2, size = 4},
+      minLevel = {parameter_number = 3, size = 4},
+      maxLevel = {parameter_number = 4, size = 4},
+      presetLevel = {parameter_number = 5, size = 4},
+      dimBarTimeout = {parameter_number = 6, size = 4},
+      statusLEDmode = {parameter_number = 7, size = 4},
+      loadType = {parameter_number = 8, size = 4},
+      controlTiming = {parameter_number = 9, size = 4}
+    }
+  },
+  LEVITON_SWITCH = {
+    MATCHING_MATRIX = {
+      mfrs = 0x001D,
+      product_types = 0x0042,
+      product_ids = 0x0002
+    },
+    PARAMETERS = {
+    statusLEDmode = {parameter_number = 7, size = 4}
+    }
   }
 }
 

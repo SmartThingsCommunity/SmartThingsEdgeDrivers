@@ -292,12 +292,12 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
-  local ENDPOINT = 1
+  local endpoint_id = device:component_to_endpoint(cmd.component)
   if cmd.component == "runMode" then
     local supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES) or {}
     for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
-        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, i - 1))
         return
       end
     end
@@ -305,7 +305,7 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
     local supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
     for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
-        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, endpoint_id, i - 1))
         return
       end
     end
