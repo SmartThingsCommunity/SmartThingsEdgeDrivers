@@ -183,7 +183,12 @@ zigbeeManufacturer:
     deviceLabel: ITM Switch
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-005
-    deviceProfileName: SLED-three-buttons  
+    deviceProfileName: SLED-three-buttons 
+  - id:  Juno/ABL-LIGHT-Z-401
+    deviceLabel: SEAMLESS Smart Controller
+    manufacturer: Juno
+    model: ABL-LIGHT-Z-401
+    deviceProfileName: SLED-three-buttons   
   # # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: 语音场景(4寸）面板
