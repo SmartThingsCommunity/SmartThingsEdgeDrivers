@@ -109,4 +109,29 @@ function Discovery.discovery_handler(driver, _, should_continue)
   log.info("Ending Harman Luxury discovery")
 end
 
+function Discovery.update_device_ip(device)
+  local dni = device.device_network_id
+  local ip = device:get_device_info(const.IP)
+
+  -- collect current parameters
+  local params_table = Discovery.find_params_table()
+
+  -- update device IPs
+  if params_table[dni] then
+    -- if device is still online
+    local current_ip = params_table[dni].ip
+    if ip ~= current_ip then
+      device:set_field(const.IP, current_ip, {
+        persist = true,
+      })
+      log.info(string.format("%s updated IP from %s to %s", dni, ip, current_ip))
+    end
+    return true
+  else
+    -- if device is no longer online
+    device:offline()
+    return false
+  end
+end
+
 return Discovery
