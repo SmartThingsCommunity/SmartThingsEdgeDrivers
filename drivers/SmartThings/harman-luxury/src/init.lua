@@ -243,12 +243,6 @@ local function device_init(driver, device)
   local supportedInputSources, _ = api.GetSupportedInputSources(device_ip)
   device:emit_event(capabilities.mediaInputSource.supportedInputSources(supportedInputSources))
 
-  -- set supported keypad inputs
-  device:emit_event(capabilities.keypadInput.supportedKeyCodes(
-                      {"UP", "DOWN", "LEFT", "RIGHT", "SELECT", "BACK", "EXIT", "MENU", "SETTINGS", "HOME", "NUMBER0",
-                       "NUMBER1", "NUMBER2", "NUMBER3", "NUMBER4", "NUMBER5", "NUMBER6", "NUMBER7", "NUMBER8",
-                       "NUMBER9"}))
-
   log.trace(string.format("device IP: %s", device_ip))
 
   create_check_for_updates_thread(device)
@@ -386,9 +380,6 @@ local driver = Driver("Harman Luxury", {
     [capabilities.mediaTrackControl.ID] = {
       [capabilities.mediaTrackControl.commands.nextTrack.NAME] = handlers.handle_next_track,
       [capabilities.mediaTrackControl.commands.previousTrack.NAME] = handlers.handle_previous_track,
-    },
-    [capabilities.keypadInput.ID] = {
-      [capabilities.keypadInput.commands.sendKey.NAME] = handlers.handle_send_key,
     },
   },
   supported_capabilities = {capabilities.switch, capabilities.audioMute, capabilities.audioVolume,

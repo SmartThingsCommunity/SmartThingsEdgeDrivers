@@ -293,19 +293,6 @@ function APIs.GetPlayerState(ip)
   return invoke.Activate(ip, SMARTTHINGS_MEDIA_PATH .. "getPlayerState")
 end
 
---- key input APIs ------------------------------------
-
---- invoke smartthings:sendKey on ip
----@param ip string
----@param key string
----@return boolean|number|string|table|nil, nil|string
-function APIs.InvokeSendKey(ip, key)
-  local value = {
-    NsdkSmartThingsKey = key,
-  }
-  return invoke.ActivateValue(ip, SMARTTHINGS_PATH .. "sendKey", value)
-end
-
 --- check for values change APIs ------------------------------------
 
 --- invoke smartthings:updateValues on ip
