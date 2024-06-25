@@ -12,6 +12,8 @@ local MANUFACTURER_NAME_PATH = "settings:/system/manufacturer"
 local DEVICE_NAME_PATH = "settings:/deviceName"
 local MODEL_NAME_PATH = "settings:/system/modelName"
 local PRODUCT_NAME_PATH = "settings:/system/productName"
+local INIT_CREDENTIAL_PATH = "smartthings:initCredentialsToken"
+local CREDENTIAL_PATH = "settings:/smartthings/userToken"
 
 ----------------------------------------------------------
 --- APIs
@@ -57,25 +59,28 @@ function APIs.SetDeviceName(ip, value)
   return set.String(ip, DEVICE_NAME_PATH, value)
 end
 
---- get active credential token from a Harman Luxury device on ip
+--- initialise a new credential token from Harman Luxury on ip
 ---@param ip string
----@return boolean|number|string|table|nil, nil|string
-function APIs.InitCredentialsToken(ip)
-  return invoke.Activate(ip, SMARTTHINGS_PATH .. "initCredentialsToken")
+---@return string|nil, nil|string
+function APIs.init_credential_token(ip)
+  local val, err = invoke.Activate(ip, INIT_CREDENTIAL_PATH)
+  if err then
+    return nil, err
+  else
+    if type(val) == "string" then
+      return val, nil
+    else
+      err = string.format("Device with IP:%s failed to generate a valid credential", ip)
+      return nil, err
+    end
+  end
 end
 
---- get active credential token from a Harman Luxury device on ip
+--- get device current active token from Harman Luxury on ip
 ---@param ip string
----@return boolean|number|string|table|nil, nil|string
-function APIs.GetCredentialsToken(ip)
-  return invoke.Activate(ip, SMARTTHINGS_PATH .. "getCredentialsToken")
-end
-
---- get supported input sources from a Harman Luxury device on ip
----@param ip string
----@return table|nil, nil|string
-function APIs.GetSupportedInputSources(ip)
-  return invoke.Activate(ip, SMARTTHINGS_PATH .. "getSupportedInputSources")
+---@return string|nil, nil|string
+function APIs.GetActiveCredentialToken(ip)
+  return get.String(ip, CREDENTIAL_PATH)
 end
 
 return APIs

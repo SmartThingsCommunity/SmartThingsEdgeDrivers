@@ -338,8 +338,8 @@ end
 local driver = Driver("Harman Luxury", {
   discovery = discovery.discovery_handler,
   lifecycle_handlers = {
+    added = discovery.device_added,
     init = device_init,
-    added = device_added,
     removed = device_removed,
     infoChanged = device_changeInfo,
   },
