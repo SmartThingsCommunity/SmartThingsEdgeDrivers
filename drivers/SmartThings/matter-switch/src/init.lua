@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
+local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
 
@@ -156,9 +157,19 @@ end
 --- and supports the OnOff cluster. This is done to bypass the
 --- BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
-  local eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(eps)
-  for _, v in ipairs(eps) do
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local all_eps = {}
+
+  for _,v in ipairs(switch_eps) do
+    table.insert(all_eps, v)
+  end
+  for _,v in ipairs(button_eps) do
+    table.insert(all_eps, v)
+  end
+  table.sort(all_eps)
+
+  for _, v in ipairs(all_eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
       return v
     end
@@ -227,46 +238,25 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local all_eps = {}
 
-  if #switch_eps > 0 and #button_eps > 0 then
-    table.sort(switch_eps)
-    local num_server_eps = 0
-    local main_endpoint = find_default_endpoint(device)
-    for _, ep in ipairs(switch_eps) do
-      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-        num_server_eps = num_server_eps + 1
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local name = string.format("%s %d", device.label, current_component_number)
-          driver:try_create_device(
-              {
-                type = "EDGE_CHILD",
-                label = name,
-                profile = "button",
-                parent_device_id = device.id,
-                parent_assigned_child_key = string.format("%02X", ep),
-                vendor_provided_label = name
-              }
-          )
-        end
-      end
+  local profile_changed = false
+
+  if #switch_eps > 0 or #button_eps > 0 then
+    for _,v in ipairs(switch_eps) do
+      table.insert(all_eps, v)
     end
-    if num_server_eps > 1  then
-      -- If the device is a parent child device, then set the find_child function on init.
-      -- This is persisted because initialize switch is only run once, but find_child function should be set
-      -- on each driver init.
-      device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
+    for _,v in ipairs(button_eps) do
+      table.insert(all_eps, v)
     end
-    device:set_field(SWITCH_INITIALIZED, true)
-    configure_buttons(device)
-  elseif #switch_eps > 0 then
-    table.sort(switch_eps)
-    -- Since we do not support bindings at the moment, we only want to count On/Off
-    -- clusters that have been implemented as server. This can be removed when we have
+    table.sort(all_eps)
+    -- Since we do not support bindings at the moment, we only want to count clusters
+    -- that have been implemented as server. This can be removed when we have
     -- support for bindings.
     local num_server_eps = 0
     local main_endpoint = find_default_endpoint(device)
-    for _, ep in ipairs(switch_eps) do
-      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+    for _, ep in ipairs(all_eps) do
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) or device:supports_server_cluster(clusters.Switch.ID, ep) then
         num_server_eps = num_server_eps + 1
         if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
           local name = string.format("%s %d", device.label, num_server_eps)
@@ -293,131 +283,59 @@ local function initialize_switch(driver, device)
     end
 
     device:set_field(SWITCH_INITIALIZED, true)
-    -- The case where num_server_eps > 0 is a workaround for devices that have a
-    -- Light Switch device type but implement the On Off cluster as server (which is against the spec
-    -- for this device type). By default, we do not support Light Switch device types because by spec these
-    -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
-    -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
-    -- claim to be Light Switch device types and still implement their clusters as server, so this is a
-    -- workaround for those devices.
-    if num_server_eps > 0 and detect_matter_thing(device) == true then
-      local id = 0
-      for _, ep in ipairs(device.endpoints) do
-        -- main_endpoint only supports server cluster by definition of get_endpoints()
-        if main_endpoint == ep.endpoint_id then
-          for _, dt in ipairs(ep.device_types) do
-            -- no device type that is not in the switch subset should be considered.
-            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
-              id = math.max(id, dt.device_type_id)
+
+    if device:supports_server_cluster(clusters.OnOff.ID, main_endpoint) then
+      -- The case where num_server_eps > 0 is a workaround for devices that have a
+      -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+      -- for this device type). By default, we do not support Light Switch device types because by spec these
+      -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+      -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+      -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+      -- workaround for those devices.
+      if num_server_eps > 0 and detect_matter_thing(device) == true then
+        local id = 0
+        for _, ep in ipairs(device.endpoints) do
+          -- main_endpoint only supports server cluster by definition of get_endpoints()
+          if main_endpoint == ep.endpoint_id then
+            for _, dt in ipairs(ep.device_types) do
+              -- no device type that is not in the switch subset should be considered.
+              if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+                id = math.max(id, dt.device_type_id)
+              end
             end
+            break
           end
-          break
+        end
+
+        if device_type_profile_map[id] ~= nil then
+          device:try_update_metadata({profile = device_type_profile_map[id]})
         end
       end
-
-      if device_type_profile_map[id] ~= nil then
-        device:try_update_metadata({profile = device_type_profile_map[id]})
-      end
-    end
-  else -- device is a button
-    if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      -- find the default/main endpoint, the device with the lowest EP that supports MS
-      table.sort(button_eps)
-      local main_endpoint = device.MATTER_DEFAULT_ENDPOINT
-      if #button_eps > 0 then
-        main_endpoint = button_eps[1] -- the endpoint matching to the non-child device
-        if button_eps[1] == 0 then main_endpoint = button_eps[2] end -- we shouldn't hit this, but just in case
-      end
-
+    else -- main endpoint is a button
       local battery_support = false
       if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
           #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
         battery_support = true
       end
 
-      local new_profile = nil
+      local new_profile = "button-battery"
       -- We have a static profile that will work for this number of buttons
-      if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
-        if battery_support then
-          new_profile = string.format("%d-button-battery", #button_eps)
-        else
-          new_profile = string.format("%d-button", #button_eps)
-        end
-      elseif not battery_support then
+      if not battery_support then
         -- a battery-less button/remote (either single or will use parent/child)
+        -- device should fingerprint to button-battery
         new_profile = "button"
+        profile_changed = true
       end
 
-      if new_profile then device:try_update_metadata({profile = new_profile}) end
+      device:try_update_metadata({profile = new_profile})
+    end
 
-      -- At the moment, we're taking it for granted that all momentary switches only have 2 positions
-      -- TODO: flesh this out for NumberOfPositions > 2
-      local current_component_number = 2
-      local component_map = {}
-      local component_map_used = false
-      print("CHILD DEVICE CREATION")
-      for _, ep in ipairs(button_eps) do -- for each momentary switch endpoint (including main)
-        device.log.debug("Configuring endpoint "..ep)
-        -- build the mapping of endpoints to components if we have a static profile (multi-component)
-        if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
-          if ep ~= main_endpoint then
-            component_map[string.format("button%d", current_component_number)] = ep
-            current_component_number = current_component_number + 1
-          else
-            component_map["main"] = ep
-          end
-          component_map_used = true
-        else -- use parent/child
-          if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-            local name = string.format("%s %d", device.label, current_component_number)
-            print("CHILD DEVICE: ", name)
-            print("KEY: ", ep)
-            print("PARENT ID: ", device.id)
-            driver:try_create_device(
-                {
-                  type = "EDGE_CHILD",
-                  label = name,
-                  profile = "button",
-                  parent_device_id = device.id,
-                  parent_assigned_child_key = string.format("%02X", ep),
-                  vendor_provided_label = name
-                }
-            )
-            current_component_number = current_component_number + 1
-          end
-        end
-      end
-
-      if component_map_used then
-        device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-      end
-
-      if new_profile then
+    if #button_eps > 0 then
+      if profile_changed then
         device:set_field(DEFERRED_CONFIGURE, true)
       else
         configure_buttons(device)
       end
-
-      -- TODO: Solution for latching switches
-      -- for _, ep in ipairs(LS) do
-      --   local name = string.format("%s %d", device.label, ep)
-      --   local child = driver:try_create_device(
-      --     {
-      --       type = "EDGE_CHILD",
-      --       label = name,
-      --       profile = "child-button",
-      --       parent_device_id = device.id,
-      --       parent_assigned_child_key = string.format("%02X", ep),
-      --       vendor_provided_label = name
-      --     }
-      --   )
-      --   -- Latching switches are switches that don't return to an idle position after being pressed.
-      --   -- In that sense, they can be all sorts of things, like dials or radio buttons. This means
-      --   -- they can have any number of states > 2. However, due to the current nature of our capabilities
-      --   -- our ability to support the full range of options here is limited, so we will stick with
-      --   -- up/down rocker switches (kind of).
-      --   child:emit_event(capabilities.button.supportedButtonValues({"up","down"}, {visibility = {displayed = false}}))
-      -- end
     end
   end
 end

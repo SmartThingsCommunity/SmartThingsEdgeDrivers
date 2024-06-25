@@ -89,9 +89,9 @@ for _, endpoint in ipairs(mock_device.endpoints) do
   if endpoint.endpoint_id ~= 2 then
     local child_data = {
       profile = child_profile,
-      device_network_id = string.format("%s:%02X", mock_device.id, endpoint.endpoint_id),
+      device_network_id = string.format("%s:%d", mock_device.id, endpoint.endpoint_id),
       parent_device_id = mock_device.id,
-      parent_assigned_child_key = string.format("%02X", endpoint.endpoint_id)
+      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
     }
     mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
   end
@@ -118,6 +118,7 @@ local function test_init()
     test.mock_device.add_test_device(child)
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  mock_device:expect_metadata_update({ profile = "button-battery" })
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
@@ -127,7 +128,7 @@ local function test_init()
     label = "Matter Button 2",
     profile = "button",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = "03"
+    parent_assigned_child_key = "3"
   })
   test.socket.capability:__expect_send(mock_children[3]:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_children[3]:generate_test_message("main", button_attr.pushed({state_change = false})))
@@ -137,7 +138,7 @@ local function test_init()
     label = "Matter Button 3",
     profile = "button",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = "04"
+    parent_assigned_child_key = "4"
   })
   test.socket.capability:__expect_send(mock_children[4]:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_children[4]:generate_test_message("main", button_attr.pushed({state_change = false})))
@@ -147,7 +148,7 @@ local function test_init()
     label = "Matter Button 4",
     profile = "button",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = "05"
+    parent_assigned_child_key = "5"
   })
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
   test.socket.capability:__expect_send(mock_children[5]:generate_test_message("main", button_attr.pushed({state_change = false})))
@@ -157,7 +158,7 @@ local function test_init()
     label = "Matter Button 5",
     profile = "button",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = "06"
+    parent_assigned_child_key = "6"
   })
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
   test.socket.capability:__expect_send(mock_children[6]:generate_test_message("main", button_attr.pushed({state_change = false})))

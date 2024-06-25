@@ -20,7 +20,6 @@ local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
-local button_attr = capabilities.button.button
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
@@ -78,39 +77,6 @@ local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
   }
 })
 
-local mock_device_button_switch = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("switch-button.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 1,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
-          cluster_type = "SERVER"
-        },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
-      },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    },
-    {
-      endpoint_id = 1,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
-      }
-    }
-  }
-})
-
 local cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -123,15 +89,6 @@ local cluster_subscribe_list = {
   clusters.ColorControl.attributes.ColorTemperatureMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-}
-
-local cluster_subscribe_list_button_switch = {
-  clusters.OnOff.attributes.OnOff,
-  clusters.PowerSource.attributes.BatPercentRemaining,
-  clusters.Switch.server.events.InitialPress,
-  clusters.Switch.server.events.LongPress,
-  clusters.Switch.server.events.ShortRelease,
-  clusters.Switch.server.events.MultiPressComplete
 }
 
 local function test_init()
@@ -153,17 +110,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
-
-  subscribe_request = cluster_subscribe_list_button_switch[1]:subscribe(mock_device_button_switch)
-  for i, cluster in ipairs(cluster_subscribe_list_button_switch) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_button_switch))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device_button_switch.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_button_switch)
-  test.socket.capability:__expect_send(mock_device_button_switch:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device_button_switch:generate_test_message("main", button_attr.pushed({state_change = false})))
 end
 test.set_test_init_function(test_init)
 
@@ -725,48 +671,6 @@ test.register_message_test(
       }
     }
   }
-)
-
-test.register_message_test(
-    "On command should send the appropriate commands",
-    {
-      {
-        channel = "capability",
-        direction = "receive",
-        message = {
-          mock_device_button_switch.id,
-          { capability = "switch", component = "main", command = "on", args = { } }
-        }
-      },
-      {
-        channel = "matter",
-        direction = "send",
-        message = {
-          mock_device_button_switch.id,
-          clusters.OnOff.server.commands.On(mock_device, 1)
-        }
-      }
-    }
-)
-
-test.register_message_test(
-    "Handle single press sequence, no hold", {
-      {
-        channel = "matter",
-        direction = "receive",
-        message = {
-          mock_device_button_switch.id,
-          clusters.Switch.events.InitialPress:build_test_event_report(
-              mock_device_button_switch, 1, {new_position = 1}
-          ),
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device_button_switch:generate_test_message("main", button_attr.pushed({state_change = true})) --should send initial press
-      }
-    }
 )
 
 test.run_registered_tests()
