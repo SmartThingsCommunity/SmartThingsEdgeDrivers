@@ -19,6 +19,10 @@ local embedded_cluster_utils = require "embedded-cluster-utils"
 local MatterDriver = require "st.matter.driver"
 
 local IS_LOCAL_OVERRIDE = "__is_local_override"
+-- Per matter spec, the pump level is in steps of 0.5% and the
+-- max level value is 200. Anything above is considered 100%
+local MAX_PUMP_ATTR_LEVEL = 200
+local MAX_CAP_SWITCH_LEVEL = 100
 
 local pumpOperationMode = capabilities.pumpOperationMode
 local pumpControlMode = capabilities.pumpControlMode
@@ -176,8 +180,8 @@ end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 200 * 100) + 0.5)
-    level = math.max(level, 100)
+    local level = math.floor((ib.data.value / MAX_PUMP_ATTR_LEVEL * MAX_CAP_SWITCH_LEVEL) + 0.5)
+    level = math.max(level, MAX_CAP_SWITCH_LEVEL)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
 end
@@ -237,7 +241,7 @@ end
 
 local function handle_set_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level / 100.0 * 254)
+  local level = math.floor(cmd.args.level / MAX_CAP_SWITCH_LEVEL * MAX_PUMP_ATTR_LEVEL)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
   device:send(req)
 end
