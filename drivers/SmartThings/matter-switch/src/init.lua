@@ -377,7 +377,6 @@ end
 
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    device:subscribe()
     -- initialize_switch will create parent-child devices as needed for multi-switch devices.
     -- However, we want to maintain support for existing MCD devices, so do not initialize
     -- device if it has already been previously initialized as an MCD device.
@@ -393,6 +392,7 @@ local function device_init(driver, device)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
+    device:subscribe()
   end
 end
 
