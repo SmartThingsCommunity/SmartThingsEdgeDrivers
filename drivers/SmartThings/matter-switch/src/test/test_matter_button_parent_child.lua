@@ -162,7 +162,6 @@ local function test_init()
   })
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
   test.socket.capability:__expect_send(mock_children[6]:generate_test_message("main", button_attr.pushed({state_change = false})))
-
 end
 
 test.set_test_init_function(test_init)

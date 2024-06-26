@@ -46,6 +46,7 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
+--local PROFILE_CHANGED = "__profile_changed"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -235,6 +236,10 @@ local function configure_buttons(device)
   end
 end
 
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+end
+
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
@@ -324,18 +329,21 @@ local function initialize_switch(driver, device)
         -- a battery-less button/remote (either single or will use parent/child)
         -- device should fingerprint to button-battery
         new_profile = "button"
+        --device:set_field("PROFILE_CHANGED", true)
         profile_changed = true
       end
 
       device:try_update_metadata({profile = new_profile})
     end
-
-    if #button_eps > 0 then
-      if profile_changed then
-        device:set_field(DEFERRED_CONFIGURE, true)
-      else
-        configure_buttons(device)
-      end
+  end
+  if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+    device:set_find_child(find_child)
+  end
+  if #button_eps > 0 then
+    if profile_changed == true then
+      device:set_field(DEFERRED_CONFIGURE, true)
+    else
+      configure_buttons(device)
     end
   end
 end
@@ -358,10 +366,6 @@ local function endpoint_to_component(device, ep)
   return "main"
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
-end
-
 local function detect_bridge(device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
@@ -375,6 +379,7 @@ end
 
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:subscribe()
     -- initialize_switch will create parent-child devices as needed for multi-switch devices.
     -- However, we want to maintain support for existing MCD devices, so do not initialize
     -- device if it has already been previously initialized as an MCD device.
@@ -390,7 +395,6 @@ local function device_init(driver, device)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
-    device:subscribe()
   end
 end
 

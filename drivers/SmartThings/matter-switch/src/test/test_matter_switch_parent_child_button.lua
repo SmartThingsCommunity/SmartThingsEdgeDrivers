@@ -17,9 +17,6 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 
 local clusters = require "st.matter.clusters"
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
 
 local parent_ep = 10
 local child1_ep = 20
@@ -27,8 +24,7 @@ local child2_ep = 30
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  --profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
-  profile = t_utils.get_profile_definition("switch-button.yml"),
+  profile = t_utils.get_profile_definition("switch-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -99,16 +95,12 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.socket.matter:__set_channel_ordering("relaxed")
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel,
-    clusters.PowerSource.server.attributes.BatPercentRemaining,
-    clusters.Switch.server.events.InitialPress,
-    clusters.Switch.server.events.LongPress,
-    clusters.Switch.server.events.ShortRelease,
-    clusters.Switch.server.events.MultiPressComplete,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -117,8 +109,6 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
 
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
@@ -140,6 +130,8 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
   })
+  test.socket.capability:__expect_send(mock_children[child2_ep]:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_children[child2_ep]:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
