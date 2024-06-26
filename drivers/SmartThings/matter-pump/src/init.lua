@@ -181,7 +181,7 @@ end
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local level = math.floor((ib.data.value / MAX_PUMP_ATTR_LEVEL * MAX_CAP_SWITCH_LEVEL) + 0.5)
-    level = math.max(level, MAX_CAP_SWITCH_LEVEL)
+    level = math.min(level, MAX_CAP_SWITCH_LEVEL)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
 end
