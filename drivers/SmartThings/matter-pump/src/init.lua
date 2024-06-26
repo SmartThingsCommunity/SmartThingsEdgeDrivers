@@ -103,6 +103,8 @@ end
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  -- pump should not be allowed to receive a level value of 0.
+  capabilities.switchLevel.levelRange({ value = {minimum = 1, maximum = 100} })
 end
 
 local function info_changed(driver, device, event, args)
