@@ -176,7 +176,8 @@ end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = math.floor((ib.data.value / 200 * 100) + 0.5)
+    level = math.max(level, 100)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
   end
 end
