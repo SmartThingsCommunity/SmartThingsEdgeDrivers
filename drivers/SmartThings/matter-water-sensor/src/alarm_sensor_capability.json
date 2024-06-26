@@ -1,0 +1,67 @@
+{
+    "name": "Custom Alarm Sensor",
+    "attributes": {
+        "alarmSensorState": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "enabled",
+                            "suppressed"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            },
+            "setter": "setAlarmSensorState",
+            "enumCommands": []
+        },
+        "supportedAlarmSensorStates": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "off",
+                                "enabled",
+                                "suppressed"
+                            ]
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            }
+        }
+    },
+    "commands": {
+        "setAlarmSensorState": {
+            "name": "setAlarmSensorState",
+            "arguments": [
+                {
+                    "name": "alarmSensorState",
+                    "optional": false,
+                    "schema": {
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "enabled",
+                            "suppressed"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

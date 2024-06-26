@@ -1,0 +1,23 @@
+{
+    "name": "Custom Rain Sensor",
+    "attributes": {
+        "rain": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": [
+                            "deteted",
+                            "undetected"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "value"
+                ]
+            }
+        }
+    }
+}
