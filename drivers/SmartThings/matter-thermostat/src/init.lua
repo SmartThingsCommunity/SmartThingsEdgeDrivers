@@ -360,13 +360,11 @@ local function do_configure(driver, device)
   local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
-  --Note: we have not encountered thermostats with multiple endpoints that support the Thermostat cluster
   if device_type == RAC_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
   elseif device_type == FAN_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
   elseif device_type == AP_DEVICE_TYPE_ID and #thermo_eps < 1 then
-    -- currently no profile switching for Air Purifier
     profile_name = "air-purifier"
     if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
       profile_name = profile_name .. "-hepa" .. "-ac"
