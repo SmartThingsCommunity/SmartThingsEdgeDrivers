@@ -46,7 +46,6 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
---local PROFILE_CHANGED = "__profile_changed"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -69,6 +68,80 @@ local device_type_profile_map = {
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
   [GENERIC_SWITCH_ID] = "button"
+}
+
+local matter_driver_template
+
+local device_type_attribute_map = {
+  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+  },
+  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [ON_OFF_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [ON_OFF_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [GENERIC_SWITCH_ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
+  }
 }
 local detect_matter_thing
 
@@ -191,6 +264,17 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
+      for _, attr in pairs(device_type_attribute_map[id]) do
+        if id == GENERIC_SWITCH_ID then
+          if attr == clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_attribute(attr)
+          else
+            device:add_subscribed_event(attr)
+          end
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
     end
   end
   -- default to "switch-binary" if no profile is found
@@ -734,7 +818,7 @@ local function device_added(driver, device)
   end
 end
 
-local matter_driver_template = {
+matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added,

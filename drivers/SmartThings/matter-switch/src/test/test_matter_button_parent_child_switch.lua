@@ -104,11 +104,22 @@ end
 local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
   local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY,
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.Switch.server.events.InitialPress,
     clusters.Switch.server.events.LongPress,
     clusters.Switch.server.events.ShortRelease,
-    clusters.Switch.server.events.MultiPressComplete,
+    clusters.Switch.server.events.MultiPressComplete
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do

@@ -101,6 +101,11 @@ local function test_init()
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel,
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
