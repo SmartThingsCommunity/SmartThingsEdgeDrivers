@@ -129,12 +129,12 @@ zigbeeManufacturer:
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
     model: H60/H90
-    deviceProfileName: base-lock
+    deviceProfileName: lock-battery
   - id: TOTEM/P30
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
     model: P30
-    deviceProfileName: base-lock
+    deviceProfileName: lock-battery
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock
