@@ -107,6 +107,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
+  test.socket.matter:__set_channel_ordering("relaxed")
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
@@ -114,14 +115,10 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   mock_device:expect_metadata_update({ profile = "button-battery" })
 
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
-
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
@@ -153,6 +150,7 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = "5"
   })
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
   test.socket.capability:__expect_send(mock_children[5]:generate_test_message("main", button_attr.pushed({state_change = false})))
 
   mock_device:expect_device_create({
@@ -162,7 +160,10 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = "6"
   })
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
   test.socket.capability:__expect_send(mock_children[6]:generate_test_message("main", button_attr.pushed({state_change = false})))
+
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)

@@ -46,7 +46,7 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
---local PROFILE_CHANGED = "__profile_changed"
+local NUM_EPS_INIT = "__num_eps_init"
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -70,6 +70,7 @@ local device_type_profile_map = {
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
   [GENERIC_SWITCH_ID] = "button"
 }
+
 local detect_matter_thing
 
 local START_BUTTON_PRESS = "__start_button_press"
@@ -91,6 +92,8 @@ local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitc
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
 local HUE_MANUFACTURER_ID = 0x100B
+
+local matter_driver_template
 
 --helper function to create list of multi press values
 local function create_multi_list(size, supportsHeld)
@@ -376,14 +379,19 @@ local function detect_bridge(device)
 end
 
 local function device_init(driver, device)
+  local main_device = device:get_parent_device()
+  if main_device == nil then
+    main_device = device
+  end
+
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     -- initialize_switch will create parent-child devices as needed for multi-switch devices.
     -- However, we want to maintain support for existing MCD devices, so do not initialize
     -- device if it has already been previously initialized as an MCD device.
     -- Also, do not attempt a profile switch for a bridge device.
     if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
-       not device:get_field(SWITCH_INITIALIZED) and
-       not detect_bridge(device) then
+        not device:get_field(SWITCH_INITIALIZED) and
+        not detect_bridge(device) then
       -- create child devices as needed for multi-switch devices
       initialize_switch(driver, device)
     end
@@ -392,7 +400,36 @@ local function device_init(driver, device)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
-    device:subscribe()
+    if device:get_field(COMPONENT_TO_ENDPOINT_MAP) then
+      device:subscribe()
+    end
+  elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    for cap_id, attributes in pairs(matter_driver_template.subscribed_attributes) do
+      if device:supports_capability_by_id(cap_id) then
+        for _, attr in ipairs(attributes) do
+          main_device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+    for cap_id, events in pairs(matter_driver_template.subscribed_events) do
+      if device:supports_capability_by_id(cap_id) then
+        for _, event in ipairs(events) do
+          main_device:add_subscribed_event(event)
+        end
+      end
+    end
+  end
+
+  -- Subscribe after the main device and any child devices are initialized
+  local num_eps_initialized = main_device:get_field(NUM_EPS_INIT)
+  if num_eps_initialized ~= nil then
+    main_device:set_field(NUM_EPS_INIT, num_eps_initialized + 1)
+  else
+    main_device:set_field(NUM_EPS_INIT, 1)
+  end
+  local total_num_eps = #main_device:get_endpoints(clusters.OnOff.ID) + #main_device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  if main_device:get_field(NUM_EPS_INIT) == total_num_eps then
+    main_device:subscribe()
   end
 end
 
@@ -734,7 +771,7 @@ local function device_added(driver, device)
   end
 end
 
-local matter_driver_template = {
+matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added,

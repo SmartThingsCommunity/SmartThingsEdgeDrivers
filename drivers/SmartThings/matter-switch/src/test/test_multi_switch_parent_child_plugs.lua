@@ -84,11 +84,11 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.socket.matter:__set_channel_ordering("relaxed")
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
@@ -110,6 +110,7 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
   })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)

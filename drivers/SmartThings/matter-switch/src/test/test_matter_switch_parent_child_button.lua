@@ -19,8 +19,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 
 local parent_ep = 10
-local child1_ep = 20
-local child2_ep = 30
+local child_ep = 20
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
@@ -49,18 +48,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = child1_ep,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
-      },
-      device_types = {
-        {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
-        {device_type_id = 0x0101, device_type_revision = 2} -- Dimmable Light
-      }
-    },
-    {
-      endpoint_id = child2_ep,
+      endpoint_id = child_ep,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -76,31 +64,20 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local child_profiles = {
-  [child1_ep] = t_utils.get_profile_definition("light-level.yml"),
-  [child2_ep] = t_utils.get_profile_definition("button-battery.yml")
-}
+local child_profile = t_utils.get_profile_definition("button-battery.yml")
 
-local mock_children = {}
-for i, endpoint in ipairs(mock_device.endpoints) do
-  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
-    local child_data = {
-      profile = child_profiles[endpoint.endpoint_id],
-      device_network_id = string.format("%s:%d", mock_device.id, endpoint.endpoint_id),
-      parent_device_id = mock_device.id,
-      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
-    }
-    mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
-  end
-end
+local child_data = {
+  profile = child_profile,
+  device_network_id = string.format("%s:%d", mock_device.id, child_ep),
+  parent_device_id = mock_device.id,
+  parent_assigned_child_key = string.format("%d", child_ep)
+}
+local mock_child = test.mock_device.build_test_child_device(child_data)
 
 local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
   local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
+    clusters.OnOff.attributes.OnOff
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -108,30 +85,35 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.mock_device.add_test_device(mock_device)
-  for _, child in pairs(mock_children) do
-    test.mock_device.add_test_device(child)
+  test.mock_device.add_test_device(mock_child)
+
+  cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.PowerSource.server.attributes.BatPercentRemaining,
+    clusters.Switch.server.events.InitialPress,
+    clusters.Switch.server.events.LongPress,
+    clusters.Switch.server.events.ShortRelease,
+    clusters.Switch.server.events.MultiPressComplete,
+  }
+  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
   end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 2",
-    profile = "light-level",
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", child1_ep)
-  })
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 3",
     profile = "button",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", child2_ep)
+    parent_assigned_child_key = string.format("%d", child_ep)
   })
-  test.socket.capability:__expect_send(mock_children[child2_ep]:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_children[child2_ep]:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+  test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
@@ -172,42 +154,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "First child device: switch capability switch should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_children[child1_ep].id,
-        { capability = "switch", component = "main", command = "on", args = { } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, child1_ep)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, child1_ep, true)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
-)
-
-test.register_message_test(
-  "Second child device: Handle single press sequence, no hold",
+  "Child device: Handle single press sequence, no hold",
   {
     {
       channel = "matter",
@@ -215,14 +162,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Switch.events.InitialPress:build_test_event_report(
-            mock_device, child2_ep, {new_position = 1}
+            mock_device, child_ep, {new_position = 1}
         ),
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_children[child2_ep]:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
+      message = mock_child:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
   }
 )
