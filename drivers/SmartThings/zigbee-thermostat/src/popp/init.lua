@@ -167,8 +167,8 @@ local turn_switch_on = function(driver, device)
   end
 end
 
--- Custom setpoint command handler
-local setpoint_cmd_handler = function(driver, device, cmd)
+-- custom thermostatMode_handler
+local thermostat_mode_handler = function(driver, device, cmd)
   local payload
   local mode = cmd.args.mode
 
@@ -210,7 +210,7 @@ local setpoint_cmd_handler = function(driver, device, cmd)
 end
 
 -- temperature setpoint handler
-local handle_set_setpoint = function(driver, device, command)
+local thermostat_setpoint_handler = function(driver, device, command)
   local value = command.args.setpoint
   local type = 0x00 -- default eco
 
@@ -397,10 +397,10 @@ local popp_thermostat = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     },
     [ThermostatHeatingSetpoint.ID] = {
-      [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = handle_set_setpoint
+      [ThermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = thermostat_setpoint_handler
     },
     [ThermostatMode.ID] = {
-      [ThermostatMode.commands.setThermostatMode.NAME] = setpoint_cmd_handler
+      [ThermostatMode.commands.setThermostatMode.NAME] = thermostat_mode_handler
     },
     [Switch.ID] = {
       [Switch.commands.on.NAME] = switch_handler_factory('on'),
