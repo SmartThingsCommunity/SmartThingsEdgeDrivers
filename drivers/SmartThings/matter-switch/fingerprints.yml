@@ -42,6 +42,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x006B
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/93"
+    deviceLabel: Eve Light Switch
+    vendorId: 0x130A
+    productId: 0x005D
+    deviceProfileName: switch-binary 
 
 #GE
   - id: "4921/177"
@@ -186,7 +191,6 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
-
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -227,6 +231,11 @@ matterManufacturer:
     deviceLabel: Essentials Outdoor Lights
     vendorId: 0x115A
     productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/71"
+    deviceLabel: Smart Holiday String Lights
+    vendorId: 0x115A
+    productId: 0x0047
     deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -298,6 +307,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03f8
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1024"
+    deviceLabel: Smart Plug
+    vendorId: 0x1168
+    productId: 0x0400
+    deviceProfileName: plug-binary
   - id: "4456/1011"
     deviceLabel: Smart Light Bulb A60
     vendorId: 0x1168

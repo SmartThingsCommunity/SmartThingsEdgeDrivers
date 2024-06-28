@@ -25,6 +25,7 @@ local zigbee_window_treatment_driver_template = {
     capabilities.windowShade,
     capabilities.windowShadePreset,
     capabilities.windowShadeLevel,
+    capabilities.powerSource,
     capabilities.battery
   },
   sub_drivers = {
@@ -36,7 +37,8 @@ local zigbee_window_treatment_driver_template = {
     require("rooms-beautiful"),
     require("axis"),
     require("yoolax"),
-    require("hanssem") },
+    require("hanssem"),
+    require("screen-innovations")},
   lifecycle_handlers = {
     added = added_handler
   }

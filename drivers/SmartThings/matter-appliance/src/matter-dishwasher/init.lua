@@ -32,8 +32,8 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
-local supportedTemperatureLevels = {}
-local dishwasherModeSupportedModes = {}
+local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
+local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 
 local function device_init(driver, device)
   device:subscribe()
@@ -60,6 +60,7 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   device.log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
+  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
   local temperatureLevel = ib.data.value
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if i - 1 == temperatureLevel then
@@ -78,30 +79,33 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   device.log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
-  supportedTemperatureLevels = {}
+  local supportedTemperatureLevels = {}
   for _, tempLevel in ipairs(ib.data.elements) do
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
+  device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
-  dishwasherModeSupportedModes = {}
+  local supportedDishwasherModes = {}
   for _, mode in ipairs(ib.data.elements) do
     if version.api < 10 then
       clusters.DishwasherMode.types.ModeOptionStruct:augment_type(mode)
     end
-    table.insert(dishwasherModeSupportedModes, mode.elements.label.value)
+    table.insert(supportedDishwasherModes, mode.elements.label.value)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(dishwasherModeSupportedModes))
+  device:set_field(SUPPORTED_DISHWASHER_MODES, supportedDishwasherModes, { persist = true })
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedDishwasherModes))
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
   device.log.info_with({ hub_logs = true },
     string.format("dishwasher_mode_attr_handler mode: %s", ib.data.value))
 
+  local supportedDishwasherModes = device:get_field(SUPPORTED_DISHWASHER_MODES)
   local currentMode = ib.data.value
-  for i, mode in ipairs(dishwasherModeSupportedModes) do
+  for i, mode in ipairs(supportedDishwasherModes) do
     if i - 1 == currentMode then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       break
@@ -208,10 +212,11 @@ local function handle_dishwasher_mode(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
 
-  local ENDPOINT = 1
-  for i, mode in ipairs(dishwasherModeSupportedModes) do
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local supportedDishwasherModes =device:get_field(SUPPORTED_DISHWASHER_MODES)
+  for i, mode in ipairs(supportedDishwasherModes) do
     if cmd.args.mode == mode then
-      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+      device:send(clusters.DishwasherMode.commands.ChangeToMode(device, endpoint_id, i - 1))
       return
     end
   end
@@ -221,10 +226,11 @@ local function handle_temperature_level(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
-  local ENDPOINT = 1
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local supportedTemperatureLevels =device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if cmd.args.temperatureLevel == tempLevel then
-      device:send(clusters.TemperatureControl.commands.SetTemperature(device, ENDPOINT, nil, i - 1))
+      device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
       return
     end
   end
