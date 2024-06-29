@@ -162,6 +162,8 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
   )
 
   local component = device.profile.components["runMode"]
+  local labels = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES)
+  device:emit_component_event(component, capabilities.mode.supportedArguments(labels))
   device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
 end
 
@@ -211,6 +213,7 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
   local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
 
   local component = device.profile.components["cleanMode"]
+  device:emit_component_event(component, capabilities.mode.supportedArguments(labels_of_supported_modes))
   device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
 end
 

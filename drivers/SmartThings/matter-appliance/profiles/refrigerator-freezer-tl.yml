@@ -35,3 +35,6 @@ components:
     version: 1
   categories:
   - name: Refrigerator
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-refrigerator
