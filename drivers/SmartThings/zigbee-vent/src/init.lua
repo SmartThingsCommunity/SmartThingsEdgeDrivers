@@ -19,6 +19,11 @@ local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 
+local temperature_measurement_defaults = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
+}
+
 local KEEN_PRESSURE_ATTRIBUTE = 0x0020
 local KEEN_MFG_CODE = 0x115B
 
@@ -58,10 +63,35 @@ local function switch_on_handler(driver, device, command)
   device:send(clusters.Level.commands.MoveToLevelWithOnOff(device, last_level, 0xFFFF))
 end
 
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_measurement_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_measurement_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_measurement_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_measurement_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
+
 local function refresh_handler(driver, device, command)
   device:send(clusters.Level.attributes.CurrentLevel:read(device))
   device:send(clusters.OnOff.attributes.OnOff:read(device))
   device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
+  device:send(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  device:send(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
   device:send(clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 
   local pressure_read = cluster_base.read_manufacturer_specific_attribute(device, clusters.PressureMeasurement.ID, KEEN_PRESSURE_ATTRIBUTE, KEEN_MFG_CODE)
@@ -102,6 +132,10 @@ local zigbee_vent_driver = {
       },
       [clusters.Level.ID] = {
         [clusters.Level.attributes.CurrentLevel.ID] = level_report_handler
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MIN_TEMP),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MAX_TEMP),
       }
     }
   },

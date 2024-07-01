@@ -140,6 +140,22 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
     },
     {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+      }
+    },
+    {
       channel = "capability",
       direction = "receive",
       message = {
@@ -237,6 +253,43 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
+    }
+  }
+)
+
+test.register_message_test(
+  "Temperature report should be handled (C)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 2500) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Minimum & Maximum Temperature report should be handled (C)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, TemperatureMeasurement.attributes.MinMeasuredValue:build_test_attr_report(mock_device, 2000) }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_attr_report(mock_device, 3000) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
     }
   }
 )
