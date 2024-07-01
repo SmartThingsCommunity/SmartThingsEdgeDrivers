@@ -145,7 +145,7 @@ test.register_message_test(
         capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
-      }))
+      }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -162,7 +162,7 @@ test.register_message_test(
         capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
-      }))
+      }, {visibility={displayed=false}}))
     },
   }
 )
@@ -324,7 +324,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind))
+      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
