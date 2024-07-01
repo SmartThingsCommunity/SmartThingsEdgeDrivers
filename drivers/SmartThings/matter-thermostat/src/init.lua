@@ -251,21 +251,21 @@ local function component_to_endpoint(device, component_name)
   end
 end
 
--- local function device_init(driver, device)
---   device:subscribe()
---   device:set_component_to_endpoint_fn(component_to_endpoint)
+local function device_init(driver, device)
+  device:subscribe()
+  device:set_component_to_endpoint_fn(component_to_endpoint)
 
---   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
---     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
---     --Query min setpoint deadband if needed
---     if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
---       local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
---       setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
---       device:send(setpoint_limit_read)
---     end
---     device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
---   end
--- end
+  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
+    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+    --Query min setpoint deadband if needed
+    if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+      device:send(setpoint_limit_read)
+    end
+    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
+  end
+end
 
 local function info_changed(driver, device, event, args)
   --Note this is needed because device:subscribe() does not recalculate
@@ -455,23 +455,6 @@ local function do_configure(driver, device)
     device:try_update_metadata({profile = profile_name})
   else
     device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
-  end
-end
-
-local function device_init(driver, device)
-  do_configure(driver, device)
-  device:subscribe()
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-
-  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
-    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-    --Query min setpoint deadband if needed
-    if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
-      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-      device:send(setpoint_limit_read)
-    end
-    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
   end
 end
 
