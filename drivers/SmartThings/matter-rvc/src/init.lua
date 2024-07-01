@@ -160,9 +160,9 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
     clusters.RvcRunMode.types.ModeTag.IDLE,
     current_mode
   )
-
   local component = device.profile.components["runMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
+  local event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -186,7 +186,8 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
         clusters.RvcRunMode.types.ModeTag.IDLE,
         mode
       )
-      device:emit_component_event(component, capabilities.mode.supportedModes(filtered_labels))
+      local event = capabilities.mode.supportedModes(filtered_labels, {visibility = {displayed = false}})
+      device:emit_component_event(component, event)
 
       -- State Machine Rules 2. RVC Clean Mode - Mode Change Restrictions
       local is_idle = is_idle_mode(device, RVC_RUN_MODE_SUPPORTED_MODES, i, clusters.RvcRunMode.types.ModeTag.IDLE)
@@ -197,9 +198,11 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
           clusters.RvcCleanMode.ID,
           clusters.RvcCleanMode.attributes.SupportedModes.ID,
           response)
-        device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_rvc_clean_mode))
+        local event = capabilities.mode.supportedModes(labels_of_rvc_clean_mode, {visibility = {displayed = false}})
+        device:emit_component_event(component, event)
       else
-        device:emit_component_event(component, capabilities.mode.supportedModes({}))
+        local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
+        device:emit_component_event(component, event)
       end
       break
     end
@@ -211,7 +214,8 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
   local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
 
   local component = device.profile.components["cleanMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
+  local event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)

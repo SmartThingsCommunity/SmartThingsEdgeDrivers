@@ -349,7 +349,8 @@ local function system_mode_handler(driver, device, ib, response)
     end
     -- if we get here, then the reported mode was not in our mode map
     table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(sm))
+    local event = capabilities.thermostatMode.supportedThermostatModes(sm, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
 end
 
@@ -383,7 +384,8 @@ local function sequence_of_operation_handler(driver, device, ib, response)
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+  local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function min_deadband_limit_handler(driver, device, ib, response)
@@ -473,7 +475,8 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
         "high"
       }
     end
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.supportedAcFanModes(supportedAcFanModes))
+    local event = capabilities.airConditionerFanMode.supportedAcFanModes(supportedAcFanModes, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
   elseif device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
     -- Air Purifier
     local supportedAirPurifierFanModes
@@ -517,7 +520,8 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
       }
     end
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.supportedAirPurifierFanModes(supportedAirPurifierFanModes))
+    local event = capabilities.airPurifierFanMode.supportedAirPurifierFanModes(supportedAirPurifierFanModes, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
   else
     -- Thermostat
     -- Our thermostat fan mode control is probably not granular enough to handle the supported modes here well
@@ -525,10 +529,14 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
       ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-        {capabilities.thermostatFanMode.thermostatFanMode.auto.NAME, capabilities.thermostatFanMode.thermostatFanMode.on.NAME}))
+        {capabilities.thermostatFanMode.thermostatFanMode.auto.NAME, capabilities.thermostatFanMode.thermostatFanMode.on.NAME},
+        {visibility = {displayed = false}}
+      ))
     else
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-        {capabilities.thermostatFanMode.thermostatFanMode.on.NAME}))
+        {capabilities.thermostatFanMode.thermostatFanMode.on.NAME},
+        {visibility = {displayed = false}}
+      ))
     end
   end
 end
@@ -548,7 +556,8 @@ local function wind_support_handler(driver, device, ib, response)
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.supportedWindModes(supported_wind_modes))
+  local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function wind_setting_handler(driver, device, ib, response)
