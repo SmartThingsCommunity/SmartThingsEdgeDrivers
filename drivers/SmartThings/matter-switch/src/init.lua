@@ -332,6 +332,18 @@ local function handle_set_color_temperature(driver, device, cmd)
   device:send(req)
 end
 
+local function handle_valve_open(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveControl.server.commands.Open(device, endpoint_id)
+  device:send(req)
+end
+
+local function handle_valve_close(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveControl.server.commands.Close(device, endpoint_id)
+  device:send(req)
+end
+
 local function handle_refresh(driver, device, cmd)
   --Note: no endpoint specified indicates a wildcard endpoint
   local req = clusters.OnOff.attributes.OnOff:read(device)
@@ -501,6 +513,14 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
+local function valve_state_attr_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.open())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.closed())
+  end
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -550,6 +570,9 @@ local matter_driver_template = {
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
+      },
+      [clusters.ValveControl.ID] = {
+        [clusters.ValveControl.attributes.CurrentState] = valve_state_attr_handler
       }
     },
     fallback = matter_handler,
@@ -579,6 +602,9 @@ local matter_driver_template = {
     },
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.valve.ID] = {
+      clusters.ValveControl.attributes.CurrentState
     }
   },
   capability_handlers = {
@@ -600,6 +626,10 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature,
     },
+    [capabilities.valve.ID] = {
+      [capabilities.valve.commands.open.NAME] = handle_valve_open,
+      [capabilities.valve.commands.close.NAME] = handle_valve_close
+    }
   },
   supported_capabilities = {
     capabilities.switch,
@@ -607,7 +637,8 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
     capabilities.motionSensor,
-    capabilities.illuminanceMeasurement
+    capabilities.illuminanceMeasurement,
+    capabilities.valve
   },
     sub_drivers = {
     require("eve-energy"),
