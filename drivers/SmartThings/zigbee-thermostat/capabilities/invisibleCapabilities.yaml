@@ -1,0 +1,18 @@
+id: stse.invisibleCapabilities
+version: 1
+status: proposed
+name: invisible capabilities
+ephemeral: false
+attributes:
+  invisibleCapabilities:
+    schema:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+      required: []
+    enumCommands: []
+commands: {}
