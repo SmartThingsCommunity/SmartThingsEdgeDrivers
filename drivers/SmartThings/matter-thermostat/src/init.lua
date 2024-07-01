@@ -73,6 +73,8 @@ local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
 
+local MGM3_PPM_CONVERSION_FACTOR = 24.45
+
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
   MIN_HEAT = "MIN_HEAT",
@@ -249,21 +251,21 @@ local function component_to_endpoint(device, component_name)
   end
 end
 
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_component_to_endpoint_fn(component_to_endpoint)
+-- local function device_init(driver, device)
+--   device:subscribe()
+--   device:set_component_to_endpoint_fn(component_to_endpoint)
 
-  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
-    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-    --Query min setpoint deadband if needed
-    if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
-      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-      device:send(setpoint_limit_read)
-    end
-    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
-  end
-end
+--   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
+--     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+--     --Query min setpoint deadband if needed
+--     if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+--       local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+--       setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+--       device:send(setpoint_limit_read)
+--     end
+--     device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
+--   end
+-- end
 
 local function info_changed(driver, device, event, args)
   --Note this is needed because device:subscribe() does not recalculate
@@ -317,34 +319,25 @@ local AIR_QUALITY_MAP = {
   {capabilities.veryFineDustSensor.ID,           "-pm1",   clusters.Pm1ConcentrationMeasurement},
 }
 
-local function create_air_quality_profile(device)
+local function create_level_measurement_profile(device)
   local meas_name, level_name = "", ""
-  local aqs_supported
-
-  local aq_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
-  if #aq_eps == 0 then
-    aqs_supported = false
-    return aqs_supported, meas_name, level_name
-  else
-    aqs_supported = true
-    for _, details in pairs(AIR_QUALITY_MAP) do
-      local cap_id = details[1]
-      local cluster = details[3]
-      -- capability describes either a HealthConcern or Measurement/Sensor
-      if (cap_id:match("HealthConcern$")) then
-        local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
-        if #attr_eps > 0 then
-          level_name = level_name .. details[2]
-        end
-      elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
-        local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
-        if #attr_eps > 0 then
-          meas_name = meas_name .. details[2]
-        end
+  for _, details in ipairs(AIR_QUALITY_MAP) do
+    local cap_id  = details[1]
+    local cluster = details[3]
+    -- capability describes either a HealthConcern or Measurement/Sensor
+    if (cap_id:match("HealthConcern$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
+      if #attr_eps > 0 then
+        level_name = level_name .. details[2]
+      end
+    elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
+      if #attr_eps > 0 then
+        meas_name = meas_name .. details[2]
       end
     end
   end
-  return aqs_supported, meas_name, level_name
+  return meas_name, level_name
 end
 
 local function do_configure(driver, device)
@@ -358,27 +351,14 @@ local function do_configure(driver, device)
   -- use get_endpoints for embedded clusters
   local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   if device_type == RAC_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
   elseif device_type == FAN_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
-  elseif device_type == AP_DEVICE_TYPE_ID and #thermo_eps < 1 then
-    profile_name = "air-purifier"
-    if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
-      profile_name = profile_name .. "-hepa" .. "-ac"
-    elseif #hepa_filter_eps > 0 then
-      profile_name = profile_name .. "-hepa"
-    elseif #ac_filter_eps > 0 then
-      profile_name = profile_name .. "-ac"
-    end
-    if #wind_eps > 0 then
-      profile_name = profile_name .. "-wind"
-    end
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
-  elseif device_type == AP_DEVICE_TYPE_ID and #thermo_eps == 1 then
+  elseif device_type == AP_DEVICE_TYPE_ID then
     profile_name = "air-purifier"
     if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
       profile_name = profile_name .. "-hepa" .. "-ac"
@@ -391,13 +371,15 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-wind"
     end
 
-    profile_name = profile_name .. "-thermostat"
-    if #humidity_eps > 0 and #fan_eps > 0 then
-      profile_name = profile_name .. "-humidity" .. "-fan"
-    elseif #humidity_eps > 0 then
-      profile_name = profile_name .. "-humidity"
-    elseif #fan_eps > 0 then
-      profile_name = profile_name .. "-fan"
+    if #thermo_eps > 0 then
+      profile_name = profile_name .. "-thermostat"
+      if #humidity_eps > 0 and #fan_eps > 0 then
+        profile_name = profile_name .. "-humidity" .. "-fan"
+      elseif #humidity_eps > 0 then
+        profile_name = profile_name .. "-humidity"
+      elseif #fan_eps > 0 then
+        profile_name = profile_name .. "-fan"
+      end
     end
 
     if #heat_eps == 0 and #cool_eps == 0 then
@@ -418,22 +400,24 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-nobattery"
     end
 
-    local aqs_supported, meas_name, level_name = create_air_quality_profile(device)
-    if aqs_supported then
+    if #aqs_eps > 0 then
       profile_name = profile_name .. "-aqs"
-      if meas_name ~= "" then
-        profile_name = profile_name .. meas_name .. "-meas"
-      end
-      if level_name ~= "" then
-        profile_name = profile_name .. level_name .. "-level"
-      end
+    end
+
+    local meas_name, level_name = create_level_measurement_profile(device)
+
+    if meas_name ~= "" then
+      profile_name = profile_name .. meas_name .. "-meas"
+    end
+
+    if level_name ~= "" then
+      profile_name = profile_name .. level_name .. "-level"
     end
 
     if profile_name == "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" then
       profile_name = "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs"
     end
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
+
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif #thermo_eps == 1 then
@@ -471,6 +455,23 @@ local function do_configure(driver, device)
     device:try_update_metadata({profile = profile_name})
   else
     device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
+  end
+end
+
+local function device_init(driver, device)
+  do_configure(driver, device)
+  device:subscribe()
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+
+  if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
+    local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+    --Query min setpoint deadband if needed
+    if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+      local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+      device:send(setpoint_limit_read)
+    end
+    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
   end
 end
 
@@ -533,10 +534,15 @@ local level_strings = {
   [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL] = "hazardous",
 }
 
+local molecular_weights = {
+  [capabilities.formaldehydeMeasurement.NAME] = 30.031,
+}
+
 local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end,
-    [units.UGM3] = function(value) return utils.round((value * 30.031 * 1000) / 24.45) end,
+    [units.UGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
+    [units.MGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
   },
   [units.PPB] = {
     [units.PPM] = function(value) return utils.round(value/(10^3)) end
@@ -546,11 +552,11 @@ local conversion_tables = {
   },
   [units.MGM3] = {
     [units.UGM3] = function(value) return utils.round(value * (10^3)) end,
-    [units.PPM] = function(value) return utils.round((value * 24.45) / (30.031)) end,
+    [units.PPM] = function(value, molecular_weight) return utils.round((value * MGM3_PPM_CONVERSION_FACTOR) / molecular_weight) end,
   },
   [units.UGM3] = {
     [units.UGM3] = function(value) return utils.round(value) end,
-    [units.PPM] = function(value) return utils.round((value * 24.45) / (30.031 * 1000)) end,
+    [units.PPM] = function(value, molecular_weight) return utils.round((value * MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end,
   },
   [units.NGM3] = {
     [units.UGM3] = function(value) return utils.round(value/(10^3)) end
@@ -560,7 +566,7 @@ local conversion_tables = {
   },
 }
 
-local function unit_conversion(value, from_unit, to_unit)
+local function unit_conversion(value, from_unit, to_unit, capability_name)
   local conversion_function = conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
     log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
@@ -571,7 +577,15 @@ local function unit_conversion(value, from_unit, to_unit)
     log.info_with( {hub_logs = true} , "unit conversion value is nil")
     return 1
   end
-  return conversion_function(value)
+
+  -- checks if number of parameters is greater than 1. This supports conversions
+  -- where there is a value other than simple scaling values
+  local conversion_function_info = debug.getinfo(conversion_function, "u")
+  if conversion_function_info.nparams > 1 then
+    return conversion_function(value, molecular_weights[capability_name])
+  else
+    return conversion_function(value)
+  end
 end
 
 local function measurementHandlerFactory(capability_name, attribute, target_unit)
@@ -584,7 +598,7 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
     end
 
     if reporting_unit then
-      local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
+      local value = unit_conversion(ib.data.value, reporting_unit, target_unit, capability_name)
       device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
 
       -- handle case where device profile supports both fineDustLevel and dustLevel
