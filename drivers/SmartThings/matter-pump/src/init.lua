@@ -24,6 +24,12 @@ local IS_LOCAL_OVERRIDE = "__is_local_override"
 local MAX_PUMP_ATTR_LEVEL = 200
 local MAX_CAP_SWITCH_LEVEL = 100
 
+-- Include driver-side definitions when lua libs api version is < 10
+local version = require "version"
+if version.api < 10 then
+  clusters.PumpConfigurationAndControl = require "PumpConfigurationAndControl"
+end
+
 local pumpOperationMode = capabilities.pumpOperationMode
 local pumpControlMode = capabilities.pumpControlMode
 
