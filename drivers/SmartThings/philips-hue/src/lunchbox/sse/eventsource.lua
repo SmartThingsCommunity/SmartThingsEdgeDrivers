@@ -1,6 +1,9 @@
 local cosock = require "cosock"
 local socket = require "cosock.socket"
 local ssl = require "cosock.ssl"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(sock: table, config: table?): table?, string?
+ssl.wrap = ssl.wrap
 
 local log = require "log"
 local util = require "lunchbox.util"
@@ -17,7 +20,7 @@ local Response = require "luncheon.response"
 ---
 --- @class EventSource
 --- @field public url table A `net.url` table representing the URL for the connection
---- @field public ready_state number Enumeration of the ready states outlined in the spec.
+--- @field public ready_state EventSource.ReadyStates Enumeration of the ready states outlined in the spec.
 --- @field public onopen function in-line callback for on-open events
 --- @field public onmessage function in-line callback for on-message events
 --- @field public onerror function in-line callback for on-error events; error callbacks will fire
@@ -27,31 +30,34 @@ local Response = require "luncheon.response"
 --- @field package _sock table? the TCP socket for the connection
 --- @field package _needs_more boolean flag to track whether or not we're still expecting mroe on this source before we dispatch
 --- @field package _last_field string the last field the parsing path saw, in case it needs to append more to its value
---- @field package _extra_headers table a table of string:string key-value pairs that will be inserted in to the initial requests's headers.
---- @field package _parse_buffers table inner state, keeps track of the various event stream buffers in between dispatches.
---- @field package _listeners table event listeners attached using the add_event_listener API instead of the inline callbacks.
+--- @field package _extra_headers table<string,string> a table of string:string key-value pairs that will be inserted in to the initial requests's headers.
+--- @field package _parse_buffers table<string,string> inner state, keeps track of the various event stream buffers in between dispatches.
+--- @field package _listeners table<EventSource.EventTypes,fun(event: table?)[]> event listeners attached using the add_event_listener API instead of the inline callbacks.
 local EventSource = {}
 EventSource.__index = EventSource
 
 --- The Ready States that an EventSource can be in. We use base 0 to match the specification.
-EventSource.ReadyStates = util.read_only {
+---@enum EventSource.ReadyStates
+EventSource.ReadyStates = {
   CONNECTING = 0, -- The connection has not yet been established
   OPEN = 1,       -- The connection is open
   CLOSED = 2      -- The connection has closed
 }
+EventSource.ReadyStates = util.read_only(EventSource.ReadyStates)
 
 --- The event types supported by this source, patterned after their values in JavaScript.
-EventSource.EventTypes = util.read_only {
+---@enum EventSource.EventTypes
+EventSource.EventTypes = {
   ON_OPEN = "open",
   ON_MESSAGE = "message",
   ON_ERROR = "error",
 }
+EventSource.EventTypes = util.read_only(EventSource.EventTypes)
 
 --- Helper function that creates the initial Request to start the stream.
---- @function create_request
---- @local
 --- @param url_table table a net.url table
 --- @param extra_headers table a set of key/value pairs (strings) to capture any extra HTTP headers needed.
+--- @return HttpMessage request
 local function create_request(url_table, extra_headers)
   local request = Request.new("GET", url_table.path, nil)
       :add_header("user-agent", "smartthings-lua-edge-driver")
@@ -69,10 +75,11 @@ local function create_request(url_table, extra_headers)
 end
 
 --- Helper function to send the request and kick off the stream.
---- @function send_stream_start_request
---- @local
 --- @param payload string the entire string buffer to send
 --- @param sock table the TCP socket to send it over
+--- @return number? bytes bytes sent
+--- @return string? err error, nil on success
+--- @return number? idx index of last byte sent on error
 local function send_stream_start_request(payload, sock)
   local bytes, err, idx = nil, nil, 0
 
@@ -88,9 +95,8 @@ local function send_stream_start_request(payload, sock)
 end
 
 --- Helper function to create an table representing an event from the source's parse buffers.
---- @function make_event
---- @local
 --- @param source EventSource
+--- @return event table
 local function make_event(source)
   local event_type = nil
 
@@ -108,8 +114,6 @@ end
 
 --- SSE spec for dispatching an event:
 --- https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage
---- @function dispatch_event
---- @local
 --- @param source EventSource
 local function dispatch_event(source)
   local data_buffer = source._parse_buffers["data"]
@@ -189,8 +193,6 @@ local function event_lines(chunk)
 end
 --- SSE spec for interpreting an event stream:
 --- https://html.spec.whatwg.org/multipage/server-sent-events.html#the-eventsource-interface
---- @function parse
---- @local
 --- @param source EventSource
 --- @param recv string the received payload from the last socket receive
 local function sse_parse_chunk(source, recv)
@@ -237,24 +239,26 @@ local function sse_parse_chunk(source, recv)
 end
 
 --- Helper function that captures the cyclic logic of the EventSource while in the CONNECTING state.
---- @function connecting_action
---- @local
 --- @param source EventSource
+--- @return nil nothing always returns nil
+--- @return string? err error message if there was a failure
+--- @return table? http_err if the error was an HTTP error, returned here
 local function connecting_action(source)
   if not source._sock then
     if type(source._sock_builder) == "function" then
       source._sock = source._sock_builder()
     else
+      local err = nil
       source._sock, err = socket.tcp()
       if err ~= nil then return nil, err end
 
-      _, err = source._sock:settimeout(60)
+      err = select(2, source._sock:settimeout(60))
       if err ~= nil then return nil, err end
 
-      _, err = source._sock:connect(source.url.host, source.url.port)
+      err = select(2, source._sock:connect(source.url.host, source.url.port))
       if err ~= nil then return nil, err end
 
-      _, err = source._sock:setoption("keepalive", true)
+      err = select(2, source._sock:setoption("keepalive", true))
       if err ~= nil then return nil, err end
 
       if source.url.scheme == "https" then
@@ -266,7 +270,7 @@ local function connecting_action(source)
         })
         if err ~= nil then return nil, err end
 
-        _, err = source._sock:dohandshake()
+        err = select(2, source._sock:dohandshake())
         if err ~= nil then return nil, err end
       end
     end
@@ -280,7 +284,12 @@ local function connecting_action(source)
     request = request:add_header("Last-Event-ID", last_event_id)
   end
 
-  local _, err, _ = send_stream_start_request(request:serialize(), source._sock)
+  local request_string, ser_err = request:serialize()
+  if ser_err or not request_string then
+    return nil, ser_err
+  end
+
+  local _, err, _ = send_stream_start_request(request_string, source._sock)
 
   if err ~= nil then
     return nil, err
@@ -320,9 +329,10 @@ local function connecting_action(source)
   end
 end
 --- Helper function that captures the cyclic logic of the EventSource while in the OPEN state.
---- @function open_action
---- @local
 --- @param source EventSource
+--- @return nil nothing always nil
+--- @return string? err error message if failed
+--- @return string? partial partial socket receive if available
 local function open_action(source)
   local recv, err, partial = source._sock:receive('*l')
 
@@ -419,7 +429,7 @@ local state_actions = {
 ---
 --- @param url string|table a string or a net.url table representing the complete URL (minimally a scheme/host/path, port optional) for the event stream.
 --- @param extra_headers table|nil an optional table of key-value pairs (strings) to be added to the initial GET request
---- @param sock_builder function|nil an optional function to be used to create the TCP socket for the stream. If nil, a set of defaults will be used to create a new TCP socket.
+--- @param sock_builder nil|fun(): table an optional function to be used to create the TCP socket for the stream. If nil, a set of defaults will be used to create a new TCP socket.
 --- @return EventSource a new EventSource
 function EventSource.new(url, extra_headers, sock_builder)
   local url_table = util.force_url_table(url)
