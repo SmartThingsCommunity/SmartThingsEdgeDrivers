@@ -30,10 +30,8 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
-local json = require "st.json"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
-local types = DoorLock.types
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("lock-lockalarm-nobattery.yml"),
