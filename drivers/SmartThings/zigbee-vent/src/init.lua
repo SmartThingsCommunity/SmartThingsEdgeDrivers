@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local device_management = require "st.zigbee.device_management"
 local defaults = require "st.zigbee.defaults"
+local temperature_defaults = require "st.zigbee.defaults.temperatureMeasurement_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 
@@ -56,6 +57,37 @@ local function switch_on_handler(driver, device, command)
   if (last_level == nil or last_level == 0) then last_level = 100 end
   last_level =  math.floor(last_level * 0xFE / 100)
   device:send(clusters.Level.commands.MoveToLevelWithOnOff(device, last_level, 0xFFFF))
+end
+
+local function temperature_measurement_attr_handler(driver, device, value, zb_rx)
+  local raw_temp = value.value
+  local celc_temp = raw_temp / 100.0
+  local temp_scale = "C"
+  -- All events from drivers should be in celsius and without offset manipulation
+  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperature({value = celc_temp, unit = temp_scale }))
+end
+
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
 end
 
 local function refresh_handler(driver, device, command)
@@ -102,6 +134,11 @@ local zigbee_vent_driver = {
       },
       [clusters.Level.ID] = {
         [clusters.Level.attributes.CurrentLevel.ID] = level_report_handler
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_measurement_attr_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_defaults.MIN_TEMP),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_defaults.MAX_TEMP),
       }
     }
   },
