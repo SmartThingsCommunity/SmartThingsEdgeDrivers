@@ -110,8 +110,8 @@ local function num_pin_users_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
-local function require_remote_pin_handler(driver, device, ib, response)
-  if ib.data.value then
+local function apply_cota_credentials_if_absent(device)
+  if not device:get_field(lock_utils.COTA_CRED) then
     --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
     device.thread:call_with_delay(0, function(t)
       generate_cota_cred_for_device(device)
@@ -121,6 +121,12 @@ local function require_remote_pin_handler(driver, device, ib, response)
         set_cota_credential(device, INITIAL_COTA_INDEX)
       end)
     end)
+  end
+end
+
+local function require_remote_pin_handler(driver, device, ib, response)
+  if ib.data.value then
+    apply_cota_credentials_if_absent(device)
   else
     device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
@@ -519,6 +525,15 @@ end
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+
+  -- Device may require pin for remote operation if it supports COTA and PIN features.
+  local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+  if #eps == 0 then
+    device.log.debug("Device will not require PIN for remote operation")
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+  else
+    device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+  end
  end
 
 local function device_added(driver, device)
@@ -534,18 +549,18 @@ local function device_added(driver, device)
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
     end
-  -- some devices may have lock codes functionality, but may not support it in their profile
-  -- intentionally, so only run this if device supports lockCodes in profile.
-  elseif device:supports_capability(capabilities.lockCodes) then
+  else
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
     req:merge(DoorLock.attributes.MinPINCodeLength:read(device, eps[1]))
     req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, eps[1]))
-    driver:inject_capability_command(device, {
-      capability = capabilities.lockCodes.ID,
-      command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-      args = {}
-    })
+    if device:supports_capability(capabilities.lockCodes) then
+      driver:inject_capability_command(device, {
+        capability = capabilities.lockCodes.ID,
+        command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+        args = {}
+      })
+    end
 
     --Device may require pin for remote operation if it supports COTA and PIN features.
     eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
