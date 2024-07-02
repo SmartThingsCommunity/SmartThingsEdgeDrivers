@@ -110,21 +110,25 @@ local function num_pin_users_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
+local function apply_cota_credentials_if_absent(device)
+  if not device:get_field(lock_utils.COTA_CRED) then
+    --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
+    device.thread:call_with_delay(0, function(t)
+      generate_cota_cred_for_device(device)
+      -- delay needed to allow test to override the random credential data
+      device.thread:call_with_delay(0, function(t)
+        -- Attempt to set cota credential at the lowest index
+        set_cota_credential(device, INITIAL_COTA_INDEX)
+      end)
+    end)
+  end
+end
+
 local function require_remote_pin_handler(driver, device, ib, response)
   if ib.data.value then
-    if device:get_field(lock_utils.COTA_CRED) ~= nil then
-      --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
-      device.thread:call_with_delay(0, function(t)
-        generate_cota_cred_for_device(device)
-        -- delay needed to allow test to override the random credential data
-        device.thread:call_with_delay(0, function(t)
-          -- Attempt to set cota credential at the lowest index
-          set_cota_credential(device, INITIAL_COTA_INDEX)
-        end)
-      end)
-    else
-      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
-    end
+    apply_cota_credentials_if_absent(device)
+  else
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
 end
 
