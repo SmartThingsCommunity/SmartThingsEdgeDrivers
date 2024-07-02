@@ -231,7 +231,11 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
     )
-end
+    local req = clusters.DoorLock.attributes.MaxPINCodeLength:read(mock_device, 1)
+    req:merge(clusters.DoorLock.attributes.MinPINCodeLength:read(mock_device, 1))
+    req:merge(clusters.DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device, 1))
+    test.socket.matter:__expect_send({mock_device.id, req})
+  end
 )
 
 test.run_registered_tests()
