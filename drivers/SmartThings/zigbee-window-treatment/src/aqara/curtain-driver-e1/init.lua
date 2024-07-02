@@ -30,7 +30,7 @@ local PRIVATE_CURTAIN_LOCKING_STATUS_ATTRIBUTE_ID = 0x0428
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
 local hookLockState = capabilities["stse.hookLockState"]
-local chargingStatus = capabilities["stse.chargingStatus"]
+local chargingState = capabilities["stse.chargingState"]
 local softTouch = capabilities["stse.softTouch"]
 local hookUnlockCommandName = "hookUnlock"
 local hookLockCommandName = "hookLock"
@@ -45,7 +45,7 @@ local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(hookLockState.hookLockState.unlocked())
-  device:emit_event(chargingStatus.chargingStatus.notCharging())
+  device:emit_event(chargingState.chargingState.discharging())
   device:emit_event(capabilities.battery.battery(100))
 end
 
@@ -126,11 +126,11 @@ end
 
 local function curtain_state_of_charge_report_handler(driver, device, value, zb_rx)
   if value.value == 3 then
-    device:emit_event(chargingStatus.chargingStatus.notCharging())
+    device:emit_event(chargingState.chargingState.discharging())
   elseif value.value == 4 then
-    device:emit_event(chargingStatus.chargingStatus.charging())
+    device:emit_event(chargingState.chargingState.charging())
   elseif value.value == 7 then
-    device:emit_event(chargingStatus.chargingStatus.chargingComplete())
+    device:emit_event(chargingState.chargingState.fullyCharged())
   end
 end
 

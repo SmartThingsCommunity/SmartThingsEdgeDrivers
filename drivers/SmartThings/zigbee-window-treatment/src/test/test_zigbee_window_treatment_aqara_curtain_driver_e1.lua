@@ -21,12 +21,12 @@ local test = require "integration_test"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local chargingStatus = capabilities["stse.chargingStatus"]
+local chargingState = capabilities["stse.chargingState"]
 local hookLockState = capabilities["stse.hookLockState"]
 local hookLockStateId = "stse.hookLockState"
 test.add_package_capability("initializedStateWithGuide.yaml")
 test.add_package_capability("hookLockState.yaml")
-test.add_package_capability("chargingStatus.yaml")
+test.add_package_capability("chargingState.yaml")
 
 local Groups = clusters.Groups
 local Basic = clusters.Basic
@@ -97,7 +97,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", hookLockState.hookLockState.unlocked())
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", chargingStatus.chargingStatus.notCharging())
+      mock_device:generate_test_message("main", chargingState.chargingState.discharging())
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(100))
@@ -285,7 +285,7 @@ test.register_coroutine_test(
 
 
 test.register_coroutine_test(
-  "curtain charging status report should be handled",
+  "curtain charging state report should be handled",
   function()
     local attr_report_data = {
       { Basic.attributes.PowerSource.ID, data_types.Enum8.ID, 4 }
@@ -295,7 +295,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", chargingStatus.chargingStatus.charging())
+      mock_device:generate_test_message("main", chargingState.chargingState.charging())
     )
   end
 )
