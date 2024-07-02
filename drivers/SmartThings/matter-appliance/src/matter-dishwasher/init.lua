@@ -84,7 +84,8 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -96,7 +97,8 @@ local function dishwasher_supported_modes_attr_handler(driver, device, ib, respo
     table.insert(supportedDishwasherModes, mode.elements.label.value)
   end
   device:set_field(SUPPORTED_DISHWASHER_MODES, supportedDishwasherModes, { persist = true })
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedDishwasherModes))
+  local event = capabilities.mode.supportedModes(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
@@ -174,7 +176,8 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list))
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)

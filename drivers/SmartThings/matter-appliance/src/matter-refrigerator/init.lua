@@ -166,7 +166,8 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   device:set_field(SUPPORTED_TEMPERATURE_LEVEL, supportedTemperatureLevels, { persist = true })
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
@@ -180,7 +181,8 @@ local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib,
   end
   supportedRefrigeratorTccModesMap[ib.endpoint_id] = supportedRefrigeratorTccModes
   device:set_field(SUPPORTED_REFRIGERATOR_TCC_MODES_MAP, supportedRefrigeratorTccModesMap, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedRefrigeratorTccModes))
+  local event = capabilities.mode.supportedModes(supportedRefrigeratorTccModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
