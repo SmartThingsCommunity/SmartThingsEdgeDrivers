@@ -64,6 +64,64 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local parent_ep = 1
+local child1_ep = 2
+local mock_outlet = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  manufacturer_info = {
+    vendor_id = 0x130A,
+    product_id = 0x0050,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = parent_ep,
+      clusters = {
+        {
+          cluster_id = clusters.OnOff.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0, --u32 bitmap
+        },
+        {
+          cluster_id = PRIVATE_CLUSTER_ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0, --u32 bitmap
+        }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- On/Off Plug
+      }
+    },
+    {
+      endpoint_id = child1_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 1} -- On/Off Light
+      }
+    },
+  }
+})
+
+local mock_child = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("plug-binary.yml"),
+  device_network_id = string.format("%s:%d", mock_outlet.id, child1_ep),
+  parent_device_id = mock_outlet.id,
+  parent_assigned_child_key = string.format("%d", child1_ep)
+})
+
 local function test_init()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
@@ -77,6 +135,25 @@ local function test_init()
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
+end
+
+local function test_init_parent_child()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_outlet)
+  test.socket.matter:__expect_send({mock_outlet.id, subscribe_request})
+
+  test.mock_device.add_test_device(mock_outlet)
+  test.mock_device.add_test_device(mock_child)
+
+  mock_outlet:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "plug-binary",
+    parent_device_id = mock_outlet.id,
+    parent_assigned_child_key = string.format("%d", child1_ep)
+  })
 end
 test.set_test_init_function(test_init)
 
@@ -388,6 +465,16 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
+)
+
+test.register_coroutine_test(
+  "Added should get switch state for child devices", function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
+    local req = clusters.OnOff.attributes.OnOff:read(mock_child)
+    test.socket.matter:__expect_send({mock_outlet.id, req})
+  end,
+  { test_init = test_init_parent_child }
 )
 
 test.run_registered_tests()
