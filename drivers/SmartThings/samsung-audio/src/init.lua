@@ -213,11 +213,6 @@ local samsungAudio = Driver("samsung-audio", {
       [capabilities.audioVolume.commands.volumeDown.NAME] = handlers.handle_volume_down,
       [capabilities.audioVolume.commands.setVolume.NAME] = handlers.handle_set_volume,
     },
-    [capabilities.audioNotification.ID] = {
-      [capabilities.audioNotification.commands.playTrack.NAME] = handlers.handle_audio_notification,
-      [capabilities.audioNotification.commands.playTrackAndResume.NAME] = handlers.handle_audio_notification,
-      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = handlers.handle_audio_notification,
-    },
   },
 })
 
