@@ -32,7 +32,7 @@ local utils = require "st.utils"
 
 -- maps model name to profile name
 local profiles = {
-  ["Insight"] = "wemo.mini-smart-plug.v1",
+  ["Insight"] = "wemo.insight-smart-plug.v1",
   ["Socket"] = "wemo.mini-smart-plug.v1",
   ["Dimmer"] = "wemo.dimmer-switch.v1",
   ["Motion"] = "wemo.motion-sensor.v1",
@@ -249,7 +249,10 @@ local wemo = Driver("wemo", {
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = command_handlers.handle_refresh,
-    }
+    },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = command_handlers.handle_reset_energy_meter,
+    },
   }
 })
 
