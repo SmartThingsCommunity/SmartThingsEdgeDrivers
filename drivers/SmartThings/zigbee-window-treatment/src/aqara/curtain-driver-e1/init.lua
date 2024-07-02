@@ -45,7 +45,7 @@ local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(hookLockState.hookLockState.unlocked())
-  device:emit_event(chargingState.chargingState.discharging())
+  device:emit_event(chargingState.chargingState.stopped())
   device:emit_event(capabilities.battery.battery(100))
 end
 
@@ -126,7 +126,7 @@ end
 
 local function curtain_state_of_charge_report_handler(driver, device, value, zb_rx)
   if value.value == 3 then
-    device:emit_event(chargingState.chargingState.discharging())
+    device:emit_event(chargingState.chargingState.stopped())
   elseif value.value == 4 then
     device:emit_event(chargingState.chargingState.charging())
   elseif value.value == 7 then

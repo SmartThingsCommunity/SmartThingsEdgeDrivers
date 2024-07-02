@@ -97,7 +97,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", hookLockState.hookLockState.unlocked())
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", chargingState.chargingState.discharging())
+      mock_device:generate_test_message("main", chargingState.chargingState.stopped())
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(100))
