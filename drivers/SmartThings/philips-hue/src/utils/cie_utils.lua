@@ -7,6 +7,8 @@ local DefaultGamut = {
   blue = {x = 0.1532, y = 0.0475}
 }
 
+---@param val number
+---@return number
 local function _apply_gamma_correct(val)
   if val > 0.04045 then
     return ((val + 0.055) / (1.0 + 0.055)) ^ (2.4)
@@ -15,6 +17,8 @@ local function _apply_gamma_correct(val)
   end
 end
 
+---@param val number
+---@return number
 local function _invert_gamma_correct(val)
   if val <= 0.0031308 then
     return val * 12.92
@@ -23,10 +27,16 @@ local function _invert_gamma_correct(val)
   end
 end
 
+---@param a HueColorCoords
+---@param b HueColorCoords
+---@return number
 local function _vec_cross_product(a, b)
   return (a.x * b.y) - (b.x * a.y)
 end
 
+---@param xy HueColorCoords
+---@param gamut HueGamut
+---@return boolean is_in_triangle
 local function _xy_in_gamut_triangle(xy, gamut)
   local red = gamut.red
   local green = gamut.green
@@ -50,6 +60,10 @@ local function _xy_in_gamut_triangle(xy, gamut)
   return (s >= 0) and (t >= 0) and (s + t < 1)
 end
 
+---@param point HueColorCoords
+---@param line_segment_start HueColorCoords
+---@param line_segment_end HueColorCoords
+---@return HueColorCoords
 local function _closest_point_on_line(point, line_segment_start, line_segment_end)
   local AP = {}
   local AB = {}
@@ -68,12 +82,18 @@ local function _closest_point_on_line(point, line_segment_start, line_segment_en
   }
 end
 
+---@param a HueColorCoords
+---@param b HueColorCoords
+---@return number
 local function _distance_between_points(a, b)
   local dx = a.x - b.x
   local dy = a.y - b.y
   return math.sqrt(dx * dx + dy * dy)
 end
 
+---@param xy HueColorCoords
+---@param gamut HueGamut
+---@return HueColorCoords
 local function _closest_point_in_gamut_triangle(xy, gamut)
   local red_green_corner = _closest_point_on_line(xy, gamut.red, gamut.green)
   local blue_red_corner = _closest_point_on_line(xy, gamut.blue, gamut.red)
@@ -97,6 +117,11 @@ local function _closest_point_in_gamut_triangle(xy, gamut)
   return closest_point
 end
 
+---@param red number
+---@param green number
+---@param blue number
+---@param gamut HueGamut
+---@return HueColorCoords
 function CieUtils.safe_rgb_to_xy(red, green, blue, gamut)
   if gamut == nil then gamut = DefaultGamut end
   red = _apply_gamma_correct(red)
@@ -123,6 +148,11 @@ function CieUtils.safe_rgb_to_xy(red, green, blue, gamut)
   return xy
 end
 
+---@param xy HueColorCoords
+---@param gamut HueGamut
+---@return number red
+---@return number green
+---@return number blue
 function CieUtils.safe_xy_to_rgb(xy, gamut)
   if gamut == nil then gamut = DefaultGamut end
   if not _xy_in_gamut_triangle(xy, gamut) then

@@ -1,0 +1,4 @@
+name: 'Matter Pump'
+packageKey: 'matter-pump'
+permissions:
+  matter: {}
