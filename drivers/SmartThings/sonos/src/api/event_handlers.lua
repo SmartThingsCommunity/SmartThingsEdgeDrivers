@@ -83,6 +83,22 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
     elseif is_linein or is_station or is_show or is_radio_tracklist then
       audio_track_data.mediaSource = metadata_status_body.container.name
     end
+
+    local cached_track_control_cmds = device:get_latest_state(
+      "main", capabilities.mediaTrackControl.ID,
+      capabilities.mediaTrackControl.supportedTrackControlCommands.NAME
+    )
+    -- If this is a radio source, disable track controls
+    if is_radio_tracklist and
+      (cached_track_control_cmds == nil or st_utils.table_size(cached_track_control_cmds) > 0) then
+      device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({ }))
+    elseif not is_radio_tracklist and
+      ((cached_track_control_cmds == nil or st_utils.table_size(cached_track_control_cmds) == 0) ) then
+        device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+          capabilities.mediaTrackControl.commands.nextTrack.NAME,
+          capabilities.mediaTrackControl.commands.previousTrack.NAME,
+        }))
+    end
   end
 
   local track_info = nil
