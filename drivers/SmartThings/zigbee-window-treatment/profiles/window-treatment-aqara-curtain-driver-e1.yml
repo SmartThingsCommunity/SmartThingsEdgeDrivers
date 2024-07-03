@@ -25,3 +25,6 @@ preferences:
     explicit: true
   - preferenceId: stse.softTouch
     explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Curtain_Driver_E1    
