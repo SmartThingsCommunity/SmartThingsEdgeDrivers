@@ -503,7 +503,6 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
-
 local function illuminance_attr_handler(driver, device, ib, response)
   local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
@@ -519,6 +518,13 @@ local function valve_state_attr_handler(driver, device, ib, response)
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.closed())
   end
+end
+
+local function valve_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then
+    return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(ib.data.value))
 end
 
 local function info_changed(driver, device, event, args)
@@ -572,7 +578,8 @@ local matter_driver_template = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
       },
       [clusters.ValveControl.ID] = {
-        [clusters.ValveControl.attributes.CurrentState] = valve_state_attr_handler
+        [clusters.ValveControl.attributes.CurrentState] = valve_state_attr_handler,
+        [clusters.ValveControl.attributes.CurrentLevel] = valve_level_attr_handler
       }
     },
     fallback = matter_handler,
@@ -605,6 +612,9 @@ local matter_driver_template = {
     },
     [capabilities.valve.ID] = {
       clusters.ValveControl.attributes.CurrentState
+    },
+    [capabilities.level.ID] = {
+      clusters.ValveControl.attributes.CurrentLevel
     }
   },
   capability_handlers = {
