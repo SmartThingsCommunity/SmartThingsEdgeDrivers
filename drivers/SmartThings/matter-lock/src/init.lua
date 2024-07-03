@@ -514,7 +514,7 @@ local function device_init(driver, device)
   -- check if we have a missing COTA credential. Only run this if it has not been run before (i.e. in device added),
   -- because there is a delay built into the COTA process and we do not want to start two COTA generations at the same time
   -- in the event this was triggered on add.
-  if not device:get_field(COTA_READ_INITIALIZED) then
+  if not device:get_field(COTA_READ_INITIALIZED) or not device:get_field(lock_utils.COTA_CRED) then
     local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
     if #eps == 0 then
       device.log.debug("Device will not require PIN for remote operation")

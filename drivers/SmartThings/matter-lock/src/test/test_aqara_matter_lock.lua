@@ -228,7 +228,6 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-    mock_device:expect_metadata_update({ profile = "lock-lockalarm-nobattery.yml" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
     )

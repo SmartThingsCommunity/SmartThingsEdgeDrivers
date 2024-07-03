@@ -20,13 +20,13 @@ local DoorLock = clusters.DoorLock
 local AQARA_MANUFACTURER_ID = 0x115f
 local U200_PRODUCT_ID = 0x2802
 
-local function is_aqara_products(device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER or
-      device.manufacturer_info.vendor_id ~= AQARA_MANUFACTURER_ID or
-      device.manufacturer_info.product_id ~= U200_PRODUCT_ID then
-        return false
+local function is_aqara_products(opts, driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+      device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+      device.manufacturer_info.product_id == U200_PRODUCT_ID then
+        return true
   end
-  return true
+  return false
 end
 
 local function find_default_endpoint(device, cluster)
