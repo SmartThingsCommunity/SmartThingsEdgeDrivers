@@ -32,7 +32,7 @@ local PRIVATE_THERMOSTAT_ALARM_INFORMATION_ID = 0x0275
 local PRIVATE_CHILD_LOCK_ID = 0x0277
 local PRIVATE_ANTIFREEZE_MODE_TEMPERATURE_SETTING_ID = 0x0279
 local PRIVATE_VALVE_RESULT_CALIBRATION_ID = 0x027B
-local PRIVATE_HEART_BATTERY_ENERGY_ID = 0x00F7
+local PRIVATE_BATTERY_ENERGY_ID = 0x040A
 
 local FINGERPRINTS = {
     { mfr = "LUMI", model = "lumi.airrtc.agl001" }
@@ -211,8 +211,7 @@ local function thermostat_mode_attr_handler(driver, device, command)
 end
 
 local function battery_energy_status_handler(driver, device, value, zb_rx)
-  local battery_value = string.byte(value.value, 43) & 0xFF
-  device:emit_event(capabilities.battery.battery(battery_value))
+  device:emit_event(capabilities.battery.battery(value.value))
 end
 
 local function open_heating_attr_handler(driver, device, command)
@@ -255,7 +254,7 @@ local aqara_radiator_thermostat_e1_handler = {
         [PRIVATE_THERMOSTAT_OPERATING_MODE_ATTRIBUTE_ID] = thermostat_operating_mode_status_handler,
         [PRIVATE_VALVE_SWITCH_ATTRIBUTE_ID] = valve_status_handler,
         [PRIVATE_CHILD_LOCK_ID] = child_switch_status_handler,
-        [PRIVATE_HEART_BATTERY_ENERGY_ID] = battery_energy_status_handler
+        [PRIVATE_BATTERY_ENERGY_ID] = battery_energy_status_handler
       },
       [Thermostat.ID] = {
         [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler

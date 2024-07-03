@@ -36,7 +36,7 @@ local PRIVATE_THERMOSTAT_ALARM_INFORMATION_ID = 0x0275
 local PRIVATE_CHILD_LOCK_ID = 0x0277
 local PRIVATE_ANTIFREEZE_MODE_TEMPERATURE_SETTING_ID = 0x0279
 local PRIVATE_VALVE_RESULT_CALIBRATION_ID = 0x027B
-local PRIVATE_HEART_BATTERY_ENERGY_ID = 0x00F7
+local PRIVATE_BATTERY_ENERGY_ID = 0x040A
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -224,8 +224,7 @@ test.register_coroutine_test(
   "Battery voltage report should be handled, 92",
   function()
     local attr_report_data = {
-      { PRIVATE_HEART_BATTERY_ENERGY_ID, data_types.CharString.ID,
-       "\x03\x28\x1B\x05\x03\x28\x1B\x05\x21\x02\x00\x09\x21\x00\x01\x0A\x21\x00\x00\x0B\x20\x00\x0C\x20\x01\x0D\x23\x1A\x0F\x00\x00\x11\x23\x01\x00\x00\x00\x64\x20\x2E\x65\x20\x5C" }
+      { PRIVATE_BATTERY_ENERGY_ID, data_types.Uint8.ID, 0x92 }
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
