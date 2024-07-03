@@ -34,6 +34,7 @@ local AnalogOutput = clusters.AnalogOutput
 local Groups = clusters.Groups
 
 local SHADE_LEVEL = "shadeLevel"
+local UPDATE_SHADE_LEVEL = "update_shade_level"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -141,6 +142,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, -127, 0))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
@@ -160,6 +162,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 6, 0.5625))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
@@ -179,6 +182,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 5, 0.5625))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     )

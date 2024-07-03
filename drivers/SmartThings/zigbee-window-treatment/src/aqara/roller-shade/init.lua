@@ -33,6 +33,8 @@ local function window_shade_open_cmd(driver, device, command)
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
     initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
   if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    aqara_utils.disable_update_shade_level(device)
+    device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
     device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
   end
 end
@@ -42,12 +44,14 @@ local function window_shade_close_cmd(driver, device, command)
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
     initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
   if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
+    aqara_utils.disable_update_shade_level(device)
+    device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
     device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
   end
 end
 
 local function set_rotate_command_handler(driver, device, command)
-  device:emit_event(shadeRotateState.rotateState.idle({state_change = true})) -- update UI
+  device:emit_event(shadeRotateState.rotateState.idle({ state_change = true })) -- update UI
 
   -- Cannot be controlled if not initialized
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
@@ -92,7 +96,8 @@ local function device_info_changed(driver, device, event, args)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },
+    { visibility = { displayed = false } }))
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
