@@ -575,6 +575,7 @@ local matter_lock_driver = {
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
+    [capabilities.lockAlarm.ID] = {DoorLock.events.DoorLockAlarm},
     [capabilities.lockCodes.ID] = {DoorLock.events.LockUserChange},
   },
   capability_handlers = {
