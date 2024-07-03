@@ -1,4 +1,4 @@
-name: lock-lockalarm-nobattery
+name: lock-nocodes-lockAlarm
 components:
 - id: main
   capabilities:
@@ -12,6 +12,8 @@ components:
         - unlocked
         - unknown
   - id: lockAlarm
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
