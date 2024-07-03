@@ -320,9 +320,9 @@ test.register_coroutine_test(
   end
 )
 
--- test.register_coroutine_test(
---   "Delay setting COTA cred if another cred is already being set.", function()
---   end
--- )
+test.register_coroutine_test(
+  "Delay setting COTA cred if another cred is already being set.", function()
+  end
+)
 
 test.run_registered_tests()
