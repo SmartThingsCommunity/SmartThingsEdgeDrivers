@@ -24,7 +24,8 @@ local lock_utils = {
   COTA_CRED = "cotaCred",
   COTA_CODE_NAME = "ST Remote Operation Code",
   COTA_CRED_INDEX = "cotaCredIndex",
-  NONFUNCTIONAL = "nonFunctional"
+  NONFUNCTIONAL = "nonFunctional",
+  COTA_READ_INITIALIZED = "cotaReadInitialized"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
