@@ -34,7 +34,7 @@ local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
 
 local mock_device_record = {
-  profile = t_utils.get_profile_definition("lock-lockalarm-nobattery.yml"),
+  profile = t_utils.get_profile_definition("lock-nocodes-notamper.yml"),
   manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
   endpoints = {
     {
@@ -63,7 +63,7 @@ local mock_device = test.mock_device.build_test_matter_device(mock_device_record
 
 local function test_init()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
   test.mock_device.add_test_device(mock_device)
@@ -75,9 +75,6 @@ local test_credential_data = "12345678"
 
 local function expect_kick_off_cota_process(device)
   test.socket.device_lifecycle:__queue_receive({ device.id, "added" })
-  test.socket.capability:__expect_send(
-    device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
-  )
   local req = DoorLock.attributes.MaxPINCodeLength:read(device, 10)
   req:merge(DoorLock.attributes.MinPINCodeLength:read(device, 10))
   req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, 10))
@@ -323,9 +320,9 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "Delay setting COTA cred if another cred is already being set.", function()
-  end
-)
+-- test.register_coroutine_test(
+--   "Delay setting COTA cred if another cred is already being set.", function()
+--   end
+-- )
 
 test.run_registered_tests()
