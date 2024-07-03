@@ -111,12 +111,16 @@ local function supported_thermostat_modes_handler(driver, device, value)
   }, { visibility = { displayed = false } }))
 end
 
-local function device_init(driver, device)
+local function do_refresh(driver, device)
   device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
   device:send(cluster_base.read_manufacturer_specific_attribute(device,
   PRIVATE_CLUSTER_ID, PRIVATE_THERMOSTAT_OPERATING_MODE_ATTRIBUTE_ID, MFG_CODE))
   device:send(cluster_base.read_manufacturer_specific_attribute(device,
   PRIVATE_CLUSTER_ID, PRIVATE_VALVE_RESULT_CALIBRATION_ID, MFG_CODE))
+end
+
+local function device_init(driver, device)
+  do_refresh(driver, device)
 end
 
 local function device_added(driver, device)
@@ -276,7 +280,10 @@ local aqara_radiator_thermostat_e1_handler = {
     [capabilities.lock.ID] = {
       [capabilities.lock.commands.lock.NAME] = child_switch_on_attr_handler,
       [capabilities.lock.commands.unlock.NAME] = child_switch_off_attr_handler
-    }
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+    } 
   },
   can_handle = is_aqara_products
 }
