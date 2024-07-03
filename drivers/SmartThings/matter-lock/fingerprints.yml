@@ -15,10 +15,10 @@ matterManufacturer:
     deviceLabel: Aqara Smart Lock U200
     vendorId: 0x115F
     productId: 0x2802
-    deviceProfileName: lock-nocodes-nobattery-lockAlarm
+    deviceProfileName: lock-nocodes-nobattery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
     deviceTypes:
       - id: 0x000A # Door Lock
-    deviceProfileName: base-lock #TODO update if lockAlarm is visible
+    deviceProfileName: base-lock

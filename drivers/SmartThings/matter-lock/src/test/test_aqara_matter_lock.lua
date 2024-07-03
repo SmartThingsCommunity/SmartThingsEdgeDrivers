@@ -19,7 +19,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("lock-nocodes-nobattery-lockAlarm.yml"),
+  profile = t_utils.get_profile_definition("lock-nocodes-nobattery.yml"),
   manufacturer_info = {
     vendor_id = 0x115f,
     product_id = 0x2802,
@@ -228,6 +228,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
+    mock_device:expect_metadata_update({ profile = "lock-nocodes-nobattery.yml" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
     )
