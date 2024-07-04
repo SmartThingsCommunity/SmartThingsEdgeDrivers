@@ -21,7 +21,7 @@ local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Stelpro", model = "MaestroStat" },
+  { mfr = "Stelpro", model = "SMT402AD" },
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
