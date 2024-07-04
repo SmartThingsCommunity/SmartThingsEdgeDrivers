@@ -26,7 +26,7 @@ local FREEZE_ALRAM_TEMPERATURE = 0
 local HEAT_ALRAM_TEMPERATURE = 50
 
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Stelpro", model = "MaestroStat" },
+  { mfr = "Stelpro", model = "SMT402AD" },
   { mfr = "Stelpro", model = "SORB" },
   { mfr = "Stelpro", model = "SonomaStyle" }
 }
