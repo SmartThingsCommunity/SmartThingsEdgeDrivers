@@ -33,8 +33,7 @@ local function window_shade_open_cmd(driver, device, command)
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
     initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
   if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
-    aqara_utils.disable_update_shade_level(device)
-    device:emit_event(capabilities.windowShadeLevel.shadeLevel(100))
+    aqara_utils.enable_update_shade_level(device)
     device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
   end
 end
@@ -44,8 +43,7 @@ local function window_shade_close_cmd(driver, device, command)
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
     initializedStateWithGuide.initializedStateWithGuide.NAME) or 0
   if initialized == initializedStateWithGuide.initializedStateWithGuide.initialized.NAME then
-    aqara_utils.disable_update_shade_level(device)
-    device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
+    aqara_utils.enable_update_shade_level(device)
     device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
   end
 end

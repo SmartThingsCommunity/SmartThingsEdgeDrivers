@@ -25,9 +25,11 @@ local aqara_utils = {}
 local function enable_update_shade_level(device)
   device:set_field(UPDATE_SHADE_LEVEL, true, { persist = true })
 end
+
 local function disable_update_shade_level(device)
   device:set_field(UPDATE_SHADE_LEVEL, false, { persist = true })
 end
+
 local function shade_level_cmd(driver, device, command)
   disable_update_shade_level(device)
   local level = command.args.shadeLevel
