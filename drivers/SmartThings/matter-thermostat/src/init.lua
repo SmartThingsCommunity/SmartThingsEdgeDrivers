@@ -523,7 +523,7 @@ local molecular_weights = {
   [capabilities.fineDustSensor.NAME] = "N/A",
   [capabilities.dustSensor.NAME] = "N/A",
   [capabilities.radonMeasurement.NAME] = 222.018,
-  [capabilities.tvocMeasurement.NAME] = units.PPM
+  [capabilities.tvocMeasurement.NAME] = "N/A",
 }
 
 local conversion_tables = {
@@ -573,15 +573,18 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
   return function(driver, device, ib, response)
     local reporting_unit = device:get_field(capability_name.."_unit")
 
-    if reporting_unit == nil then
+    if not reporting_unit then
       reporting_unit = unit_default[capability_name]
       device:set_field(capability_name.."_unit", reporting_unit, {persist = true})
     end
 
+    local value = nil
     if reporting_unit then
-      local value = unit_conversion(ib.data.value, reporting_unit, target_unit, capability_name)
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
+      value = unit_conversion(ib.data.value, reporting_unit, target_unit, capability_name)
+    end
 
+    if value then
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
       -- handle case where device profile supports both fineDustLevel and dustLevel
       if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = unit_strings[target_unit]}))
