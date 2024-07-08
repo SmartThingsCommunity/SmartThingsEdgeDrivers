@@ -68,6 +68,10 @@ local device_type_profile_map = {
 }
 local detect_matter_thing
 
+local embedded_cluster_utils = require "embedded-cluster-utils"
+local POWER_TOPOLOGY_TYPE = "__power_topology_type"
+
+
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
@@ -501,6 +505,185 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
+local POWER_TOPOLOGY_FEATURE_MAP = {
+  ["NODE"] = 0x0001,
+  ["TREE"] = 0x0010,
+  ["SET"]  = 0x0100,
+  ["DYPF"] = 0x1100,
+}
+
+local function power_topology_handler(driver, device, ib, response)
+  -- check get_endpoints for each feature map value.
+  for name, bitmap in pairs(POWER_TOPOLOGY_FEATURE_MAP) do
+    local feature_eps = embedded_cluster_utils.get_endpoints(device, clusters.PowerTopology.ID, {feature_bitmap = bitmap})
+    if #feature_eps > 0 then
+      device:set_field(POWER_TOPOLOGY_TYPE, POWER_TOPOLOGY_FEATURE_MAP[name])
+    end
+  end
+end
+
+-- enerrgy number
+-- start.end timestamp and sys start.end timestamp
+
+
+local function create_poll_report_schedule(device)
+  -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
+  local timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+    local current_time = os.time()
+    local last_time = device:get_field(LAST_REPORT_TIME) or 0
+    local latestTotalConsumptionWH = device:get_field(LATEST_TOTAL_CONSUMPTION_WH) or 0
+
+    device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+    -- Calculate the energy consumed between the start and the end time
+    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+      capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+    local deltaEnergyWh = 0.0
+    if previousTotalConsumptionWh ~= nil and previousTotalConsumptionWh.energy ~= nil then
+      deltaEnergyWh = math.max(latestTotalConsumptionWH - previousTotalConsumptionWh.energy, 0.0)
+    end
+
+    local startTime = iso8061Timestamp(last_time)
+    local endTime = iso8061Timestamp(current_time - 1)
+
+    -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+      start = startTime,
+      ["end"] = endTime,
+      deltaEnergy = deltaEnergyWh,
+      energy = latestTotalConsumptionWH
+    }))
+  end, "polling_report_schedule_timer")
+
+  device:set_field(RECURRING_REPORT_POLL_TIMER, timer)
+end
+
+--[[
+set field imported.
+set field exported.
+use the same field for both cumulative and periodic
+in periodic check if cumulative exists. if it does, do not update periodic.
+]]
+
+local CUM_ENERGY_REPORTED = "__cum_energy_reported"
+local TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
+local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
+local LATEST_IMPORTED_TIMESTAMP = "__latest_imported_timestamp"
+local LATEST_EXPORTED_TIMESTAMP = "__latest_exported_timestamp"
+
+local function cum_energy_imported_handler(driver, device, ib, response)
+  device:set_field(TOTAL_IMPORTED_ENERGY, ib.data.elements["Energy"])
+  device:set_field(LATEST_IMPORTED_TIMESTAMP, ib.data.elements["EndTimestamp"])
+end
+
+local function cum_energy_exported_handler(driver, device, ib, response)
+  device:set_field(TOTAL_EXPORTED_ENERGY, ib.data.elements["Energy"])
+  device:set_field(LATEST_EXPORTED_TIMESTAMP, ib.data.elements["EndTimestamp"])
+end
+
+local function per_energy_imported_handler(driver, device, ib, response)
+  local is_cum_energy_reported = device:get_field(CUM_ENERGY_REPORTED)
+  if not is_cum_energy_reported then
+    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY)
+    local summed_energy_report = latest_energy_report + ib.data.elements["Energy"]
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
+    device:set_field(LATEST_IMPORTED_TIMESTAMP, ib.data.elements["EndTimestamp"])
+  end
+end
+
+local function per_energy_exported_handler(driver, device, ib, response)
+  local is_cum_energy_reported = device:get_field(CUM_ENERGY_REPORTED)
+  if not is_cum_energy_reported then
+    local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY)
+    local summed_energy_report = latest_energy_report + ib.data.elements["Energy"]
+    device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
+    device:set_field(LATEST_EXPORTED_TIMESTAMP, ib.data.elements["EndTimestamp"])
+  end
+end
+
+local function delete_poll_schedule(device)
+  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
+  if poll_timer ~= nil then
+    device.thread:cancel_timer(poll_timer)
+    device:set_field(RECURRING_POLL_TIMER, nil)
+  end
+end
+
+
+local function create_poll_report_schedule(device)
+  -- the poll schedule is only needed for devices that support powerConsumption
+  if not device:supports_capability(capabilities.powerConsumptionReport) then
+    return
+  end
+
+  -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
+  if device:get_field(SUPPORTS_IMPORTED_ENERGY) then
+    local import_timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+      local current_time = os.time()
+      local last_time = device:get_field(LAST_REPORT_TIME) or 0
+      local latestTotalConsumptionWH = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
+
+      device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+      -- Calculate the energy consumed between the start and the end time
+      local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+        capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+      local deltaEnergyWh = 0.0
+      if previousTotalConsumptionWh and previousTotalConsumptionWh.energy then
+        deltaEnergyWh = math.max(latestTotalConsumptionWH - previousTotalConsumptionWh.energy, 0.0)
+      end
+
+      local startTime = iso8061Timestamp(last_time)
+      local endTime = iso8061Timestamp(current_time - 1)
+
+      -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+      device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+        start = startTime,
+        ["end"] = endTime,
+        deltaEnergy = deltaEnergyWh,
+        energy = latestTotalConsumptionWH
+      }))
+    end, "polling_import_report_schedule_timer")
+
+    device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
+  end
+
+  if device:get_field(SUPPORTS_EXPORTED_ENERGY) then
+    local export_timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+      local current_time = os.time()
+      local last_time = device:get_field(LATEST_IMPORTED_TIMESTAMP) or 0
+      local latestTotalConsumptionWH = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+
+      device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+
+      -- Calculate the energy consumed between the start and the end time
+      local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+        capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+      local deltaEnergyWh = 0.0
+      if previousTotalConsumptionWh ~= nil and previousTotalConsumptionWh.energy ~= nil then
+        deltaEnergyWh = math.max(latestTotalConsumptionWH - previousTotalConsumptionWh.energy, 0.0)
+      end
+
+      local startTime = iso8061Timestamp(last_time)
+      local endTime = iso8061Timestamp(current_time - 1)
+
+      -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+      device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+        start = startTime,
+        ["end"] = endTime,
+        deltaEnergy = deltaEnergyWh,
+        energy = latestTotalConsumptionWH
+      }))
+    end, "polling_export_report_schedule_timer")
+
+    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
+  end
+end
+
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -550,7 +733,17 @@ local matter_driver_template = {
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
-      }
+      },
+      [clusters.PowerTopology.ID] = power_topology_handler,
+      [clusters.ElectricalPowerMeasurement.ID] = {
+        [clusters.ElectricalPowerMeasurement.attributes.activePower.ID] = active_power_handler,
+      },
+      [clusters.ElectricalEnergyMeasurement.ID] = {
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = cum_energy_imported_handler,
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = per_energy_imported_handler,
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = cum_energy_exported_handler,
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = per_energy_exported_handler,
+      },
     },
     fallback = matter_handler,
   },
@@ -600,6 +793,11 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature,
     },
+    -- [capabilities.powerMeter.ID] = {},
+    -- [capabilities.energyMeter.ID] = {
+    --     [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = handle_reset_energy_meter,
+    -- },
+    -- [capabilities.powerConsumptionReport.ID] = {},
   },
   supported_capabilities = {
     capabilities.switch,
@@ -607,7 +805,10 @@ local matter_driver_template = {
     capabilities.colorControl,
     capabilities.colorTemperature,
     capabilities.motionSensor,
-    capabilities.illuminanceMeasurement
+    capabilities.illuminanceMeasurement,
+    capabilities.powerMeter,
+    capabilities.energyMeter,
+    capabilities.powerConsumptionReport,
   },
     sub_drivers = {
     require("eve-energy"),
