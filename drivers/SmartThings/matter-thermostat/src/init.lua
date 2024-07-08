@@ -513,8 +513,17 @@ local level_strings = {
   [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL] = "hazardous",
 }
 
+-- measured in g/mol
 local molecular_weights = {
+  [capabilities.carbonDioxideMeasurement.NAME] = 44.010,
+  [capabilities.nitrogenDioxideMeasurement.NAME] = 28.014,
+  [capabilities.ozoneMeasurement.NAME] = 48.0,
   [capabilities.formaldehydeMeasurement.NAME] = 30.031,
+  [capabilities.veryFineDustSensor.NAME] = "N/A",
+  [capabilities.fineDustSensor.NAME] = "N/A",
+  [capabilities.dustSensor.NAME] = "N/A",
+  [capabilities.radonMeasurement.NAME] = 222.018,
+  [capabilities.tvocMeasurement.NAME] = units.PPM
 }
 
 local conversion_tables = {
@@ -547,24 +556,17 @@ local conversion_tables = {
 
 local function unit_conversion(value, from_unit, to_unit, capability_name)
   local conversion_function = conversion_tables[from_unit][to_unit]
-  if conversion_function == nil then
+  if not conversion_function then
     log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
     return
   end
 
-  if value == nil then
+  if not value then
     log.info_with( {hub_logs = true} , "unit conversion value is nil")
     return
   end
 
-  -- checks if number of parameters is greater than 1. This supports conversions
-  -- where there is a value other than simple scaling values
-  local conversion_function_info = debug.getinfo(conversion_function, "u")
-  if conversion_function_info.nparams > 1 then
-    return conversion_function(value, molecular_weights[capability_name])
-  else
-    return conversion_function(value)
-  end
+  return conversion_function(value, molecular_weights[capability_name])
 end
 
 local function measurementHandlerFactory(capability_name, attribute, target_unit)
