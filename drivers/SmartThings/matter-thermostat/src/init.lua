@@ -380,24 +380,24 @@ local function do_configure(driver, device)
       elseif #fan_eps > 0 then
         profile_name = profile_name .. "-fan"
       end
-    end
 
-    if #heat_eps == 0 and #cool_eps == 0 then
-      device.log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
-      return
-    elseif #heat_eps > 0 and #cool_eps == 0 then
-      profile_name = profile_name .. "-heating-only"
-    elseif #cool_eps > 0 and #heat_eps == 0 then
-      profile_name = profile_name .. "-cooling-only"
-    end
+      if #heat_eps == 0 and #cool_eps == 0 then
+        device.log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
+        return
+      elseif #heat_eps > 0 and #cool_eps == 0 then
+        profile_name = profile_name .. "-heating-only"
+      elseif #cool_eps > 0 and #heat_eps == 0 then
+        profile_name = profile_name .. "-cooling-only"
+      end
 
-    -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-    -- to determine support for ThermostatRunningState
-    -- Add nobattery profiles if updated
-    profile_name = profile_name .. "-nostate"
+      -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
+      -- to determine support for ThermostatRunningState
+      -- Add nobattery profiles if updated
+      profile_name = profile_name .. "-nostate"
 
-    if #battery_eps == 0 then
-      profile_name = profile_name .. "-nobattery"
+      if #battery_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      end
     end
 
     if #aqs_eps > 0 then
