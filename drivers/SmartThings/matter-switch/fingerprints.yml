@@ -4,8 +4,8 @@ matterManufacturer:
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
-    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K 
-    
+    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -46,7 +46,7 @@ matterManufacturer:
     deviceLabel: Eve Light Switch
     vendorId: 0x130A
     productId: 0x005D
-    deviceProfileName: switch-binary 
+    deviceProfileName: switch-binary
 
 #GE
   - id: "4921/177"
@@ -73,7 +73,7 @@ matterManufacturer:
     deviceLabel: Cync Full Color 6 Inch Wafer
     vendorId: 0x1339
     productId: 0x00AF
-    deviceProfileName: light-color-level-2000K-7000K  
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/181"
     deviceLabel: Cync 6 Inch High Ceiling Wafer
     vendorId: 0x1339
@@ -133,12 +133,12 @@ matterManufacturer:
     deviceLabel: Cync Indoor Light Strip 16ft
     vendorId: 0x1339
     productId: 0x006E
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/123"
     deviceLabel: Cync Indoor Light Strip 32ft
     vendorId: 0x1339
     productId: 0x007B
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339
@@ -236,7 +236,12 @@ matterManufacturer:
     deviceLabel: Smart Holiday String Lights
     vendorId: 0x115A
     productId: 0x0047
-    deviceProfileName: light-color-level-2700K-6500K  
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/75"
+    deviceLabel: Essentials Wifi A19-A60 Smart Bulb
+    vendorId: 0x115A
+    productId: 0x004B
+    deviceProfileName: light-color-level-2700K-6500K
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
