@@ -414,10 +414,6 @@ local function do_configure(driver, device)
       profile_name = profile_name .. level_name .. "-level"
     end
 
-    if profile_name == "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" then
-      profile_name = "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs"
-    end
-
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif #thermo_eps == 1 then
@@ -553,12 +549,12 @@ local function unit_conversion(value, from_unit, to_unit, capability_name)
   local conversion_function = conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
     log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
-    return 1
+    return
   end
 
   if value == nil then
     log.info_with( {hub_logs = true} , "unit conversion value is nil")
-    return 1
+    return
   end
 
   -- checks if number of parameters is greater than 1. This supports conversions
