@@ -95,7 +95,8 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
@@ -107,10 +108,10 @@ local function laundry_washer_supported_modes_attr_handler(driver, device, ib, r
     log.info(string.format("Inserting supported washer mode: %s", mode.elements.label.value))
     table.insert(supportedLaundryWasherModes, mode.elements.label.value)
   end
-
   local component = device.profile.components["main"]
   device:set_field(SUPPORTED_LAUNDRY_WASHER_MODES, supportedLaundryWasherModes, {persist = true})
-  device:emit_component_event(component, capabilities.mode.supportedModes(supportedLaundryWasherModes))
+  local event = capabilities.mode.supportedModes(supportedLaundryWasherModes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
@@ -136,7 +137,8 @@ local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, 
     table.insert(supportedLaundryWasherSpinSpeeds, spinSpeed.value)
   end
   device:set_field(SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS, supportedLaundryWasherSpinSpeeds, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(supportedLaundryWasherSpinSpeeds))
+  local event = capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(supportedLaundryWasherSpinSpeeds, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
@@ -171,7 +173,8 @@ local function laundry_washer_controls_supported_rinses_attr_handler(driver, dev
     table.insert(supportedLaundryWasherRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME)
   end
   device:set_field(SUPPORTED_LAUNDRY_WASHER_RINSES, supportedLaundryWasherRinses, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(supportedLaundryWasherRinses))
+  local event = capabilities.laundryWasherRinseMode.supportedRinseModes(supportedLaundryWasherRinses, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
@@ -186,7 +189,8 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list))
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)

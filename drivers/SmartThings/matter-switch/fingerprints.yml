@@ -2134,6 +2134,21 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
+  - id: "5020/43825"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB31
+    deviceProfileName: switch-binary
+  - id: "5020/43780"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB04
+    deviceProfileName: switch-binary
+  - id: "5020/43777"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB01
+    deviceProfileName: switch-binary
 
 
 #Bridge devices need manufacturer specific fingerprints until
