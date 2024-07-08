@@ -23,11 +23,11 @@ local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
 local aqara_utils = {}
 
 local function enable_update_shade_level(device)
-  device:set_field(UPDATE_SHADE_LEVEL, true, { persist = true })
+  device:set_field(UPDATE_SHADE_LEVEL, true)
 end
 
 local function disable_update_shade_level(device)
-  device:set_field(UPDATE_SHADE_LEVEL, false, { persist = true })
+  device:set_field(UPDATE_SHADE_LEVEL, false)
 end
 
 local function shade_level_cmd(driver, device, command)
@@ -37,9 +37,6 @@ local function shade_level_cmd(driver, device, command)
     level = 100
   end
   level = utils.round(level)
-
-  -- update ui to the new level
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
 
   -- send
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))

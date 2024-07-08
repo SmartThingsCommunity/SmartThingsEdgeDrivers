@@ -124,6 +124,7 @@ local function application_version_handler(driver, device, value, zb_rx)
 end
 
 local function do_refresh(self, device)
+  aqara_utils.enable_update_shade_level(device)
   device:send(AnalogOutput.attributes.PresentValue:read(device))
   device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
     aqara_utils.MFG_CODE))
