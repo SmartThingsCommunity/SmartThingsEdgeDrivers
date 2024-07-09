@@ -325,14 +325,22 @@ local cluster_subscribe_list_configured = {
   [capabilities.dustHealthConcern.ID] = {
     clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
   },
-  [capabilities.tvocMeasurement.ID] = {
-    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
-  },
   [capabilities.tvocHealthConcern.ID] = {
     clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
   }
 }
+
+local function test_init()
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device)
+end
+test.set_test_init_function(test_init)
 
 local function test_init_ap_aqs()
   local subscribe_request_ap_aqs = cluster_subscribe_list[1]:subscribe(mock_device_ap_aqs)
@@ -345,15 +353,20 @@ local function test_init_ap_aqs()
   test.mock_device.add_test_device(mock_device_ap_aqs)
 end
 
-test.register_coroutine_test(
-  "Test profile change on init for AP and AQS combined device type",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
-    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
-    mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end,
-  { test_init = test_init_ap_aqs }
-)
+local function test_init_ap_thermo_aqs_preconfigured()
+  local subscribe_request = nil
+  for _, attributes in pairs(cluster_subscribe_list_configured) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device))
+      end
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_ap_thermo_aqs_preconfigured.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_ap_thermo_aqs_preconfigured)
+end
 
 local function test_init_ap_thermo_aqs()
   local subscribe_request_ap_aqs = cluster_subscribe_list[1]:subscribe(mock_device_ap_thermo_aqs)
@@ -366,6 +379,15 @@ local function test_init_ap_thermo_aqs()
   test.mock_device.add_test_device(mock_device_ap_thermo_aqs)
 end
 
+test.register_coroutine_test(
+  "Test profile change on init for AP and AQS combined device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
+    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
+    mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_ap_aqs }
+)
 
 test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
@@ -377,16 +399,6 @@ test.register_coroutine_test(
   end,
   { test_init = test_init_ap_thermo_aqs }
 )
-
-local function test_init_ap_thermo_aqs_preconfigured()
-  local subscribe_request_ap_thermo_aqs = cluster_subscribe_list_configured:subscribe(mock_device_ap_thermo_aqs_preconfigured)
-  for _, cluster in pairs(cluster_subscribe_list_configured) do
-      subscribe_request_ap_thermo_aqs:merge(cluster:subscribe(mock_device_ap_thermo_aqs_preconfigured))
-  end
-  test.socket.matter:__expect_send({mock_device_ap_thermo_aqs_preconfigured.id, subscribe_request_ap_thermo_aqs})
-  test.mock_device.add_test_device(mock_device_ap_thermo_aqs_preconfigured)
-end
-test.set_test_init_function(test_init_ap_thermo_aqs_preconfigured)
 
 test.register_coroutine_test(
   "Molecular weight conversion should be handled appropriately in unit_conversion",
@@ -404,24 +416,12 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(
-      mock_device_ap_thermo_aqs_preconfigured:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 18, unit = "ppm"}))
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 14, unit = "ppm"}))
     )
-  end
+  end,
+  { test_init = test_init_ap_thermo_aqs_preconfigured }
 )
 
-local function test_init()
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
-end
-test.set_test_init_function(test_init)
-
---[[
 test.register_message_test(
   "setAirPurifierFanMode command should send the appropriate commands",
   {
@@ -707,5 +707,5 @@ test.register_message_test(
     }
   }
 )
-]]
+
 test.run_registered_tests()
