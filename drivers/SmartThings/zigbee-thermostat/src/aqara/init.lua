@@ -69,8 +69,14 @@ local function device_info_changed(driver, device, event, args)
         if attr.value_map ~= nil then
           value = attr.value_map[value]
         end
-        device:send(cluster_base.write_manufacturer_specific_attribute(device, attr.cluster_id, attr.attribute_id,
+        if preferences[id] == device.preferences["stse.antifreezeModeSetting"] then
+          device:send(cluster_base.write_manufacturer_specific_attribute(device, attr.cluster_id, attr.attribute_id,
           attr.mfg_code, attr.data_type, value_conversion(value)))
+        end
+        if preferences[id] == device.preferences["stse.notificationOfValveTest"] then
+          device:send(cluster_base.write_manufacturer_specific_attribute(device, attr.cluster_id, attr.attribute_id,
+          attr.mfg_code, attr.data_type, value))
+        end
       end
     end
   end
