@@ -64,15 +64,15 @@ local function emit_shade_event(device, value)
 end
 
 local function custom_write_attribute(device, cluster, attribute, data_type, value, mfg_code)
-	local data = data_types.validate_or_build_type(value, data_type)
-	local message = cluster_base.write_attribute(device, data_types.ClusterId(cluster), attribute, data)
-	if mfg_code ~= nil then
-	  message.body.zcl_header.frame_ctrl:set_mfg_specific()
-	  message.body.zcl_header.mfg_code = data_types.validate_or_build_type(mfg_code, data_types.Uint16, "mfg_code")
-	else
-	  message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
-	end
-	return message
+  local data = data_types.validate_or_build_type(value, data_type)
+  local message = cluster_base.write_attribute(device, data_types.ClusterId(cluster), attribute, data)
+  if mfg_code ~= nil then
+    message.body.zcl_header.frame_ctrl:set_mfg_specific()
+    message.body.zcl_header.mfg_code = data_types.validate_or_build_type(mfg_code, data_types.Uint16, "mfg_code")
+  else
+    message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
+  end
+  return message
 end
 
 local function emit_shade_level_event(device, value)

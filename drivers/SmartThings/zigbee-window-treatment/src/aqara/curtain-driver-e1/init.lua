@@ -63,21 +63,21 @@ local function do_configure(self, device)
 end
 
 local CONFIGURATIONS = {
-	{
-	  cluster = PowerConfiguration.ID,
-	  attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
-	  minimum_interval = 30,
-	  maximum_interval = 3600,
-	  data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-	  reportable_change = 1
-	}
+  {
+    cluster = PowerConfiguration.ID,
+    attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+    minimum_interval = 30,
+    maximum_interval = 3600,
+    data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+    reportable_change = 1
+  }
 }
 
 local function device_init(driver, device)
-	for _, attribute in ipairs(CONFIGURATIONS) do
-	  device:add_configured_attribute(attribute)
-	  device:add_monitored_attribute(attribute)
-	end
+  for _, attribute in ipairs(CONFIGURATIONS) do
+    device:add_configured_attribute(attribute)
+    device:add_monitored_attribute(attribute)
+  end
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -89,14 +89,14 @@ local function device_info_changed(driver, device, event, args)
     if reverseCurtainDirectionPrefValue ~= nil and
         reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
       local raw_value = reverseCurtainDirectionPrefValue and 0x01 or 0x00
-			device:send(aqara_utils.custom_write_attribute(device, WindowCovering.ID, WindowCovering.attributes.Mode.ID,
-			  data_types.Bitmap8, raw_value, nil))
+        device:send(aqara_utils.custom_write_attribute(device, WindowCovering.ID, WindowCovering.attributes.Mode.ID,
+          data_types.Bitmap8, raw_value, nil))
     end
 
     -- soft touch
     if softTouchPrefValue ~= nil and
         softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
-			device:send(cluster_base.write_manufacturer_specific_attribute(device,
+      device:send(cluster_base.write_manufacturer_specific_attribute(device,
         aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_MANUAL_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, (not softTouchPrefValue)))
     end
   end
@@ -178,19 +178,19 @@ local function window_shade_close_cmd(driver, device, command)
 end
 
 local function hook_lock_cmd(driver, device, command)
-	device:send(cluster_base.write_manufacturer_specific_attribute(device,
-		aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 0x01))
+  device:send(cluster_base.write_manufacturer_specific_attribute(device,
+    aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 0x01))
 end
 
 local function hook_unlock_cmd(driver, device, command)
-	device:send(cluster_base.write_manufacturer_specific_attribute(device,
-		aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 0x00))
+  device:send(cluster_base.write_manufacturer_specific_attribute(device,
+    aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 0x00))
 end
 
 local aqara_curtain_driver_e1_handler = {
   NAME = "Aqara Curtain Driver E1 Handler",
   lifecycle_handlers = {
-	  init = device_init,
+    init = device_init,
     added = device_added,
     doConfigure = do_configure,
     infoChanged = device_info_changed
@@ -211,12 +211,12 @@ local aqara_curtain_driver_e1_handler = {
   },
   zigbee_handlers = {
     attr = {
-		  [Basic.ID] = {
-		    [Basic.attributes.PowerSource.ID] = curtain_state_of_charge_report_handler
-	    },
-	    [PowerConfiguration.ID] = {
-		    [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_energy_status_handler
-	    },
+      [Basic.ID] = {
+        [Basic.attributes.PowerSource.ID] = curtain_state_of_charge_report_handler
+      },
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_energy_status_handler
+      },
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
         [PRIVATE_CURTAIN_RANGE_FLAG_ATTRIBUTE_ID] = curtain_range_report_handler,
 		    [PRIVATE_CURTAIN_STATUS_ATTRIBUTE_ID] = shade_state_report_handler,

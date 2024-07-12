@@ -177,24 +177,45 @@ test.register_coroutine_test(
 
 
 test.register_coroutine_test(
-  "Window shade open cmd handler",
+  "Window shade open cmd handler (initialized)",
   function()
+    local attr_report_data = {
+      { PRIVATE_CURTAIN_RANGE_FLAG_ATTRIBUTE_ID, data_types.Boolean.ID, true }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.initialized())
+    )
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
         { capability = "windowShade", component = "main", command = "open", args = {} }
       }
     )
-    -- test.socket.zigbee:__expect_send({
-    --     mock_device.id,
-    --     WindowCovering.server.commands.UpOrOpen(mock_device, 'open')
-    -- })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.UpOrOpen(mock_device)
+    })
   end
 )
 
 test.register_coroutine_test(
-  "Window shade close cmd handler",
+  "Window shade close cmd handler (notInitialized)",
   function()
+    local attr_report_data = {
+      { PRIVATE_CURTAIN_RANGE_FLAG_ATTRIBUTE_ID, data_types.Boolean.ID, false }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
+    )
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
@@ -203,24 +224,35 @@ test.register_coroutine_test(
     )
     -- test.socket.zigbee:__expect_send({
     --     mock_device.id,
-    --     WindowCovering.server.commands.DownOrClose(mock_device, 'close')
+    --     WindowCovering.server.commands.DownOrClose(mock_device)
     -- })
   end
 )
 
 test.register_coroutine_test(
-  "Window shade pause cmd handler(partially open)",
+  "Window shade pause cmd handler(partially open)(initialized)",
   function()
+    local attr_report_data = {
+      { PRIVATE_CURTAIN_RANGE_FLAG_ATTRIBUTE_ID, data_types.Boolean.ID, true }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.initialized())
+    )
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
         { capability = "windowShade", component = "main", command = "pause", args = {} }
       }
     )
-    -- test.socket.zigbee:__expect_send({
-    --     mock_device.id,
-    --     WindowCovering.server.commands.Stop(mock_device)
-    -- })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.Stop(mock_device)
+    })
   end
 )
 
