@@ -59,6 +59,33 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_rock = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-rock.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+        endpoint_id = 1,
+        clusters = {
+          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
+        }
+      }
+  }
+})
+
 local mock_device_ap_aqs = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
   manufacturer_info = {
@@ -173,7 +200,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -255,6 +282,20 @@ local cluster_subscribe_list = {
   clusters.ActivatedCarbonFilterMonitoring.attributes.Condition,
 }
 
+local cluster_subscribe_list_rock = {
+  clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.FanMode,
+  clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.WindSupport,
+  clusters.FanControl.attributes.WindSetting,
+  clusters.FanControl.attributes.RockSupport,
+  clusters.FanControl.attributes.RockSetting,
+  clusters.HepaFilterMonitoring.attributes.ChangeIndication,
+  clusters.HepaFilterMonitoring.attributes.Condition,
+  clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication,
+  clusters.ActivatedCarbonFilterMonitoring.attributes.Condition,
+}
+
 local cluster_subscribe_list_configured = {
   [capabilities.temperatureMeasurement.ID] = {
     clusters.Thermostat.attributes.LocalTemperature,
@@ -286,7 +327,9 @@ local cluster_subscribe_list_configured = {
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
-    clusters.FanControl.attributes.WindSetting
+    clusters.FanControl.attributes.WindSetting,
+    clusters.FanControl.attributes.RockSupport,
+    clusters.FanControl.attributes.RockSetting,
   },
   [capabilities.filterState.ID] = {
     clusters.HepaFilterMonitoring.attributes.Condition,
@@ -335,6 +378,15 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+
+  subscribe_request = cluster_subscribe_list_rock[1]:subscribe(mock_device_rock)
+  for i, cluster in ipairs(cluster_subscribe_list_rock) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_rock))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_rock.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_rock)
 end
 test.set_test_init_function(test_init)
 
@@ -379,7 +431,7 @@ test.register_coroutine_test(
   "Test profile change on init for AP and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
-    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
+    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-aqs-co2-tvoc-meas-co2-radon-level" })
     mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_ap_aqs }
@@ -392,7 +444,7 @@ test.register_coroutine_test(
     local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
     read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, read_limits})
-    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
+    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     print(mock_device_ap_thermo_aqs.profile)
   end,
@@ -702,6 +754,73 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
+      }
+    }
+  }
+)
+
+local supportedFanRock = {
+  capabilities.fanOscillationMode.fanOscillationMode.off.NAME,
+  capabilities.fanOscillationMode.fanOscillationMode.horizontal.NAME,
+  capabilities.fanOscillationMode.fanOscillationMode.vertical.NAME,
+  capabilities.fanOscillationMode.fanOscillationMode.swing.NAME
+}
+test.register_message_test(
+  "Test rock mode",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSupport:build_test_report_data(mock_device_rock, 1, 0x07) -- off,  RockLeftRight (0x01), RockUpDown (0x02), and RockRound (0x04)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.supportedFanOscillationModes(supportedFanRock, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:build_test_report_data(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_UP_DOWN)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.vertical())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:build_test_report_data(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_LEFT_RIGHT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.horizontal())
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        { capability = "fanOscillationMode", component = "main", command = "setFanOscillationMode", args = { "vertical" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:write(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_UP_DOWN)
       }
     }
   }
