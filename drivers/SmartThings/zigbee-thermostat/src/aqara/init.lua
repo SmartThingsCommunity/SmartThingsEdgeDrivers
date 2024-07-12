@@ -51,31 +51,12 @@ local preference_map = {
     attribute_id = PRIVATE_ANTIFREEZE_MODE_TEMPERATURE_SETTING_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint32,
-    value_map = {
-      ["1"] = 500,
-      ["2"] = 550,
-      ["3"] = 600,
-      ["4"] = 650,
-      ["5"] = 700,
-      ["6"] = 750,
-      ["7"] = 800,
-      ["8"] = 850,
-      ["9"] = 900,
-      ["10"] = 950,
-      ["11"] = 1000,
-      ["12"] = 1050,
-      ["13"] = 1100,
-      ["14"] = 1150,
-      ["15"] = 1200,
-      ["16"] = 1250,
-      ["17"] = 1300,
-      ["18"] = 1350,
-      ["19"] = 1400,
-      ["20"] = 1450,
-      ["21"] = 1500
-    },
   },
 }
+
+local function value_conversion(value)
+  return tonumber(value)*50 + 450
+end
 
 local function device_info_changed(driver, device, event, args)
   local preferences = device.preferences
@@ -89,7 +70,7 @@ local function device_info_changed(driver, device, event, args)
           value = attr.value_map[value]
         end
         device:send(cluster_base.write_manufacturer_specific_attribute(device, attr.cluster_id, attr.attribute_id,
-          attr.mfg_code, attr.data_type, value))
+          attr.mfg_code, attr.data_type, value_conversion(value)))
       end
     end
   end
