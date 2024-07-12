@@ -139,15 +139,15 @@ local function battery_energy_status_handler(driver, device, value, zb_rx)
 end
 
 local function window_locking_status_handler(driver, device, value, zb_rx)
-	if value.value == 0 then
-		device:emit_event(hookLockState.hookLockState.unlocked())
-	elseif value.value == 1 then
-		device:emit_event(hookLockState.hookLockState.locked())
-	elseif value.value == 2 then
-		device:emit_event(hookLockState.hookLockState.locking())
-	elseif value.value == 3 then
-		device:emit_event(hookLockState.hookLockState.unlocking())
-	end
+  if value.value == 0 then
+    device:emit_event(hookLockState.hookLockState.unlocked())
+  elseif value.value == 1 then
+    device:emit_event(hookLockState.hookLockState.locked())
+  elseif value.value == 2 then
+    device:emit_event(hookLockState.hookLockState.locking())
+  elseif value.value == 3 then
+    device:emit_event(hookLockState.hookLockState.unlocking())
+  end
 end
 
 local function window_shade_open_cmd(driver, device, command)
@@ -219,7 +219,7 @@ local aqara_curtain_driver_e1_handler = {
       },
       [aqara_utils.PRIVATE_CLUSTER_ID] = {
         [PRIVATE_CURTAIN_RANGE_FLAG_ATTRIBUTE_ID] = curtain_range_report_handler,
-		    [PRIVATE_CURTAIN_STATUS_ATTRIBUTE_ID] = shade_state_report_handler,
+        [PRIVATE_CURTAIN_STATUS_ATTRIBUTE_ID] = shade_state_report_handler,
         [PRIVATE_CURTAIN_LOCKING_STATUS_ATTRIBUTE_ID] = window_locking_status_handler
       }
     }
