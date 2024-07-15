@@ -470,7 +470,7 @@ end
 
 local function component_to_endpoint(device, component)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local map = {}
+  local map
   if #button_eps > 0 then
     map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
   else
@@ -484,7 +484,7 @@ end
 
 local function endpoint_to_component(device, ep)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local map = {}
+  local map
   if #button_eps > 0 then
     map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
   else
