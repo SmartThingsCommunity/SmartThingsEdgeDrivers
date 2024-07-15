@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -131,7 +131,7 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
   end
 
   if button_info.power_state and type(button_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     button_device:emit_event(
       capabilities.battery.battery(
         st_utils.clamp_value(button_info.power_state.battery_level, 0, 100)
@@ -186,12 +186,12 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
   end
 
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
 
   if sensor_info.tamper_reports then
-    log.debug(true, "emit tamper")
+    log.debug("emit tamper")
     local tampered = false
     for _, tamper in ipairs(sensor_info.tamper_reports) do
       if tamper.state == "tampered" then
@@ -208,7 +208,7 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
   end
 
   if sensor_info.contact_report then
-    log.debug(true, "emit contact")
+    log.debug("emit contact")
     if sensor_info.contact_report.state == "contact" then
       sensor_device:emit_event(capabilities.contactSensor.contact.closed())
     else
@@ -224,12 +224,12 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
 
   if sensor_info.temperature and sensor_info.temperature.temperature_valid then
-    log.debug(true, "emit temp")
+    log.debug("emit temp")
     sensor_device:emit_event(capabilities.temperatureMeasurement.temperature({
       value = sensor_info.temperature.temperature,
       unit = "C"
@@ -237,7 +237,7 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.light and sensor_info.light.light_level_valid then
-    log.debug(true, "emit light")
+    log.debug("emit light")
     -- From the Hue docs: Light level in 10000*log10(lux) +1
     local raw_light_level = sensor_info.light.light_level
     -- Convert from the Hue value to lux
@@ -246,7 +246,7 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.motion and sensor_info.motion.motion_valid then
-    log.debug(true, "emit motion")
+    log.debug("emit motion")
     if sensor_info.motion.motion then
       sensor_device:emit_event(capabilities.motionSensor.motion.active())
     else
@@ -259,19 +259,19 @@ end
 ---@param light_repr table
 function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
-    log.warn(true, "Tried to emit light status event for device that has been deleted")
+    log.warn("Tried to emit light status event for device that has been deleted")
     return
   end
   local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)
   if not success then
-    log.error_with({ hub_logs = true, on = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
+    log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
   end
 end
 
 local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
   local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
-  log.warn(true, string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
+  log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
 function AttributeEmitters.emitter_for_device_type(device_type)
