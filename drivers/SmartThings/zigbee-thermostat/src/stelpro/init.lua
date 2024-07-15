@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 
 local Thermostat = clusters.Thermostat
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
 local ThermostatOperatingState = capabilities.thermostatOperatingState
@@ -29,6 +30,11 @@ local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
   { mfr = "Stelpro", model = "SORB" },
   { mfr = "Stelpro", model = "SonomaStyle" }
+}
+
+local temperature_measurement_defaults = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
@@ -103,6 +109,29 @@ local function thermostat_heating_demand_attr_handler(driver, device, value, zb_
   device:emit_event(event)
 end
 
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_measurement_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_measurement_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_measurement_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_measurement_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
+
 local function info_changed(driver, device, event, args)
   if device.preferences ~= nil and device.preferences.lock ~= args.old_st_store.preferences.lock then
     device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, tonumber(device.preferences.lock)))
@@ -121,6 +150,10 @@ local stelpro_thermostat = {
         [Thermostat.attributes.PIHeatingDemand.ID] = thermostat_heating_demand_attr_handler,
         [Thermostat.attributes.LocalTemperature.ID] = thermostat_local_temp_attr_handler,
         [Thermostat.attributes.OccupiedHeatingSetpoint.ID] = thermostat_heating_set_point_attr_handler,
+      },
+      [TemperatureMeasurement.ID] = {
+        [TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MIN_TEMP),
+        [TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MAX_TEMP),
       }
     }
   },
