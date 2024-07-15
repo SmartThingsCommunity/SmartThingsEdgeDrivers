@@ -107,6 +107,14 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
+  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+  end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
@@ -115,12 +123,6 @@ local function test_init()
 
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
-
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
-  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
-    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))

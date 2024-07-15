@@ -55,6 +55,7 @@ local function test_init()
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
