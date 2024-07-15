@@ -28,6 +28,7 @@
 -- Mock out globals
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
+test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
 local json = require "st.json"
 local clusters = require "st.matter.clusters"
@@ -69,6 +70,7 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
   test.mock_device.add_test_device(mock_device)
 end
 
