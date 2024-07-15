@@ -218,7 +218,7 @@ local aqara_window_treatment_handler = {
   },
   sub_drivers = {
     require("aqara.roller-shade"),
-	require("aqara.curtain-driver-e1"),
+    require("aqara.curtain-driver-e1"),
     require("aqara.version")
   },
   can_handle = is_aqara_products
