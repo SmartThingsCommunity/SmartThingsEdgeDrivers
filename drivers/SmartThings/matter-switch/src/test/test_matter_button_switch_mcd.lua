@@ -17,16 +17,14 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 
 local clusters = require "st.matter.clusters"
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
 
-local parent_ep = 10
-local child_ep = 20
+local button1_ep = 10
+local button2_ep = 20
+local light_ep = 30
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("button-battery.yml"),
+  profile = t_utils.get_profile_definition("2-button-battery-switch.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -42,7 +40,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = parent_ep,
+      endpoint_id = button1_ep,
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
@@ -56,50 +54,38 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = child_ep,
+      endpoint_id = button2_ep,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+              clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+              clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
+    },
+    {
+      endpoint_id = light_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
-        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30}
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31}
       },
       device_types = {
-        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
       }
     }
   }
 })
 
-local child_profiles = {
-  [child_ep] = t_utils.get_profile_definition("light-color-level.yml")
-}
-
-local mock_children = {}
-for i, endpoint in ipairs(mock_device.endpoints) do
-  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
-    local child_data = {
-      profile = child_profiles[endpoint.endpoint_id],
-      device_network_id = string.format("%s:%d", mock_device.id, endpoint.endpoint_id),
-      parent_device_id = mock_device.id,
-      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
-    }
-    mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
-  end
-end
-
 local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.Switch.server.events.InitialPress,
     clusters.Switch.server.events.LongPress,
@@ -114,54 +100,82 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 20)})
   test.mock_device.add_test_device(mock_device)
+  mock_device:expect_metadata_update({ profile = "2-button-battery-switch" })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
-
-  for _, child in pairs(mock_children) do
-    test.mock_device.add_test_device(child)
-  end
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 2",
-    profile = "light-color-level",
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", child_ep)
-  })
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.button.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Parent device: Handle single press sequence, no hold", {
+  "Handle single press sequence, no hold", {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
         clusters.Switch.events.InitialPress:build_test_event_report(
-            mock_device, 10, {new_position = 1}
+          mock_device, button1_ep, {new_position = 1}  --move to position 1?
         ),
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
+      message = mock_device:generate_test_message("main", capabilities.button.button.pushed({state_change = true})) --should send initial press
     }
   }
 )
 
+test.register_coroutine_test(
+  "Handle single press sequence for a multi press on multi button",
+  function ()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Switch.events.InitialPress:build_test_event_report(
+        mock_device, button2_ep, {new_position = 1}
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Switch.events.ShortRelease:build_test_event_report(
+        mock_device, button2_ep, {previous_position = 0}
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Switch.events.InitialPress:build_test_event_report(
+        mock_device, button2_ep, {new_position = 1}
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Switch.events.MultiPressOngoing:build_test_event_report(
+        mock_device, button2_ep, {new_position = 1, current_number_of_presses_counted = 2}
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Switch.events.MultiPressComplete:build_test_event_report(
+        mock_device, button2_ep, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1}
+      )
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.button.double({state_change = true})))
+  end
+)
+
 test.register_message_test(
-  "Child device: set color temperature should send the appropriate commands",
+  "On command should send the appropriate commands",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_children[child_ep].id,
-        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
+        mock_device.id,
+        { capability = "switch", component = "switch3", command = "on", args = { } }
       }
     },
     {
@@ -169,31 +183,9 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child_ep, 370, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.OnOff.server.commands.On(mock_device, light_ep)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, child_ep)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, child_ep, 370)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[child_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
-    },
+    }
   }
 )
-
 test.run_registered_tests()

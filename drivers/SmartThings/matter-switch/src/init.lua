@@ -39,6 +39,12 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 -- in the device table for devices that joined prior to this transition, and it
 -- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+-- COMPONENT_TO_ENDPOINT_MAP_BUTTON is for devices with button endpoints, to
+-- preserve the MCD functionality for button devices from the matter-button
+-- driver after it was merged into the matter-switch driver. Note that devices
+-- containing both button endpoints and switch endpoints will use this field
+-- rather than COMPONENT_TO_ENDPOINT_MAP.
+local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
 local COLOR_TEMP_MIN = "__color_temp_min"
@@ -69,8 +75,6 @@ local device_type_profile_map = {
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
   [GENERIC_SWITCH_ID] = "button"
 }
-
-local matter_driver_template
 
 local device_type_attribute_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
@@ -352,13 +356,21 @@ local function initialize_switch(driver, device)
     for _, ep in ipairs(all_eps) do
       if device:supports_server_cluster(clusters.OnOff.ID, ep) or device:supports_server_cluster(clusters.Switch.ID, ep) then
         num_server_eps = num_server_eps + 1
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          -- Configure MCD for button endpoints
-          if device:supports_server_cluster(clusters.Switch.ID, ep) and tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
-            component_map[string.format("button%d", current_component_number)] = ep
+        -- Configure MCD for button endpoints
+        if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
+          if ep ~= main_endpoint then
+            if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+              component_map[string.format("switch%d", current_component_number)] = ep
+            else
+              component_map[string.format("button%d", current_component_number)] = ep
+            end
             current_component_number = current_component_number + 1
-            component_map_used = true
-          else -- Create child devices for non-main endpoints
+          else
+            component_map["main"] = ep
+          end
+          component_map_used = true
+        else -- Create child devices for non-main endpoints
+          if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
             local name = string.format("%s %d", device.label, num_server_eps)
             local child_profile = assign_child_profile(device, ep)
             driver:try_create_device(
@@ -371,12 +383,7 @@ local function initialize_switch(driver, device)
                   vendor_provided_label = name
                 }
             )
-          end
-        else
-          -- Main endpoint for MCD
-          if device:supports_server_cluster(clusters.Switch.ID, ep) and tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
-            component_map["main"] = ep
-            component_map_used = true
+            current_component_number = current_component_number + 1
           end
         end
       end
@@ -410,7 +417,7 @@ local function initialize_switch(driver, device)
       end
 
       if new_profile then
-        if #switch_eps > 0 then -- currently devices that contain buttons only support up to one switch endpoint
+        if #switch_eps > 0 then
           new_profile = new_profile .. "-switch"
         end
         device:try_update_metadata({profile = new_profile})
@@ -449,7 +456,7 @@ local function initialize_switch(driver, device)
   end
 
   if component_map_used then
-    device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
   if #button_eps > 0 then
@@ -462,7 +469,13 @@ local function initialize_switch(driver, device)
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local map = {}
+  if #button_eps > 0 then
+    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
+  else
+    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  end
   if map[component] then
     return map[component]
   end
@@ -470,7 +483,13 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local map = {}
+  if #button_eps > 0 then
+    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
+  else
+    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  end
   for component, endpoint in pairs(map) do
     if endpoint == ep then
        return component
@@ -492,6 +511,8 @@ end
 
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
     -- initialize_switch will create parent-child devices as needed for multi-switch devices.
     -- However, we want to maintain support for existing MCD devices, so do not initialize
     -- device if it has already been previously initialized as an MCD device.
@@ -502,8 +523,6 @@ local function device_init(driver, device)
       -- create child devices as needed for multi-switch devices
       initialize_switch(driver, device)
     end
-    device:set_component_to_endpoint_fn(component_to_endpoint)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
@@ -849,7 +868,7 @@ local function device_added(driver, device)
   end
 end
 
-matter_driver_template = {
+local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added,
