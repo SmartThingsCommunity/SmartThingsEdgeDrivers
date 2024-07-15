@@ -144,6 +144,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
+  - id: "4921/101"
+    deviceLabel: Cync Full Color Deco Candle Base
+    vendorId: 0x1339
+    productId: 0x0065
+    deviceProfileName: light-color-level-2000K-7000K
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
