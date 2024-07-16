@@ -41,7 +41,8 @@ local RVC_RUN_MODE_SUPPORTED_MODES = "__rvc_run_mode_supported_modes"
 local RVC_CLEAN_MODE_SUPPORTED_MODES = "__rvc_clean_mode_supported_modes"
 
 local function device_init(driver, device)
-  device:subscribe()
+  -- tests should fail
+  -- device:subscribe()
 end
 
 -- Helper functions --

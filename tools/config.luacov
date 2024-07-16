@@ -4,6 +4,18 @@ configuration = {
     "lua_libs",
     "test",
     "unofficial",
+    "DishwasherAlarm",
+    "DishwasherMode",
+    "LaundryWasherControls",
+    "LaundryWasherMode",
+    "OperationalState",
+    "RefrigeratorAlarm",
+    "RefrigeratorAndTemperatureControlledCabinetMode",
+    "TemperatureControl",
+    "PumpConfigurationAndControl",
+    "RvcCleanMode",
+    "RvcOperationalState",
+    "RvcRunMode",
     "AirQuality",
     "CarbonDioxideConcentrationMeasurement",
     "CarbonMonoxideConcentrationMeasurement",
@@ -18,7 +30,8 @@ configuration = {
     "RadonConcentrationMeasurement",
     "SmokeCoAlarm",
     "TotalVolatileOrganicCompoundsConcentrationMeasurement",
-    "embedded-cluster-utils.lua"
+    "ActivatedCarbonFilterMonitoring",
+    "HepaFilterMonitoring",
   },
   cobertura = {
     filenameparser = function(filename)
