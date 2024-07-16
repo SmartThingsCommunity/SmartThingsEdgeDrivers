@@ -95,8 +95,7 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
-  -- tests should fail
-  -- device:subscribe()
+  device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 

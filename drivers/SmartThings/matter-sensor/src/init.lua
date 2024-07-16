@@ -109,8 +109,7 @@ local function device_init(driver, device)
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
   end
-  -- tests should fail
-  -- device:subscribe()
+  device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)

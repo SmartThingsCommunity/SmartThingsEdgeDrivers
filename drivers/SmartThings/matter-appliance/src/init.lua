@@ -92,8 +92,7 @@ local subscribed_attributes = {
 }
 
 local function device_init(driver, device)
-  -- tests should fail
-  -- device:subscribe()
+  device:subscribe()
 end
 
 local function do_configure(driver, device)

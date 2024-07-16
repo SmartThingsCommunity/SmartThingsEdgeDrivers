@@ -252,8 +252,7 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
-  -- device:subscribe()
-  -- tests should faile
+  device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
 
   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
