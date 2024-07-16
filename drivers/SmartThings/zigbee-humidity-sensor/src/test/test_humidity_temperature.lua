@@ -53,6 +53,33 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Minimum & Maximum Temperature report should be handled (C)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MinMeasuredValue:build_test_attr_report(mock_device, 2000)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_attr_report(mock_device, 3000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
+    }
+  }
+)
+
+test.register_message_test(
   "Humidity report should be handled",
   {
      {
