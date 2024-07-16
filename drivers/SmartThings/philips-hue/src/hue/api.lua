@@ -125,7 +125,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
     "Creating new Bridge Manager:",
     true
   ))
-  local control_tx, control_rx = channel.new()
+  local control_tx, control_rx = channel.new(st_utils.stringify_table(base_url) .. '_control')
   control_rx:settimeout(30)
   local self = setmetatable(
     {
@@ -209,7 +209,7 @@ end
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
 local function do_get(instance, path)
-  local reply_tx, reply_rx = channel.new()
+  local reply_tx, reply_rx = channel.new(path .. '_do_get_reply_chan')
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Get(path, reply_tx);
   try_send(instance, msg)
@@ -227,7 +227,7 @@ end
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
 local function do_put(instance, path, payload)
-  local reply_tx, reply_rx = channel.new()
+  local reply_tx, reply_rx = channel.new(path .. '_do_put_reply_chan')
   reply_rx:settimeout(10)
   local msg = ControlMessageBuilders.Put(path, payload, reply_tx);
   try_send(instance, msg)
@@ -245,7 +245,7 @@ end
 ---@return nil|string error nil on success
 ---@return nil|string partial partial response if available, nil otherwise
 function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
-  local tx, rx = channel.new()
+  local tx, rx = channel.new('get_bridge_info')
   rx:settimeout(10)
   cosock.spawn(
     function()
@@ -267,7 +267,7 @@ end
 ---@return string? error nil on success
 ---@return string? partial partial response if available, nil otherwise
 function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
-  local tx, rx = channel.new()
+  local tx, rx = channel.new("request_api_key")
   rx:settimeout(10)
   cosock.spawn(
     function()

@@ -224,7 +224,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network
   if type(log_prefix) == "string" and #log_prefix > 0 then prefix = log_prefix .. " " end
 
   local devices, err, _ = api_instance:get_devices()
-  if err ~= nil or not devices then
+  if type(err) == "string" or not devices then
     log.error_with({ hub_logs = true },
       prefix .. "Error querying bridge for devices: " .. (err or "unexpected nil in error position"))
     return
