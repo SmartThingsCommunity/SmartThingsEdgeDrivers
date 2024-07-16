@@ -337,6 +337,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03EF
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1005"
+    deviceLabel: Matter Smart Light Bulb A19 RGBTW 1100lm
+    vendorId: 0x1168
+    productId: 0x03ED
+    deviceProfileName: light-color-level-1800K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
