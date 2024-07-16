@@ -11,7 +11,12 @@ configuration = {
     "NitrogenDioxideConcentrationMeasurement",
     "OzoneConcentrationMeasurement",
     "Pm1ConcentrationMeasurement",
-
+    "Pm10ConcentrationMeasurement",
+    "Pm25ConcentrationMeasurement",
+    "PressureMeasurement",
+    "RadonConcentrationMeasurement",
+    "SmokeCoAlarm",
+    "TotalVolatileOrganicCompoundsConcentrationMeasurement",
   },
   cobertura = {
     filenameparser = function(filename)
