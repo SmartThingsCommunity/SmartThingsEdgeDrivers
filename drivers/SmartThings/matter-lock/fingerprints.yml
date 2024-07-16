@@ -21,4 +21,4 @@ matterGeneric:
     deviceLabel: Matter Door Lock
     deviceTypes:
       - id: 0x000A # Door Lock
-    deviceProfileName: lock-lockalarm
+    deviceProfileName: base-lock

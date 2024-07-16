@@ -1,0 +1,17 @@
+name: aqara-switch-module-no-power
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+preferences:
+  - preferenceId: stse.restorePowerState
+    explicit: true
+  - preferenceId: stse.electricSwitchType
+    explicit: true

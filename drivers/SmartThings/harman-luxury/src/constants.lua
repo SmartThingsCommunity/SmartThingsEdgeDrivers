@@ -3,14 +3,20 @@ local Constants = {
   IP = "device_ipv4",
   DEVICE_INFO = "device_info",
   CREDENTIAL = "credential",
-  STATUS = "status",
-  HEALTH_TIMER = "health_timer",
-  UPDATE_TIMER = "value_updates_timer",
+  INITIALISED = "initialised",
+  WEBSOCKET = "websocket",
+
+  -- message fields
+  MESSAGE = "message",
+  CAPABILITY = "capability",
+  COMMAND = "command",
+  ARG = "arg",
 
   -- intervals constants (in seconds)
-  UPDATE_INTERVAL = 1,
-  HEALTH_CHEACK_INTERVAL = 10,
-  HTTP_TIMEOUT = 10,
+  WS_SOCKET_TIMEOUT = 10,
+  WS_IDLE_PING_PERIOD = 30,
+  WS_RECONNECT_PERIOD = 10,
+  HTTP_TIMEOUT = 5,
 
   -- discovery constants
   SERVICE_TYPE = "_sue-st._tcp",
@@ -28,5 +34,6 @@ local Constants = {
 
   -- general consts
   VOL_STEP = 5,
+  WS_PORT = 50002,
 }
 return Constants

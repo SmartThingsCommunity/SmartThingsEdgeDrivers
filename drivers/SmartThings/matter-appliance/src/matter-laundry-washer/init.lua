@@ -41,10 +41,10 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
-local supportedTemperatureLevels = {}
-local laundryWasherModeSupportedModes = {}
-local laundryWasherControlsSpinSpeeds = {}
-local laundryWasherControlsSupportedRinses = {}
+local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
+local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
+local SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS = "__supported_laundry_spin_speeds"
+local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
 
 local function device_init(driver, device)
   device:subscribe()
@@ -71,6 +71,7 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   device.log.info_with({ hub_logs = true },
     string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
+  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
   local temperatureLevel = ib.data.value
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if i - 1 == temperatureLevel then
@@ -89,37 +90,38 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   device.log.info_with({ hub_logs = true },
     string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
-  supportedTemperatureLevels = {}
+  local supportedTemperatureLevels = {}
   for _, tempLevel in ipairs(ib.data.elements) do
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_supported_modes_attr_handler(driver, device, ib, response)
-  laundryWasherModeSupportedModes = {}
+  local supportedLaundryWasherModes = {}
   for _, mode in ipairs(ib.data.elements) do
     if version.api < 10 then
       clusters.LaundryWasherMode.types.ModeOptionStruct:augment_type(mode)
     end
     log.info(string.format("Inserting supported washer mode: %s", mode.elements.label.value))
-    table.insert(laundryWasherModeSupportedModes, mode.elements.label.value)
+    table.insert(supportedLaundryWasherModes, mode.elements.label.value)
   end
-  -- TODO: Create laundryWasherSpinSpeed
-  -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
   local component = device.profile.components["main"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(laundryWasherModeSupportedModes))
+  device:set_field(SUPPORTED_LAUNDRY_WASHER_MODES, supportedLaundryWasherModes, {persist = true})
+  local event = capabilities.mode.supportedModes(supportedLaundryWasherModes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
   device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_mode_attr_handler currentMode: %s", ib.data.value))
 
+  local supportedLaundryWasherModes = device:get_field(SUPPORTED_LAUNDRY_WASHER_MODES)
   local currentMode = ib.data.value
-  for i, mode in ipairs(laundryWasherModeSupportedModes) do
+  for i, mode in ipairs(supportedLaundryWasherModes) do
     if i - 1 == currentMode then
-      -- TODO: Create laundryWasherSpinSpeed
-      -- device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       local component = device.profile.components["main"]
       device:emit_component_event(component, capabilities.mode.mode(mode))
       return
@@ -129,20 +131,23 @@ local function laundry_washer_mode_attr_handler(driver, device, ib, response)
 end
 
 local function laundry_washer_controls_spin_speeds_attr_handler(driver, device, ib, response)
-  laundryWasherControlsSpinSpeeds = {}
+  local supportedLaundryWasherSpinSpeeds = {}
   for _, spinSpeed in ipairs(ib.data.elements) do
     log.info(string.format("Inserting supported spin speed mode: %s", spinSpeed.value))
-    table.insert(laundryWasherControlsSpinSpeeds, spinSpeed.value)
+    table.insert(supportedLaundryWasherSpinSpeeds, spinSpeed.value)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(laundryWasherControlsSpinSpeeds))
+  device:set_field(SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS, supportedLaundryWasherSpinSpeeds, {persist = true})
+  local event = capabilities.laundryWasherSpinSpeed.supportedSpinSpeeds(supportedLaundryWasherSpinSpeeds, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_controls_spin_speed_current_attr_handler(driver, device, ib, response)
   device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_controls_spin_speed_current_attr_handler spinSpeedCurrent: %s", ib.data.value))
 
+  local supportedLaundryWasherSpinSpeeds = device:get_field(SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS)
   local spinSpeedCurrent = ib.data.value
-  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+  for i, spinSpeed in ipairs(supportedLaundryWasherSpinSpeeds) do
     if i - 1 == spinSpeedCurrent then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherSpinSpeed.spinSpeed(spinSpeed))
       return
@@ -162,12 +167,14 @@ local function laundry_washer_controls_supported_rinses_attr_handler(driver, dev
   device.log.info_with({ hub_logs = true },
     string.format("laundry_washer_controls_supported_rinses_attr_handler: %s", ib.data.elements))
 
-  laundryWasherControlsSupportedRinses = {}
+  local supportedLaundryWasherRinses = {}
   for _, numberOfRinses in ipairs(ib.data.elements) do
     device.log.info_with({ hub_logs = true }, string.format("numberOfRinses: %s => %s", numberOfRinses.value, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME))
-    table.insert(laundryWasherControlsSupportedRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME)
+    table.insert(supportedLaundryWasherRinses, LAUNDRY_WASHER_RINSE_MODE_MAP[numberOfRinses.value].NAME)
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.laundryWasherRinseMode.supportedRinseModes(laundryWasherControlsSupportedRinses))
+  device:set_field(SUPPORTED_LAUNDRY_WASHER_RINSES, supportedLaundryWasherRinses, {persist = true})
+  local event = capabilities.laundryWasherRinseMode.supportedRinseModes(supportedLaundryWasherRinses, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
@@ -182,7 +189,8 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list))
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
@@ -221,7 +229,8 @@ local function handle_laundry_washer_mode(driver, device, cmd)
     string.format("handle_laundry_washer_mode[%s] mode: %s", cmd.component, cmd.args.mode))
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  for i, mode in ipairs(laundryWasherModeSupportedModes) do
+  local supportedLaundryWasherModes = device:get_field(SUPPORTED_LAUNDRY_WASHER_MODES)
+  for i, mode in ipairs(supportedLaundryWasherModes) do
     if cmd.args.mode == mode then
       device:send(clusters.LaundryWasherMode.commands.ChangeToMode(device, endpoint_id, i - 1))
       return
@@ -234,6 +243,7 @@ local function handle_temperature_level(driver, device, cmd)
     string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
+  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if cmd.args.temperatureLevel == tempLevel then
       device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
@@ -247,7 +257,8 @@ local function handle_laundry_washer_spin_speed(driver, device, cmd)
     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  for i, spinSpeed in ipairs(laundryWasherControlsSpinSpeeds) do
+  local supportedLaundryWasherSpinSpeeds = device:get_field(SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS)
+  for i, spinSpeed in ipairs(supportedLaundryWasherSpinSpeeds) do
     if cmd.args.spinSpeed == spinSpeed then
       device:send(clusters.LaundryWasherControls.attributes.SpinSpeedCurrent:write(device, endpoint_id, i - 1))
       return
