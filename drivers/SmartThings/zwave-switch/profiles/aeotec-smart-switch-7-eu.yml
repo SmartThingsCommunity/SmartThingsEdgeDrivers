@@ -1,28 +1,30 @@
 name: aeotec-smart-switch-7-eu
 components:
-- id: main
-  label: "Switch"
-  capabilities:
-  - id: switch
-    version: 1
-  - id: powerMeter
-    version: 1
-  - id: energyMeter
-    version: 1
-  - id: powerConsumptionReport
-    version: 1
-  - id: refresh
-    version: 1
-  categories:
-  - name: Switch
+  - id: main
+    label: "Switch"
+    capabilities:
+      - id: switch
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
+        version: 1
+      - id: colorControl
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
 metadata:
-    deviceType: Switch
-    ocfDeviceType: oic.d.switch
-    deviceTypeId: Switch
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch
 preferences:
   - title: "91. Watt Threshold"
     name: thresholdPower
-    description: "determines how much change in Watt induces a report."
+    description: "Determines how much change in Watt induces a report."
     required: true
     preferenceType: integer
     definition:
@@ -31,7 +33,7 @@ preferences:
       default: 0
   - title: "92. kWh Threshold"
     name: thresholdKwh
-    description: "determines how much change in kWh induces a report."
+    description: "Determines how much change in kWh induces a report."
     required: true
     preferenceType: integer
     definition:
@@ -49,7 +51,7 @@ preferences:
       default: 3
   - title: "111. Group 1 sensor report time"
     name: group1Time
-    description: "set timed report of Group 1 sensor in seconds"
+    description: "Set timed report of Group 1 sensor in seconds"
     required: true
     preferenceType: integer
     definition:
@@ -63,4 +65,4 @@ preferences:
     preferenceType: string
     definition:
       stringType: text
-      default: ""
+      default: ''
