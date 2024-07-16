@@ -165,6 +165,12 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0007
     deviceProfileName: plug-binary
+#Huepress
+  - id: "8707/1"
+    deviceLabel: RGBW LED CONTROLLER
+    vendorId: 0x2203
+    productId: 0x0001
+    deviceProfileName: light-color-level-2200K-6500K
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
