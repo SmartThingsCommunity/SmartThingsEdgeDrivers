@@ -106,19 +106,6 @@ local function supports_battery_percentage_remaining(device)
   return false
 end
 
-local function set_device_type_per_endpoint(driver, device)
-  for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-          local this_id = dt.device_type_id
-          for name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
-              if this_id == info.id then
-                  device:set_field(name, ep.endpoint_id)
-              end
-          end
-      end
-  end
-end
-
 local function check_for_battery(device)
   local profile_name = ""
 
