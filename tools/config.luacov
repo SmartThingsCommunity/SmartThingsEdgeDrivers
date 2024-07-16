@@ -4,6 +4,7 @@ configuration = {
     "lua_libs",
     "test",
     "unofficial",
+    "AirQuality",
     "CarbonDioxideConcentrationMeasurement",
     "CarbonMonoxideConcentrationMeasurement",
     "ConcentrationMeasurement",
