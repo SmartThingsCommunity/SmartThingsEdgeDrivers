@@ -18,6 +18,7 @@ configuration = {
     "RadonConcentrationMeasurement",
     "SmokeCoAlarm",
     "TotalVolatileOrganicCompoundsConcentrationMeasurement",
+    "embedded-cluster-utils.lua"
   },
   cobertura = {
     filenameparser = function(filename)
