@@ -54,6 +54,12 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0002
     deviceProfileName: contact-battery
+  # LeTianpai
+  - id: "LeTianPai/Motion"
+    deviceLabel: LeTianPai Presence Sensor Box
+    vendorId: 0x142B
+    productId: 0x0002
+    deviceProfileName: motion-illuminance-temperature-humidity
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
