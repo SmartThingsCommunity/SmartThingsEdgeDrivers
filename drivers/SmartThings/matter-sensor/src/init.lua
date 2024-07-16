@@ -102,6 +102,7 @@ local function check_for_battery(device)
 
   device:try_update_metadata({profile = profile_name})
   device:set_field(BATTERY_CHECKED, 1, {persist = true})
+  -- this is just a test
 end
 
 local function device_init(driver, device)

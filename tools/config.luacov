@@ -3,7 +3,15 @@ configuration = {
     "scripting-engine",
     "lua_libs",
     "test",
-    "unofficial"
+    "unofficial",
+    "CarbonDioxideConcentrationMeasurement",
+    "CarbonMonoxideConcentrationMeasurement",
+    "ConcentrationMeasurement",
+    "FormaldehydeConcentrationMeasurement",
+    "NitrogenDioxideConcentrationMeasurement",
+    "OzoneConcentrationMeasurement",
+    "Pm1ConcentrationMeasurement",
+
   },
   cobertura = {
     filenameparser = function(filename)
