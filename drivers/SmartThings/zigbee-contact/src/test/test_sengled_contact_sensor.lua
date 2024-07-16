@@ -19,6 +19,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 
 local IASCIEAddress = IASZone.attributes.IASCIEAddress
 local EnrollResponseCode = IASZone.types.EnrollResponseCode
@@ -59,6 +60,14 @@ test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+    })
     test.wait_for_events()
 
     test.socket.zigbee:__set_channel_ordering("relaxed")
