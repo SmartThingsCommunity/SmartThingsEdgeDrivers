@@ -333,7 +333,7 @@ local function initialize_switch(driver, device)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
   local all_eps = {}
 
-  local profile_changed = false
+  local new_profile = nil
 
   local component_map = {}
   local current_component_number = 2
@@ -399,7 +399,6 @@ local function initialize_switch(driver, device)
     device:set_field(SWITCH_INITIALIZED, true)
 
     if #button_eps > 0 then
-      local new_profile = nil
       local battery_support = false
       if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
           #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
@@ -460,7 +459,7 @@ local function initialize_switch(driver, device)
   end
 
   if #button_eps > 0 then
-    if profile_changed == true then
+    if new_profile then
       device:set_field(DEFERRED_CONFIGURE, true)
     else
       configure_buttons(device)
@@ -492,7 +491,7 @@ local function endpoint_to_component(device, ep)
   end
   for component, endpoint in pairs(map) do
     if endpoint == ep then
-       return component
+      return component
     end
   end
   return "main"
