@@ -42,6 +42,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x006B
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/93"
+    deviceLabel: Eve Light Switch
+    vendorId: 0x130A
+    productId: 0x005D
+    deviceProfileName: switch-binary 
 
 #GE
   - id: "4921/177"
@@ -226,6 +231,11 @@ matterManufacturer:
     deviceLabel: Essentials Outdoor Lights
     vendorId: 0x115A
     productId: 0x0049
+    deviceProfileName: light-color-level-2700K-6500K
+  - id: "4442/71"
+    deviceLabel: Smart Holiday String Lights
+    vendorId: 0x115A
+    productId: 0x0047
     deviceProfileName: light-color-level-2700K-6500K  
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -2124,6 +2134,21 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
+  - id: "5020/43825"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB31
+    deviceProfileName: switch-binary
+  - id: "5020/43780"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB04
+    deviceProfileName: switch-binary
+  - id: "5020/43777"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB01
+    deviceProfileName: switch-binary
 
 
 #Bridge devices need manufacturer specific fingerprints until
