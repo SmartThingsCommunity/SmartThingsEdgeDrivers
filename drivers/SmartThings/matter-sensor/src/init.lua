@@ -339,9 +339,9 @@ local matter_driver_template = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
       },
       [clusters.BooleanStateConfiguration.ID] = {
-        [clusters.BooleanStateConfiguration.AlarmsSuppressed.ID] = alarms_suppressed_handler,
-        [clusters.BooleanStateConfiguration.AlarmsEnabled.ID] = alarms_enabled_handler,
-        [clusters.BooleanStateConfiguration.SensorFault.ID] = sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.AlarmsSuppressed.ID] = alarms_suppressed_handler,
+        [clusters.BooleanStateConfiguration.attributes.AlarmsEnabled.ID] = alarms_enabled_handler,
+        [clusters.BooleanStateConfiguration.types.SensorFaultBitmap.ID] = sensor_fault_handler,
     },
     }
   },
@@ -456,23 +456,23 @@ local matter_driver_template = {
     },
     [capabilities.hardwareFault.ID] = {
       -- clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
-      clusters.BooleanStateConfiguration.SensorFault,
+      clusters.BooleanStateConfiguration.types.SensorFaultBitmap,
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
     [alarmSensorID] = {
-        clusters.BooleanStateConfiguration.AlarmsSuppressed,
-        clusters.BooleanStateConfiguration.AlarmsEnabled,
+        clusters.BooleanStateConfiguration.attributes.AlarmsSuppressed,
+        clusters.BooleanStateConfiguration.attributes.AlarmsEnabled,
     },
     [capabilities.waterSensor.ID] = {
-        clusters.BooleanState.StateValue,
+        clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.temperatureAlarm.ID] = {
-        clusters.BooleanState.StateValue,
+        clusters.BooleanState.attributes.StateValue,
     },
     [rainSensorID] = {
-        clusters.BooleanState.StateValue,
+        clusters.BooleanState.attributes.StateValue,
     }
   },
   capability_handlers = {
