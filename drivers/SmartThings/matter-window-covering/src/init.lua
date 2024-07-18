@@ -155,8 +155,8 @@ local function current_pos_handler(driver, device, ib, response)
       else
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
       end
+      device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
     end
-    device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
   else
     device:set_field(EVENT_STATE, WindowCoveringEventEnum.CURRENT_POSITION_EVENT)
   end
@@ -186,6 +186,7 @@ local function current_status_handler(driver, device, ib, response)
       else
         device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
       end
+      device:set_field(IS_MOVING, false)
     elseif state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
     elseif state == 2 then -- closing
@@ -203,8 +204,8 @@ local function current_status_handler(driver, device, ib, response)
       device:set_field(IS_MOVING, true)
     else
       device:set_field(IS_MOVING, false)
+      device:set_field(EVENT_STATE, WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT)
     end
-    device:set_field(EVENT_STATE, WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT)
   end
 end
 

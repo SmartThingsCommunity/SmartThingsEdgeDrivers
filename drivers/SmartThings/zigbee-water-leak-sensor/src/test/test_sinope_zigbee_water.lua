@@ -161,6 +161,14 @@ test.register_coroutine_test(
     "Health check should check all relevant attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+      })
       test.wait_for_events()
 
       test.mock_time.advance_time(50000) -- battery is 21600 for max reporting interval
@@ -197,6 +205,14 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+      })
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -288,6 +304,22 @@ test.register_message_test(
         channel = "device_lifecycle",
         direction = "receive",
         message = {mock_device.id, "added"}
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+        }
       },
       {
         channel = "capability",

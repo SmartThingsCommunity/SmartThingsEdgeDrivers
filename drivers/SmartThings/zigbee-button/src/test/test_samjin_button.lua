@@ -128,6 +128,14 @@ test.register_coroutine_test(
         attribute_id = "button", state = { value = "pushed" }
       }
     })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+    })
     -- test.socket.zigbee:__expect_send({
     --   mock_device.id,
     --   PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
