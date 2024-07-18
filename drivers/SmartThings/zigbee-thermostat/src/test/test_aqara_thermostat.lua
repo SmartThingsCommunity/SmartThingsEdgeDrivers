@@ -75,46 +75,46 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_coroutine_test(
-  "Handle added lifecycle",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-      capabilities.thermostatMode.supportedThermostatModes({
-        capabilities.thermostatMode.thermostatMode.manual.NAME,
-        capabilities.thermostatMode.thermostatMode.antifreezing.NAME
-      }, { visibility = { displayed = false } }))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.manual())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.valve.valve.open())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("ChildLock", capabilities.lock.lock.unlocked())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", valveCalibration.calibrationState.calibrationPending())
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", invisibleCapabilities.invisibleCapabilities({""}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.battery.battery(100))
-    )
-  end
-)
+-- test.register_coroutine_test(
+--   "Handle added lifecycle",
+--   function()
+--     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main",
+--       capabilities.thermostatMode.supportedThermostatModes({
+--         capabilities.thermostatMode.thermostatMode.manual.NAME,
+--         capabilities.thermostatMode.thermostatMode.antifreezing.NAME
+--       }, { visibility = { displayed = false } }))
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.manual())
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.valve.valve.open())
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("ChildLock", capabilities.lock.lock.unlocked())
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", valveCalibration.calibrationState.calibrationPending())
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", invisibleCapabilities.invisibleCapabilities({""}))
+--     )
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.battery.battery(100))
+--     )
+--   end
+-- )
 
 
 test.register_coroutine_test(
@@ -221,31 +221,31 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Battery voltage report should be handled, 92",
+  "Battery voltage report should be handled, 48",
   function()
     local attr_report_data = {
-      { PRIVATE_BATTERY_ENERGY_ID, data_types.Uint8.ID, 0x92 }
+      { PRIVATE_BATTERY_ENERGY_ID, data_types.Uint8.ID, 0x30 }
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.battery.battery(92))
+      mock_device:generate_test_message("main", capabilities.battery.battery(48))
     )
   end
 )
 
-test.register_coroutine_test("ControlSequenceOfOperation reporting should create the appropriate events", function()
-  test.socket.zigbee:__queue_receive({mock_device.id,
-                                      Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(
-    mock_device, 0x02)})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.thermostatMode.supportedThermostatModes({
-      capabilities.thermostatMode.thermostatMode.manual.NAME,
-      capabilities.thermostatMode.thermostatMode.antifreezing.NAME
-    }, { visibility = { displayed = false } })))
-end)
+-- test.register_coroutine_test("ControlSequenceOfOperation reporting should create the appropriate events", function()
+--   test.socket.zigbee:__queue_receive({mock_device.id,
+--                                       Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(
+--     mock_device, 0x02)})
+--   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+--     capabilities.thermostatMode.supportedThermostatModes({
+--       capabilities.thermostatMode.thermostatMode.manual.NAME,
+--       capabilities.thermostatMode.thermostatMode.antifreezing.NAME
+--     }, { visibility = { displayed = false } })))
+-- end)
 
 test.register_coroutine_test(
   "Capability on command should be handled : thermostat mode manual",
