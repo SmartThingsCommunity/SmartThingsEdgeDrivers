@@ -159,6 +159,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x00AD
     deviceProfileName: light-color-level-2000K-7000K
+  - id: 4921/21
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0x0015
+    deviceProfileName: light-color-level-2000K-7000K  
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
