@@ -129,6 +129,11 @@ local function info_changed(self, device, event, args)
       end
     end
   end
+
+  -- resubscribe to new attributes as needed if a profile switch occured
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
 end
 
 -- Matter Handlers --
