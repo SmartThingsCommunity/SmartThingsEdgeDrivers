@@ -44,9 +44,7 @@ end
 
 -- custom capability setup
 local rainSensorID = "smilevirtual57983.customRainSensor"
-local alarmSensorID = "smilevirtual57983.customAlarmSensor"
 local rainSensor = capabilities[rainSensorID]
-local alarmSensor = capabilities[alarmSensorID]
 
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
@@ -147,10 +145,6 @@ local function check_for_battery(device)
 
   if device:supports_capability(capabilities.waterSensor) then
     profile_name = profile_name .. "-leak"
-  end
-
-  if device:supports_capability(alarmSensor) then
-    profile_name = profile_name .. "-alarm"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -258,29 +252,6 @@ local function boolean_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
 end
 
-local function alarms_suppressed_handler(driver, device, ib, response)
-  for index=1,2 do
-      if ((ib.data.value >> index) & 1) > 0 then
-          device:emit_event_for_endpoint(ib.endpoint_id, alarmSensor.alarmSensorState.suppressed())
-          break
-      end
-  end
-end
-
-local function alarms_enabled_handler(driver, device, ib, response)
-  local device_is_enabled = false
-  for index=1,2 do
-      if ((ib.data.value >> index) & 1) > 0 then
-          device:emit_event_for_endpoint(ib.endpoint_id, alarmSensor.alarmSensorState.enabled())
-          device_is_enabled = true
-          break
-      end
-  end
-  if not device_is_enabled then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.smilevirtual57983.customAlarmSensor.alarmSensorState.off())
-  end
-end
-
 local function sensor_fault_handler(driver, device, ib, response)
   if ib.data.value > 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.detected())
@@ -339,8 +310,6 @@ local matter_driver_template = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
       },
       [clusters.BooleanStateConfiguration.ID] = {
-        [clusters.BooleanStateConfiguration.attributes.AlarmsSuppressed.ID] = alarms_suppressed_handler,
-        [clusters.BooleanStateConfiguration.attributes.AlarmsEnabled.ID] = alarms_enabled_handler,
         [clusters.BooleanStateConfiguration.types.SensorFaultBitmap.ID] = sensor_fault_handler,
     },
     }
@@ -460,10 +429,6 @@ local matter_driver_template = {
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
-    },
-    [alarmSensorID] = {
-        clusters.BooleanStateConfiguration.attributes.AlarmsSuppressed,
-        clusters.BooleanStateConfiguration.attributes.AlarmsEnabled,
     },
     [capabilities.waterSensor.ID] = {
         clusters.BooleanState.attributes.StateValue,
