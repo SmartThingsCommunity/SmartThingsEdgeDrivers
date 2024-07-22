@@ -23,8 +23,10 @@ local utils = require "st.utils"
 
 local version = require "version"
 if version.api < 10 then
+  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.DishwasherAlarm = require "DishwasherAlarm"
   clusters.DishwasherMode = require "DishwasherMode"
+  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
   clusters.LaundryWasherControls = require "LaundryWasherControls"
   clusters.LaundryWasherMode = require "LaundryWasherMode"
   clusters.OperationalState = require "OperationalState"
@@ -36,6 +38,7 @@ end
 local dishwasher = require("matter-dishwasher")
 local laundryWasher = require("matter-laundry-washer")
 local refrigerator = require("matter-refrigerator")
+local extractorHood = require("matter-extractor-hood")
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -89,6 +92,25 @@ local subscribed_attributes = {
   [capabilities.temperatureAlarm.ID] = {
     clusters.DishwasherAlarm.attributes.State
   },
+  [capabilities.fanMode.ID] = {
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.FanMode
+  },
+  [capabilities.fanSpeedPercent.ID] = {
+    clusters.FanControl.attributes.PercentCurrent
+  },
+  [capabilities.windMode.ID] = {
+    clusters.FanControl.attributes.WindSupport,
+    clusters.FanControl.attributes.WindSetting
+  },
+  [capabilities.filterState.ID] = {
+    clusters.HepaFilterMonitoring.attributes.Condition,
+    clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
+  },
+  [capabilities.filterStatus.ID] = {
+    clusters.HepaFilterMonitoring.attributes.ChangeIndication,
+    clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
+  }
 }
 
 local function device_init(driver, device)
@@ -98,6 +120,9 @@ end
 local function do_configure(driver, device)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
   if dishwasher.can_handle({}, driver, device) then
     local profile_name = "dishwasher"
     if #tn_eps > 0 and #tl_eps > 0 then
@@ -131,8 +156,22 @@ local function do_configure(driver, device)
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
+  elseif extractorHood.can_handle({}, driver, device) then
+    local profile_name = "extractor-hood"
+    if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
+      profile_name = profile_name .. "-hepa" .. "-ac"
+    elseif #hepa_filter_eps > 0 then
+      profile_name = profile_name .. "-hepa"
+    elseif #ac_filter_eps > 0 then
+      profile_name = profile_name .. "-ac"
+    end
+    if #wind_eps > 0 then
+      profile_name = profile_name .. "-wind"
+    end
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   else
-    device.log.warn_with({hub_logs=true}, "Device has not sub driver")
+    device.log.warn_with({hub_logs=true}, "Device has no sub driver")
   end
 
   --Query setpoint limits if needed
@@ -289,11 +328,17 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.waterFlowAlarm,
     capabilities.temperatureAlarm,
+    capabilities.filterState,
+    capabilities.filterStatus,
+    capabilities.fanMode,
+    capabilities.fanSpeedPercent,
+    capabilities.windMode
   },
   sub_drivers = {
     dishwasher,
     laundryWasher,
-    refrigerator
+    refrigerator,
+    extractorHood
   }
 }
 
