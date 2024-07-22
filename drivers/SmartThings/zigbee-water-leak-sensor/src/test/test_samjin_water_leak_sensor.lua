@@ -63,6 +63,14 @@ test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+    })
     test.wait_for_events()
 
     test.socket.zigbee:__set_channel_ordering("relaxed")
