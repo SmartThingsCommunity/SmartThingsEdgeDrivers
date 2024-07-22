@@ -334,13 +334,13 @@ end
 
 local function handle_valve_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.ValveControl.server.commands.Open(device, endpoint_id)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Open(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_valve_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.ValveControl.server.commands.Close(device, endpoint_id)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Close(device, endpoint_id)
   device:send(req)
 end
 
@@ -577,9 +577,9 @@ local matter_driver_template = {
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
       },
-      [clusters.ValveControl.ID] = {
-        [clusters.ValveControl.attributes.CurrentState] = valve_state_attr_handler,
-        [clusters.ValveControl.attributes.CurrentLevel] = valve_level_attr_handler
+      [clusters.ValveConfigurationAndControl.ID] = {
+        [clusters.ValveConfigurationAndControl.attributes.CurrentState] = valve_state_attr_handler,
+        [clusters.ValveConfigurationAndControl.attributes.CurrentLevel] = valve_level_attr_handler
       }
     },
     fallback = matter_handler,
@@ -611,10 +611,10 @@ local matter_driver_template = {
       clusters.OccupancySensing.attributes.Occupancy
     },
     [capabilities.valve.ID] = {
-      clusters.ValveControl.attributes.CurrentState
+      clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
     [capabilities.level.ID] = {
-      clusters.ValveControl.attributes.CurrentLevel
+      clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     }
   },
   capability_handlers = {
