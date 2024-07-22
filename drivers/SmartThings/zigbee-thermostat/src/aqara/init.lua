@@ -269,7 +269,7 @@ local aqara_radiator_thermostat_e1_handler = {
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
-    } 
+    }
   },
   can_handle = is_aqara_products
 }
