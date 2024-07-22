@@ -25,7 +25,6 @@ local invisibleCapabilities = capabilities["stse.invisibleCapabilities"]
 local valveCalibrationCommandName = "startCalibration"
 local thermostatModeId = "thermostatMode"
 test.add_package_capability("valveCalibration.yaml")
-test.add_package_capability("hardwareFault.yaml")
 test.add_package_capability("invisibleCapabilities.yaml")
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local MFG_CODE = 0x115F
@@ -153,7 +152,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities["hardwareFault"].hardwareFault.detected()))
+    capabilities.hardwareFault.hardwareFault.detected()))
   end
 )
 

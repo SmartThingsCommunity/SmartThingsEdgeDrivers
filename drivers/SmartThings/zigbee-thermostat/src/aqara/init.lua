@@ -125,9 +125,9 @@ end
 
 local function thermostat_alarm_status_handler(driver, device, value, zb_rx)
   if value.value == 1 then
-    capabilities.hardwareFault.hardwareFault.detected()
+    device:emit_event(capabilities.hardwareFault.hardwareFault.detected())
   elseif value.value == 0 then
-    capabilities.hardwareFault.hardwareFault.clear()
+    device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
   end
 end
 
