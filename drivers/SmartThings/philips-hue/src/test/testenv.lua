@@ -16,6 +16,23 @@ local m = {
 function m.testenv_init()
   test.socket:set_time_advance_per_select(1)
   test.mock_devices_api._create_mock_devices = true
+  local raw_get_resource = HueApi.get_rtype_by_rid
+  HueApi.get_rtype_by_rid = function(self, rtype, rid)
+    local ret, err = nil, nil
+    repeat
+      ret, err = raw_get_resource(self, rtype, rid)
+    until ret ~= nil or (type(err) == "string" and err ~= "timeout")
+    return ret, err
+  end
+
+  local raw_get_all = HueApi.get_all_reprs_for_rtype
+  HueApi.get_all_reprs_for_rtype = function(self, rtype)
+    local ret, err = nil, nil
+    repeat
+      ret, err = raw_get_all(self, rtype)
+    until ret ~= nil or (type(err) == "string" and err ~= "timeout")
+    return ret, err
+  end
   m.create_mock_hue_bridge()
 end
 
@@ -35,6 +52,30 @@ function m.create_mock_hue_bridge(mock_bridge_info)
     mock_bridge_info = m.generate_mock_bridge_info()
   end
   m.mock_hue_bridge = mock_hue_bridge.new(mock_bridge_info)
+end
+
+-- Luxure servers expect a connection-per-request behavior,
+-- and by default the Hue driver tries to keep its client
+-- connection open forever. We use Luxure to create the mock
+-- REST server, so this is a convenience function for resetting
+-- the bridge's API client if a test needs to make multiple requests.
+function m.reset_api_client(mock_bridge_device)
+  local existing_api_instance =
+      mock_bridge_device:get_field(Fields.BRIDGE_API) or
+      Discovery.disco_api_instances[mock_bridge_device.device_network_id]
+  if existing_api_instance then
+    existing_api_instance:shutdown()
+    test.wait_for_events()
+  end
+
+  local api_instance = HueApi.new_bridge_manager(
+    "https://" .. mock_bridge_device:get_field(Fields.IPV4),
+    mock_bridge_device:get_field(Fields.APPLICATION_KEY_HEADER),
+    helpers.socket.mock_labeled_socket_builder('[Hue Bridge API Instance] ')
+  )
+
+  mock_bridge_device:set_field(Fields.BRIDGE_API, api_instance, { persist = false })
+  Discovery.disco_api_instances[mock_bridge_device.device_network_id] = api_instance
 end
 
 function m.create_already_onboarded_bridge_device(driver_under_test)
@@ -72,25 +113,6 @@ function m.create_already_onboarded_bridge_device(driver_under_test)
   mock_bridge_device:set_field(HueApi.APPLICATION_KEY_HEADER, bridge_api_key, { persist = true })
   -- TODO: This should be a table, not a boolean. Need to mock the event source first
   mock_bridge_device:set_field(Fields.EVENT_SOURCE, true, { persist = false })
-  local raw_get_resource = HueApi.get_rtype_by_rid
-  HueApi.get_rtype_by_rid = function(self, rtype, rid)
-    local ret, err = nil, nil
-    repeat
-      ret, err = raw_get_resource(self, rtype, rid)
-    until ret ~= nil or (type(err) == "string" and err ~= "timeout")
-    -- self.client:shutdown()
-    return ret, err
-  end
-
-  local raw_get_all = HueApi.get_all_reprs_for_rtype
-  HueApi.get_all_reprs_for_rtype = function(self, rtype)
-    local ret, err = nil, nil
-    repeat
-      ret, err = raw_get_all(self, rtype)
-    until ret ~= nil or (type(err) == "string" and err ~= "timeout")
-    -- self.client:shutdown()
-    return ret, err
-  end
 
   local api_instance = HueApi.new_bridge_manager(
     "https://" .. mock_bridge_info.ip,
