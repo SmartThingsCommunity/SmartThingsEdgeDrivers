@@ -166,10 +166,43 @@ test.register_coroutine_test(
       end
     end
 
-    -- Reset the client connection to make Luxure happy.
-    testenv.reset_api_client(mock_bridge_st_device)
-
     test.socket.capability:__set_channel_ordering("relaxed")
+
+    -- We expect an `on` because the value in the template file is on.
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    -- We expect an `100` because the value in the template file is 100.
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+    )
+
+    -- We expect `"normal"` because the value in the template file is "normal".
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
+    )
+
+    while not light_device:get_field(Fields._ADDED) do
+      test.wait_for_events()
+    end
+
+    -- We expect an `on` because the value in the template file is on.
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    -- We expect an `100` because the value in the template file is 100.
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+    )
+
+    -- We expect `"normal"` because the value in the template file is "normal".
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
+    )
+
+    while not light_device:get_field(Fields._INIT) do
+      test.wait_for_events()
+    end
 
     -- We expect an `on` because the value in the template file is on.
     test.socket.capability:__expect_send(
@@ -196,6 +229,7 @@ test.register_coroutine_test(
   {}
 )
 
+test.add_test_env_setup_func(testenv.driver_env_init)
 test.set_test_init_function(testenv.testenv_init)
 test.set_test_cleanup_function(testenv.testenv_cleanup)
 test.run_registered_tests()

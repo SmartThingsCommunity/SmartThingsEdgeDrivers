@@ -135,11 +135,9 @@ function m:start()
     "called start on an already started server")
   assert(self.server_spec_builder, "called start on a mock hue bridge server without a spec builder")
   self.server_spec = assert(self.server_spec_builder:build_server_spec())
-  local mock_server = assert(lan_test_utils.make_server(self.server_spec))
+  local mock_server = assert(lan_test_utils.make_server(self.server_spec, self.socket))
   self.server_spec_builder = nil
 
-  ---@diagnostic disable-next-line: invisible
-  mock_server.delegate.inner.socket = self.socket
   self.mock_server = mock_server
   self.mock_server:start()
 end
