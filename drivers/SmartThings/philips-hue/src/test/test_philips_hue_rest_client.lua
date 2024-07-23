@@ -182,46 +182,41 @@ test.register_coroutine_test(
       light_device:generate_test_message("main", hueSyncMode.mode("normal"))
     )
 
+    -- The added lifecycle handler will invoke the refresh handler, so we wait for the expected emits
     while not light_device:get_field(Fields._ADDED) do
       test.wait_for_events()
     end
 
-    -- We expect an `on` because the value in the template file is on.
     test.socket.capability:__expect_send(
       light_device:generate_test_message("main", capabilities.switch.switch.on())
     )
-    -- We expect an `100` because the value in the template file is 100.
     test.socket.capability:__expect_send(
       light_device:generate_test_message("main", capabilities.switchLevel.level(100))
     )
-
-    -- We expect `"normal"` because the value in the template file is "normal".
     test.socket.capability:__expect_send(
       light_device:generate_test_message("main", hueSyncMode.mode("normal"))
     )
 
+    -- The init lifecycle handler will also manually invoke the refresh handler.
     while not light_device:get_field(Fields._INIT) do
       test.wait_for_events()
     end
 
-    -- We expect an `on` because the value in the template file is on.
-    test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switch.switch.on())
-    )
-    -- We expect an `100` because the value in the template file is 100.
-    test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
-    )
-
-    -- We expect `"normal"` because the value in the template file is "normal".
-    test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
-    )
-
+    -- We'll queue up a receive capability command to verify that the emits happen for
+    -- the capability command handler as well.
     test.socket.capability:__queue_receive(
       { light_device.id,
         { capability = "refresh", component = "main", command = "refresh", args = {} }
       }
+    )
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+    )
+    test.socket.capability:__expect_send(
+      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
     )
 
     test.wait_for_events()
