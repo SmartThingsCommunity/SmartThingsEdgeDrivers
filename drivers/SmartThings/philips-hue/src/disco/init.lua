@@ -359,7 +359,7 @@ function HueDiscovery.do_mdns_scan(driver)
   local bridge_netinfo = driver.datastore.bridge_netinfo
   local mdns_responses, err = mdns.discover(HueDiscovery.ServiceType, HueDiscovery.Domain)
 
-  if err ~= nil then
+  if not mdns_responses and err ~= nil then
     log.error_with({ hub_logs = true }, "Error during service discovery: ", err)
     return
   end
