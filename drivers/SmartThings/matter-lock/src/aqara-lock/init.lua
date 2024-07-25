@@ -52,7 +52,7 @@ local function device_init(driver, device)
  end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.lockAlarm.alarm.clear())
+  device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
 end
 
 local function lock_state_handler(driver, device, ib, response)
@@ -75,15 +75,15 @@ local function alarm_event_handler(driver, device, ib, response)
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
   if alarm_code.value == DlAlarmCode.LOCK_JAMMED then
-    device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor())
+    device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.LOCK_FACTORY_RESET then
-    device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset())
+    device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT then
-    device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded())
+    device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED then
-    device:emit_event(capabilities.lockAlarm.alarm.damaged())
+    device:emit_event(capabilities.lockAlarm.alarm.damaged({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
-    device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt())
+    device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true}))
   end
 end
 
