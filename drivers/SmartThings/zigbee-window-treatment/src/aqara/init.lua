@@ -124,7 +124,6 @@ local function application_version_handler(driver, device, value, zb_rx)
 end
 
 local function do_refresh(self, device)
-  aqara_utils.enable_update_shade_level(device)
   device:send(AnalogOutput.attributes.PresentValue:read(device))
   device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
     aqara_utils.MFG_CODE))
@@ -167,10 +166,8 @@ local function do_configure(self, device)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },
-    { visibility = { displayed = false } }))
-  device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" },
-    { visibility = { displayed = false } }))
+  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+  device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }, {visibility = {displayed = false}}))
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(deviceInitialization.initializedState.notInitialized())
@@ -179,7 +176,6 @@ local function device_added(driver, device)
     aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))
 
   -- Initial default settings
-  aqara_utils.enable_update_shade_level(device)
   device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
     aqara_utils.MFG_CODE, data_types.CharString, aqara_utils.PREF_REVERSE_OFF))
   device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
