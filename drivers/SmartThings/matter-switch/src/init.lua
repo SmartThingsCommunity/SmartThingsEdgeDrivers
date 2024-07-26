@@ -338,6 +338,7 @@ local function initialize_switch(driver, device)
   local component_map = {}
   local current_component_number = 2
   local component_map_used = false
+  local parent_child_device = false
 
   if #switch_eps > 0 or #button_eps > 0 then
     for _,v in ipairs(switch_eps) do
@@ -350,12 +351,11 @@ local function initialize_switch(driver, device)
     -- Since we do not support bindings at the moment, we only want to count clusters
     -- that have been implemented as server. This can be removed when we have
     -- support for bindings.
-    local num_server_eps = 0
+    local num_switch_server_eps = 0
     local main_endpoint = find_default_endpoint(device)
 
     for _, ep in ipairs(all_eps) do
       if device:supports_server_cluster(clusters.OnOff.ID, ep) or device:supports_server_cluster(clusters.Switch.ID, ep) then
-        num_server_eps = num_server_eps + 1
         -- Configure MCD for button endpoints
         if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
           if ep ~= main_endpoint then
@@ -369,9 +369,10 @@ local function initialize_switch(driver, device)
             component_map["main"] = ep
           end
           component_map_used = true
-        else -- Create child devices for non-main endpoints
+        else -- Create child devices for non-main switch endpoints
+          num_switch_server_eps = num_switch_server_eps + 1
           if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-            local name = string.format("%s %d", device.label, num_server_eps)
+            local name = string.format("%s %d", device.label, num_switch_server_eps)
             local child_profile = assign_child_profile(device, ep)
             driver:try_create_device(
                 {
@@ -384,12 +385,13 @@ local function initialize_switch(driver, device)
                 }
             )
             current_component_number = current_component_number + 1
+            parent_child_device = true
           end
         end
       end
     end
 
-    if num_server_eps > 1  then
+    if parent_child_device then
       -- If the device is a parent child device, then set the find_child function on init.
       -- This is persisted because initialize switch is only run once, but find_child function should be set
       -- on each driver init.
@@ -429,7 +431,7 @@ local function initialize_switch(driver, device)
       -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
       -- claim to be Light Switch device types and still implement their clusters as server, so this is a
       -- workaround for those devices.
-      if num_server_eps > 0 and detect_matter_thing(device) == true then
+      if num_switch_server_eps > 0 and detect_matter_thing(device) == true then
         local id = 0
         for _, ep in ipairs(device.endpoints) do
           -- main_endpoint only supports server cluster by definition of get_endpoints()
