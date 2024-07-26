@@ -196,6 +196,12 @@ local mock_device_parent_child_switch_types = test.mock_device.build_test_matter
 })
 
 local function test_init_parent_child_switch_types()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_switch_types)
+  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
+
   test.mock_device.add_test_device(mock_device_parent_child_switch_types)
   mock_device_parent_child_switch_types:expect_metadata_update({ profile = "switch-level" })
 
