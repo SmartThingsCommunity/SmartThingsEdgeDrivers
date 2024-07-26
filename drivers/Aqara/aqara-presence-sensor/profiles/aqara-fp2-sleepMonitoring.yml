@@ -1,0 +1,16 @@
+name: aqara-fp2-sleepMonitoring
+components:
+  - id: main
+    capabilities:
+      - id: illuminanceMeasurement
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: PresenceSensor
+  - id: mode
+    capabilities:
+      - id: stse.deviceMode
+        version: 1
+    categories:
+      - name: PresenceSensor
