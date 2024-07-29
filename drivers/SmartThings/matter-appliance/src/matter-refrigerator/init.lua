@@ -132,7 +132,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   if not supports_temperature_number_endpoint(device, ib.endpoint_id) then
     return
   end
-  device.log.info_with({ hub_logs = true }, string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
+  device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
   local min = device:get_field(min_field) or 0
@@ -171,7 +171,7 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   end
   local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id]
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    device.log.info_with({ hub_logs = true }, string.format("selected_temperature_level_attr_handler: %d, %s", i, tempLevel))
+    device.log.info(string.format("selected_temperature_level_attr_handler: %d, %s", i, tempLevel))
     if i - 1 == temperatureLevel then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
       break
@@ -186,12 +186,12 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
   local supportedTemperatureLevels = {}
   for _, tempLevel in ipairs(ib.data.elements) do
-    log.info_with({ hub_logs = true }, string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
+    device.log.info(string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   for ep = 1, ib.endpoint_id - 1 do
     if not supportedTemperatureLevelsMap[ep] then
-      log.info_with({ hub_logs = true }, string.format("supportedTemperatureLevelsMap[%d] is nil", ep))
+      device.log.info(string.format("supportedTemperatureLevelsMap[%d] is nil", ep))
       supportedTemperatureLevelsMap[ep] = {"Nothing"}
     end
   end
@@ -255,7 +255,7 @@ end
 
 -- Capability Handlers --
 local function handle_refrigerator_tcc_mode(driver, device, cmd)
-  device.log.info_with({ hub_logs = true }, string.format("handle_refrigerator_tcc_mode mode: %s", cmd.args.mode))
+  device.log.info(string.format("handle_refrigerator_tcc_mode mode: %s", cmd.args.mode))
   local ep = component_to_endpoint(device, cmd.component)
   local supportedRefrigeratorTccModesMap = device:get_field(SUPPORTED_REFRIGERATOR_TCC_MODES_MAP)
   local supportedRefrigeratorTccModes = supportedRefrigeratorTccModesMap[ep] or {}
@@ -272,7 +272,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
   if not supports_temperature_number_endpoint(device, ep) then
     return
   end
-  device.log.info_with({ hub_logs = true }, string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
+  device.log.info(string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local value = cmd.args.setpoint
   local _, temp_setpoint = device:get_latest_state(
@@ -299,7 +299,7 @@ end
 
 local function handle_temperature_level(driver, device, cmd)
   local ep = component_to_endpoint(device, cmd.component)
-  device.log.info_with({ hub_logs = true }, string.format("handle_temperature_level: %s(%d)", cmd.args.temperatureLevel, ep))
+  device.log.info(string.format("handle_temperature_level: %s(%d)", cmd.args.temperatureLevel, ep))
   if not supports_temperature_level_endpoint(device, ep) then
     return
   end
