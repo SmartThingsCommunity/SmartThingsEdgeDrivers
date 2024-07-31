@@ -32,3 +32,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0075
     deviceProfileName: dishwasher-tn-tl
+  - id: "matter/laundry-dryer"
+    deviceLabel: Matter Laundry Dryer
+    deviceTypes:
+      - id: 0x007C
+    deviceProfileName: laundry-dryer
