@@ -37,7 +37,7 @@ local driver_template = {
   },
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
+defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities, {native_capability_cmds_enabled = true})
 --- @type st.zwave.Driver
 local bulb = ZwaveDriver("zwave_bulb", driver_template)
 bulb:run()
