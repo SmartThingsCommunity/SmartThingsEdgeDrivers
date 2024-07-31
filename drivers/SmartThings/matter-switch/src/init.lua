@@ -250,6 +250,9 @@ local function device_removed(driver, device)
 end
 
 local function handle_switch_on(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
@@ -257,12 +260,18 @@ local function handle_switch_on(driver, device, cmd)
 end
 
 local function handle_switch_off(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_set_level(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level/100.0 * 254)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
