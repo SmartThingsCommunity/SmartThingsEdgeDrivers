@@ -1,5 +1,6 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
+local constants = require "st.zigbee.constants"
 
 local OnOff = clusters.OnOff
 local AnalogInput = clusters.AnalogInput
@@ -22,7 +23,13 @@ end
 
 local function energy_meter_power_consumption_report(device, raw_value)
   -- energy meter
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+  local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
+  if raw_value < offset then
+    --- somehow our value has gone below the offset, so we'll reset the offset, since the device seems to have
+    offset = 0
+    device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
+  end
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value - offset, unit = "Wh" }))
 
   -- report interval
   local current_time = os.time()
