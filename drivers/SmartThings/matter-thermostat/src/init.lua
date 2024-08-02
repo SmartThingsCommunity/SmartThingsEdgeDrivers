@@ -343,7 +343,7 @@ local function do_configure(driver, device)
     if #heat_eps > 0 and #cool_eps > 0 then
       profile_name = profile_name .. "-heating-cooling"
     else
-      device.log.warn_with({hub_logs=true}, "Thermostat does not support both heating and cooling. No matching profile")
+      device.log.warn_with({hub_logs=true}, "Room AC does not support both heating and cooling. No matching profile")
       return
     end
 
