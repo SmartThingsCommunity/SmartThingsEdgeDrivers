@@ -18,7 +18,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("room-air-conditioner-humidity-fan-wind-heating-cooling.yml"),
+  profile = t_utils.get_profile_definition("room-air-conditioner.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
