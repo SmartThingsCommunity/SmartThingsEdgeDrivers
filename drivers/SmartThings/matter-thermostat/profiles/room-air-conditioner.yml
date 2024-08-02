@@ -1,10 +1,12 @@
-name: room-air-conditioner-fan-wind-heating-cooling
+name: room-air-conditioner
 components:
 - id: main
   capabilities:
   - id: switch
     version: 1
   - id: temperatureMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
     version: 1
   - id: thermostatMode
     version: 1
