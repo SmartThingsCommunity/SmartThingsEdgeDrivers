@@ -347,6 +347,10 @@ local function do_configure(driver, device)
       return
     end
 
+    if profile_name == "room-air-conditioner-humidity-fan-wind-heating-cooling" then
+      profile_name = "room-air-conditioner"
+    end
+
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
