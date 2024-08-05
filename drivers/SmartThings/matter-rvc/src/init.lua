@@ -155,13 +155,16 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
       break
     end
   end
-  local labels_of_supported_modes = get_labels_of_supported_modes_filter_by_current_mode(device,
+  local labels_of_supported_arguments = get_labels_of_supported_modes_filter_by_current_mode(device,
     RVC_RUN_MODE_SUPPORTED_MODES,
     clusters.RvcRunMode.types.ModeTag.IDLE,
     current_mode
   )
+  local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES)
   local component = device.profile.components["runMode"]
-  local event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  local event = capabilities.mode.supportedArguments(labels_of_supported_arguments, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+  event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
   device:emit_component_event(component, event)
 end
 
@@ -214,7 +217,9 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
   local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
 
   local component = device.profile.components["cleanMode"]
-  local event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  local event = capabilities.mode.supportedArguments(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+  event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
   device:emit_component_event(component, event)
 end
 
