@@ -2,7 +2,6 @@ local log = require "log"
 ---@module 'utils'
 local utils = {}
 
-local MAC_ADDRESS_STR_LEN = 12
 
 function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
@@ -67,40 +66,71 @@ function utils.labeled_socket_builder(label, ssl_config)
   end
 
   local function make_socket(host, port, wrap_ssl)
+    log.info(
+      string.format(
+        "%sCreating TCP socket for REST Connection", label
+      )
+    )
     local _ = nil
     local sock, err = socket.tcp()
 
     if err ~= nil or (not sock) then
       return nil, (err or "unknown error creating TCP socket")
     end
-
+    log.info(
+      string.format(
+        "%sSetting TCP socket timeout for REST Connection", label
+      )
+    )
     _, err = sock:settimeout(60)
     if err ~= nil then
       return nil, "settimeout error: " .. err
     end
-
+    log.info(
+      string.format(
+        "%sConnecting TCP socket for REST Connection", label
+      )
+    )
     _, err = sock:connect(host, port)
     if err ~= nil then
       return nil, "Connect error: " .. err
     end
-
+    log.info(
+      string.format(
+        "%sSet Keepalive for TCP socket for REST Connection", label
+      )
+    )
     _, err = sock:setoption("keepalive", true)
     if err ~= nil then
       return nil, "Setoption error: " .. err
     end
 
     if wrap_ssl then
+      log.info(
+        string.format(
+          "%sCreating SSL wrapper for for REST Connection", label
+        )
+      )
       sock, err =
           ssl.wrap(sock, ssl_config)
       if err ~= nil then
         return nil, "SSL wrap error: " .. err
       end
+      log.info(
+        string.format(
+          "%sPerforming SSL handshake for for REST Connection", label
+        )
+      )
       _, err = sock:dohandshake()
       if err ~= nil then
         return nil, "Error with SSL handshake: " .. err
       end
     end
-
+    log.info(
+      string.format(
+        "%sSuccessfully created TCP connection", label
+      )
+    )
     return sock, err
   end
   return make_socket

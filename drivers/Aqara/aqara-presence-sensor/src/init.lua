@@ -145,7 +145,7 @@ local function device_removed(driver, device)
   if not conn_info then
     log.warn(string.format("remove : failed to find conn_info, dni = %s", device.device_network_id))
   else
-    local resp, err, status = conn_info:get_remove()
+    local _, err, status = conn_info:get_remove()
 
     if err or status ~= 200 then
       log.error(string.format("remove : failed to get remove, dni= %s, err= %s, status= %s", device.device_network_id,
