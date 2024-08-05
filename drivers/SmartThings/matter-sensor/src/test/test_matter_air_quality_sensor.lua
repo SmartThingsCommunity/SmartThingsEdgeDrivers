@@ -14,6 +14,7 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
+test.add_package_capability("customRainSensor.yml")
 local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 

@@ -39,14 +39,48 @@ if version.api < 10 then
   clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+  -- will require rain sensor and alarm capabilities
 end
 
+local rainSensorID = "smilevirtual57983.customRainSensor"
+local rainSensor = capabilities[rainSensorID]
+
 local BATTERY_CHECKED = "__battery_checked"
+local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
+
+local BOOLEAN_DEVICE_TYPE_INFO = {
+  ["RAIN_SENSOR"] = {
+    id = 0x0044,
+  },
+  ["WATER_FREEZE_DETECTOR"] = {
+    id = 0x0043,
+  },
+  ["WATER_LEAK_DETECTOR"] = {
+    id = 0x0041,
+  },
+  ["CONTACT_SENSOR"] = {
+    id = 0x0015,
+  }
+}
+
+local function set_device_type_per_endpoint(driver, device)
+  for _, ep in ipairs(device.endpoints) do
+      for _, dt in ipairs(ep.device_types) do
+          local this_id = dt.device_type_id
+          for name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+              if this_id == info.id then
+                  device:set_field(name, ep.endpoint_id)
+              end
+          end
+      end
+  end
+  device:set_field(BOOLEAN_DEVICE_TYPES_CHECKED, 1, {persist = true})
+end
 
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
@@ -97,6 +131,22 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-battery"
   end
 
+  if device:supports_capability(rainSensor) then
+    profile_name = profile_name .. "-rain"
+  end
+
+  if device:supports_capability(capabilities.temperatureAlert) then
+    profile_name = profile_name .. "-freeze"
+  end
+
+  if device:supports_capability(capabilities.waterSensor) then
+    profile_name = profile_name .. "-leak"
+  end
+
+  if device:supports_capability(capabilities.hardwareFault) then
+    profile_name = profile_name .. "-fault"
+  end
+
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
 
@@ -108,6 +158,9 @@ local function device_init(driver, device)
   log.info("device init")
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
+  end
+  if not device:get_field(BOOLEAN_DEVICE_TYPES_CHECKED) then
+    set_device_type_per_endpoint(driver, device)
   end
   device:subscribe()
 end
@@ -164,11 +217,42 @@ local function humidity_attr_handler(driver, device, ib, response)
   end
 end
 
+local BOOLEAN_CAP_EVENT_MAP = {
+  [true] = {
+      ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.freeze(),
+      ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.wet(),
+      ["RAIN_SENSOR"] = rainSensor.rain.detected(),
+      ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.closed(),
+  },
+  [false] = {
+      ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.cleared(),
+      ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.dry(),
+      ["RAIN_SENSOR"] = rainSensor.rain.undetected(),
+      ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.open(),
+  }
+}
+
 local function boolean_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
+  local name = nil
+  for dt_name, _ in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+      local dt_ep_id = device:get_field(dt_name)
+      if ib.endpoint_id == dt_ep_id then
+          name = dt_name
+          break
+      end
+  end
+  if name == nil then
+      log.error("No Boolean device type found on an endpoint, BooleanState handler aborted")
+      return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
+end
+
+local function sensor_fault_handler(driver, device, ib, response)
+  if ib.data.value > 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.detected())
   else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.clear())
   end
 end
 
@@ -221,6 +305,9 @@ local matter_driver_template = {
       [clusters.PressureMeasurement.ID] = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
       },
+      [clusters.BooleanStateConfiguration.ID] = {
+        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
+    },
     }
   },
   -- TODO Once capabilities all have default handlers move this info there, and
@@ -333,11 +420,21 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [capabilities.hardwareFault.ID] = {
-      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.BooleanStateConfiguration.attributes.SensorFault,
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
+    [capabilities.waterSensor.ID] = {
+        clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.temperatureAlarm.ID] = {
+        clusters.BooleanState.attributes.StateValue,
+    },
+    [rainSensorID] = {
+        clusters.BooleanState.attributes.StateValue,
+    }
   },
   capability_handlers = {
   },
@@ -349,6 +446,9 @@ local matter_driver_template = {
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
+    capabilities.waterSensor,
+    capabilities.temperatureAlarm,
+    capabilities.hardwareFault
   },
   sub_drivers = {
     require("air-quality-sensor"),
