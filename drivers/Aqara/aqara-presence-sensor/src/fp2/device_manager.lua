@@ -26,11 +26,11 @@ function device_manager.presence_handler(driver, device, zone, evt_value)
 end
 
 function device_manager.movement_handler(driver, device, zone, evt_value)
-  if not device:supports_capability(PresenceSensor) then return end
+  if not device:supports_capability(MovementSensor) then return end
 
   local val = evt_value
   local no_movement = function()
-    if not device:supports_capability(PresenceSensor) then return end
+    if not device:supports_capability(MovementSensor) then return end
     device:emit_event(MovementSensor.movement("inactive"))
   end
   device:set_field(MOVEMENT_TIMER, device.thread:call_with_delay(MOVEMENT_TIME, no_movement))
@@ -55,7 +55,7 @@ function device_manager.movement_handler(driver, device, zone, evt_value)
 end
 
 function device_manager.zone_presence_handler(driver, device, zone, evt_value)
-  if not device:supports_capability(PresenceSensor) then return end
+  if not device:supports_capability(capabilities.multipleZonePresence) then return end
 
   local zoneInfo = multipleZonePresence.findZoneById(zone)
   if not zoneInfo then
@@ -94,7 +94,7 @@ function device_manager.work_mode_handler(driver, device, zone, evt_value)
 end
 
 function device_manager.zone_quantities_handler(driver, device, zone, evt_value)
-  if not device:supports_capability(PresenceSensor) then return end
+  if not device:supports_capability(capabilities.multipleZonePresence) then return end
 
   for i = 0, 29 do
     local zonePos = tostring(i + 1)
@@ -111,7 +111,7 @@ function device_manager.zone_quantities_handler(driver, device, zone, evt_value)
 end
 
 function device_manager.monitoring_mode_handler(driver, device, zone, evt_value)
-  if not device:supports_capability(PresenceSensor) then return end
+  if not device:supports_capability(MovementSensor) then return end
 
   local supportedEnum = { "inactive", "approaching", "movingAway", "entering", "leaving" }
   if evt_value == 0x01 then
