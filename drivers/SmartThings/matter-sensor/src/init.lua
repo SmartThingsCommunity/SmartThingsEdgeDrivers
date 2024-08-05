@@ -42,7 +42,6 @@ if version.api < 10 then
   -- will require rain sensor and alarm capabilities
 end
 
--- custom capability setup
 local rainSensorID = "smilevirtual57983.customRainSensor"
 local rainSensor = capabilities[rainSensorID]
 
@@ -57,15 +56,12 @@ local HUE_MANUFACTURER_ID = 0x100B
 local BOOLEAN_DEVICE_TYPE_INFO = {
   ["RAIN_SENSOR"] = {
     id = 0x0044,
-    alarmComponentName = "rainSensorAlarm",
   },
   ["WATER_FREEZE_DETECTOR"] = {
     id = 0x0043,
-    alarmComponentName = "waterFreezeDetectorAlarm",
   },
   ["WATER_LEAK_DETECTOR"] = {
     id = 0x0041,
-    alarmComponentName = "waterLeakDetectorAlarm",
   },
   ["CONTACT_SENSOR"] = {
     id = 0x0015,
@@ -169,7 +165,6 @@ local function device_init(driver, device)
   device:subscribe()
 end
 
--- TODO: add preference min.max
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -247,7 +242,8 @@ local function boolean_attr_handler(driver, device, ib, response)
       end
   end
   if name == nil then
-      log.error()
+      log.error("No Boolean device type found on an endpoint, BooleanState handler aborted")
+      return
   end
   device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
 end
@@ -310,7 +306,7 @@ local matter_driver_template = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
       },
       [clusters.BooleanStateConfiguration.ID] = {
-        [clusters.BooleanStateConfiguration.types.SensorFaultBitmap.ID] = sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
     },
     }
   },
@@ -424,8 +420,8 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [capabilities.hardwareFault.ID] = {
-      -- clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
-      clusters.BooleanStateConfiguration.types.SensorFaultBitmap,
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.BooleanStateConfiguration.attributes.SensorFault,
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
