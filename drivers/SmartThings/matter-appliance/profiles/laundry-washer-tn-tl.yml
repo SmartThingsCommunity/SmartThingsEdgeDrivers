@@ -10,10 +10,6 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
-    config:
-      values:
-        - key: "temperatureSetpoint.value"
-          range: [ 0, 100 ]
   - id: operationalState
     version: 1
   - id: temperatureLevel
@@ -26,3 +22,6 @@ components:
     version: 1
   categories:
   - name: Washer
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-laundry-washer

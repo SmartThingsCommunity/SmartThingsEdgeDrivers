@@ -20,3 +20,6 @@ components:
     version: 1
   categories:
   - name: Dishwasher
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-dishwasher
