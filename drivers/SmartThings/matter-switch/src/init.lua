@@ -153,21 +153,20 @@ local function initialize_switch(driver, device)
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
-  local num_server_eps = 0
   local num_switch_server_eps = 0
   local num_valve_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
   for _, ep in ipairs(all_eps) do
     if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) or device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      local name
       if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) then
         num_valve_server_eps = num_valve_server_eps + 1
-        num_server_eps = num_valve_server_eps
+        name = string.format("%s %d", device.label, num_valve_server_eps)
       else
         num_switch_server_eps = num_switch_server_eps + 1
-        num_server_eps = num_switch_server_eps
+        name = string.format("%s %d", device.label, num_switch_server_eps)
       end
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_server_eps)
         local child_profile = assign_child_profile(device, ep)
         driver:try_create_device(
           {
@@ -199,7 +198,7 @@ local function initialize_switch(driver, device)
     end
     device:try_update_metadata({profile = profile_name})
   elseif num_switch_server_eps > 0 then
-    -- The case where num_server_eps > 0 is a workaround for devices that have a
+    -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
     -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
