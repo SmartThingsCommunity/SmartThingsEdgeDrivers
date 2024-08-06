@@ -108,7 +108,7 @@ preferences:
         "1": "Smart Bulb Mode"
       default: 0
   - name: "parameter1"
-    title: "1. Dimming Speed - Up (Remote)"
+    title: "1. Dimming Speed (Remote)"
     description: "This changes the speed that the light dims up when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
   Default=25 (2500ms or 2.5s)"
     required: false
@@ -118,7 +118,7 @@ preferences:
       maximum: 126
       default: 25
   - name: "parameter2"
-    title: "2. Dimming Speed - Up (Local)"
+    title: "2. Dimming Speed (Local)"
     description: "This changes the speed that the light dims up when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
   (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
     required: false
@@ -128,7 +128,7 @@ preferences:
       maximum: 127
       default: 127
   - name: "parameter3"
-    title: "3. Ramp Rate - Off to On (Remote)"
+    title: "3. Ramp Rate (Remote)"
     description: "This changes the speed that the light turns on when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
   (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
     required: false
@@ -138,49 +138,9 @@ preferences:
       maximum: 127
       default: 127
   - name: "parameter4"
-    title: "4. Ramp Rate - Off to On (Local)"
+    title: "4. Ramp Rate (Local)"
     description: "This changes the speed that the light turns on when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
   (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 3)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter5"
-    title: "5. Dimming Speed - Down (Remote)"
-    description: "This changes the speed that the light dims down when controlled from the hub. A setting of '0' turns the light immediately off. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter6"
-    title: "6. Dimming Speed - Down (Local)"
-    description: "This changes the speed that the light dims down when controlled at the switch. A setting of '0' turns the light immediately off. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 2)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter7"
-    title: "7. Ramp Rate - On to Off (Remote)"
-    description: "This changes the speed that the light turns off when controlled from the hub. A setting of '0' turns the light immediately off. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 3)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter8"
-    title: "8. Ramp Rate - On to Off (Local)"
-    description: "This changes the speed that the light turns off when controlled at the switch. A setting of '0' turns the light immediately off. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 4)"
     required: false
     preferenceType: number
     definition:
@@ -225,28 +185,6 @@ preferences:
       minimum: 0
       maximum: 32767
       default: 0
-  - name: "parameter13"
-    title: "13. Default Level (Local)"
-    description: "Default level for the dimmer when turned on at the switch.
-  1-100=Set Level
-  101=Use previous level."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 101
-      default: 101
-  - name: "parameter14"
-    title: "14. Default Level (Remote)"
-    description: "Default level for the dimmer when turned on from the hub.
-  1-100=Set Level
-  101=Use previous level."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 101
-      default: 101
   - name: "parameter15"
     title: "15. Level After Power Restored"
     description: "The level the switch will return to when power is restored after power failure.
@@ -279,103 +217,6 @@ preferences:
         "10": "10 Seconds"
         "11": "Display Load Level with no timeout"
       default: 11
-  - name: "parameter18"
-    title: "18. Active Power Reports"
-    description: "Power level change that will result in a new power report being sent.
-  0 = Disabled
-  1-32767 = 0.1W-3276.7W."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 32767
-      default: 100
-  - name: "parameter19"
-    title: "19. Periodic Power & Energy Reports"
-    description: "Time period between consecutive power & energy reports being sent (in seconds). The timer is reset after each report is sent."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 32767
-      default: 3600
-  - name: "parameter20"
-    title: "20. Active Energy Reports"
-    description: "Energy level change that will result in a new energy report being sent.
-  0 = Disabled
-  1-32767 = 0.01kWh-327.67kWh."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 32767
-      default: 100
-  - name: "parameter25"
-    title: "25. Non-Neutral Output"
-    description: "Increase the power output when in non-neutral mode. May cause flickering or problems with aux switch detection. If this occurs, reduce the maximum level. Firmware 2.14+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Disabled (default)"
-        "1": "Enabled"
-      default: 0
-  - name: "parameter50"
-    title: "50. Button Press Delay"
-    description: "Adjust the delay used in scene control. 0=no delay (disables multi-tap scenes), 1=100ms, 2=200ms, 3=300ms, etc."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "0ms"
-        "1": "100ms"
-        "2": "200ms"
-        "3": "300ms"
-        "4": "400ms"
-        "5": "500ms (default)"
-        "6": "600ms"
-        "7": "700ms"
-        "8": "800ms"
-        "9": "900ms"
-      default: 5
-  - name: "parameter53"
-    title: "53. 2x-Tap UP for full brightness"
-    description: "Enable or Disable full brightness on double-tap up."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Disabled (default)"
-        "1": "Enabled"
-      default: 0
-  - name: "parameter54"
-    title: "54. 2x-Tap DOWN for min brightness"
-    description: "Enable or Disable minimum brightness on double-tap down. Firmware 2.11+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Disabled (default)"
-        "1": "Enabled"
-      default: 0
-  - name: "parameter55"
-    title: "55. Double-Tap UP level"
-    description: "When parameter 53 is enabled, this is the level that the switch will go to on double tap up. Firmware 2.14+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 99
-      default: 99
-  - name: "parameter56"
-    title: "56. Double-Tap Down level"
-    description: "When parameter 54 is enabled, this is the level that the switch will go to on double tap down. Firmware 2.14+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 99
-      default: 1
   - name: "parameter95"
     title: "95. LED Indicator Color (w/On)"
     description: "Set the color of the Full LED Indicator when the load is on."
@@ -436,141 +277,3 @@ preferences:
       minimum: 0
       maximum: 100
       default: 5
-  - name: "parameter100"
-    title: "100. LED Bar Scaling"
-    description: "Scaling method to use to display the level of the load. Firmware 2.11+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Match Blue Series (default)"
-        "1": "Match Red Series Previous Gen"
-      default: 0
-  - name: "parameter120"
-    title: "120. Single Tap Behavior"
-    description: "Behavior of single tapping the on or off button. Old behavior turns the switch on or off. New behavior cycles through the levels set by P131-133. Firmware 2.16+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Old Behavior (default)"
-        "1": "New Behavior"
-      default: 0
-  - name: "parameter125"
-    title: "125. Binding Default Level"
-    description: "Send on/off with level to bound devices that matches the devices default level. Firmware 2.14+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Disabled (default)"
-        "1": "Enabled"
-      default: 0
-  - name: "parameter130"
-    title: "130. Fan Control Mode"
-    description: "Which mode to use when binding EP3 to a fan module. Firmware 2.16+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Disabled (default)"
-        "1": "Multi Tap"
-        "2": "Cycle"
-      default: 0
-  - name: "parameter131"
-    title: "131. Low Level For Fan Control Mode"
-    description: "Level to send to device bound to EP3 when set to low. Firmware 2.16+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 100
-      default: 25
-  - name: "parameter132"
-    title: "132. Med Level For Fan Control Mode"
-    description: "Level to send to device bound to EP3 when set to Medium. Firmware 2.16+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 100
-      default: 50
-  - name: "parameter133"
-    title: "133. Hgh Level For Fan Control Mode"
-    description: "Level to send to device bound to EP3 when set to high. Firmware 2.16+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 100
-      default: 100
-  - name: "parameter134"
-    title: "134. LED Color For Fan Control Mode"
-    description: "LED color used to display fan control mode. Firmware 2.16+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Red"
-        "7": "Orange"
-        "28": "Lemon"
-        "64": "Lime"
-        "85": "Green"
-        "106": "Teal"
-        "127": "Cyan"
-        "148": "Aqua"
-        "170": "Blue (default)"
-        "190": "Violet"
-        "212": "Magenta"
-        "234": "Pink"
-        "255": "White"
-      default: 255
-  - name: "parameter256"
-    title: "256. Local Protection"
-    description: "Ability to control switch from the wall."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Local control enabled (default)"
-        "1": "Local control disabled"
-      default: 0
-  - name: "parameter260"
-    title: "260. Firmware Update Indicator"
-    description: "Display firmware update progress on LED Indicator"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "1": "Enabled (default)"
-        "0": "Disabled"
-      default: 1
-  - name: "parameter261"
-    title: "261. Relay Click"
-    description: "Audible Click in On/Off mode"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Enabled (default)"
-        "1": "Disabled"
-      default: 0
-  - name: "parameter262"
-    title: "262. Clear Notification w/ 2x Config"
-    description: "Double-Tap the Config button to clear notifications. Firmware 2.05+"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Enabled (default)"
-        "1": "Disabled"
-      default: 0
-  - name: "parameter263"
-    title: "263. LED Level Type"
-    description: "Levels of the LED bar in Smart Bulb Mode. 10=full range. Firmware 2.16+"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 10
-      default: 10
