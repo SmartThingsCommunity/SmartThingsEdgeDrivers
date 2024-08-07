@@ -15,4 +15,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: Water Valve
+  - name: WaterValve
