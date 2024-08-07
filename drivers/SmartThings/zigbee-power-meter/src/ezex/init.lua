@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
+local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
   { model = "E240-KR080Z0-HA" }
@@ -63,10 +64,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value_watts, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 
-  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000000
-  local converted_value = raw_value_miliwatts * multiplier/divisor -- unit: kWh
-  device:emit_event(capabilities.energyMeter.energy({value = converted_value, unit = "kWh"}))
+  energy_meter_defaults.energy_meter_handler(driver, device, value, zb_rx)
 end
 
 local ezex_power_meter_handler = {
