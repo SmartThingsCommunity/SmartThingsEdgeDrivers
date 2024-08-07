@@ -184,6 +184,10 @@ local subscribed_attributes = {
   [capabilities.fineDustHealthConcern.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
   },
+  [capabilities.fineDustSensor.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+  },
   [capabilities.dustSensor.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
