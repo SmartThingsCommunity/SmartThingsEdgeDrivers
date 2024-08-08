@@ -1,0 +1,2 @@
+mdns:
+    - service: "_Aqara-FP2._tcp"

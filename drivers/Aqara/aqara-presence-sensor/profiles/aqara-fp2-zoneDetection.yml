@@ -1,0 +1,22 @@
+name: aqara-fp2-zoneDetection
+components:
+  - id: main
+    capabilities:
+      - id: presenceSensor
+        version: 1
+      - id: movementSensor
+        version: 1
+      - id: multipleZonePresence
+        version: 1
+      - id: illuminanceMeasurement
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: PresenceSensor
+  - id: mode
+    capabilities:
+      - id: stse.deviceMode
+        version: 1
+    categories:
+      - name: PresenceSensor
