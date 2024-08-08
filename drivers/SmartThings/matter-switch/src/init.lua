@@ -55,6 +55,7 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local WATER_VALVE_DEVICE_TYPE_ID = 0x0042
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -65,6 +66,7 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [WATER_VALVE_DEVICE_TYPE_ID] = "water-valve"
 }
 local detect_matter_thing
 
@@ -93,12 +95,21 @@ end
 --- component_to_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
---- and supports the OnOff cluster. This is done to bypass the
---- BRIDGED_NODE_DEVICE_TYPE on bridged devices
+--- and supports the OnOff or ValveConfigurationAndControl cluster. This is
+--- done to bypass the BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
-  local eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(eps)
-  for _, v in ipairs(eps) do
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  local all_eps = {}
+
+  for _,v in ipairs(switch_eps) do
+    table.insert(all_eps, v)
+  end
+  for _,v in ipairs(valve_eps) do
+    table.insert(all_eps, v)
+  end
+  table.sort(all_eps)
+  for _, v in ipairs(all_eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
       return v
     end
@@ -128,18 +139,34 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function initialize_switch(driver, device)
+  local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(switch_eps)
-  -- Since we do not support bindings at the moment, we only want to count On/Off
-  -- clusters that have been implemented as server. This can be removed when we have
+  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  local all_eps = {}
+  for _,v in ipairs(switch_eps) do
+    table.insert(all_eps, v)
+  end
+  for _,v in ipairs(valve_eps) do
+    table.insert(all_eps, v)
+  end
+  table.sort(all_eps)
+  -- Since we do not support bindings at the moment, we only want to count clusters
+  -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
-  local num_server_eps = 0
+  local num_switch_server_eps = 0
+  local num_valve_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-  for _, ep in ipairs(switch_eps) do
-    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_server_eps = num_server_eps + 1
+  for _, ep in ipairs(all_eps) do
+    if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) or device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      local name
+      if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) then
+        num_valve_server_eps = num_valve_server_eps + 1
+        name = string.format("%s %d", device.label, num_valve_server_eps)
+      else
+        num_switch_server_eps = num_switch_server_eps + 1
+        name = string.format("%s %d", device.label, num_switch_server_eps)
+      end
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_server_eps)
         local child_profile = assign_child_profile(device, ep)
         driver:try_create_device(
           {
@@ -151,11 +178,12 @@ local function initialize_switch(driver, device)
             vendor_provided_label = name
           }
         )
+        parent_child_device = true
       end
     end
   end
 
-  if num_server_eps > 1  then
+  if parent_child_device then
     -- If the device is a parent child device, then set the find_child function on init.
     -- This is persisted because initialize switch is only run once, but find_child function should be set
     -- on each driver init.
@@ -163,30 +191,38 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-  -- The case where num_server_eps > 0 is a workaround for devices that have a
-  -- Light Switch device type but implement the On Off cluster as server (which is against the spec
-  -- for this device type). By default, we do not support Light Switch device types because by spec these
-  -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
-  -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
-  -- claim to be Light Switch device types and still implement their clusters as server, so this is a
-  -- workaround for those devices.
-  if num_server_eps > 0 and detect_matter_thing(device) == true then
-    local id = 0
-    for _, ep in ipairs(device.endpoints) do
-      -- main_endpoint only supports server cluster by definition of get_endpoints()
-      if main_endpoint == ep.endpoint_id then
-        for _, dt in ipairs(ep.device_types) do
-          -- no device type that is not in the switch subset should be considered.
-          if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
-            id = math.max(id, dt.device_type_id)
-          end
-        end
-        break
-      end
+  if num_valve_server_eps > 0 then
+    local profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
+    if #device:get_endpoints(clusters.ValveConfigurationAndControl.ID, {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      profile_name = profile_name .. "-level"
     end
+    device:try_update_metadata({profile = profile_name})
+  elseif num_switch_server_eps > 0 then
+    -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
+    -- Light Switch device type but implement the On Off cluster as server (which is against the spec
+    -- for this device type). By default, we do not support Light Switch device types because by spec these
+    -- devices need bindings to work correctly (On/Off cluster is client in this case), so these device types
+    -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
+    -- claim to be Light Switch device types and still implement their clusters as server, so this is a
+    -- workaround for those devices.
+    if detect_matter_thing(device) == true then
+      local id = 0
+      for _, ep in ipairs(device.endpoints) do
+        -- main_endpoint only supports server cluster by definition of get_endpoints()
+        if main_endpoint == ep.endpoint_id then
+          for _, dt in ipairs(ep.device_types) do
+            -- no device type that is not in the switch subset should be considered.
+            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+              id = math.max(id, dt.device_type_id)
+            end
+          end
+          break
+        end
+      end
 
-    if device_type_profile_map[id] ~= nil then
-      device:try_update_metadata({profile = device_type_profile_map[id]})
+      if device_type_profile_map[id] ~= nil then
+        device:try_update_metadata({profile = device_type_profile_map[id]})
+      end
     end
   end
 end
@@ -329,6 +365,18 @@ local function handle_set_color_temperature(driver, device, cmd)
   local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/cmd.args.temperature)
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
+  device:send(req)
+end
+
+local function handle_valve_open(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Open(device, endpoint_id)
+  device:send(req)
+end
+
+local function handle_valve_close(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Close(device, endpoint_id)
   device:send(req)
 end
 
@@ -491,7 +539,6 @@ local function color_cap_attr_handler(driver, device, ib, response)
   end
 end
 
-
 local function illuminance_attr_handler(driver, device, ib, response)
   local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
@@ -499,6 +546,21 @@ end
 
 local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+end
+
+local function valve_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.closed())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.open())
+  end
+end
+
+local function valve_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then
+    return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(ib.data.value))
 end
 
 local function info_changed(driver, device, event, args)
@@ -550,6 +612,10 @@ local matter_driver_template = {
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
+      },
+      [clusters.ValveConfigurationAndControl.ID] = {
+        [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
+        [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = valve_level_attr_handler
       }
     },
     fallback = matter_handler,
@@ -579,6 +645,12 @@ local matter_driver_template = {
     },
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.valve.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentState
+    },
+    [capabilities.level.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     }
   },
   capability_handlers = {
@@ -600,14 +672,20 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature,
     },
+    [capabilities.valve.ID] = {
+      [capabilities.valve.commands.open.NAME] = handle_valve_open,
+      [capabilities.valve.commands.close.NAME] = handle_valve_close
+    }
   },
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
     capabilities.colorControl,
     capabilities.colorTemperature,
+    capabilities.level,
     capabilities.motionSensor,
-    capabilities.illuminanceMeasurement
+    capabilities.illuminanceMeasurement,
+    capabilities.valve
   },
     sub_drivers = {
     require("eve-energy"),
