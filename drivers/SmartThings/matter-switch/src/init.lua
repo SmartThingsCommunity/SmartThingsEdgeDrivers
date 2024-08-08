@@ -78,71 +78,39 @@ local device_type_profile_map = {
   [GENERIC_SWITCH_ID] = "button"
 }
 
-local device_type_attribute_map = {
-  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+local subscribed_attributes = {
+  [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff
   },
-  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
+  [capabilities.switchLevel.ID] = {
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
+  [capabilities.colorControl.ID] = {
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [capabilities.colorTemperature.ID] = {
     clusters.ColorControl.attributes.ColorTemperatureMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
   },
-  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+  [capabilities.illuminanceMeasurement.ID] = {
+    clusters.IlluminanceMeasurement.attributes.MeasuredValue
   },
-  [ON_OFF_PLUG_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff
+  [capabilities.motionSensor.ID] = {
+    clusters.OccupancySensing.attributes.Occupancy
   },
-  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [ON_OFF_SWITCH_ID] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [ON_OFF_DIMMER_SWITCH_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
-  },
-  [GENERIC_SWITCH_ID] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
+  [capabilities.battery.ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining
+  }
+}
+
+local subscribed_events = {
+  [capabilities.button.ID] = {
     clusters.Switch.events.InitialPress,
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
@@ -287,17 +255,6 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
-      for _, attr in pairs(device_type_attribute_map[id]) do
-        if id == GENERIC_SWITCH_ID then
-          if attr == clusters.PowerSource.attributes.BatPercentRemaining then
-            device:add_subscribed_attribute(attr)
-          else
-            device:add_subscribed_event(attr)
-          end
-        else
-          device:add_subscribed_attribute(attr)
-        end
-      end
     end
   end
   -- default to "switch-binary" if no profile is found
@@ -531,6 +488,20 @@ local function device_init(driver, device)
     end
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
+    end
+    for _, cap in pairs(subscribed_attributes) do
+      for _, attr in pairs(cap) do
+        if device:supports_capability(cap) then
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+    for _, cap in pairs(subscribed_events) do
+      for _, attr in pairs(cap) do
+        if device:supports_capability(cap) then
+          device:add_subscribed_event(attr)
+        end
+      end
     end
     device:subscribe()
   end
@@ -939,44 +910,8 @@ local matter_driver_template = {
     },
     fallback = matter_handler,
   },
-  subscribed_attributes = {
-    [capabilities.switch.ID] = {
-      clusters.OnOff.attributes.OnOff
-    },
-    [capabilities.switchLevel.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel,
-      clusters.LevelControl.attributes.MaxLevel,
-      clusters.LevelControl.attributes.MinLevel,
-    },
-    [capabilities.colorControl.ID] = {
-      clusters.ColorControl.attributes.CurrentHue,
-      clusters.ColorControl.attributes.CurrentSaturation,
-      clusters.ColorControl.attributes.CurrentX,
-      clusters.ColorControl.attributes.CurrentY,
-    },
-    [capabilities.colorTemperature.ID] = {
-      clusters.ColorControl.attributes.ColorTemperatureMireds,
-      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    },
-    [capabilities.illuminanceMeasurement.ID] = {
-      clusters.IlluminanceMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.motionSensor.ID] = {
-      clusters.OccupancySensing.attributes.Occupancy
-    },
-    [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining,
-    },
-  },
-  subscribed_events = {
-    [capabilities.button.ID] = {
-      clusters.Switch.events.InitialPress,
-      clusters.Switch.events.LongPress,
-      clusters.Switch.events.ShortRelease,
-      clusters.Switch.events.MultiPressComplete,
-    },
-  },
+  subscribed_attributes = subscribed_attributes,
+  subscribed_events = subscribed_events,
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
