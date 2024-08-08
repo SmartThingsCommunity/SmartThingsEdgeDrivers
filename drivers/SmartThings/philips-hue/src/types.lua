@@ -72,7 +72,7 @@
 ---@field public tamper_reports { changed: string, source: string, state: string }[]
 
 --- Hue Bridge Info as returned by the unauthenticated API endpoint `/api/config`
---- @class HueBridgeInfo: { [string]: any }
+--- @class HueBridgeInfo
 --- @field public name string
 --- @field public datastoreversion string
 --- @field public swversion string

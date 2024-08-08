@@ -153,7 +153,7 @@ end
 --- Spawn the stray device resolution task, returning a handle to the tx side of the
 --- channel for controlling it.
 function StrayDeviceHelper.spawn()
-  local stray_device_tx, stray_device_rx = cosock.channel.new()
+  local stray_device_tx, stray_device_rx = cosock.channel.new("stray_device")
   stray_device_rx:settimeout(30)
 
   cosock.spawn(function()

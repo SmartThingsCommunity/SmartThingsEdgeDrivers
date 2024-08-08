@@ -19,7 +19,7 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
   local zigbee_resource_id
   if not zigbee_status then
     local rest_resp, rest_err = hue_api:get_device_by_id(hue_device_id)
-    if rest_err ~= nil then
+    if not rest_resp and rest_err ~= nil then
       log.error_with({ hub_logs = true }, rest_err)
       return
     end
@@ -43,7 +43,7 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
 
     if zigbee_resource_id ~= nil then
       rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
-      if rest_err ~= nil then
+      if not rest_resp and rest_err ~= nil then
         log.error_with({ hub_logs = true }, rest_err)
         return
       end
@@ -326,7 +326,7 @@ function RefreshHandlers.do_refresh_light(driver, light_device, light_status_cac
     count = count + 1
     if do_light_request and light_device:get_field(Fields.IS_ONLINE) then
       rest_resp, rest_err = hue_api:get_light_by_id(light_resource_id)
-      if rest_err ~= nil then
+      if not rest_resp and rest_err ~= nil then
         log.error_with({ hub_logs = true }, rest_err)
         goto continue
       end
