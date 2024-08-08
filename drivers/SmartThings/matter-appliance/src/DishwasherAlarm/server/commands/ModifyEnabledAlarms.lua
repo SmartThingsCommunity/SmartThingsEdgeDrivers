@@ -11,7 +11,7 @@ ModifyEnabledAlarms.field_defs = {
     field_id = 0,
     is_nullable = false,
     is_optional = false,
-    data_type = require "DishwasherAlarm.types.AlarmMap",
+    data_type = require "DishwasherAlarm.types.AlarmBitmap",
   },
 }
 

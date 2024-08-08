@@ -36,6 +36,7 @@ end
 local dishwasher = require("matter-dishwasher")
 local laundry_driver = require("matter-laundry")
 local refrigerator = require("matter-refrigerator")
+local cook_top = require("matter-cook-top")
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -300,7 +301,8 @@ local matter_driver_template = {
   sub_drivers = {
     dishwasher,
     laundry_driver,
-    refrigerator
+    refrigerator,
+    cook_top
   }
 }
 

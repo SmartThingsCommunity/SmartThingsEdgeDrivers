@@ -37,3 +37,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x007C
     deviceProfileName: laundry-dryer
+  - id: "matter/cook-top"
+    deviceLabel: Matter Cook Top
+    deviceTypes:
+      - id: 0x0078
+    deviceProfileName: cook-top
