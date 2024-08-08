@@ -37,6 +37,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1031
     deviceProfileName: contact-battery
+  - id: "4619/4099"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1003
+    deviceProfileName: smoke
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
