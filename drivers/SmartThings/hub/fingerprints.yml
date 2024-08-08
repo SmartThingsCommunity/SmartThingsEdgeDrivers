@@ -1,0 +1,17 @@
+hub:
+  - id: "tv-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType: SAMSUNG_VD_TV_HUB
+    deviceProfileName: tv-hub
+  - id: "soundbar-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType: SAMSUNG_SOUNDBAR_TIZEN_OPEN_HUB
+    deviceProfileName: soundbar-hub
+  - id: "refrigerator-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType: SAMSUNG_DA_REFRIGERATOR_HUB
+    deviceProfileName: refrigerator-hub
+hubThing:
+  - id: "hub-thing"
+    deviceLabel: SmartThings Hub
+    deviceProfileName: hub-thing

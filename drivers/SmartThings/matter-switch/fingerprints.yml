@@ -347,6 +347,11 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03F3
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/A19/CCT"
+    deviceLabel: Smart Light Bulb A19 CCT
+    vendorId: 0x1168
+    productId: 0x03f9
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
   - id: "4456/1013"
     deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
     vendorId: 0x1168
