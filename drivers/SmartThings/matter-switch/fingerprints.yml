@@ -1,11 +1,16 @@
 matterManufacturer:
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
