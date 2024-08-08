@@ -34,7 +34,7 @@ if version.api < 10 then
 end
 
 local dishwasher = require("matter-dishwasher")
-local laundryWasher = require("matter-laundry-washer")
+local laundry_driver = require("matter-laundry")
 local refrigerator = require("matter-refrigerator")
 local cook_top = require("matter-cook-top")
 
@@ -42,6 +42,7 @@ local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",
 }
+local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
@@ -110,8 +111,14 @@ local function do_configure(driver, device)
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
-  elseif laundryWasher.can_handle({}, driver, device) then
-    local profile_name = "laundry-washer"
+  elseif laundry_driver.can_handle({}, driver, device) then
+    local device_type = laundry_driver.can_handle({}, driver, device)
+    local profile_name = "laundry"
+    if (device_type == LAUNDRY_WASHER_DEVICE_TYPE_ID) then
+      profile_name = profile_name.."-washer"
+    else
+      profile_name = profile_name.."-dryer"
+    end
     if #tn_eps > 0 and #tl_eps > 0 then
       profile_name = profile_name .. "-tn" .. "-tl"
     elseif #tn_eps > 0 then
@@ -293,7 +300,7 @@ local matter_driver_template = {
   },
   sub_drivers = {
     dishwasher,
-    laundryWasher,
+    laundry_driver,
     refrigerator,
     cook_top
   }
