@@ -1,11 +1,11 @@
 hub:
   - id: "tv-hub"
     deviceLabel: SmartThings Hub
-    hardwareType: SAMSUNG-TV-TIZEN-OPEN
+    hardwareType: SAMSUNG_VD_TV_HUB
     deviceProfileName: tv-hub
   - id: "soundbar-hub"
-    deviceLabel: Harman Kardon Virtuo
-    hardwareType: HARMAN_SPEAKER_LINUX_OPEN_HUB
+    deviceLabel: SmartThings Hub
+    hardwareType: SAMSUNG_SOUNDBAR_TIZEN_OPEN_HUB
     deviceProfileName: soundbar-hub
   - id: "refrigerator-hub"
     deviceLabel: SmartThings Hub
