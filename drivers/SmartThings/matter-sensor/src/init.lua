@@ -28,6 +28,7 @@ end
 local version = require "version"
 if version.api < 10 then
   clusters.AirQuality = require "AirQuality"
+  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
   clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
   clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
   clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
@@ -37,13 +38,12 @@ if version.api < 10 then
   clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
   clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
   clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
-  -- will require rain sensor and alarm capabilities
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
-local rainSensorID = "smilevirtual57983.customRainSensor"
-local rainSensor = capabilities[rainSensorID]
+-- local rainSensorID = "smilevirtual57983.customRainSensor"
+-- local rainSensor = capabilities[rainSensorID]
 
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
@@ -54,27 +54,18 @@ local TEMP_MAX = "__temp_max"
 local HUE_MANUFACTURER_ID = 0x100B
 
 local BOOLEAN_DEVICE_TYPE_INFO = {
-  ["RAIN_SENSOR"] = {
-    id = 0x0044,
-  },
-  ["WATER_FREEZE_DETECTOR"] = {
-    id = 0x0043,
-  },
-  ["WATER_LEAK_DETECTOR"] = {
-    id = 0x0041,
-  },
-  ["CONTACT_SENSOR"] = {
-    id = 0x0015,
-  }
+  ["RAIN_SENSOR"] = { id = 0x0044, },
+  ["WATER_FREEZE_DETECTOR"] = { id = 0x0043, },
+  ["WATER_LEAK_DETECTOR"] = { id = 0x0041, },
+  ["CONTACT_SENSOR"] = { id = 0x0015, },
 }
 
 local function set_device_type_per_endpoint(driver, device)
   for _, ep in ipairs(device.endpoints) do
       for _, dt in ipairs(ep.device_types) do
-          local this_id = dt.device_type_id
-          for name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
-              if this_id == info.id then
-                  device:set_field(name, ep.endpoint_id)
+          for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+              if dt.device_type_id == info.id then
+                  device:set_field(dt_name, ep.endpoint_id)
               end
           end
       end
@@ -131,7 +122,7 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-battery"
   end
 
-  if device:supports_capability(rainSensor) then
+  if device:supports_capability(capabilities.rainSensor) then
     profile_name = profile_name .. "-rain"
   end
 
@@ -221,13 +212,13 @@ local BOOLEAN_CAP_EVENT_MAP = {
   [true] = {
       ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.freeze(),
       ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.wet(),
-      ["RAIN_SENSOR"] = rainSensor.rain.detected(),
+      ["RAIN_SENSOR"] = capabilities.rainSensor.rain.detected(),
       ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.closed(),
   },
   [false] = {
       ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.cleared(),
       ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.dry(),
-      ["RAIN_SENSOR"] = rainSensor.rain.undetected(),
+      ["RAIN_SENSOR"] = capabilities.rainSensor.rain.undetected(),
       ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.open(),
   }
 }
@@ -432,7 +423,7 @@ local matter_driver_template = {
     [capabilities.temperatureAlarm.ID] = {
         clusters.BooleanState.attributes.StateValue,
     },
-    [rainSensorID] = {
+    [capabilities.rainSensor.ID] = {
         clusters.BooleanState.attributes.StateValue,
     }
   },
