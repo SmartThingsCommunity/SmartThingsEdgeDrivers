@@ -32,3 +32,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0075
     deviceProfileName: dishwasher-tn-tl
+  - id: "matter/cook-top"
+    deviceLabel: Matter Cook Top
+    deviceTypes:
+      - id: 0x0078
+    deviceProfileName: cook-top
