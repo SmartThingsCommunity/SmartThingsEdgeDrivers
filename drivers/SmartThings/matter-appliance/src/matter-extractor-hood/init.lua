@@ -87,7 +87,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
       capabilities.fanMode.fanMode.high.NAME,
       capabilities.fanMode.fanMode.auto.NAME
     }
-  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
     supportedFanModes = {
       capabilities.fanMode.fanMode.off.NAME,
       capabilities.fanMode.fanMode.high.NAME,
