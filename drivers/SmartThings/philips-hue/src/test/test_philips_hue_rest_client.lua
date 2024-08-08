@@ -129,7 +129,7 @@ test.register_coroutine_test(
 
     --- Register a device with the mock bridge such that its available via the REST API.
     --- This populates the `device`, `light`, and `zigbee_connectivity` services.
-    local _mock_hue_device_service = testenv.mock_hue_bridge:add_device_from_template(
+    local _ = testenv.mock_hue_bridge:add_device_from_template(
       HueDeviceTypes.LIGHT,
       "test_data/templates/white-bulb"
     )

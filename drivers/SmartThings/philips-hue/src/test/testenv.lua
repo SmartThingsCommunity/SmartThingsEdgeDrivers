@@ -16,7 +16,7 @@ local m = {
 
 local raw_get_resource = HueApi.get_rtype_by_rid
 HueApi.get_rtype_by_rid = function(self, rtype, rid)
-  local ret, err = nil, nil
+  local ret, err
   repeat
     ret, err = raw_get_resource(self, rtype, rid)
   until ret ~= nil or (type(err) == "string" and err ~= "timeout")
@@ -25,7 +25,7 @@ end
 
 local raw_get_all = HueApi.get_all_reprs_for_rtype
 HueApi.get_all_reprs_for_rtype = function(self, rtype)
-  local ret, err = nil, nil
+  local ret, err
   repeat
     ret, err = raw_get_all(self, rtype)
   until ret ~= nil or (type(err) == "string" and err ~= "timeout")

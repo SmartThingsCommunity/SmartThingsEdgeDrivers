@@ -73,7 +73,7 @@ function m:register_hue_resource(resource)
         return builder
             :add_get(string.format("/clip/v2/resource/%s", resource.type))
             :with_response(function(req, _ser, _de)
-              if not req:get_headers():get_one('hue-application-key') == self.application_key then
+              if req:get_headers():get_one('hue-application-key') ~= self.application_key then
                 error('403 forbidden')
                 return
                 ---@diagnostic disable-next-line: return-type-mismatch
@@ -103,7 +103,7 @@ function m:register_hue_resource(resource)
       return builder
           :add_get(string.format("/clip/v2/resource/%s/%s", resource.type, resource.id))
           :with_response(function(req, _ser, _de)
-            if not req:get_headers():get_one('hue-application-key') == self.application_key then
+            if req:get_headers():get_one('hue-application-key') ~= self.application_key then
               error('403 forbidden')
               return
               ---@diagnostic disable-next-line: return-type-mismatch
