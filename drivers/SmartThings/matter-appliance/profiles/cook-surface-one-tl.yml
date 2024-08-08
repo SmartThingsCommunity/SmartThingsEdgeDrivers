@@ -1,0 +1,19 @@
+name: cook-surface-one-tl
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Cooktop
+- id: cookSurfaceOne
+  label: Cook Surface 1
+  capabilities:
+  - id: temperatureLevel
+    version: 1
+  - id: temperatureMeasurement
+    version: 1

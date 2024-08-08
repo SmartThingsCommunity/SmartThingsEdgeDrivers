@@ -2,44 +2,56 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-local Supported = {
-  ID = 0x0003,
-  NAME = "Supported",
-  base_type = require "DishwasherAlarm.types.AlarmBitmap",
+local SupportedModes = {
+  ID = 0x0000,
+  NAME = "SupportedModes",
+  base_type = data_types.Structure,
 }
 
-function Supported:new_value(...)
+SupportedModes.enum_fields = {
+}
+
+function SupportedModes:augment_type(base_type_obj)
+  base_type_obj.field_name = self.NAME
+  base_type_obj.pretty_print = self.pretty_print
+end
+
+function SupportedModes.pretty_print(value_obj)
+  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, SupportedModes.enum_fields[value_obj.value])
+end
+
+function SupportedModes:new_value(...)
   local o = self.base_type(table.unpack({...}))
   self:augment_type(o)
   return o
 end
 
-function Supported:read(device, endpoint_id)
+function SupportedModes:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil
+    nil --event_id
   )
 end
 
-function Supported:subscribe(device, endpoint_id)
+function SupportedModes:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil
+    nil --event_id
   )
 end
 
-function Supported:set_parent_cluster(cluster)
+function SupportedModes:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-function Supported:build_test_report_data(
+function SupportedModes:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -57,12 +69,12 @@ function Supported:build_test_report_data(
   )
 end
 
-function Supported:deserialize(tlv_buf)
+function SupportedModes:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
   self:augment_type(data)
   return data
 end
 
-setmetatable(Supported, {__call = Supported.new_value, __index = Supported.base_type})
-return Supported
+setmetatable(SupportedModes, {__call = SupportedModes.new_value})
+return SupportedModes
 
