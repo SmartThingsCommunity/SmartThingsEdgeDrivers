@@ -29,7 +29,8 @@ local APPLICATION_VERSION = "application_version"
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.curtain" },
   { mfr = "LUMI", model = "lumi.curtain.v1" },
-  { mfr = "LUMI", model = "lumi.curtain.aq2" }
+  { mfr = "LUMI", model = "lumi.curtain.aq2" },
+  { mfr = "LUMI", model = "lumi.curtain.agl001" }
 }
 
 local function is_aqara_products(opts, driver, device)
@@ -217,6 +218,7 @@ local aqara_window_treatment_handler = {
   },
   sub_drivers = {
     require("aqara.roller-shade"),
+    require("aqara.curtain-driver-e1"),
     require("aqara.version")
   },
   can_handle = is_aqara_products
