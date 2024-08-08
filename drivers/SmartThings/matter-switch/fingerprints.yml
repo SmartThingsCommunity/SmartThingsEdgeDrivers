@@ -169,6 +169,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+#Ledvance
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
