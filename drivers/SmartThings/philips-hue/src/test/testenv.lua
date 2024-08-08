@@ -11,6 +11,8 @@ local Discovery = require "disco"
 local Fields = require "fields"
 local HueApi = require "hue.api"
 
+test.add_package_capability("hueSyncMode.yml")
+
 local m = {
   mock_hue_bridge = nil,
   driver_under_test = nil
