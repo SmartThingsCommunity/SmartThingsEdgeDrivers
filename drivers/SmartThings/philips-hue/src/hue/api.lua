@@ -2,7 +2,7 @@ local cosock = require "cosock"
 local channel = require "cosock.channel"
 
 local json = require "st.json"
-local log = require "logjam"
+local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
 

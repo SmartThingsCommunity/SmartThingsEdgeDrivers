@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 
 local Discovery = require "disco"
@@ -88,7 +88,7 @@ function LifecycleHandlers.device_added(driver, device, ...)
       local bridge_id = parent_bridge and parent_bridge:get_field(Fields.BRIDGE_ID)
 
       if not (bridge_ip and bridge_id and resource_state_known and (Discovery.api_keys[bridge_id or {}] or key)) then
-        log.warn(true,
+        log.warn(
           "Found \"stray\" bulb without associated Hue Bridge. Waiting to see if a bridge becomes available.")
         driver.stray_device_tx:send({
           type = StrayDeviceHelper.MessageTypes.NewStrayDevice,

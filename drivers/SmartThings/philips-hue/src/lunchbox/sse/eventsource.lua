@@ -5,7 +5,7 @@ local ssl = require "cosock.ssl"
 ---@type fun(sock: table, config: table?): table?, string?
 ssl.wrap = ssl.wrap
 
-local log = require "logjam"
+local log = require "log"
 local util = require "lunchbox.util"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"

@@ -30,13 +30,13 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {
           cluster_id = clusters.Thermostat.ID,
@@ -46,6 +46,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -64,7 +67,7 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1}  -- RootNode
       }
     },
     {
@@ -78,6 +81,9 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
           feature_map=2, -- Cool feature only.
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -96,7 +102,7 @@ local mock_device_no_battery = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -109,6 +115,9 @@ local mock_device_no_battery = test.mock_device.build_test_matter_device({
           feature_map=2, -- Cool feature only.
         },
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -121,7 +130,6 @@ local cluster_subscribe_list = {
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
@@ -135,7 +143,6 @@ local cluster_subscribe_list_simple = {
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.PowerSource.attributes.BatPercentRemaining,
 }
@@ -146,7 +153,6 @@ local cluster_subscribe_list_no_battery = {
   clusters.Thermostat.attributes.SystemMode,
   clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
-  clusters.Thermostat.attributes.LocalTemperature,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
 }
 
