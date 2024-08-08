@@ -2,6 +2,8 @@
 local test = require "integration_test.cosock_runner"
 local test_utils = require "integration_test.utils"
 
+local log = require "log"
+
 local helpers = require "test.helpers"
 local mock_hue_bridge = require "test.mock_hue_bridge"
 
@@ -42,7 +44,10 @@ function m.driver_env_init(driver)
   end
 end
 
+local original_log_level
 function m.testenv_init()
+  original_log_level = log._level or log.LOG_LEVEL_TRACE
+  log.set_log_level(log.LOG_LEVEL_DEBUG)
   test.socket:set_time_advance_per_select(1)
   test.mock_devices_api._create_mock_devices = true
   m.create_mock_hue_bridge()
@@ -62,6 +67,7 @@ function m.testenv_cleanup()
 
   Discovery.disco_api_instances = {}
   Discovery.api_keys = {}
+  log.set_log_level(original_log_level or log.LOG_LEVEL_TRACE)
 end
 
 function m.generate_mock_bridge_info()
