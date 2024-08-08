@@ -22,6 +22,9 @@ local log = require "log"
 local utils = require "st.utils"
 
 local version = require "version"
+clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+
 if version.api < 10 then
   clusters.DishwasherAlarm = require "DishwasherAlarm"
   clusters.DishwasherMode = require "DishwasherMode"
@@ -37,6 +40,7 @@ local dishwasher = require("matter-dishwasher")
 local laundry_driver = require("matter-laundry")
 local refrigerator = require("matter-refrigerator")
 local cook_top = require("matter-cook-top")
+local microwave_oven = require("matter-microwave-oven")
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -69,6 +73,8 @@ local subscribed_attributes = {
     clusters.LaundryWasherMode.attributes.CurrentMode,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
+    clusters.MicrowaveOvenMode.attributes.CurrentMode,
+    clusters.MicrowaveOvenMode.attributes.SupportedModes
   },
   [capabilities.laundryWasherRinseMode.ID] = {
     clusters.LaundryWasherControls.attributes.NumberOfRinses,
@@ -91,6 +97,10 @@ local subscribed_attributes = {
   [capabilities.temperatureAlarm.ID] = {
     clusters.DishwasherAlarm.attributes.State
   },
+  [capabilities.cookTime.ID] = {
+    clusters.MicrowaveOvenControl.attributes.MaxCookTime,
+    clusters.MicrowaveOvenControl.attributes.CookTime
+  }
 }
 
 local function device_init(driver, device)
@@ -302,7 +312,8 @@ local matter_driver_template = {
     dishwasher,
     laundry_driver,
     refrigerator,
-    cook_top
+    cook_top,
+    microwave_oven
   }
 }
 
