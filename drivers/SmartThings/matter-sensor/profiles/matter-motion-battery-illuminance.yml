@@ -1,4 +1,4 @@
-name: matter-motion-battery-illuminance
+name: motion-battery-illuminance
 components:
 - id: main
   capabilities:
