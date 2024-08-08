@@ -42,3 +42,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0078
     deviceProfileName: cook-top
+  - id: "matter/microwave-oven"
+    deviceLabel: Matter Microwave Oven
+    deviceTypes:
+      - id: 0x0079
+    deviceProfileName: microwave-oven
