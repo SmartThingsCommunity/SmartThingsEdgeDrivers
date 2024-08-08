@@ -1,0 +1,15 @@
+name: freeze-leak
+components:
+- id: main
+  capabilities:
+  - id: temperatureAlert
+    version: 1
+  - id: waterSensor
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+  
