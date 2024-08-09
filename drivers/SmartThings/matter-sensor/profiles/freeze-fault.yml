@@ -2,7 +2,7 @@ name: freeze-fault
 components:
 - id: main
   capabilities:
-  - id: temperatureAlert
+  - id: temperatureAlarm
     version: 1
   - id: hardwareFault
     version: 1

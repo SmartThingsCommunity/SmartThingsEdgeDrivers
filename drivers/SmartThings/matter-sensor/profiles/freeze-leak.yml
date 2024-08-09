@@ -2,7 +2,7 @@ name: freeze-leak
 components:
 - id: main
   capabilities:
-  - id: temperatureAlert
+  - id: temperatureAlarm
     version: 1
   - id: waterSensor
     version: 1

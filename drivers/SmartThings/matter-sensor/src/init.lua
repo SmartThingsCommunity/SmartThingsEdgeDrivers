@@ -52,8 +52,8 @@ local HUE_MANUFACTURER_ID = 0x100B
 
 local BOOLEAN_DEVICE_TYPE_INFO = {
   ["RAIN_SENSOR"] = { id = 0x0044, },
-  ["WATER_FREEZE_DETECTOR"] = { id = 0x0043, },
-  ["WATER_LEAK_DETECTOR"] = { id = 0x0041, },
+  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, },
+  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, },
   ["CONTACT_SENSOR"] = { id = 0x0015, },
 }
 
@@ -123,7 +123,7 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-rain"
   end
 
-  if device:supports_capability(capabilities.temperatureAlert) then
+  if device:supports_capability(capabilities.temperatureAlarm) then
     profile_name = profile_name .. "-freeze"
   end
 
