@@ -51,27 +51,110 @@ local mock_device_rain = test.mock_device.build_test_matter_device({
 })
 
 local subscribed_attributes = {
-    [capabilities.BooleanState.ID] = {
-        clusters.BooleanState.attributes.StateValue,
-    },
-    [capabilities.BooleanStateConfiguration.ID] = {
-        clusters.BooleanStateConfiguration.attributes.SensorFault,
-    },
+  clusters.BooleanState.attributes.StateValue,
+  clusters.BooleanStateConfiguration.attributes.SensorFault,
 }
 
 local function test_init_rain()
-    local subscribe_request = nil
-    for _, attributes in pairs(subscribed_attributes) do
-        for _, attribute in ipairs(attributes) do
-            if subscribe_request == nil then
-                subscribe_request = attribute:subscribe(mock_device_rain)
-            else
-                subscribe_request:merge(attribute:subscribe(mock_device_rain))
-            end
-        end
+  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_rain)
+  for i, cluster in ipairs(subscribed_attributes) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_rain))
     end
-
-    test.socket.matter:__expect_send({mock_device_rain.id, subscribe_request})
-    test.mock_device.add_test_device(mock_device_rain)
+  end
+  test.socket.matter:__expect_send({mock_device_rain.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_rain)
+  mock_device_rain:set_field("__battery_checked", 1, {persist = true})
+  test.set_rpc_version(4)
 end
 test.set_test_init_function(test_init_rain)
+
+local mock_device_rain_cf = mock_device_rain
+
+local function test_init_cf()
+  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_rain_cf)
+  for i, cluster in ipairs(subscribed_attributes) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_rain_cf))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_rain_cf.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_rain_cf)
+  mock_device_rain_cf:expect_metadata_update({ profile = "rain-fault" })
+  mock_device_rain_cf:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+test.register_coroutine_test(
+  "Test profile change on init for Freeze and Leak combined device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_rain_cf.id, "doConfigure" })
+  end,
+  { test_init = test_init_cf }
+)
+
+test.register_message_test(
+  "Boolean state rain detection reports should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rain.id,
+        clusters.BooleanState.server.attributes.StateValue:build_test_report_data(mock_device_rain, 1, false)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rain:generate_test_message("main", capabilities.rainSensor.rain.undetected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rain.id,
+        clusters.BooleanState.server.attributes.StateValue:build_test_report_data(mock_device_rain, 1, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rain:generate_test_message("main", capabilities.rainSensor.rain.detected())
+    }
+  }
+)
+
+test.register_message_test(
+  "Test hardware fault alert handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rain.id,
+        clusters.BooleanStateConfiguration.attributes.SensorFault:build_test_report_data(mock_device_rain, 1, 0x1)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rain:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rain.id,
+        clusters.BooleanStateConfiguration.attributes.SensorFault:build_test_report_data(mock_device_rain, 1, 0x0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rain:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    }
+  }
+)
+
+
+test.run_registered_tests()
