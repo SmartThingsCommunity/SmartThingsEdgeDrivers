@@ -2320,6 +2320,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/electrical-sensor"
+    deviceLabel: Matter Electrical Sensor
+    deviceTypes:
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: electrical-sensor
 
 matterThing:
   - id: SmartThings/MatterThing

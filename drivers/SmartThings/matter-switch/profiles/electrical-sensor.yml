@@ -1,0 +1,16 @@
+name: electrical-sensor
+components:
+  - id: main
+    capabilities:
+      - id: energyMeter
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyConsumptionReport
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: AirQualityDetector
