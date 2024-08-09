@@ -54,8 +54,6 @@ local function test_init()
     [capabilities.temperatureMeasurement.ID] = {
       clusters.Thermostat.attributes.LocalTemperature,
       clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -68,14 +66,10 @@ local function test_init()
       clusters.Thermostat.attributes.ThermostatRunningState
     },
     [capabilities.thermostatCoolingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
-      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
-      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint
     },
     [capabilities.thermostatHeatingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
-      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint
     },
     [capabilities.airConditionerFanMode.ID] = {
       clusters.FanControl.attributes.FanMode
@@ -157,7 +151,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind))
+      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility={displayed=false}}))
     },
     {
       channel = "matter",

@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local Supported = {
   ID = 0x0003,
   NAME = "Supported",
-  base_type = require "DishwasherAlarm.types.AlarmMap",
+  base_type = require "DishwasherAlarm.types.AlarmBitmap",
 }
 
 function Supported:new_value(...)

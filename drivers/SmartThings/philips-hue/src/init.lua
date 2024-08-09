@@ -54,6 +54,12 @@ Discovery.api_keys = setmetatable({}, {
     )
     hue.datastore.api_keys[k] = v
     hue.datastore:save()
+    -- Because we never actually store keys on the metatable target itself,
+    -- __newindex is invoked for ever mutation; values for a new key, updating
+    -- the value for an existing key, and setting an existing key to `nil` will
+    -- all hit this path.
+    local commit_result = table.pack(hue.datastore:commit())
+    log.trace(st_utils.stringify_table(commit_result, "[DataStoreCommit] commit result", true))
   end,
   __index = function(self, k)
     return hue.datastore.api_keys[k]
