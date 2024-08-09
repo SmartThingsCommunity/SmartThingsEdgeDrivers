@@ -923,6 +923,30 @@ zwaveManufacturer:
     productId: 0x0088
     productType: 0x0002
     deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/131
+    deviceLabel: Wave 1
+    manufacturerId: 0x0460
+    productId: 0x0083
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/142
+    deviceLabel: Wave 1 Mini
+    manufacturerId: 0x0460
+    productId: 0x008E
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/138
+    deviceLabel: Wave Pro 1
+    manufacturerId: 0x0460
+    productId: 0x008A
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/140
+    deviceLabel: Wave Pro 2
+    manufacturerId: 0x0460
+    productId: 0x008C
+    productType: 0x0002
+    deviceProfileName: switch-binary
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch
