@@ -3,8 +3,10 @@ local utils = require "st.utils"
 
 local version = require "version"
 if version.api < 10 then
+  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.DishwasherAlarm = require "DishwasherAlarm"
   clusters.DishwasherMode = require "DishwasherMode"
+  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
   clusters.LaundryWasherControls = require "LaundryWasherControls"
   clusters.LaundryWasherMode = require "LaundryWasherMode"
   clusters.OperationalState = require "OperationalState"
@@ -13,17 +15,25 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
+--These clusters are not available in v10
+clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
+  [clusters.ActivatedCarbonFilterMonitoring.ID] = clusters.ActivatedCarbonFilterMonitoring,
   [clusters.DishwasherAlarm.ID] = clusters.DishwasherAlarm,
   [clusters.DishwasherMode.ID] = clusters.DishwasherMode,
+  [clusters.HepaFilterMonitoring.ID] = clusters.HepaFilterMonitoring,
   [clusters.LaundryWasherControls.ID] = clusters.LaundryWasherControls,
   [clusters.LaundryWasherMode.ID] = clusters.LaundryWasherMode,
   [clusters.OperationalState.ID] = clusters.OperationalState,
   [clusters.RefrigeratorAlarm.ID] = clusters.RefrigeratorAlarm,
   [clusters.RefrigeratorAndTemperatureControlledCabinetMode.ID] = clusters.RefrigeratorAndTemperatureControlledCabinetMode,
   [clusters.TemperatureControl.ID] = clusters.TemperatureControl,
+  [clusters.MicrowaveOvenControl.ID] = clusters.MicrowaveOvenControl,
+  [clusters.MicrowaveOvenMode.ID] = clusters.MicrowaveOvenMode,
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)

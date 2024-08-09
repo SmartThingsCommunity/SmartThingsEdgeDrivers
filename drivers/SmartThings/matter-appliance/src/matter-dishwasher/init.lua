@@ -125,27 +125,27 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
   local isWaterFlowVolumeAlarm = false
 
   local state = ib.data.value
-  if state & clusters.DishwasherAlarm.types.AlarmMap.INFLOW_ERROR > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.INFLOW_ERROR > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.alarm())
     isWaterFlowRateAlarm = true
   end
-  if state & clusters.DishwasherAlarm.types.AlarmMap.DRAIN_ERROR > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.DRAIN_ERROR > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.rateAlarm.alarm())
     isWaterFlowRateAlarm = true
   end
-  if state & clusters.DishwasherAlarm.types.AlarmMap.DOOR_ERROR > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.DOOR_ERROR > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
     isContactSensorAlarm = true
   end
-  if state & clusters.DishwasherAlarm.types.AlarmMap.TEMP_TOO_LOW > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.TEMP_TOO_LOW > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.freeze())
     isTemperatureAlarm = true
   end
-  if state & clusters.DishwasherAlarm.types.AlarmMap.TEMP_TOO_HIGH > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.TEMP_TOO_HIGH > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureAlarm.temperatureAlarm.heat())
     isTemperatureAlarm = true
   end
-  if state & clusters.DishwasherAlarm.types.AlarmMap.WATER_LEVEL_ERROR > 0 then
+  if state & clusters.DishwasherAlarm.types.AlarmBitmap.WATER_LEVEL_ERROR > 0 then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.waterFlowAlarm.volumeAlarm.alarm())
     isWaterFlowVolumeAlarm = true
   end
