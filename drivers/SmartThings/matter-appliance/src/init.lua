@@ -210,18 +210,12 @@ end
 
 -- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_switch_off(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)

@@ -41,7 +41,7 @@ local zigbee_fan_driver = {
   }
 }
 
-defaults.register_for_default_handlers(zigbee_fan_driver,zigbee_fan_driver.supported_capabilities, {native_capability_cmds_enabled = true})
+defaults.register_for_default_handlers(zigbee_fan_driver,zigbee_fan_driver.supported_capabilities)
 local fan = ZigbeeDriver("zigbee-fan", zigbee_fan_driver)
 fan:run()
 

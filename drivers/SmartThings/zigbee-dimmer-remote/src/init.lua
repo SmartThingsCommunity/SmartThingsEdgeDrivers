@@ -26,9 +26,6 @@ local zigbee_dimmer_remote_driver_template = {
     sub_drivers = { require("zigbee-accessory-dimmer"), require("zigbee-battery-accessory-dimmer")}
 }
 
-defaults.register_for_default_handlers(
-    zigbee_dimmer_remote_driver_template,
-    zigbee_dimmer_remote_driver_template.supported_capabilities,
-    {native_capability_cmds_enabled = true})
+defaults.register_for_default_handlers(zigbee_dimmer_remote_driver_template, zigbee_dimmer_remote_driver_template.supported_capabilities)
 local zigbee_dimmer_remote = ZigbeeDriver("zigbee_dimmer_remote", zigbee_dimmer_remote_driver_template)
 zigbee_dimmer_remote:run()
