@@ -150,9 +150,7 @@ local function test_init()
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
@@ -248,9 +246,7 @@ local function test_init_common()
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
@@ -289,9 +285,7 @@ local function test_init_level()
       clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue

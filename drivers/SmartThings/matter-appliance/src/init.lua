@@ -22,6 +22,9 @@ local log = require "log"
 local utils = require "st.utils"
 
 local version = require "version"
+clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+
 if version.api < 10 then
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.DishwasherAlarm = require "DishwasherAlarm"
@@ -36,14 +39,17 @@ if version.api < 10 then
 end
 
 local dishwasher = require("matter-dishwasher")
-local laundryWasher = require("matter-laundry-washer")
+local laundry_driver = require("matter-laundry")
 local refrigerator = require("matter-refrigerator")
 local extractorHood = require("matter-extractor-hood")
+local cook_top = require("matter-cook-top")
+local microwave_oven = require("matter-microwave-oven")
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",
 }
+local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
 
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
@@ -70,6 +76,8 @@ local subscribed_attributes = {
     clusters.LaundryWasherMode.attributes.CurrentMode,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
+    clusters.MicrowaveOvenMode.attributes.CurrentMode,
+    clusters.MicrowaveOvenMode.attributes.SupportedModes
   },
   [capabilities.laundryWasherRinseMode.ID] = {
     clusters.LaundryWasherControls.attributes.NumberOfRinses,
@@ -110,6 +118,9 @@ local subscribed_attributes = {
   [capabilities.filterStatus.ID] = {
     clusters.HepaFilterMonitoring.attributes.ChangeIndication,
     clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
+  [capabilities.cookTime.ID] = {
+    clusters.MicrowaveOvenControl.attributes.MaxCookTime,
+    clusters.MicrowaveOvenControl.attributes.CookTime
   }
 }
 
@@ -134,8 +145,14 @@ local function do_configure(driver, device)
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
-  elseif laundryWasher.can_handle({}, driver, device) then
-    local profile_name = "laundry-washer"
+  elseif laundry_driver.can_handle({}, driver, device) then
+    local device_type = laundry_driver.can_handle({}, driver, device)
+    local profile_name = "laundry"
+    if (device_type == LAUNDRY_WASHER_DEVICE_TYPE_ID) then
+      profile_name = profile_name.."-washer"
+    else
+      profile_name = profile_name.."-dryer"
+    end
     if #tn_eps > 0 and #tl_eps > 0 then
       profile_name = profile_name .. "-tn" .. "-tl"
     elseif #tn_eps > 0 then
@@ -336,8 +353,10 @@ local matter_driver_template = {
   },
   sub_drivers = {
     dishwasher,
-    laundryWasher,
+    laundry_driver,
     refrigerator,
+    cook_top,
+    microwave_oven,
     extractorHood
   }
 }
