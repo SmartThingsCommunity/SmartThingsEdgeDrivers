@@ -173,30 +173,6 @@ local function temperature_attr_handler(driver, device, ib, response)
   end
 end
 
-local temp_attr_handler_factory = function(minOrMax)
-  return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 4 (unit conversion for temperature
-    -- range capability is only supported for RPC >= 4)
-    if ib.data.value == nil or version.rpc < 4 then
-      return
-    end
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
-    local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
-    if min ~= nil and max ~= nil then
-      if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
-      else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
-      end
-    end
-  end
-end
-
 local function humidity_attr_handler(driver, device, ib, response)
   local measured_value = ib.data.value
   if measured_value ~= nil then
@@ -274,9 +250,7 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
@@ -305,9 +279,7 @@ local matter_driver_template = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
