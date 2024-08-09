@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-test.add_package_capability("customRainSensor.yml")
 local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
@@ -151,9 +150,7 @@ local function test_init()
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
@@ -249,9 +246,7 @@ local function test_init_common()
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
@@ -290,9 +285,7 @@ local function test_init_level()
       clusters.AirQuality.attributes.AirQuality
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
