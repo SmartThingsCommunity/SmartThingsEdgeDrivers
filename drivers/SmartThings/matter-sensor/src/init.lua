@@ -42,9 +42,6 @@ if version.api < 10 then
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
--- local rainSensorID = "smilevirtual57983.customRainSensor"
--- local rainSensor = capabilities[rainSensorID]
-
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
