@@ -658,6 +658,7 @@ local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.powerMeter.power({ value = ib.data.value, unit = "W"}))
   end
+end
 
 local function valve_state_attr_handler(driver, device, ib, response)
   if ib.data.value == 0 then
