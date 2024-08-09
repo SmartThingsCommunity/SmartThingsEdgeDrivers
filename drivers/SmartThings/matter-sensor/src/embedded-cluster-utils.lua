@@ -5,6 +5,7 @@ local utils = require "st.utils"
 local version = require "version"
 if version.api < 10 then
   clusters.AirQuality = require "AirQuality"
+  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
   clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
   clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
   clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
@@ -14,14 +15,15 @@ if version.api < 10 then
   clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
   clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
   clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
   [clusters.AirQuality.ID] = clusters.AirQuality,
+  [clusters.BooleanStateConfiguration.ID] = clusters.BooleanStateConfiguration,
   [clusters.CarbonMonoxideConcentrationMeasurement.ID] = clusters.CarbonMonoxideConcentrationMeasurement,
   [clusters.CarbonDioxideConcentrationMeasurement.ID] = clusters.CarbonDioxideConcentrationMeasurement,
   [clusters.FormaldehydeConcentrationMeasurement.ID] = clusters.FormaldehydeConcentrationMeasurement,
@@ -31,8 +33,8 @@ local embedded_clusters = {
   [clusters.Pm10ConcentrationMeasurement.ID] = clusters.Pm10ConcentrationMeasurement,
   [clusters.Pm25ConcentrationMeasurement.ID] = clusters.Pm25ConcentrationMeasurement,
   [clusters.RadonConcentrationMeasurement.ID] = clusters.RadonConcentrationMeasurement,
-  [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement,
   [clusters.SmokeCoAlarm.ID] = clusters.SmokeCoAlarm,
+  [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement,
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)
