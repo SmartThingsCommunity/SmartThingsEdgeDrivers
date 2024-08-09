@@ -118,6 +118,7 @@ local subscribed_attributes = {
   [capabilities.filterStatus.ID] = {
     clusters.HepaFilterMonitoring.attributes.ChangeIndication,
     clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication
+  },
   [capabilities.cookTime.ID] = {
     clusters.MicrowaveOvenControl.attributes.MaxCookTime,
     clusters.MicrowaveOvenControl.attributes.CookTime
