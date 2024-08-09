@@ -37,7 +37,10 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
   { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
   { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.l2aeu1" }
+  { mfr = "LUMI", model = "lumi.switch.l2aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.b1nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b2nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b3n01" }
 }
 
 local preference_map = {
