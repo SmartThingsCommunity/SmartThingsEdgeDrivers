@@ -32,6 +32,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0075
     deviceProfileName: dishwasher-tn-tl
+  - id: "matter/extractor-hood"
+    deviceLabel: Matter Extractor Hood
+    deviceTypes:
+      - id: 0x007A
+    deviceProfileName: extractor-hood
   - id: "matter/laundry-dryer"
     deviceLabel: Matter Laundry Dryer
     deviceTypes:
