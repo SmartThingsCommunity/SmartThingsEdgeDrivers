@@ -1,0 +1,12 @@
+name: Newfan.v1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: airConditionerFanMode
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Vent
