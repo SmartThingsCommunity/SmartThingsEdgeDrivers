@@ -133,3 +133,24 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076
     deviceProfileName: smoke-co
+  - id: "matter/rain/sensor"
+    deviceLabel: Matter Rain Sensor
+    deviceTypes:
+      - id: 0x0044
+    deviceProfileName: rain-battery
+  - id: "matter/freeze/detector"
+    deviceLabel: Matter Water Freeze Detector
+    deviceTypes:
+      - id: 0x0041
+    deviceProfileName: freeze-battery
+  - id: "matter/leak/detector"
+    deviceLabel: Matter Water Leak Detector
+    deviceTypes:
+      - id: 0x0043
+    deviceProfileName: leak-battery
+  - id: "matter/freeze-leak/detector"
+    deviceLabel: Matter Water Freeze/Leak Detector
+    deviceTypes:
+      - id: 0x0041
+      - id: 0x0043
+    deviceProfileName: freeze-leak-battery

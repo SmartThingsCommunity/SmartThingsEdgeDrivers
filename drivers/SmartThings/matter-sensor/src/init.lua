@@ -115,10 +115,6 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-pressure"
   end
 
-  if supports_battery_percentage_remaining(device) then
-    profile_name = profile_name .. "-battery"
-  end
-
   if device:supports_capability(capabilities.rainSensor) then
     profile_name = profile_name .. "-rain"
   end
@@ -133,6 +129,10 @@ local function check_for_battery(device)
 
   if device:supports_capability(capabilities.hardwareFault) then
     profile_name = profile_name .. "-fault"
+  end
+
+  if supports_battery_percentage_remaining(device) then
+    profile_name = profile_name .. "-battery"
   end
 
   -- remove leading "-"
