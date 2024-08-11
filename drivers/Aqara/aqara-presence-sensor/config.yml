@@ -1,4 +1,4 @@
-name: 'aqara-presence-sensor'
+name: 'Aqara Presence Sensor'
 packageKey: 'aqara-presence-sensor'
 permissions:
   lan: {}

@@ -62,7 +62,7 @@ function mzp.deleteZone(id)
     table.remove(mzp.zoneInfoTable, index)
     deletedId = id
   else
-    err = string.format("id %s doesn't exists", id)
+    err = string.format("id %s doesn't exist", id)
   end
   return err, deletedId
 end
@@ -74,7 +74,7 @@ function mzp.renameZone(id, name)
     zoneInfo.name = name
     changedId = id
   else
-    err = string.format("id %s doesn't exists", id)
+    err = string.format("id %s doesn't exist", id)
   end
   return err, changedId
 end
@@ -86,7 +86,7 @@ function mzp.changeState(id, state)
     zoneInfo.state = state
     changedId = id
   else
-    err = string.format("id %s doesn't exists", id)
+    err = string.format("id %s doesn't exist", id)
   end
   return err, changedId
 end
