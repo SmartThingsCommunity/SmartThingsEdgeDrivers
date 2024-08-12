@@ -1,6 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
-local ElectricalPowerMeasurementServerAttributes = require "st.matter.generated.zap_clusters.ElectricalPowerMeasurement.server.attributes"
-local ElectricalPowerMeasurementTypes = require "st.matter.generated.zap_clusters.ElectricalPowerMeasurement.types"
+local ElectricalPowerMeasurementServerAttributes = require "ElectricalPowerMeasurement.server.attributes"
+local ElectricalPowerMeasurementTypes = require "ElectricalPowerMeasurement.types"
 
 local ElectricalPowerMeasurement = {}
 

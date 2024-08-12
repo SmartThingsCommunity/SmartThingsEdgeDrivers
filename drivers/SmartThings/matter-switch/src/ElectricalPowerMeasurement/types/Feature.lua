@@ -80,8 +80,6 @@ end
 Feature.unset_harmonics = function(self)
   self.value = self.value & (~self.HARMONICS & self.BASE_MASK)
 end
---- @function Feature:is_power_quality_set
---- @return boolean True if the value of POWER_QUALITY is non-zero
 Feature.is_power_quality_set = function(self)
   return (self.value & self.POWER_QUALITY) ~= 0
 end

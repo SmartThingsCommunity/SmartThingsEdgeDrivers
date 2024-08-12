@@ -46,7 +46,7 @@ EnergyMeasurementStruct.init = function(cls, tbl)
     o.elements = {}
     o.num_elements = 0
     setmetatable(o, new_mt)
-    for idx, field_def in ipairs(cls.field_defs) do --Note: idx is 1 when field_id is 0
+    for idx, field_def in ipairs(cls.field_defs) do
       if (not field_def.is_optional and not field_def.is_nullable) and not tbl[field_def.name] then
         error("Missing non optional or non_nullable field: " .. field_def.name)
       else

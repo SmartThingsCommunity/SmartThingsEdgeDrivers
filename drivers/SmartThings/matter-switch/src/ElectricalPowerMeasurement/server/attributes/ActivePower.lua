@@ -20,7 +20,7 @@ function ActivePower:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -30,7 +30,7 @@ function ActivePower:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
