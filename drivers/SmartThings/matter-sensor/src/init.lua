@@ -402,6 +402,7 @@ local matter_driver_template = {
     capabilities.atmosphericPressureMeasurement,
     capabilities.waterSensor,
     capabilities.temperatureAlarm,
+    capabilities.rainSensor,
     capabilities.hardwareFault
   },
   sub_drivers = {
