@@ -28,7 +28,6 @@ end
 local version = require "version"
 if version.api < 10 then
   clusters.AirQuality = require "AirQuality"
-  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
   clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
   clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
   clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
@@ -41,7 +40,11 @@ if version.api < 10 then
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
+end
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
 

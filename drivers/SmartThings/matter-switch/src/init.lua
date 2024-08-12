@@ -81,9 +81,12 @@ local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in s
 
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-
+-- Include driver-side definitions when lua libs api version is < 11
+local version = require "version"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
 
 -- Return a ISO 8061 formatted timestamp in UTC (Z)
 -- @return e.g. 2022-02-02T08:00:00Z
