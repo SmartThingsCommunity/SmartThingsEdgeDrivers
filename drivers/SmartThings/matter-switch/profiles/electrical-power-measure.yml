@@ -1,4 +1,4 @@
-name: electrical-sensor
+name: electrical-power-measure
 components:
   - id: main
     capabilities:
@@ -6,7 +6,7 @@ components:
         version: 1
       - id: powerMeter
         version: 1
-      - id: energyConsumptionReport
+      - id: powerConsumptionReport
         version: 1
       - id: firmwareUpdate
         version: 1
