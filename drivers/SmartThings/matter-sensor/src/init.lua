@@ -67,14 +67,6 @@ local function set_device_type_per_endpoint(driver, device)
   device:set_field(BOOLEAN_DEVICE_TYPES_CHECKED, 1, {persist = true})
 end
 
-local function get_field_for_endpoint(device, field, endpoint)
-  return device:get_field(string.format("%s_%d", field, endpoint))
-end
-
-local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
-  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
-end
-
 local function supports_battery_percentage_remaining(device)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
           {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
@@ -203,8 +195,13 @@ local function boolean_attr_handler(driver, device, ib, response)
       end
   end
   if name == nil then
+    -- The generic case where no device type has been specified but the profile uses this capability.
+    if device:supports_capability(capabilities.contactSensor) then
+      device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value]["CONTACT_SENSOR"])
+    else
       log.error("No Boolean device type found on an endpoint, BooleanState handler aborted")
-      return
+    end
+    return
   end
   device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
 end
