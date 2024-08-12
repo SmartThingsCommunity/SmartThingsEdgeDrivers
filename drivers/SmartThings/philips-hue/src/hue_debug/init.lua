@@ -11,7 +11,7 @@ local lazy_handlers = utils.lazy_handler_loader("handlers")
 local hue_debug = {}
 
 local _log = function(msg)
-  log.debug(true, "*****>> " .. msg)
+  log.debug("*****>> " .. msg)
 end
 
 local function _setup_delayed_bridges(template, delay_time)

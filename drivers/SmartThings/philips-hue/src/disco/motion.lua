@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local socket = require "cosock".socket
 local st_utils = require "st.utils"
 

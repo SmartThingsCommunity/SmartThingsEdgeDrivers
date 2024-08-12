@@ -1,0 +1,99 @@
+# in-wall-dimmer-profile
+name: leviton-ZW6HD
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [1, 99]
+  - id: refresh
+    version: 1
+  categories:
+  - name: Switch
+preferences:
+  - name: "fadeOnTime"
+    title: "Fade On Time"
+    description: "0: instant on, 1-127: 1-127 seconds, 128-253: 1-126 minutes"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 253
+      default: 2
+  - name: "fadeOffTime"
+    title: "Fade Off Time"
+    description: "0: instant off, 1-127: 1-127 seconds, 128-253: 1-126 minutes"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 253
+      default: 2
+  - name: "minLevel"
+    title: "Minimum Dim Light Level"
+    description: "0-99"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 10
+  - name: "maxLevel"
+    title: "Maximum Brightness Light Level"
+    description: "10-99"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 10
+      maximum: 99
+      default: 99
+  - name: "presetLevel"
+    title: "Preset level / Return to last level"
+    description: "0-99. 0 to return to previous level"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 99
+      default: 0
+  - name: "dimBarTimeout"
+    title: "LED Dim Bar Behavior"
+    description: "0: always off 1-254: 1-254 seconds 255: always on"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 3
+  - name: "statusLEDmode"
+    title: "Status LED Configuration"
+    description: "0: always off, 254: Status LED ON when load is ON, 255: Status LED ON when load is OFF (locator mode)"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 255
+  - name: "loadType"
+    title: "Load Type"
+    description: "0: incandescent 1: LED 2: CFL 3: MLV"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 3
+      default: 1
+  - name: "controlTiming"
+    title: "Control Timing"
+    description: "0: Normal 1: Medium 2: Extended"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 2
+      default: 0

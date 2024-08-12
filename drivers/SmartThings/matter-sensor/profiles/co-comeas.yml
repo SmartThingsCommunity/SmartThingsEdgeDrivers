@@ -1,0 +1,21 @@
+name: co-comeas
+components:
+- id: main
+  capabilities:
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: carbonMonoxideMeasurement
+    version: 1
+  - id: batteryLevel
+    version: 1
+  - id: hardwareFault
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmokeDetector
+preferences:
+  - preferenceId: certifiedpreferences.smokeSensorSensitivity
+    explicit: true

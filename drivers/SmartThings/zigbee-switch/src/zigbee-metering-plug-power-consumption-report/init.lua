@@ -14,16 +14,13 @@
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local constants = require "st.zigbee.constants"
 local zigbee_constants = require "st.zigbee.constants"
+local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
 
 local SimpleMetering = clusters.SimpleMetering
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
-  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000
-  local converted_value = raw_value * multiplier/divisor
 
   local delta_energy = 0.0
   local current_power_consumption = device:get_latest_state("main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
@@ -32,7 +29,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 
-  device:emit_event(capabilities.energyMeter.energy({value = converted_value, unit = "kWh"}))
+  energy_meter_defaults.energy_meter_handler(driver, device, value, zb_rx)
 end
 
 local do_configure = function(self, device)
