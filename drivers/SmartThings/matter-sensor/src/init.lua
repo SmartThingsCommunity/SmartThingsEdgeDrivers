@@ -44,9 +44,6 @@ end
 
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
-local TEMP_BOUND_RECEIVED = "__temp_bound_received"
-local TEMP_MIN = "__temp_min"
-local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
 

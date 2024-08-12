@@ -70,13 +70,16 @@ local device_type_profile_map = {
 }
 local detect_matter_thing
 
+local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
 local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
 local EXPORT_POLL_TIMER_IS_SET = "__export_poll_timer_is_set"
 local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
 local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
 local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
-local RECURRING_EXPORT_POLL_TIMER = "__recurring_export_poll_timer"
+local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
+
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -92,10 +95,10 @@ local function iso8061Timestamp(time)
 end
 
 local function delete_export_poll_schedule(device)
-  local export_poll_timer = device:get_field(RECURRING_EXPORT_POLL_TIMER)
+  local export_poll_timer = device:get_field(RECURRING_EXPORT_REPORT_POLL_TIMER)
   if export_poll_timer then
     device.thread:cancel_timer(export_poll_timer)
-    device:set_field(RECURRING_EXPORT_POLL_TIMER, nil)
+    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
     device:set_field(EXPORT_POLL_TIMER_IS_SET, nil)
   end
 end
@@ -128,20 +131,28 @@ end
 
 local function create_poll_report_schedule(device)
   local export_timer = device.thread:call_on_schedule(
-    EXPORT_REPORT_TIMEOUT,
+    device:get_field(EXPORT_REPORT_TIMEOUT),
     send_export_poll_report(device, device:get_field(TOTAL_EXPORTED_ENERGY)),
     "polling_export_report_schedule_timer"
   )
-  device:set_field(RECURRING_EXPORT_POLL_TIMER, export_timer)
+  device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
 end
 
-local function set_poll_report_timer_and_schedule(device)
-  if not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
+local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
+  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID,
+    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+  if #cumul_eps == 0 then
+    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true)
+  end
+  if #cumul_eps > 0 and not is_cumulative_report then
+    return
+  elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
     device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
   else
     local first_timestamp = device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP)
-    local second_timestamp = device:get_field(os.time())
-    local report_interval_secs = first_timestamp - second_timestamp
+    local second_timestamp = os.time()
+    local report_interval_secs = second_timestamp - first_timestamp
     device:set_field(EXPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumption
     if device:supports_capability(capabilities.powerConsumptionReport) then
@@ -631,24 +642,25 @@ local function occupancy_attr_handler(driver, device, ib, response)
 end
 
 local function cumul_energy_exported_handler(driver, device, ib, response)
-  device:set_field(TOTAL_EXPORTED_ENERGY, ib.data.elements["Energy"])
-  device:emit_event(capabilities.energyMeter.energy({ value = ib.data.elements["Energy"], unit = "Wh" }))
+  device:set_field(TOTAL_EXPORTED_ENERGY, ib.data.elements.energy.value)
+  device:emit_event(capabilities.energyMeter.energy({ value = ib.data.elements.energy.value, unit = "Wh" }))
 end
 
 local function per_energy_exported_handler(driver, device, ib, response)
-  local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY)
-  local summed_energy_report = latest_energy_report + ib.data.elements["Energy"]
+  local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+  local summed_energy_report = latest_energy_report + ib.data.elements.energy.value
   device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
-  device:emit_event(capabilities.energyMeter.energy({ value = ib.data.elements["Energy"], unit = "Wh" }))
+  device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
 end
 
 local function energy_report_handler_factory(is_cumulative_report)
   return function(driver, device, ib, response)
     if not device:get_field(EXPORT_POLL_TIMER_IS_SET) then
-      set_poll_report_timer_and_schedule(device)
-    elseif is_cumulative_report then
+      set_poll_report_timer_and_schedule(device, is_cumulative_report)
+    end
+    if is_cumulative_report then
       cumul_energy_exported_handler(driver, device, ib, response)
-    else
+    elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
       per_energy_exported_handler(driver, device, ib, response)
     end
   end
@@ -686,6 +698,14 @@ local function device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
+  end
+
+  -- Reset the values
+  if device:supports_capability(capabilities.powerMeter) then
+    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
+  end
+  if device:supports_capability(capabilities.energyMeter) then
+    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -726,7 +746,7 @@ local matter_driver_template = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
       },
       [clusters.ElectricalPowerMeasurement.ID] = {
-        [clusters.ElectricalPowerMeasurement.attributes.activePower.ID] = active_power_handler,
+        [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
