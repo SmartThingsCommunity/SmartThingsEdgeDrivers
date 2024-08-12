@@ -6,13 +6,15 @@ local version = require "version"
 if version.api < 10 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
 end
 
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
   [clusters.ElectricalEnergyMeasurement] = clusters.ElectricalEnergyMeasurement,
-  [clusters.ElectricalPowerMeasurement] = clusters.ElectricalPowerMeasurement
+  [clusters.ElectricalPowerMeasurement] = clusters.ElectricalPowerMeasurement,
+  [clusters.ValveConfigurationAndControl] = clusters.ValveConfigurationAndControl
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)

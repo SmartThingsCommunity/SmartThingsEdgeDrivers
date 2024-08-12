@@ -86,6 +86,7 @@ local version = require "version"
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
 end
 
 -- Return a ISO 8061 formatted timestamp in UTC (Z)
