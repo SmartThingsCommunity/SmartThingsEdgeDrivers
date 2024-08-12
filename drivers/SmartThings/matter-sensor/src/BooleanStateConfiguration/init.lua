@@ -75,24 +75,6 @@ end
 BooleanStateConfiguration.attributes = {}
 setmetatable(BooleanStateConfiguration.attributes, attribute_helper_mt)
 
-local command_helper_mt = {}
-command_helper_mt.__index = function(self, key)
-  local direction = BooleanStateConfiguration.command_direction_map[key]
-  if direction == nil then
-    error(string.format("Referenced unknown command %s on cluster %s", key, BooleanStateConfiguration.NAME))
-  end
-  return BooleanStateConfiguration[direction].commands[key]
-end
-BooleanStateConfiguration.commands = {}
-setmetatable(BooleanStateConfiguration.commands, command_helper_mt)
-
-local event_helper_mt = {}
-event_helper_mt.__index = function(self, key)
-  return BooleanStateConfiguration.server.events[key]
-end
-BooleanStateConfiguration.events = {}
-setmetatable(BooleanStateConfiguration.events, event_helper_mt)
-
 setmetatable(BooleanStateConfiguration, {__index = cluster_base})
 
 return BooleanStateConfiguration
