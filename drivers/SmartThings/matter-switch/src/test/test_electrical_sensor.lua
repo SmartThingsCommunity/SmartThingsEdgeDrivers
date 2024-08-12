@@ -161,6 +161,14 @@ local cumulative_report_val_29 = {
   end_systime = 0,
 }
 
+local cumulative_report_val_39 = {
+  energy = 39,
+  start_timestamp = 0,
+  end_timestamp = 0,
+  start_systime = 0,
+  end_systime = 0,
+}
+
 test.register_message_test(
   "Cumulative Energy measurement should generate correct messages",
   {
@@ -177,6 +185,42 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19, unit="Wh"}))
     },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_29)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1969-12-31T23:59:59Z",
+        deltaEnergy = 0.0,
+        energy = 19
+      }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 29, unit="Wh"}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_39)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 39, unit="Wh"}))
+    },
   }
 )
 
@@ -187,6 +231,28 @@ local periodic_report_val_23 = {
     start_systime = 0,
     end_systime = 0,
 }
+
+test.register_message_test(
+  "Periodic Energy as subordinate to Cumulative Energy measurement should not generate any messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+      }
+    },
+  }
+)
 
 test.register_message_test(
   "Periodic Energy measurement should generate correct messages",
