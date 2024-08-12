@@ -1,4 +1,4 @@
-name: freeze-fault
+name: freeze-battery
 components:
 - id: main
   capabilities:
@@ -10,7 +10,7 @@ components:
           enabledValues:
             - cleared
             - freeze
-  - id: hardwareFault
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1

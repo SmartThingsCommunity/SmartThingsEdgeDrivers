@@ -2,11 +2,17 @@ name: freeze
 components:
 - id: main
   capabilities:
-  - id: temperatureAlert
+  - id: temperatureAlarm
     version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: ContactSensor
+  - name: LeakSensor

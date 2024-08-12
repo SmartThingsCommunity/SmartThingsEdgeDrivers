@@ -1,4 +1,4 @@
-name: electrical-power-measure
+name: electrical-measure
 components:
   - id: main
     capabilities:
@@ -11,4 +11,4 @@ components:
       - id: refresh
         version: 1
     categories:
-    - name: AirQualityDetector
+    - name: SmartPlug

@@ -1,4 +1,4 @@
-name: freeze-fault
+name: freeze-leak-battery
 components:
 - id: main
   capabilities:
@@ -10,7 +10,9 @@ components:
           enabledValues:
             - cleared
             - freeze
-  - id: hardwareFault
+  - id: waterSensor
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1

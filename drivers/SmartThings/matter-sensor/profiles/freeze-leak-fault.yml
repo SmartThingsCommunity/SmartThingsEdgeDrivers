@@ -4,6 +4,12 @@ components:
   capabilities:
   - id: temperatureAlarm
     version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
   - id: waterSensor
     version: 1
   - id: hardwareFault
@@ -13,4 +19,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: ContactSensor
+  - name: LeakSensor

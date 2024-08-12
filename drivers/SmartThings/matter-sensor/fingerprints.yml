@@ -142,7 +142,7 @@ matterGeneric:
     deviceLabel: Matter Water Freeze Detector
     deviceTypes:
       - id: 0x0041
-    deviceProfileName: freeze-battery
+    deviceProfileName: freeze
   - id: "matter/leak/detector"
     deviceLabel: Matter Water Leak Detector
     deviceTypes:

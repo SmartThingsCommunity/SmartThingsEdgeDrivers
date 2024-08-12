@@ -2324,7 +2324,7 @@ matterGeneric:
     deviceLabel: Matter Electrical Sensor
     deviceTypes:
       - id: 0x0510 # Electrical Sensor
-    deviceProfileName: electrical-power-measure
+    deviceProfileName: power-energy-powerConsumption
 
 matterThing:
   - id: SmartThings/MatterThing

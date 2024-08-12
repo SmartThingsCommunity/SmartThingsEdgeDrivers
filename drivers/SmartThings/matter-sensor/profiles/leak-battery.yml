@@ -1,8 +1,10 @@
-name: rain
+name: leak-battery
 components:
 - id: main
   capabilities:
-  - id: rainSensor
+  - id: waterSensor
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
