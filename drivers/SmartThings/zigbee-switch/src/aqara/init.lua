@@ -162,9 +162,16 @@ local function wireless_switch_handler(driver, device, value, zb_rx)
   end
 end
 
-local function energy_meter_power_consumption_report(device, raw_value)
+local function energy_meter_power_consumption_report(driver, device, value, zb_rx)
+  local raw_value = value.value
   -- energy meter
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+  local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
+  if raw_value < offset then
+    --- somehow our value has gone below the offset, so we'll reset the offset, since the device seems to have
+    offset = 0
+    device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
+  end
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value - offset, unit = "Wh" }))
 
   -- report interval
   local current_time = os.time()
@@ -189,11 +196,6 @@ local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value -- '10W'
   raw_value = raw_value / 10
   device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
-end
-
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value -- 'Wh'
-  energy_meter_power_consumption_report(device, raw_value)
 end
 
 local function do_refresh(self, device)
@@ -255,7 +257,7 @@ local aqara_switch_handler = {
         [ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
       },
       [SimpleMetering.ID] = {
-        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_power_consumption_report
       },
       [WIRELESS_SWITCH_CLUSTER_ID] = {
         [WIRELESS_SWITCH_ATTRIBUTE_ID] = wireless_switch_handler
