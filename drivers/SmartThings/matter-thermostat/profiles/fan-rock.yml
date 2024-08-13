@@ -1,4 +1,4 @@
-name: fan
+name: fan-rock
 components:
 - id: main
   capabilities:
