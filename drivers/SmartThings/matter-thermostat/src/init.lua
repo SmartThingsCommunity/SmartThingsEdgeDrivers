@@ -781,7 +781,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
         "high",
         "auto"
       }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
       supportedAcFanModes = {
         "off",
         "high",
@@ -826,7 +826,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
       }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
       supportedAirPurifierFanModes = {
         capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
@@ -845,7 +845,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
     -- Our thermostat fan mode control is probably not granular enough to handle the supported modes here well
     -- definitely meant for actual fans and not HVAC fans
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
-      ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+      ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
         {capabilities.thermostatFanMode.thermostatFanMode.auto.NAME, capabilities.thermostatFanMode.thermostatFanMode.on.NAME},
         {visibility = {displayed = false}}
