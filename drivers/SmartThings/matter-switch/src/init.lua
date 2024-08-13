@@ -231,6 +231,23 @@ local function assign_child_profile(device, child_ep)
   return profile or "switch-binary"
 end
 
+local function do_configure(driver, device)
+  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
+  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+  local profile_name = nil
+  if #energy_eps > 0 and #power_eps > 0 then
+    profile_name = "power-energy-powerConsumption"
+  elseif #energy_eps > 0 then
+    profile_name = "electrical-energy-powerConsumption"
+  elseif #power_eps > 0 then
+    profile_name = "electrical-power"
+  end
+
+  if profile_name then
+    device:try_update_metadata({ profile = profile_name })
+  end
+end
+
 local function initialize_switch(driver, device)
   local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
@@ -718,7 +735,8 @@ local matter_driver_template = {
     init = device_init,
     added = device_added,
     removed = device_removed,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {

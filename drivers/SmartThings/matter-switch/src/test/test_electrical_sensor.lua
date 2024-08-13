@@ -52,7 +52,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 
 local mock_device_periodic = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("electrical-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -526,6 +526,26 @@ test.register_coroutine_test(
     assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
     assert(export_timer_length ~= nil, "export_timer_length should exist")
     assert(export_timer_length == 2000, "export_timer should min_interval")
+  end,
+  { test_init = test_init_periodic }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for Electrical Sensor device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ profile = "power-energy-powerConsumption" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for only Periodic Electrical Sensor device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "doConfigure" })
+    mock_device_periodic:expect_metadata_update({ profile = "electrical-energy-powerConsumption" })
+    mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_periodic }
 )

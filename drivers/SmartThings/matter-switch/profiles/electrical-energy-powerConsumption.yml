@@ -1,4 +1,4 @@
-name: electrical-measure
+name: electrical-energy-powerConsumption
 components:
   - id: main
     capabilities:
