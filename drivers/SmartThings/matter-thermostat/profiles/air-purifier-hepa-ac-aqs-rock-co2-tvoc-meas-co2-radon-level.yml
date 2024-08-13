@@ -1,4 +1,4 @@
-name: air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level
+name: air-purifier-hepa-ac-rock-aqs-co2-tvoc-meas-co2-radon-level
 components:
 - id: main
   label: Main

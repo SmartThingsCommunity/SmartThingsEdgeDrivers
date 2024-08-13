@@ -200,7 +200,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -331,7 +331,9 @@ local cluster_subscribe_list_configured = {
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
-    clusters.FanControl.attributes.WindSetting
+    clusters.FanControl.attributes.WindSetting,
+    clusters.FanControl.attributes.RockSupport,
+    clusters.FanControl.attributes.RockSetting,
   },
   [capabilities.filterState.ID] = {
     clusters.HepaFilterMonitoring.attributes.Condition,
@@ -433,7 +435,7 @@ test.register_coroutine_test(
   "Test profile change on init for AP and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
-    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
+    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-aqs-co2-tvoc-meas-co2-radon-level" })
     mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_ap_aqs }
@@ -443,7 +445,7 @@ test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
-    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
+    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     print(mock_device_ap_thermo_aqs.profile)
   end,
@@ -779,6 +781,19 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.supportedFanOscillationModes(supportedFanRock, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:build_test_report_data(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_UP_DOWN)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.vertical())
     },
     {
       channel = "matter",
