@@ -37,23 +37,37 @@ if version.api < 10 then
   clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
   clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
   clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
+end
 local BATTERY_CHECKED = "__battery_checked"
-local TEMP_BOUND_RECEIVED = "__temp_bound_received"
-local TEMP_MIN = "__temp_min"
-local TEMP_MAX = "__temp_max"
+local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
 
 local HUE_MANUFACTURER_ID = 0x100B
 
-local function get_field_for_endpoint(device, field, endpoint)
-  return device:get_field(string.format("%s_%d", field, endpoint))
-end
+local BOOLEAN_DEVICE_TYPE_INFO = {
+  ["RAIN_SENSOR"] = { id = 0x0044, },
+  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, },
+  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, },
+  ["CONTACT_SENSOR"] = { id = 0x0015, },
+}
 
-local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
-  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+local function set_device_type_per_endpoint(driver, device)
+  for _, ep in ipairs(device.endpoints) do
+      for _, dt in ipairs(ep.device_types) do
+          for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+              if dt.device_type_id == info.id then
+                  device:set_field(dt_name, ep.endpoint_id)
+              end
+          end
+      end
+  end
+  device:set_field(BOOLEAN_DEVICE_TYPES_CHECKED, 1, {persist = true})
 end
 
 local function supports_battery_percentage_remaining(device)
@@ -93,6 +107,22 @@ local function check_for_battery(device)
     profile_name = profile_name .. "-pressure"
   end
 
+  if device:supports_capability(capabilities.rainSensor) then
+    profile_name = profile_name .. "-rain"
+  end
+
+  if device:supports_capability(capabilities.temperatureAlarm) then
+    profile_name = profile_name .. "-freeze"
+  end
+
+  if device:supports_capability(capabilities.waterSensor) then
+    profile_name = profile_name .. "-leak"
+  end
+
+  if device:supports_capability(capabilities.hardwareFault) then
+    profile_name = profile_name .. "-fault"
+  end
+
   if supports_battery_percentage_remaining(device) then
     profile_name = profile_name .. "-battery"
   end
@@ -108,6 +138,9 @@ local function device_init(driver, device)
   log.info("device init")
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
+  end
+  if not device:get_field(BOOLEAN_DEVICE_TYPES_CHECKED) then
+    set_device_type_per_endpoint(driver, device)
   end
   device:subscribe()
 end
@@ -132,30 +165,6 @@ local function temperature_attr_handler(driver, device, ib, response)
   end
 end
 
-local temp_attr_handler_factory = function(minOrMax)
-  return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 4 (unit conversion for temperature
-    -- range capability is only supported for RPC >= 4)
-    if ib.data.value == nil or version.rpc < 4 then
-      return
-    end
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
-    local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
-    if min ~= nil and max ~= nil then
-      if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
-      else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
-      end
-    end
-  end
-end
-
 local function humidity_attr_handler(driver, device, ib, response)
   local measured_value = ib.data.value
   if measured_value ~= nil then
@@ -164,11 +173,47 @@ local function humidity_attr_handler(driver, device, ib, response)
   end
 end
 
+local BOOLEAN_CAP_EVENT_MAP = {
+  [true] = {
+      ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.freeze(),
+      ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.wet(),
+      ["RAIN_SENSOR"] = capabilities.rainSensor.rain.detected(),
+      ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.closed(),
+  },
+  [false] = {
+      ["WATER_FREEZE_DETECTOR"] = capabilities.temperatureAlarm.temperatureAlarm.cleared(),
+      ["WATER_LEAK_DETECTOR"] = capabilities.waterSensor.water.dry(),
+      ["RAIN_SENSOR"] = capabilities.rainSensor.rain.undetected(),
+      ["CONTACT_SENSOR"] =  capabilities.contactSensor.contact.open(),
+  }
+}
+
 local function boolean_attr_handler(driver, device, ib, response)
-  if ib.data.value then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.closed())
+  local name = nil
+  for dt_name, _ in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+      local dt_ep_id = device:get_field(dt_name)
+      if ib.endpoint_id == dt_ep_id then
+          name = dt_name
+          break
+      end
+  end
+  if name == nil then
+    -- The generic case where no device type has been specified but the profile uses this capability.
+    if device:supports_capability(capabilities.contactSensor) then
+      device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value]["CONTACT_SENSOR"])
+    else
+      log.error("No Boolean device type found on an endpoint, BooleanState handler aborted")
+    end
+    return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
+end
+
+local function sensor_fault_handler(driver, device, ib, response)
+  if ib.data.value > 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.detected())
   else
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.contactSensor.contact.open())
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.clear())
   end
 end
 
@@ -202,9 +247,7 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
@@ -221,6 +264,9 @@ local matter_driver_template = {
       [clusters.PressureMeasurement.ID] = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = pressure_attr_handler,
       },
+      [clusters.BooleanStateConfiguration.ID] = {
+        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
+    },
     }
   },
   -- TODO Once capabilities all have default handlers move this info there, and
@@ -230,9 +276,7 @@ local matter_driver_template = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MeasuredValue
     },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
@@ -333,11 +377,21 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [capabilities.hardwareFault.ID] = {
-      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.BooleanStateConfiguration.attributes.SensorFault,
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
+    [capabilities.waterSensor.ID] = {
+        clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.temperatureAlarm.ID] = {
+        clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.rainSensor.ID] = {
+        clusters.BooleanState.attributes.StateValue,
+    }
   },
   capability_handlers = {
   },
@@ -349,6 +403,10 @@ local matter_driver_template = {
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
+    capabilities.waterSensor,
+    capabilities.temperatureAlarm,
+    capabilities.rainSensor,
+    capabilities.hardwareFault
   },
   sub_drivers = {
     require("air-quality-sensor"),

@@ -300,8 +300,6 @@ local cluster_subscribe_list_configured = {
   [capabilities.temperatureMeasurement.ID] = {
     clusters.Thermostat.attributes.LocalTemperature,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
   },
   [capabilities.relativeHumidityMeasurement.ID] = {
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -319,8 +317,6 @@ local cluster_subscribe_list_configured = {
   },
   [capabilities.thermostatHeatingSetpoint.ID] = {
     clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
-    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
   },
   [capabilities.airPurifierFanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
@@ -445,9 +441,11 @@ test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
+    local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
+    read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
+    test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, read_limits})
     mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    print(mock_device_ap_thermo_aqs.profile)
   end,
   { test_init = test_init_ap_thermo_aqs }
 )

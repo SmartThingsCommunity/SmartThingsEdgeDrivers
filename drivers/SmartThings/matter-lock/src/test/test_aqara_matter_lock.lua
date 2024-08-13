@@ -158,7 +158,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.unableToLockTheDoor()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.unableToLockTheDoor({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -173,7 +176,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.lockFactoryReset()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.lockFactoryReset({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -188,7 +194,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.attemptsExceeded()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.attemptsExceeded({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -203,7 +212,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.damaged()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.damaged({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -218,7 +230,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.forcedOpeningAttempt()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true})
+      ),
     },
   }
 )
@@ -229,7 +244,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.clear({state_change = true})
+      )
     )
 end
 )

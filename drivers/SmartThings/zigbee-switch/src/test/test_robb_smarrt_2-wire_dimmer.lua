@@ -95,6 +95,23 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Handle Power meter",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id,
+        SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_device, 90) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.0, unit = "W" }))
+    }
+  }
+)
+
+test.register_message_test(
   "Handle Energy meter",
   {
     {
