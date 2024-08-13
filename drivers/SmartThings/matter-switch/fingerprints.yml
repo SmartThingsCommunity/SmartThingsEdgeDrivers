@@ -2325,6 +2325,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0510 # Electrical Sensor
     deviceProfileName: power-energy-powerConsumption
+  - id: "matter/water-valve"
+    deviceLabel: Matter Water Valve
+    deviceTypes:
+      - id: 0x0042 # Water Valve
+    deviceProfileName: water-valve
 
 matterThing:
   - id: SmartThings/MatterThing
