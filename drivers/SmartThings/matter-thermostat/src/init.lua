@@ -69,6 +69,12 @@ local WIND_MODE_MAP = {
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
+local ROCK_MODE_MAP = {
+  [0] = capabilities.fanOscillationMode.fanOscillationMode.horizontal,
+  [1] = capabilities.fanOscillationMode.fanOscillationMode.vertical,
+  [2] = capabilities.fanOscillationMode.fanOscillationMode.swing
+}
+
 local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
@@ -124,6 +130,10 @@ local subscribed_attributes = {
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
     clusters.FanControl.attributes.WindSetting
+  },
+  [capabilities.fanOscillationMode.ID] = {
+    clusters.FanControl.attributes.RockSupport,
+    clusters.FanControl.attributes.RockSetting
   },
   [capabilities.battery.ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining
@@ -323,6 +333,7 @@ local function do_configure(driver, device)
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.ROCK})
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   -- use get_endpoints for embedded clusters
@@ -346,6 +357,9 @@ local function do_configure(driver, device)
     end
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
+    end
+    if #rock_eps > 0 then
+      profile_name = profile_name .. "-rock"
     end
 
     if #thermo_eps > 0 then
@@ -456,6 +470,7 @@ local function device_added(driver, device)
   device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   device:send(clusters.FanControl.attributes.FanModeSequence:read(device))
   device:send(clusters.FanControl.attributes.WindSupport:read(device))
+  device:send(clusters.FanControl.attributes.RockSupport:read(device))
 end
 
 local function store_unit_factory(capability_name)
@@ -873,6 +888,27 @@ local function wind_setting_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windMode.windMode.noWind())
 end
 
+local function rock_support_handler(driver, device, ib, response)
+  local supported_rock_modes = {capabilities.fanOscillationMode.fanOscillationMode.off.NAME}
+  for mode, rock_mode in pairs(ROCK_MODE_MAP) do
+    if ((ib.data.value >> mode) & 1) > 0 then
+      table.insert(supported_rock_modes, rock_mode.NAME)
+    end
+  end
+  local event = capabilities.fanOscillationMode.supportedFanOscillationModes(supported_rock_modes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+local function rock_setting_handler(driver, device, ib, response)
+  for index, rock_mode in pairs(ROCK_MODE_MAP) do
+    if ((ib.data.value >> index) & 1) > 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, rock_mode())
+      return
+    end
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanOscillationMode.fanOscillationMode.off())
+end
+
 local function hepa_filter_condition_handler(driver, device, ib, response)
   local component = device.profile.components["hepaFilter"]
   local condition = ib.data.value
@@ -1100,6 +1136,18 @@ local function set_wind_mode(driver, device, cmd)
   device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), wind_mode))
 end
 
+local function set_rock_mode(driver, device, cmd)
+  local rock_mode = 0
+  if cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.horizontal.NAME then
+    rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_LEFT_RIGHT
+  elseif cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.vertical.NAME then
+    rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_UP_DOWN
+  elseif cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.swing.NAME then
+    rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_ROUND
+  end
+  device:send(clusters.FanControl.attributes.RockSetting:write(device, device:component_to_endpoint(cmd.component), rock_mode))
+end
+
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
@@ -1136,7 +1184,9 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
-        [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler
+        [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
+        [clusters.FanControl.attributes.RockSupport.ID] = rock_support_handler,
+        [clusters.FanControl.attributes.RockSetting.ID] = rock_setting_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
@@ -1246,6 +1296,9 @@ local matter_driver_template = {
     },
     [capabilities.windMode.ID] = {
       [capabilities.windMode.commands.setWindMode.NAME] = set_wind_mode,
+    },
+    [capabilities.fanOscillationMode.ID] = {
+      [capabilities.fanOscillationMode.commands.setFanOscillationMode.NAME] = set_rock_mode,
     }
   },
   supported_capabilities = {
@@ -1258,6 +1311,7 @@ local matter_driver_template = {
     capabilities.fanSpeedPercent,
     capabilities.airPurifierFanMode,
     capabilities.windMode,
+    capabilities.fanOscillationMode,
     capabilities.battery,
     capabilities.filterState,
     capabilities.filterStatus,
