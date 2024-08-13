@@ -84,6 +84,8 @@ local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
+local PROFILE_NAME = "__profile_name"
+
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
   MIN_HEAT = "MIN_HEAT",
@@ -505,6 +507,30 @@ local function do_configure(driver, device)
     device:try_update_metadata({profile = profile_name})
   else
     device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
+  end
+
+  -- save profile name if needed
+  device:set_field(PROFILE_NAME, profile_name)
+
+  --Query setpoint limits if needed
+  local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_HEAT) == nil then
+    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read())
+  end
+  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_HEAT) == nil then
+    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
+  end
+  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_COOL) == nil then
+    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
+  end
+  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_COOL) == nil then
+    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
+  end
+  if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
+    setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
+  end
+  if #setpoint_limit_read.info_blocks ~= 0 then
+    device:send(setpoint_limit_read)
   end
 end
 
@@ -943,6 +969,13 @@ local function wind_support_handler(driver, device, ib, response)
     if ((ib.data.value >> mode) & 1) > 0 then
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
+  end
+  -- this check re-profiles devices with a feature map indicating they support WindMode,
+  -- but with a WindSupport value of 0 in their device specifications.
+  if #supported_wind_modes < 2 then
+    local fixed_profile_name = string.gsub(device:get_field(PROFILE_NAME), "-wind", "")
+    device:try_update_metadata({profile = fixed_profile_name})
+    return
   end
   local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
