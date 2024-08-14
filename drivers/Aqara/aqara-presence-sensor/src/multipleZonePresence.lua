@@ -91,6 +91,12 @@ function mzp.changeState(id, state)
   return err, changedId
 end
 
+function mzp.setZoneInfo(zoneInfoTable)
+  if zoneInfoTable then
+    mzp.zoneInfoTable = zoneInfoTable
+  end
+end
+
 mzp.commands.updateZoneName = {}
 mzp.commands.updateZoneName.name = "updateZoneName"
 function mzp.commands.updateZoneName.handler(driver, device, args)
@@ -118,8 +124,7 @@ function mzp.commands.createZone.handler(driver, device, args)
 end
 
 function mzp.updateAttribute(driver, device)
-  device:emit_event(mzp.capability.zoneState({ value = mzp.zoneInfoTable },
-    { data = { lastId = "MYID", state = "present" } }))
+  device:emit_event(mzp.capability.zoneState({ value = mzp.zoneInfoTable }))
 end
 
 return mzp

@@ -11,9 +11,11 @@ local function set_device_field(driver, device)
   local device_cache_value = device_discovery_cache[device.device_network_id]
 
   -- persistent fields
-  device:set_field(fields.DEVICE_IPV4, device_cache_value.ip, { persist = true })
-  device:set_field(fields.DEVICE_INFO, device_cache_value.device_info, { persist = true })
-  device:set_field(fields.CREDENTIAL, device_cache_value.credential, { persist = true })
+  if device_cache_value ~= nil then
+    device:set_field(fields.DEVICE_IPV4, device_cache_value.ip, { persist = true })
+    device:set_field(fields.DEVICE_INFO, device_cache_value.device_info, { persist = true })
+    device:set_field(fields.CREDENTIAL, device_cache_value.credential, { persist = true })
+  end
 end
 
 local function update_device_discovery_cache(driver, dni, ip, credential)
@@ -47,8 +49,7 @@ function discovery.device_added(driver, device)
 end
 
 function discovery.find_ip_table(driver)
-  local ip_table = discovery_mdns.find_ip_table_by_mdns(driver)
-  return ip_table
+  return discovery_mdns.find_ip_table_by_mdns(driver)
 end
 
 local function discovery_device(driver)
@@ -63,7 +64,7 @@ local function discovery_device(driver)
   local ip_table = discovery.find_ip_table(driver)
 
   for dni, ip in pairs(ip_table) do
-    if not known_devices or not known_devices[dni] then
+    if not known_devices[dni] then
       unknown_discovered_devices[dni] = ip
     else
       known_discovered_devices[dni] = ip

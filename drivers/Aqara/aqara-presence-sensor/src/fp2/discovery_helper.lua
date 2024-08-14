@@ -29,7 +29,7 @@ function discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
   local device_info = fp2_api.get_info(device_ip, fp2_api.labeled_socket_builder(device_dni))
 
   if not device_info then
-    log.error(string.format("failed to create device create msg. device_info is nil."))
+    log.warn("failed to create device create msg. device_info is nil.")
     return nil
   end
 
@@ -49,7 +49,7 @@ function discovery_helper.get_credential(driver, bridge_dni, bridge_ip)
   local credential = fp2_api.get_credential(bridge_ip, fp2_api.labeled_socket_builder(bridge_dni))
 
   if not credential then
-    log.error("credential is nil")
+    log.warn("credential is nil")
     return nil
   end
 
@@ -60,7 +60,7 @@ function discovery_helper.get_connection_info(driver, device_dni, device_ip, dev
   local conn_info = fp2_api.new_device_manager(device_ip, device_info, fp2_api.labeled_socket_builder(device_dni))
 
   if conn_info == nil then
-    log.error("conn_info is nil")
+    log.warn("conn_info is nil")
   end
 
   return conn_info
@@ -70,7 +70,7 @@ function discovery_helper.get_device_info(driver, device_dni, device_ip)
   local device_info = fp2_api.get_info(device_ip, fp2_api.labeled_socket_builder(device_dni))
 
   if device_info == nil then
-    log.error("device_info is nil")
+    log.warn("device_info is nil")
   end
 
   return device_info

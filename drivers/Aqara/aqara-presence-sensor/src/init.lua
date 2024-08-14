@@ -39,7 +39,7 @@ local function create_sse(driver, device, credential)
   local conn_info = device:get_field(fields.CONN_INFO)
 
   if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
-    log.error("create_sse : invalid connection")
+    log.warn("create_sse : invalid connection")
     return
   end
 
@@ -51,9 +51,6 @@ local function create_sse(driver, device, credential)
     local label = string.format("%s-SSE", device.device_network_id)
     local eventsource = EventSource.new(sse_url, { [CREDENTIAL_KEY_HEADER] = credential },
       fp2_api.labeled_socket_builder(label))
-    -- sync
-    -- status_update(driver, device) -- for test
-    -- end of sync
 
     eventsource.onmessage = function(msg)
       if msg then
@@ -100,6 +97,8 @@ local function find_new_connetion(driver, device)
     device:set_field(fields.DEVICE_IPV4, ip, { persist = true })
     local device_info = device:get_field(fields.DEVICE_INFO)
     update_connection(driver, device, ip, device_info)
+  else
+    log.warn("find new conneciton : ip is nil")
   end
 end
 
@@ -185,16 +184,14 @@ local function device_init(driver, device)
   create_monitoring_thread(driver, device, device_info)
   update_connection(driver, device, device_ip, device_info)
 
+  driver.device_manager.set_zone_info_to_latest_state(driver, device)
+
   do_refresh(driver, device, nil)
   device:set_field(fields._INIT, true, { persist = false })
 end
 
 local function device_info_changed(driver, device, event, args)
   do_refresh(driver, device, nil)
-end
-
-local function configure_handler(driver, device, event, args)
-  -- no action
 end
 
 local lan_driver = Driver("aqara-fp2",
@@ -204,7 +201,6 @@ local lan_driver = Driver("aqara-fp2",
       added = discovery.device_added,
       init = device_init,
       infoChanged = device_info_changed,
-      doConfigure = configure_handler,
       removed = device_removed
     },
     capability_handlers = {
@@ -224,4 +220,3 @@ local lan_driver = Driver("aqara-fp2",
 )
 
 lan_driver:run()
-log.warn("lan driver exiting")

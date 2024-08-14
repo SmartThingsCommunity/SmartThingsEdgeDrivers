@@ -115,8 +115,8 @@ function device_manager.monitoring_mode_handler(driver, device, zone, evt_value)
 
   local supportedEnum = { "inactive", "approaching", "movingAway", "entering", "leaving" }
   if evt_value == 0x01 then
-    supportedEnum = { "inactive", "approaching", "movingAway", "enteringLeft", "enteringRight", "leavingLeft",
-      "leavingRight" }
+    local additional = { "enteringLeft", "enteringRight", "leavingLeft", "leavingRight" }
+    table.move(additional, 1, #additional, 4, supportedEnum)
   end
 
   device:emit_event(MovementSensor.supportedMovements(supportedEnum, { visibility = { displayed = false } }))
@@ -174,7 +174,8 @@ local resource_id = {
 }
 
 function device_manager.init_presence(driver, device)
-  if device:supports_capability(PresenceSensor) and device:get_latest_state("main", PresenceSensor.ID, PresenceSensor.presence.NAME) == nil then
+  if device:supports_capability(PresenceSensor)
+      and device:get_latest_state("main", PresenceSensor.ID, PresenceSensor.presence.NAME) == nil then
     device:emit_event(PresenceSensor.presence("not present"))
   end
 end
@@ -189,15 +190,25 @@ function device_manager.init_activity(driver, device)
   device:emit_event(ActivitySensor.activity("noActivity"))
 end
 
+function device_manager.set_zone_info_to_latest_state(driver, device)
+  if not device:supports_capability(capabilities.multipleZonePresence) then return end
+
+  local zoneInfoTable = device:get_latest_state("main", capabilities.multipleZonePresence.ID,
+    capabilities.multipleZonePresence.zoneState.NAME, {})
+  multipleZonePresence.setZoneInfo(zoneInfoTable)
+end
+
 function device_manager.handle_status(driver, device, status)
   if not status then
-    log.error("device_manager.handle_status : status is nil")
+    log.warn("device_manager.handle_status : status is nil")
     return
   end
 
   for k, _ in pairs(status) do
     if resource_id[k] then
       resource_id[k].event_handler(driver, device, resource_id[k].zone, tonumber(status[k]))
+    else
+      log.warn("device_manager.handle_status : resource id status is nil")
     end
   end
 end
@@ -231,7 +242,7 @@ function device_manager.handle_sse_event(driver, device, event_type, data)
   local _, device_json = pcall(json.decode, data)
 
   local event_handler = sse_event_handlers[event_type]
-  if event_handler then
+  if event_handler and device_json then
     event_handler(driver, device, device_json)
   else
     log.error(string.format("handle_sse_event : unknown event type. dni = %s, event_type = '%s'",
@@ -261,7 +272,6 @@ function device_manager.is_valid_connection(driver, device, conn_info)
 end
 
 function device_manager.device_monitor(driver, device, device_info)
-  --TODO: add device monitoring logic (ip change, online/offline, etc ..)
   device_manager.refresh(driver, device)
 end
 
