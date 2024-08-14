@@ -47,7 +47,6 @@ if version.api < 11 then
 end
 
 local BATTERY_CHECKED = "__battery_checked"
-local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
 local MAX_SENSITIVITY_LEVEL = "__max_sensitivity_level"
 local MIN_SENSITIVITY_LEVEL = "__min_sensitivity_level"
 
@@ -72,7 +71,6 @@ local function set_device_type_per_endpoint(driver, device)
           end
       end
   end
-  device:set_field(BOOLEAN_DEVICE_TYPES_CHECKED, 1, {persist = true})
 end
 
 local function supports_battery_percentage_remaining(device)
@@ -144,15 +142,14 @@ local function device_init(driver, device)
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
   end
-  if not device:get_field(BOOLEAN_DEVICE_TYPES_CHECKED) then
-    set_device_type_per_endpoint(driver, device)
-  end
+  set_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
+    set_device_type_per_endpoint(driver, device)
   end
   if not device.preferences then
     return
