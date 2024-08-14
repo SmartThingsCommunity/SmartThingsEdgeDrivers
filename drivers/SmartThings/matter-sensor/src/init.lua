@@ -17,6 +17,7 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
 if not pcall(function(cluster) return clusters[cluster] end,
@@ -43,10 +44,12 @@ end
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
-
 end
+
 local BATTERY_CHECKED = "__battery_checked"
 local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
+local MAX_SENSITIVITY_LEVEL = "__max_sensitivity_level"
+local MIN_SENSITIVITY_LEVEL = "__min_sensitivity_level"
 
 local HUE_MANUFACTURER_ID = 0x100B
 
@@ -149,6 +152,25 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
   end
+  if not device.preferences or (device.preferences["certifiedpreferences.booleanConfigSensitivity"] == args.old_st_store.preferences["certifiedpreferences.booleanConfigSensitivity"]) then
+    return
+  end
+  local eps = embedded_cluster_utils.get_endpoints(device, clusters.BooleanStateConfiguration.ID)
+  if #eps > 0 then
+    local bool_config_sensitivity = device.preferences["certifiedpreferences.booleanConfigSensitivity"]
+    local updated_sensitivity_level = nil
+    if bool_config_sensitivity == "0" then -- High
+      updated_sensitivity_level = device:get_field(MAX_SENSITIVITY_LEVEL) - 1
+    elseif bool_config_sensitivity == "1" then -- Low
+      updated_sensitivity_level = device:get_field(MIN_SENSITIVITY_LEVEL)
+    end
+    for dt_name, _ in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+      local dt_ep = device:get_field(dt_name)
+      if dt_ep then
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, updated_sensitivity_level))
+      end
+    end
+  end
 end
 
 local function illuminance_attr_handler(driver, device, ib, response)
@@ -209,6 +231,19 @@ local function boolean_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
 end
 
+local function supported_sensitivities_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:set_field(MAX_SENSITIVITY_LEVEL, ib.data.value)
+    device:set_field(MIN_SENSITIVITY_LEVEL, 0)
+  end
+end
+
+local function default_sensitivity_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, ib.endpoint_id, ib.data.value))
+  end
+end
+
 local function sensor_fault_handler(driver, device, ib, response)
   if ib.data.value > 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.detected())
@@ -266,6 +301,8 @@ local matter_driver_template = {
       },
       [clusters.BooleanStateConfiguration.ID] = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
+        [clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel.ID] = default_sensitivity_handler,
     },
     }
   },

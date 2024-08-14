@@ -197,5 +197,12 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "Check that preference udpates as expected", function()
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { booleanConfigSensitivity = 1 } }))
+    test.socket.matter:__expect_send(mock_device_freeze_leak.id, 1, 2)
+  end
+)
+
 
 test.run_registered_tests()
