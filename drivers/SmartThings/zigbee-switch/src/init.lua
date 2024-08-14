@@ -21,6 +21,17 @@ local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 
+local Groups = clusters.Groups
+local log = require "log"
+local zigbee_zcl = require "st.zigbee.zcl"
+local messages = require "st.zigbee.messages"
+local data_types = require "st.zigbee.data_types"
+local zigbee_constants = require "st.zigbee.constants"
+local generic_body = require "st.zigbee.generic_body"
+local utils = require "st.utils"
+GROUP_ID = 0x1234
+
+
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"
@@ -37,6 +48,60 @@ end
 local function info_changed(self, device, event, args)
   preferences.update_preferences(self, device, args)
 end
+
+local function send_on_to_group(device, group_id)
+  log.info(string.format("Sending On command to group 0x%04X", group_id)) 
+  tx_msg = clusters.OnOff.server.commands.On(device)
+  tx_msg.address_header.dest_addr.value = group_id
+  tx_msg.address_header.dest_endpoint.value = 0xFF
+  tx_msg.tx_options.value = 0x01
+  device:send(tx_msg)
+end
+
+local function send_off_to_group(device, group_id)
+  log.info(string.format("Sending Off command to group 0x%04X", group_id)) 
+  tx_msg = clusters.OnOff.server.commands.Off(device)
+  tx_msg.address_header.dest_addr.value = group_id
+  tx_msg.address_header.dest_endpoint.value = 0xFF
+  tx_msg.tx_options.value = 0x01
+  device:send(tx_msg)
+end
+
+local function add_to_group(device, group_id)
+  log.info(string.format("Adding device to group 0x%04X", group_id))
+  device:send(Groups.server.commands.AddGroup(device, group_id))
+end
+
+local function add_to_group_response(self, device, value, zb_rx)
+  log.info(string.format("add_to_group_response value=%s zb_rx=%s", value, zb_rx))
+end
+
+local function get_group_membership(device)
+  log.info(string.format("Getting group membership"))
+  device:send(Groups.server.commands.GetGroupMembership(device, {}))
+end
+
+local function get_group_membership_response(self, device, zb_rx)
+  zcl_body = zb_rx.body.zcl_body
+  log.info(string.format("get_group_membership_response: %s", utils.stringify_table(zcl_body)))
+  
+  already_in_group = false
+  for _, group_entry in ipairs(zcl_body.group_list_list) do
+    if group_entry.value == GROUP_ID then
+      log.info("Already in group")
+      already_in_group = true
+      break
+    end
+  end
+
+  if not already_in_group then
+    log.info("Not already in group")
+    add_to_group(device, GROUP_ID)
+  end
+  --send_on_to_group(device, GROUP_ID)
+  --send_off_to_group(device, GROUP_ID)
+end
+
 
 local do_configure = function(self, device)
   device:refresh()
@@ -83,6 +148,16 @@ local device_init = function(self, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+
+  get_group_membership(device)
+end
+
+local function handle_switch_on(driver, device, cmd)
+  send_on_to_group(device, GROUP_ID)
+end
+
+local function handle_switch_off(driver, device, cmd)
+  send_off_to_group(device, GROUP_ID)
 end
 
 local zigbee_switch_driver_template = {
@@ -93,7 +168,7 @@ local zigbee_switch_driver_template = {
     capabilities.colorTemperature,
     capabilities.powerMeter,
     capabilities.energyMeter,
-    capabilities.motionSensor
+    capabilities.motionSensor,
   },
   sub_drivers = {
     lazy_load_if_possible("hanssem"),
@@ -123,10 +198,25 @@ local zigbee_switch_driver_template = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure
+  },
+  zigbee_handlers = {
+    cluster = {
+      [Groups.ID] = {
+        [Groups.client.commands.AddGroupResponse.ID] = add_to_group_response,
+        [Groups.client.commands.GetGroupMembershipResponse.ID] = get_group_membership_response
+      },
+    },
+  },
+  capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = handle_switch_on,
+      [capabilities.switch.commands.off.NAME] = handle_switch_off,
+    },
   }
 }
 
+
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
-  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
-local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
+  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = false})
+local zigbee_switch = ZigbeeDriver("zigbee_switch_with_groups", zigbee_switch_driver_template)
 zigbee_switch:run()

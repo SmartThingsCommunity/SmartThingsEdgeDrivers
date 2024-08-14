@@ -1,6 +1,6 @@
-name: 'Zigbee Switch'
-packageKey: 'zigbee-switch'
+name: 'Zigbee Switch With Groups'
+packageKey: 'zigbee-switch-with-groups'
 permissions:
   zigbee: {}
-description: "SmartThings driver for Zigbee switch devices"
+description: "Testing out Zigbee groups"
 vendorSupportInformation: "https://support.smartthings.com"
