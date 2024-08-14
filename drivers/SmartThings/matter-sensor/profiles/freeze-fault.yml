@@ -21,7 +21,7 @@ components:
 preferences:
   - name: "freezeSensitivity"
     title: "Freeze detector sensitivity"
-    description: "Sensitivity of a device to coldness"
+    description: "Sensitivity of the device to the cold"
     required: false
     preferenceType: "enumeration"
     definition: {

@@ -13,7 +13,7 @@ components:
 preferences:
   - name: "leakSensitivity"
     title: "Leak detector sensitivity"
-    description: "Sensitivity of a device to leaking"
+    description: "The moisture sensitivity of the device"
     required: false
     preferenceType: "enumeration"
     definition: {
