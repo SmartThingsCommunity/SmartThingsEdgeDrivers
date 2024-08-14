@@ -54,9 +54,9 @@ local MIN_SENSITIVITY_LEVEL = "__min_sensitivity_level"
 local HUE_MANUFACTURER_ID = 0x100B
 
 local BOOLEAN_DEVICE_TYPE_INFO = {
-  ["RAIN_SENSOR"] = { id = 0x0044, },
-  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, },
-  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, },
+  ["RAIN_SENSOR"] = { id = 0x0044, sensitivity_preference = "rainSensitivity" },
+  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, sensitivity_preference = "freezeSensitivity" },
+  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, sensitivity_preference = "leakSensitivity" },
   ["CONTACT_SENSOR"] = { id = 0x0015, },
 }
 
@@ -66,6 +66,8 @@ local function set_device_type_per_endpoint(driver, device)
           for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
               if dt.device_type_id == info.id then
                   device:set_field(dt_name, ep.endpoint_id)
+                  device:send(clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(device, ep.endpoint_id))
+                  device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
               end
           end
       end
@@ -152,22 +154,17 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
   end
-  if not device.preferences or (device.preferences["certifiedpreferences.booleanConfigSensitivity"] == args.old_st_store.preferences["certifiedpreferences.booleanConfigSensitivity"]) then
+  if not device.preferences then
     return
   end
-  local eps = embedded_cluster_utils.get_endpoints(device, clusters.BooleanStateConfiguration.ID)
-  if #eps > 0 then
-    local bool_config_sensitivity = device.preferences["certifiedpreferences.booleanConfigSensitivity"]
-    local updated_sensitivity_level = nil
-    if bool_config_sensitivity == "0" then -- High
-      updated_sensitivity_level = device:get_field(MAX_SENSITIVITY_LEVEL) - 1
-    elseif bool_config_sensitivity == "1" then -- Low
-      updated_sensitivity_level = device:get_field(MIN_SENSITIVITY_LEVEL)
-    end
-    for dt_name, _ in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
-      local dt_ep = device:get_field(dt_name)
-      if dt_ep then
-        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, updated_sensitivity_level))
+  for dt_name, dt_info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+    local dt_ep = device:get_field(dt_name)
+    if dt_ep and (device.preferences[dt_info.sensitivity_preference] ~= args.old_st_store.preferences[dt_info.sensitivity_preference]) then
+      local sensitivity_preference = device.preferences[dt_info.sensitivity_preference]
+      if sensitivity_preference == 0 then -- High
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MAX_SENSITIVITY_LEVEL) - 1))
+      elseif sensitivity_preference == 1 then -- Low
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MIN_SENSITIVITY_LEVEL)))
       end
     end
   end
@@ -234,7 +231,7 @@ end
 local function supported_sensitivities_handler(driver, device, ib, response)
   if ib.data.value then
     device:set_field(MAX_SENSITIVITY_LEVEL, ib.data.value)
-    device:set_field(MIN_SENSITIVITY_LEVEL, 0)
+    device:set_field(MIN_SENSITIVITY_LEVEL, 0x00)
   end
 end
 
@@ -428,7 +425,7 @@ local matter_driver_template = {
     },
     [capabilities.rainSensor.ID] = {
         clusters.BooleanState.attributes.StateValue,
-    }
+    },
   },
   capability_handlers = {
   },

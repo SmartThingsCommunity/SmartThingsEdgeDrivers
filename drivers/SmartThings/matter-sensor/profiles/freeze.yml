@@ -17,5 +17,11 @@ components:
   categories:
   - name: LeakSensor
 preferences:
-  - preferenceId: certifiedpreferences.booleanConfigSensitivity
-    explicit: true
+  - name: "freezeSensitivity"
+    title: "Freeze detector sensitivity"
+    description: "Sensitivity of a device to coldness"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 1
