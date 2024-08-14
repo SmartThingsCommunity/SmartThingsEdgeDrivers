@@ -148,4 +148,3 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak
-    
