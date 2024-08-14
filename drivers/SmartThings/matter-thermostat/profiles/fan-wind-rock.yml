@@ -1,4 +1,4 @@
-name: fan
+name: fan-wind-rock
 components:
 - id: main
   capabilities:

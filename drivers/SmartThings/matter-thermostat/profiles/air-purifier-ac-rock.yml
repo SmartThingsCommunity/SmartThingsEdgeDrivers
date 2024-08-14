@@ -1,4 +1,4 @@
-name: air-purifier-ac
+name: air-purifier-ac-rock
 components:
 - id: main
   label: Main
