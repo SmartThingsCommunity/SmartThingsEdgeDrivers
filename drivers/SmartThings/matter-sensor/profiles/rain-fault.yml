@@ -17,7 +17,10 @@ preferences:
     title: "Rain detector sensitivity"
     description: "Sensitivity of a device to rainfall"
     required: false
-    preferenceType: integer
-    definition:
-      minimum: 0
-      maximum: 1
+    preferenceType: "enumeration"
+    definition: {
+      options: {
+        0: "Min",
+        1: "Max"
+      }
+    }

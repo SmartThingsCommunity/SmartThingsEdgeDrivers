@@ -189,7 +189,7 @@ test.register_coroutine_test(
     })
     test.wait_for_events()
 
-    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = 1 } }))
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "0" } }))
     test.socket.matter:__expect_send({
       mock_device_freeze_leak.id,
       clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__min_sensitivity_level"))
@@ -206,7 +206,7 @@ test.register_coroutine_test(
       )
     })
     test.wait_for_events()
-    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = 0 } }))
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "1" } }))
     test.socket.matter:__expect_send({
       mock_device_freeze_leak.id,
       clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__max_sensitivity_level") - 1)
