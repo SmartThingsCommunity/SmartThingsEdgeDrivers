@@ -175,16 +175,6 @@ preferences:
         "0": "No (default)"
         "1": "Yes"
       default: 0
-  - name: "parameter12"
-    title: "12. Auto Off Timer"
-    description: "Automatically turns the switch off after this many seconds. When the switch is turned on a timer is started. When the timer expires the switch turns off.
-  0=Auto Off Disabled."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 32767
-      default: 0
   - name: "parameter15"
     title: "15. Level After Power Restored"
     description: "The level the switch will return to when power is restored after power failure.
