@@ -38,8 +38,8 @@ local mock_device_freeze_leak = test.mock_device.build_test_matter_device({
       {
         endpoint_id = 1,
         clusters = {
-          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
+          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
         },
         device_types = {
           {device_type_id = 0x0043, device_type_revision = 1} -- Water Leak Detector
@@ -48,8 +48,8 @@ local mock_device_freeze_leak = test.mock_device.build_test_matter_device({
       {
         endpoint_id = 2,
         clusters = {
-          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
+          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
         },
         device_types = {
           {device_type_id = 0x0041, device_type_revision = 1} -- Water Freeze Detector
@@ -70,35 +70,17 @@ local function test_init_freeze_leak()
       subscribe_request:merge(cluster:subscribe(mock_device_freeze_leak))
     end
   end
+  test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(mock_device_freeze_leak, 1)})
+  test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_freeze_leak, 1)})
+  test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(mock_device_freeze_leak, 2)})
+  test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_freeze_leak, 2)})
+
   test.socket.matter:__expect_send({mock_device_freeze_leak.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_freeze_leak)
   mock_device_freeze_leak:set_field("__battery_checked", 1, {persist = true})
   test.set_rpc_version(4)
 end
 test.set_test_init_function(test_init_freeze_leak)
-
-local mock_device_freeze_leak_cf = mock_device_freeze_leak
-
-local function test_init_cf()
-  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_freeze_leak_cf)
-  for i, cluster in ipairs(subscribed_attributes) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_freeze_leak_cf))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device_freeze_leak_cf.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_freeze_leak_cf)
-  mock_device_freeze_leak_cf:expect_metadata_update({ profile = "freeze-leak-fault" })
-  mock_device_freeze_leak_cf:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end
-
-test.register_coroutine_test(
-  "Test profile change on init for Freeze and Leak combined device type",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_freeze_leak_cf.id, "doConfigure" })
-  end,
-  { test_init = test_init_cf }
-)
 
 test.register_message_test(
   "Boolean state freeze detection reports should generate correct messages",
@@ -197,5 +179,39 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "Check that preference updates to low as expected", function()
+    test.socket.matter:__queue_receive({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:build_test_report_data(
+        mock_device_freeze_leak, 2, 4
+      )
+    })
+    test.wait_for_events()
+
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = 1 } }))
+    test.socket.matter:__expect_send({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__min_sensitivity_level"))
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Check that preference updates to high as expected", function()
+    test.socket.matter:__queue_receive({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:build_test_report_data(
+        mock_device_freeze_leak, 2, 4
+      )
+    })
+    test.wait_for_events()
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = 0 } }))
+    test.socket.matter:__expect_send({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__max_sensitivity_level") - 1)
+    })
+  end
+)
 
 test.run_registered_tests()

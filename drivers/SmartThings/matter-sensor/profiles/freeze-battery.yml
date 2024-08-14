@@ -18,3 +18,12 @@ components:
     version: 1
   categories:
   - name: LeakSensor
+preferences:
+  - name: "freezeSensitivity"
+    title: "Freeze detector sensitivity"
+    description: "Sensitivity of a device to coldness"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 1

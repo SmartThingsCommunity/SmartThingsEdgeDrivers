@@ -17,6 +17,7 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
 if not pcall(function(cluster) return clusters[cluster] end,
@@ -43,17 +44,18 @@ end
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
-
 end
+
 local BATTERY_CHECKED = "__battery_checked"
-local BOOLEAN_DEVICE_TYPES_CHECKED = "__boolean_device_types_checked"
+local MAX_SENSITIVITY_LEVEL = "__max_sensitivity_level"
+local MIN_SENSITIVITY_LEVEL = "__min_sensitivity_level"
 
 local HUE_MANUFACTURER_ID = 0x100B
 
 local BOOLEAN_DEVICE_TYPE_INFO = {
-  ["RAIN_SENSOR"] = { id = 0x0044, },
-  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, },
-  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, },
+  ["RAIN_SENSOR"] = { id = 0x0044, sensitivity_preference = "rainSensitivity" },
+  ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, sensitivity_preference = "freezeSensitivity" },
+  ["WATER_LEAK_DETECTOR"] = { id = 0x0043, sensitivity_preference = "leakSensitivity" },
   ["CONTACT_SENSOR"] = { id = 0x0015, },
 }
 
@@ -63,11 +65,12 @@ local function set_device_type_per_endpoint(driver, device)
           for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
               if dt.device_type_id == info.id then
                   device:set_field(dt_name, ep.endpoint_id)
+                  device:send(clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(device, ep.endpoint_id))
+                  device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
               end
           end
       end
   end
-  device:set_field(BOOLEAN_DEVICE_TYPES_CHECKED, 1, {persist = true})
 end
 
 local function supports_battery_percentage_remaining(device)
@@ -139,15 +142,28 @@ local function device_init(driver, device)
   if not device:get_field(BATTERY_CHECKED) then
     check_for_battery(device)
   end
-  if not device:get_field(BOOLEAN_DEVICE_TYPES_CHECKED) then
-    set_device_type_per_endpoint(driver, device)
-  end
+  set_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
+    set_device_type_per_endpoint(driver, device)
+  end
+  if not device.preferences then
+    return
+  end
+  for dt_name, dt_info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
+    local dt_ep = device:get_field(dt_name)
+    if dt_ep and (device.preferences[dt_info.sensitivity_preference] ~= args.old_st_store.preferences[dt_info.sensitivity_preference]) then
+      local sensitivity_preference = device.preferences[dt_info.sensitivity_preference]
+      if sensitivity_preference == 0 then -- High
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MAX_SENSITIVITY_LEVEL) - 1))
+      elseif sensitivity_preference == 1 then -- Low
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MIN_SENSITIVITY_LEVEL)))
+      end
+    end
   end
 end
 
@@ -209,6 +225,19 @@ local function boolean_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
 end
 
+local function supported_sensitivities_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:set_field(MAX_SENSITIVITY_LEVEL, ib.data.value)
+    device:set_field(MIN_SENSITIVITY_LEVEL, 0x00)
+  end
+end
+
+local function default_sensitivity_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, ib.endpoint_id, ib.data.value))
+  end
+end
+
 local function sensor_fault_handler(driver, device, ib, response)
   if ib.data.value > 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.hardwareFault.hardwareFault.detected())
@@ -266,6 +295,8 @@ local matter_driver_template = {
       },
       [clusters.BooleanStateConfiguration.ID] = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
+        [clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel.ID] = default_sensitivity_handler,
     },
     }
   },
@@ -391,7 +422,7 @@ local matter_driver_template = {
     },
     [capabilities.rainSensor.ID] = {
         clusters.BooleanState.attributes.StateValue,
-    }
+    },
   },
   capability_handlers = {
   },
