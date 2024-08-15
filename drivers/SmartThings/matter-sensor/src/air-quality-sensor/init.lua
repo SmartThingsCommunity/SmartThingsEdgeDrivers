@@ -378,13 +378,11 @@ local conversion_tables = {
 local function unit_conversion(value, from_unit, to_unit)
   local conversion_function = conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
-    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit]))
-    return 1
+    return nil, string.format("Unsupported unit conversion from %s to %s", unit_strings[from_unit], unit_strings[to_unit])
   end
 
   if value == nil then
-    log.info_with( {hub_logs = true} , "unit conversion value is nil")
-    return 1
+    return nil, "Unit conversion value is nil"
   end
   return conversion_function(value)
 end
@@ -398,14 +396,19 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
       device:set_field(capability_name.."_unit", reporting_unit, {persist = true})
     end
 
+    local value, err_msg
     if reporting_unit then
-      local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
+      value, err_msg = unit_conversion(ib.data.value, reporting_unit, target_unit)
+    end
 
+    if value then
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
       -- handle case where device profile supports both fineDustLevel and dustLevel
       if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = unit_strings[target_unit]}))
       end
+    else
+      log.info_with({hub_logs = true}, err_msg)
     end
   end
 end
