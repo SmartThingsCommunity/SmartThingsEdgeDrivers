@@ -355,6 +355,74 @@ test.register_message_test(
   }
 )
 
+hue = 0xFE
+sat = 0xFE
+test.register_message_test(
+  "Set color command should clamp invalid huesat values",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorCapabilities:build_test_report_data(mock_device, 1, 0x01)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 110, saturation = 110 } } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation:build_test_command_response(mock_device, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, hue)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(100))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, sat)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
+    }
+  }
+)
+
+hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
+sat = math.floor((50 * 0xFE) / 100.0 + 0.5)
 test.register_message_test(
   "Set Hue command should send MoveToHue",
   {
