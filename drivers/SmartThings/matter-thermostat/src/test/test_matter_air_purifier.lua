@@ -431,7 +431,7 @@ test.register_coroutine_test(
   "Test profile change on init for AP and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
-    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-aqs-co2-tvoc-meas-co2-radon-level" })
+    mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
     mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_ap_aqs }
