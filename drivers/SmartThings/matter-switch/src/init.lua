@@ -66,6 +66,11 @@ local device_type_profile_map = {
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
+
+local child_device_profile_overrides = {
+  { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+}
+
 local detect_matter_thing
 
 local function get_field_for_endpoint(device, field, endpoint)
@@ -109,6 +114,16 @@ end
 
 local function assign_child_profile(device, child_ep)
   local profile
+
+  -- check if device has an overriden child profile that differs from the profile
+  -- that would match the child's device type
+  for _, fingerprint in ipairs(child_device_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+       device.manufacturer_info.product_id == fingerprint.product_id then
+      return fingerprint.child_profile
+    end
+  end
+
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of
