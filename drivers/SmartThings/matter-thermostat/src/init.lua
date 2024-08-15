@@ -974,6 +974,9 @@ local function wind_support_handler(driver, device, ib, response)
   -- but with a WindSupport value of 0 in their device specifications.
   if #supported_wind_modes < 2 then
     local fixed_profile_name = string.gsub(device:get_field(PROFILE_NAME), "-wind", "")
+    if fixed_profile_name == "fan" then
+      fixed_profile_name = "fan-generic"
+    end
     device:try_update_metadata({profile = fixed_profile_name})
     return
   end
