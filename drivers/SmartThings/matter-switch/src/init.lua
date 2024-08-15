@@ -78,6 +78,7 @@ local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
 local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
 local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
+local SUBSCIPTION_REPORT_OCCURRED = "__s"
 
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
@@ -148,6 +149,8 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
   end
   if #cumul_eps > 0 and not is_cumulative_report then
     return
+  elseif not device:get_field(SUBSCIPTION_REPORT_OCCURRED) then
+    device:set_field(SUBSCIPTION_REPORT_OCCURRED, true)
   elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
     device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
   else
