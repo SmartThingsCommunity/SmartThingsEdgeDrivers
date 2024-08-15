@@ -7,9 +7,9 @@ components:
     version: 1
   - id: fanSpeedPercent
     version: 1
-  - id: windMode
-    version: 1
   - id: fanOscillationMode
+    version: 1
+  - id: windMode
     version: 1
   - id: firmwareUpdate
     version: 1
