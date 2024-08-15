@@ -106,7 +106,18 @@ test.register_coroutine_test(
     --- This populates the `device`, `light`, and `zigbee_connectivity` services.
     local _ = testenv.mock_hue_bridge:add_device_from_template(
       HueDeviceTypes.LIGHT,
-      "test_data/templates/white-bulb"
+      "test_data/templates/white-bulb",
+      "Test Edison Bulb",
+      {
+        on = {
+          on = false
+        },
+        dimming = {
+          brightness = 80,
+          min_dim_level = 2
+        },
+        mode = "streaming"
+      }
     )
 
     --- Generate the mock REST API server with all registered devices
@@ -145,16 +156,16 @@ test.register_coroutine_test(
 
     -- We expect an `on` because the value in the template file is on.
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switch.switch.on())
+      light_device:generate_test_message("main", capabilities.switch.switch.off())
     )
     -- We expect an `100` because the value in the template file is 100.
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+      light_device:generate_test_message("main", capabilities.switchLevel.level(80))
     )
 
     -- We expect `"normal"` because the value in the template file is "normal".
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
+      light_device:generate_test_message("main", hueSyncMode.mode("streaming"))
     )
 
     -- The added lifecycle handler will invoke the refresh handler, so we wait for the expected emits
@@ -163,13 +174,13 @@ test.register_coroutine_test(
     end
 
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switch.switch.on())
+      light_device:generate_test_message("main", capabilities.switch.switch.off())
     )
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+      light_device:generate_test_message("main", capabilities.switchLevel.level(80))
     )
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
+      light_device:generate_test_message("main", hueSyncMode.mode("streaming"))
     )
 
     -- The init lifecycle handler will also manually invoke the refresh handler.
@@ -185,13 +196,13 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switch.switch.on())
+      light_device:generate_test_message("main", capabilities.switch.switch.off())
     )
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", capabilities.switchLevel.level(100))
+      light_device:generate_test_message("main", capabilities.switchLevel.level(80))
     )
     test.socket.capability:__expect_send(
-      light_device:generate_test_message("main", hueSyncMode.mode("normal"))
+      light_device:generate_test_message("main", hueSyncMode.mode("streaming"))
     )
 
     test.wait_for_events()

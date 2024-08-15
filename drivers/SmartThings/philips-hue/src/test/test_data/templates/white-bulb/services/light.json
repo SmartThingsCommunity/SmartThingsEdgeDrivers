@@ -9,7 +9,7 @@
         "rtype": "device"
       },
       "metadata": {
-        "name": "Edison Lamp",
+        "name": "{{name}}",
         "archetype": "vintage_bulb",
         "fixed_mired": 476,
         "function": "mixed"

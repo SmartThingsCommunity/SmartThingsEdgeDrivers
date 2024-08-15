@@ -14,7 +14,7 @@
         "hardware_platform_type": "100b-112"
       },
       "metadata": {
-        "name": "Edison Lamp",
+        "name": "{{name}}",
         "archetype": "vintage_bulb"
       },
       "identify": {},

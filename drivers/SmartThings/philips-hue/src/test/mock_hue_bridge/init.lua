@@ -72,10 +72,13 @@ end
 
 local UUID_TEMPLATE_KEY = "{{uuid}}"
 local ID_V1_TEMPLATE_KEY = "{{id_v1}}"
+local NAME_TEMPLATE_KEY = "{{name}}"
 
 ---@param device_type HueDeviceTypes
 ---@param template_dir string|Path
-function m:add_device_from_template(device_type, template_dir)
+---@param name string?
+---@param state table?
+function m:add_device_from_template(device_type, template_dir, name, state)
   local templates = _get_all_template_files(template_dir)
   local device_template = assert(templates["device"],
     "cannot mock a device without a \"device\" service template")
@@ -87,6 +90,18 @@ function m:add_device_from_template(device_type, template_dir)
 
   if device_data.id_v1 and device_data.id_v1 == ID_V1_TEMPLATE_KEY then
     device_data.id_v1 = _new_v1_id(self, device_type)
+  end
+
+  if
+      device_data.metadata and
+      device_data.metadata.name and
+      device_data.metadata.name == NAME_TEMPLATE_KEY
+  then
+    if not name then
+      local idx = string.match(device_data.id_v1, "^[^/]*/(%g*)$") or ""
+      name = string.format("Hue %s %s", device_type, idx)
+    end
+    device_data.metadata.name = name
   end
 
   self:register_hue_resource(device_data)
@@ -104,12 +119,22 @@ function m:add_device_from_template(device_type, template_dir)
         svc_data.id = svc.rid
       end
 
+      if svc_data.metadata and svc_data.metadata.name == NAME_TEMPLATE_KEY then
+        svc_data.metadata.name = name
+      end
+
       if
-          svc_data.owner and
-          svc_data.owner.rid == UUID_TEMPLATE_KEY
-          and svc_data.owner.rtype == "device"
+        svc_data.owner and
+        svc_data.owner.rid == UUID_TEMPLATE_KEY
+        and svc_data.owner.rtype == "device"
       then
         svc_data.owner.rid = device_data.id
+      end
+
+      if svc.rtype == device_type then
+        for k, v in pairs(state or {}) do
+          svc_data[k] = v
+        end
       end
       self:register_hue_resource(svc_data)
     end
