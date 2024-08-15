@@ -408,7 +408,7 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = unit_strings[target_unit]}))
       end
     else
-      log.info_with({hub_logs = true}, err_msg)
+      log.warn_with({hub_logs = true}, err_msg)
     end
   end
 end

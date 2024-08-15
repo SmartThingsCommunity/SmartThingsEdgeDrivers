@@ -644,4 +644,23 @@ test.register_coroutine_test(
   { test_init = test_init_level }
 )
 
+test.register_coroutine_test(
+  "Unsupported unit conversions return nil and do not emit capability event",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device_common.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device_common, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.PPM
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device_common.id,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device_common, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+      )
+    })
+  end,
+  { test_init = test_init_common }
+)
+
 test.run_registered_tests()
