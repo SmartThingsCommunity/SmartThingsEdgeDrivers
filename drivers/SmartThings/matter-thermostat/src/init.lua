@@ -333,7 +333,7 @@ local function do_configure(driver, device)
   local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
-  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.ROCK})
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   -- use get_endpoints for embedded clusters
@@ -369,7 +369,19 @@ local function do_configure(driver, device)
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
-    device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
+    profile_name = "fan"
+    if #wind_eps > 0 then
+      profile_name = profile_name .. "-wind"
+    end
+    if #rock_eps > 0 then
+      profile_name = profile_name .. "-rock"
+    end
+    if profile_name == "fan" then
+      profile_name = "fan-generic"
+    end
+
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   elseif device_type == AP_DEVICE_TYPE_ID then
     profile_name = "air-purifier"
     if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
