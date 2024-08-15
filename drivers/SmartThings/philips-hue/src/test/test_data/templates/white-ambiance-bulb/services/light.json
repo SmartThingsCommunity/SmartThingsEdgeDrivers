@@ -22,8 +22,8 @@
         "on": true
       },
       "color_temperature": {
-        "mirek": null,
-        "mirek_valid": false,
+        "mirek": 366,
+        "mirek_valid": true,
         "mirek_schema": {
           "mirek_minimum": 153,
           "mirek_maximum": 500
