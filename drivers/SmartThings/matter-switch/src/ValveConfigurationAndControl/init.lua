@@ -1,8 +1,7 @@
 local cluster_base = require "st.matter.cluster_base"
-local ValveConfigurationAndControlServerAttributes = require "st.matter.generated.zap_clusters.ValveConfigurationAndControl.server.attributes"
-local ValveConfigurationAndControlServerCommands = require "st.matter.generated.zap_clusters.ValveConfigurationAndControl.server.commands"
-local ValveConfigurationAndControlEvents = require "st.matter.generated.zap_clusters.ValveConfigurationAndControl.server.events"
-local ValveConfigurationAndControlTypes = require "st.matter.generated.zap_clusters.ValveConfigurationAndControl.types"
+local ValveConfigurationAndControlServerAttributes = require "ValveConfigurationAndControl.server.attributes"
+local ValveConfigurationAndControlServerCommands = require "ValveConfigurationAndControl.server.commands"
+local ValveConfigurationAndControlTypes = require "ValveConfigurationAndControl.types"
 local ValveConfigurationAndControl = {}
 
 ValveConfigurationAndControl.ID = 0x0081
@@ -11,7 +10,6 @@ ValveConfigurationAndControl.server = {}
 ValveConfigurationAndControl.client = {}
 ValveConfigurationAndControl.server.attributes = ValveConfigurationAndControlServerAttributes:set_parent_cluster(ValveConfigurationAndControl)
 ValveConfigurationAndControl.server.commands = ValveConfigurationAndControlServerCommands:set_parent_cluster(ValveConfigurationAndControl)
-ValveConfigurationAndControl.server.events = ValveConfigurationAndControlEvents:set_parent_cluster(ValveConfigurationAndControl)
 ValveConfigurationAndControl.types = ValveConfigurationAndControlTypes
 
 function ValveConfigurationAndControl:get_attribute_by_id(attr_id)
@@ -77,37 +75,10 @@ ValveConfigurationAndControl.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
-do
-  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ValveConfigurationAndControl.server.attributes")
-  if has_aliases then
-    for alias, _ in pairs(aliases) do
-      ValveConfigurationAndControl.attribute_direction_map[alias] = "server"
-    end
-  end
-end
-
 ValveConfigurationAndControl.command_direction_map = {
   ["Open"] = "server",
   ["Close"] = "server",
 }
-
-do
-  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ValveConfigurationAndControl.server.commands")
-  if has_aliases then
-    for alias, _ in pairs(aliases) do
-      ValveConfigurationAndControl.command_direction_map[alias] = "server"
-    end
-  end
-end
-
-do
-  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ValveConfigurationAndControl.client.commands")
-  if has_aliases then
-    for alias, _ in pairs(aliases) do
-      ValveConfigurationAndControl.command_direction_map[alias] = "client"
-    end
-  end
-end
 
 ValveConfigurationAndControl.FeatureMap = ValveConfigurationAndControl.types.Feature
 

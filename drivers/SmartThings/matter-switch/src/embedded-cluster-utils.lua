@@ -1,9 +1,9 @@
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
 
--- Include driver-side definitions when lua libs api version is < 10
+-- Include driver-side definitions when lua libs api version is < 11
 local version = require "version"
-if version.api < 10 then
+if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
   clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"

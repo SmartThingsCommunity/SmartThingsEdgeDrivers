@@ -11,10 +11,5 @@ local ElectricalEnergyMeasurementTypes = {}
 
 setmetatable(ElectricalEnergyMeasurementTypes, types_mt)
 
-local status, aliases = pcall(require, "st.matter.clusters.aliases.ElectricalEnergyMeasurement.types")
-if status then
-  aliases:add_to_class(ElectricalEnergyMeasurementTypes)
-end
-
 return ElectricalEnergyMeasurementTypes
 

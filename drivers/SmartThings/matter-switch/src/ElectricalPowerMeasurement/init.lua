@@ -68,15 +68,6 @@ ElectricalPowerMeasurement.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
-do
-  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ElectricalPowerMeasurement.server.attributes")
-  if has_aliases then
-    for alias, _ in pairs(aliases) do
-      ElectricalPowerMeasurement.attribute_direction_map[alias] = "server"
-    end
-  end
-end
-
 ElectricalPowerMeasurement.FeatureMap = ElectricalPowerMeasurement.types.Feature
 
 function ElectricalPowerMeasurement.are_features_supported(feature, feature_map)

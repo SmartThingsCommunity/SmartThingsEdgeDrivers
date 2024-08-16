@@ -112,10 +112,5 @@ end
 
 setmetatable(Feature, new_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ElectricalEnergyMeasurement.types.Feature")
-if has_aliases then
-  aliases:add_to_class(Feature)
-end
-
 return Feature
 

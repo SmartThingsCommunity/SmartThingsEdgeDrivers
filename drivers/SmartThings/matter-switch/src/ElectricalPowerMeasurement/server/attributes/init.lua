@@ -20,10 +20,5 @@ end
 
 setmetatable(ElectricalPowerMeasurementServerAttributes, attr_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ElectricalPowerMeasurement.server.attributes")
-if has_aliases then
-  aliases:add_to_class(ElectricalPowerMeasurementServerAttributes)
-end
-
 return ElectricalPowerMeasurementServerAttributes
 

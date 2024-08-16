@@ -26,9 +26,4 @@ end
 
 setmetatable(ValveStateEnum, new_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ValveConfigurationAndControl.types.ValveStateEnum")
-if has_aliases then
-  aliases:add_to_class(ValveStateEnum)
-end
-
 return ValveStateEnum
