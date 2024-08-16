@@ -67,6 +67,8 @@ local device_type_profile_map = {
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
 local detect_matter_thing
+local SONOFF_MANUFACTURER_ID = 0x131F
+local SONOFF_PRODUCT_ID = 0x0144
 
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
@@ -128,6 +130,7 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function initialize_switch(driver, device)
+  local child_profile = ""
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
   -- Since we do not support bindings at the moment, we only want to count On/Off
@@ -140,7 +143,13 @@ local function initialize_switch(driver, device)
       num_server_eps = num_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_server_eps)
-        local child_profile = assign_child_profile(device, ep)
+        --- in initialize_switch(), checking for child devices
+        if device.manufacturer_info.vendor_id == SONOFF_MANUFACTURER_ID and device.manufacturer_info.product_id == SONOFF_PRODUCT_ID then
+          child_profile = "switch-binary"
+        else
+          -- find child profile based on reported device type
+          child_profile = assign_child_profile(device, ep)
+        end
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
