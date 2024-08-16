@@ -30,6 +30,8 @@ local COLOR_TEMPERATURE_KELVIN_MIN = 1000
 local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 local SWITCH_LEVEL_LIGHTING_MIN = 1
+local CURRENT_HUESAT_ATTR_MIN = 0
+local CURRENT_HUESAT_ATTR_MAX = 254
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 -- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
@@ -82,7 +84,7 @@ local function set_field_for_endpoint(device, field, endpoint, value, additional
 end
 
 local function convert_huesat_st_to_matter(val)
-  return math.floor((val * 0xFE) / 100.0 + 0.5)
+  return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
 end
 
 local function mired_to_kelvin(value)
