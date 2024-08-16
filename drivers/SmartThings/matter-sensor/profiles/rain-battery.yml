@@ -14,13 +14,13 @@ components:
   - name: LeakSensor
 preferences:
   - name: "rainSensitivity"
-    title: "Rain detector sensitivity"
-    description: "Sensitivity of the device to rainfall"
+    title: "Rain sensitivity"
+    description: "Rain sensor sensitivity"
     required: false
     preferenceType: "enumeration"
     definition: {
       options: {
-        0: "Min",
-        1: "Max"
+        0: "min",
+        1: "max"
       }
     }

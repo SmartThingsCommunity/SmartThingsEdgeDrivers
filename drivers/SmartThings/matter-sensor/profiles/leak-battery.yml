@@ -14,13 +14,13 @@ components:
   - name: LeakSensor
 preferences:
   - name: "leakSensitivity"
-    title: "Leak detector sensitivity"
-    description: "The moisture sensitivity of the device"
+    title: "Leak sensitivity"
+    description: "Leak sensor sensitivity"
     required: false
     preferenceType: "enumeration"
     definition: {
       options: {
-        0: "Min",
-        1: "Max"
+        0: "min",
+        1: "max"
       }
     }
