@@ -31,7 +31,7 @@ matterManufacturer:
     deviceLabel: Heiman Motion Sensor
     vendorId: 0x120B
     productId: 0x1001
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-battery-illuminance
   - id: "4619/4145"
     deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
