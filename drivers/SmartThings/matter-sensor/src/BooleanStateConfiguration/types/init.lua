@@ -11,9 +11,4 @@ local BooleanStateConfigurationTypes = {}
 
 setmetatable(BooleanStateConfigurationTypes, types_mt)
 
-local status, aliases = pcall(require, "st.matter.clusters.aliases.BooleanStateConfiguration.types")
-if status then
-  aliases:add_to_class(BooleanStateConfigurationTypes)
-end
-
 return BooleanStateConfigurationTypes

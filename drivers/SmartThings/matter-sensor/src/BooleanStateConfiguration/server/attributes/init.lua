@@ -20,11 +20,6 @@ end
 
 setmetatable(BooleanStateConfigurationServerAttributes, attr_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.BooleanStateConfiguration.server.attributes")
-if has_aliases then
-  aliases:add_to_class(BooleanStateConfigurationServerAttributes)
-end
-
 return BooleanStateConfigurationServerAttributes
 
 

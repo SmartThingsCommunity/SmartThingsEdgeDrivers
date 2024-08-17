@@ -41,9 +41,4 @@ end
 
 setmetatable(SensorFaultBitmap, new_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.BooleanStateConfiguration.types.SensorFaultBitmap")
-if has_aliases then
-  aliases:add_to_class(SensorFaultBitmap)
-end
-
 return SensorFaultBitmap
