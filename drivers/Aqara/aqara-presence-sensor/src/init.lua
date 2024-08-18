@@ -90,7 +90,7 @@ local function update_connection(driver, device, device_ip, device_info)
 end
 
 
-local function find_new_connetion(driver, device)
+local function find_new_connection(driver, device)
   local ip_table = discovery.find_ip_table(driver)
   local ip = ip_table[device.device_network_id]
   if ip then
@@ -106,7 +106,7 @@ local function check_and_update_connection(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
   if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
     device:offline()
-    find_new_connetion(driver, device)
+    find_new_connection(driver, device)
     conn_info = device:get_field(fields.CONN_INFO)
   end
 
