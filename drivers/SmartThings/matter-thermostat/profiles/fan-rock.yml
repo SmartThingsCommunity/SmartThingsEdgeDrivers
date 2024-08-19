@@ -16,4 +16,4 @@ components:
   - name: Fan
 metadata:
   mnmn: SmartThingsEdge
-  vid: generic-fan-wind
+  vid: generic-fan-rock

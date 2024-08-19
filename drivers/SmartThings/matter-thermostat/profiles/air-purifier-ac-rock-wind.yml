@@ -1,4 +1,4 @@
-name: air-purifier-hepa-wind-rock
+name: air-purifier-ac-rock-wind
 components:
 - id: main
   label: Main
@@ -17,8 +17,8 @@ components:
     version: 1
   categories:
   - name: AirPurifier
-- id: hepaFilter
-  label: Hepa filter
+- id: activatedCarbonFilter
+  label: Activated carbon filter
   capabilities:
   - id: filterState
     version: 1

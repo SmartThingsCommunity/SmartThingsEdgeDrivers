@@ -60,7 +60,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_rock = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-rock.yml"),
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-rock-wind.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -200,7 +200,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -444,7 +444,7 @@ test.register_coroutine_test(
     local read_limits = clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read()
     read_limits:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, read_limits})
-    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-wind-rock-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
+    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     print(mock_device_ap_thermo_aqs.profile)
   end,

@@ -17,7 +17,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-    profile = t_utils.get_profile_definition("fan-wind-rock.yml"),
+    profile = t_utils.get_profile_definition("fan-rock-wind.yml"),
     manufacturer_info = {
       vendor_id = 0x0000,
       product_id = 0x0000,
@@ -113,7 +113,7 @@ test.register_coroutine_test(
   "Test profile change on fan with rock and wind",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "fan-wind-rock" })
+    mock_device:expect_metadata_update({ profile = "fan-rock-wind" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }

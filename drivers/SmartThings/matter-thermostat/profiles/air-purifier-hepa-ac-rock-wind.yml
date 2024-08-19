@@ -1,4 +1,4 @@
-name: air-purifier-ac-wind-rock
+name: air-purifier-hepa-ac-rock-wind
 components:
 - id: main
   label: Main
@@ -14,6 +14,15 @@ components:
   - id: firmwareUpdate
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: AirPurifier
+- id: hepaFilter
+  label: Hepa filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
     version: 1
   categories:
   - name: AirPurifier

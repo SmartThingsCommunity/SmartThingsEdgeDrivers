@@ -370,11 +370,11 @@ local function do_configure(driver, device)
     device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
     profile_name = "fan"
-    if #wind_eps > 0 then
-      profile_name = profile_name .. "-wind"
-    end
     if #rock_eps > 0 then
       profile_name = profile_name .. "-rock"
+    end
+    if #wind_eps > 0 then
+      profile_name = profile_name .. "-wind"
     end
     if profile_name == "fan" then
       profile_name = "fan-generic"
@@ -391,11 +391,11 @@ local function do_configure(driver, device)
     elseif #ac_filter_eps > 0 then
       profile_name = profile_name .. "-ac"
     end
-    if #wind_eps > 0 then
-      profile_name = profile_name .. "-wind"
-    end
     if #rock_eps > 0 then
       profile_name = profile_name .. "-rock"
+    end
+    if #wind_eps > 0 then
+      profile_name = profile_name .. "-wind"
     end
 
     if #thermo_eps > 0 then

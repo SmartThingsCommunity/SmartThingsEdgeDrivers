@@ -1,8 +1,8 @@
-name: air-purifier-wind-rock
+name: fan-rock-wind
 components:
 - id: main
   capabilities:
-  - id: airPurifierFanMode
+  - id: airConditionerFanMode
     version: 1
   - id: fanSpeedPercent
     version: 1
@@ -15,4 +15,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: AirPurifier
+  - name: Fan
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-fan-rock-wind
