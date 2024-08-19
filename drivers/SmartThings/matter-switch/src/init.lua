@@ -30,6 +30,8 @@ local COLOR_TEMPERATURE_KELVIN_MIN = 1000
 local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 local SWITCH_LEVEL_LIGHTING_MIN = 1
+local CURRENT_HUESAT_ATTR_MIN = 0
+local CURRENT_HUESAT_ATTR_MAX = 254
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 -- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
@@ -66,6 +68,11 @@ local device_type_profile_map = {
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
+
+local child_device_profile_overrides = {
+  { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+}
+
 local detect_matter_thing
 
 local function get_field_for_endpoint(device, field, endpoint)
@@ -77,7 +84,7 @@ local function set_field_for_endpoint(device, field, endpoint, value, additional
 end
 
 local function convert_huesat_st_to_matter(val)
-  return math.floor((val * 0xFE) / 100.0 + 0.5)
+  return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
 end
 
 local function mired_to_kelvin(value)
@@ -109,6 +116,16 @@ end
 
 local function assign_child_profile(device, child_ep)
   local profile
+
+  -- check if device has an overriden child profile that differs from the profile
+  -- that would match the child's device type
+  for _, fingerprint in ipairs(child_device_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+       device.manufacturer_info.product_id == fingerprint.product_id then
+      return fingerprint.child_profile
+    end
+  end
+
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of

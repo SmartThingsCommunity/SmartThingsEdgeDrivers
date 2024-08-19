@@ -184,6 +184,10 @@ local subscribed_attributes = {
   [capabilities.fineDustHealthConcern.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
   },
+  [capabilities.fineDustSensor.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+  },
   [capabilities.dustSensor.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
@@ -328,7 +332,31 @@ local function do_configure(driver, device)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   if device_type == RAC_DEVICE_TYPE_ID then
-    device.log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
+    profile_name = "room-air-conditioner"
+
+    if #humidity_eps > 0 then
+      profile_name = profile_name .. "-humidity"
+    end
+    if #fan_eps > 0 then
+      profile_name = profile_name .. "-fan"
+      if #wind_eps > 0 then
+        profile_name = profile_name .. "-wind"
+      end
+    end
+
+    if #heat_eps > 0 and #cool_eps > 0 then
+      profile_name = profile_name .. "-heating-cooling"
+    else
+      device.log.warn_with({hub_logs=true}, "Room AC does not support both heating and cooling. No matching profile")
+      return
+    end
+
+    if profile_name == "room-air-conditioner-humidity-fan-wind-heating-cooling" then
+      profile_name = "room-air-conditioner"
+    end
+
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
   elseif device_type == AP_DEVICE_TYPE_ID then
@@ -363,9 +391,6 @@ local function do_configure(driver, device)
         profile_name = profile_name .. "-cooling-only"
       end
 
-      -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-      -- to determine support for ThermostatRunningState
-      -- Add nobattery profiles if updated
       profile_name = profile_name .. "-nostate"
 
       if #battery_eps == 0 then
