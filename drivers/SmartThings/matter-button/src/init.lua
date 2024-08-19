@@ -5,6 +5,9 @@ local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local device_lib = require "st.device"
 
+local cubeAction = capabilities["stse.cubeAction"]
+local cubeFace = capabilities["stse.cubeFace"]
+
 local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
@@ -26,6 +29,8 @@ local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) de
 local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
+local CUBEACTION_TIMER = "cubeAction_timer"
+local CUBEACTION_TIME = 3
 local HUE_MANUFACTURER_ID = 0x100B
 
 --helper function to create list of multi press values
@@ -47,12 +52,83 @@ local function contains(array, value)
   return false
 end
 
+local callback_timer = function(device)
+  return function()
+    device:emit_event(cubeAction.cubeAction("noAction"))
+  end
+end
+
+local function reset_thread(device)
+  local timer = device:get_field(CUBEACTION_TIMER)
+  if timer then
+    device.thread:cancel_timer(timer)
+    device:set_field(CUBEACTION_TIMER, nil)
+  end
+  device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(device)))
+end
+
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
 
 local function set_field_for_endpoint(device, field, endpoint, value, persist)
   device:set_field(string.format("%s_%d", field, endpoint), value, {persist = persist})
+end
+
+-- The endpoints of each face may increase sequentially, but may increase as in [250, 251, 2, 3, 4, 5] 
+-- and the current device:get_endpoints function is valid only for the former so, adds this function.
+local function get_reordered_endpoints(driver, device)
+  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    -- find the default/main endpoint, the device with the lowest EP that supports MS
+    table.sort(MS)
+    if MS[6] < (MS[1] + 150) then
+      -- When the endpoints of each face increase sequentially
+      -- The lowest EP is the main endpoint
+      -- as a workaround, it is assumed that the first endpoint number and the last endpoint number are not larger than 150.
+      return MS
+    else
+      -- When the endpoints of each face do not increase sequentially... [250, 251, 2, 3, 4, 5] 250 is the main endpoint.
+      -- For the situation where a node following these mechanisms has exhausted all available 65535 endpoint addresses for exposed entities,
+      -- it MAY wrap around to the lowest unused endpoint address (refter to Matter Core Spec 9.2.4. Dynamic Endpoint Allocation)
+      local ept1 = {}   -- First consecutive end points
+      local ept2 = {}   -- Second consecutive end points
+      local idx1 = 1
+      local idx2 = 1
+      local flag = 0
+      local previous = 0
+      for _, ep in ipairs(MS) do
+        if idx1 == 1 then
+          ept1[idx1] = ep
+        else
+          if flag == 0
+            and ep <= (previous + 15) then
+            -- the endpoint number does not always increase by 1
+            -- as a workaround, assume that the next endpoint number is not greater than 15
+            ept1[idx1] = ep
+          else
+            ept2[idx2] = ep
+            idx2 = idx2 + 1
+            if flag ~= 1 then
+              flag = 1
+            end
+          end
+        end
+        idx1 = idx1 + 1
+        previous = ep
+      end
+
+      local start = #ept2 + 1
+      idx1 = 1
+      idx2 = start
+      for i=start, 6 do
+        ept2[idx2] = ept1[idx1]
+        idx1 = idx1 + 1
+        idx2 = idx2 + 1
+      end
+      return ept2
+    end
+  end
 end
 
 local function init_press(device, endpoint)
@@ -89,13 +165,18 @@ local function find_default_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, endpoint)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, ep in pairs(map) do
-    if endpoint == ep then
-      return component
+  local profile_name = string.format("%s", device.label)
+  if string.find(profile_name, "Aqara Cube T1 Pro") then
+    return "main"
+  else
+    local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+    for component, ep in pairs(map) do
+      if endpoint == ep then
+        return component
+      end
     end
+    return "main"
   end
-  return "main"
 end
 
 local function component_to_endpoint(device, component_name)
@@ -122,6 +203,7 @@ end
 -- This is called either on add for parent/child devices, or after the device profile changes for components
 local function configure_buttons(device)
   if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+    local profile_name = string.format("%s", device.label)
     local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     local MSR = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
     device.log.debug(#MSR.." momentary switch release endpoints")
@@ -145,26 +227,36 @@ local function configure_buttons(device)
         set_field_for_endpoint(device, EMULATE_HELD, ep, true, true)
       else -- device only supports momentary switch, no release events
         device.log.debug("configuring for press event only")
-        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+        if string.find(profile_name, "Aqara Cube T1 Pro") == nil then
+          supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+        end
         set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, true)
       end
 
-      if supportedButtonValues_event then
-        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      if string.find(profile_name, "Aqara Cube T1 Pro") == nil then
+        if supportedButtonValues_event then
+          device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+        end
+        device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
       end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     end
   end
 end
 
 local function device_added(driver, device)
   if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    device.log.debug(#MS.." momentary switch endpoints")
-    -- local LS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.LATCHING_SWITCH})
+    local MS = {}
+    local profile_name = string.format("%s", device.label)
+    if string.find(profile_name, "Aqara Cube T1 Pro") then
+      MS = get_reordered_endpoints(driver, device)
+    else
+      MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+      device.log.debug(#MS.." momentary switch endpoints")
+      -- local LS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.LATCHING_SWITCH})
 
-    -- find the default/main endpoint, the device with the lowest EP that supports MS
-    table.sort(MS)
+      -- find the default/main endpoint, the device with the lowest EP that supports MS
+      table.sort(MS)
+    end
     local main_endpoint = device.MATTER_DEFAULT_ENDPOINT
     if #MS > 0 then
       main_endpoint = MS[1] -- the endpoint matching to the non-child device
@@ -172,92 +264,107 @@ local function device_added(driver, device)
     end
     device.log.debug("main button endpoint is "..main_endpoint)
 
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-            #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-      battery_support = true
-    end
-
-    local new_profile = nil
-    -- We have a static profile that will work for this number of buttons
-    if contains(STATIC_PROFILE_SUPPORTED, #MS) then
-      if battery_support then
-        new_profile = string.format("%d-button-battery", #MS)
-      else
-        new_profile = string.format("%d-button", #MS)
+    if string.find(profile_name, "Aqara Cube T1 Pro") then
+      local current_component_number = 1
+      local component_map = {}
+      local component_map_used = false
+      for _, ep in ipairs(MS) do -- for each momentary switch endpoint (including main)
+        device.log.debug("Configuring endpoint "..ep)
+        -- build the mapping of endpoints to components
+        component_map[string.format("%d", current_component_number)] = ep
+        current_component_number = current_component_number + 1
       end
-    elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
-      new_profile = "button"
-    end
 
-    if new_profile then device:try_update_metadata({profile = new_profile}) end
-
-    -- At the moment, we're taking it for granted that all momentary switches only have 2 positions
-    -- TODO: flesh this out for NumberOfPositions > 2
-    local current_component_number = 2
-    local component_map = {}
-    local component_map_used = false
-    for _, ep in ipairs(MS) do -- for each momentary switch endpoint (including main)
-      device.log.debug("Configuring endpoint "..ep)
-      -- build the mapping of endpoints to components if we have a static profile (multi-component)
-      if contains(STATIC_PROFILE_SUPPORTED, #MS) then
-        if ep ~= main_endpoint then
-          component_map[string.format("button%d", current_component_number)] = ep
-          current_component_number = current_component_number + 1
-        else
-          component_map["main"] = ep
-        end
-        component_map_used = true
-      else -- use parent/child
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local name = string.format("%s %d", device.label, current_component_number)
-          driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = "button",
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%02X", ep),
-              vendor_provided_label = name
-            }
-          )
-          current_component_number = current_component_number + 1
-        end
-      end
-    end
-
-    if component_map_used then
       device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-    end
-
-    if new_profile then
+      device:try_update_metadata({profile = "cube-t1-pro"})
       device:set_field(DEFERRED_CONFIGURE, true)
     else
-      configure_buttons(device)
+      local battery_support = false
+      if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+              #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+        battery_support = true
+      end
+
+      local new_profile = nil
+      -- We have a static profile that will work for this number of buttons
+      if contains(STATIC_PROFILE_SUPPORTED, #MS) then
+        if battery_support then
+          new_profile = string.format("%d-button-battery", #MS)
+        else
+          new_profile = string.format("%d-button", #MS)
+        end
+      elseif not battery_support then
+        -- a battery-less button/remote (either single or will use parent/child)
+        new_profile = "button"
+      end
+
+      if new_profile then device:try_update_metadata({profile = new_profile}) end
+
+      -- At the moment, we're taking it for granted that all momentary switches only have 2 positions
+      -- TODO: flesh this out for NumberOfPositions > 2
+      local current_component_number = 2
+      local component_map = {}
+      local component_map_used = false
+      for _, ep in ipairs(MS) do -- for each momentary switch endpoint (including main)
+        device.log.debug("Configuring endpoint "..ep)
+        -- build the mapping of endpoints to components if we have a static profile (multi-component)
+        if contains(STATIC_PROFILE_SUPPORTED, #MS) then
+          if ep ~= main_endpoint then
+            component_map[string.format("button%d", current_component_number)] = ep
+            current_component_number = current_component_number + 1
+          else
+            component_map["main"] = ep
+          end
+          component_map_used = true
+        else -- use parent/child
+          if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+            local name = string.format("%s %d", device.label, current_component_number)
+            driver:try_create_device(
+              {
+                type = "EDGE_CHILD",
+                label = name,
+                profile = "button",
+                parent_device_id = device.id,
+                parent_assigned_child_key = string.format("%02X", ep),
+                vendor_provided_label = name
+              }
+            )
+            current_component_number = current_component_number + 1
+          end
+        end
+      end
+
+      if component_map_used then
+        device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+      end
+
+      if new_profile then
+        device:set_field(DEFERRED_CONFIGURE, true)
+      else
+        configure_buttons(device)
+      end
+
+      -- TODO: Solution for latching switches
+      -- for _, ep in ipairs(LS) do
+      --   local name = string.format("%s %d", device.label, ep)
+      --   local child = driver:try_create_device(
+      --     {
+      --       type = "EDGE_CHILD",
+      --       label = name,
+      --       profile = "child-button",
+      --       parent_device_id = device.id,
+      --       parent_assigned_child_key = string.format("%02X", ep),
+      --       vendor_provided_label = name
+      --     }
+      --   )
+      --   -- Latching switches are switches that don't return to an idle position after being pressed.
+      --   -- In that sense, they can be all sorts of things, like dials or radio buttons. This means
+      --   -- they can have any number of states > 2. However, due to the current nature of our capabilities
+      --   -- our ability to support the full range of options here is limited, so we will stick with
+      --   -- up/down rocker switches (kind of).
+      --   child:emit_event(capabilities.button.supportedButtonValues({"up","down"}, {visibility = {displayed = false}}))
+      -- end
     end
-
-    -- TODO: Solution for latching switches
-    -- for _, ep in ipairs(LS) do
-    --   local name = string.format("%s %d", device.label, ep)
-    --   local child = driver:try_create_device(
-    --     {
-    --       type = "EDGE_CHILD",
-    --       label = name,
-    --       profile = "child-button",
-    --       parent_device_id = device.id,
-    --       parent_assigned_child_key = string.format("%02X", ep),
-    --       vendor_provided_label = name
-    --     }
-    --   )
-    --   -- Latching switches are switches that don't return to an idle position after being pressed.
-    --   -- In that sense, they can be all sorts of things, like dials or radio buttons. This means
-    --   -- they can have any number of states > 2. However, due to the current nature of our capabilities
-    --   -- our ability to support the full range of options here is limited, so we will stick with
-    --   -- up/down rocker switches (kind of).
-    --   child:emit_event(capabilities.button.supportedButtonValues({"up","down"}, {visibility = {displayed = false}}))
-    -- end
-
   end
 end
 
@@ -265,6 +372,15 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id
     and device:get_field(DEFERRED_CONFIGURE)
     and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+
+    local profile_name = string.format("%s", device.label)
+    if string.find(profile_name, "Aqara Cube T1 Pro") then
+      -- At the time of device_added, there is an error that the corresponding capability cannot be found
+      -- because the profile has not been changed from the generic profile of fingerprint to the Aqara Cube.
+      reset_thread(device)
+      device:emit_event(cubeFace.cubeFace("face1Up"))
+    end
+
     -- profile has changed, and we deferred setting up our buttons, so do that now
     configure_buttons(device)
     device:set_field(DEFERRED_CONFIGURE, nil)
@@ -282,7 +398,23 @@ local function initial_press_event_handler(driver, device, ib, response)
     set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
   else
     if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
+      local profile_name = string.format("%s", device.label)
+      if string.find(profile_name, "Aqara Cube T1 Pro") then
+        local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+        local face = 1
+        for component, ep in pairs(map) do
+          if map[component] == ib.endpoint_id then
+            face = component
+            break
+          end
+        end
+
+        reset_thread(device)
+        device:emit_event(cubeAction.cubeAction(string.format("flipToSide%d", face)))
+        device:emit_event(cubeFace.cubeFace(string.format("face%dUp", face)))
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
+      end
     elseif get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
       -- if our button doesn't differentiate between short and long holds, do it in code by keeping track of the press down time
       init_press(device, ib.endpoint_id)
