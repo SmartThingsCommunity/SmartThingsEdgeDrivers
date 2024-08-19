@@ -87,14 +87,21 @@ local function convert_huesat_st_to_matter(val)
   return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
 end
 
-local function mired_to_kelvin(value)
+local function mired_to_kelvin(value, minOrMax)
   if value == 0 then -- shouldn't happen, but has
     value = 1
     log.warn(string.format("Received a color temperature of 0 mireds. Using a color temperature of 1 mired to avoid divide by zero"))
   end
-  -- we divide inside the rounding and multiply outside of it because we expect these
-  -- bounds to be multiples of 100
-  return utils.round((MIRED_KELVIN_CONVERSION_CONSTANT / value) / 100) * 100
+  -- We divide inside the rounding and multiply outside of it because we expect these
+  -- bounds to be multiples of 100. For the maximum mired value (minimum K value),
+  -- add 1 before converting and round up to nearest hundreds. For the minimum mired
+  -- (maximum K value) value, subtract 1 before converting and round down to nearest
+  -- hundreds.
+  if minOrMax == COLOR_TEMP_MIN then
+    return utils.round(((MIRED_KELVIN_CONVERSION_CONSTANT / (value + 1)) / 100) + 0.5) * 100
+  else
+    return utils.round(((MIRED_KELVIN_CONVERSION_CONSTANT / (value - 1)) / 100) - 0.5) * 100
+  end
 end
 
 --- component_to_endpoint helper function to handle situations where
@@ -429,7 +436,7 @@ local mired_bounds_handler_factory = function(minOrMax)
       device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp_in_kelvin = mired_to_kelvin(ib.data.value)
+    local temp_in_kelvin = mired_to_kelvin(ib.data.value, minOrMax)
     set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
     local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
     local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)

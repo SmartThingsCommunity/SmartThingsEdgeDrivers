@@ -649,6 +649,33 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Min and max color temperature attributes set capability constraint using improved temperature conversion rounding",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    }
+  }
+)
+
+test.register_message_test(
   "Min color temperature outside of range, capability not sent",
   {
     {
