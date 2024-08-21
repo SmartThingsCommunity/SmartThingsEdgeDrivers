@@ -27,6 +27,7 @@ end
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
+local OVEN_DEVICE_ID = 0x007B
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -94,8 +95,6 @@ end
 local function do_configure(driver, device)
   local cook_surface_endpoints = get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
 
-  --incase we arive here from oven driver as a composed child device there can be multiple instances of TC clusters.
-  --we are only interested in TC clusters with Cook Surface DT.
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
@@ -127,18 +126,20 @@ local function do_configure(driver, device)
   end
 end
 
--- Matter Handlers --
-local function is_cook_top_device(opts, driver, device, ib)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == COOK_TOP_DEVICE_TYPE_ID then
-        return true
-      end
-    end
+local function is_cook_top_device(opts, driver, device, ...)
+  local cook_top_eps = get_endpoints_for_dt(device, COOK_TOP_DEVICE_TYPE_ID)
+  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
+  -- We want to skip lifecycle events in cases where device is an oven with a composed cook-top device
+  if (#oven_eps > 0) and opts.dispatcher_class == "DeviceLifecycleDispatcher" then
+    return false
+  end
+  if #cook_top_eps > 0 then
+    return true
   end
   return false
 end
 
+-- Matter Handlers --
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL })
@@ -166,12 +167,12 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
-    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
 
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
   local supportedTemperatureLevels = {}
   for _, tempLevel in ipairs(ib.data.elements) do
+    log.info_with({ hub_logs = true },
+      string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels

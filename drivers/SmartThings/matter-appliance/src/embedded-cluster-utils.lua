@@ -15,9 +15,12 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
---These clusters are not available in v10
-clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+  clusters.OvenMode = require "OvenMode"
+end
 
 local embedded_cluster_utils = {}
 
@@ -34,6 +37,7 @@ local embedded_clusters = {
   [clusters.TemperatureControl.ID] = clusters.TemperatureControl,
   [clusters.MicrowaveOvenControl.ID] = clusters.MicrowaveOvenControl,
   [clusters.MicrowaveOvenMode.ID] = clusters.MicrowaveOvenMode,
+  [clusters.OvenMode.ID] = clusters.OvenMode,
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)

@@ -22,8 +22,6 @@ local log = require "log"
 local utils = require "st.utils"
 
 local version = require "version"
-clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
 
 if version.api < 10 then
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
@@ -38,12 +36,20 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+  clusters.OvenMode = require "OvenMode"
+end
+
 local dishwasher = require("matter-dishwasher")
 local laundry_driver = require("matter-laundry")
 local refrigerator = require("matter-refrigerator")
 local extractorHood = require("matter-extractor-hood")
 local cook_top = require("matter-cook-top")
 local microwave_oven = require("matter-microwave-oven")
+local oven = require("matter-oven")
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -77,7 +83,9 @@ local subscribed_attributes = {
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
     clusters.MicrowaveOvenMode.attributes.CurrentMode,
-    clusters.MicrowaveOvenMode.attributes.SupportedModes
+    clusters.MicrowaveOvenMode.attributes.SupportedModes,
+    clusters.OvenMode.attributes.SupportedModes,
+    clusters.OvenMode.attributes.CurrentMode,
   },
   [capabilities.laundryWasherRinseMode.ID] = {
     clusters.LaundryWasherControls.attributes.NumberOfRinses,
@@ -358,7 +366,8 @@ local matter_driver_template = {
     refrigerator,
     cook_top,
     microwave_oven,
-    extractorHood
+    extractorHood,
+    oven
   }
 }
 
