@@ -240,6 +240,12 @@ end
 
 local function device_init(driver, device)
   device:subscribe()
+  -- To check if the device support WindSupportMask
+  local eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.WindSupportMask.SLEEP_WIND})
+  local new_profile = "fan-without-windmode"
+  if #eps == 0 then
+    device:try_update_metadata({profile = new_profile})
+  end
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
