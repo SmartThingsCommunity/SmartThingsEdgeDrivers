@@ -6,12 +6,14 @@ local utils = require "st.utils"
 local matter_driver_template = {}
 local embedded_cluster_utils = require "embedded_cluster_utils"
 
---These clusters are not available in lua_libs-v10
-clusters.EnergyEvse = require "EnergyEvse"
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
-clusters.EnergyEvseMode = require "EnergyEvseMode"
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.EnergyEvse = require "EnergyEvse"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
+  clusters.EnergyEvseMode = require "EnergyEvseMode"
+end
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_EVSE_MODES_MAP = "__supported_evse_modes_map"

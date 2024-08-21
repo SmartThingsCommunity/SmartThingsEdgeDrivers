@@ -64,6 +64,17 @@ Feature.unset_power_number_limits = function(self)
   self.value = self.value & (~self.POWER_NUMBER_LIMITS & self.BASE_MASK)
 end
 
+function Feature.bits_are_valid(feature)
+  local max =
+    Feature.POWER_AS_NUMBER |
+    Feature.POWER_IN_WATTS |
+    Feature.POWER_NUMBER_LIMITS
+  if (feature <= max) and (feature >= 1) then
+    return true
+  else
+    return false
+  end
+end
 
 Feature.mask_methods = {
   is_power_as_number_set = Feature.is_power_as_number_set,

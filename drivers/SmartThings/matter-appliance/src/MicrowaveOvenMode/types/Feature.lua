@@ -28,6 +28,16 @@ Feature.unset_on_off = function(self)
   self.value = self.value & (~self.ON_OFF & self.BASE_MASK)
 end
 
+function Feature.bits_are_valid(feature)
+  local max =
+    Feature.ON_OFF
+  if (feature <= max) and (feature >= 1) then
+    return true
+  else
+    return false
+  end
+end
+
 Feature.mask_methods = {
   is_on_off_set = Feature.is_on_off_set,
   set_on_off = Feature.set_on_off,

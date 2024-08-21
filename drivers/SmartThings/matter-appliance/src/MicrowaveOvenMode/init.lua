@@ -49,8 +49,16 @@ MicrowaveOvenMode.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
-MicrowaveOvenMode.command_direction_map = {
-}
+MicrowaveOvenMode.command_direction_map = {}
+
+MicrowaveOvenMode.FeatureMap = MicrowaveOvenMode.types.Feature
+
+function MicrowaveOvenMode.are_features_supported(feature, feature_map)
+  if (MicrowaveOvenMode.FeatureMap.bits_are_valid(feature)) then
+    return (feature & feature_map) == feature
+  end
+  return false
+end
 
 local attribute_helper_mt = {}
 attribute_helper_mt.__index = function(self, key)

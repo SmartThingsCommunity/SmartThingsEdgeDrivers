@@ -68,6 +68,15 @@ MicrowaveOvenControl.command_direction_map = {
   ["AddMoreTime"] = "server",
 }
 
+MicrowaveOvenControl.FeatureMap = MicrowaveOvenControl.types.Feature
+
+function MicrowaveOvenControl.are_features_supported(feature, feature_map)
+  if (MicrowaveOvenControl.FeatureMap.bits_are_valid(feature)) then
+    return (feature & feature_map) == feature
+  end
+  return false
+end
+
 local attribute_helper_mt = {}
 attribute_helper_mt.__index = function(self, key)
   local direction = MicrowaveOvenControl.attribute_direction_map[key]
