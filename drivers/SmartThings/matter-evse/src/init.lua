@@ -6,6 +6,8 @@ local utils = require "st.utils"
 local matter_driver_template = {}
 local embedded_cluster_utils = require "embedded_cluster_utils"
 
+local version = require "version"
+
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.EnergyEvse = require "EnergyEvse"
