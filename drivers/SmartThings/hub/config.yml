@@ -1,0 +1,4 @@
+name: 'hub'
+packageKey: 'hub'
+description: "SmartThings driver for Hub devices"
+vendorSupportInformation: "https://support.smartthings.com"
