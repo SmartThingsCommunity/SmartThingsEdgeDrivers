@@ -277,34 +277,12 @@ local function initialize_switch(driver, device)
         -- Configure MCD for button endpoints
         if tbl_contains(STATIC_PROFILE_SUPPORTED, #button_eps) then
           if ep ~= main_endpoint then
-            if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-              component_map[string.format("switch%d", current_component_number)] = ep
-            else
-              component_map[string.format("button%d", current_component_number)] = ep
-            end
+            component_map[string.format("button%d", current_component_number)] = ep
             current_component_number = current_component_number + 1
           else
             component_map["main"] = ep
           end
           component_map_used = true
-        else -- Create child devices for non-main button endpoints
-          num_button_server_eps = num_button_server_eps + 1
-          if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-            local name = string.format("%s %d", device.label, num_button_server_eps)
-            local child_profile = assign_child_profile(device, ep)
-            driver:try_create_device(
-                {
-                  type = "EDGE_CHILD",
-                  label = name,
-                  profile = child_profile,
-                  parent_device_id = device.id,
-                  parent_assigned_child_key = string.format("%d", ep),
-                  vendor_provided_label = name
-                }
-            )
-            current_component_number = current_component_number + 1
-            parent_child_device = true
-          end
         end
       elseif device:supports_server_cluster(clusters.OnOff.ID, ep) then
         -- Create child devices for non-main switch endpoints
@@ -404,13 +382,7 @@ local function initialize_switch(driver, device)
 end
 
 local function component_to_endpoint(device, component)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local map
-  if #button_eps > 0 then
-    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
-  else
-    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  end
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
@@ -418,13 +390,7 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local map
-  if #button_eps > 0 then
-    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
-  else
-    map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  end
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
