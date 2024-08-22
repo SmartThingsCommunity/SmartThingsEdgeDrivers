@@ -400,8 +400,6 @@ end
 
 local function component_to_endpoint(device, component)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  end
->>>>>>> 16012947ca44b738d4876aaf53d4e3c849021771
   if map[component] then
     return map[component]
   end
