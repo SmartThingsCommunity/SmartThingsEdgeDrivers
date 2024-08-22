@@ -40,7 +40,6 @@ local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
 local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
 local APPLICATION_VERSION = "application_version"
-local UPDATE_SHADE_LEVEL = "update_shade_level"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -159,7 +158,6 @@ test.register_coroutine_test(
   "Window shade state closed",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -179,7 +177,6 @@ test.register_coroutine_test(
   "Window shade state open",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -199,7 +196,6 @@ test.register_coroutine_test(
   "Window shade state partially open",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -377,7 +373,6 @@ test.register_coroutine_test(
         WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_version_device, 0)
       }
     )
-    mock_version_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
@@ -405,7 +400,6 @@ test.register_coroutine_test(
         WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_version_device, 100)
       }
     )
-    mock_version_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
@@ -433,7 +427,6 @@ test.register_coroutine_test(
         WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_version_device, 50)
       }
     )
-    mock_version_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     )

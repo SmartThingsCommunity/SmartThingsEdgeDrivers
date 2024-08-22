@@ -73,6 +73,9 @@ local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
 
+local MIN_ALLOWED_PERCENT_VALUE = 0
+local MAX_ALLOWED_PERCENT_VALUE = 100
+
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
 local setpoint_limit_device_field = {
@@ -183,6 +186,10 @@ local subscribed_attributes = {
   },
   [capabilities.fineDustHealthConcern.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+  },
+  [capabilities.fineDustSensor.ID] = {
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
   },
   [capabilities.dustSensor.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
@@ -328,7 +335,31 @@ local function do_configure(driver, device)
   local device_type = get_device_type(driver, device)
   local profile_name = "thermostat"
   if device_type == RAC_DEVICE_TYPE_ID then
-    device.log.warn_with({hub_logs=true}, "Room Air Conditioner supports only one profile")
+    profile_name = "room-air-conditioner"
+
+    if #humidity_eps > 0 then
+      profile_name = profile_name .. "-humidity"
+    end
+    if #fan_eps > 0 then
+      profile_name = profile_name .. "-fan"
+      if #wind_eps > 0 then
+        profile_name = profile_name .. "-wind"
+      end
+    end
+
+    if #heat_eps > 0 and #cool_eps > 0 then
+      profile_name = profile_name .. "-heating-cooling"
+    else
+      device.log.warn_with({hub_logs=true}, "Room AC does not support both heating and cooling. No matching profile")
+      return
+    end
+
+    if profile_name == "room-air-conditioner-humidity-fan-wind-heating-cooling" then
+      profile_name = "room-air-conditioner"
+    end
+
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
     device.log.warn_with({hub_logs=true}, "Fan supports only one profile")
   elseif device_type == AP_DEVICE_TYPE_ID then
@@ -363,9 +394,6 @@ local function do_configure(driver, device)
         profile_name = profile_name .. "-cooling-only"
       end
 
-      -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-      -- to determine support for ThermostatRunningState
-      -- Add nobattery profiles if updated
       profile_name = profile_name .. "-nostate"
 
       if #battery_eps == 0 then
@@ -843,7 +871,7 @@ end
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
   local speed = 0
   if ib.data.value ~= nil then
-    speed = ib.data.value
+    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end

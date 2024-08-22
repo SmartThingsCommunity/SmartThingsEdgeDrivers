@@ -1,25 +1,22 @@
-name: dishwasher
+name: room-air-conditioner-heating-cooling
 components:
 - id: main
   capabilities:
   - id: switch
     version: 1
-  - id: mode
+  - id: temperatureMeasurement
     version: 1
-  - id: waterFlowAlarm
+  - id: thermostatMode
     version: 1
-  - id: contactSensor
+  - id: thermostatHeatingSetpoint
     version: 1
-  - id: temperatureAlarm
+  - id: thermostatCoolingSetpoint
     version: 1
-  - id: operationalState
+  - id: thermostatOperatingState
     version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: Dishwasher
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-dishwasher
+  - name: AirConditioner
