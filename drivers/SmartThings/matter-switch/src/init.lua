@@ -286,7 +286,6 @@ local function initialize_switch(driver, device)
     -- that have been implemented as server. This can be removed when we have
     -- support for bindings.
     local num_switch_server_eps = 0
-    local num_button_server_eps = 0
     local main_endpoint = find_default_endpoint(device)
 
     for _, ep in ipairs(all_eps) do
