@@ -14,7 +14,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: RangeHood
+  - name: KitchenHood
 - id: activatedCarbonFilter
   label: Activated carbon filter
   capabilities:
@@ -23,4 +23,4 @@ components:
   - id: filterStatus
     version: 1
   categories:
-  - name: RangeHood
+  - name: KitchenHood
