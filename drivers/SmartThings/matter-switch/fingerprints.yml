@@ -169,6 +169,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/64"
+    deviceLabel: Cync Indoor Plug
+    vendorId: 0x1339
+    productId: 0x0040
+    deviceProfileName: plug-binary
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
