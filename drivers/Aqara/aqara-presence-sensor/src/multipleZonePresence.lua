@@ -3,15 +3,16 @@ local mzp = {}
 
 mzp.capability = capabilities["multipleZonePresence"]
 mzp.id = "multipleZonePresence"
-mzp.zoneInfoTable = {}
 mzp.commands = {}
-mzp.maxZoneId = -1
 
 mzp.present = "present"
 mzp.notPresent = "not present"
 
-function mzp.findZoneById(id)
-  for index, zoneInfo in pairs(mzp.zoneInfoTable) do
+local ZONE_INFO_KEY = "zoneInfo"
+
+function mzp.findZoneById(driver, device, id)
+  local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+  for index, zoneInfo in pairs(zoneInfoTable) do
     if zoneInfo.id == id then
       return zoneInfo, index
     end
@@ -19,9 +20,10 @@ function mzp.findZoneById(id)
   return nil, nil
 end
 
-function mzp.findNewZoneId()
-  local maxId = mzp.maxZoneId
-  for _, zoneInfo in pairs(mzp.zoneInfoTable) do
+function mzp.findNewZoneId(driver, device)
+  local maxId = 0
+  local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+  for _, zoneInfo in pairs(zoneInfoTable) do
     local intId = tonumber(zoneInfo.id)
     if intId and intId > maxId then
       maxId = intId
@@ -30,71 +32,88 @@ function mzp.findNewZoneId()
   return tostring(maxId + 1)
 end
 
-function mzp.createZone(name, id)
+function mzp.createZone(driver, device, name, id)
   local err, createdId = nil, nil
   local zoneInfo = {}
+  local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
   if id == nil then
-    id = mzp.findNewZoneId()
+    id = mzp.findNewZoneId(driver, device)
   end
-  if mzp.findZoneById(id) then
+  if mzp.findZoneById(driver, device, id) then
     err = string.format("id %s already exists", id)
-    mzp.maxZoneId = mzp.maxZoneId + 1
     return err, createdId
   end
   zoneInfo.id = id
   zoneInfo.name = name
   zoneInfo.state = mzp.notPresent
-  table.insert(mzp.zoneInfoTable, zoneInfo)
+  zoneInfoTable["zone"..id] = zoneInfo
   createdId = id
 
-  local intId = tonumber(id)
-  if intId and intId > mzp.maxZoneId then
-    mzp.maxZoneId = intId
-  end
+  device:set_field(ZONE_INFO_KEY, zoneInfoTable, { persist = true })
 
   return err, createdId
 end
 
-function mzp.deleteZone(id)
+function mzp.deleteZone(driver, device, id)
   local err, deletedId = nil, nil
-  local zoneInfo, index = mzp.findZoneById(id)
-  if zoneInfo then
-    table.remove(mzp.zoneInfoTable, index)
+  local __, index = mzp.findZoneById(driver, device, id)
+  if index then
+    local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+    zoneInfoTable[index] = nil
     deletedId = id
+    device:set_field(ZONE_INFO_KEY, zoneInfoTable, { persist = true })
   else
     err = string.format("id %s doesn't exist", id)
   end
   return err, deletedId
 end
 
-function mzp.renameZone(id, name)
+function mzp.renameZone(driver, device, id, name)
   local err, changedId = nil, nil
-  local zoneInfo = mzp.findZoneById(id)
-  if zoneInfo then
-    zoneInfo.name = name
+  local __, index = mzp.findZoneById(driver, device, id)
+  if index then
+    local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+    zoneInfoTable[index].name = name
     changedId = id
+    device:set_field(ZONE_INFO_KEY, zoneInfoTable, { persist = true })
   else
     err = string.format("id %s doesn't exist", id)
   end
   return err, changedId
 end
 
-function mzp.changeState(id, state)
+function mzp.changeState(driver, device, id, state)
   local err, changedId = nil, nil
-  local zoneInfo = mzp.findZoneById(id)
+  local zoneInfo, index = mzp.findZoneById(driver, device, id)
   if zoneInfo then
-    zoneInfo.state = state
+    local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+    zoneInfoTable[index].state = state
     changedId = id
+    device:set_field(ZONE_INFO_KEY, zoneInfoTable, { persist = true })
   else
     err = string.format("id %s doesn't exist", id)
   end
   return err, changedId
 end
 
-function mzp.setZoneInfo(zoneInfoTable)
-  if zoneInfoTable then
-    mzp.zoneInfoTable = zoneInfoTable
+function mzp.setZoneInfo(driver, device, inputZoneInfoTable)
+  --prevents overwriting with a default name ("zone%d").
+  local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+  for __, inputZoneInfo in pairs(inputZoneInfoTable) do
+    local zoneInfo, index = mzp.findZoneById(driver, device, inputZoneInfo.id)
+    if zoneInfo then
+      if inputZoneInfo.name ~= "zone" .. inputZoneInfo.id then
+        zoneInfoTable[index].name = inputZoneInfo.name
+      end
+    else
+      local newZoneInfo = {}
+      newZoneInfo.id = inputZoneInfo.id
+      newZoneInfo.name = inputZoneInfo.name
+      newZoneInfo.state = mzp.notPresent
+      table.insert(zoneInfoTable, newZoneInfo)
+    end
   end
+  device:set_field(ZONE_INFO_KEY, zoneInfoTable, { persist = true })
 end
 
 mzp.commands.updateZoneName = {}
@@ -102,7 +121,7 @@ mzp.commands.updateZoneName.name = "updateZoneName"
 function mzp.commands.updateZoneName.handler(driver, device, args)
   local name = args.args.name
   local id = args.args.id
-  mzp.renameZone(id, name)
+  mzp.renameZone(driver, device, id, name)
   mzp.updateAttribute(driver, device)
 end
 
@@ -110,7 +129,7 @@ mzp.commands.deleteZone = {}
 mzp.commands.deleteZone.name = "deleteZone"
 function mzp.commands.deleteZone.handler(driver, device, args)
   local id = args.args.id
-  mzp.deleteZone(id)
+  mzp.deleteZone(driver, device, id)
   mzp.updateAttribute(driver, device)
 end
 
@@ -119,12 +138,17 @@ mzp.commands.createZone.name = "createZone"
 function mzp.commands.createZone.handler(driver, device, args)
   local name = args.args.name
   local id = args.args.id
-  mzp.createZone(name, id)
+  mzp.createZone(driver, device, name, id)
   mzp.updateAttribute(driver, device)
 end
 
 function mzp.updateAttribute(driver, device)
-  device:emit_event(mzp.capability.zoneState({ value = mzp.zoneInfoTable }))
+  local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
+  local zoneStatePayload = {}
+  for _, zoneInfo in pairs(zoneInfoTable) do
+    table.insert(zoneStatePayload, zoneInfo)
+  end
+  device:emit_event(mzp.capability.zoneState({ value = zoneStatePayload }))
 end
 
 return mzp

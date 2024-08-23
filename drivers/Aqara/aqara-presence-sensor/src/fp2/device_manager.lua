@@ -57,13 +57,13 @@ end
 function device_manager.zone_presence_handler(driver, device, zone, evt_value)
   if not device:supports_capability(capabilities.multipleZonePresence) then return end
 
-  local zoneInfo = multipleZonePresence.findZoneById(zone)
+  local zoneInfo = multipleZonePresence.findZoneById(driver, device, zone)
   if not zoneInfo then
-    multipleZonePresence.createZone("zone" .. zone, zone)
+    multipleZonePresence.createZone(driver, device, "zone" .. zone, zone)
   end
   local evt_action = multipleZonePresence.notPresent
   if evt_value == 1 then evt_action = multipleZonePresence.present end
-  multipleZonePresence.changeState(zone, evt_action)
+  multipleZonePresence.changeState(driver, device, zone, evt_action)
   multipleZonePresence.updateAttribute(driver, device)
 end
 
@@ -98,13 +98,13 @@ function device_manager.zone_quantities_handler(driver, device, zone, evt_value)
 
   for i = 0, 29 do
     local zonePos = tostring(i + 1)
-    local zoneInfo = multipleZonePresence.findZoneById(zonePos)
+    local zoneInfo = multipleZonePresence.findZoneById(driver, device, zonePos)
     local curStatus = 0x1 & (evt_value >> i)
     if zoneInfo and curStatus == 0 then         -- delete
-      multipleZonePresence.deleteZone(zonePos)
+      multipleZonePresence.deleteZone(driver, device, zonePos)
     elseif not zoneInfo and curStatus == 1 then -- create
-      multipleZonePresence.createZone("zone" .. zonePos, zonePos)
-      multipleZonePresence.changeState(zonePos, multipleZonePresence.notPresent)
+      multipleZonePresence.createZone(driver, device, "zone" .. zonePos, zonePos)
+      multipleZonePresence.changeState(driver, device, zonePos, multipleZonePresence.notPresent)
     end
   end
   multipleZonePresence.updateAttribute(driver, device)
@@ -195,7 +195,7 @@ function device_manager.set_zone_info_to_latest_state(driver, device)
 
   local zoneInfoTable = device:get_latest_state("main", capabilities.multipleZonePresence.ID,
     capabilities.multipleZonePresence.zoneState.NAME, {})
-  multipleZonePresence.setZoneInfo(zoneInfoTable)
+  multipleZonePresence.setZoneInfo(driver, device, zoneInfoTable)
 end
 
 function device_manager.handle_status(driver, device, status)
