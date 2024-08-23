@@ -186,9 +186,6 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
-      for _, attr in pairs(device_type_attribute_map[id]) do
-        device:add_subscribed_attribute(attr)
-      end
     end
   end
   -- default to "switch-binary" if no profile is found
@@ -308,6 +305,18 @@ local function device_init(driver, device)
     device:set_endpoint_to_component_fn(endpoint_to_component)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
+    end
+    local main_endpoint = find_default_endpoint(device)
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          device:add_subscribed_attribute(attr)
+        end
+      end
     end
     device:subscribe()
   end
