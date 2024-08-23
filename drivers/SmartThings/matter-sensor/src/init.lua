@@ -158,9 +158,12 @@ local function info_changed(driver, device, event, args)
     local dt_ep = device:get_field(dt_name)
     if dt_ep and (device.preferences[dt_info.sensitivity_preference] ~= args.old_st_store.preferences[dt_info.sensitivity_preference]) then
       local sensitivity_preference = device.preferences[dt_info.sensitivity_preference]
-      if sensitivity_preference == "1" then -- High
+      if sensitivity_preference == "2" then -- high
         device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MAX_SENSITIVITY_LEVEL) - 1))
-      elseif sensitivity_preference == "0" then -- Low
+      elseif sensitivity_preference == "1" then -- medium
+        local medium_sensitivity_level = math.floor((device:get_field(MAX_SENSITIVITY_LEVEL) + 1) / 2)
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, medium_sensitivity_level))
+      elseif sensitivity_preference == "0" then -- low
         device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(MIN_SENSITIVITY_LEVEL)))
       end
     end
