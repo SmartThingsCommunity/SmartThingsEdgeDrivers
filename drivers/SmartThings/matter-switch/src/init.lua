@@ -287,6 +287,17 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
+      for _, attr in pairs(device_type_attribute_map[id]) do
+        if id == GENERIC_SWITCH_ID then
+          if attr == clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_attribute(attr)
+          else
+            device:add_subscribed_event(attr)
+          end
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
     end
   end
   -- default to "switch-binary" if no profile is found
