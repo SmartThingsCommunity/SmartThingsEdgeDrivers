@@ -67,7 +67,7 @@ local mock_device_dimmer = test.mock_device.build_test_matter_device({
   },
   endpoints = {
     {
-      endpoint_id = 5,
+      endpoint_id = 0,
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
@@ -196,6 +196,12 @@ local mock_device_parent_child_switch_types = test.mock_device.build_test_matter
 })
 
 local function test_init_parent_child_switch_types()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_switch_types)
+  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
+
   test.mock_device.add_test_device(mock_device_parent_child_switch_types)
   mock_device_parent_child_switch_types:expect_metadata_update({ profile = "switch-level" })
 
@@ -217,7 +223,18 @@ local function test_init_onoff_client()
   test.mock_device.add_test_device(mock_device_onoff_client)
 end
 
+local cluster_subscribe_list = {
+  clusters.OnOff.attributes.OnOff
+}
+
 local function test_init_parent_client_child_server()
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_client_child_server)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_parent_client_child_server))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_parent_client_child_server)
   mock_device_parent_client_child_server:expect_metadata_update({ profile = "switch-binary" })
 end
