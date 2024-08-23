@@ -15,12 +15,13 @@ components:
 preferences:
   - name: "leakSensitivity"
     title: "Leak sensitivity"
-    description: "Leak sensor sensitivity"
+    description: "Water leak detector sensitivity"
     required: false
     preferenceType: "enumeration"
     definition: {
       options: {
-        0: "min",
-        1: "max"
+        0: "low",
+        1: "medium",
+        2: "high"
       }
     }

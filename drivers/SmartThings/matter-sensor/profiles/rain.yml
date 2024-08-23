@@ -18,7 +18,8 @@ preferences:
     preferenceType: "enumeration"
     definition: {
       options: {
-        0: "min",
-        1: "max"
+        0: "low",
+        1: "medium",
+        2: "high"
       }
     }

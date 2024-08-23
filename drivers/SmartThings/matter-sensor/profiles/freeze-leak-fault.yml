@@ -21,14 +21,15 @@ components:
   categories:
   - name: LeakSensor
 preferences:
-  - name: "freezeSensitivity"
-    title: "Freeze detector sensitivity"
-    description: "Sensitivity of a device to coldness"
+  - name: "waterFreezeSensitivity"
+    title: "Freeze sensitivity"
+    description: "Water freeze detector sensitivity"
     required: false
     preferenceType: "enumeration"
     definition: {
       options: {
-        0: "Min",
-        1: "Max"
+        0: "low",
+        1: "medium",
+        2: "high"
       }
     }
