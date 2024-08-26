@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local Mask = {
   ID = 0x0000,
   NAME = "Mask",
-  base_type = require "DishwasherAlarm.types.AlarmBitmap",
+  base_type = require "DishwasherAlarm.types.AlarmMap",
 }
 
 function Mask:new_value(...)

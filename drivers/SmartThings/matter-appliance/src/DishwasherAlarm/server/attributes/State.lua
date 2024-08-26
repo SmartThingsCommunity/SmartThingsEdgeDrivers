@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local State = {
   ID = 0x0002,
   NAME = "State",
-  base_type = require "DishwasherAlarm.types.AlarmBitmap",
+  base_type = require "DishwasherAlarm.types.AlarmMap",
 }
 
 function State:new_value(...)
