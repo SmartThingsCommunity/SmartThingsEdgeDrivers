@@ -56,7 +56,7 @@ end
 
 function mzp.deleteZone(driver, device, id)
   local err, deletedId = nil, nil
-  local __, index = mzp.findZoneById(driver, device, id)
+  local _, index = mzp.findZoneById(driver, device, id)
   if index then
     local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
     zoneInfoTable[index] = nil
@@ -70,7 +70,7 @@ end
 
 function mzp.renameZone(driver, device, id, name)
   local err, changedId = nil, nil
-  local __, index = mzp.findZoneById(driver, device, id)
+  local _, index = mzp.findZoneById(driver, device, id)
   if index then
     local zoneInfoTable = device:get_field(ZONE_INFO_KEY) or {}
     zoneInfoTable[index].name = name
