@@ -267,22 +267,13 @@ local function device_removed(driver, device)
 end
 
 local function handle_switch_on(driver, device, cmd)
-  print("@@")
-
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
-  print("@@")
-
   local endpoint_id = device:component_to_endpoint(cmd.component)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
-  print("@@")
-
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
-  print("@@")
-
   device:send(req)
-  print("@@")
 end
 
 local function handle_switch_off(driver, device, cmd)
