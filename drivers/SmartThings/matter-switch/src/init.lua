@@ -267,13 +267,22 @@ local function device_removed(driver, device)
 end
 
 local function handle_switch_on(driver, device, cmd)
+  print("@@")
+
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
+  print("@@")
+
   local endpoint_id = device:component_to_endpoint(cmd.component)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
+  print("@@")
+
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
+  print("@@")
+
   device:send(req)
+  print("@@")
 end
 
 local function handle_switch_off(driver, device, cmd)
@@ -290,9 +299,17 @@ local function handle_set_level(driver, device, cmd)
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
-  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
-  device:send(req)
+  local level = math.floor(cmd.args.level/100.0 * 254) or 0
+  -- not all devices properly handle the MoveToLevelWithOnOff command, so this handling manually applies the effects
+  if level == 0 then
+    local off_req = clusters.OnOff.server.commands.Off(device, endpoint_id)
+    device:send(off_req)
+  else
+    local on_req = clusters.OnOff.server.commands.On(device, endpoint_id)
+    device:send(on_req)
+  end
+  local level_req = clusters.LevelControl.server.commands.MoveToLevel(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
+  device:send(level_req)
 end
 
 --TODO could be moved to st.utils if made more generally useful
