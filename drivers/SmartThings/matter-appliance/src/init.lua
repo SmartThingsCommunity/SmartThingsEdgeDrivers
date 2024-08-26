@@ -36,12 +36,10 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
--- Include driver-side definitions when lua libs api version is < 11
-if version.api < 11 then
-  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
-  clusters.OvenMode = require "OvenMode"
-end
+--these clusters are not available in v10 and v11
+clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+clusters.OvenMode = require "OvenMode"
 
 local dishwasher = require("matter-dishwasher")
 local laundry_driver = require("matter-laundry")
