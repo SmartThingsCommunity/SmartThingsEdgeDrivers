@@ -21,6 +21,8 @@ local MatterDriver = require "st.matter.driver"
 
 local PROFILE_MATCHED = "__profile_matched"
 
+local subWindowCovering = require("matter-sub-window-covering")
+
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = device:get_endpoints(cluster)
@@ -223,6 +225,9 @@ local matter_driver_template = {
     capabilities.windowShadePreset,
     capabilities.battery,
   },
+  sub_drivers = {
+    subWindowCovering
+  }
 }
 
 local matter_driver = MatterDriver("matter-window-covering", matter_driver_template)
