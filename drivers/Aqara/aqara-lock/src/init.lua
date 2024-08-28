@@ -23,6 +23,7 @@ local seq_num = 0
 
 local SHARED_KEY = "__shared_key"
 local CLOUD_PUBLIC_KEY = "__cloud_public_key"
+local SUPPORTED_ALARM_VALUES = { "damaged", "forcedOpeningAttempt", "unableToLockTheDoor", "notClosedForALongTime", "highTemperature", "attemptsExceeded" }
 
 local function my_secret_data_handler(driver, device, secret_info)
   if secret_info.secret_kind ~= "aqara" then return end
@@ -48,6 +49,22 @@ local function remoteControlShow(device)
   else
     credential_utils.set_host_count(device, 0)
     device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
+  end
+end
+local function comp_supported_alarm_values(last_alarm_values)
+  if #last_alarm_values~=#SUPPORTED_ALARM_VALUES then return false end
+  for k, v in pairs(last_alarm_values) do
+    if SUPPORTED_ALARM_VALUES[k]~=v then return false end
+  end
+  return true
+end
+
+local function device_init(self, device)
+  local last_alarm_values = device:get_latest_state("main", LockAlarm.ID, LockAlarm.supportedAlarmValues.NAME) or nil
+  if last_alarm_values == nil or not comp_supported_alarm_values(last_alarm_values) then
+    device:emit_event(
+      LockAlarm.supportedAlarmValues(SUPPORTED_ALARM_VALUES, { visibility = { displayed = false } })
+    )
   end
 end
 
@@ -253,6 +270,7 @@ local aqara_locks_handler = {
     }
   },
   lifecycle_handlers = {
+    init = device_init,
     added = device_added
   },
   secret_data_handlers = {
