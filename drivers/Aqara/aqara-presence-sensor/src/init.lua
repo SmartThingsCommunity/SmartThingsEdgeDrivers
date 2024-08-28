@@ -150,9 +150,6 @@ local function device_removed(driver, device)
       log.error(string.format("remove : failed to get remove, dni= %s, err= %s, status= %s", device.device_network_id,
         err,
         status))
-      if status == 404 then
-        device:offline()
-      end
     end
   end
 

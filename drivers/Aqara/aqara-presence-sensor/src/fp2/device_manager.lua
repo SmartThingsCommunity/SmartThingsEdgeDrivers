@@ -250,19 +250,15 @@ function device_manager.handle_sse_event(driver, device, event_type, data)
   end
 end
 
-function device_manager.refresh(driver, device)
-  device_manager.update_status(driver, device)
-end
-
 function device_manager.is_valid_connection(driver, device, conn_info)
   if not conn_info then
-    log.error(string.format("device_manager.is_valid_connection : failed to find conn_info, dni = %s",
+    log.warn(string.format("device_manager.is_valid_connection : failed to find conn_info, dni = %s",
       device.device_network_id))
     return false
   end
   local _, err, status = conn_info:get_attr()
   if err or status ~= 200 then
-    log.error(string.format(
+    log.warn(string.format(
       "device_manager.is_valid_connection : failed to connect to device, dni = %s, err= %s, status= %s",
       device.device_network_id, err, status))
     return false
@@ -272,7 +268,7 @@ function device_manager.is_valid_connection(driver, device, conn_info)
 end
 
 function device_manager.device_monitor(driver, device, device_info)
-  device_manager.refresh(driver, device)
+  device_manager.update_status(driver, device)
 end
 
 function device_manager.get_sse_url(driver, device, conn_info)
