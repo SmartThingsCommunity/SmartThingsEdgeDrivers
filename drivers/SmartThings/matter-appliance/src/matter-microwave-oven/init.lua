@@ -63,26 +63,30 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list), {visibility = {displayed = false}})
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
 
+  local supported_mode = {}
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.stopped())
+    supported_mode = device:get_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY)
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.running())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.paused())
   end
+  local event = capabilities.mode.supportedModes(supported_mode, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
   log.info_with({ hub_logs = true },
     string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
-
   local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
@@ -93,6 +97,10 @@ local function operational_error_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id,
       capabilities.operationalState.operationalState.commandInvalidInCurrentState())
   end
+  if operationalError ~= clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
+    local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  end
 end
 
 local function microwave_oven_supported_modes_handler(driver, device, ib, response)
@@ -101,7 +109,8 @@ local function microwave_oven_supported_modes_handler(driver, device, ib, respon
     log.info_with({hub_logs=true},"Inserting supported microwave mode:", mode.elements[1].value)
     table.insert(microwaveOvenModeSupportedModes, mode.elements[1].value)
   end
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, capabilities.mode.supportedModes(microwaveOvenModeSupportedModes), {visibility = {displayed = false}})
+  local event = capabilities.mode.supportedModes(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
   device:set_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY, microwaveOvenModeSupportedModes)
 end
 
@@ -130,13 +139,13 @@ local function microwave_oven_max_cook_time_handler(driver, device, ib, response
     minimum = 1,
     maximum = ib.data.value
   }
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, capabilities.cookTime.cookTimeRange(cook_time_range), {visibility = {displayed = false}})
+  local event = capabilities.cookTime.cookTimeRange(cook_time_range, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
 end
 
 ---------------------
 --capability handlers
 ---------------------
-
 local function update_device_state(device, endpoint)
   device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint))
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint))
