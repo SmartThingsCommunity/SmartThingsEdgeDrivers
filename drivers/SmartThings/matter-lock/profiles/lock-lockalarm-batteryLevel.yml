@@ -1,4 +1,4 @@
-name: lock-lockalarm
+name: lock-lockalarm-batteryLevel
 components:
 - id: main
   capabilities:

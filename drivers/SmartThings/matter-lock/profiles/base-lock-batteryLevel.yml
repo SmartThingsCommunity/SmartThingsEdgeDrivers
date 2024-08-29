@@ -1,4 +1,4 @@
-name: base-lock
+name: base-lock-batteryLevel
 components:
 - id: main
   capabilities:

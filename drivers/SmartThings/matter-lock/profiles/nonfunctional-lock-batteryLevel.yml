@@ -1,4 +1,4 @@
-name: nonfunctional-lock
+name: nonfunctional-lock-batteryLevel
 components:
 - id: main
   capabilities:

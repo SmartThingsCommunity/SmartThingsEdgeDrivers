@@ -1,4 +1,4 @@
-name: lock-without-codes
+name: lock-without-codes-batteryLevel
 components:
 - id: main
   capabilities:

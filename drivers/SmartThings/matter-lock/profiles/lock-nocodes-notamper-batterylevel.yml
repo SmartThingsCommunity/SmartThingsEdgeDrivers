@@ -1,4 +1,4 @@
-name: lock-nocodes-notamper
+name: lock-nocodes-notamper-batteryLevel
 components:
 - id: main
   capabilities:
