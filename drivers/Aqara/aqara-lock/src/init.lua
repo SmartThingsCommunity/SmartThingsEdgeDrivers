@@ -51,6 +51,7 @@ local function remoteControlShow(device)
     device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
   end
 end
+
 local function comp_supported_alarm_values(last_alarm_values)
   if #last_alarm_values~=#SUPPORTED_ALARM_VALUES then return false end
   for k, v in pairs(last_alarm_values) do
@@ -85,6 +86,18 @@ local function toHex(value, length)
   return utils.serialize_int(value, length, false, false)
 end
 
+local METHOD = {
+  LOCKED = "locked",
+  MANUAL = "manual",
+  FINGERPRINT = "fingerprint",
+  KEYPAD = "keypad",
+  RFID = "rfid",
+  RF447 = "rf447",
+  BLUETOOTH = "bluetooth",
+  COMMAND = "command",
+  NO_USE = ""
+}
+
 local function event_lock_handler(driver, device, evt_name, evt_value)
   if evt_value == 0x1 then
     device:emit_event(Lock.lock(evt_name))
@@ -95,11 +108,19 @@ end
 
 local function event_unlock_handler(driver, device, evt_name, evt_value)
   local id, label
-  if evt_value == 0x80020000 then -- one-time password
+  if evt_name == METHOD.RF447 then
+    evt_name = nil
+    id = nil
+    label = nil
+  elseif evt_name == METHOD.BLUETOOTH and evt_value == 2 then
+    evt_name = nil
+    id = nil
+    label = nil
+  elseif evt_value == 0x80020000 then -- one-time password
     id = "OTP_STANDALONE"
     label = nil
   else
-  id, label = credential_utils.find_userLabel(driver, device, evt_value)
+    id, label = credential_utils.find_userLabel(driver, device, evt_value)
   end
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = id, codeName = label } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
@@ -138,16 +159,6 @@ local function event_lock_status_handler(driver, device, evt_name, evt_value)
     device:emit_event(LockAlarm.alarm.damaged())
   end
 end
-local METHOD = {
-  LOCKED = "locked",
-  MANUAL = "manual",
-  FINGERPRINT = "fingerprint",
-  KEYPAD = "keypad",
-  RFID = "rfid",
-  BLUETOOTH = "bluetooth",
-  COMMAND = "command",
-  NO_USE = ""
-}
 
 local resource_id = {
   ["13.31.85"] = { event_name = METHOD.LOCKED, event_handler = event_lock_handler },
@@ -157,6 +168,7 @@ local resource_id = {
   ["13.42.85"] = { event_name = METHOD.FINGERPRINT, event_handler = event_unlock_handler },
   ["13.43.85"] = { event_name = METHOD.KEYPAD, event_handler = event_unlock_handler },
   ["13.44.85"] = { event_name = METHOD.RFID, event_handler = event_unlock_handler },
+  ["13.151.85"] = { event_name = METHOD.RF447, event_handler = event_unlock_handler },
   ["13.45.85"] = { event_name = METHOD.BLUETOOTH, event_handler = event_unlock_handler },
   ["13.90.85"] = { event_name = METHOD.COMMAND, event_handler = event_unlock_handler },
   ["13.46.85"] = { event_name = METHOD.KEYPAD, event_handler = event_unlock_handler },
