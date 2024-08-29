@@ -34,8 +34,8 @@ deviceConfig:
         values:
           - label: "  {{humidity.value}} {{humidity.unit}}"
         composite: true
-    actions: [ ]
-    basicPlus: [ ]
+    actions: []
+    basicPlus: []
   detailView:
     - component: main
       capability: temperatureMeasurement
