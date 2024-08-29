@@ -4,7 +4,7 @@ components:
   capabilities:
   - id: valve
     version: 1
-  - id: level
+  - id: switchLevel
     version: 1
     config:
       values:

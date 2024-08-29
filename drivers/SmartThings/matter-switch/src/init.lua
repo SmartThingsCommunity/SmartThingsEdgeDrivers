@@ -705,7 +705,7 @@ local function valve_level_attr_handler(driver, device, ib, response)
   if ib.data.value == nil then
     return
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(ib.data.value))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(ib.data.value))
 end
 
 local function info_changed(driver, device, event, args)
@@ -810,7 +810,7 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
-    [capabilities.level.ID] = {
+    [capabilities.switchLevel.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     }
   },
