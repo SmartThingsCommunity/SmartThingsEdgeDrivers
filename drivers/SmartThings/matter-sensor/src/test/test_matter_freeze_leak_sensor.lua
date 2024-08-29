@@ -206,10 +206,40 @@ test.register_coroutine_test(
       )
     })
     test.wait_for_events()
-    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "1" } }))
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "2" } }))
     test.socket.matter:__expect_send({
       mock_device_freeze_leak.id,
       clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__max_sensitivity_level") - 1)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Check that preference updates to high after being set on-device as expected", function()
+    test.socket.matter:__queue_receive({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:build_test_report_data(
+        mock_device_freeze_leak, 2, 4
+      )
+    })
+    test.wait_for_events()
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "2" } }))
+    test.socket.matter:__expect_send({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__max_sensitivity_level") - 1)
+    })
+    test.socket["matter"]:__queue_receive(
+      {
+        mock_device_freeze_leak.id,
+        clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:build_test_report_data(
+          mock_device_freeze_leak, 2, 2 -- put on level twp
+        )
+      }
+    )
+    test.socket.device_lifecycle():__queue_receive(mock_device_freeze_leak:generate_info_changed({ preferences = { freezeSensitivity = "0" } }))
+    test.socket.matter:__expect_send({
+      mock_device_freeze_leak.id,
+      clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(mock_device_freeze_leak, 2, mock_device_freeze_leak:get_field("__min_sensitivity_level"))
     })
   end
 )

@@ -56,7 +56,7 @@ local BOOLEAN_DEVICE_TYPE_INFO = {
   ["RAIN_SENSOR"] = { id = 0x0044, sensitivity_preference = "rainSensitivity" },
   ["WATER_FREEZE_DETECTOR"] = { id = 0x0041, sensitivity_preference = "freezeSensitivity" },
   ["WATER_LEAK_DETECTOR"] = { id = 0x0043, sensitivity_preference = "leakSensitivity" },
-  ["CONTACT_SENSOR"] = { id = 0x0015, },
+  ["CONTACT_SENSOR"] = { id = 0x0015, sensitivity_preference = "N/A" },
 }
 
 local function set_device_type_per_endpoint(driver, device)

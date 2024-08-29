@@ -17,7 +17,7 @@ components:
   categories:
   - name: LeakSensor
 preferences:
-  - name: "waterFreezeSensitivity"
+  - name: "freezeSensitivity"
     title: "Freeze sensitivity"
     description: "Water freeze detector sensitivity"
     required: false
