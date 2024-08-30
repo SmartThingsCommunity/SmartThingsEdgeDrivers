@@ -1,9 +1,9 @@
 local data_types = require "st.matter.data_types"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
-local energy_mwh = require "ElectricalEnergyMeasurement.types.Int64"
+local energy_mwh = require "st.matter.data_types.Int64"
 
 
-local systime_ms = require "st.matter.types.Uint64"
+local systime_ms = require "st.matter.data_types.Uint64"
 
 local EnergyMeasurementStruct = {}
 local new_mt = StructureABC.new_mt({NAME = "EnergyMeasurementStruct", ID = data_types.name_to_id_map["Structure"]})

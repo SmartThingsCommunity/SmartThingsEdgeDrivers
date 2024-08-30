@@ -19,7 +19,7 @@ Feature.mask_fields = {
 Feature.is_power_as_number_set = function(self)
   return (self.value & self.POWER_AS_NUMBER) ~= 0
 end
- 
+
 Feature.set_power_as_number = function(self)
   if self.value ~= nil then
     self.value = self.value | self.POWER_AS_NUMBER

@@ -23,10 +23,12 @@ local SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP = "__supported_device_energy_
 local RECURRING_REPORT_POLL_TIMER = "__recurring_report_poll_timer"
 local RECURRING_POLL_TIMER = "__recurring_poll_timer"
 local LAST_REPORTED_TIME = "__last_reported_time"
-local TOTAL_CUMULATIVE_ENERGY_IMORTED = "__total_cumulative_energy_imported" -- total in case there are multiple electrical sensors
+local TOTAL_CUMULATIVE_ENERGY_IMPORTED =
+"__total_cumulative_energy_imported" -- total in case there are multiple electrical sensors
 
-local TIMER_REPEAT = (1 * 60) -- 1 minute
-local REPORT_TIMEOUT = (15 * 60) -- Report the value each 15 minutes
+local TIMER_REPEAT = (1 * 60)        -- 1 minute
+local REPORT_TIMEOUT = (15 * 60)     -- Report the value each 15 minutes
+local MAX_CHARGING_CURRENT_CONSTRAINT = 80000 -- In v1.3 release of stack, this check for 80 A is performed.
 
 local ELECTRICAL_SENSOR_DEVICE_ID = 0x0510
 local DEVICE_ENERGY_MANAGEMENT_DEVICE_ID = 0x050D
@@ -63,19 +65,23 @@ local function get_endpoints_for_dt(device, device_type)
   return endpoints
 end
 
+local function time_zone_offset()
+  return os.difftime(os.time(), os.time(os.date("!*t", os.time())))
+end
+
 local function iso8601_to_epoch(iso8061Timestamp)
   local pattern = "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
   local year, month, day, hour, mins, sec = iso8061Timestamp:match(pattern)
   local time_tab = {
-    year  =  tonumber(year),
-    month =  tonumber(month),
-    day   =  tonumber(day),
-    hour  =  tonumber(hour),
-    mins  =  tonumber(mins),
-    sec   =  tonumber(sec),
+    year  = tonumber(year),
+    month = tonumber(month),
+    day   = tonumber(day),
+    hour  = tonumber(hour),
+    min  = tonumber(mins),
+    sec   = tonumber(sec),
     isdst = false
   }
-  return os.time(time_tab)
+  return math.floor(os.time(time_tab) + time_zone_offset())
 end
 
 local function epoch_to_iso8601(time)
@@ -102,32 +108,37 @@ local EVSE_SUPPLY_STATE_ENUM_TO_CAPABILITY_MAP = {
 }
 
 local EVSE_FAULTY_STATE_ENUM_TO_CAPABILITY_MAP = {
-  [clusters.EnergyEvse.types.FaultStateEnum.NO_ERROR] = capabilities.evseState.faultState.noError(),
-  [clusters.EnergyEvse.types.FaultStateEnum.METER_FAILURE] = capabilities.evseState.faultState.meterFailure(),
-  [clusters.EnergyEvse.types.FaultStateEnum.OVER_VOLTAGE] = capabilities.evseState.faultState.overVoltage(),
-  [clusters.EnergyEvse.types.FaultStateEnum.UNDER_VOLTAGE] = capabilities.evseState.faultState.underVoltage(),
-  [clusters.EnergyEvse.types.FaultStateEnum.OVER_CURRENT] = capabilities.evseState.faultState.overCurrent(),
-  [clusters.EnergyEvse.types.FaultStateEnum.CONTACT_WET_FAILURE] = capabilities.evseState.faultState.contactWetFailure(),
-  [clusters.EnergyEvse.types.FaultStateEnum.CONTACT_DRY_FAILURE] = capabilities.evseState.faultState.contactDryFailure(),
-  [clusters.EnergyEvse.types.FaultStateEnum.GROUND_FAULT] = capabilities.evseState.faultState.groundFault(),
-  [clusters.EnergyEvse.types.FaultStateEnum.POWER_LOSS] = capabilities.evseState.faultState.powerLoss(),
-  [clusters.EnergyEvse.types.FaultStateEnum.POWER_QUALITY] = capabilities.evseState.faultState.powerQuality(),
-  [clusters.EnergyEvse.types.FaultStateEnum.PILOT_SHORT_CIRCUIT] = capabilities.evseState.faultState.pilotShortCircuit(),
-  [clusters.EnergyEvse.types.FaultStateEnum.EMERGENCY_STOP] = capabilities.evseState.faultState.emergencyStop(),
-  [clusters.EnergyEvse.types.FaultStateEnum.EV_DISCONNECTED] = capabilities.evseState.faultState.eVDisconnected(),
-  [clusters.EnergyEvse.types.FaultStateEnum.WRONG_POWER_SUPPLY] = capabilities.evseState.faultState.wrongPowerSupply(),
-  [clusters.EnergyEvse.types.FaultStateEnum.LIVE_NEUTRAL_SWAP] = capabilities.evseState.faultState.liveNeutralSwap(),
-  [clusters.EnergyEvse.types.FaultStateEnum.OVER_TEMPERATURE] = capabilities.evseState.faultState.overTemperature(),
-  [clusters.EnergyEvse.types.FaultStateEnum.OTHER] = capabilities.evseState.faultState.other(),
+  [clusters.EnergyEvse.types.FaultStateEnum.NO_ERROR] = capabilities.evseState.faultState.noError,
+  [clusters.EnergyEvse.types.FaultStateEnum.METER_FAILURE] = capabilities.evseState.faultState.meterFailure,
+  [clusters.EnergyEvse.types.FaultStateEnum.OVER_VOLTAGE] = capabilities.evseState.faultState.overVoltage,
+  [clusters.EnergyEvse.types.FaultStateEnum.UNDER_VOLTAGE] = capabilities.evseState.faultState.underVoltage,
+  [clusters.EnergyEvse.types.FaultStateEnum.OVER_CURRENT] = capabilities.evseState.faultState.overCurrent,
+  [clusters.EnergyEvse.types.FaultStateEnum.CONTACT_WET_FAILURE] = capabilities.evseState.faultState.contactWetFailure,
+  [clusters.EnergyEvse.types.FaultStateEnum.CONTACT_DRY_FAILURE] = capabilities.evseState.faultState.contactDryFailure,
+  [clusters.EnergyEvse.types.FaultStateEnum.GROUND_FAULT] = capabilities.evseState.faultState.groundFault,
+  [clusters.EnergyEvse.types.FaultStateEnum.POWER_LOSS] = capabilities.evseState.faultState.powerLoss,
+  [clusters.EnergyEvse.types.FaultStateEnum.POWER_QUALITY] = capabilities.evseState.faultState.powerQuality,
+  [clusters.EnergyEvse.types.FaultStateEnum.PILOT_SHORT_CIRCUIT] = capabilities.evseState.faultState.pilotShortCircuit,
+  [clusters.EnergyEvse.types.FaultStateEnum.EMERGENCY_STOP] = capabilities.evseState.faultState.emergencyStop,
+  [clusters.EnergyEvse.types.FaultStateEnum.EV_DISCONNECTED] = capabilities.evseState.faultState.eVDisconnected,
+  [clusters.EnergyEvse.types.FaultStateEnum.WRONG_POWER_SUPPLY] = capabilities.evseState.faultState.wrongPowerSupply,
+  [clusters.EnergyEvse.types.FaultStateEnum.LIVE_NEUTRAL_SWAP] = capabilities.evseState.faultState.liveNeutralSwap,
+  [clusters.EnergyEvse.types.FaultStateEnum.OVER_TEMPERATURE] = capabilities.evseState.faultState.overTemperature,
+  [clusters.EnergyEvse.types.FaultStateEnum.OTHER] = capabilities.evseState.faultState.other,
 }
 
 local function read_cumulative_energy_imported(device)
-  local component_to_endpoint = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  local electrical_sensor_eps = component_to_endpoint["electricalSensor"] or device.MATTER_DEFAULT_ENDPOINT
-  -- TODO: Combine into a single read interaction request
-  for _, ep in ipairs(electrical_sensor_eps) do
-    device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, electrical_sensor_eps))
+  local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID) or {}
+  if #electrical_energy_measurement_eps > 0 then
+    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device,
+      electrical_energy_measurement_eps[1])
+    for i, ep in ipairs(electrical_energy_measurement_eps) do
+      if i > 1 then
+        read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, ep))
+      end
+    end
+    device:send(read_req)
   end
 end
 
@@ -146,7 +157,6 @@ local function create_poll_schedule(device)
 end
 
 local function create_poll_report_schedule(device)
-
   local polling_schedule_timer = device:get_field(RECURRING_REPORT_POLL_TIMER)
   if polling_schedule_timer ~= nil then
     return
@@ -156,24 +166,23 @@ local function create_poll_report_schedule(device)
   local timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
     local current_time = os.time()
     local last_time = device:get_field(LAST_REPORTED_TIME) or 0
-    local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMORTED) or {}
+    local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED) or {}
     local total_energy = 0
 
     -- we sum up total cumulative energy across all electrical sensor endpoints
-    for _, energyWh in ipairs(total_cumulative_energy_imported) do
+    for _, energyWh in pairs(total_cumulative_energy_imported) do
       total_energy = total_energy + energyWh
     end
 
     device:set_field(LAST_REPORTED_TIME, current_time, { persist = true })
 
     -- Calculate the energy consumed between the start and the end time
-    local previousTotalConsumptionWh = device:get_latest_state("electricalSensor", capabilities.powerConsumptionReport.ID,
-      capabilities.powerConsumptionReport.powerConsumption.NAME)
+    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport
+      .ID,
+      capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
 
     local deltaEnergyWh = 0.0
-    if previousTotalConsumptionWh ~= nil and previousTotalConsumptionWh.energy ~= nil then
-      deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
-    end
+    deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
 
     local startTime = epoch_to_iso8601(last_time)
     local endTime = epoch_to_iso8601(current_time - 1)
@@ -217,18 +226,22 @@ local function device_init(driver, device)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   create_poll_schedules_for_cumulative_energy_imported(device)
+  local current_time = os.time()
+  local current_time_iso8601 = epoch_to_iso8601(current_time)
+  device:emit_event(capabilities.evseChargingSession.targetEndTime(current_time_iso8601))
+  --emit current time by default
 end
 
 local function device_added(driver, device)
   local electrical_sensor_eps = get_endpoints_for_dt(device, ELECTRICAL_SENSOR_DEVICE_ID) or {}
-  local deivce_energy_mgmt_eps = get_endpoints_for_dt(device, DEVICE_ENERGY_MANAGEMENT_DEVICE_ID) or {}
+  local device_energy_mgmt_eps = get_endpoints_for_dt(device, DEVICE_ENERGY_MANAGEMENT_DEVICE_ID) or {}
   local component_to_endpoint_map = {
     ["main"] = device.MATTER_DEFAULT_ENDPOINT,
     ["electricalSensor"] = electrical_sensor_eps[1],
-    ["deviceEnergyManagement"] = deivce_energy_mgmt_eps[1]
+    ["deviceEnergyManagement"] = device_energy_mgmt_eps[1]
   }
-  log.debug_with({hub_logs=true}, "component_to_endpoint_map "..utils.stringify_table(component_to_endpoint_map))
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, {persist = true})
+  log.debug("component_to_endpoint_map " .. utils.stringify_table(component_to_endpoint_map))
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, { persist = true })
 end
 
 local function do_configure(driver, device)
@@ -237,19 +250,22 @@ local function do_configure(driver, device)
   local device_energy_mgmt_eps = embedded_cluster_utils.get_endpoints(device, clusters.DeviceEnergyManagementMode) or {}
   local profile_name = "evse"
 
-  --As per spec, atleast one of electrical energy measurement or electrical power measurement clusters are to be supported.
   if #energy_meas_eps > 0 then
-    profile_name = profile_name.."-energy-meas"
-  elseif #power_meas_eps > 0 then
-    profile_name = profile_name.."-power-meas"
+    profile_name = profile_name .. "-energy"
   end
+  if #power_meas_eps > 0 then
+    profile_name = profile_name .. "-power"
+  end
+
+  --As per spec, atleast one of electrical energy measurement or electrical power measurement clusters are to be supported.
+  profile_name = profile_name .. "-meas"
 
   if #device_energy_mgmt_eps > 0 then
-    profile_name = profile_name.."-energy-mgmt-mode"
+    profile_name = profile_name .. "-energy-mgmt-mode"
   end
 
-  log.info_with({hub_logs = true}, "Updating device profile to "..profile_name)
-  device:try_update_metadata({profile = profile_name})
+  log.info_with({ hub_logs = true }, "Updating device profile to " .. profile_name)
+  device:try_update_metadata({ profile = profile_name })
 end
 
 local function info_changed(driver, device)
@@ -269,72 +285,69 @@ local function device_removed(driver, device)
 end
 
 -- Matter Handlers --
+local function charging_readiness_state_handler(driver, device, evse_state, evse_supply_state)
+  local event = capabilities.evseChargingSession.chargingState.stopped({state_change = true})
+  if evse_supply_state.NAME == capabilities.evseState.supplyState.disabledError.NAME or
+  evse_supply_state.NAME == capabilities.evseState.supplyState.disabledDiagnostics.NAME or
+      evse_state.NAME == capabilities.evseState.state.fault.NAME then
+    event = capabilities.evseChargingSession.chargingState.disabled({state_change = true})
+  elseif evse_supply_state.NAME == capabilities.evseState.supplyState.chargingEnabled.NAME then
+    event = capabilities.evseChargingSession.chargingState.charging({state_change = true})
+  end
+  device:emit_event(event)
+end
+
 local function evse_state_handler(driver, device, ib, response)
   local evse_state = ib.data.value
+  local latest_supply_state = device:get_latest_state(
+    "main",
+    capabilities.evseState.ID,
+    capabilities.evseState.supplyState.NAME
+  )
   local event = EVSE_STATE_ENUM_TO_CAPABILITY_MAP[evse_state]
   if event then
     device:emit_event_for_endpoint(ib.endpoint_id, event())
+    charging_readiness_state_handler(driver, device, event, {NAME=latest_supply_state})
   else
-    log.warn("evse_state_handler invalid EVSE State: "..evse_state)
+    log.warn("evse_state_handler invalid EVSE State: " .. evse_state)
   end
-
-  local lastet_supply_state = device:get_latest_state(
-                                device:endpoint_to_component(ib.endopint_id),
-                                capabilities.evseState.ID,
-                                capabilities.evseState.supplyState.NAME
-                              )
-  if event.NAME == capabilities.evseState.state.fault.NAME or
-      lastet_supply_state == capabilities.evseState.supplyState.disabledError.NAME or
-      lastet_supply_state == capabilities.evseState.supplyState.disabledDiagnostics.NAME then
-    event = capabilities.evseChargingSession.chargingState.disabled({state_change = true})
-  elseif lastet_supply_state == capabilities.evseState.supplyState.chargingEnabled.NAME then
-    event = capabilities.evseChargingSession.chargingState.charging({state_change = true})
-  else
-    event = capabilities.evseChargingSession.chargingState.stopped({state_change = true})
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function evse_supply_state_handler(driver, device, ib, response)
-  local evse_faulty_state = ib.data.value
-  local event = EVSE_SUPPLY_STATE_ENUM_TO_CAPABILITY_MAP[evse_faulty_state]
+  local evse_supply_state = ib.data.value
+
+  local latest_evse_state = device:get_latest_state(
+    device:endpoint_to_component(ib.endopint_id),
+    capabilities.evseState.ID,
+    capabilities.evseState.state.NAME
+  )
+  local event = EVSE_SUPPLY_STATE_ENUM_TO_CAPABILITY_MAP[evse_supply_state]
   if event then
     device:emit_event_for_endpoint(ib.endpoint_id, event())
+    charging_readiness_state_handler(driver, device, {NAME=latest_evse_state}, event)
   else
-    log.warn("evse_supply_state_handler invalid EVSE Supply State: "..evse_faulty_state)
+    log.warn("evse_supply_state_handler invalid EVSE Supply State: " .. evse_supply_state)
   end
-
-  local lastet_state = device:get_latest_state(
-                        device:endpoint_to_component(ib.endopint_id),
-                        capabilities.evseState.ID,
-                        capabilities.evseState.state.NAME
-                      )
-  if event.NAME == capabilities.evseState.supplyState.disabledError.NAME or
-      event.NAME == capabilities.evseState.supplyState.disabledDiagnostics.NAME or
-      lastet_state == capabilities.evseState.state.fault.NAME then
-    event = capabilities.evseChargingSession.chargingState.disabled({state_change = true})
-  elseif event.NAME == capabilities.evseState.supplyState.chargingEnabled.NAME then
-    event = capabilities.evseChargingSession.chargingState.charging({state_change = true})
-  else
-    event = capabilities.evseChargingSession.chargingState.stopped({state_change = true})
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function evse_faulty_state_handler(driver, device, ib, response)
   local evse_faulty_state = ib.data.value
   local event = EVSE_FAULTY_STATE_ENUM_TO_CAPABILITY_MAP[evse_faulty_state]
   if event then
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
+    device:emit_event_for_endpoint(ib.endpoint_id, event())
     return
   end
-  log.warn("evse_faulty_state_handler invalid EVSE Faulty State: "..evse_faulty_state)
+  log.warn("evse_faulty_state_handler invalid EVSE Faulty State: " .. evse_faulty_state)
 end
 
 local function evse_charging_enabled_until_handler(driver, device, ib, response)
   local ep = ib.endpoint_id
-  if ib.data.value ~= nil then
-    local targetEndTime = epoch_to_iso8601(ib.data.value)
+  local targetEndTime = ib.data.value
+  if targetEndTime ~= nil then
+    if  targetEndTime == 0 then --if we get 0 we update with current time.
+      targetEndTime = os.time()
+    end
+    targetEndTime = epoch_to_iso8601(targetEndTime)
     device:emit_event_for_endpoint(ep, capabilities.evseChargingSession.targetEndTime(targetEndTime))
     return
   end
@@ -349,7 +362,7 @@ local function evse_current_limit_handler(event)
       device:emit_event_for_endpoint(ep, event(data))
       return
     end
-    log.warn("Failed to emit capability for "..event.NAME)
+    log.warn("Failed to emit capability for " .. event.NAME)
   end
 end
 
@@ -394,8 +407,8 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
     table.insert(supportedEvseModes, mode.elements.label.value)
   end
   supportedEvseModesMap[ib.endpoint_id] = supportedEvseModes
-  device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedEvseModesMap, {persist = true})
-  local event = capabilities.mode.supportedModes(supportedEvseModes, {visibility = {displayed = false}})
+  device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedEvseModesMap, { persist = true })
+  local event = capabilities.mode.supportedModes(supportedEvseModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
@@ -415,15 +428,15 @@ local function energy_evse_mode_attr_handler(driver, device, ib, response)
 end
 
 local function device_energy_mgmt_supported_modes_attr_handler(driver, device, ib, response)
-  local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
+  local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
   local supportedDeviceEnergyMgmtModes = {}
   for _, mode in ipairs(ib.data.elements) do
     clusters.EnergyEvseMode.types.ModeOptionStruct:augment_type(mode)
     table.insert(supportedDeviceEnergyMgmtModes, mode.elements.label.value)
   end
   supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] = supportedDeviceEnergyMgmtModes
-  device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedDeviceEnergyMgmtModesMap, {persist = true})
-  local event = capabilities.mode.supportedModes(supportedDeviceEnergyMgmtModes, {visibility = {displayed = false}})
+  device:set_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP, supportedDeviceEnergyMgmtModesMap, { persist = true })
+  local event = capabilities.mode.supportedModes(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
@@ -443,42 +456,53 @@ local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response
 end
 
 local function cumulative_energy_imported_handler(driver, device, ib, response)
-  if ib.data.value then
-    local cumulative_energy_imported = ib.data.value
+  if ib.data then
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
+    local cumulative_energy_imported = ib.data.elements.energy.value
     local endpoint_id = string.format(ib.endpoint_id)
     local cumulative_energy_imported_Wh = utils.round(1000 * cumulative_energy_imported)
-    local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMORTED) or {}
+    local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED) or {}
 
     -- in case there are multiple electrical sensors store them in a table.
     total_cumulative_energy_imported[endpoint_id] = cumulative_energy_imported_Wh
-    device:set_field(TOTAL_CUMULATIVE_ENERGY_IMORTED, total_cumulative_energy_imported, {persist=true})
+    device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED, total_cumulative_energy_imported, { persist = true })
   end
 end
 
 -- Capability Handlers --
-local function handle_set_min_current(driver, device, cmd)
-  local minimum_current = {value = cmd.args.minCurrent, unit = "mA"}
-  local event = capabilities.evseChargingSession.minCurrent(minimum_current, {state_change = true})
-  local ep = component_to_endpoint(device, cmd.component)
-  device:emit_event_for_endpoint(ep, event)
-end
-
-local function handle_set_max_current(driver, device, cmd)
-  local maximum_current = {value = cmd.args.maxCurrent, unit = "mA"}
-  local event = capabilities.evseChargingSession.maxCurrent(maximum_current, {state_change = true})
-  local ep = component_to_endpoint(device, cmd.component)
-  device:emit_event_for_endpoint(ep, event)
+local function get_latest_charging_parameters(device)
+  local min_charging_current = device:get_latest_state("main", capabilities.evseChargingSession.ID,
+    capabilities.evseChargingSession.minCurrent.NAME) or 0
+  local max_charging_current = device:get_latest_state("main", capabilities.evseChargingSession.ID,
+    capabilities.evseChargingSession.maxCurrent.NAME)
+  local target_end_time_iso8601 = device:get_latest_state("main", capabilities.evseChargingSession.ID,
+    capabilities.evseChargingSession.targetEndTime.NAME)
+  return min_charging_current, max_charging_current, target_end_time_iso8601
 end
 
 local function handle_enable_charging(driver, device, cmd)
-  local charging_enabled_until_iso8601 = cmd.args.time
-  local minimum_current = cmd.args.minCurrent
-  local maximum_current = cmd.args.maxCurrent
   local ep = component_to_endpoint(device, cmd.component)
+  local default_min_current, default_max_current, default_charging_enabled_until_iso8601 = get_latest_charging_parameters(
+    device)
+  local charging_enabled_until_iso8601 = cmd.args.time or default_charging_enabled_until_iso8601
+  local minimum_current = cmd.args.minCurrent or default_min_current
+  local maximum_current = cmd.args.maxCurrent or default_max_current
   local charging_enabled_until_epoch_s = iso8601_to_epoch(charging_enabled_until_iso8601)
-  device:send(clusters.EnergyEvse.commands.EnableCharging(device, ep, charging_enabled_until_epoch_s, minimum_current, maximum_current))
+  device:send(clusters.EnergyEvse.commands.EnableCharging(device, ep, charging_enabled_until_epoch_s, minimum_current,
+    maximum_current))
 end
 
+local handle_set_charging_parameters = function(cap, arg)
+  return function(driver, device, cmd)
+    if arg == "maxCurrent" and cmd.args[arg] > MAX_CHARGING_CURRENT_CONSTRAINT then
+      cmd.args[arg] = MAX_CHARGING_CURRENT_CONSTRAINT
+      log.warn_with({hub_logs=true}, "Clipping Max Current as it cannot be greater than 80A")
+    end
+    local capability_event = cap(cmd.args[arg])
+    log.info_with({hub_logs=true}, "Setting value " .. (cmd.args[arg]) .. " for".. (cap.NAME))
+    device:emit_event(capability_event)
+  end
+end
 
 local function handle_disable_charging(driver, device, cmd)
   local ep = component_to_endpoint(device, cmd.component)
@@ -531,8 +555,10 @@ matter_driver_template = {
         [clusters.EnergyEvse.attributes.SupplyState.ID] = evse_supply_state_handler,
         [clusters.EnergyEvse.attributes.FaultState.ID] = evse_faulty_state_handler,
         [clusters.EnergyEvse.attributes.ChargingEnabledUntil.ID] = evse_charging_enabled_until_handler,
-        [clusters.EnergyEvse.attributes.MinimumChargeCurrent.ID] = evse_current_limit_handler(capabilities.evseChargingSession.minCurrent),
-        [clusters.EnergyEvse.attributes.MaximumChargeCurrent.ID] = evse_current_limit_handler(capabilities.evseChargingSession.maxCurrent),
+        [clusters.EnergyEvse.attributes.MinimumChargeCurrent.ID] = evse_current_limit_handler(capabilities
+          .evseChargingSession.minCurrent),
+        [clusters.EnergyEvse.attributes.MaximumChargeCurrent.ID] = evse_current_limit_handler(capabilities
+          .evseChargingSession.maxCurrent),
         [clusters.EnergyEvse.attributes.SessionDuration.ID] = evse_session_duration_handler,
         [clusters.EnergyEvse.attributes.SessionEnergyCharged.ID] = evse_session_energy_charged_handler,
       },
@@ -544,11 +570,13 @@ matter_driver_template = {
         [clusters.EnergyEvseMode.attributes.CurrentMode.ID] = energy_evse_mode_attr_handler,
       },
       [clusters.DeviceEnergyManagementMode.ID] = {
-        [clusters.DeviceEnergyManagementMode.attributes.SupportedModes.ID] = device_energy_mgmt_supported_modes_attr_handler,
+        [clusters.DeviceEnergyManagementMode.attributes.SupportedModes.ID] =
+            device_energy_mgmt_supported_modes_attr_handler,
         [clusters.DeviceEnergyManagementMode.attributes.CurrentMode.ID] = device_energy_mgmt_mode_attr_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = cumulative_energy_imported_handler,
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] =
+            cumulative_energy_imported_handler,
       },
     },
   },
@@ -568,22 +596,20 @@ matter_driver_template = {
     [capabilities.powerSource.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.PowerMode,
     },
-    [capabilities.powerConsumptionReport.ID] = {
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    },
     [capabilities.mode.ID] = {
       clusters.EnergyEvseMode.attributes.SupportedModes,
       clusters.EnergyEvseMode.attributes.CurrentMode,
       clusters.DeviceEnergyManagementMode.attributes.CurrentMode,
-      clusters.DeviceEnergyManagementMode.attributes.CurrentMode,
-    },
+      clusters.DeviceEnergyManagementMode.attributes.SupportedModes
+    }
   },
   capability_handlers = {
     [capabilities.evseChargingSession.ID] = {
-      [capabilities.evseChargingSession.commands.setMinCurrent.NAME] = handle_set_min_current,
-      [capabilities.evseChargingSession.commands.setMaxCurrent.NAME] = handle_set_max_current,
       [capabilities.evseChargingSession.commands.enableCharging.NAME] = handle_enable_charging,
       [capabilities.evseChargingSession.commands.disableCharging.NAME] = handle_disable_charging,
+      [capabilities.evseChargingSession.commands.setTargetEndTime.NAME] = handle_set_charging_parameters(capabilities.evseChargingSession.targetEndTime, "time"),
+      [capabilities.evseChargingSession.commands.setMinCurrent.NAME] = handle_set_charging_parameters(capabilities.evseChargingSession.minCurrent, "minCurrent"),
+      [capabilities.evseChargingSession.commands.setMaxCurrent.NAME] = handle_set_charging_parameters(capabilities.evseChargingSession.maxCurrent, "maxCurrent"),
     },
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_set_mode_command,
@@ -599,5 +625,6 @@ matter_driver_template = {
 }
 
 local matter_driver = MatterDriver("matter-evse", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
+log.info_with({ hub_logs = true },
+  string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()

@@ -5,12 +5,12 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local CurrentMode = {
   ID = 0x0001,
   NAME = "CurrentMode",
-  base_type = data_types.Uint8,
+  base_type = require "st.matter.data_types.Uint8",
 }
 
 function CurrentMode:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  
+
   return o
 end
 
@@ -46,7 +46,7 @@ function CurrentMode:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  
+
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -59,9 +59,10 @@ end
 
 function CurrentMode:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  
+
   return data
 end
 
-setmetatable(CurrentMode, {__call = CurrentMode.new_value})
+setmetatable(CurrentMode, {__call = CurrentMode.new_value, __index = CurrentMode.base_type})
 return CurrentMode
+

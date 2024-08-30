@@ -1,7 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
 local ElectricalPowerMeasurementServerAttributes = require "ElectricalPowerMeasurement.server.attributes"
 local ElectricalPowerMeasurementServerCommands = require "ElectricalPowerMeasurement.server.commands"
-local ElectricalPowerMeasurementEvents = require "ElectricalPowerMeasurement.server.events"
 local ElectricalPowerMeasurementTypes = require "ElectricalPowerMeasurement.types"
 
 local ElectricalPowerMeasurement = {}
@@ -12,7 +11,6 @@ ElectricalPowerMeasurement.server = {}
 ElectricalPowerMeasurement.client = {}
 ElectricalPowerMeasurement.server.attributes = ElectricalPowerMeasurementServerAttributes:set_parent_cluster(ElectricalPowerMeasurement)
 ElectricalPowerMeasurement.server.commands = ElectricalPowerMeasurementServerCommands:set_parent_cluster(ElectricalPowerMeasurement)
-ElectricalPowerMeasurement.server.events = ElectricalPowerMeasurementEvents:set_parent_cluster(ElectricalPowerMeasurement)
 ElectricalPowerMeasurement.types = ElectricalPowerMeasurementTypes
 
 local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
@@ -33,26 +31,9 @@ end
 function ElectricalPowerMeasurement:get_attribute_by_id(attr_id)
   local attr_id_map = {
     [0x0000] = "PowerMode",
-    [0x0001] = "NumberOfMeasurementTypes",
-    [0x0002] = "Accuracy",
-    [0x0003] = "Ranges",
-    [0x0004] = "Voltage",
-    [0x0005] = "ActiveCurrent",
-    [0x0006] = "ReactiveCurrent",
-    [0x0007] = "ApparentCurrent",
     [0x0008] = "ActivePower",
-    [0x0009] = "ReactivePower",
     [0x000A] = "ApparentPower",
-    [0x000B] = "RMSVoltage",
-    [0x000C] = "RMSCurrent",
-    [0x000D] = "RMSPower",
-    [0x000E] = "Frequency",
-    [0x000F] = "HarmonicCurrents",
-    [0x0010] = "HarmonicPhases",
-    [0x0011] = "PowerFactor",
-    [0x0012] = "NeutralCurrent",
     [0xFFF9] = "AcceptedCommandList",
-    [0xFFFA] = "EventList",
     [0xFFFB] = "AttributeList",
   }
   local attr_name = attr_id_map[attr_id]
@@ -71,7 +52,6 @@ function ElectricalPowerMeasurement:get_server_command_by_id(command_id)
   return nil
 end
 
-
 function ElectricalPowerMeasurement:get_event_by_id(event_id)
   local event_id_map = {
     [0x0000] = "MeasurementPeriodRanges",
@@ -84,26 +64,9 @@ end
 -- Attribute Mapping
 ElectricalPowerMeasurement.attribute_direction_map = {
   ["PowerMode"] = "server",
-  ["NumberOfMeasurementTypes"] = "server",
-  ["Accuracy"] = "server",
-  ["Ranges"] = "server",
-  ["Voltage"] = "server",
-  ["ActiveCurrent"] = "server",
-  ["ReactiveCurrent"] = "server",
-  ["ApparentCurrent"] = "server",
   ["ActivePower"] = "server",
-  ["ReactivePower"] = "server",
   ["ApparentPower"] = "server",
-  ["RMSVoltage"] = "server",
-  ["RMSCurrent"] = "server",
-  ["RMSPower"] = "server",
-  ["Frequency"] = "server",
-  ["HarmonicCurrents"] = "server",
-  ["HarmonicPhases"] = "server",
-  ["PowerFactor"] = "server",
-  ["NeutralCurrent"] = "server",
   ["AcceptedCommandList"] = "server",
-  ["EventList"] = "server",
   ["AttributeList"] = "server",
 }
 
@@ -133,13 +96,6 @@ command_helper_mt.__index = function(self, key)
 end
 ElectricalPowerMeasurement.commands = {}
 setmetatable(ElectricalPowerMeasurement.commands, command_helper_mt)
-
-local event_helper_mt = {}
-event_helper_mt.__index = function(self, key)
-  return ElectricalPowerMeasurement.server.events[key]
-end
-ElectricalPowerMeasurement.events = {}
-setmetatable(ElectricalPowerMeasurement.events, event_helper_mt)
 
 setmetatable(ElectricalPowerMeasurement, {__index = cluster_base})
 

@@ -29,6 +29,16 @@ new_mt.__index.CONVECTION_ROAST  = 0x4006
 new_mt.__index.WARMING  = 0x4007
 new_mt.__index.PROOFING  = 0x4008
 
+ModeTag.BAKE  = 0x4000
+ModeTag.CONVECTION  = 0x4001
+ModeTag.GRILL  = 0x4002
+ModeTag.ROAST  = 0x4003
+ModeTag.CLEAN  = 0x4004
+ModeTag.CONVECTION_BAKE  = 0x4005
+ModeTag.CONVECTION_ROAST  = 0x4006
+ModeTag.WARMING  = 0x4007
+ModeTag.PROOFING  = 0x4008
+
 ModeTag.augment_type = function(cls, val)
   setmetatable(val, new_mt)
 end

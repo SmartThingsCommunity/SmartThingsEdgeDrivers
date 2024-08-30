@@ -9,21 +9,15 @@ local AcceptedCommandList = {
   element_type = require "st.matter.data_types.Uint32",
 }
 
-AcceptedCommandList.enum_fields = {
-}
-
-function AcceptedCommandList:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function AcceptedCommandList.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, AcceptedCommandList.enum_fields[value_obj.value])
+function AcceptedCommandList:augment_type(data_type_obj)
+  for i, v in ipairs(data_type_obj.elements) do
+    data_type_obj.elements[i] = data_types.validate_or_build_type(v, AcceptedCommandList.element_type)
+  end
 end
 
 function AcceptedCommandList:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  self:augment_type(o)
+
   return o
 end
 
@@ -59,7 +53,7 @@ function AcceptedCommandList:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  self:augment_type(data)
+
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -72,9 +66,9 @@ end
 
 function AcceptedCommandList:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  self:augment_type(data)
+
   return data
 end
 
-setmetatable(AcceptedCommandList, {__call = AcceptedCommandList.new_value})
+setmetatable(AcceptedCommandList, {__call = AcceptedCommandList.new_value, __index = AcceptedCommandList.base_type})
 return AcceptedCommandList

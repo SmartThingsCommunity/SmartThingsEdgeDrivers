@@ -130,7 +130,7 @@ local function is_cook_top_device(opts, driver, device, ...)
   local cook_top_eps = get_endpoints_for_dt(device, COOK_TOP_DEVICE_TYPE_ID)
   local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
   -- We want to skip lifecycle events in cases where device is an oven with a composed cook-top device
-  if #oven_eps > 0 then
+  if (#oven_eps > 0) and opts.dispatcher_class == "DeviceLifecycleDispatcher" then
     return false
   end
   if #cook_top_eps > 0 then

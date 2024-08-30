@@ -11,12 +11,6 @@ MicrowaveOvenMode.client = {}
 MicrowaveOvenMode.server.attributes = MicrowaveOvenModeServerAttributes:set_parent_cluster(MicrowaveOvenMode)
 MicrowaveOvenMode.types = MicrowaveOvenModeTypes
 
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 function MicrowaveOvenMode:get_attribute_by_id(attr_id)
   local attr_id_map = {
     [0x0000] = "SupportedModes",
@@ -49,8 +43,6 @@ MicrowaveOvenMode.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
-MicrowaveOvenMode.command_direction_map = {}
-
 MicrowaveOvenMode.FeatureMap = MicrowaveOvenMode.types.Feature
 
 function MicrowaveOvenMode.are_features_supported(feature, feature_map)
@@ -70,17 +62,6 @@ attribute_helper_mt.__index = function(self, key)
 end
 MicrowaveOvenMode.attributes = {}
 setmetatable(MicrowaveOvenMode.attributes, attribute_helper_mt)
-
-local command_helper_mt = {}
-command_helper_mt.__index = function(self, key)
-  local direction = MicrowaveOvenMode.command_direction_map[key]
-  if direction == nil then
-    error(string.format("Referenced unknown command %s on cluster %s", key, MicrowaveOvenMode.NAME))
-  end
-  return MicrowaveOvenMode[direction].commands[key] 
-end
-MicrowaveOvenMode.commands = {}
-setmetatable(MicrowaveOvenMode.commands, command_helper_mt)
 
 setmetatable(MicrowaveOvenMode, {__index = cluster_base})
 

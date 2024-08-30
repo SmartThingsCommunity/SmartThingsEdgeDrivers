@@ -13,23 +13,10 @@ MicrowaveOvenControl.server.attributes = MicrowaveOvenControlServerAttributes:se
 MicrowaveOvenControl.server.commands = MicrowaveOvenControlServerCommands:set_parent_cluster(MicrowaveOvenControl)
 MicrowaveOvenControl.types = MicrowaveOvenControlTypes
 
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 function MicrowaveOvenControl:get_attribute_by_id(attr_id)
   local attr_id_map = {
     [0x0000] = "CookTime",
     [0x0001] = "MaxCookTime",
-    [0x0002] = "PowerSetting",
-    [0x0003] = "MinPower",
-    [0x0004] = "MaxPower",
-    [0x0005] = "PowerStep",
-    [0x0006] = "SupportedWatts",
-    [0x0007] = "SelectedWattIndex",
-    [0x0008] = "WattRating",
     [0xFFF9] = "AcceptedCommandList",
   }
   local attr_name = attr_id_map[attr_id]
@@ -53,13 +40,6 @@ end
 MicrowaveOvenControl.attribute_direction_map = {
   ["CookTime"] = "server",
   ["MaxCookTime"] = "server",
-  ["PowerSetting"] = "server",
-  ["MinPower"] = "server",
-  ["MaxPower"] = "server",
-  ["PowerStep"] = "server",
-  ["SupportedWatts"] = "server",
-  ["SelectedWattIndex"] = "server",
-  ["WattRating"] = "server",
   ["AcceptedCommandList"] = "server",
 }
 
@@ -94,7 +74,7 @@ command_helper_mt.__index = function(self, key)
   if direction == nil then
     error(string.format("Referenced unknown command %s on cluster %s", key, MicrowaveOvenControl.NAME))
   end
-  return MicrowaveOvenControl[direction].commands[key] 
+  return MicrowaveOvenControl[direction].commands[key]
 end
 MicrowaveOvenControl.commands = {}
 setmetatable(MicrowaveOvenControl.commands, command_helper_mt)

@@ -5,19 +5,14 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local SupportedModes = {
   ID = 0x0000,
   NAME = "SupportedModes",
-  base_type = data_types.Structure,
+  base_type = require "st.matter.data_types.Array",
+  element_type = require "MicrowaveOvenMode.types.ModeOptionStruct",
 }
 
-SupportedModes.enum_fields = {
-}
-
-function SupportedModes:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function SupportedModes.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, SupportedModes.enum_fields[value_obj.value])
+function SupportedModes:augment_type(data_type_obj)
+  for i, v in ipairs(data_type_obj.elements) do
+    data_type_obj.elements[i] = data_types.validate_or_build_type(v, SupportedModes.element_type)
+  end
 end
 
 function SupportedModes:new_value(...)
@@ -75,6 +70,6 @@ function SupportedModes:deserialize(tlv_buf)
   return data
 end
 
-setmetatable(SupportedModes, {__call = SupportedModes.new_value})
+setmetatable(SupportedModes, {__call = SupportedModes.new_value, __index = SupportedModes.base_type})
 return SupportedModes
 

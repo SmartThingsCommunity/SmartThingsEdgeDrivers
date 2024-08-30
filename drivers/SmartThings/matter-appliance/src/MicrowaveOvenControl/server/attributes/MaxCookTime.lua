@@ -5,24 +5,12 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local MaxCookTime = {
   ID = 0x0001,
   NAME = "MaxCookTime",
-  base_type = data_types.Uint16,
+  base_type = require "st.matter.data_types.Uint32",
 }
-
-MaxCookTime.enum_fields = {
-}
-
-function MaxCookTime:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function MaxCookTime.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, MaxCookTime.enum_fields[value_obj.value])
-end
 
 function MaxCookTime:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  self:augment_type(o)
+
   return o
 end
 
@@ -58,7 +46,7 @@ function MaxCookTime:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  self:augment_type(data)
+
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -71,10 +59,10 @@ end
 
 function MaxCookTime:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  self:augment_type(data)
+
   return data
 end
 
-setmetatable(MaxCookTime, {__call = MaxCookTime.new_value})
+setmetatable(MaxCookTime, {__call = MaxCookTime.new_value, __index = MaxCookTime.base_type})
 return MaxCookTime
 

@@ -13,20 +13,10 @@ OvenMode.server.attributes = OvenModeServerAttributes:set_parent_cluster(OvenMod
 OvenMode.server.commands = OvenModeServerCommands:set_parent_cluster(OvenMode)
 OvenMode.types = OvenModeTypes
 
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 function OvenMode:get_attribute_by_id(attr_id)
   local attr_id_map = {
     [0x0000] = "SupportedModes",
     [0x0001] = "CurrentMode",
-    [0x0002] = "StartUpMode",
-    [0x0003] = "OnMode",
-    [0xFFF9] = "AcceptedCommandList",
-    [0xFFFB] = "AttributeList",
   }
   local attr_name = attr_id_map[attr_id]
   if attr_name ~= nil then
@@ -48,10 +38,6 @@ end
 OvenMode.attribute_direction_map = {
   ["SupportedModes"] = "server",
   ["CurrentMode"] = "server",
-  ["StartUpMode"] = "server",
-  ["OnMode"] = "server",
-  ["AcceptedCommandList"] = "server",
-  ["AttributeList"] = "server",
 }
 
 OvenMode.command_direction_map = {
