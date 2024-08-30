@@ -79,6 +79,10 @@ def compare_components(prof1, prof2):
             if new_component.get("categories") != current_component.get("categories"):
                 return False
 
+            # compare labels
+            if new_component.get("label") != current_component.get("label"):
+                return False
+
             # check that there are the same number of capabilities and that the top capability matches
             if  ((len(new_component["capabilities"]) == len(current_component["capabilities"])) and
                 (new_component["capabilities"][0]["id"] == current_component["capabilities"][0]["id"])):

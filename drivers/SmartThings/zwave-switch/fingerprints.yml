@@ -448,6 +448,18 @@ zwaveManufacturer:
     productType: 0x1603
     productId: 0x0334
     deviceProfileName: smartplug-binary
+  - id: 001D/0041/0002
+    deviceLabel: Leviton ZW6HD In-wall Dimmer
+    manufacturerId: 0x001D
+    productType: 0x0041
+    productId: 0x0002
+    deviceProfileName: leviton-ZW6HD
+  - id: 001D/0042/0002
+    deviceLabel: Leviton ZW15S In-wall Switch
+    manufacturerId: 0x001D
+    productType: 0x0042
+    productId: 0x0002
+    deviceProfileName: leviton-ZW15S
   - id: 011A/0101/0102
     deviceLabel: Enerwave Switch
     manufacturerId: 0x011A

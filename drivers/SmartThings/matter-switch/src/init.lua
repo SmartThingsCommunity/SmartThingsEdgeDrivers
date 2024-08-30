@@ -30,6 +30,8 @@ local COLOR_TEMPERATURE_KELVIN_MIN = 1000
 local COLOR_TEMPERATURE_MIRED_MAX = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
 local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
 local SWITCH_LEVEL_LIGHTING_MIN = 1
+local CURRENT_HUESAT_ATTR_MIN = 0
+local CURRENT_HUESAT_ATTR_MAX = 254
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 -- COMPONENT_TO_ENDPOINT_MAP is here only to perserve the endpoint mapping for
@@ -66,6 +68,11 @@ local device_type_profile_map = {
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
+
+local child_device_profile_overrides = {
+  { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+}
+
 local detect_matter_thing
 
 local function get_field_for_endpoint(device, field, endpoint)
@@ -77,7 +84,7 @@ local function set_field_for_endpoint(device, field, endpoint, value, additional
 end
 
 local function convert_huesat_st_to_matter(val)
-  return math.floor((val * 0xFE) / 100.0 + 0.5)
+  return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
 end
 
 local function mired_to_kelvin(value)
@@ -109,6 +116,16 @@ end
 
 local function assign_child_profile(device, child_ep)
   local profile
+
+  -- check if device has an overriden child profile that differs from the profile
+  -- that would match the child's device type
+  for _, fingerprint in ipairs(child_device_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+       device.manufacturer_info.product_id == fingerprint.product_id then
+      return fingerprint.child_profile
+    end
+  end
+
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of
@@ -250,6 +267,9 @@ local function device_removed(driver, device)
 end
 
 local function handle_switch_on(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
@@ -257,12 +277,18 @@ local function handle_switch_on(driver, device, cmd)
 end
 
 local function handle_switch_off(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_set_level(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level/100.0 * 254)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
@@ -379,7 +405,10 @@ local function temp_attr_handler(driver, device, ib, response)
       return
     end
     local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = find_child(device, ib.endpoint_id) or device
+    local temp_device = device
+    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+      temp_device = find_child(device, ib.endpoint_id) or device
+    end
     local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
     -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
     if most_recent_temp ~= nil and
@@ -510,6 +539,9 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     handle_refresh(driver, device)
   end
+
+  -- call device init in case init is not called after added due to device caching
+  device_init(driver, device)
 end
 
 local matter_driver_template = {

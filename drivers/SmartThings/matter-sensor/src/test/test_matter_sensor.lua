@@ -29,7 +29,7 @@ local matter_endpoints = {
       {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
     },
     device_types = {
-      device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
     }
   },
   {
@@ -37,21 +37,24 @@ local matter_endpoints = {
     clusters = {
       {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
-    }
+    },
+    device_types = {}
   },
   {
     endpoint_id = 2,
     clusters = {
       {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER"},
-    }
+    },
+    device_types = {}
   },
   {
     endpoint_id = 3,
     clusters = {
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER"},
-    }
+    },
+    device_types = {}
   }
 }
 
@@ -262,4 +265,5 @@ test.register_message_test(
       },
     }
 )
+
 test.run_registered_tests()

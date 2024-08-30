@@ -30,7 +30,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -43,6 +43,9 @@ local mock_device = test.mock_device.build_test_matter_device({
           feature_map=35, -- Heat, Cool, and Auto features.
         },
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
     }
   }
@@ -56,7 +59,6 @@ local function test_init()
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ThermostatRunningState,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.Thermostat.attributes.LocalTemperature,
     clusters.PowerSource.attributes.BatPercentRemaining,
   }
   test.socket.matter:__set_channel_ordering("relaxed")

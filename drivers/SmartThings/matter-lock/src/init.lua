@@ -24,6 +24,9 @@ local lock_utils = require "lock_utils"
 
 local INITIAL_COTA_INDEX = 1
 
+-- add this defintions for locks to work on older lua libs
+local UNLATCHED_STATE = 0x3
+
 --- If a device needs a cota credential this function attempts to set the credential
 --- at the index provided. The set_credential_response_handler handles all failures
 --- and retries with the appropriate index when necessary.
@@ -75,9 +78,10 @@ local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
+    [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
+    [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled
   }
 
   if ib.data.value ~= nil then
@@ -106,8 +110,8 @@ local function num_pin_users_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
-local function require_remote_pin_handler(driver, device, ib, response)
-  if ib.data.value then
+local function apply_cota_credentials_if_absent(device)
+  if not device:get_field(lock_utils.COTA_CRED) then
     --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
     device.thread:call_with_delay(0, function(t)
       generate_cota_cred_for_device(device)
@@ -117,6 +121,12 @@ local function require_remote_pin_handler(driver, device, ib, response)
         set_cota_credential(device, INITIAL_COTA_INDEX)
       end)
     end)
+  end
+end
+
+local function require_remote_pin_handler(driver, device, ib, response)
+  if ib.data.value then
+    apply_cota_credentials_if_absent(device)
   else
     device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
@@ -499,6 +509,20 @@ end
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+
+  -- check if we have a missing COTA credential. Only run this if it has not been run before (i.e. in device added),
+  -- because there is a delay built into the COTA process and we do not want to start two COTA generations at the same time
+  -- in the event this was triggered on add.
+  if not device:get_field(lock_utils.COTA_READ_INITIALIZED) or not device:get_field(lock_utils.COTA_CRED) then
+    local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+    if #eps == 0 then
+      device.log.debug("Device will not require PIN for remote operation")
+      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+    else
+      device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
+    end
+  end
  end
 
 local function device_added(driver, device)
@@ -531,6 +555,7 @@ local function device_added(driver, device)
       device:set_field(lock_utils.COTA_CRED, false, {persist = true})
     else
       req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
     end
     device:send(req)
   end
@@ -571,6 +596,7 @@ local matter_lock_driver = {
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
+    [capabilities.lockAlarm.ID] = {DoorLock.events.DoorLockAlarm},
     [capabilities.lockCodes.ID] = {DoorLock.events.LockUserChange},
   },
   capability_handlers = {
@@ -592,6 +618,9 @@ local matter_lock_driver = {
     capabilities.lockCodes,
     capabilities.tamperAlert,
     capabilities.battery,
+  },
+  sub_drivers = {
+    require("aqara-lock"),
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }

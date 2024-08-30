@@ -5,6 +5,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2002
     deviceProfileName: contact-battery
+  - id: "4447/8195"
+    deviceLabel: Aqara Motion and Light Sensor P2
+    vendorId: 0x115F
+    productId: 0x2003
+    deviceProfileName: motion-illuminance-battery
   #Eve
   - id: "Eve Motion"
     deviceLabel: Eve Motion
@@ -26,7 +31,7 @@ matterManufacturer:
     deviceLabel: Heiman Motion Sensor
     vendorId: 0x120B
     productId: 0x1001
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "4619/4145"
     deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
@@ -49,6 +54,12 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0002
     deviceProfileName: contact-battery
+  # LeTianpai
+  - id: "LeTianPai/Motion"
+    deviceLabel: LeTianPai Presence Sensor Box
+    vendorId: 0x142B
+    productId: 0x0002
+    deviceProfileName: motion-illuminance-temperature-humidity
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -112,3 +123,13 @@ matterGeneric:
       - id: 0x0107 # Occupancy Sensor
       - id: 0x0015 # Contact Sensor
     deviceProfileName: motion-contact-battery
+  - id: "matter/air-quality-sensor"
+    deviceLabel: Matter Air Quality Sensor
+    deviceTypes:
+      - id: 0x002C
+    deviceProfileName: aqs
+  - id: "matter/smoke-co-alarm"
+    deviceLabel: Matter Smoke/CO Alarm
+    deviceTypes:
+      - id: 0x0076
+    deviceProfileName: smoke-co

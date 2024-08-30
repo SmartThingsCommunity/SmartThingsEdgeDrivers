@@ -5,12 +5,20 @@ local json = require "st.json"
 local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
+
+local HueDeviceTypes = require "hue_device_types"
+
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 local APPLICATION_KEY_HEADER = "hue-application-key"
 
+---@class HueResourceResponse<T>: { errors: table[], data: T[] }
+
+---@class HueApiKeyResponse: { error: { description: string }?, success: { username: string, client_key: string|nil }? }
+
+---@enum ControlMessageTypes
 local ControlMessageTypes = {
   Shutdown = "shutdown",
   Get = "get",
@@ -57,9 +65,6 @@ local PhilipsHueApi = {}
 PhilipsHueApi.__index = PhilipsHueApi
 
 PhilipsHueApi.MIN_CLIP_V2_SWVERSION = 1948086000
-PhilipsHueApi.MIN_TEMP_KELVIN_COLOR_AMBIANCE = 2000
-PhilipsHueApi.MIN_TEMP_KELVIN_WHITE_AMBIANCE = 2200
-PhilipsHueApi.MAX_TEMP_KELVIN = 6500
 PhilipsHueApi.APPLICATION_KEY_HEADER = APPLICATION_KEY_HEADER
 
 local function retry_fn(retry_attempts)
@@ -70,6 +75,13 @@ local function retry_fn(retry_attempts)
   end
 end
 
+---@param response Response?
+---@param err string?
+---@param partial string?
+---@param err_callback fun(err: string)?
+---@return table? tbl the table representation of the JSON response, nil on error
+---@return string? err the error message, nil on success
+---@return string? partial the partial response if the response was not complete
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
     log.error_with({ hub_logs = true },
@@ -192,6 +204,8 @@ function PhilipsHueApi:update_connection(hub_base_url, api_key)
   try_send(self, msg)
 end
 
+---@param instance PhilipsHueApi
+---@param path string
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
 local function do_get(instance, path)
@@ -207,6 +221,9 @@ local function do_get(instance, path)
   return table.unpack(recv, 1, recv.n)
 end
 
+---@param instance PhilipsHueApi
+---@param path string
+---@param payload string
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
 local function do_put(instance, path, payload)
@@ -246,9 +263,9 @@ end
 
 ---@param bridge_ip string
 ---@param socket_builder nil|function optional an override to the default socket factory callback
----@return table|nil api_key_response nil on err
----@return nil|string error nil on success
----@return nil|string partial partial response if available, nil otherwise
+---@return HueApiKeyResponse[]? api_key_response nil on err
+---@return string? error nil on success
+---@return string? partial partial response if available, nil otherwise
 function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   local tx, rx = channel.new()
   rx:settimeout(10)
@@ -267,32 +284,115 @@ function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   return table.unpack(recv, 1, recv.n)
 end
 
-function PhilipsHueApi:get_lights() return do_get(self, "/clip/v2/resource/light") end
+---@param rtype string
+---@return HueResourceResponse<HueResourceInfo>|nil
+---@return string? err nil on success
+function PhilipsHueApi:get_all_reprs_for_rtype(rtype) return do_get(self, string.format("/clip/v2/resource/%s", string.lower(tostring(rtype)))) end
 
-function PhilipsHueApi:get_devices() return do_get(self, "/clip/v2/resource/device") end
+---@generic T: HueResourceInfo
+---@param rtype string
+---@param rid string
+---@return HueResourceResponse<T>|nil
+---@return string? err nil on success
+function PhilipsHueApi:get_rtype_by_rid(rtype, rid)
+  return do_get(
+    self,
+    string.format(
+      "/clip/v2/resource/%s/%s",
+      string.lower(tostring(rtype)),
+      string.lower(tostring(rid))
+    )
+  )
+end
 
-function PhilipsHueApi:get_connectivity_status() return do_get(self, "/clip/v2/resource/zigbee_connectivity") end
+---@return HueResourceResponse<HueLightInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_lights() return self:get_all_reprs_for_rtype(HueDeviceTypes.LIGHT) end
 
-function PhilipsHueApi:get_rooms() return do_get(self, "/clip/v2/resource/room") end
+---@return HueResourceResponse<HueDeviceInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device") end
 
+---@return HueResourceResponse<HueZigbeeInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") end
+
+---@param light_resource_id string
+---@return HueResourceResponse<HueLightInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_light_by_id(light_resource_id)
-  return do_get(self, string.format("/clip/v2/resource/light/%s", light_resource_id))
+  return self:get_rtype_by_rid(HueDeviceTypes.LIGHT, light_resource_id)
 end
 
+---@param hue_device_id string
+---@return HueResourceResponse<HueDeviceInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_device_by_id(hue_device_id)
-  return do_get(self, string.format("/clip/v2/resource/device/%s", hue_device_id))
+  return self:get_rtype_by_rid("device", hue_device_id)
 end
 
+---@param zigbee_resource_id string
+---@return HueResourceResponse<HueZigbeeInfo>?
+---@return string? err nil on success
 function PhilipsHueApi:get_zigbee_connectivity_by_id(zigbee_resource_id)
-  return do_get(self, string.format("/clip/v2/resource/zigbee_connectivity/%s", zigbee_resource_id))
+  return self:get_rtype_by_rid("zigbee_connectivity", zigbee_resource_id)
 end
 
-function PhilipsHueApi:get_room_by_id(id)
-  return do_get(self, string.format("/clip/v2/resource/room/%s", id))
+---@param button_resource_id string
+---@return HueResourceResponse<HueButtonInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_button_by_id(button_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.BUTTON, button_resource_id)
 end
 
+---@param contact_resource_id string
+---@return HueResourceResponse<HueContactInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_contact_by_id(contact_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.CONTACT, contact_resource_id)
+end
+
+---@param motion_resource_id string
+---@return HueResourceResponse<HueMotionInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_motion_by_id(motion_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.MOTION, motion_resource_id)
+end
+
+---@param device_power_resource_id string
+---@return HueResourceResponse<HuePowerLevelInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_device_power_by_id(device_power_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.DEVICE_POWER, device_power_resource_id)
+end
+
+---@param tamper_resource_id string
+---@return HueResourceResponse<HueTamperInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_tamper_by_id(tamper_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.TAMPER, tamper_resource_id)
+end
+
+---@param temperature_resource_id string
+---@return HueResourceResponse<HueTemperatureInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_temperature_by_id(temperature_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.TEMPERATURE, temperature_resource_id)
+end
+
+---@param light_level_resource_id string
+---@return HueResourceResponse<HueLightLevelInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_light_level_by_id(light_level_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.LIGHT_LEVEL, light_level_resource_id)
+end
+
+---@param id string
+---@param on boolean
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_on_state(id, on)
-  local url = string.format("/clip/v2/resource/light/%s", id)
+  local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
 
   if type(on) ~= "boolean" then
     if on then
@@ -307,9 +407,13 @@ function PhilipsHueApi:set_light_on_state(id, on)
   return do_put(self, url, payload)
 end
 
+---@param id string
+---@param level number
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_level(id, level)
   if type(level) == "number" then
-    local url = string.format("/clip/v2/resource/light/%s", id)
+    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
     local payload_table = { dimming = { brightness = level } }
 
     return do_put(self, url, json.encode(payload_table))
@@ -319,12 +423,16 @@ function PhilipsHueApi:set_light_level(id, level)
   end
 end
 
+---@param id string
+---@param xy_table HueColorCoords
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_color_xy(id, xy_table)
   local x_valid = (xy_table ~= nil) and ((xy_table.x ~= nil) and (type(xy_table.x) == "number"))
   local y_valid = (xy_table ~= nil) and ((xy_table.y ~= nil) and (type(xy_table.y) == "number"))
 
   if x_valid and y_valid then
-    local url = string.format("/clip/v2/resource/light/%s", id)
+    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
     local payload = json.encode { color = { xy = xy_table }, on = { on = true } }
     return do_put(self, url, payload)
   else
@@ -333,9 +441,13 @@ function PhilipsHueApi:set_light_color_xy(id, xy_table)
   end
 end
 
+---@param id string
+---@param mirek number
+---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
+---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_color_temp(id, mirek)
   if type(mirek) == "number" then
-    local url = string.format("/clip/v2/resource/light/%s", id)
+    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
     local payload = json.encode { color_temperature = { mirek = mirek }, on = { on = true } }
 
     return do_put(self, url, payload)
