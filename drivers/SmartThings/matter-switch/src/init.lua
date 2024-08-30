@@ -412,7 +412,7 @@ local function handle_switch_off(driver, device, cmd)
   device:send(req)
 end
 
-local function handle_set_level(driver, device, cmd)
+local function handle_set_switch_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level/100.0 * 254)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
@@ -492,6 +492,17 @@ local function handle_valve_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.ValveConfigurationAndControl.server.commands.Close(device, endpoint_id)
   device:send(req)
+end
+
+local function handle_set_level(driver, device, cmd)
+  local commands = clusters.ValveConfigurationAndControl.server.commands
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local level = cmd.args.level
+  if level ~= 0 then
+    device:send(commands.Open(device, endpoint_id, nil, level))
+  else
+    device:send(commands.Close(device, endpoint_id))
+  end
 end
 
 local function handle_refresh(driver, device, cmd)
@@ -705,7 +716,7 @@ local function valve_level_attr_handler(driver, device, ib, response)
   if ib.data.value == nil then
     return
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(ib.data.value))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(ib.data.value))
 end
 
 local function info_changed(driver, device, event, args)
@@ -810,7 +821,7 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
-    [capabilities.switchLevel.ID] = {
+    [capabilities.level.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     }
   },
@@ -820,7 +831,7 @@ local matter_driver_template = {
       [capabilities.switch.commands.off.NAME] = handle_switch_off,
     },
     [capabilities.switchLevel.ID] = {
-      [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_level
+      [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_switch_level
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
@@ -836,6 +847,9 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       [capabilities.valve.commands.open.NAME] = handle_valve_open,
       [capabilities.valve.commands.close.NAME] = handle_valve_close
+    },
+    [capabilities.level.ID] = {
+      [capabilities.level.commands.setLevel.NAME] = handle_set_level
     }
   },
   supported_capabilities = {
