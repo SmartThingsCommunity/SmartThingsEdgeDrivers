@@ -1,10 +1,4 @@
 matterManufacturer:
-#Level
-  - id: "4767/1"
-    deviceLabel: Level Lock Plus (Matter)
-    vendorId: 0x129F
-    productId: 0x0001
-    deviceProfileName: lock-nocodes-notamper-batteryLevel
 #Nuki
   - id: "Nuki Smart Lock Pro"
     deviceLabel: Nuki Smart Lock Pro
