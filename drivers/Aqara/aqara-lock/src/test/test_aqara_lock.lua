@@ -38,6 +38,10 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
+  local SUPPORTED_ALARM_VALUES = { "damaged", "forcedOpeningAttempt", "unableToLockTheDoor", "notClosedForALongTime",
+  "highTemperature", "attemptsExceeded" }
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    lockAlarm.supportedAlarmValues(SUPPORTED_ALARM_VALUES, { visibility = { displayed = false } })))
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)

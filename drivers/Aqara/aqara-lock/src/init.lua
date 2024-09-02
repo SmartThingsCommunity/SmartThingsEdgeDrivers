@@ -53,6 +53,7 @@ local function remoteControlShow(device)
 end
 
 local function comp_supported_alarm_values(last_alarm_values)
+  if not last_alarm_values then return false end
   if #last_alarm_values~=#SUPPORTED_ALARM_VALUES then return false end
   for k, v in pairs(last_alarm_values) do
     if SUPPORTED_ALARM_VALUES[k]~=v then return false end
@@ -61,8 +62,8 @@ local function comp_supported_alarm_values(last_alarm_values)
 end
 
 local function device_init(self, device)
-  local last_alarm_values = device:get_latest_state("main", LockAlarm.ID, LockAlarm.supportedAlarmValues.NAME) or nil
-  if last_alarm_values == nil or not comp_supported_alarm_values(last_alarm_values) then
+  local last_alarm_values = device:get_latest_state("main", LockAlarm.ID, LockAlarm.supportedAlarmValues.NAME) or {}
+  if not comp_supported_alarm_values(last_alarm_values) then
     device:emit_event(
       LockAlarm.supportedAlarmValues(SUPPORTED_ALARM_VALUES, { visibility = { displayed = false } })
     )
@@ -259,6 +260,7 @@ local aqara_locks_handler = {
   NAME = "Aqara Doorlock K100",
   supported_capabilities = {
     Lock,
+    LockAlarm,
     Battery,
     lockCredentialInfo,
     capabilities.refresh,
