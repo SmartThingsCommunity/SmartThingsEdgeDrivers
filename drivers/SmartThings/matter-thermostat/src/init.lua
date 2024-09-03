@@ -503,10 +503,12 @@ local function do_configure(driver, device)
 end
 
 local function device_added(driver, device)
-  device:send(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
-  device:send(clusters.FanControl.attributes.FanModeSequence:read(device))
-  device:send(clusters.FanControl.attributes.WindSupport:read(device))
-  device:send(clusters.FanControl.attributes.RockSupport:read(device))
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
+  req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
+  req:merge(clusters.FanControl.attributes.WindSupport:read(device))
+  req:merge(clusters.FanControl.attributes.RockSupport:read(device))
+  device:send(req)
 end
 
 local function store_unit_factory(capability_name)
