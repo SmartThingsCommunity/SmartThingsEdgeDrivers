@@ -21,6 +21,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2801
     deviceProfileName: lock-lockalarm-nobattery
+#VDA -- Needs to remove
+  - id: "Virtual Device App"
+    deviceLabel: Virtual Door Lock
+    vendorId: 0x10E1
+    productId: 0x1002
+    deviceProfileName: lock-user-pin-schedule
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

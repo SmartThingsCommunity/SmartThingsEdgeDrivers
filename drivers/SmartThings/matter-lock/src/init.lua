@@ -633,7 +633,7 @@ local matter_lock_driver = {
     capabilities.batteryLevel,
   },
   sub_drivers = {
-    require("aqara-lock"),
+    require("new-matter-lock"),
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }
