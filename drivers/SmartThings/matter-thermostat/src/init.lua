@@ -510,7 +510,7 @@ local function do_configure(driver, device)
   end
 
   -- save profile name if needed
-  device:set_field(PROFILE_NAME, profile_name)
+  device:set_field(PROFILE_NAME, profile_name, {persist = true})
 
   --Query setpoint limits if needed
   local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -970,11 +970,11 @@ local function wind_support_handler(driver, device, ib, response)
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
-  -- this check re-profiles devices with a feature map indicating they support WindMode,
-  -- but with a WindSupport value of 0 in their device specifications.
+  -- this check re-profiles devices with a feature map that indicates they support WindMode,
+  -- but whose WindSupport value reports as 0 (no support) in their device specifications. 
   if #supported_wind_modes < 2 then
     local fixed_profile_name = string.gsub(device:get_field(PROFILE_NAME), "-wind", "")
-    device:set_field(PROFILE_NAME, fixed_profile_name)
+    device:set_field(PROFILE_NAME, fixed_profile_name, {persist = true})
     if fixed_profile_name == "fan" then
       fixed_profile_name = "fan-generic"
     end
