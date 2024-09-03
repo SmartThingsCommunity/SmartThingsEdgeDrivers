@@ -2324,7 +2324,7 @@ matterGeneric:
     deviceLabel: Matter Electrical Sensor
     deviceTypes:
       - id: 0x0510 # Electrical Sensor
-    deviceProfileName: power-energy-powerConsumption
+    deviceProfileName: plug-energy-power-powerConsumption
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:

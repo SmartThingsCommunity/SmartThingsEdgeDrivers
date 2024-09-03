@@ -1,4 +1,4 @@
-name: electrical-power
+name: plug-power
 components:
 - id: main
   capabilities:
