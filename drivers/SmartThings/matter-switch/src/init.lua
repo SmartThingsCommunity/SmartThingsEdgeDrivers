@@ -266,7 +266,6 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local all_eps = {}
 
   local profile_name = nil
 
@@ -279,21 +278,35 @@ local function initialize_switch(driver, device)
     return
   end
 
-  for _,ep in ipairs(switch_eps) do
-    table.insert(all_eps, ep)
-  end
-  for _,ep in ipairs(button_eps) do
-    table.insert(all_eps, ep)
-  end
-  table.sort(all_eps)
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
 
-  for _, ep in ipairs(all_eps) do
-    if device:supports_server_cluster(clusters.Switch.ID, ep) then
+  if #switch_eps > 0 then
+    for _, ep in ipairs(switch_eps) do
+      -- Create child devices for non-main switch endpoints
+      num_switch_server_eps = num_switch_server_eps + 1
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        local name = string.format("%s %d", device.label, num_switch_server_eps)
+        local child_profile = assign_child_profile(device, ep)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = child_profile,
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
+        current_component_number = current_component_number + 1
+        parent_child_device = true
+      end
+    end
+  elseif #button_eps > 0 then
+    for _, ep in ipairs(button_eps) do
       -- Configure MCD for button endpoints
       if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
         if ep ~= main_endpoint then
@@ -303,25 +316,6 @@ local function initialize_switch(driver, device)
           component_map["main"] = ep
         end
         component_map_used = true
-      end
-    elseif device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      -- Create child devices for non-main switch endpoints
-      num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = assign_child_profile(device, ep)
-        driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = child_profile,
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%d", ep),
-              vendor_provided_label = name
-            }
-        )
-        current_component_number = current_component_number + 1
-        parent_child_device = true
       end
     end
   end
@@ -335,27 +329,15 @@ local function initialize_switch(driver, device)
 
   device:set_field(SWITCH_INITIALIZED, true)
 
-  if #button_eps > 0 then
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-        #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
-      battery_support = true
-    end
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
-      else
-        profile_name = string.format("%d-button", #button_eps)
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
-      profile_name = "button"
-    end
+  if device:get_field(IS_PARENT_CHILD_DEVICE) then
+    device:set_find_child(find_child)
+  end
 
-    if profile_name then
-      device:try_update_metadata({profile = profile_name})
-    end
-  else
+  if component_map_used then
+    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  end
+
+  if #switch_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -382,16 +364,27 @@ local function initialize_switch(driver, device)
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
     end
-  end
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
+  elseif #button_eps > 0 then
+    local battery_support = false
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
+      battery_support = true
+    end
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if battery_support then
+        profile_name = string.format("%d-button-battery", #button_eps)
+      else
+        profile_name = string.format("%d-button", #button_eps)
+      end
+    elseif not battery_support then
+      -- a battery-less button/remote (either single or will use parent/child)
+      profile_name = "button"
+    end
 
-  if component_map_used then
-    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
-  end
+    if profile_name then
+      device:try_update_metadata({profile = profile_name})
+    end
 
-  if #button_eps > 0 then
     if profile_name then
       device:set_field(DEFERRED_CONFIGURE, true)
     else
