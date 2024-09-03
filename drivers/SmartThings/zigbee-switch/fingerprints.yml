@@ -2278,6 +2278,12 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  # Zignito
+  - id: Zignito/TS0505B
+    deviceLabel: Zignito Led Controller RGBCCT
+    manufacturer: Zignito
+    model: TS0505B
+    deviceProfileName: rgbw-bulb-2200K-6500K
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
