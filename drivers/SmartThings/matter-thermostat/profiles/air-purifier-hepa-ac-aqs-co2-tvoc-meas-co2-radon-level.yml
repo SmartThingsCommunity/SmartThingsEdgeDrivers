@@ -1,4 +1,4 @@
-name: air-purifier-hepa-ac-wind-rock
+name: air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level
 components:
 - id: main
   label: Main
@@ -7,9 +7,15 @@ components:
     version: 1
   - id: fanSpeedPercent
     version: 1
-  - id: windMode
+  - id: airQualityHealthConcern
     version: 1
-  - id: fanOscillationMode
+  - id: carbonDioxideHealthConcern
+    version: 1
+  - id: carbonDioxideMeasurement
+    version: 1
+  - id: radonHealthConcern
+    version: 1
+  - id: tvocMeasurement
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -18,7 +24,7 @@ components:
   categories:
   - name: AirPurifier
 - id: hepaFilter
-  label: Hepa filter
+  label: Hepa Filter
   capabilities:
   - id: filterState
     version: 1
@@ -27,7 +33,7 @@ components:
   categories:
   - name: AirPurifier
 - id: activatedCarbonFilter
-  label: Activated carbon filter
+  label: Activated Carbon Filter
   capabilities:
   - id: filterState
     version: 1
