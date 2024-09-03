@@ -1,4 +1,4 @@
--- As of July 2024, the matter-button driver has been deprecated in favor of being integrated into the matter-switch
+-- As of September 2024, the matter-button driver has been deprecated in favor of being integrated into the matter-switch
 -- driver. All functionality and test cases present in this driver were carried over into matter-switch. Therefore,
 -- we are no longer accepting bug fixes or feature enhancements such as fingerprint adds to this driver.
 -- Note that this change won't affect devices using the button driver unless they are re-onboarded, in which case
