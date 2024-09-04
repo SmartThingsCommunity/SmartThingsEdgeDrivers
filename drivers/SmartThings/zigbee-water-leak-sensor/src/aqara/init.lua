@@ -54,10 +54,6 @@ local aqara_contact_handler = {
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = function() end
-      },
-      [TemperatureMeasurement.ID] = {
-        [TemperatureMeasurement.attributes.MinMeasuredValue.ID] = function() end,
-        [TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = function() end
       }
     }
   },
