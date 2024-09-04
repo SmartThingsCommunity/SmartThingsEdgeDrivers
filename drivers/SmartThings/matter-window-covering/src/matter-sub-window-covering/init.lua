@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
 
+local DEFAULT_LEVEL = 0
 local STATE_MACHINE = "__state_machine"
 
 local StateMachineEnum = {
@@ -25,11 +26,8 @@ local StateMachineEnum = {
   STATE_CURRENT_POSITION_FIRED = 0x03
 }
 
-local TEST_MANUFACTURER_ID = 0x10e1
-local VIRTUAL_WINDOW_COVERING_ID = 0x1005
-
 local SUB_WINDOW_COVERING_VID_PID = {
-  {0x10e1, 0x1005}
+  {0x10e1, 0x1005} -- VDA
 }
 
 local function is_matter_sub_window_covering(opts, driver, device)
@@ -60,9 +58,8 @@ local function current_pos_handler(driver, device, ib, response)
     )
   end
   local state_machine = device:get_field(STATE_MACHINE)
-  if state_machine == StateMachineEnum.STATE_IDLE then
-    -- do nothing
-  elseif state_machine == StateMachineEnum.STATE_MOVING then
+  -- When stat_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
+  if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED then
     if position == 0 then
@@ -75,8 +72,6 @@ local function current_pos_handler(driver, device, ib, response)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
     end
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
-  elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
-    -- do nothing
   end
 end
 
@@ -96,6 +91,7 @@ local function current_status_handler(driver, device, ib, response)
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
   local state_machine = device:get_field(STATE_MACHINE)
+  -- When stat_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_IDLE then
     if state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
@@ -103,8 +99,6 @@ local function current_status_handler(driver, device, ib, response)
     elseif state == 2 then -- closing
       device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_MOVING)
-    else
-      -- do nothing
     end
   elseif state_machine == StateMachineEnum.STATE_MOVING then
     if state == 0 then -- not moving
@@ -117,8 +111,6 @@ local function current_status_handler(driver, device, ib, response)
       device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
     end
-  elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED then
-    -- do nothing
   elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
     if state == 0 then -- not moving
       if position == 100 then -- open
