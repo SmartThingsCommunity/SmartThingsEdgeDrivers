@@ -15,12 +15,18 @@ matterManufacturer:
     deviceLabel: Aqara Smart Lock U200
     vendorId: 0x115F
     productId: 0x2802
-    deviceProfileName: lock-lockalarm-nobattery
+    deviceProfileName: lock-user-pin
   - id: "4447/10241"
     deviceLabel: Aqara Smart Lock U300
     vendorId: 0x115F
     productId: 0x2801
-    deviceProfileName: lock-lockalarm-nobattery
+    deviceProfileName: lock-user-pin
+#eufy
+  - id: 5427/1
+    deviceLabel: eufy Smart Lock E31
+    vendorId: 0x1533
+    productId: 0x0001
+    deviceProfileName: lock-user-pin
 #VDA -- Needs to remove
   - id: "Virtual Device App"
     deviceLabel: Virtual Door Lock
