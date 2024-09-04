@@ -17,7 +17,6 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
-local embedded_cluster_utils = require "embedded-cluster-utils"
 
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
 if not pcall(function(cluster) return clusters[cluster] end,
