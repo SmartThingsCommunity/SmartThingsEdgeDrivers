@@ -22,7 +22,7 @@ clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
 clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-energy-power-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -52,7 +52,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 
 local mock_device_periodic = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("electrical-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
