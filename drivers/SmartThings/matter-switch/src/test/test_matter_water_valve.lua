@@ -38,12 +38,11 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = 1,
       clusters = {
         {
-          cluster_id = clusters.OnOff.ID,
+          cluster_id = clusters.ValveConfigurationAndControl.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0, --u32 bitmap
+          feature_map = 2
         },
-        {cluster_id = clusters.ValveConfigurationAndControl.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 2},
       },
       device_types = {
         {device_type_id = 0x0042, device_type_revision = 1} -- Water Valve
@@ -185,7 +184,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(50))
+      message = mock_device:generate_test_message("main", capabilities.level.level(50))
     },
   }
 )
