@@ -96,11 +96,16 @@ local function mired_to_kelvin(value, minOrMax)
   -- bounds to be multiples of 100. For the maximum mired value (minimum K value),
   -- add 1 before converting and round up to nearest hundreds. For the minimum mired
   -- (maximum K value) value, subtract 1 before converting and round down to nearest
-  -- hundreds.
+  -- hundreds. Note that 1 is added/subtracted from the mired value in order to avoid
+  -- rounding errors from the conversion of Kelvin to mireds.
+  local kelvin_step_size = 100
+  local rounding_value = 0.5
   if minOrMax == COLOR_TEMP_MIN then
-    return utils.round(((MIRED_KELVIN_CONVERSION_CONSTANT / (value + 1)) / 100) + 0.5) * 100
+    return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value + 1)) + rounding_value) * kelvin_step_size
+  elseif minOrMax == COLOR_TEMP_MAX then
+    return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
   else
-    return utils.round(((MIRED_KELVIN_CONVERSION_CONSTANT / (value - 1)) / 100) - 0.5) * 100
+    log.warn("Attempted to convert temperature unit for an undefined value")
   end
 end
 
