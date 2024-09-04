@@ -14,7 +14,6 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local TemperatureMeasurement = (require "st.zigbee.zcl.clusters").TemperatureMeasurement
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
