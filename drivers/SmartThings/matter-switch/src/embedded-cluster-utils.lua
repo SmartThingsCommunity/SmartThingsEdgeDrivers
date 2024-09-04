@@ -12,15 +12,15 @@ end
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
-  [clusters.ElectricalEnergyMeasurement] = clusters.ElectricalEnergyMeasurement,
-  [clusters.ElectricalPowerMeasurement] = clusters.ElectricalPowerMeasurement,
-  [clusters.ValveConfigurationAndControl] = clusters.ValveConfigurationAndControl
+  [clusters.ElectricalEnergyMeasurement.ID] = clusters.ElectricalEnergyMeasurement,
+  [clusters.ElectricalPowerMeasurement.ID] = clusters.ElectricalPowerMeasurement,
+  [clusters.ValveConfigurationAndControl.ID] = clusters.ValveConfigurationAndControl
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)
     -- If using older lua libs and need to check for an embedded cluster feature,
     -- we must use the embedded cluster definitions here
-    if version.api < 10 and embedded_clusters[cluster_id] ~= nil then
+    if version.api < 11 and embedded_clusters[cluster_id] ~= nil then
       local embedded_cluster = embedded_clusters[cluster_id]
       local opts = opts or {}
       if utils.table_size(opts) > 1 then

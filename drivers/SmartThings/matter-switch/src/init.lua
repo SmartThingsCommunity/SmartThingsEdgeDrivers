@@ -195,7 +195,7 @@ end
 --- done to bypass the BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local all_eps = {}
 
   for _,v in ipairs(switch_eps) do
@@ -254,7 +254,7 @@ end
 local function initialize_switch(driver, device)
   local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local all_eps = {}
   for _,v in ipairs(switch_eps) do
     table.insert(all_eps, v)
@@ -306,7 +306,8 @@ local function initialize_switch(driver, device)
   device:set_field(SWITCH_INITIALIZED, true)
   if num_valve_server_eps > 0 then
     local profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
-    if #device:get_endpoints(clusters.ValveConfigurationAndControl.ID, {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+        {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
       profile_name = profile_name .. "-level"
     end
     device:try_update_metadata({profile = profile_name})
