@@ -152,6 +152,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -187,6 +195,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child1_ep].id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -219,6 +235,14 @@ test.register_message_test(
       message = {
         mock_children[child2_ep].id,
         { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child2_ep].id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
