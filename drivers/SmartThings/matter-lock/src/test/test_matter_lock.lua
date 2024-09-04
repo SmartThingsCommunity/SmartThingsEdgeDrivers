@@ -96,7 +96,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Handle received Lock State from Matter device.", {
+  "Handle received LockState.LOCKED from Matter device.", {
     {
       channel = "matter",
       direction = "receive",
@@ -111,6 +111,66 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.UNLOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.UNLOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.NOT_FULLY_LOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.NOT_FULLY_LOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.UNLATCHED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.UNLATCHED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
   }
 )

@@ -96,6 +96,14 @@ test.register_message_test(
         message = { mock_simple_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 57, 0 } } }
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_simple_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
+        }
+      },
+      {
         channel = "zigbee",
         direction = "send",
         message = { mock_simple_device.id, Level.server.commands.MoveToLevelWithOnOff(mock_simple_device,
