@@ -78,7 +78,7 @@ local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
+    [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
     [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled

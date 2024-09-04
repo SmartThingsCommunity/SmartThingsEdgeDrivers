@@ -73,6 +73,9 @@ local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
 
+local MIN_ALLOWED_PERCENT_VALUE = 0
+local MAX_ALLOWED_PERCENT_VALUE = 100
+
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
 local setpoint_limit_device_field = {
@@ -868,7 +871,7 @@ end
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
   local speed = 0
   if ib.data.value ~= nil then
-    speed = ib.data.value
+    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
