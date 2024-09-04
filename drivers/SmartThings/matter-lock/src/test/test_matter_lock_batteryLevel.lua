@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ local mock_device_record = {
       endpoint_id = 10,
       clusters = {
         {cluster_id = clusters.DoorLock.ID, cluster_type = "SERVER", feature_map = 0x0000},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002},
       },
     },
   },
@@ -67,6 +67,21 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical()),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device, 10, clusters.PowerSource.types.BatChargeLevelEnum.WARNING
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning()),
     },
     {
         channel = "matter",

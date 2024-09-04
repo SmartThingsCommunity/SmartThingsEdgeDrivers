@@ -11,9 +11,9 @@ components:
         - locked
         - unlocked
         - not fully locked
-  - id: batteryLevel
-    version: 1
   - id: tamperAlert
+    version: 1
+  - id: batteryLevel
     version: 1
   - id: firmwareUpdate
     version: 1
