@@ -469,14 +469,18 @@ local function delete_credential_from_table(device, credIdx)
   local new_cred_table = {}
 
   -- Recreate credential table
+  local userIdx = 0
   local i = 0
   for index, entry in pairs(cred_table) do
     if entry.credentialIndex ~= credIdx then
       table.insert(new_cred_table, entry)
+    else
+      userIdx = entry.userIndex
     end
   end
 
   device:emit_event(capabilities.lockCredentials.credentials(new_cred_table, {visibility = {displayed = false}}))
+  return userIdx
 end
 
 local function delete_credential_from_table_as_user(device, userIdx)
@@ -1311,13 +1315,15 @@ local function clear_credential_response_handler(driver, device, ib, response)
   end
 
   -- Delete User in table
+  local userIdx = 0
   if status == "success" then
-    delete_credential_from_table(device, credIdx)
+    userIdx = delete_credential_from_table(device, credIdx)
   end
   
   -- Update commandResult
   local result = {
     commandName = cmdName,
+    userIndex = userIdx,
     credentialIndex = credIdx,
     statusCode = status
   }
