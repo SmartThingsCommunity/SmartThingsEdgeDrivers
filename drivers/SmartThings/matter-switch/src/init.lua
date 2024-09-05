@@ -105,7 +105,7 @@ local function mired_to_kelvin(value, minOrMax)
   elseif minOrMax == COLOR_TEMP_MAX then
     return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
   else
-    log.warn("Attempted to convert temperature unit for an undefined value")
+    log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
   end
 end
 
