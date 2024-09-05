@@ -31,7 +31,7 @@ matterManufacturer:
   - id: "Virtual Device App"
     deviceLabel: Virtual Door Lock
     vendorId: 0x10E1
-    productId: 0x1002
+    productId: 0x2002
     deviceProfileName: lock-user-pin-schedule
 matterGeneric:
   - id: "matter/door-lock"
