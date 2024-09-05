@@ -30,6 +30,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x1533, 0x0001}, -- eufy, Smart Lock E31
+  {0x1533, 0x0002}, -- eufy, Smart Lock E30
+  {0x1533, 0x0003}, -- eufy, Smart Lock C34
   {0x10E1, 0x2002} -- VDA
 }
 

@@ -27,6 +27,16 @@ matterManufacturer:
     vendorId: 0x1533
     productId: 0x0001
     deviceProfileName: lock-user-pin
+  - id: 5427/2
+    deviceLabel: eufy Smart Lock E30
+    vendorId: 0x1533
+    productId: 0x0002
+    deviceProfileName: lock-user-pin
+  - id: 5427/3
+    deviceLabel: eufy Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
+    deviceProfileName: lock-user-pin
 #VDA -- Needs to remove
   - id: "Virtual Device App"
     deviceLabel: Virtual Door Lock
