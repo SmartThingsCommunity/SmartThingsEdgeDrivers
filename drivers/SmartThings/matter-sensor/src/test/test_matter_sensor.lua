@@ -66,6 +66,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 local function subscribe_on_init(dev)
   local subscribe_request = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(mock_device)
   subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:subscribe(mock_device))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:subscribe(mock_device))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:subscribe(mock_device))
   subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(mock_device))
   subscribe_request:merge(clusters.BooleanState.attributes.StateValue:subscribe(mock_device))
   subscribe_request:merge(clusters.OccupancySensing.attributes.Occupancy:subscribe(mock_device))
@@ -78,6 +80,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
   -- don't check the battery for this device because we are using the catch-all "sensor.yml" profile just for testing
   mock_device:set_field("__battery_checked", 1, {persist = true})
+  test.set_rpc_version(4)
 end
 test.set_test_init_function(test_init)
 
@@ -237,6 +240,8 @@ test.register_message_test(
 local function refresh_commands(dev)
   local req = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(dev)
   req:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(dev))
+  req:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:read(dev))
+  req:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:read(dev))
   req:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:read(dev))
   req:merge(clusters.BooleanState.attributes.StateValue:read(dev))
   req:merge(clusters.OccupancySensing.attributes.Occupancy:read(dev))
@@ -264,6 +269,33 @@ test.register_message_test(
         }
       },
     }
+)
+
+test.register_message_test(
+  "Min and max temperature attributes set capability constraint",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_device, 1, 500)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
+    }
+  }
 )
 
 test.run_registered_tests()
