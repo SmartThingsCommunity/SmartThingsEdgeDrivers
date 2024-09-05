@@ -301,7 +301,6 @@ local function initialize_switch(driver, device)
             vendor_provided_label = name
           }
         )
-        current_component_number = current_component_number + 1
         parent_child_device = true
       end
     end
@@ -328,10 +327,6 @@ local function initialize_switch(driver, device)
   end
 
   device:set_field(SWITCH_INITIALIZED, true)
-
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
 
   if component_map_used then
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
@@ -383,9 +378,6 @@ local function initialize_switch(driver, device)
 
     if profile_name then
       device:try_update_metadata({profile = profile_name})
-    end
-
-    if profile_name then
       device:set_field(DEFERRED_CONFIGURE, true)
     else
       configure_buttons(device)
@@ -434,11 +426,11 @@ local function device_init(driver, device)
       -- create child devices as needed for multi-switch devices
       initialize_switch(driver, device)
     end
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
-    device:set_component_to_endpoint_fn(component_to_endpoint)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
     device:subscribe()
   end
 end

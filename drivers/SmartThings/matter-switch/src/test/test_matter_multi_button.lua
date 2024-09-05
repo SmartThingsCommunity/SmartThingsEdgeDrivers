@@ -7,7 +7,7 @@ local dkjson = require "dkjson"
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
--- Mock a 4-button device using endpoints non-consecutive endpoints
+-- Mock a 5-button device using endpoints non-consecutive endpoints
 local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("5-button-battery.yml"), -- on a real device we would switch to this, rather than fingerprint to it
