@@ -433,6 +433,7 @@ test.register_coroutine_test(
         mock_parent.id,
         { capability = "switchLevel", component = "main", command = "setLevel", args = { 50 } }
       })
+      mock_parent:expect_native_cmd_handler_registration("switchLevel", "setLevel")
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
