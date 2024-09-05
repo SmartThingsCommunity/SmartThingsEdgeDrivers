@@ -35,7 +35,7 @@ end
 Feature.is_power_in_watts_set = function(self)
   return (self.value & self.POWER_IN_WATTS) ~= 0
 end
- 
+
 Feature.set_power_in_watts = function(self)
   if self.value ~= nil then
     self.value = self.value | self.POWER_IN_WATTS
@@ -51,7 +51,7 @@ end
 Feature.is_power_number_limits_set = function(self)
   return (self.value & self.POWER_NUMBER_LIMITS) ~= 0
 end
- 
+
 Feature.set_power_number_limits = function(self)
   if self.value ~= nil then
     self.value = self.value | self.POWER_NUMBER_LIMITS
@@ -95,4 +95,3 @@ end
 setmetatable(Feature, new_mt)
 
 return Feature
-

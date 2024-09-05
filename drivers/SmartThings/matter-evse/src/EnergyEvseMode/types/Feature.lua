@@ -16,7 +16,7 @@ Feature.mask_fields = {
 Feature.is_on_off_set = function(self)
   return (self.value & self.ON_OFF) ~= 0
 end
- 
+
 Feature.set_on_off = function(self)
   if self.value ~= nil then
     self.value = self.value | self.ON_OFF

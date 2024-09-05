@@ -1,5 +1,4 @@
 local data_types = require "st.matter.data_types"
-local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
 local amperage_maType = require "st.matter.data_types.Int64"
 
@@ -98,4 +97,3 @@ end
 setmetatable(EnableDischarging, {__call = EnableDischarging.init})
 
 return EnableDischarging
-

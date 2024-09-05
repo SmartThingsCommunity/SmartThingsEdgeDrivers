@@ -45,7 +45,6 @@ function NextChargeStartTime:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -58,7 +57,6 @@ end
 
 function NextChargeStartTime:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  
   return data
 end
 

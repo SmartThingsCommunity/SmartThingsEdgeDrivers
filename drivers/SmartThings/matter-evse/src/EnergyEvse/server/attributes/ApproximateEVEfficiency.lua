@@ -10,7 +10,6 @@ local ApproximateEVEfficiency = {
 
 function ApproximateEVEfficiency:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  
   return o
 end
 
@@ -26,7 +25,6 @@ end
 
 function ApproximateEVEfficiency:write(device, endpoint_id, value)
   local data = data_types.validate_or_build_type(value, self.base_type)
-  
   return cluster_base.write(
     device,
     endpoint_id,
@@ -59,7 +57,6 @@ function ApproximateEVEfficiency:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -72,7 +69,6 @@ end
 
 function ApproximateEVEfficiency:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  
   return data
 end
 

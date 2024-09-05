@@ -11,13 +11,11 @@ ChargingTargetScheduleStruct.field_defs = {
     data_type = TargetDayOfWeekBitmap,
     field_id = 0,
     name = "day_of_week_for_sequence",
-    
   },
   {
     data_type = ChargingTargetStruct,
     field_id = 1,
     name = "charging_targets",
-    
   },
 }
 
@@ -71,4 +69,3 @@ end
 setmetatable(ChargingTargetScheduleStruct, new_mt)
 
 return ChargingTargetScheduleStruct
-

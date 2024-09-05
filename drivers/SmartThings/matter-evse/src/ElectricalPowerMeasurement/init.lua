@@ -12,13 +12,6 @@ ElectricalPowerMeasurement.client = {}
 ElectricalPowerMeasurement.server.attributes = ElectricalPowerMeasurementServerAttributes:set_parent_cluster(ElectricalPowerMeasurement)
 ElectricalPowerMeasurement.server.commands = ElectricalPowerMeasurementServerCommands:set_parent_cluster(ElectricalPowerMeasurement)
 ElectricalPowerMeasurement.types = ElectricalPowerMeasurementTypes
-
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 ElectricalPowerMeasurement.FeatureMap = ElectricalPowerMeasurement.types.Feature
 
 function ElectricalPowerMeasurement.are_features_supported(feature, feature_map)
@@ -92,7 +85,7 @@ command_helper_mt.__index = function(self, key)
   if direction == nil then
     error(string.format("Referenced unknown command %s on cluster %s", key, ElectricalPowerMeasurement.NAME))
   end
-  return ElectricalPowerMeasurement[direction].commands[key] 
+  return ElectricalPowerMeasurement[direction].commands[key]
 end
 ElectricalPowerMeasurement.commands = {}
 setmetatable(ElectricalPowerMeasurement.commands, command_helper_mt)

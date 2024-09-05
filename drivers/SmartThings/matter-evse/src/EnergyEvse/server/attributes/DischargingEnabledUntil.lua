@@ -10,7 +10,6 @@ local DischargingEnabledUntil = {
 
 function DischargingEnabledUntil:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  
   return o
 end
 
@@ -46,7 +45,6 @@ function DischargingEnabledUntil:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -59,7 +57,6 @@ end
 
 function DischargingEnabledUntil:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  
   return data
 end
 

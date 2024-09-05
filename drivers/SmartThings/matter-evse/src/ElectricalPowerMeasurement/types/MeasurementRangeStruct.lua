@@ -56,13 +56,11 @@ MeasurementRangeStruct.field_defs = {
     data_type = data_types.Uint64,
     field_id = 7,
     name = "start_systime",
-    
   },
   {
     data_type = data_types.Uint64,
     field_id = 8,
     name = "end_systime",
-    
   },
   {
     data_type = data_types.Uint64,

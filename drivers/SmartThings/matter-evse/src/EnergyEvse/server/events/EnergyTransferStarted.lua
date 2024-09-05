@@ -3,7 +3,6 @@ local cluster_base = require "st.matter.cluster_base"
 local TLVParser = require "st.matter.TLV.TLVParser"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
 local StateEnum = require "EnergyEvsetypes.StateEnum"
-local amperage_ma = require "EnergyEvsetypes.amperage_ma"
 
 local EnergyTransferStarted = {
   ID = 0x0002,
@@ -113,4 +112,3 @@ function EnergyTransferStarted:set_parent_cluster(cluster)
 end
 
 return EnergyTransferStarted
-

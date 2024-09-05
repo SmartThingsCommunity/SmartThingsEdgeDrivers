@@ -11,13 +11,6 @@ EnergyEvseMode.server = {}
 EnergyEvseMode.server.attributes = EnergyEvseModeServerAttributes:set_parent_cluster(EnergyEvseMode)
 EnergyEvseMode.server.commands = EnergyEvseModeServerCommands:set_parent_cluster(EnergyEvseMode)
 EnergyEvseMode.types = EnergyEvseModeTypes
-
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 EnergyEvseMode.FeatureMap = EnergyEvseMode.types.Feature
 
 function EnergyEvseMode.are_features_supported(feature, feature_map)
@@ -93,11 +86,11 @@ command_helper_mt.__index = function(self, key)
   if direction == nil then
     error(string.format("Referenced unknown command %s on cluster %s", key, EnergyEvseMode.NAME))
   end
-  return EnergyEvseMode[direction].commands[key] 
+  return EnergyEvseMode[direction].commands[key]
 end
 EnergyEvseMode.commands = {}
 setmetatable(EnergyEvseMode.commands, command_helper_mt)
 
-setmetatable(EnergyEvseMode, {__index = cluster_base})  
+setmetatable(EnergyEvseMode, {__index = cluster_base})
 
 return EnergyEvseMode

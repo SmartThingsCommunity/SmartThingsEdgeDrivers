@@ -4,7 +4,6 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
 local StateEnum = require "EnergyEvsetypes.StateEnum"
 local FaultStateEnum = require "EnergyEvsetypes.FaultStateEnum"
-local FaultStateEnum = require "EnergyEvsetypes.FaultStateEnum"
 
 local Fault = {
   ID = 0x0004,
@@ -122,4 +121,3 @@ function Fault:set_parent_cluster(cluster)
 end
 
 return Fault
-

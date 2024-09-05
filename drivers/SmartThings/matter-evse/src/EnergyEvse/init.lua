@@ -14,13 +14,6 @@ EnergyEvse.server.attributes = EnergyEvseServerAttributes:set_parent_cluster(Ene
 EnergyEvse.server.commands = EnergyEvseServerCommands:set_parent_cluster(EnergyEvse)
 EnergyEvse.server.events = EnergyEvseEvents:set_parent_cluster(EnergyEvse)
 EnergyEvse.types = EnergyEvseTypes
-
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 EnergyEvse.FeatureMap = EnergyEvse.types.Feature
 
 function EnergyEvse.are_features_supported(feature, feature_map)
@@ -152,7 +145,7 @@ command_helper_mt.__index = function(self, key)
   if direction == nil then
     error(string.format("Referenced unknown command %s on cluster %s", key, EnergyEvse.NAME))
   end
-  return EnergyEvse[direction].commands[key] 
+  return EnergyEvse[direction].commands[key]
 end
 EnergyEvse.commands = {}
 setmetatable(EnergyEvse.commands, command_helper_mt)

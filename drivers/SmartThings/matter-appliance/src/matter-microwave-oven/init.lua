@@ -1,9 +1,7 @@
 local capabilities = require "st.capabilities"
-local log = require "log"
 local clusters = require "st.matter.clusters"
-local utils = require "st.utils"
+local log = require "log"
 
-local version = require "version"
 clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
 clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
 

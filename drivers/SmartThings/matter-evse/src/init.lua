@@ -181,9 +181,7 @@ local function create_poll_report_schedule(device)
       .ID,
       capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
 
-    local deltaEnergyWh = 0.0
-    deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
-
+    local deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
     local startTime = epoch_to_iso8601(last_time)
     local endTime = epoch_to_iso8601(current_time - 1)
 

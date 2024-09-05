@@ -9,15 +9,6 @@ ElectricalEnergyMeasurement.NAME = "ElectricalEnergyMeasurement"
 ElectricalEnergyMeasurement.server = {}
 ElectricalEnergyMeasurement.server.attributes = ElectricalEnergyMeasurementServerAttributes:set_parent_cluster(ElectricalEnergyMeasurement)
 ElectricalEnergyMeasurement.types = ElectricalEnergyMeasurementTypes
-
--- Global Attributes Metadata
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
--- Represent the global attributes
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 ElectricalEnergyMeasurement.FeatureMap = ElectricalEnergyMeasurement.types.Feature
 
 function ElectricalEnergyMeasurement.are_features_supported(feature, feature_map)
@@ -67,4 +58,3 @@ setmetatable(ElectricalEnergyMeasurement.attributes, attribute_helper_mt)
 setmetatable(ElectricalEnergyMeasurement, {__index = cluster_base})
 
 return ElectricalEnergyMeasurement
-

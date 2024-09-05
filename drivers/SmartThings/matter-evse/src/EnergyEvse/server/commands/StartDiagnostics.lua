@@ -1,5 +1,4 @@
 local data_types = require "st.matter.data_types"
-local log = require "log"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
 local StartDiagnostics = {}
@@ -83,4 +82,3 @@ end
 setmetatable(StartDiagnostics, {__call = StartDiagnostics.init})
 
 return StartDiagnostics
-

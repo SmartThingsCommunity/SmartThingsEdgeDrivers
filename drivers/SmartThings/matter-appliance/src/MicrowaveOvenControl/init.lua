@@ -79,6 +79,6 @@ end
 MicrowaveOvenControl.commands = {}
 setmetatable(MicrowaveOvenControl.commands, command_helper_mt)
 
-setmetatable(MicrowaveOvenControl, {__index = cluster_base})  
+setmetatable(MicrowaveOvenControl, {__index = cluster_base})
 
 return MicrowaveOvenControl

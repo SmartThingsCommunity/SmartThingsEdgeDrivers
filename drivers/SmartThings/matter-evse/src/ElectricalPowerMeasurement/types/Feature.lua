@@ -23,7 +23,7 @@ Feature.mask_fields = {
 Feature.is_direct_current_set = function(self)
   return (self.value & self.DIRECT_CURRENT) ~= 0
 end
- 
+
 Feature.set_direct_current = function(self)
   if self.value ~= nil then
     self.value = self.value | self.DIRECT_CURRENT
@@ -38,7 +38,7 @@ end
 Feature.is_alternating_current_set = function(self)
   return (self.value & self.ALTERNATING_CURRENT) ~= 0
 end
- 
+
 Feature.set_alternating_current = function(self)
   if self.value ~= nil then
     self.value = self.value | self.ALTERNATING_CURRENT
@@ -53,7 +53,7 @@ end
 Feature.is_polyphase_power_set = function(self)
   return (self.value & self.POLYPHASE_POWER) ~= 0
 end
- 
+
 Feature.set_polyphase_power = function(self)
   if self.value ~= nil then
     self.value = self.value | self.POLYPHASE_POWER
@@ -83,7 +83,7 @@ end
 Feature.is_power_quality_set = function(self)
   return (self.value & self.POWER_QUALITY) ~= 0
 end
- 
+
 Feature.set_power_quality = function(self)
   if self.value ~= nil then
     self.value = self.value | self.POWER_QUALITY

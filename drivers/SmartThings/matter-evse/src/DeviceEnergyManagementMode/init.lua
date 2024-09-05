@@ -12,15 +12,6 @@ DeviceEnergyManagementMode.server = {}
 DeviceEnergyManagementMode.server.attributes = DeviceEnergyManagementModeServerAttributes:set_parent_cluster(DeviceEnergyManagementMode)
 DeviceEnergyManagementMode.server.commands = DeviceEnergyManagementModeServerCommands:set_parent_cluster(DeviceEnergyManagementMode)
 DeviceEnergyManagementMode.types = DeviceEnergyManagementModeTypes
-
--- Global Attributes Metadata
-local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = 0xFFFD
-
--- Represent the global attributes
-local global_attr_id_map = {
-  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
-}
-
 DeviceEnergyManagementMode.FeatureMap = DeviceEnergyManagementMode.types.Feature
 
 function DeviceEnergyManagementMode.are_features_supported(feature, feature_map)
@@ -85,12 +76,11 @@ command_helper_mt.__index = function(self, key)
   if direction == nil then
     error(string.format("Referenced unknown command %s on cluster %s", key, DeviceEnergyManagementMode.NAME))
   end
-  return DeviceEnergyManagementMode[direction].commands[key] 
+  return DeviceEnergyManagementMode[direction].commands[key]
 end
 DeviceEnergyManagementMode.commands = {}
 setmetatable(DeviceEnergyManagementMode.commands, command_helper_mt)
 
-setmetatable(DeviceEnergyManagementMode, {__index = cluster_base})  
+setmetatable(DeviceEnergyManagementMode, {__index = cluster_base})
 
 return DeviceEnergyManagementMode
-
