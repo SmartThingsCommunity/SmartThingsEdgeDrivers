@@ -235,6 +235,45 @@ local mock_device_parent_child_different_types = test.mock_device.build_test_mat
   }
 })
 
+local mock_device_parent_child_unsupported_device_type = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 7,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0103, device_type_revision = 1} -- OnOff Switch
+      }
+    },
+    {
+      endpoint_id = 10,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0304, device_type_revision = 2} -- Pump Controller
+      }
+    }
+  }
+})
+
 local function test_init_parent_child_switch_types()
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_child_switch_types)
   test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
@@ -310,6 +349,19 @@ local function test_init_parent_child_different_types()
   })
 end
 
+local function test_init_parent_child_unsupported_device_type()
+  test.mock_device.add_test_device(mock_device_parent_child_unsupported_device_type)
+  mock_device_parent_child_unsupported_device_type:expect_metadata_update({ profile = "switch-binary" })
+
+  mock_device_parent_child_unsupported_device_type:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "switch-binary",
+    parent_device_id = mock_device_parent_child_unsupported_device_type.id,
+    parent_assigned_child_key = string.format("%d", 10)
+  })
+end
+
 test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as server",
   function()
@@ -357,6 +409,13 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_parent_child_different_types }
+)
+
+test.register_coroutine_test(
+  "Test child device attributes not subscribed to for unsupported device type for child device",
+  function()
+  end,
+  { test_init = test_init_parent_child_unsupported_device_type }
 )
 
 test.run_registered_tests()
