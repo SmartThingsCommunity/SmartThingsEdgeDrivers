@@ -41,7 +41,7 @@ matterManufacturer:
     deviceLabel: Heiman CO Sensor
     vendorId: 0x120B
     productId: 0x1002
-    deviceProfileName: co
+    deviceProfileName: co-comeas
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
