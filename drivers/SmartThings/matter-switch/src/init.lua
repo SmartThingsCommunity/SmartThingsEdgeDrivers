@@ -78,6 +78,71 @@ local device_type_profile_map = {
   [GENERIC_SWITCH_ID] = "button"
 }
 
+local device_type_attribute_map = {
+  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+  },
+  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [ON_OFF_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [ON_OFF_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  }
+}
+
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
@@ -155,14 +220,26 @@ local function convert_huesat_st_to_matter(val)
   return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
 end
 
-local function mired_to_kelvin(value)
+local function mired_to_kelvin(value, minOrMax)
   if value == 0 then -- shouldn't happen, but has
     value = 1
     log.warn(string.format("Received a color temperature of 0 mireds. Using a color temperature of 1 mired to avoid divide by zero"))
   end
-  -- we divide inside the rounding and multiply outside of it because we expect these
-  -- bounds to be multiples of 100
-  return utils.round((MIRED_KELVIN_CONVERSION_CONSTANT / value) / 100) * 100
+  -- We divide inside the rounding and multiply outside of it because we expect these
+  -- bounds to be multiples of 100. For the maximum mired value (minimum K value),
+  -- add 1 before converting and round up to nearest hundreds. For the minimum mired
+  -- (maximum K value) value, subtract 1 before converting and round down to nearest
+  -- hundreds. Note that 1 is added/subtracted from the mired value in order to avoid
+  -- rounding errors from the conversion of Kelvin to mireds.
+  local kelvin_step_size = 100
+  local rounding_value = 0.5
+  if minOrMax == COLOR_TEMP_MIN then
+    return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value + 1)) + rounding_value) * kelvin_step_size
+  elseif minOrMax == COLOR_TEMP_MAX then
+    return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
+  else
+    log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
+  end
 end
 
 --- find_default_endpoint helper function to handle situations where
@@ -431,6 +508,18 @@ local function device_init(driver, device)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
     end
+    local main_endpoint = find_default_endpoint(device)
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
     device:subscribe()
   end
 end
@@ -592,7 +681,7 @@ local mired_bounds_handler_factory = function(minOrMax)
       device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp_in_kelvin = mired_to_kelvin(ib.data.value)
+    local temp_in_kelvin = mired_to_kelvin(ib.data.value, minOrMax)
     set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
     local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
     local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
