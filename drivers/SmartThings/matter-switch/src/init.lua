@@ -69,6 +69,71 @@ local device_type_profile_map = {
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
 }
 
+local device_type_attribute_map = {
+  [ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+  },
+  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [ON_OFF_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff
+  },
+  [ON_OFF_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  },
+  [ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  }
+}
+
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
@@ -269,6 +334,18 @@ local function device_init(driver, device)
     device:set_endpoint_to_component_fn(endpoint_to_component)
     if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
       device:set_find_child(find_child)
+    end
+    local main_endpoint = find_default_endpoint(device)
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          device:add_subscribed_attribute(attr)
+        end
+      end
     end
     device:subscribe()
   end
