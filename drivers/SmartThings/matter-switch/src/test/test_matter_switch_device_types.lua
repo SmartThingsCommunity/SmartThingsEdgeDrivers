@@ -197,7 +197,7 @@ local mock_device_parent_child_switch_types = test.mock_device.build_test_matter
 
 local mock_device_parent_child_different_types = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -338,7 +338,6 @@ local function test_init_parent_child_different_types()
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.mock_device.add_test_device(mock_device_parent_child_different_types)
-  mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
 
   mock_device_parent_child_different_types:expect_device_create({
     type = "EDGE_CHILD",
