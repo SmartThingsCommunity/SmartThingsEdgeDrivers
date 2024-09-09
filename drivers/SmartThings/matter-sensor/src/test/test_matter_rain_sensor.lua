@@ -16,6 +16,7 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 test.add_package_capability("rainSensor.yml")
+
 local clusters = require "st.matter.clusters"
 
 clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
@@ -39,8 +40,8 @@ local mock_device_rain = test.mock_device.build_test_matter_device({
       {
         endpoint_id = 1,
         clusters = {
-          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
+          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
         },
         device_types = {
           {device_type_id = 0x0044, device_type_revision = 1} -- Rain Sensor
@@ -61,6 +62,8 @@ local function test_init_rain()
       subscribe_request:merge(cluster:subscribe(mock_device_rain))
     end
   end
+  test.socket.matter:__expect_send({mock_device_rain.id, clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(mock_device_rain, 1)})
+  test.socket.matter:__expect_send({mock_device_rain.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_rain, 1)})
   test.socket.matter:__expect_send({mock_device_rain.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_rain)
   mock_device_rain:set_field("__battery_checked", 1, {persist = true})
@@ -77,6 +80,8 @@ local function test_init_cf()
       subscribe_request:merge(cluster:subscribe(mock_device_rain_cf))
     end
   end
+  test.socket.matter:__expect_send({mock_device_rain_cf.id, clusters.BooleanStateConfiguration.attributes.DefaultSensitivityLevel:read(mock_device_rain_cf, 1)})
+  test.socket.matter:__expect_send({mock_device_rain_cf.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_rain_cf, 1)})
   test.socket.matter:__expect_send({mock_device_rain_cf.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_rain_cf)
   mock_device_rain_cf:expect_metadata_update({ profile = "rain-fault" })

@@ -7,9 +7,13 @@ attributes:
       additionalProperties: false
       properties:
         value:
-          $ref: RainState
+          title: RainState
+          type: string
+          enum:
+            - undetected
+            - detected
       required:
-      - value
+        - value 
 commands: {}
 id: rainSensor
 version: 1
