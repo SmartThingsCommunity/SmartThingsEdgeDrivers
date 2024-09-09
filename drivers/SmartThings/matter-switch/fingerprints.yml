@@ -179,6 +179,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
