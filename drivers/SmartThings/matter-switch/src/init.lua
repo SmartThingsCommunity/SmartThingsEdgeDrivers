@@ -76,7 +76,7 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
-  [WATER_VALVE_DEVICE_TYPE_ID] = "water-valve"
+  [WATER_VALVE_DEVICE_TYPE_ID] = "water-valve",
   [GENERIC_SWITCH_ID] = "button"
 }
 
@@ -1147,6 +1147,7 @@ local matter_driver_template = {
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = valve_level_attr_handler
+      },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
@@ -1195,7 +1196,7 @@ local matter_driver_template = {
     },
     [capabilities.level.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentLevel
-    }
+    },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
@@ -1246,7 +1247,7 @@ local matter_driver_template = {
     capabilities.powerMeter,
     capabilities.energyMeter,
     capabilities.powerConsumptionReport,
-    capabilities.valve
+    capabilities.valve,
     capabilities.button,
     capabilities.battery
   },
