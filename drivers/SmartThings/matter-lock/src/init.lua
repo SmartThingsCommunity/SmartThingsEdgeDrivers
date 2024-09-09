@@ -97,6 +97,16 @@ local function handle_battery_percent_remaining(driver, device, ib, response)
   end
 end
 
+local function handle_battery_charge_level(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
 local function max_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
 end
@@ -573,6 +583,7 @@ local matter_lock_driver = {
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
+        [PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
       },
     },
     event = {
@@ -593,6 +604,7 @@ local matter_lock_driver = {
   subscribed_attributes = {
     [capabilities.lock.ID] = {DoorLock.attributes.LockState},
     [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
+    [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
@@ -618,6 +630,7 @@ local matter_lock_driver = {
     capabilities.lockCodes,
     capabilities.tamperAlert,
     capabilities.battery,
+    capabilities.batteryLevel,
   },
   sub_drivers = {
     require("aqara-lock"),
