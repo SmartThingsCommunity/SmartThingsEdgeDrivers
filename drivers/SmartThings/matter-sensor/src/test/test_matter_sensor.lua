@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+test.add_package_capability("customRainSensor.yml")
 
 --Note all endpoints are being mapped to the main component
 -- in the matter-sensor driver. If any devices require invoke/write

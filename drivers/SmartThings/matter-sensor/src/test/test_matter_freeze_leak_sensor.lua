@@ -16,6 +16,7 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+test.add_package_capability("customRainSensor.yml")
 
 clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
