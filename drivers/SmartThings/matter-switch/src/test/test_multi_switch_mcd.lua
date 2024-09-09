@@ -14,6 +14,7 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
+test.add_package_capability("level.yml")
 
 local clusters = require "st.matter.clusters"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"

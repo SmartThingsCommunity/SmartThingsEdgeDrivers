@@ -1,6 +1,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+test.add_package_capability("level.yml")
 
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
