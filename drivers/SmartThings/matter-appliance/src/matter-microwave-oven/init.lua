@@ -1,7 +1,11 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
+local version = require "version"
 
+if version.api < 10 then
+  clusters.OperationalState = require "OperationalState"
+end
 clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
 clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
 
@@ -83,17 +87,18 @@ local function operational_state_attr_handler(driver, device, ib, response)
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
+  if version.api < 10 then
+    clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
+  end
   log.info_with({ hub_logs = true },
     string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
   local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
-    device:emit_event_for_endpoint(ib.endpoint_id,
-      capabilities.operationalState.operationalState.unableToCompleteOperation())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToCompleteOperation())
   elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
-    device:emit_event_for_endpoint(ib.endpoint_id,
-      capabilities.operationalState.operationalState.commandInvalidInCurrentState())
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.commandInvalidInCurrentState())
   end
   if operationalError ~= clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
     local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
@@ -119,12 +124,12 @@ local function microwave_oven_current_mode_handler(driver, device, ib, response)
   local currentMode = ib.data.value
   local microwaveOvenModeSupportedModes = device:get_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY) or {}
 
-  if microwaveOvenModeSupportedModes[currentMode+1] then
-    local mode = microwaveOvenModeSupportedModes[currentMode+1]
+  if microwaveOvenModeSupportedModes[currentMode + 1] then
+    local mode = microwaveOvenModeSupportedModes[currentMode + 1]
     device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, capabilities.mode.mode(mode))
     return
   end
-  log.warn(string.format("Microwave oven mode %s not found in supported microwave oven modes", currentMode.value))
+  log.warn(string.format("Microwave oven mode %s not found in supported microwave oven modes", currentMode))
 end
 
 local function microwave_oven_cook_time_handler(driver, device, ib, response)
