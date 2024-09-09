@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
-test.add_package_capability("customRainSensor.yml")
 
 local clusters = require "st.matter.clusters"
 clusters.SmokeCoAlarm = require "SmokeCoAlarm"
