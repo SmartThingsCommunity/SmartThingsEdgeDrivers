@@ -104,7 +104,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = 0
+  local speed
   if ib.data.value ~= nil and ib.data.value <= 100 then
     speed = ib.data.value
   else

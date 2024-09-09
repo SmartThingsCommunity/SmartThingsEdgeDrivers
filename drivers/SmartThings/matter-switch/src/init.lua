@@ -459,7 +459,6 @@ local function find_child(parent, ep_id)
 end
 
 local function initialize_switch(driver, device)
-  local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
@@ -552,7 +551,7 @@ local function initialize_switch(driver, device)
   end
 
   if num_valve_server_eps > 0 then
-    local profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
+    profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
       profile_name = profile_name .. "-level"
