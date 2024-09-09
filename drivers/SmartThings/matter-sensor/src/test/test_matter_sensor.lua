@@ -14,6 +14,7 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
+test.add_package_capability("rainSensor.yml")
 
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"

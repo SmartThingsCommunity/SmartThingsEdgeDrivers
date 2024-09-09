@@ -1,0 +1,15 @@
+name: Rain Sensor
+status: proposed
+attributes:
+  rain:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          $ref: RainState
+      required:
+      - value
+commands: {}
+id: rainSensor
+version: 1
