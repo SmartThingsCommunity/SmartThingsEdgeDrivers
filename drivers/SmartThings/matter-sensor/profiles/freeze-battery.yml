@@ -17,7 +17,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: LeakSensor
+  - name: WaterFreezeDetector
 preferences:
   - name: "freezeSensitivity"
     title: "Freeze sensitivity"
