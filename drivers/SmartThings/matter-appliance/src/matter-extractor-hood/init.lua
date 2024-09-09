@@ -105,8 +105,10 @@ end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
   local speed = 0
-  if ib.data.value ~= nil then
+  if ib.data.value ~= nil and ib.data.value <= 100 then
     speed = ib.data.value
+  else
+    return
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
