@@ -125,6 +125,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -147,6 +155,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -166,6 +182,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
       }
     },
     {
@@ -644,6 +668,33 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Min and max color temperature attributes set capability constraint using improved temperature conversion rounding",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
     }
   }
 )
