@@ -37,7 +37,7 @@ local types = DoorLock.types
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("base-lock.yml"),
-  manufacturer_info = {vendor_id = 0xcccc, product_id = 0x1},
+  manufacturer_info = {vendor_id = 0x101D, product_id = 0x1},
   endpoints = {
     {
       endpoint_id = 2,
