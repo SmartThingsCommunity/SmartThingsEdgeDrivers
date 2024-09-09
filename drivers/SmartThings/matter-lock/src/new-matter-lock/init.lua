@@ -18,6 +18,33 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
 local log = require "log" -- needs to remove
+local utils = require "st.utils"
+
+log.info("Seeding the RNG")
+math.randomseed(os.time())
+log.info("Random number " .. math.random())
+log.info("Random number " .. math.random())
+log.info("Random number " .. math.random())
+log.info("Random number " .. math.random())
+log.info("Random number " .. math.random())
+
+local seeded = false
+local function seed_once()
+  if seeded then return end
+  seeded = true
+  log.info("Seeding random number generator " .. os.time())
+  math.randomseed(os.time())
+  log.info("Random number " .. math.random())
+  log.info("Random number " .. math.random())
+  log.info("Random number " .. math.random())
+  log.info("Random number " .. math.random())
+  log.info("Random number " .. math.random())
+  log.info("Random number " .. math.floor(math.random() * (10 ^ 6)))
+  log.info("Random number " .. math.floor(math.random() * (10 ^ 6)))
+  log.info("Random number " .. math.floor(math.random() * (10 ^ 6)))
+  log.info("Random number " .. math.floor(math.random() * (10 ^ 6)))
+  log.info("Random number " .. math.floor(math.random() * (10 ^ 6)))
+end
 
 local DoorLock = clusters.DoorLock
 local INITIAL_COTA_INDEX = 1
@@ -32,6 +59,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1533, 0x0001}, -- eufy, Smart Lock E31
   {0x1533, 0x0002}, -- eufy, Smart Lock E30
   {0x1533, 0x0003}, -- eufy, Smart Lock C34
+  {0x101D, 0x0001}, -- Yale, Assure 2
   {0x10E1, 0x2002} -- VDA
 }
 
@@ -64,7 +92,7 @@ local subscribed_events = {
   [capabilities.lockAlarm.ID] = {
     DoorLock.events.DoorLockAlarm
   },
-  [capabilities.lockUser.ID] = {
+  [capabilities.lockUsers.ID] = {
     DoorLock.events.LockUserChange
   }
 }
@@ -276,6 +304,7 @@ end
 
 local function generate_cota_cred_for_device(device)
   local len = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.maxPinCodeLen.NAME) or 6
+  seed_once()
   local cred_data = math.floor(math.random() * (10 ^ len))
   cred_data = string.format("%0" .. tostring(len) .. "d", cred_data)
   log.info_with({hub_logs=true}, string.format("cota_cred: %s", cred_data))
@@ -1179,6 +1208,23 @@ local function set_credential_response_handler(driver, device, ib, response)
     log.info_with({hub_logs=true}, string.format("userType: %s", userType))
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+
+    log.info(utils.stringify_table(ep, "ep"))
+    log.info(utils.stringify_table(credential, "credential"))
+    log.info(utils.stringify_table(credData, "credData"))
+    log.info(utils.stringify_table(userIdx, "userIdx"))
+    log.info(utils.stringify_table(userTypeMatter, "userTypeMatter"))
+
+    local long_log = utils.stringify_table(device.driver.device_cache)
+    local chunk_size = #long_log
+
+    --for i = 1, #long_log, chunk_size do
+    --    local chunk = string.sub(long_log, i, i + chunk_size - 1)
+    --    log.info(#chunk)
+    --    log.info(chunk)
+    --end
+
+    log.info("Finished")
 
     -- Sned command
     local ep = find_default_endpoint(device, DoorLock.ID)
