@@ -404,6 +404,9 @@ local matter_driver_template = {
       clusters.Switch.events.MultiPressComplete
     }
   },
+  sub_drivers = {
+    require("aqara-cube")
+  }
 }
 
 local matter_driver = MatterDriver("matter-button", matter_driver_template)
