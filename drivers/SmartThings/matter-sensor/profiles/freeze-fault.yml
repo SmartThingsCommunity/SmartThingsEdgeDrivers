@@ -19,15 +19,5 @@ components:
   categories:
   - name: WaterFreezeDetector
 preferences:
-  - name: "freezeSensitivity"
-    title: "Freeze sensitivity"
-    description: "Water freeze detector sensitivity"
-    required: false
-    preferenceType: "enumeration"
-    definition: {
-      options: {
-        0: "low",
-        1: "medium",
-        2: "high"
-      }
-    }
+  - preferenceId: freezeSensitivity
+    explicit: true

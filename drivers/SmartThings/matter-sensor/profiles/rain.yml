@@ -11,15 +11,5 @@ components:
   categories:
   - name: LeakSensor
 preferences:
-  - name: "rainSensitivity"
-    title: "Rain sensitivity"
-    description: "Rain sensor sensitivity"
-    required: false
-    preferenceType: "enumeration"
-    definition: {
-      options: {
-        0: "low",
-        1: "medium",
-        2: "high"
-      }
-    }
+  - preferenceId: rainSensitivity
+    explicit: true

@@ -11,15 +11,5 @@ components:
   categories:
   - name: LeakSensor
 preferences:
-  - name: "leakSensitivity"
-    title: "Leak sensitivity"
-    description: "Water leak detector sensitivity"
-    required: false
-    preferenceType: "enumeration"
-    definition: {
-      options: {
-        0: "low",
-        1: "medium",
-        2: "high"
-      }
-    }
+  - preferenceId: leakSensitivity
+    explicit: true

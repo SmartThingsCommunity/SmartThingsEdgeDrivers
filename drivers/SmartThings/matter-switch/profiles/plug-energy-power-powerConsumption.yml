@@ -1,4 +1,4 @@
-name: plug-energy-power-powerConsumption
+name: plug-power-energy-powerConsumption
 components:
 - id: main
   capabilities:
