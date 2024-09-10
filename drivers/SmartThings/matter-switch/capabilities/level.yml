@@ -3,14 +3,18 @@ status: proposed
 attributes:
   level:
     schema:
-      value:
-        type: integer
-        minimum: 0
-        maximum: 100
-      unit:
-        type: string
-        enum: ['%']
-        default: '%'
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          title: IntegerPercent
+          type: integer
+          minimum: 0
+          maximum: 100
+        unit:
+          type: string
+          enum: ['%']
+          default: '%'
     setter: setLevel
   levelRange:
     schema:
