@@ -16,8 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-
-test.add_package_capability("rainSensor.yml")
 clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
 local mock_device_freeze_leak = test.mock_device.build_test_matter_device({

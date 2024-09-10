@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local data_types = require "st.matter.data_types"
-test.add_package_capability("level.yml")
 
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"

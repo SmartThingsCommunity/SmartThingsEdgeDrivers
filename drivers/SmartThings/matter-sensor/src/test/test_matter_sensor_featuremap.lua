@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-test.add_package_capability("rainSensor.yml")
 
 local mock_device_humidity_battery = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("humidity-battery.yml"),

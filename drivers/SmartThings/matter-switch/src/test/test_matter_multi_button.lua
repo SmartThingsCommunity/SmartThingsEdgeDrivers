@@ -3,7 +3,6 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-test.add_package_capability("level.yml")
 
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button

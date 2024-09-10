@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-test.add_package_capability("level.yml")
 
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
