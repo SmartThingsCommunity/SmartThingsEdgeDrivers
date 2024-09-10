@@ -40,7 +40,40 @@ local DEFAULT_MODE = 0
 local RVC_RUN_MODE_SUPPORTED_MODES = "__rvc_run_mode_supported_modes"
 local RVC_CLEAN_MODE_SUPPORTED_MODES = "__rvc_clean_mode_supported_modes"
 
+local subscribed_attributes = {
+  [capabilities.mode.ID] = {
+    clusters.RvcRunMode.attributes.SupportedModes,
+    clusters.RvcRunMode.attributes.CurrentMode,
+    clusters.RvcCleanMode.attributes.SupportedModes,
+    clusters.RvcCleanMode.attributes.CurrentMode
+  },
+  [capabilities.robotCleanerOperatingState.ID] = {
+    clusters.RvcOperationalState.attributes.OperationalState,
+    clusters.RvcOperationalState.attributes.OperationalError
+  }
+}
+
 local function device_init(driver, device)
+  device:subscribe()
+end
+
+local function do_configure(driver, device)
+  local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID)
+  if #clean_mode_eps == 0 then
+    local profile_name = "rvc"
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  end
+end
+
+local function info_changed(driver, device, event, args)
+  for cap_id, attributes in pairs(subscribed_attributes) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, attr in ipairs(attributes) do
+        device:add_subscribed_attribute(attr)
+      end
+    end
+  end
   device:subscribe()
 end
 
@@ -193,6 +226,10 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
       device:emit_component_event(component, event)
 
       -- State Machine Rules 2. RVC Clean Mode - Mode Change Restrictions
+      local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID)
+      if #clean_mode_eps == 0 then
+        break
+      end
       local is_idle = is_idle_mode(device, RVC_RUN_MODE_SUPPORTED_MODES, i, clusters.RvcRunMode.types.ModeTag.IDLE)
       local component = device.profile.components["cleanMode"]
       if is_idle then
@@ -324,6 +361,8 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    doConfigure = do_configure,
+    infoChanged = info_changed,
   },
   matter_handlers = {
     attr = {
@@ -341,18 +380,7 @@ local matter_driver_template = {
       },
     }
   },
-  subscribed_attributes = {
-    [capabilities.mode.ID] = {
-      clusters.RvcRunMode.attributes.SupportedModes,
-      clusters.RvcRunMode.attributes.CurrentMode,
-      clusters.RvcCleanMode.attributes.SupportedModes,
-      clusters.RvcCleanMode.attributes.CurrentMode,
-    },
-    [capabilities.robotCleanerOperatingState.ID] = {
-      clusters.RvcOperationalState.attributes.OperationalState,
-      clusters.RvcOperationalState.attributes.OperationalError,
-    },
-  },
+  subscribed_attributes = subscribed_attributes,
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_robot_cleaner_mode,
