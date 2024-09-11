@@ -214,7 +214,7 @@ local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib,
   device:set_field(SUPPORTED_REFRIGERATOR_TCC_MODES_MAP, supportedRefrigeratorTccModesMap, {persist = true})
   local event = capabilities.mode.supportedModes(supportedRefrigeratorTccModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
-  event = capabilities.mode.supportedArguments(supportedDishwasherModes, {visibility = {displayed = false}})
+  event = capabilities.mode.supportedArguments(supportedRefrigeratorTccModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
