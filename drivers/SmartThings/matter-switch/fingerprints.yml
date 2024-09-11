@@ -1,11 +1,16 @@
 matterManufacturer:
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -174,6 +179,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
