@@ -14,3 +14,6 @@ components:
     version: 1
   categories:
   - name: ElectricVehicleCharger
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-evse

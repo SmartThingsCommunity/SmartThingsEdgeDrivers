@@ -22,3 +22,6 @@ components:
   capabilities:
   - id: mode
     version: 1
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-evse

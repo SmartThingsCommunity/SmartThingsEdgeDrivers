@@ -20,3 +20,6 @@ components:
   capabilities:
   - id: powerSource
     version: 1
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-evse
