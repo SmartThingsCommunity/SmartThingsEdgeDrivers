@@ -6,8 +6,11 @@ local version = require "version"
 if version.api < 10 then
   clusters.OperationalState = require "OperationalState"
 end
-clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+
+if version.api < 11 then
+  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+end
 
 local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Pause.ID] = "pause",
@@ -109,8 +112,11 @@ end
 local function microwave_oven_supported_modes_handler(driver, device, ib, response)
   local microwaveOvenModeSupportedModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    log.info_with({hub_logs=true},"Inserting supported microwave mode:", mode.elements[1].value)
-    table.insert(microwaveOvenModeSupportedModes, mode.elements[1].value)
+    if version.api < 11 then
+      clusters.MicrowaveOvenMode.types.ModeOptionStruct:augment_type(mode)
+    end
+    log.info_with({hub_logs=true},"Inserting supported microwave mode:", mode.elements.label.value)
+    table.insert(microwaveOvenModeSupportedModes, mode.elements.label.value)
   end
   local event = capabilities.mode.supportedModes(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
