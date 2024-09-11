@@ -119,9 +119,7 @@ local cluster_subscribe_list_humidity_no_battery = {
 
 local cluster_subscribe_list_temp_humidity = {
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-  clusters.TemperatureMeasurement.attributes.MeasuredValue,
-  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+  clusters.TemperatureMeasurement.attributes.MeasuredValue
 }
 
 local function test_init_humidity_battery()
