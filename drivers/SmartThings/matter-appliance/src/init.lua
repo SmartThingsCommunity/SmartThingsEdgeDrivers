@@ -17,10 +17,8 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local embedded_cluster_utils = require "embedded-cluster-utils"
-
 local log = require "log"
 local utils = require "st.utils"
-
 local version = require "version"
 
 if version.api < 10 then
@@ -36,10 +34,11 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
---these clusters are not available in v10 and v11
-clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
-clusters.OvenMode = require "OvenMode"
+if version.api < 11 then
+  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+  clusters.OvenMode = require "OvenMode"
+end
 
 local dishwasher = require("matter-dishwasher")
 local laundry_driver = require("matter-laundry")
