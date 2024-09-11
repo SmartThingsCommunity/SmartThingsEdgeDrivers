@@ -404,6 +404,11 @@ test.register_message_test(
     },
     {
       channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({"Quick", "Super Dry"}, {visibility = {displayed = false}}))
+    },
+    {
+      channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,

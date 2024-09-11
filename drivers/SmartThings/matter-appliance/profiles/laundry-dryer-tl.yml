@@ -16,3 +16,6 @@ components:
     version: 1
   categories:
   - name: Dryer
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-laundry-dryer

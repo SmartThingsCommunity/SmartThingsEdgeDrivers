@@ -103,6 +103,8 @@ local function oven_supported_modes_attr_handler(driver, device, ib, response)
   device:set_field(SUPPORTED_OVEN_MODES_MAP, supportedOvenModesMap, {persist = true})
   local event = capabilities.mode.supportedModes(supportedOvenModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+  local event = capabilities.mode.supportedArguments(supportedOvenModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function oven_mode_attr_handler(driver, device, ib, response)

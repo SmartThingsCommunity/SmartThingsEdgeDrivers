@@ -18,9 +18,6 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
-test.add_package_capability("cookTime.yml")
-test.add_package_capability("fanMode.yml")
-
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("extractor-hood-hepa-ac-wind.yml"),
   manufacturer_info = {

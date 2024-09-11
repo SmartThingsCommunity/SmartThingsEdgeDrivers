@@ -87,6 +87,8 @@ local function operational_state_attr_handler(driver, device, ib, response)
   end
   local event = capabilities.mode.supportedModes(supported_mode, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  event = capabilities.mode.supportedArguments(supported_mode, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
@@ -105,6 +107,8 @@ local function operational_error_attr_handler(driver, device, ib, response)
   end
   if operationalError ~= clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
     local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+    event = capabilities.mode.supportedArguments({}, {visibility = {displayed = false}})
     device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
   end
 end

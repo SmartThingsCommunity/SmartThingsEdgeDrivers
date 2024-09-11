@@ -17,10 +17,6 @@ components:
     version: 1
   - id: temperatureSetpoint
     version: 1
-    config:
-      values:
-        - key: "temperatureSetpoint.value"
-          range: [ 0, 100 ]
 - id: tccTwo
   label: Oven Cabinet 2
   capabilities:
@@ -49,3 +45,6 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-oven

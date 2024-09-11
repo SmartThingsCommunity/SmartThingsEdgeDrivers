@@ -11,7 +11,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: LeakSensor
+  - name: RainSensor
 preferences:
   - preferenceId: rainSensitivity
     explicit: true
