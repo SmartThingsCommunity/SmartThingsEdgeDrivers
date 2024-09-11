@@ -113,6 +113,8 @@ local function laundry_washer_supported_modes_attr_handler(driver, device, ib, r
   device:set_field(SUPPORTED_LAUNDRY_WASHER_MODES, supportedLaundryWasherModes, {persist = true})
   local event = capabilities.mode.supportedModes(supportedLaundryWasherModes, {visibility = {displayed = false}})
   device:emit_component_event(component, event)
+  event = capabilities.mode.supportedArguments(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)

@@ -99,6 +99,8 @@ local function dishwasher_supported_modes_attr_handler(driver, device, ib, respo
   device:set_field(SUPPORTED_DISHWASHER_MODES, supportedDishwasherModes, { persist = true })
   local event = capabilities.mode.supportedModes(supportedDishwasherModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
