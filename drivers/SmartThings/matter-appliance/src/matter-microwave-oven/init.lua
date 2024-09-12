@@ -124,6 +124,8 @@ local function microwave_oven_supported_modes_handler(driver, device, ib, respon
   end
   local event = capabilities.mode.supportedModes(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  event = capabilities.mode.supportedArguments(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
   device:set_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY, microwaveOvenModeSupportedModes)
 end
 
