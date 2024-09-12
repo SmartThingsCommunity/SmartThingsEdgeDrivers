@@ -3,9 +3,6 @@ local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
-test.add_package_capability("evse-charging-session.yml")
-test.add_package_capability("evse-state.yml")
-
 local EVSE_EP = 1
 local ELECTRICAL_SENSOR_EP_ONE = 2
 local ELECTRICAL_SENSOR_EP_TWO = 3

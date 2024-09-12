@@ -4,9 +4,6 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local log = require "log"
 
-test.add_package_capability("evse-charging-session.yml")
-test.add_package_capability("evse-state.yml")
-
 local EVSE_EP = 1
 local ELECTRICAL_SENSOR_EP = 2
 local DEVICE_ENERGY_MANAGEMENT_DEVICE_EP = 3
