@@ -180,6 +180,12 @@ test.register_message_test(
     },
     {
       channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne",
+        capabilities.mode.supportedArguments({ "Grill", "Pre Heat" }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,
@@ -308,6 +314,12 @@ test.register_message_test(
     },
     {
       channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccTwo",
+        capabilities.mode.supportedArguments({ "Grill", "Pre Heat" }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,
@@ -381,7 +393,6 @@ test.register_message_test(
   }
 )
 
-
 test.register_message_test(
   "Cook Top: Off command should send appropriate commands",
   -- we do not test "on" command, as cook-top is supposed to have offOnly feature.
@@ -404,7 +415,6 @@ test.register_message_test(
     }
   }
 )
-
 
 test.register_message_test(
   "Cook Surface One: TemperatureControl Supported Levels must be registered and setTemperatureLevel level command should send appropriate command",
