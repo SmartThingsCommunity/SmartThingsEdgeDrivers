@@ -26,6 +26,11 @@ local INOVELLI_VZM31_SN_FINGERPRINTS = {
   { mfr = "Inovelli", model = "VZM31-SN" }
 }
 
+local PRIVATE_CLUSTER_ID = 0xFC31
+local PRIVATE_CMD_NOTIF_ID = 0x01
+local PRIVATE_CMD_SCENE_ID =0x00
+local MFG_CODE = 0x122F
+
 local preference_map = {
       parameter258 = {parameter_number = 258, size = data_types.Boolean},
       parameter22 = {parameter_number = 22, size = data_types.Uint8},
@@ -119,18 +124,6 @@ local function scene_handler(driver, device, zb_rx)
   end
 end
 
-local function configuration_handler(driver, device, zb_rx)
-  for i,v in ipairs(zb_rx.body.zcl_body.attr_records) do
-    if (v.attr_id.value == 0x000D) then
-    elseif (v.attr_id.value == 0x0015) then
-    else
-    end
-  end
-end
-
-local version_handler = function(driver, device, value, zb_rx)
-end
-
 local function add_child(driver,parent,profile,child_type)
   local child_metadata = {
       type = "EDGE_CHILD",
@@ -144,34 +137,34 @@ local function add_child(driver,parent,profile,child_type)
 end
 
 local function info_changed(driver, device, event, args)
-  local time_diff = 3
-  local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
-  if last_clock_set_time ~= nil then
-      time_diff = os.difftime(os.time(), last_clock_set_time)
-  end
-  device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
-
-  if time_diff > 2 then
-    local preferences = preference_map
-    if args.old_st_store.preferences["notificationChild"] ~= device.preferences.notificationChild and args.old_st_store.preferences["notificationChild"] == false and device.preferences.notificationChild == true then
-      if not device:get_child_by_parent_assigned_key('notification') then
-        add_child(driver,device,'child-notification','notificaiton')
-      end
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    local time_diff = 3
+    local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
+    if last_clock_set_time ~= nil then
+        time_diff = os.difftime(os.time(), last_clock_set_time)
     end
-    for id, value in pairs(device.preferences) do
-      if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-        local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
+    device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
 
-        if(preferences[id].size == data_types.Boolean) then
-          device:send(cluster_base.write_manufacturer_specific_attribute(device, 0xFC31, preferences[id].parameter_number, 0x122F, preferences[id].size, to_boolean(new_parameter_value)))
-        else
-          device:send(cluster_base.write_manufacturer_specific_attribute(device, 0xFC31, preferences[id].parameter_number, 0x122F, preferences[id].size, new_parameter_value))
+    if time_diff > 2 then
+      local preferences = preference_map
+      if args.old_st_store.preferences["notificationChild"] ~= device.preferences.notificationChild and args.old_st_store.preferences["notificationChild"] == false and device.preferences.notificationChild == true then
+        if not device:get_child_by_parent_assigned_key('notification') then
+          add_child(driver,device,'rgbw-bulb-2700K-6500K','notificaiton')
         end
       end
+      for id, value in pairs(device.preferences) do
+        if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
+          local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
+
+          if(preferences[id].size == data_types.Boolean) then
+            device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, to_boolean(new_parameter_value)))
+          else
+            device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, new_parameter_value))
+          end
+        end
+      end
+      device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
     end
-    device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
-  else
-    -- "info_changed event duplicate detected. Not performing any actions."
   end
 end
 
@@ -180,10 +173,10 @@ local do_configure = function(self, device)
     device:refresh()
     device:configure()
 
-    device:send(device_management.build_bind_request(device, 0xFC31, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses. 
+    device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
 
     -- Retrieve Neutral Setting "Parameter 21"
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, 0xFC31, 21, 0x122F))
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, 21, MFG_CODE))
     device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
 
     -- Additional one time configuration
@@ -286,9 +279,9 @@ local function on_handler(driver, device, command)
     local send_configuration = function()
       dev:send(cluster_base.build_manufacturer_specific_command(
             dev,
-            0xfc31,
-            0x01,
-            0x122f,
+            PRIVATE_CLUSTER_ID,
+            PRIVATE_CMD_NOTIF_ID,
+            MFG_CODE,
             utils.serialize_int(getNotificationValue(device),4,false,false)))
     end
     device.thread:call_with_delay(1,send_configuration)
@@ -304,9 +297,9 @@ local function off_handler(driver, device, command)
     local send_configuration = function()
       dev:send(cluster_base.build_manufacturer_specific_command(
             dev,
-            0xfc31,
-            0x01,
-            0x122f,
+            PRIVATE_CLUSTER_ID,
+            PRIVATE_CMD_NOTIF_ID,
+            MFG_CODE,
             utils.serialize_int(0,4,false,false)))
     end
     device.thread:call_with_delay(1,send_configuration)
@@ -323,9 +316,9 @@ local function switch_level_handler(driver, device, command)
     local send_configuration = function()
       dev:send(cluster_base.build_manufacturer_specific_command(
             dev,
-            0xfc31,
-            0x01,
-            0x122f,
+            PRIVATE_CLUSTER_ID,
+            PRIVATE_CMD_NOTIF_ID,
+            MFG_CODE,
             utils.serialize_int(getNotificationValue(device),4,false,false)))
     end
     device.thread:call_with_delay(1,send_configuration)
@@ -339,9 +332,9 @@ local function set_color_temperature(driver, device, command)
   local send_configuration = function()
     dev:send(cluster_base.build_manufacturer_specific_command(
           dev,
-          0xfc31,
-          0x01,
-          0x122f,
+          PRIVATE_CLUSTER_ID,
+          PRIVATE_CMD_NOTIF_ID,
+          MFG_CODE,
           utils.serialize_int(getNotificationValue(device, 100),4,false,false)))
   end
   device.thread:call_with_delay(1,send_configuration)
@@ -354,9 +347,9 @@ local function set_color(driver, device, command)
   local send_configuration = function()
     dev:send(cluster_base.build_manufacturer_specific_command(
           dev,
-          0xfc31,
-          0x01,
-          0x122f,
+          PRIVATE_CLUSTER_ID,
+          PRIVATE_CMD_NOTIF_ID,
+          MFG_CODE,
           utils.serialize_int(getNotificationValue(device),4,false,false)))
   end
   device.thread:call_with_delay(1,send_configuration)
@@ -371,10 +364,7 @@ local inovelli_vzm31_sn = {
   },
   zigbee_handlers = {
     attr = {
-      [0x0000] = {
-        [0x4000] = version_handler
-      },
-	  [clusters.SimpleMetering.ID] = {
+      [clusters.SimpleMetering.ID] = {
         [clusters.SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
         [clusters.SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
       },
@@ -382,14 +372,9 @@ local inovelli_vzm31_sn = {
         [clusters.ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
       }
     },
-    global = {
-      [0xFC31] = {
-        [0x01] = configuration_handler
-      }
-    },
     cluster = {
-      [0xFC31] = {
-        [0x00] = scene_handler,
+      [PRIVATE_CLUSTER_ID] = {
+        [PRIVATE_CMD_SCENE_ID] = scene_handler,
       }
     }
   },
