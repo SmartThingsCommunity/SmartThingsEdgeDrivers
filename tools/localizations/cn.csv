@@ -48,9 +48,9 @@ Aqara Smart Dimmer Controller T1 Pro,Aqara 双色温驱动器 T1 Pro
 Aqara Curtain Controller,Aqara智能窗帘电机 (Zigbee开合帘版)
 Aqara Roller Shade Controller,Aqara智能管状电机
 Aqara Smart Pet Feeder C1,Aqara智能宠物喂食器 C1
-"Aqara Smart Wall Switch H1 (With Neutral,Single Rocker)",Aqara智能墙壁开关H1 (零火线单键版)
-"Aqara Smart Wall Switch H1 (With Neutral,Double Rocker)",Aqara智能墙壁开关H1 (零火线双键版)
-"Aqara Smart Wall Switch H1 (With Neutral,Triple Rocker)",Aqara智能墙壁开关H1 (零火线三键版)
+"Aqara Smart Wall Switch H1 (With Neutral, Single Rocker)",Aqara智能墙壁开关H1 (零火线单键版)
+"Aqara Smart Wall Switch H1 (With Neutral, Double Rocker)",Aqara智能墙壁开关H1 (零火线双键版)
+"Aqara Smart Wall Switch H1 (With Neutral, Triple Rocker)",Aqara智能墙壁开关H1 (零火线三键版)
 Aqara Smart Natural Gas Detector,Aqara天然气报警器
 Aqara Smart Smoke Detector,Aqara烟雾报警器
 Aqara Smart Plug T1,Aqara 智能插座 T1 (国标)
@@ -64,3 +64,7 @@ Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
 "Aqara Single Switch Module T1 (No Neutral)",Aqara 单路控制器T1 (单火线版)
 "TOTEM Door Lock",TOTEM智能门锁
 "LeTianPai Presence Sensor Box",乐天派存在传感器Box
+"Aqara Cube T1 Pro",Aqara 魔方控制器 T1 Pro
+"Aqara Smart Wall Switch T1 (With Neutral, Single Rocker)",Aqara智能墙壁开关T1 (零火线单键版)
+"Aqara Smart Wall Switch T1 (With Neutral, Double Rocker)",Aqara智能墙壁开关T1 (零火线双键版)
+"Aqara Smart Wall Switch T1 (With Neutral, Triple Rocker)",Aqara智能墙壁开关T1 (零火线三键版)

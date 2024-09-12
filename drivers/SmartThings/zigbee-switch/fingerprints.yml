@@ -140,7 +140,22 @@ zigbeeManufacturer:
     deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 1
     manufacturer: LUMI
     model: lumi.switch.l2aeu1
-    deviceProfileName: aqara-switch-no-power    
+    deviceProfileName: aqara-switch-no-power
+  - id: "LUMI/lumi.switch.b1nacn01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.b1nacn01
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.b2nacn01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b2nacn01
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.b3n01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Triple Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b3n01
+    deviceProfileName: aqara-switch-power
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
