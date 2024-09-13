@@ -83,7 +83,7 @@ local function test_init()
 
   test.mock_device.add_test_device(mock_device)
 
-  test.set_rpc_version(4)
+  test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
 

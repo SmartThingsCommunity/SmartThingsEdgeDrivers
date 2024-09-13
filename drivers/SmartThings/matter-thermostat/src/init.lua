@@ -694,9 +694,7 @@ end
 
 local temp_attr_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 5 (unit conversion for temperature
-    -- range capability is only supported for RPC >= 5)
-    if ib.data.value == nil or version.rpc < 5 then
+    if ib.data.value == nil then
       return
     end
     local temp = ib.data.value / 100.0
@@ -704,7 +702,9 @@ local temp_attr_handler_factory = function(minOrMax)
     set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp)
     local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
     local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
-    if min ~= nil and max ~= nil then
+    -- Only emit the capability for RPC version >= 5 (unit conversion for
+    -- temperature range capability is only supported for RPC >= 5)
+    if version.rpc >= 5 and min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
         set_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id, nil)
@@ -1121,23 +1121,18 @@ end
 
 local heating_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 5 (unit conversion for heating setpoint
-    -- range capability is only supported for RPC >= 5)
-    if ib.data.value == nil or version.rpc < 5 then
+    if ib.data.value == nil then
       return
     end
     local val = ib.data.value / 100.0
-    if val >= 40 then -- assume this is a fahrenheit value
-      val = utils.f_to_c(val)
-    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
     local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
-    if min ~= nil and max ~= nil then
+    -- Only emit the capability for RPC version >= 5 (unit conversion for
+    -- heating setpoint range capability is only supported for RPC >= 5)
+    if version.rpc >= 5 and min ~= nil and max ~= nil then
       if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
-        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_HEAT, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_HEAT, ib.endpoint_id, nil)
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
       end
@@ -1147,23 +1142,18 @@ end
 
 local cooling_setpoint_limit_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 5 (unit conversion for cooling setpoint
-    -- range capability is only supported for RPC >= 5)
-    if ib.data.value == nil or version.rpc < 5 then
+    if ib.data.value == nil then
       return
     end
     local val = ib.data.value / 100.0
-    if val >= 40 then -- assume this is a fahrenheit value
-      val = utils.f_to_c(val)
-    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
     local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
-    if min ~= nil and max ~= nil then
+    -- Only emit the capability for RPC version >= 5 (unit conversion for
+    -- cooling setpoint range capability is only supported for RPC >= 5)
+    if version.rpc >= 5 and min ~= nil and max ~= nil then
       if min < max then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
-        set_field_for_endpoint(device, setpoint_limit_device_field.MIN_COOL, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, setpoint_limit_device_field.MAX_COOL, ib.endpoint_id, nil)
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
       end
