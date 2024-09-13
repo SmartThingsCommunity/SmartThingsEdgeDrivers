@@ -99,6 +99,7 @@ local function init_supported_microwave_oven_modes()
     )
   })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.supportedModes({ "Grill", "Pre Heat" }, {visibility={displayed=false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.supportedArguments({ "Grill", "Pre Heat" }, {visibility={displayed=false}})))
 end
 
 test.set_test_init_function(test_init)
@@ -156,6 +157,12 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mode.supportedModes({},{visibility={displayed=false}}))
+      -- Prevent user from changing modes in between an operation.
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({},{visibility={displayed=false}}))
       -- Prevent user from changing modes in between an operation.
     },
     {
@@ -227,6 +234,12 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mode.supportedModes({ "Grill", "Pre Heat" },{visibility={displayed=false}}))
+      --When operation is stopped, enable mode options for user to choose.
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({ "Grill", "Pre Heat" },{visibility={displayed=false}}))
       --When operation is stopped, enable mode options for user to choose.
     },
     {
@@ -307,6 +320,12 @@ test.register_message_test(
       -- Prevent user from changing modes in between an operation.
     },
     {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({},{visibility={displayed=false}}))
+      -- Prevent user from changing modes in between an operation.
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -351,6 +370,12 @@ test.register_message_test(
       -- Prevent user from changing mode in event of error.
     },
     {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({},{visibility={displayed=false}}))
+      -- Prevent user from changing mode in event of error.
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -376,6 +401,12 @@ test.register_message_test(
       -- Prevent user from changing mode in event of error.
     },
     {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({},{visibility={displayed=false}}))
+      -- Prevent user from changing mode in event of error.
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -398,6 +429,12 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mode.supportedModes({},{visibility={displayed=false}}))
+      -- Prevent user from changing mode in event of error.
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({},{visibility={displayed=false}}))
       -- Prevent user from changing mode in event of error.
     },
     {
@@ -484,6 +521,11 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mode.supportedModes({ "Grill", "Pre Heat" }, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.mode.supportedArguments({ "Grill", "Pre Heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "capability",
