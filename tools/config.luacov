@@ -32,6 +32,16 @@ configuration = {
     "TotalVolatileOrganicCompoundsConcentrationMeasurement",
     "ActivatedCarbonFilterMonitoring",
     "HepaFilterMonitoring",
+    "MicrowaveOvenControl",
+    "MicrowaveOvenMode",
+    "OvenMode",
+    "DeviceEnergyManagementMode",
+    "ElectricalEnergyMeasurement",
+    "ElectricalPowerMeasurement",
+    "EnergyEvse",
+    "EnergyEvseMode",
+    "BooleanStateConfiguration",
+    "ValveConfigurationAndControl",
   },
   cobertura = {
     filenameparser = function(filename)

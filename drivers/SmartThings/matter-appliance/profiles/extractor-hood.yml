@@ -1,0 +1,14 @@
+name: extractor-hood
+components:
+- id: main
+  capabilities:
+  - id: fanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: KitchenHood
