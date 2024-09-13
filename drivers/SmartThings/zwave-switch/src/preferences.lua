@@ -345,7 +345,7 @@ local devices = {
   AEOTEC_SMART_SWITCH_US = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
-	    product_types = 0x0103,
+      product_types = 0x0103,
       product_ids = 0x0017
     },
     PARAMETERS = SWITCH_US.PARAMETERS
