@@ -17,7 +17,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
-local openssl = require "openssl"
 
 local aliroSettingId = "moon.aliroSetting"
 local aliroSetting = capabilities[aliroSettingId]
@@ -50,6 +49,13 @@ local subscribed_attributes = {
   [capabilities.lockSchedules.ID] = {
     DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser,
     DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser
+  },
+  [aliroSettingId] = {
+    DoorLock.attributes.AliroReaderVerificationKey,
+    DoorLock.attributes.AliroReaderGroupIdentifier,
+    DoorLock.attributes.AliroReaderGroupSubIdentifier,
+    DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported,
+    DoorLock.attributes.NumberOfAliroEndpointKeysSupported
   }
 }
 
@@ -186,6 +192,7 @@ local function operating_modes_handler(driver, device, ib, response)
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
   end
 end
+
 -------------------------------------
 -- Number Of Total Users Supported --
 -------------------------------------
@@ -317,6 +324,15 @@ local function handle_lock(driver, device, command)
   else
     device:send(DoorLock.server.commands.LockDoor(device, ep))
   end
+
+  device:send(
+    DoorLock.server.commands.SetAliroReaderConfig(
+      device, ep,
+      "privateKey", -- Signing key
+      "publickKey", -- Verification key
+      "groupId"     -- Group identification
+    )
+  )
 end
 
 local function handle_unlock(driver, device, command)
@@ -601,7 +617,6 @@ end
 -- Add User --
 --------------
 local function handle_add_user(driver, device, command)
-
   -- Get parameters
   local cmdName = "addUser"
   local userName = command.args.userName
@@ -972,12 +987,7 @@ end
 -----------------------------
 -- Set Credential Response --
 -----------------------------
-local function set_credential_response_handler(driver, device, ib, response)
-  if ib.status ~= im.InteractionResponse.Status.SUCCESS then
-    device.log.error("Failed to set credential for device")
-    return
-  end
-
+local function set_pin_response_handler(driver, device, ib, response)
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
@@ -1089,6 +1099,251 @@ local function set_credential_response_handler(driver, device, ib, response)
     )
     device:emit_event(event)
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  end
+end
+
+
+
+
+
+
+
+
+
+
+local function add_aliro_to_table(device, endpointKey)
+  -- Get latest credential table
+  local aliro_table = device:get_latest_state(
+    "main",
+    aliroSettingId,
+    aliroSetting.NAME
+  ) or {}
+  local new_aliro_table = {}
+
+  -- Recreat credential table
+  for index, entry in pairs(aliro_table) do
+    table.insert(new_aliro_table, entry)
+  end
+
+  -- Add new entry to table
+  table.insert(new_aliro_table, endpointKey)
+  device:emit_event(aliroSetting.aliroEndpointKey(new_aliro_table, {visibility = {displayed = false}}))
+end
+
+local function delete_credential_from_table(device, endpointKey)
+  -- If Credential Index is ALL_INDEX, remove all entry from the table
+  if credIdx == ALL_INDEX then
+    device:emit_event(aliroSetting.aliroEndpointKey({}))
+  end
+
+  -- Get latest credential table
+  local aliro_table = device:get_latest_state(
+    "main",
+    aliroSettingId,
+    aliroSetting.NAME
+  ) or {}
+  local new_aliro_table = {}
+
+  -- Recreate credential table
+  local userIdx = 0
+  for index, entry in pairs(aliro_table) do
+    if entry ~= endpointKey then
+      table.insert(new_aliro_table, entry)
+    end
+  end
+
+  -- Add new entry to table
+  device:emit_event(aliroSetting.aliroEndpointKey(new_aliro_table, {visibility = {displayed = false}}))
+end
+
+
+
+
+local function set_aliro_response_handler(driver, device, ib, response)
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local credIdx = device:get_field(lock_utils.CRED_INDEX)
+  local credData = device:get_field(lock_utils.CRED_DATA)
+  local status = "success"
+  local elements = ib.info_block.data.elements
+  if elements.status.value == DoorLock.types.DlStatus.SUCCESS then
+    if credData == nil then
+      -- If user is added, also update User table
+      if userIdx == nil then
+        local userType = device:get_field(lock_utils.USER_TYPE)
+        add_user_to_table(device, elements.user_index.value, userType)
+      end
+
+      -- Update Credential table
+      local evictableEndpointKey = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
+      userIdx = elements.user_index.value
+      if cmdName == "addCredential" then
+        add_credential_to_table(device, userIdx, credIdx, "pin")
+      end
+
+      -- Update commandResult
+      local result = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      local event = capabilities.lockCredentials.commandResult(
+        result,
+        {
+          state_change = true,
+          visibility = {displayed = false}
+        }
+      )
+      device:emit_event(event)
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+      return
+    else
+      -- issuer key setting complete
+      device:set_field(lock_utils.CRED_DATA, nil, {persist = true})
+
+      -- Get parameters
+      local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+      local credential = {
+        credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_EVICTABLE_ENDPOINT_KEY,
+        credential_index = credIdx
+      }
+      local evictableEndpointKey = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
+
+      -- Send command
+      local ep = device:component_to_endpoint(command.component)
+      device:send(
+        DoorLock.server.commands.SetCredential(
+          device, ep,
+          DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+          credential,           -- Credential
+          evictableEndpointKey, -- Credential Data
+          userIdx,              -- User Index
+          nil,                  -- User Status
+          userTypeMatter        -- User Type
+        )
+      )
+      return
+    end
+  end
+
+  -- Update commandResult
+  status = "occupied"
+  if elements.status.value == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif elements.status.value == DoorLock.types.DlStatus.DUPLICATE then
+    status = "duplicate"
+  elseif elements.status.value == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  elseif elements.status.value == DoorLock.types.DlStatus.RESOURCE_EXHAUSTED then
+    status = "resourceExhausted"
+  elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
+    status = "failure"
+  end
+  if status ~= "occupied" then
+    local result = {
+      commandName = cmdName,
+      statusCode = status
+    }
+    local event = capabilities.lockCredentials.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    return
+  end
+
+  if elements.next_credential_index.value ~= nil then
+    -- Get parameters
+    local credIdx = elements.next_credential_index.value
+    local credType = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY
+    if credData == nil then
+      credType = DoorLock.types.CredentialTypeEnum.ALIRO_EVICTABLE_ENDPOINT_KEY
+      credData = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
+    end 
+    local credential = {
+      credential_type = credType,
+      credential_index = credIdx
+    }
+    local userIdx = device:get_field(lock_utils.USER_INDEX)
+    local userType = device:get_field(lock_utils.USER_TYPE)
+    local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+
+    device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+
+    -- Send command
+    local ep = find_default_endpoint(device, DoorLock.ID)
+    device:send(
+      DoorLock.server.commands.SetCredential(
+        device, ep,
+        DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+        credential,    -- Credential
+        credData,      -- Credential Data
+        userIdx,       -- User Index
+        nil,           -- User Status
+        userTypeMatter -- User Type
+      )
+    )
+  else
+    local result = {
+      commandName = cmdName,
+      statusCode = "resourceExhausted" -- No more available credential index
+    }
+    local event = capabilities.lockCredentials.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local function set_credential_response_handler(driver, device, ib, response)
+  if ib.status ~= im.InteractionResponse.Status.SUCCESS then
+    device.log.error("Failed to set credential for device")
+    return
+  end
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  if cmdName == "addCredential" or cmdName == "updateCredential" then
+    set_pin_response_handler(driver, device, ib, response)
+  elseif cmdName == "setAliroCredential" then
+    set_aliro_response_handler(driver, device, ib, response)
   end
 end
 
@@ -1540,6 +1795,173 @@ local function handle_refresh(driver, device, command)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local function aliro_reader_verification_key_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_verification_key_handler !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    return
+  end
+  device:emit_event(aliroSetting.aliroReaderVerificationKey(ib.data.value))
+end
+
+
+
+local function aliro_reader_group_id_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_id_handler !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    return
+  end
+  device:emit_event(aliroSetting.aliroReaderGroupIdentifier(ib.data.value))
+end
+
+local function aliro_reader_group_sub_id_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_sub_id_handler !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+end
+
+local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    return
+  end
+  device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
+end
+
+local function max_aliro_endpoint_key_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    return
+  end
+  device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
+end
+
+
+
+
+
+
+local function handle_set_reader_key(driver, device, command)
+  local cmdName = "setReaderKey"
+  local privateKey = command.args.privKey
+  local publicKey = command.args.pubKey
+  local groupId = command.args.groupId
+  
+  -- Save values to field
+  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  device:send(
+    DoorLock.server.commands.SetAliroReaderConfig(
+      device, ep,
+      privateKey, -- Signing key
+      publickKey, -- Verification key
+      groupId     -- Group identification
+    )
+  )
+end
+
+local function handle_set_aliro_credential(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
+  -- Get parameters
+  local cmdName = "setAliroCredential"
+  local userIdx = command.args.userIndex
+  if userIdx == 0 then
+    userIdx = nil
+  end
+  local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+  local credential = {
+    credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+    credential_index = INITIAL_COTA_INDEX
+  }
+  local issuerKey = command.args.issuerKey
+  local evictableEndpointKey = command.args.evictableEndPointKey
+
+  -- Check busy state
+  local busy = device:get_field(lock_utils.BUSY_STATE)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockCredentials.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  device:set_field(lock_utils.CRED_INDEX, INITIAL_COTA_INDEX, {persist = true})
+  device:set_field(lock_utils.CRED_DATA, issuerKey, {persist = true})  
+  device:set_field(lock_utils.EVICTABLE_ENDPOINT_KEY, evictableEndpointKey, {persist = true})
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  device:send(
+    DoorLock.server.commands.SetCredential(
+      device, ep,
+      DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+      credential,     -- Credential
+      issuerKey,      -- Credential Data
+      userIdx,        -- User Index
+      nil,            -- User Status
+      userTypeMatter  -- User Type
+    )
+  )
+end
+
+local function handle_clear_aliro_credential(driver, device, command)
+  local ep = device:component_to_endpoint(command.component)
+  local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  if cota_cred then
+    device:send(
+      DoorLock.server.commands.LockDoor(device, ep, cota_cred)
+    )
+  else
+    device:send(DoorLock.server.commands.LockDoor(device, ep))
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local new_matter_lock_handler = {
   NAME = "New Matter Lock Handler",
   lifecycle_handlers = {
@@ -1560,6 +1982,11 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler,
         [DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser.ID] = max_week_schedule_of_user_handler,
         [DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser.ID] = max_year_schedule_of_user_handler,
+        [DoorLock.attributes.AliroReaderVerificationKey.ID] = aliro_reader_verification_key_handler,
+        [DoorLock.attributes.AliroReaderGroupIdentifier.ID] = aliro_reader_group_id_handler,
+        [DoorLock.attributes.AliroReaderGroupSubIdentifier.ID] = aliro_reader_group_sub_id_handler,
+        [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
+        [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
       }
     },
     event = {
@@ -1610,6 +2037,11 @@ local new_matter_lock_handler = {
       [capabilities.lockSchedules.commands.clearWeekDaySchedules.NAME] = handle_clear_week_day_schedule,
       [capabilities.lockSchedules.commands.setYearDaySchedule.NAME] = handle_set_year_day_schedule,
       [capabilities.lockSchedules.commands.clearYearDaySchedules.NAME] = handle_clear_year_day_schedule,
+    },
+    [aliroSettingId] = {
+      [aliroSetting.commands.setReaderKey.NAME] = handle_set_reader_key,
+      [aliroSetting.commands.setAliroCredential.NAME] = handle_set_aliro_credential,
+      [aliroSetting.commands.clearAliroCredential.NAME] = handle_clear_aliro_credential,
     },
     [capabilities.refresh.ID] = {[capabilities.refresh.commands.refresh.NAME] = handle_refresh}
   },
