@@ -1,4 +1,4 @@
-name: lock-lockalarm
+name: lock-user-pin
 components:
 - id: main
   capabilities:
@@ -13,9 +13,11 @@ components:
         - not fully locked
   - id: lockAlarm
     version: 1
-  - id: battery
+  - id: remoteControlStatus
     version: 1
-  - id: firmwareUpdate
+  - id: lockUsers
+    version: 1
+  - id: lockCredentials
     version: 1
   - id: refresh
     version: 1
