@@ -1,11 +1,16 @@
 matterManufacturer:
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -174,6 +179,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -2214,6 +2225,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+#TUO
+  - id: "5150/1"
+    deviceLabel: "TUO Smart Button"
+    vendorId: 0x141E
+    productId: 0x0001
+    deviceProfileName: "button-battery"
 
 
 #Bridge devices need manufacturer specific fingerprints until
@@ -2330,6 +2347,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
 
 matterThing:
   - id: SmartThings/MatterThing
