@@ -134,9 +134,9 @@ end
 
 local temp_attr_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    -- Return if no data or RPC version < 4 (unit conversion for temperature
-    -- range capability is only supported for RPC >= 4)
-    if ib.data.value == nil or version.rpc < 4 then
+    -- Return if no data or RPC version < 5 (unit conversion for temperature
+    -- range capability is only supported for RPC >= 5)
+    if ib.data.value == nil or version.rpc < 5 then
       return
     end
     local temp = ib.data.value / 100.0

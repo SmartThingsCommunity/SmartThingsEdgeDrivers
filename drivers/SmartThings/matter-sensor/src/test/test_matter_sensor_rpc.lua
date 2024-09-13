@@ -61,7 +61,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Min and max temperature attributes do not set capability constraint when RPC version is less than 4",
+  "Min and max temperature attributes do not set capability constraint when RPC version is less than 5",
   {
     {
       channel = "matter",
