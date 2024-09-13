@@ -29,6 +29,7 @@ local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
 local FINGERPRINTS = {
+  {mfr = 0x0086, prodId = 0x0060},
   {mfr = 0x0371, prodId = 0x00AF}, -- Smart Switch 7 EU
   {mfr = 0x0371, prodId = 0x0017}  -- Smart Switch 7 US
 }
