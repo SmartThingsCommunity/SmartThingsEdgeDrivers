@@ -27,6 +27,7 @@ if version.api < 10 then
 end
 
 local LAUNDRY_WASHER_DEVICE_TYPE_ID = 0x0073
+local LAUNDRY_DRYER_DEVICE_TYPE_ID = 0x007C
 
 local LAUNDRY_WASHER_RINSE_MODE_MAP = {
   [clusters.LaundryWasherControls.types.NumberOfRinsesEnum.NONE] = capabilities.laundryWasherRinseMode.rinseMode.none,
@@ -51,11 +52,11 @@ local function device_init(driver, device)
 end
 
 -- Matter Handlers --
-local function is_matter_laundry_washer(opts, driver, device)
+local function is_matter_laundry_device(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == LAUNDRY_WASHER_DEVICE_TYPE_ID then
-        return true
+      if dt.device_type_id == LAUNDRY_WASHER_DEVICE_TYPE_ID or dt.device_type_id == LAUNDRY_DRYER_DEVICE_TYPE_ID then
+        return dt.device_type_id
       end
     end
   end
@@ -112,6 +113,8 @@ local function laundry_washer_supported_modes_attr_handler(driver, device, ib, r
   device:set_field(SUPPORTED_LAUNDRY_WASHER_MODES, supportedLaundryWasherModes, {persist = true})
   local event = capabilities.mode.supportedModes(supportedLaundryWasherModes, {visibility = {displayed = false}})
   device:emit_component_event(component, event)
+  event = capabilities.mode.supportedArguments(supportedLaundryWasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function laundry_washer_mode_attr_handler(driver, device, ib, response)
@@ -307,8 +310,8 @@ local function handle_operational_state_pause(driver, device, cmd)
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
 
-local matter_laundry_washer_handler = {
-  NAME = "matter-laundry-washer",
+local matter_laundry_handler = {
+  NAME = "matter-laundry",
   lifecycle_handlers = {
     init = device_init,
   },
@@ -355,7 +358,7 @@ local matter_laundry_washer_handler = {
       [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume,
     },
   },
-  can_handle = is_matter_laundry_washer,
+  can_handle = is_matter_laundry_device,
 }
 
-return matter_laundry_washer_handler
+return matter_laundry_handler
