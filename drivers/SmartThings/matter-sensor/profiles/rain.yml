@@ -1,0 +1,15 @@
+name: rain
+components:
+- id: main
+  capabilities:
+  - id: rainSensor
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: RainSensor
+preferences:
+  - preferenceId: rainSensitivity
+    explicit: true
