@@ -393,6 +393,16 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x044E
     deviceProfileName: plug-binary
+  - id: "4456/1019"
+    deviceLabel: Matter Smart Filament  Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FB
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1020"
+    deviceLabel: AiDot OREiN Matter Smart Filament Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FC
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
