@@ -64,6 +64,8 @@ local cluster_subscribe_list = {
   clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
   clusters.SmokeCoAlarm.attributes.BatteryAlert,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
