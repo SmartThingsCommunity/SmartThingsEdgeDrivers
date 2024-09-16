@@ -393,6 +393,16 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x044E
     deviceProfileName: plug-binary
+  - id: "4456/1019"
+    deviceLabel: Matter Smart Filament  Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FB
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1020"
+    deviceLabel: AiDot OREiN Matter Smart Filament Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FC
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -2225,6 +2235,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+#TUO
+  - id: "5150/1"
+    deviceLabel: "TUO Smart Button"
+    vendorId: 0x141E
+    productId: 0x0001
+    deviceProfileName: "button-battery"
 
 
 #Bridge devices need manufacturer specific fingerprints until
@@ -2341,6 +2357,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
 
 matterThing:
   - id: SmartThings/MatterThing
