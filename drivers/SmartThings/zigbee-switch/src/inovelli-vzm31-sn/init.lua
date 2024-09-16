@@ -59,7 +59,6 @@ local preferences_to_numeric_value = function(new_value)
 end
 
 local preferences_calculate_parameter = function(new_value, type, number)
-  local numeric = tonumber(new_value)
   if number == "parameter9" or number == "parameter10" or number == "parameter13" or number == "parameter14"  or number == "parameter15" or number == "parameter55" or number == "parameter56" then
     if new_value == 101 then
       return 255
