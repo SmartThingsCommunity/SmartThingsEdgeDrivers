@@ -1,0 +1,27 @@
+#EVSE with Electrical Energy Measurement Cluster in Electrical Sensor DT and Device Energy Manage Mode in Energy Management DT
+name: evse-energy-meas-energy-mgmt-mode
+components:
+- id: main
+  capabilities:
+  - id: evseState
+    version: 1
+  - id: evseChargingSession
+    version: 1
+  - id: mode
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ElectricVehicleCharger
+- id: deviceEnergyManagement
+  label: Energy Manager
+  capabilities:
+  - id: mode
+    version: 1
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-evse
