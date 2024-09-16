@@ -64,6 +64,7 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local WATER_VALVE_DEVICE_TYPE_ID = 0x0042
 local GENERIC_SWITCH_ID = 0x000F
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
@@ -75,6 +76,7 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [WATER_VALVE_DEVICE_TYPE_ID] = "water-valve",
   [GENERIC_SWITCH_ID] = "button"
 }
 
@@ -148,6 +150,102 @@ local child_device_profile_overrides = {
 }
 
 local detect_matter_thing
+
+local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
+local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
+local EXPORT_POLL_TIMER_IS_SET = "__export_poll_timer_is_set"
+local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
+local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
+local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
+local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
+local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
+local SUBSCIPTION_REPORT_OCCURRED = "__s"
+
+local embedded_cluster_utils = require "embedded-cluster-utils"
+
+-- Include driver-side definitions when lua libs api version is < 11
+local version = require "version"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
+end
+
+-- Return a ISO 8061 formatted timestamp in UTC (Z)
+-- @return e.g. 2022-02-02T08:00:00Z
+local function iso8061Timestamp(time)
+  return os.date("!%Y-%m-%dT%TZ", time)
+end
+
+local function delete_export_poll_schedule(device)
+  local export_poll_timer = device:get_field(RECURRING_EXPORT_REPORT_POLL_TIMER)
+  if export_poll_timer then
+    device.thread:cancel_timer(export_poll_timer)
+    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
+    device:set_field(EXPORT_POLL_TIMER_IS_SET, nil)
+  end
+end
+
+local function send_export_poll_report(device, latest_total_exported_energy_wh)
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_EXPORTED_REPORT_TIMESTAMP) or 0
+  device:set_field(LAST_EXPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+
+  -- Calculate the energy consumed between the start and the end time
+  local previous_exported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
+
+  local start_time = iso8061Timestamp(last_time)
+  local end_time = iso8061Timestamp(current_time - 1)
+
+  local energy_delta_wh = 0.0
+  if previous_exported_report and previous_exported_report.energy then
+    energy_delta_wh = math.max(latest_total_exported_energy_wh - previous_exported_report.energy, 0.0)
+  end
+
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+    start = start_time,
+    ["end"] = end_time,
+    deltaEnergy = energy_delta_wh,
+    energy = latest_total_exported_energy_wh
+  }))
+end
+
+local function create_poll_report_schedule(device)
+  local export_timer = device.thread:call_on_schedule(
+    device:get_field(EXPORT_REPORT_TIMEOUT),
+    send_export_poll_report(device, device:get_field(TOTAL_EXPORTED_ENERGY)),
+    "polling_export_report_schedule_timer"
+  )
+  device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
+end
+
+local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
+  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID,
+    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+  if #cumul_eps == 0 then
+    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true)
+  end
+  if #cumul_eps > 0 and not is_cumulative_report then
+    return
+  elseif not device:get_field(SUBSCIPTION_REPORT_OCCURRED) then
+    device:set_field(SUBSCIPTION_REPORT_OCCURRED, true)
+  elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
+    device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
+  else
+    local first_timestamp = device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP)
+    local second_timestamp = os.time()
+    local report_interval_secs = second_timestamp - first_timestamp
+    device:set_field(EXPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
+    -- the poll schedule is only needed for devices that support powerConsumption
+    if device:supports_capability(capabilities.powerConsumptionReport) then
+      create_poll_report_schedule(device)
+    end
+    device:set_field(EXPORT_POLL_TIMER_IS_SET, true)
+  end
+end
 
 local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
@@ -245,11 +343,12 @@ end
 --- find_default_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
---- and supports the OnOff or Switch cluster. This is done to bypass the
---- BRIDGED_NODE_DEVICE_TYPE on bridged devices
+--- and supports the OnOff, Switch, or ValveConfigurationAndControl cluster.
+--- This is done to bypass the BRIDGED_NODE_DEVICE_TYPE on bridged devices
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local all_eps = {}
 
   for _,ep in ipairs(switch_eps) do
@@ -258,9 +357,11 @@ local function find_default_endpoint(device, component)
   for _,ep in ipairs(button_eps) do
     table.insert(all_eps, ep)
   end
+  for _,ep in ipairs(valve_eps) do
+    table.insert(all_eps, ep)
+  end
   table.sort(all_eps)
-
-  for _,ep in ipairs(all_eps) do
+  for _, ep in ipairs(all_eps) do
     if ep ~= 0 then --0 is the matter RootNode endpoint
       return ep
     end
@@ -297,6 +398,23 @@ local function assign_child_profile(device, child_ep)
   end
   -- default to "switch-binary" if no profile is found
   return profile or "switch-binary"
+end
+
+local function do_configure(driver, device)
+  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
+  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+  local profile_name = nil
+  if #energy_eps > 0 and #power_eps > 0 then
+    profile_name = "power-energy-powerConsumption"
+  elseif #energy_eps > 0 then
+    profile_name = "electrical-energy-powerConsumption"
+  elseif #power_eps > 0 then
+    profile_name = "electrical-power"
+  end
+
+  if profile_name then
+    device:try_update_metadata({ profile = profile_name })
+  end
 end
 
 local function configure_buttons(device)
@@ -342,6 +460,7 @@ end
 
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
 
   local profile_name = nil
@@ -359,26 +478,48 @@ local function initialize_switch(driver, device)
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
+  local num_valve_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-
-  if #switch_eps > 0 then
+  if #valve_eps > 0 then
+    for _, ep in ipairs(valve_eps) do
+      if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) then
+        num_valve_server_eps = num_valve_server_eps + 1
+        local name = string.format("%s %d", device.label, num_valve_server_eps)
+        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+          local child_profile = assign_child_profile(device, ep)
+          driver:try_create_device(
+            {
+              type = "EDGE_CHILD",
+              label = name,
+              profile = child_profile,
+              parent_device_id = device.id,
+              parent_assigned_child_key = string.format("%d", ep),
+              vendor_provided_label = name
+            }
+          )
+          parent_child_device = true
+        end
+      end
+    end
+  elseif #switch_eps > 0 then
     for _, ep in ipairs(switch_eps) do
-      -- Create child devices for non-main switch endpoints
-      num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+        num_switch_server_eps = num_switch_server_eps + 1
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = assign_child_profile(device, ep)
-        driver:try_create_device(
-          {
-            type = "EDGE_CHILD",
-            label = name,
-            profile = child_profile,
-            parent_device_id = device.id,
-            parent_assigned_child_key = string.format("%d", ep),
-            vendor_provided_label = name
-          }
-        )
-        parent_child_device = true
+        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+          local child_profile = assign_child_profile(device, ep)
+          driver:try_create_device(
+            {
+              type = "EDGE_CHILD",
+              label = name,
+              profile = child_profile,
+              parent_device_id = device.id,
+              parent_assigned_child_key = string.format("%d", ep),
+              vendor_provided_label = name
+            }
+          )
+          parent_child_device = true
+        end
       end
     end
   elseif #button_eps > 0 then
@@ -409,7 +550,14 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if #switch_eps > 0 then
+  if num_valve_server_eps > 0 then
+    profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      profile_name = profile_name .. "-level"
+    end
+    device:try_update_metadata({profile = profile_name})
+  elseif num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -417,7 +565,7 @@ local function initialize_switch(driver, device)
     -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
     -- claim to be Light Switch device types and still implement their clusters as server, so this is a
     -- workaround for those devices.
-    if num_switch_server_eps > 0 and detect_matter_thing(device) == true then
+    if detect_matter_thing(device) then
       local id = 0
       for _, ep in ipairs(device.endpoints) do
         -- main_endpoint only supports server cluster by definition of get_endpoints()
@@ -526,6 +674,7 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
+  delete_export_poll_schedule(device)
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -547,7 +696,8 @@ local function handle_switch_off(driver, device, cmd)
   device:send(req)
 end
 
-local function handle_set_level(driver, device, cmd)
+
+local function handle_set_switch_level(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
@@ -608,6 +758,29 @@ local function handle_set_color_temperature(driver, device, cmd)
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
+end
+
+local function handle_valve_open(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Open(device, endpoint_id)
+  device:send(req)
+end
+
+local function handle_valve_close(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.ValveConfigurationAndControl.server.commands.Close(device, endpoint_id)
+  device:send(req)
+end
+
+local function handle_set_level(driver, device, cmd)
+  local commands = clusters.ValveConfigurationAndControl.server.commands
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local level = cmd.args.level
+  if level ~= 0 then
+    device:send(commands.Open(device, endpoint_id, nil, level))
+  else
+    device:send(commands.Close(device, endpoint_id))
+  end
 end
 
 local function handle_refresh(driver, device, cmd)
@@ -778,6 +951,31 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
+local function cumul_energy_exported_handler(driver, device, ib, response)
+  device:set_field(TOTAL_EXPORTED_ENERGY, ib.data.elements.energy.value)
+  device:emit_event(capabilities.energyMeter.energy({ value = ib.data.elements.energy.value, unit = "Wh" }))
+end
+
+local function per_energy_exported_handler(driver, device, ib, response)
+  local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+  local summed_energy_report = latest_energy_report + ib.data.elements.energy.value
+  device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
+  device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
+end
+
+local function energy_report_handler_factory(is_cumulative_report)
+  return function(driver, device, ib, response)
+    if not device:get_field(EXPORT_POLL_TIMER_IS_SET) then
+      set_poll_report_timer_and_schedule(device, is_cumulative_report)
+    end
+    if is_cumulative_report then
+      cumul_energy_exported_handler(driver, device, ib, response)
+    elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
+      per_energy_exported_handler(driver, device, ib, response)
+    end
+  end
+end
+
 local function initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
     -- Receipt of an InitialPress event means we do not want to ignore the next MultiPressComplete event
@@ -809,6 +1007,27 @@ local function short_release_event_handler(driver, device, ib, response)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
     end
   end
+end
+
+local function active_power_handler(driver, device, ib, response)
+  if ib.data.value then
+    device:emit_event(capabilities.powerMeter.power({ value = ib.data.value, unit = "W"}))
+  end
+end
+
+local function valve_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.closed())
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.valve.valve.open())
+  end
+end
+
+local function valve_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then
+    return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(ib.data.value))
 end
 
 local function multi_press_complete_event_handler(driver, device, ib, response)
@@ -871,6 +1090,14 @@ local function device_added(driver, device)
     handle_refresh(driver, device)
   end
 
+  -- Reset the values
+  if device:supports_capability(capabilities.powerMeter) then
+    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
+  end
+  if device:supports_capability(capabilities.energyMeter) then
+    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+  end
+
   -- call device init in case init is not called after added due to device caching
   device_init(driver, device)
 end
@@ -880,7 +1107,8 @@ local matter_driver_template = {
     init = device_init,
     added = device_added,
     removed = device_removed,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
@@ -907,6 +1135,17 @@ local matter_driver_template = {
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
+      },
+      [clusters.ElectricalPowerMeasurement.ID] = {
+        [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
+      },
+      [clusters.ElectricalEnergyMeasurement.ID] = {
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
+      },
+      [clusters.ValveConfigurationAndControl.ID] = {
+        [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
+        [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = valve_level_attr_handler
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
@@ -951,6 +1190,12 @@ local matter_driver_template = {
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
+    [capabilities.valve.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentState
+    },
+    [capabilities.level.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentLevel
+    },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
@@ -969,7 +1214,7 @@ local matter_driver_template = {
       [capabilities.switch.commands.off.NAME] = handle_switch_off,
     },
     [capabilities.switchLevel.ID] = {
-      [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_level
+      [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_switch_level
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
@@ -982,14 +1227,26 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature,
     },
+    [capabilities.valve.ID] = {
+      [capabilities.valve.commands.open.NAME] = handle_valve_open,
+      [capabilities.valve.commands.close.NAME] = handle_valve_close
+    },
+    [capabilities.level.ID] = {
+      [capabilities.level.commands.setLevel.NAME] = handle_set_level
+    }
   },
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
     capabilities.colorControl,
     capabilities.colorTemperature,
+    capabilities.level,
     capabilities.motionSensor,
     capabilities.illuminanceMeasurement,
+    capabilities.powerMeter,
+    capabilities.energyMeter,
+    capabilities.powerConsumptionReport,
+    capabilities.valve,
     capabilities.button,
     capabilities.battery
   },
