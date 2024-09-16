@@ -1245,7 +1245,8 @@ local function set_wind_mode(driver, device, cmd)
 end
 
 local function set_rock_mode(driver, device, cmd)
-  local rock_mode = 0
+  -- test comment
+  local rock_mode = nil
   if cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.horizontal.NAME then
     rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_LEFT_RIGHT
   elseif cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.vertical.NAME then
