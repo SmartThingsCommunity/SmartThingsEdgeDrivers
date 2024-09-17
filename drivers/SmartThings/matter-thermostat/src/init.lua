@@ -963,7 +963,7 @@ local function wind_support_handler(driver, device, ib, response)
 
   -- save the number of supported wind modes for use in do_configure.
   device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes, {persist = true})
-  if #supported_wind_modes > 2 then
+  if #supported_wind_modes >= 2 then
     local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
     device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
