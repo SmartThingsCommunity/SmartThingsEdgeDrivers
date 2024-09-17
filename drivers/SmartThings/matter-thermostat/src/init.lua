@@ -410,7 +410,8 @@ local function do_configure(driver, device)
 
     -- for devices with a feature map that indicate they support WindMode,
     -- but who offer no support their WindSupport attribute.
-    if device:get_field(NUM_SUPPORTED_WIND_MODES) < 2 then
+    local num_wind_modes = device:get_field(NUM_SUPPORTED_WIND_MODES)
+    if num_wind_modes and num_wind_modes < 2 then
       profile_name = string.gsub(profile_name, "-wind", "")
     end
 
@@ -474,6 +475,13 @@ local function do_configure(driver, device)
 
     if level_name ~= "" then
       profile_name = profile_name .. level_name .. "-level"
+    end
+
+    -- for devices with a feature map that indicate they support WindMode,
+    -- but who offer no support their WindSupport attribute.
+    local num_wind_modes = device:get_field(NUM_SUPPORTED_WIND_MODES)
+    if num_wind_modes and num_wind_modes < 2 then
+      profile_name = string.gsub(profile_name, "-wind", "")
     end
 
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
@@ -954,10 +962,11 @@ local function wind_support_handler(driver, device, ib, response)
   end
 
   -- save the number of supported wind modes for use in do_configure.
-  device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes)
-
-  local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes, {persist = true})
+  if #supported_wind_modes > 2 then
+    local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
+  end
 end
 
 local function wind_setting_handler(driver, device, ib, response)
