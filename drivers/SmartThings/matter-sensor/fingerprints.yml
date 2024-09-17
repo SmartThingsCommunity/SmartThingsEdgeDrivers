@@ -31,7 +31,7 @@ matterManufacturer:
     deviceLabel: Heiman Motion Sensor
     vendorId: 0x120B
     productId: 0x1001
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "4619/4145"
     deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
@@ -42,6 +42,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1002
     deviceProfileName: co-comeas
+  - id: "4619/4099"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1003
+    deviceProfileName: smoke
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -59,6 +64,12 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0002
     deviceProfileName: contact-battery
+  # LeTianpai
+  - id: "LeTianPai/Motion"
+    deviceLabel: LeTianPai Presence Sensor Box
+    vendorId: 0x142B
+    productId: 0x0002
+    deviceProfileName: motion-illuminance-temperature-humidity
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor

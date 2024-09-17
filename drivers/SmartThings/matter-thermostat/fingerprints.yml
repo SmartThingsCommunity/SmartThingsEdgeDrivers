@@ -10,6 +10,13 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x0043A
     deviceProfileName: air-purifier-hepa
+#Eve
+  - id: "4874/79"
+    deviceLabel: Eve Thermo
+    vendorId: 0x130A
+    productId: 0x004F
+    deviceProfileName: thermostat-heating-only-nostate
+
 
 matterGeneric:
   - id: "matter/hvac/heatcool"
@@ -69,7 +76,7 @@ matterGeneric:
     deviceLabel: Matter Fan
     deviceTypes:
       - id: 0x002B
-    deviceProfileName: fan
+    deviceProfileName: fan-generic
   - id: "matter/air-purifier"
     deviceLabel: Matter Air Purifier
     deviceTypes:

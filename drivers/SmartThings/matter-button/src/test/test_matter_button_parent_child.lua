@@ -40,27 +40,9 @@ local mock_device = test.mock_device.build_test_matter_device(
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
-          cluster_type = "SERVER"
-        },
-      },
-    },
-    {
-      endpoint_id = 5,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS,
-          cluster_type = "SERVER"
-        },
-      },
-    },
-    {
-      endpoint_id = 6,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH
+            | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS
+            | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS,
           cluster_type = "SERVER"
         },
       },
@@ -124,28 +106,8 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = "04"
   })
-  test.socket.capability:__expect_send(mock_children[4]:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 4)})
   test.socket.capability:__expect_send(mock_children[4]:generate_test_message("main", button_attr.pushed({state_change = false})))
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Button 4",
-    profile = "button",
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = "05"
-  })
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 5)})
-  test.socket.capability:__expect_send(mock_children[5]:generate_test_message("main", button_attr.pushed({state_change = false})))
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Button 5",
-    profile = "button",
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = "06"
-  })
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 6)})
-  test.socket.capability:__expect_send(mock_children[6]:generate_test_message("main", button_attr.pushed({state_change = false})))
 
 end
 
@@ -243,27 +205,6 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Receiving a max press attribute of 2 should emit correct event", {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          mock_device, 6, 2
-        )
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[6]:generate_test_message("main",
-        capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
-    },
-  }
-)
-
-test.register_message_test(
   "Receiving a max press attribute of 3 should emit correct event", {
     {
       channel = "matter",
@@ -271,15 +212,15 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          mock_device, 5, 3
+          mock_device, 4, 3
         )
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_children[5]:generate_test_message("main",
-        capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x"}, {visibility = {displayed = false}}))
+      message = mock_children[4]:generate_test_message("main",
+        capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
   }
 )
@@ -313,7 +254,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 5, {new_position = 1}
+        mock_device, 4, {new_position = 1}
       )
     }
   },
@@ -323,14 +264,14 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 5, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0}
+        mock_device, 4, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0}
       )
     }
   },
   {
     channel = "capability",
     direction = "send",
-    message = mock_children[5]:generate_test_message("main", button_attr.double({state_change = true}))
+    message = mock_children[4]:generate_test_message("main", button_attr.double({state_change = true}))
   },
 
 }
@@ -344,7 +285,7 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 6, {new_position = 1}
+        mock_device, 4, {new_position = 1}
       )
     }
   },
@@ -354,14 +295,14 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.MultiPressComplete:build_test_event_report(
-        mock_device, 6, {new_position = 1, total_number_of_presses_counted = 4, previous_position = 0}
+        mock_device, 4, {new_position = 1, total_number_of_presses_counted = 4, previous_position = 0}
       )
     }
   },
   {
     channel = "capability",
     direction = "send",
-    message = mock_children[6]:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
+    message = mock_children[4]:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
   },
 
 }
