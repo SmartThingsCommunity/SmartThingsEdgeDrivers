@@ -514,27 +514,6 @@ local function do_configure(driver, device)
   else
     device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
   end
-
-  --Query setpoint limits if needed
-  local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:read())
-  end
-  if #heat_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_HEAT) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:read())
-  end
-  if #cool_eps ~= 0 and device:get_field(setpoint_limit_device_field.MAX_COOL) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:read())
-  end
-  if #auto_eps ~= 0 and device:get_field(setpoint_limit_device_field.MIN_DEADBAND) == nil then
-    setpoint_limit_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
-  end
-  if #setpoint_limit_read.info_blocks ~= 0 then
-    device:send(setpoint_limit_read)
-  end
 end
 
 local function device_added(driver, device)
