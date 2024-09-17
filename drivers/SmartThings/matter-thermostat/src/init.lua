@@ -83,8 +83,7 @@ local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
-
-local PROFILE_NAME = "__profile_name"
+local NUM_SUPPORTED_WIND_MODES = "__num_suppored_wind_modes"
 
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
@@ -408,6 +407,13 @@ local function do_configure(driver, device)
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
     end
+
+    -- for devices with a feature map that indicate they support WindMode,
+    -- but who offer no support their WindSupport attribute.
+    if device:get_field(NUM_SUPPORTED_WIND_MODES) < 2 then
+      profile_name = string.gsub(profile_name, "-wind", "")
+    end
+
     if profile_name == "fan" then
       profile_name = "fan-generic"
     end
@@ -508,9 +514,6 @@ local function do_configure(driver, device)
   else
     device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
   end
-
-  -- save profile name if needed
-  device:set_field(PROFILE_NAME, profile_name, {persist = true})
 
   --Query setpoint limits if needed
   local setpoint_limit_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -970,17 +973,10 @@ local function wind_support_handler(driver, device, ib, response)
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
-  -- this check re-profiles devices with a feature map that indicates they support WindMode,
-  -- but whose WindSupport value reports as 0 (no support) in their device specifications.
-  if #supported_wind_modes < 2 then
-    local fixed_profile_name = string.gsub(device:get_field(PROFILE_NAME), "-wind", "")
-    device:set_field(PROFILE_NAME, fixed_profile_name, {persist = true})
-    if fixed_profile_name == "fan" then
-      fixed_profile_name = "fan-generic"
-    end
-    device:try_update_metadata({profile = fixed_profile_name})
-    return
-  end
+
+  -- save the number of supported wind modes for use in do_configure.
+  device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes)
+
   local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
