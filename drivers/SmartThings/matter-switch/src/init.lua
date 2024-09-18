@@ -460,8 +460,8 @@ end
 
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
 
   local profile_name = nil
 
@@ -470,7 +470,7 @@ local function initialize_switch(driver, device)
   local component_map_used = false
   local parent_child_device = false
 
-  if #switch_eps == 0 and #button_eps == 0 then
+  if #switch_eps == 0 and #button_eps == 0 and #valve_eps == 0 then
     return
   end
 
@@ -478,30 +478,8 @@ local function initialize_switch(driver, device)
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
-  local num_valve_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-  if #valve_eps > 0 then
-    for _, ep in ipairs(valve_eps) do
-      if device:supports_server_cluster(clusters.ValveConfigurationAndControl.ID, ep) then
-        num_valve_server_eps = num_valve_server_eps + 1
-        local name = string.format("%s %d", device.label, num_valve_server_eps)
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local child_profile = assign_child_profile(device, ep)
-          driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = child_profile,
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%d", ep),
-              vendor_provided_label = name
-            }
-          )
-          parent_child_device = true
-        end
-      end
-    end
-  elseif #switch_eps > 0 then
+  if #switch_eps > 0 then
     for _, ep in ipairs(switch_eps) do
       if device:supports_server_cluster(clusters.OnOff.ID, ep) then
         num_switch_server_eps = num_switch_server_eps + 1
@@ -550,14 +528,7 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if num_valve_server_eps > 0 then
-    profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      profile_name = profile_name .. "-level"
-    end
-    device:try_update_metadata({profile = profile_name})
-  elseif num_switch_server_eps > 0 then
+  if num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -584,6 +555,13 @@ local function initialize_switch(driver, device)
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
     end
+  elseif #valve_eps > 0 then
+    profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      profile_name = profile_name .. "-level"
+    end
+    device:try_update_metadata({profile = profile_name})
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
