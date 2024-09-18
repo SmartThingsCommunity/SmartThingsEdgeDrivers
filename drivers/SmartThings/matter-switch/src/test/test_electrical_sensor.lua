@@ -592,7 +592,7 @@ test.register_coroutine_test(
   "Test profile change on init for Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "power-energy-powerConsumption" })
+    mock_device:expect_metadata_update({ profile = "plug-power-energy-powerConsumption" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }
@@ -602,7 +602,7 @@ test.register_coroutine_test(
   "Test profile change on init for only Periodic Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "doConfigure" })
-    mock_device_periodic:expect_metadata_update({ profile = "electrical-energy-powerConsumption" })
+    mock_device_periodic:expect_metadata_update({ profile = "plug-electrical-energy-powerConsumption" })
     mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_periodic }

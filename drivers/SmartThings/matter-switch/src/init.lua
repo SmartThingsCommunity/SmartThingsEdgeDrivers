@@ -64,7 +64,6 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
-local WATER_VALVE_DEVICE_TYPE_ID = 0x0042
 local GENERIC_SWITCH_ID = 0x000F
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
@@ -76,7 +75,6 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
-  [WATER_VALVE_DEVICE_TYPE_ID] = "water-valve",
   [GENERIC_SWITCH_ID] = "button"
 }
 
@@ -403,13 +401,20 @@ end
 local function do_configure(driver, device)
   local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local profile_name = nil
   if #energy_eps > 0 and #power_eps > 0 then
-    profile_name = "power-energy-powerConsumption"
+    profile_name = "plug-power-energy-powerConsumption"
   elseif #energy_eps > 0 then
-    profile_name = "electrical-energy-powerConsumption"
+    profile_name = "plug-electrical-energy-powerConsumption"
   elseif #power_eps > 0 then
-    profile_name = "electrical-power"
+    profile_name = "plug-electrical-power"
+  elseif #valve_eps > 0 then
+    profile_name = "water-valve"
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      profile_name = profile_name .. "-level"
+    end
   end
 
   if profile_name then
@@ -461,7 +466,6 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
 
   local profile_name = nil
 
@@ -470,7 +474,7 @@ local function initialize_switch(driver, device)
   local component_map_used = false
   local parent_child_device = false
 
-  if #switch_eps == 0 and #button_eps == 0 and #valve_eps == 0 then
+  if #switch_eps == 0 and #button_eps == 0 then
     return
   end
 
@@ -555,13 +559,6 @@ local function initialize_switch(driver, device)
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
     end
-  elseif #valve_eps > 0 then
-    profile_name = device_type_profile_map[WATER_VALVE_DEVICE_TYPE_ID]
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      profile_name = profile_name .. "-level"
-    end
-    device:try_update_metadata({profile = profile_name})
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
