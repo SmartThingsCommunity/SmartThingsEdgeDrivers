@@ -346,16 +346,12 @@ end
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local all_eps = {}
 
   for _,ep in ipairs(switch_eps) do
     table.insert(all_eps, ep)
   end
   for _,ep in ipairs(button_eps) do
-    table.insert(all_eps, ep)
-  end
-  for _,ep in ipairs(valve_eps) do
     table.insert(all_eps, ep)
   end
   table.sort(all_eps)
