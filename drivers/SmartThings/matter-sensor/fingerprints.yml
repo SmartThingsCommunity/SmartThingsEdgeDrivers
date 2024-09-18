@@ -37,11 +37,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1031
     deviceProfileName: contact-battery
-
   - id: "4619/4102"
     deviceLabel: Heiman Smoke Sensor
     vendorId: 0x120B
     productId: 0x1006
+    deviceProfileName: smoke
   - id: "4619/4098"
     deviceLabel: Heiman CO Sensor
     vendorId: 0x120B
