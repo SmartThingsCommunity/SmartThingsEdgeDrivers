@@ -751,10 +751,13 @@ local function handle_set_level(driver, device, cmd)
   local commands = clusters.ValveConfigurationAndControl.server.commands
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = cmd.args.level
-  if level ~= 0 then
-    device:send(commands.Open(device, endpoint_id, nil, level))
-  else
+  if level == nil then
+    return
+  end
+  if level == 0 then
     device:send(commands.Close(device, endpoint_id))
+  else
+    device:send(commands.Open(device, endpoint_id, nil, level))
   end
 end
 

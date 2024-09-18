@@ -65,7 +65,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-  mock_device:expect_metadata_update({ profile = "water-valve-level" })
 end
 test.set_test_init_function(test_init)
 
@@ -100,6 +99,50 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "valve", component = "main", command = "close", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Set level command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "level", component = "main", command = "setLevel", args = { 25 } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1, nil, 25)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Set level command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "level", component = "main", command = "setLevel", args = { 0 } }
       }
     },
     {
