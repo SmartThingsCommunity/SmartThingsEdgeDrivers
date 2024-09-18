@@ -47,6 +47,14 @@ test.register_message_test(
       message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "zigbee",
       direction = "send",
       message = { mock_device.id, OnOffCluster.server.commands.On(mock_device) }
@@ -61,6 +69,14 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = { mock_device.id, { capability = "switch", component = "main", command = "off", args = { } } }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
     },
     {
       channel = "zigbee",
