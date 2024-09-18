@@ -395,8 +395,8 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function do_configure(driver, device)
-  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
-  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local profile_name = nil
   if #energy_eps > 0 and #power_eps > 0 then
