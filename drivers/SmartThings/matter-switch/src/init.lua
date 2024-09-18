@@ -140,6 +140,13 @@ local device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY
+  },
+  [GENERIC_SWITCH_ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
   }
 }
 
@@ -250,17 +257,14 @@ end
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local all_eps = {}
 
-  for _,ep in ipairs(switch_eps) do
-    table.insert(all_eps, ep)
-  end
+  -- use first button endpoint as main endpoint if one exists
   for _,ep in ipairs(button_eps) do
-    table.insert(all_eps, ep)
+    if ep ~= 0 then --0 is the matter RootNode endpoint
+      return ep
+    end
   end
-  table.sort(all_eps)
-
-  for _,ep in ipairs(all_eps) do
+  for _,ep in ipairs(switch_eps) do
     if ep ~= 0 then --0 is the matter RootNode endpoint
       return ep
     end
@@ -343,6 +347,7 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local all_eps = {}
 
   local profile_name = nil
 
@@ -355,12 +360,34 @@ local function initialize_switch(driver, device)
     return
   end
 
+  for _,v in ipairs(switch_eps) do
+    table.insert(all_eps, v)
+  end
+  for _,v in ipairs(button_eps) do
+    table.insert(all_eps, v)
+  end
+  table.sort(all_eps)
+
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
 
+  if #button_eps > 0 then
+    for _, ep in ipairs(button_eps) do
+      -- Configure MCD for button endpoints
+      if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+        if ep ~= main_endpoint then
+          component_map[string.format("button%d", current_component_number)] = ep
+          current_component_number = current_component_number + 1
+        else
+          component_map["main"] = ep
+        end
+        component_map_used = true
+      end
+    end
+  end
   if #switch_eps > 0 then
     for _, ep in ipairs(switch_eps) do
       -- Create child devices for non-main switch endpoints
@@ -381,19 +408,6 @@ local function initialize_switch(driver, device)
         parent_child_device = true
       end
     end
-  elseif #button_eps > 0 then
-    for _, ep in ipairs(button_eps) do
-      -- Configure MCD for button endpoints
-      if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-        if ep ~= main_endpoint then
-          component_map[string.format("button%d", current_component_number)] = ep
-          current_component_number = current_component_number + 1
-        else
-          component_map["main"] = ep
-        end
-        component_map_used = true
-      end
-    end
   end
 
   if parent_child_device then
@@ -409,7 +423,30 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if #switch_eps > 0 then
+  if #button_eps > 0 then
+    local battery_support = false
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
+      battery_support = true
+    end
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if battery_support then
+        profile_name = string.format("%d-button-battery", #button_eps)
+      else
+        profile_name = string.format("%d-button", #button_eps)
+      end
+    elseif not battery_support then
+      -- a battery-less button/remote (either single or will use parent/child)
+      profile_name = "button"
+    end
+
+    if profile_name then
+      device:try_update_metadata({profile = profile_name})
+      device:set_field(DEFERRED_CONFIGURE, true)
+    else
+      configure_buttons(device)
+    end
+  elseif #switch_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -435,29 +472,6 @@ local function initialize_switch(driver, device)
       if device_type_profile_map[id] ~= nil then
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
-    end
-  elseif #button_eps > 0 then
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
-      battery_support = true
-    end
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
-      else
-        profile_name = string.format("%d-button", #button_eps)
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
-      profile_name = "button"
-    end
-
-    if profile_name then
-      device:try_update_metadata({profile = profile_name})
-      device:set_field(DEFERRED_CONFIGURE, true)
-    else
-      configure_buttons(device)
     end
   end
 end
@@ -516,7 +530,15 @@ local function device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
-          device:add_subscribed_attribute(attr)
+          if id == GENERIC_SWITCH_ID then
+            if attr == clusters.PowerSource.attributes.BatPercentRemaining then
+              device:add_subscribed_attribute(attr)
+            else
+              device:add_subscribed_event(attr)
+            end
+          else
+            device:add_subscribed_attribute(attr)
+          end
         end
       end
     end
