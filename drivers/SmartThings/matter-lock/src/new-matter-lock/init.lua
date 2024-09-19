@@ -149,8 +149,8 @@ local function lock_state_handler(driver, device, ib, response)
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
     [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
-    [LockState.LOCKED] = attr.locked({visibility = {displayed = false}}),
-    [LockState.UNLOCKED] = attr.unlocked({visibility = {displayed = false}}),
+    [LockState.LOCKED] = attr.locked(),
+    [LockState.UNLOCKED] = attr.unlocked(),
   }
 
   -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
@@ -244,10 +244,11 @@ local function set_cota_credential(device, credential_index)
   device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
   local credential = {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = credential_index}
   -- Set the credential to a code
-  device:set_field(lock_utils.COMMAND_NAME, "addCredential")
+  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  device:set_field(lock_utils.COMMAND_NAME, "addCota")
   device:set_field(lock_utils.CRED_INDEX, credential_index)
   device:set_field(lock_utils.SET_CREDENTIAL, credential_index)
-  device:set_field(lock_utils.USER_TYPE, "adminMember")
+  device:set_field(lock_utils.USER_TYPE, "remote")
   device.log.info(string.format("Attempting to set COTA credential at index %s", credential_index))
   device:send(DoorLock.server.commands.SetCredential(
     device,
@@ -980,6 +981,11 @@ local function set_credential_response_handler(driver, device, ib, response)
   end
 
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local credData = device:get_field(lock_utils.CRED_DATA)
+  if cmdName == "addCota" then
+    credData = device:get_field(lock_utils.COTA_CRED)
+    cmdName = "addCredential"
+  end
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local status = "success"
@@ -1029,6 +1035,13 @@ local function set_credential_response_handler(driver, device, ib, response)
   elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
     status = "failure"
   end
+
+  -- Error Handling
+  if status == "duplicate" then
+    generate_cota_cred_for_device(device)
+    device.thread:call_with_delay(0, function(t) set_cota_credential(device, credIdx) end)
+    return
+  end
   if status ~= "occupied" then
     local result = {
       commandName = cmdName,
@@ -1045,7 +1058,6 @@ local function set_credential_response_handler(driver, device, ib, response)
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
-
   if elements.next_credential_index.value ~= nil then
     -- Get parameters
     local credIdx = elements.next_credential_index.value
@@ -1053,12 +1065,13 @@ local function set_credential_response_handler(driver, device, ib, response)
       credential_type = DoorLock.types.DlCredentialType.PIN,
       credential_index = credIdx,
     }
-    local credData = device:get_field(lock_utils.CRED_DATA)
     local userIdx = device:get_field(lock_utils.USER_INDEX)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
     if userType == "guest" then
       userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+    elseif userType == "remote" then
+      userTypeMatter = DoorLock.types.DlUserType.REMOTE_ONLY_USER
     end
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
