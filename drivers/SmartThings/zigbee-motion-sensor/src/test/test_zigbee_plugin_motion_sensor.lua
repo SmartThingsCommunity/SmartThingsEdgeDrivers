@@ -17,6 +17,7 @@ local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 --- @type st.zigbee.zcl.clusters.OccupancySensing
 local OccupancySensing = clusters.OccupancySensing
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -85,6 +86,22 @@ test.register_message_test(
       channel = "device_lifecycle",
       direction = "receive",
       message = {mock_device.id, "added"}
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+      }
     },
     {
       channel = "capability",

@@ -34,11 +34,16 @@ local AnalogOutput = clusters.AnalogOutput
 local Groups = clusters.Groups
 
 local SHADE_LEVEL = "shadeLevel"
+local UPDATE_SHADE_LEVEL = "update_shade_level"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
+local SHADE_STATE_ATTRIBUTE_ID = 0x0404
+
+local SHADE_STATE_STOP = 0
+local SHADE_STATE_CLOSE = 2
 
 local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
 local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
@@ -72,7 +77,8 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
-        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },
+          { visibility = { displayed = false } }))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
@@ -141,6 +147,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, -127, 0))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
@@ -160,6 +167,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 6, 0.5625))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
@@ -179,6 +187,7 @@ test.register_coroutine_test(
         AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 5, 0.5625))
       }
     )
+    mock_device:set_field(UPDATE_SHADE_LEVEL, true)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     )
@@ -239,7 +248,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({ state_change = true }))
     )
   end
 )
@@ -251,12 +260,16 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        { capability = shadeRotateStateId, component = "main", command = "setRotateState",
-          args = { state = "rotateDown" } }
+        {
+          capability = shadeRotateStateId,
+          component = "main",
+          command = "setRotateState",
+          args = { state = "rotateDown" }
+        }
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({ state_change = true }))
     )
   end
 )
@@ -312,6 +325,53 @@ test.register_coroutine_test(
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
+  end
+)
+
+test.register_coroutine_test(
+  "Window shade level update flag test",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 20 } } })
+    local attr_report_closing_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, SHADE_STATE_CLOSE }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_closing_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+    )
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 5, 0.5625)) -- ignoring
+      }
+    )
+    local attr_report_stop_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, SHADE_STATE_STOP }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_stop_data, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      AnalogOutput.attributes.PresentValue:read(mock_device)
+    })
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        AnalogOutput.attributes.PresentValue:build_test_attr_report(mock_device, SinglePrecisionFloat(0, 4, 0.25)) -- 20%
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(20))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
   end
 )
 
