@@ -19,6 +19,8 @@ components:
     version: 1
   - id: lockCredentials
     version: 1
+  - id: firmwareUpdate
+    version: 1
   - id: refresh
     version: 1
   categories:
