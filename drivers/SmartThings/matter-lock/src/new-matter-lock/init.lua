@@ -153,11 +153,16 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.UNLOCKED] = attr.unlocked({visibility = {displayed = false}}),
   }
 
-  if ib.data.value ~= nil then
-    device:emit_event(LOCK_STATE[ib.data.value])
-  else
-    device:emit_event(attr.unknown())
-  end
+  -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
+  -- In this case, two events occur. To prevent this, when both functions are called,
+  -- it send the event after 1 second so that no event occurs in the lock_state_handler.  
+  device.thread:call_with_delay(1, function ()
+    if ib.data.value ~= nil then
+      device:emit_event(LOCK_STATE[ib.data.value])
+    else
+      device:emit_event(attr.unknown())
+    end
+  end)
 end
 
 ---------------------
