@@ -47,7 +47,7 @@ local LifecycleHandlers = {}
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
 function LifecycleHandlers.device_init(driver, device, ...)
-  local device_type = device:get_field(Fields.DEVICE_TYPE)
+  local device_type = utils.determine_device_type(device)
   log.info(
     string.format
     ("device_init for device %s, device_type: %s", (device.label or device.id or "unknown device"),
