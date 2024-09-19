@@ -237,6 +237,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_parent_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -251,7 +259,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Switch on/off capability command from parent device should be handled: on",
+  "Switch on/off capability command from child device should be handled: on",
   {
     {
       channel = "capability",
@@ -259,6 +267,14 @@ test.register_message_test(
       message = {
         mock_child_device.id,
         { capability = "switch", command = "on", component = "main", args = {} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_child_device.id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
@@ -287,6 +303,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_parent_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -309,6 +333,14 @@ test.register_message_test(
       message = {
         mock_child_device.id,
         { capability = "switch", command = "off", component = "main", args = {} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_child_device.id, capability_id = "switch", capability_cmd_id = "off" }
       }
     },
     {
@@ -527,6 +559,7 @@ test.register_coroutine_test(
       mock_parent_device.id,
       { capability = "switch", command = "off", component = "main", args = {} }
     })
+    mock_parent_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
@@ -557,6 +590,7 @@ test.register_coroutine_test(
       mock_child_device.id,
       { capability = "switch", command = "off", component = "main", args = {} }
     })
+    mock_child_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
