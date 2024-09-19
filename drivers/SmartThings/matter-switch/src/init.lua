@@ -347,6 +347,7 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local all_eps = {}
 
   local profile_name = nil
 
@@ -358,6 +359,14 @@ local function initialize_switch(driver, device)
   if #switch_eps == 0 and #button_eps == 0 then
     return
   end
+
+  for _,v in ipairs(switch_eps) do
+    table.insert(all_eps, v)
+  end
+  for _,v in ipairs(button_eps) do
+    table.insert(all_eps, v)
+  end
+  table.sort(all_eps)
 
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
@@ -430,6 +439,7 @@ local function initialize_switch(driver, device)
       -- a battery-less button/remote (either single or will use parent/child)
       profile_name = "button"
     end
+
     if profile_name then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
