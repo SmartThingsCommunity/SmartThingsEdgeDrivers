@@ -84,6 +84,11 @@ zigbeeManufacturer:
     manufacturer: Stelpro
     model: ST218
     deviceProfileName: thermostat-temperature-temperaturealarm
+  - id: "Maestro Thermostat"
+    deviceLabel: Maestro Thermostat
+    manufacturer: Stelpro
+    model: SMT402AD
+    deviceProfileName: thermostat-stelpro-profile
   - id: "SAT402ZB Thermostat"
     deviceLabel: SAT402ZB Thermostat
     manufacturer: Stello
