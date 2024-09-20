@@ -15,17 +15,40 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
+local version = require "version"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+local utils = require "st.utils"
+
+if version.api < 10 then
+  clusters.TemperatureControl = require "TemperatureControl"
+end
 
 --OvenMode is currently not available in any of lua_libs releases
-clusters.OvenMode = require "OvenMode"
+if version.api < 11 then
+  clusters.OvenMode = require "OvenMode"
+end
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_OVEN_MODES_MAP = "__supported_oven_modes_map_key_"
+local CURRENT_CONFIGURED_UNIT = "__current_configured_unit"
 
 local OVEN_DEVICE_ID = 0x007B
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local TCC_DEVICE_TYPE_ID = 0x0071
+
+-- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- When units are switched, we will never know the recevied command value is for what unit as the arguments don't contain the unit.
+-- So to handle this we assume the following ranges considering usual oven temperatures:
+-- 1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
+-- 2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
+local OVEN_MAX_TEMP_IN_C = 260
+local OVEN_MIN_TEMP_IN_C = 127
+
+local setpoint_limit_device_field = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP",
+}
 
 local function get_endpoints_for_dt(device, device_type)
   local endpoints = {}
@@ -64,6 +87,7 @@ local function device_init(driver, device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_field(CURRENT_CONFIGURED_UNIT, "C")
 end
 
 local function device_added(driver, device)
@@ -96,7 +120,7 @@ local function oven_supported_modes_attr_handler(driver, device, ib, response)
   for _, mode in ipairs(ib.data.elements) do
     clusters.OvenMode.types.ModeOptionStruct:augment_type(mode)
     local modeLabel = mode.elements.label.value
-    log.info_with("Inserting supported oven mode: "..modeLabel)
+    log.info("Inserting supported oven mode: "..modeLabel)
     table.insert(supportedOvenModes, modeLabel)
   end
   supportedOvenModesMap[string.format(ib.endpoint_id)] = supportedOvenModes
@@ -108,8 +132,7 @@ local function oven_supported_modes_attr_handler(driver, device, ib, response)
 end
 
 local function oven_mode_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("oven_mode_attr_handler currentMode: %s", ib.data.value))
+  log.info(string.format("oven_mode_attr_handler currentMode: %s", ib.data.value))
 
   local supportedOvenModesMap = device:get_field(SUPPORTED_OVEN_MODES_MAP) or {}
   local supportedOvenModes = supportedOvenModesMap[string.format(ib.endpoint_id)] or {}
@@ -119,13 +142,64 @@ local function oven_mode_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
     return
   end
-  log.warn_with({hub_logs=true}, "oven_mode_attr_handler received unsupported mode for endpoint"..ib.endpoint_id)
+  log.warn("oven_mode_attr_handler received unsupported mode for endpoint"..ib.endpoint_id)
+end
+
+local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+  if #tn_eps == 0 then
+    device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
+  device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
+
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+  local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
+  local unit = device:get_field(CURRENT_CONFIGURED_UNIT) or "C"
+  local temp = ib.data.value / 100.0
+  if unit == "F" then
+    min = utils.c_to_f(unit)
+    max = utils.c_to_f(unit)
+    temp = utils.c_to_f(temp)
+  end
+  local range = {
+    minimum = min,
+    maximum = max,
+  }
+
+  device:emit_event_for_endpoint(ib.endpoint_id,
+    capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit},{visibility = {displayed = false}}))
+
+  device:emit_event_for_endpoint(ib.endpoint_id,
+    capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
+end
+
+local function setpoint_limit_handler(limit_field)
+  return function(driver, device, ib, response)
+    local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+      { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+    if #tn_eps == 0 then
+      device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      return
+    end
+    local field = string.format("%s-%d", limit_field, ib.endpoint_id)
+    local val = ib.data.value / 100.0
+
+    -- We clamp the max and min values as per the assumed oven temperature ranges.
+    val = math.min(val, OVEN_MAX_TEMP_IN_C)
+    val = math.max(val, OVEN_MIN_TEMP_IN_C)
+
+    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device:set_field(field, val, { persist = true })
+  end
 end
 
 -- Capability Handlers --
 local function handle_oven_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-  string.format("handle_oven_mode mode: %s", cmd.args.mode))
+  log.info(string.format("handle_oven_mode mode: %s", cmd.args.mode))
   local ep = component_to_endpoint(device, cmd.component)
   local supportedOvenModesMap = device:get_field(SUPPORTED_OVEN_MODES_MAP) or {}
   local supportedOvenModes = supportedOvenModesMap[string.format(ep)] or {}
@@ -135,7 +209,56 @@ local function handle_oven_mode(driver, device, cmd)
       return
     end
   end
-  log.warn_with({hub_logs=true}, "handle_oven_mode received unsupported mode: ".." for endpoint: "..ep)
+  log.warn("handle_oven_mode received unsupported mode: ".." for endpoint: "..ep)
+end
+
+local function handle_temperature_setpoint(driver, device, cmd)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+  if #tn_eps == 0 then
+    device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
+  device.log.info(string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
+
+  local value = cmd.args.setpoint
+  local _, temp_setpoint = device:get_latest_state(
+    cmd.component, capabilities.temperatureSetpoint.ID,
+    capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
+    0, { value = 0, unit = "C" }
+  )
+  local ep = component_to_endpoint(device, cmd.component)
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
+  local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
+  local unit = "C"
+  if value <= OVEN_MAX_TEMP_IN_C then
+    device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
+    if temp_setpoint.unit == "F" then
+      temp_setpoint.value = utils.f_to_c(temp_setpoint.value)
+      temp_setpoint.unit = unit
+    end
+  else
+    unit = "F"
+    device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
+    value = utils.f_to_c(value)
+    if temp_setpoint.unit == "C" then
+      temp_setpoint.value = utils.c_to_f(temp_setpoint.value)
+      temp_setpoint.unit = unit
+    end
+  end
+  if value < min or value > max then
+    log.warn(string.format(
+      "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
+      value, min, max
+    ))
+    device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
+    return
+  end
+
+  local ep = component_to_endpoint(device, cmd.component)
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
 local matter_oven_handler = {
@@ -146,6 +269,13 @@ local matter_oven_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.TemperatureControl.ID] = {
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(
+          setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(
+          setpoint_limit_device_field.MAX_TEMP),
+      },
       [clusters.OvenMode.ID] = {
         [clusters.OvenMode.attributes.SupportedModes.ID] = oven_supported_modes_attr_handler,
         [clusters.OvenMode.attributes.CurrentMode.ID] = oven_mode_attr_handler,
@@ -156,6 +286,9 @@ local matter_oven_handler = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_oven_mode,
     },
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
+    }
   },
   can_handle = is_oven_device,
 }

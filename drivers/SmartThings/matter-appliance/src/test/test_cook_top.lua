@@ -22,7 +22,7 @@ local COOK_SURFACE_ONE_ENDPOINT = 2
 local COOK_SURFACE_TWO_ENDPOINT = 3
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("cook-surface-one-tn-cook-surface-two-tl.yml"), --on an actual device we would switch to this over doConfigure.
+  profile = t_utils.get_profile_definition("cook-surface-one-tl-cook-surface-two-tl.yml"), --on an actual device we would switch to this over doConfigure.
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -49,8 +49,8 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = COOK_SURFACE_ONE_ENDPOINT,
       clusters = {
-        { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 1 }, --Temperature Number
-        { cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"}, --Temperature Level
+        { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 2 }, --Temperature Level
+        { cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
       },
       device_types = {
         { device_type_id = 0x0077, device_type_revision = 1 } -- Cook Surface
@@ -59,7 +59,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = COOK_SURFACE_TWO_ENDPOINT,
       clusters = {
-        { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 2},
+        { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 2}, --Temperature Level
         { cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER" },
       },
       device_types = {
@@ -73,9 +73,6 @@ local function test_init()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureControl.attributes.TemperatureSetpoint,
-    clusters.TemperatureControl.attributes.MaxTemperature,
-    clusters.TemperatureControl.attributes.MinTemperature,
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels
   }
@@ -96,7 +93,7 @@ test.register_coroutine_test(
     "Verify device profile update",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
-      mock_device:expect_metadata_update({ profile = "cook-surface-one-tn-cook-surface-two-tl" })
+      mock_device:expect_metadata_update({ profile = "cook-surface-one-tl-cook-surface-two-tl" })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
@@ -130,62 +127,6 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, COOK_TOP_ENDPOINT)
       }
     }
-  }
-)
-
-test.register_message_test(
-  "Cook Surface One: Veirfy temperatureSetpoint command sends the appropriate commands.",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, COOK_SURFACE_ONE_ENDPOINT, 0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, COOK_SURFACE_ONE_ENDPOINT, 10000)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, COOK_SURFACE_ONE_ENDPOINT, 9000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("cookSurfaceOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=100.0}, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("cookSurfaceOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 90.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "temperatureSetpoint", component = "cookSurfaceOne", command = "setTemperatureSetpoint", args = {40.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, COOK_SURFACE_ONE_ENDPOINT, 40 * 100, nil)
-      }
-    },
   }
 )
 

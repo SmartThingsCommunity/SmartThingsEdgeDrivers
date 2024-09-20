@@ -47,7 +47,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = OVEN_ENDPOINT,
       clusters = {},
       device_types = {
-        { device_type_id = 0x007B, device_type_revision = 1 } -- Cook Top
+        { device_type_id = 0x007B, device_type_revision = 1 } -- Oven
       }
     },
     {
@@ -58,7 +58,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         { cluster_id = clusters.TemperatureControl.ID,     cluster_type = "SERVER", feature_map = 1 }, --Temperature Number
       },
       device_types = {
-        { device_type_id = 0x0071, device_type_revision = 1 } -- Cook Top
+        { device_type_id = 0x0071, device_type_revision = 1 } -- Oven TCC
       }
     },
     {
@@ -69,7 +69,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         { cluster_id = clusters.TemperatureControl.ID,     cluster_type = "SERVER", feature_map = 2 }, --Temperature Level
       },
       device_types = {
-        { device_type_id = 0x0071, device_type_revision = 1 } -- Cook Top
+        { device_type_id = 0x0071, device_type_revision = 1 } -- Oven TCC
       }
     },
     {
@@ -230,7 +230,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 0)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 12800)
       }
     },
     {
@@ -238,7 +238,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 10000)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 20000)
       }
     },
     {
@@ -252,7 +252,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=100.0}, unit = "C"}))
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -264,7 +264,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        { capability = "temperatureSetpoint", component = "tccOne", command = "setTemperatureSetpoint", args = {40.0}}
+        { capability = "temperatureSetpoint", component = "tccOne", command = "setTemperatureSetpoint", args = {130.0}}
       }
     },
     {
@@ -272,7 +272,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 40 * 100, nil)
+        clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 130 * 100, nil)
       }
     },
   }

@@ -95,26 +95,20 @@ end
 local function do_configure(driver, device)
   local cook_surface_endpoints = get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
 
-  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
-    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL })
 
   local profile_name
   if #cook_surface_endpoints > 0 then
     profile_name = "cook-surface-one"
-    if table_contains(tn_eps, cook_surface_endpoints[1]) then
-      profile_name = profile_name .. "-tn"
-    elseif table_contains(tl_eps, cook_surface_endpoints[1]) then
+    if table_contains(tl_eps, cook_surface_endpoints[1]) then
       profile_name = profile_name .. "-tl"
     end
 
     --we only support upto two cook surfaces
     if #cook_surface_endpoints > 1 then
       profile_name = profile_name .. "-cook-surface-two"
-      if table_contains(tn_eps, cook_surface_endpoints[2]) then
-        profile_name = profile_name .. "-tn"
-      elseif table_contains(tl_eps, cook_surface_endpoints[2]) then
+      if table_contains(tl_eps, cook_surface_endpoints[2]) then
         profile_name = profile_name .. "-tl"
       end
     end
@@ -182,48 +176,6 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
-local function temperature_setpoint_attr_handler(driver, device, ib, response)
-  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
-    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
-  if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
-    return
-  end
-  device.log.info_with({ hub_logs = true },
-    string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
-
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
-  local min = device:get_field(min_field) or 0
-  local max = device:get_field(max_field) or 100
-  local unit = "C"
-  local range = {
-    minimum = min,
-    maximum = max,
-  }
-  device:emit_event_for_endpoint(ib.endpoint_id,
-    capabilities.temperatureSetpoint.temperatureSetpointRange({ value = range, unit = unit }), { visibility = { displayed = false } })
-
-  local temp = ib.data.value / 100.0
-  device:emit_event_for_endpoint(ib.endpoint_id,
-    capabilities.temperatureSetpoint.temperatureSetpoint({ value = temp, unit = unit }))
-end
-
-local function setpoint_limit_handler(limit_field)
-  return function(driver, device, ib, response)
-    local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
-      { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
-    if #tn_eps == 0 then
-      device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
-      return
-    end
-    local field = string.format("%s-%d", limit_field, ib.endpoint_id)
-    local val = ib.data.value / 100.0
-    log.info("Setting " .. field .. " to " .. string.format("%s", val))
-    device:set_field(field, val, { persist = true })
-  end
-end
-
 local function temp_event_handler(driver, device, ib, response)
   device.log.info_with({ hub_logs = true },
     string.format("temp_event_handler: %s", ib.data.value))
@@ -237,40 +189,6 @@ local function temp_event_handler(driver, device, ib, response)
   end
   device:emit_event_for_endpoint(ib.endpoint_id,
     capabilities.temperatureMeasurement.temperature({ value = temp, unit = unit }))
-end
-
-local function handle_temperature_setpoint(driver, device, cmd)
-  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
-    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
-  if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
-    return
-  end
-  device.log.info_with({ hub_logs = true },
-    string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
-
-  local value = cmd.args.setpoint
-  local _, temp_setpoint = device:get_latest_state(
-    cmd.component, capabilities.temperatureSetpoint.ID,
-    capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
-    0, { value = 0, unit = "C" }
-  )
-  local ep = component_to_endpoint(device, cmd.component)
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
-  local min = device:get_field(min_field) or 0
-  local max = device:get_field(max_field) or 100
-  if value < min or value > max then
-    log.warn(string.format(
-      "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
-      value, min, max
-    ))
-    device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
-    return
-  end
-
-  local ep = component_to_endpoint(device, cmd.component)
-  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
 local function handle_temperature_level(driver, device, cmd)
@@ -298,11 +216,6 @@ local matter_cook_top_handler = {
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
-        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(
-          setpoint_limit_device_field.MIN_TEMP),
-        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(
-          setpoint_limit_device_field.MAX_TEMP),
         [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] =
             selected_temperature_level_attr_handler,
         [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] =
@@ -314,9 +227,6 @@ local matter_cook_top_handler = {
     }
   },
   capability_handlers = {
-    [capabilities.temperatureSetpoint.ID] = {
-      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
-    },
     [capabilities.temperatureLevel.ID] = {
       [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
     }
