@@ -306,7 +306,7 @@ local refresh_handlers = require "handlers.refresh_handlers"
 ---@param cmd table?
 ---@return table? refreshed_device_info
 function CommandHandlers.refresh_handler(driver, device, cmd)
-  return refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
+  return refresh_handlers.handler_for_device_type(utils.determine_device_type(device))(driver, device, cmd)
 end
 
 return CommandHandlers
