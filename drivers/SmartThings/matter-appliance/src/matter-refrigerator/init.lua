@@ -100,7 +100,7 @@ local function supports_temperature_level_endpoint(device, endpoint)
   local feature = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = feature})
   if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    device.log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return false
   end
   for i, eps in ipairs(tl_eps) do
@@ -108,7 +108,7 @@ local function supports_temperature_level_endpoint(device, endpoint)
       return true
     end
   end
-  device.log.warn_with({ hub_logs = true }, string.format("Endpoint(%d) does not support TEMPERATURE_LEVEL feature", endpoint))
+  device.log.warn_with({hub_logs = true}, string.format("Endpoint(%d) does not support TEMPERATURE_LEVEL feature", endpoint))
   return false
 end
 
@@ -116,7 +116,7 @@ local function supports_temperature_number_endpoint(device, endpoint)
   local feature = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = feature})
   if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    device.log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return false
   end
   for i, eps in ipairs(tn_eps) do
@@ -124,7 +124,7 @@ local function supports_temperature_number_endpoint(device, endpoint)
       return true
     end
   end
-  device.log.warn_with({ hub_logs = true }, string.format("Endpoint(%d) does not support TEMPERATURE_NUMBER feature", endpoint))
+  device.log.warn_with({hub_logs = true}, string.format("Endpoint(%d) does not support TEMPERATURE_NUMBER feature", endpoint))
   return false
 end
 
@@ -219,8 +219,7 @@ local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib,
 end
 
 local function refrigerator_tcc_mode_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
+  device.log.info(string.format("refrigerator_tcc_mode_attr_handler currentMode: %s", ib.data.value))
 
   local supportedRefrigeratorTccModesMap = device:get_field(SUPPORTED_REFRIGERATOR_TCC_MODES_MAP)
   local supportedRefrigeratorTccModes = supportedRefrigeratorTccModesMap[ib.endpoint_id] or {}
@@ -242,8 +241,7 @@ local function refrigerator_alarm_attr_handler(driver, device, ib, response)
 end
 
 local function temp_event_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-  string.format("temp_event_handler: %s", ib.data.value))
+  device.log.info(string.format("temp_event_handler: %s", ib.data.value))
 
   local temp
   local unit = "C"

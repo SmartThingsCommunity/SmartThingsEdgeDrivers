@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ local function do_configure(driver, device)
   end
 
   if profile_name then
-    log.info_with({ hub_logs = true }, "Updating device profile to " .. profile_name)
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({ profile = profile_name })
   end
 end
@@ -138,11 +138,10 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL })
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
-  log.info_with({ hub_logs = true },
-    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
+  log.info(string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
 
   local temperatureLevel = ib.data.value
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
@@ -158,15 +157,14 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL })
   if #tl_eps == 0 then
-    log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
+    log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_LEVEL feature"))
     return
   end
 
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
   local supportedTemperatureLevels = {}
   for _, tempLevel in ipairs(ib.data.elements) do
-    log.info_with({ hub_logs = true },
-      string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
+    log.info(string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
@@ -177,8 +175,7 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
 end
 
 local function temp_event_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("temp_event_handler: %s", ib.data.value))
+  device.log.info(string.format("temp_event_handler: %s", ib.data.value))
 
   local temp
   local unit = "C"
@@ -192,8 +189,7 @@ local function temp_event_handler(driver, device, ib, response)
 end
 
 local function handle_temperature_level(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
+  log.info(string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}

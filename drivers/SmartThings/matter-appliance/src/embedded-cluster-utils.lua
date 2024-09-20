@@ -15,9 +15,11 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
---these clusters are not available in v10 and v11
-clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
-clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+if version.api < 11 then
+  clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
+  clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
+end
+
 clusters.OvenMode = require "OvenMode"
 
 local embedded_cluster_utils = {}

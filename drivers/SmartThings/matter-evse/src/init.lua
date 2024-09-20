@@ -1,3 +1,17 @@
+-- Copyright 2024 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local capabilities = require "st.capabilities"
 local MatterDriver = require "st.matter.driver"
 local clusters = require "st.matter.clusters"
@@ -5,10 +19,8 @@ local log = require "log"
 local utils = require "st.utils"
 local matter_driver_template = {}
 local embedded_cluster_utils = require "embedded_cluster_utils"
-
 local version = require "version"
 
--- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.EnergyEvse = require "EnergyEvse"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
@@ -23,8 +35,8 @@ local SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP = "__supported_device_energy_
 local RECURRING_REPORT_POLL_TIMER = "__recurring_report_poll_timer"
 local RECURRING_POLL_TIMER = "__recurring_poll_timer"
 local LAST_REPORTED_TIME = "__last_reported_time"
-local TOTAL_CUMULATIVE_ENERGY_IMPORTED =
-"__total_cumulative_energy_imported" -- total in case there are multiple electrical sensors
+-- total in case there are multiple electrical sensors
+local TOTAL_CUMULATIVE_ENERGY_IMPORTED = "__total_cumulative_energy_imported"
 
 local TIMER_REPEAT = (1 * 60)        -- 1 minute
 local REPORT_TIMEOUT = (15 * 60)     -- Report the value each 15 minutes
@@ -47,8 +59,9 @@ local function component_to_endpoint(device, component)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
+  else
+    return device.MATTER_DEFAULT_ENDPOINT
   end
-  return device.MATTER_DEFAULT_ENDPOINT
 end
 
 local function get_endpoints_for_dt(device, device_type)
@@ -262,7 +275,7 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-energy-mgmt-mode"
   end
 
-  log.info_with({ hub_logs = true }, "Updating device profile to " .. profile_name)
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({ profile = profile_name })
 end
 
@@ -411,8 +424,7 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
 end
 
 local function energy_evse_mode_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
+  device.log.info(string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
 
   local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
   local supportedEvseModes = supportedEvseModesMap[ib.endpoint_id] or {}
@@ -439,8 +451,7 @@ local function device_energy_mgmt_supported_modes_attr_handler(driver, device, i
 end
 
 local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
+  device.log.info(string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
 
   local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
   local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] or {}
@@ -497,7 +508,7 @@ local handle_set_charging_parameters = function(cap, arg)
       log.warn_with({hub_logs=true}, "Clipping Max Current as it cannot be greater than 80A")
     end
     local capability_event = cap(cmd.args[arg])
-    log.info_with({hub_logs=true}, "Setting value " .. (cmd.args[arg]) .. " for".. (cap.NAME))
+    log.info("Setting value " .. (cmd.args[arg]) .. " for".. (cap.NAME))
     device:emit_event(capability_event)
   end
 end
@@ -623,6 +634,5 @@ matter_driver_template = {
 }
 
 local matter_driver = MatterDriver("matter-evse", matter_driver_template)
-log.info_with({ hub_logs = true },
-  string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
+log.info(string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()

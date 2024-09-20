@@ -1,3 +1,17 @@
+-- Copyright 2024 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
@@ -55,15 +69,13 @@ local function get_last_set_cooking_parameters(device)
 end
 
 local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("operational_state_accepted_command_list_attr_handler: %s", ib.data.elements))
+  log.info(string.format("operational_state_accepted_command_list_attr_handler: %s", ib.data.elements))
 
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
     if OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id] then
-      log.info_with({ hub_logs = true },
-        string.format("AcceptedCommand: %s => %s", accepted_command_id,
+      log.info(string.format("AcceptedCommand: %s => %s", accepted_command_id,
           OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
@@ -73,8 +85,7 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
+  log.info(string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
 
   local supported_mode = {}
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
@@ -95,8 +106,7 @@ local function operational_error_attr_handler(driver, device, ib, response)
   if version.api < 10 then
     clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
   end
-  log.info_with({ hub_logs = true },
-    string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
+  log.info(string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
   local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
@@ -119,7 +129,7 @@ local function microwave_oven_supported_modes_handler(driver, device, ib, respon
     if version.api < 11 then
       clusters.MicrowaveOvenMode.types.ModeOptionStruct:augment_type(mode)
     end
-    log.info_with({hub_logs=true},"Inserting supported microwave mode:", mode.elements.label.value)
+    log.info("Inserting supported microwave mode:", mode.elements.label.value)
     table.insert(microwaveOvenModeSupportedModes, mode.elements.label.value)
   end
   local event = capabilities.mode.supportedModes(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
@@ -130,8 +140,7 @@ local function microwave_oven_supported_modes_handler(driver, device, ib, respon
 end
 
 local function microwave_oven_current_mode_handler(driver, device, ib, response)
-  log.info_with({ hub_logs = true },
-    string.format("microwave_oven_current_mode_handler currentMode: %s", ib.data.value))
+  log.info(string.format("microwave_oven_current_mode_handler currentMode: %s", ib.data.value))
 
   local currentMode = ib.data.value
   local microwaveOvenModeSupportedModes = device:get_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY) or {}
@@ -191,8 +200,7 @@ local function handle_operational_state_pause(driver, device, cmd)
 end
 
 local function handle_microwave_oven_mode(driver, device, cmd)
-  log.info_with({ hub_logs = true },
-    string.format("microwave_oven_mode[%s] mode: %s", cmd.component, cmd.args.mode))
+  log.info(string.format("microwave_oven_mode[%s] mode: %s", cmd.component, cmd.args.mode))
   local microwaveOvenModeSupportedModes = device:get_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY) or {}
   for i, mode in ipairs(microwaveOvenModeSupportedModes) do
     if cmd.args.mode == mode then

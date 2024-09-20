@@ -1,12 +1,14 @@
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
+local version = require "version"
 
---These clusters are not available in lua_libs-v10
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-clusters.EnergyEvse = require "EnergyEvse"
-clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.EnergyEvseMode = require "EnergyEvseMode"
+if version.api < 11 then
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.EnergyEvse = require "EnergyEvse"
+  clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.EnergyEvseMode = require "EnergyEvseMode"
+end
 
 local embedded_cluster_utils = {}
 

@@ -238,11 +238,10 @@ end
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    device.log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
   end
-  device.log.info_with({ hub_logs = true },
-    string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
+  device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
   local min = device:get_field(setpoint_limit_device_field.MIN_TEMP) or 0
   local max = device:get_field(setpoint_limit_device_field.MAX_TEMP) or 100
@@ -261,7 +260,7 @@ local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
     local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
     if #tn_eps == 0 then
-      device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      device.log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_NUMBER feature"))
       return
     end
     local val = ib.data.value / 100.0
@@ -286,11 +285,10 @@ end
 local function handle_temperature_setpoint(driver, device, cmd)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    device.log.warn_with({hub_logs = true}, string.format("Device does not support TEMPERATURE_NUMBER feature"))
     return
   end
-  device.log.info_with({ hub_logs = true },
-    string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
+  device.log.info(string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
 
   local value = cmd.args.setpoint
   local _, temp_setpoint = device:get_latest_state(
@@ -369,5 +367,5 @@ local matter_driver_template = {
 }
 
 local matter_driver = MatterDriver("matter-appliance", matter_driver_template)
-log.info_with({hub_logs=true}, string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
+log.info(string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()
