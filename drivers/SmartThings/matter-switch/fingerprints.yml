@@ -207,6 +207,11 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0007
     deviceProfileName: plug-binary
+  - id: "4129/5"
+    deviceLabel: Radiant Smart Switch
+    vendorId: 0x1021
+    productId: 0x0005
+    deviceProfileName: switch-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
