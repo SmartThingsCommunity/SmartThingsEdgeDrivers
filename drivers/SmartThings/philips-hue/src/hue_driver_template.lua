@@ -19,7 +19,7 @@ local utils = require "utils"
 ---@param device HueDevice
 local function _remove(driver, device)
   driver.datastore.dni_to_device_id[device.device_network_id] = nil
-  if device:get_field(Fields.DEVICE_TYPE) == "bridge" then
+  if utils.determine_device_type(device) == "bridge" then
     local api_instance = device:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
     if api_instance then
       api_instance:shutdown()
