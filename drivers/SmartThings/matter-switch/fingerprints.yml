@@ -11,6 +11,12 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+#ELEGRP
+  - id: "5158/3"
+    deviceLabel: ELEGRP Smart Mini Plug
+    vendorId: 0x1426
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -201,6 +207,11 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0007
     deviceProfileName: plug-binary
+  - id: "4129/5"
+    deviceLabel: Radiant Smart Switch
+    vendorId: 0x1021
+    productId: 0x0005
+    deviceProfileName: switch-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
