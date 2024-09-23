@@ -78,7 +78,7 @@ local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
+    [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
     [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled
@@ -97,6 +97,16 @@ local function handle_battery_percent_remaining(driver, device, ib, response)
   end
 end
 
+local function handle_battery_charge_level(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
 local function max_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
 end
@@ -110,8 +120,8 @@ local function num_pin_users_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
 end
 
-local function require_remote_pin_handler(driver, device, ib, response)
-  if ib.data.value then
+local function apply_cota_credentials_if_absent(device)
+  if not device:get_field(lock_utils.COTA_CRED) then
     --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
     device.thread:call_with_delay(0, function(t)
       generate_cota_cred_for_device(device)
@@ -121,6 +131,12 @@ local function require_remote_pin_handler(driver, device, ib, response)
         set_cota_credential(device, INITIAL_COTA_INDEX)
       end)
     end)
+  end
+end
+
+local function require_remote_pin_handler(driver, device, ib, response)
+  if ib.data.value then
+    apply_cota_credentials_if_absent(device)
   else
     device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
@@ -292,24 +308,10 @@ end
 local function alarm_event_handler(driver, device, ib, response)
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
-  if device:supports_capability(capabilities.lockAlarm) then
-    if alarm_code.value == DlAlarmCode.LOCK_JAMMED then
-      device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor())
-    elseif alarm_code.value == DlAlarmCode.LOCK_FACTORY_RESET then
-      device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset())
-    elseif alarm_code.value == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT then
-      device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded())
-    elseif alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED then
-      device:emit_event(capabilities.lockAlarm.alarm.damaged())
-    elseif alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
-      device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt())
-    end
-  elseif device:supports_capability(capabilities.tamperAlert) then
-    if alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED or alarm_code.value
-      == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT or alarm_code.value == DlAlarmCode.FORCED_USER
-      or alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
-      device:emit_event(capabilities.tamperAlert.tamper.detected())
-    end
+  if alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED or alarm_code.value
+    == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT or alarm_code.value == DlAlarmCode.FORCED_USER
+    or alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
+    device:emit_event(capabilities.tamperAlert.tamper.detected())
   end
 end
 
@@ -384,9 +386,7 @@ end
 local function handle_refresh(driver, device, command)
   -- Note: no endpoint specified indicates a wildcard endpoint
   local req = DoorLock.attributes.LockState:read(device)
-  if device:supports_capability(capabilities.battery) then
-    req:merge(PowerSource.attributes.BatPercentRemaining:read(device))
-  end
+  req:merge(PowerSource.attributes.BatPercentRemaining:read(device))
   device:send(req)
 end
 
@@ -519,13 +519,26 @@ end
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+
+  -- check if we have a missing COTA credential. Only run this if it has not been run before (i.e. in device added),
+  -- because there is a delay built into the COTA process and we do not want to start two COTA generations at the same time
+  -- in the event this was triggered on add.
+  if not device:get_field(lock_utils.COTA_READ_INITIALIZED) or not device:get_field(lock_utils.COTA_CRED) then
+    local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+    if #eps == 0 then
+      device.log.debug("Device will not require PIN for remote operation")
+      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+    else
+      device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
+    end
+  end
  end
 
 local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
   --Note: May want to write RequirePINForRemoteOperation, to avoid cota cases if possible.
   device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.lockAlarm.alarm.clear())
   local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
   if #eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
@@ -534,9 +547,7 @@ local function device_added(driver, device)
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
     end
-  -- some devices may have lock codes functionality, but may not support it in their profile
-  -- intentionally, so only run this if device supports lockCodes in profile.
-  elseif device:supports_capability(capabilities.lockCodes) then
+  else
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(DoorLock.attributes.MaxPINCodeLength:read(device, eps[1]))
     req:merge(DoorLock.attributes.MinPINCodeLength:read(device, eps[1]))
@@ -554,6 +565,7 @@ local function device_added(driver, device)
       device:set_field(lock_utils.COTA_CRED, false, {persist = true})
     else
       req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
     end
     device:send(req)
   end
@@ -571,6 +583,7 @@ local matter_lock_driver = {
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
+        [PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
       },
     },
     event = {
@@ -591,6 +604,7 @@ local matter_lock_driver = {
   subscribed_attributes = {
     [capabilities.lock.ID] = {DoorLock.attributes.LockState},
     [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
+    [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
@@ -616,6 +630,10 @@ local matter_lock_driver = {
     capabilities.lockCodes,
     capabilities.tamperAlert,
     capabilities.battery,
+    capabilities.batteryLevel,
+  },
+  sub_drivers = {
+    require("aqara-lock"),
   },
   lifecycle_handlers = {init = device_init, added = device_added},
 }

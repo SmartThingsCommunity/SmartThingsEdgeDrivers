@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Min and max temperature attributes do not set capability constraint when RPC version is less than 4",
+  "Min and max temperature attributes do not set capability constraint when RPC version is less than 5",
   {
     {
       channel = "matter",
