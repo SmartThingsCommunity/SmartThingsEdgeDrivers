@@ -1,0 +1,21 @@
+name: fan-rock-wind
+components:
+- id: main
+  capabilities:
+  - id: airConditionerFanMode
+    version: 1
+  - id: fanSpeedPercent
+    version: 1
+  - id: fanOscillationMode
+    version: 1
+  - id: windMode
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Fan
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-fan-rock-wind

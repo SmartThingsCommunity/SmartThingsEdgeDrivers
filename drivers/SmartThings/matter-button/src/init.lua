@@ -1,3 +1,10 @@
+-- As of September 2024, the matter-button driver has been deprecated in favor of being integrated into the matter-switch
+-- driver. All functionality and test cases present in this driver were carried over into matter-switch. Therefore,
+-- we are no longer accepting bug fixes or feature enhancements such as fingerprint adds to this driver.
+-- Note that this change won't affect devices using the button driver unless they are re-onboarded, in which case
+-- they would onboard to the switch driver, as all button fingerprints were removed from this driver and moved to
+-- the switch driver.
+
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.generated.zap_clusters"
@@ -9,7 +16,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_PROFILE_SUPPORTED = {2, 4, 6, 8}
+local STATIC_PROFILE_SUPPORTED = {2, 4, 5, 6, 8}
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"

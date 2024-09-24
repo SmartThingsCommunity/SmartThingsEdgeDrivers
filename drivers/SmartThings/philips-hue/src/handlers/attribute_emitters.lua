@@ -270,7 +270,7 @@ end
 
 local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
-  local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
+  local device_type = (device and utils.determine_device_type(device)) or "Unknown Device Type"
   log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 

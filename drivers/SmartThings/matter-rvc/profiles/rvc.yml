@@ -25,3 +25,6 @@ components:
         version: 1
     categories:
     - name: RobotCleaner
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-rvc
