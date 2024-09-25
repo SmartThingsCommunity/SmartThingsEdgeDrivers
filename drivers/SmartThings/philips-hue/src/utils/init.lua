@@ -17,6 +17,7 @@ function utils.lazy_handler_loader(parent_module)
     {},
     {
       __index = function(tbl, key)
+        if key == nil then return nil end
         if nils[key] then return nil end
         if rawget(tbl, key) == nil then
           local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
