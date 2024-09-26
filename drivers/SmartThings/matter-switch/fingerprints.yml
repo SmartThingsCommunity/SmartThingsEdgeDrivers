@@ -180,6 +180,12 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+#Ledvance
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
   - id: "4921/64"
     deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
