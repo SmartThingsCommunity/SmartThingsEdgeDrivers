@@ -156,13 +156,8 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
-  local unit = device:get_field(CURRENT_CONFIGURED_UNIT) or "C"
+  local unit = "C"
   local temp = ib.data.value / 100.0
-  if unit == "F" then
-    min = utils.c_to_f(min)
-    max = utils.c_to_f(max)
-    temp = utils.c_to_f(temp)
-  end
   local range = {
     minimum = min,
     maximum = max,
@@ -188,7 +183,7 @@ local function setpoint_limit_handler(limit_field)
 
     -- We clamp the max and min values as per the assumed oven temperature ranges.
     if val < OVEN_MIN_TEMP_IN_C or val > OVEN_MAX_TEMP_IN_C then
-      if limit_field == "MIN_TEMP" then
+      if limit_field == setpoint_limit_device_field.MIN_TEMP then
         val = OVEN_MIN_TEMP_IN_C
       else
         val = OVEN_MAX_TEMP_IN_C
@@ -235,21 +230,8 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
-  local unit = "C"
-  if value <= OVEN_MAX_TEMP_IN_C then
-    device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
-    if temp_setpoint.unit == "F" then
-      temp_setpoint.value = utils.f_to_c(temp_setpoint.value)
-      temp_setpoint.unit = unit
-    end
-  else
-    unit = "F"
-    device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
+  if value > OVEN_MAX_TEMP_IN_C then
     value = utils.f_to_c(value)
-    if temp_setpoint.unit == "C" then
-      temp_setpoint.value = utils.c_to_f(temp_setpoint.value)
-      temp_setpoint.unit = unit
-    end
   end
   if value < min or value > max then
     log.warn(string.format(
