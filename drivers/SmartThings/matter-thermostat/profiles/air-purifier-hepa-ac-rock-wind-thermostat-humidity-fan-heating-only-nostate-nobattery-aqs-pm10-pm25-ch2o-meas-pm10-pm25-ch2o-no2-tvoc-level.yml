@@ -1,4 +1,4 @@
-name: air-purifier-hepa-ac-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level
+name: air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level
 components:
 - id: main
   label: Main
@@ -6,6 +6,8 @@ components:
   - id: airPurifierFanMode
     version: 1
   - id: fanSpeedPercent
+    version: 1
+  - id: fanOscillationMode
     version: 1
   - id: windMode
     version: 1

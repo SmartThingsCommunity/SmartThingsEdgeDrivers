@@ -1,4 +1,21 @@
 matterManufacturer:
+#Aqara
+  - id: "4447/10242"
+    deviceLabel: Aqara Smart Lock U200
+    vendorId: 0x115F
+    productId: 0x2802
+    deviceProfileName: lock-lockalarm-nobattery
+  - id: "4447/10241"
+    deviceLabel: Aqara Smart Lock U300
+    vendorId: 0x115F
+    productId: 0x2801
+    deviceProfileName: lock-lockalarm-nobattery
+#Level
+  - id: "4767/1"
+    deviceLabel: Level Lock Plus (Matter)
+    vendorId: 0x129F
+    productId: 0x0001
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
 #Nuki
   - id: "Nuki Smart Lock Pro"
     deviceLabel: Nuki Smart Lock Pro
@@ -10,12 +27,6 @@ matterManufacturer:
     vendorId: 0x135d
     productId: 0xb0
     deviceProfileName: lock-nocodes-notamper
-#Aqara
-  - id: "4447/10242"
-    deviceLabel: Aqara Smart Lock U200
-    vendorId: 0x115F
-    productId: 0x2802
-    deviceProfileName: lock-lockalarm-nobattery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

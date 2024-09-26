@@ -46,6 +46,38 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_configure = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("room-air-conditioner.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+        endpoint_id = 1,
+        clusters = {
+          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
+          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+          {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
+          {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+          {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        },
+        device_types = {
+          {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
+        }
+      }
+  }
+})
+
 local function test_init()
   local subscribed_attributes = {
     [capabilities.switch.ID] = {
@@ -54,6 +86,8 @@ local function test_init()
     [capabilities.temperatureMeasurement.ID] = {
       clusters.Thermostat.attributes.LocalTemperature,
       clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -66,10 +100,14 @@ local function test_init()
       clusters.Thermostat.attributes.ThermostatRunningState
     },
     [capabilities.thermostatCoolingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedCoolingSetpoint
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
     },
     [capabilities.thermostatHeatingSetpoint.ID] = {
-      clusters.Thermostat.attributes.OccupiedHeatingSetpoint
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
       clusters.FanControl.attributes.FanMode
@@ -96,6 +134,78 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
+
+local function test_init_configure()
+  local subscribed_attributes = {
+    [capabilities.switch.ID] = {
+      clusters.OnOff.attributes.OnOff
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.Thermostat.attributes.LocalTemperature,
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.thermostatMode.ID] = {
+      clusters.Thermostat.attributes.SystemMode,
+      clusters.Thermostat.attributes.ControlSequenceOfOperation
+    },
+    [capabilities.thermostatOperatingState.ID] = {
+      clusters.Thermostat.attributes.ThermostatRunningState
+    },
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
+    },
+    [capabilities.thermostatHeatingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
+    },
+    [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      clusters.FanControl.attributes.PercentCurrent
+    },
+    [capabilities.windMode.ID] = {
+      clusters.FanControl.attributes.WindSupport,
+      clusters.FanControl.attributes.WindSetting
+    },
+  }
+  local subscribe_request = nil
+  for _, attributes in pairs(subscribed_attributes) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_configure)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_configure))
+      end
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_configure.id, subscribe_request})
+
+  local read_setpoint_deadband = clusters.Thermostat.attributes.MinSetpointDeadBand:read()
+  test.socket.matter:__expect_send({mock_device_configure.id, read_setpoint_deadband})
+
+  test.mock_device.add_test_device(mock_device_configure)
+end
+
+test.register_coroutine_test(
+  "Test profile change on init for Room AC device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_configure.id, "doConfigure" })
+    mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner" })
+    mock_device_configure:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  end,
+  { test_init = test_init_configure }
+)
+
 
 test.register_message_test(
   "Test fan speed commands",
