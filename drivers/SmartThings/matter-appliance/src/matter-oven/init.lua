@@ -28,7 +28,6 @@ clusters.OvenMode = require "OvenMode"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_OVEN_MODES_MAP = "__supported_oven_modes_map_key_"
-local CURRENT_CONFIGURED_UNIT = "__current_configured_unit"
 
 local OVEN_DEVICE_ID = 0x007B
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
@@ -85,7 +84,6 @@ local function device_init(driver, device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_field(CURRENT_CONFIGURED_UNIT, "C")
 end
 
 local function device_added(driver, device)
