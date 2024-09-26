@@ -18,9 +18,15 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
 
+local version = require "version"
+if version.api < 10 then
+  clusters.DoorLock = require "DoorLock"
+end
+
 local DoorLock = clusters.DoorLock
 local INITIAL_COTA_INDEX = 1
 local ALL_INDEX = 0xFFFE
+
 local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
@@ -155,7 +161,7 @@ local function lock_state_handler(driver, device, ib, response)
 
   -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
   -- In this case, two events occur. To prevent this, when both functions are called,
-  -- it send the event after 1 second so that no event occurs in the lock_state_handler.  
+  -- it send the event after 1 second so that no event occurs in the lock_state_handler.
   device.thread:call_with_delay(1, function ()
     if ib.data.value ~= nil then
       device:emit_event(LOCK_STATE[ib.data.value])
@@ -242,7 +248,7 @@ local function set_cota_credential(device, credential_index)
   end
 
   device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
-  local credential = {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = credential_index}
+  local credential = {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = credential_index}
   -- Set the credential to a code
   device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, "addCota")
@@ -253,12 +259,12 @@ local function set_cota_credential(device, credential_index)
   device:send(DoorLock.server.commands.SetCredential(
     device,
     #eps > 0 and eps[1] or 1,
-    DoorLock.types.DlDataOperationType.ADD,
+    DoorLock.types.DataOperationTypeEnum.ADD,
     credential,
     device:get_field(lock_utils.COTA_CRED),
     nil, -- nil user_index creates a new user
-    DoorLock.types.DlUserStatus.OCCUPIED_ENABLED,
-    DoorLock.types.DlUserType.REMOTE_ONLY_USER
+    DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED,
+    DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
   ))
 end
 
@@ -642,7 +648,7 @@ local function handle_add_user(driver, device, command)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DlDataOperationType.ADD, -- Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
       userName,         -- User Name
       nil,              -- Unique ID
       nil,              -- User Status
@@ -695,7 +701,7 @@ local function handle_update_user(driver, device, command)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DlDataOperationType.MODIFY, -- Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
       userIdx,        -- User Index
       userName,       -- User Name
       nil,            -- Unique ID
@@ -908,7 +914,7 @@ local function handle_add_credential(driver, device, command)
   device:send(
     DoorLock.server.commands.SetCredential(
       device, ep,
-      DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
       credential,     -- Credential
       credData,       -- Credential Data
       userIdx,        -- User Index
@@ -961,7 +967,7 @@ local function handle_update_credential(driver, device, command)
   device:send(
     DoorLock.server.commands.SetCredential(
       device, ep,
-      DoorLock.types.DlDataOperationType.MODIFY, -- Data Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Data Operation Type: Add(0), Modify(2)
       credential,  -- Credential
       credData,    -- Credential Data
       userIdx,     -- User Index
@@ -994,6 +1000,9 @@ local function set_credential_response_handler(driver, device, ib, response)
     -- If user is added also, update User table
     if userIdx == nil then
       local userType = device:get_field(lock_utils.USER_TYPE)
+      if userType == "remote" then
+        userType = "adminMember"
+      end
       add_user_to_table(device, elements.user_index.value, userType)
     end
 
@@ -1062,7 +1071,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     -- Get parameters
     local credIdx = elements.next_credential_index.value
     local credential = {
-      credential_type = DoorLock.types.DlCredentialType.PIN,
+      credential_type = DoorLock.types.CredentialTypeEnum.PIN,
       credential_index = credIdx,
     }
     local userIdx = device:get_field(lock_utils.USER_INDEX)
@@ -1071,7 +1080,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     if userType == "guest" then
       userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
     elseif userType == "remote" then
-      userTypeMatter = DoorLock.types.DlUserType.REMOTE_ONLY_USER
+      userTypeMatter = DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
     end
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
@@ -1081,7 +1090,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetCredential(
         device, ep,
-        DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+        DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
         credential,    -- Credential
         credData,      -- Credential Data
         userIdx,       -- User Index
@@ -1114,7 +1123,7 @@ local function handle_delete_credential(driver, device, command)
   local cmdName = "deleteCredential"
   local credIdx = command.args.credentialIndex
   local credential = {
-    credential_type = DoorLock.types.DlCredentialType.PIN,
+    credential_type = DoorLock.types.CredentialTypeEnum.PIN,
     credential_index = credIdx,
   }
 
@@ -1153,7 +1162,7 @@ local function handle_delete_all_credentials(driver, device, command)
   -- Get parameters
   local cmdName = "deleteAllCredentials"
   local credential = {
-    credential_type = DoorLock.types.DlCredentialType.PIN,
+    credential_type = DoorLock.types.CredentialTypeEnum.PIN,
     credential_index = ALL_INDEX,
   }
 
@@ -1377,7 +1386,7 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   if status == "success" then
     delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   end
-  
+
   -- Update commandResult
   local result = {
     commandName = cmdName,
@@ -1434,7 +1443,7 @@ local function lock_op_event_handler(driver, device, ib, response)
   local opType = ib.data.elements.lock_operation_type
   local opSource = ib.data.elements.operation_source
   local userIdx = ib.data.elements.user_index
-  local fabricId = ib.data.elements.fabric_index
+  -- TODO: This handler can check fabric index and exclude other fabric events
 
   if opType == nil or opSource == nil then
     return
@@ -1479,73 +1488,12 @@ local function lock_op_event_handler(driver, device, ib, response)
     opSource =nil
   end
 
-  if fabricId ~= nil then
-    fabricId = fabricId.value
-  end
-
   if userIdx ~= nil then
     userIdx = userIdx.value
   end
 
   local data_obj = {method = opSource, userIndex = userIdx}
   device:emit_event(opType({data = data_obj, state_change = true}))
-end
-
-----------------------
--- Lock User Change --
-----------------------
-local function lock_user_change_event_handler(driver, device, ib, response)
-  local lockDataType = ib.data.elements.lock_data_type
-  local dataOpType = ib.data.elements.data_operation_type
-  local opSource = ib.data.elements.operation_source
-  local userIdx = ib.data.elements.user_index
-  local fabricId = ib.data.elements.fabric_index
-
-  if lockDataType ~= nil then
-    lockDataType = lockDataType.value
-  end
-
-  if dataOpType ~= nil then
-    dataOpType = dataOpType.value
-  end
-
-  local Source = DoorLock.types.OperationSourceEnum
-  if opSource.value == Source.UNSPECIFIED then
-    opSource = nil
-  elseif opSource.value == Source.MANUAL then
-    opSource = "manual"
-  elseif opSource.value == Source.PROPRIETARY_REMOTE then
-    opSource = "proprietaryRemote"
-  elseif opSource.value == Source.KEYPAD then
-    opSource = "keypad"
-  elseif opSource.value == Source.AUTO then
-    opSource = "auto"
-  elseif opSource.value == Source.BUTTON then
-    opSource = "button"
-  elseif opSource.value == Source.SCHEDULE then
-    opSource = nil
-  elseif opSource.value == Source.REMOTE then
-    opSource = "command"
-  elseif opSource.value == Source.RFID then
-    opSource = "rfid"
-  elseif opSource.value == Source.BIOMETRIC then
-    opSource = "keypad"
-  elseif opSource.value == Source.ALIRO then
-    opSource = nil
-  else
-    opSource =nil
-  end
-
-  if userIdx ~= nil then
-    userIdx = userIdx.value
-  end
-
-  if fabricId ~= nil then
-    fabricId = fabricId.value
-  end
-
-  -- local data_obj = {method = opSource, userIndex = userIdx}
-  -- device:emit_event(opType({data = data_obj}, {state_change = true}))
 end
 
 local function handle_refresh(driver, device, command)
@@ -1580,7 +1528,6 @@ local new_matter_lock_handler = {
       [DoorLock.ID] = {
         [DoorLock.events.DoorLockAlarm.ID] = alarm_event_handler,
         [DoorLock.events.LockOperation.ID] = lock_op_event_handler,
-        [DoorLock.events.LockUserChange.ID] = lock_user_change_event_handler,
       },
     },
     cmd_response = {
