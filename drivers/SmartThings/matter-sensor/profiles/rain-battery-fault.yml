@@ -4,6 +4,8 @@ components:
   capabilities:
   - id: rainSensor
     version: 1
+  - id: battery
+    version: 1
   - id: hardwareFault
     version: 1
   - id: firmwareUpdate

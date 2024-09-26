@@ -47,7 +47,6 @@ if version.api < 11 then
   clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 end
 
-local MIN_SENSITIVITY_LEVEL = 0
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
@@ -194,12 +193,14 @@ local function info_changed(driver, device, event, args)
     if dt_ep and info.sensitivity_preference and (device.preferences[info.sensitivity_preference] ~= args.old_st_store.preferences[info.sensitivity_preference]) then
       local sensitivity_preference = device.preferences[info.sensitivity_preference]
       if sensitivity_preference == "2" then -- high
-        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, device:get_field(info.sensitivity_max) - 1))
+        local max_sensitivity_level = device:get_field(info.sensitivity_max) - 1
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, max_sensitivity_level))
       elseif sensitivity_preference == "1" then -- medium
         local medium_sensitivity_level = math.floor((device:get_field(info.sensitivity_max) + 1) / 2)
         device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, medium_sensitivity_level))
       elseif sensitivity_preference == "0" then -- low
-        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, MIN_SENSITIVITY_LEVEL))
+        local min_sensitivity_level = 0
+        device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, dt_ep, min_sensitivity_level))
       end
     end
   end

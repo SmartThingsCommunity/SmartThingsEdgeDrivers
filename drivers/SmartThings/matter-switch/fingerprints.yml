@@ -2374,9 +2374,10 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
-  - id: "matter/electrical-sensor"
-    deviceLabel: Matter Electrical Sensor
+  - id: "matter/on-off/plug/electrical-sensor"
+    deviceLabel: Matter OnOff Plug
     deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
       - id: 0x0510 # Electrical Sensor
     deviceProfileName: plug-power-energy-powerConsumption
   - id: "matter/water-valve"

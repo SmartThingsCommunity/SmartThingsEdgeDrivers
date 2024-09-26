@@ -171,7 +171,7 @@ end
 
 -- Return an ISO-8061 timestamp in UTC
 local function iso8061Timestamp(time)
-  return os.date("!%Y-%m-%dT%TZ", time)
+  return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
 
 local function delete_export_poll_schedule(device)
