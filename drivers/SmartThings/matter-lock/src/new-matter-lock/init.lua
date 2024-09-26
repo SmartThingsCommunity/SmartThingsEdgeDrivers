@@ -21,12 +21,22 @@ local lock_utils = require "lock_utils"
 local aliroSettingId = "moon.aliroSetting"
 local aliroSetting = capabilities[aliroSettingId]
 
+local version = require "version"
+if version.api < 10 then
+  clusters.DoorLock = require "DoorLock"
+end
+
 local DoorLock = clusters.DoorLock
 local INITIAL_COTA_INDEX = 1
 local ALL_INDEX = 0xFFFE
+
 local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
+  {0x1533, 0x0001}, -- eufy, Smart Lock E31
+  {0x1533, 0x0002}, -- eufy, Smart Lock E30
+  {0x1533, 0x0003}, -- eufy, Smart Lock C34
+  {0xFFF2, 0x8002}, -- Solity, MT-100C
   {0x10E1, 0x2002} -- VDA
 }
 
@@ -102,15 +112,59 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! device_added !!!!!!!!!!!!!")) -- needs to remove
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
  end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+
+  -- device:send(
+  --   DoorLock.server.commands.SetAliroReaderConfig(
+  --     device, ep,
+  --     "12345678901234567890123456789012", -- Signing key
+  --     "12345678901234567890123456789012345678901234567890123456789012345", -- Verification key
+  --     "1234567890123456",    -- Group identification
+  --     nil
+  --   )
+  -- )
+
+  -- local cmdName = "setAliroCredential"
+  -- local userIdx = 1
+  -- local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+  -- local credential = {
+  --   credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+  --   credential_index = INITIAL_COTA_INDEX
+  -- }
+  -- local issuerKey = "12345678901234567890123456789012345678901234567890123456789012345"
+  -- local evictableEndpointKey = "12345678901234567890123456789012345678901234567890123456789012345"
+
+  -- -- Save values to field
+  -- device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  -- device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  -- device:set_field(lock_utils.CRED_INDEX, INITIAL_COTA_INDEX, {persist = true})
+  -- device:set_field(lock_utils.CRED_DATA, issuerKey, {persist = true})
+  -- device:set_field(lock_utils.EVICTABLE_ENDPOINT_KEY, evictableEndpointKey, {persist = true})
+
+  -- -- Send command
+  -- local ep = device:component_to_endpoint(command.component)
+  -- device:send(
+  --   DoorLock.server.commands.SetCredential(
+  --     device, ep,
+  --     DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
+  --     credential,     -- Credential
+  --     issuerKey,      -- Credential Data
+  --     userIdx,        -- User Index
+  --     nil,            -- User Status
+  --     userTypeMatter  -- User Type
+  --   )
+  -- )
 end
 
 local function do_configure(driver, device)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! do_configure !!!!!!!!!!!!!")) -- needs to remove
+
   local user_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.USER})
   local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.PIN_CREDENTIAL})
   local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
@@ -128,7 +182,7 @@ local function do_configure(driver, device)
   else
     profile_name = "base-lock"
   end
-  device.log.info(string.format("Updating device profile to %s.", profile_name))
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
 
@@ -155,25 +209,33 @@ end
 -- Lock State --
 ----------------
 local function lock_state_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_state_handler !!!!!!!!!!!!!")) -- needs to remove
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
     [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
-    [LockState.LOCKED] = attr.locked({visibility = {displayed = false}}),
-    [LockState.UNLOCKED] = attr.unlocked({visibility = {displayed = false}}),
+    [LockState.LOCKED] = attr.locked(),
+    [LockState.UNLOCKED] = attr.unlocked(),
   }
 
-  if ib.data.value ~= nil then
-    device:emit_event(LOCK_STATE[ib.data.value])
-  else
-    device:emit_event(attr.unknown())
-  end
+  -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
+  -- In this case, two events occur. To prevent this, when both functions are called,
+  -- it send the event after 1 second so that no event occurs in the lock_state_handler.
+  device.thread:call_with_delay(1, function ()
+    if ib.data.value ~= nil then
+      device:emit_event(LOCK_STATE[ib.data.value])
+    else
+      device:emit_event(attr.unknown())
+    end
+  end)
 end
 
 ---------------------
 -- Operating Modes --
 ---------------------
 local function operating_modes_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! operating_modes_handler!!!!!!!!!!!!!")) -- needs to remove
+
   local status = capabilities.remoteControlStatus.remoteControlEnabled
   local op_type = DoorLock.types.OperatingModeEnum
   local opMode_map = {
@@ -197,6 +259,7 @@ end
 -- Number Of Total Users Supported --
 -------------------------------------
 local function total_users_supported_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! total_users_supported_handler: %d !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockUsers.totalUsersSupported(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -204,6 +267,7 @@ end
 -- Number Of PIN User Supported --
 ----------------------------------
 local function pin_users_supported_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! pin_users_supported_handler: %d !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockCredentials.pinUsersSupported(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -211,6 +275,7 @@ end
 -- Min PIN Code Length --
 -------------------------
 local function min_pin_code_len_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! min_pin_code_len_handler: %d !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockCredentials.minPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -218,6 +283,7 @@ end
 -- Max PIN Code Length --
 -------------------------
 local function max_pin_code_len_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_pin_code_len_handler: %d !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockCredentials.maxPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -248,22 +314,23 @@ local function set_cota_credential(device, credential_index)
   end
 
   device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
-  local credential = {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = credential_index}
+  local credential = {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = credential_index}
   -- Set the credential to a code
-  device:set_field(lock_utils.COMMAND_NAME, "addCredential")
+  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  device:set_field(lock_utils.COMMAND_NAME, "addCota")
   device:set_field(lock_utils.CRED_INDEX, credential_index)
   device:set_field(lock_utils.SET_CREDENTIAL, credential_index)
-  device:set_field(lock_utils.USER_TYPE, "adminMember")
+  device:set_field(lock_utils.USER_TYPE, "remote")
   device.log.info(string.format("Attempting to set COTA credential at index %s", credential_index))
   device:send(DoorLock.server.commands.SetCredential(
     device,
     #eps > 0 and eps[1] or 1,
-    DoorLock.types.DlDataOperationType.ADD,
+    DoorLock.types.DataOperationTypeEnum.ADD,
     credential,
     device:get_field(lock_utils.COTA_CRED),
     nil, -- nil user_index creates a new user
-    DoorLock.types.DlUserStatus.OCCUPIED_ENABLED,
-    DoorLock.types.DlUserType.REMOTE_ONLY_USER
+    DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED,
+    DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
   ))
 end
 
@@ -271,6 +338,7 @@ local function generate_cota_cred_for_device(device)
   local len = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.maxPinCodeLen.NAME) or 6
   local cred_data = math.floor(math.random() * (10 ^ len))
   cred_data = string.format("%0" .. tostring(len) .. "d", cred_data)
+  log.info_with({hub_logs=true}, string.format("cota_cred: %s", cred_data))
   device:set_field(lock_utils.COTA_CRED, cred_data, {persist = true})
 end
 
@@ -289,6 +357,7 @@ local function apply_cota_credentials_if_absent(device)
 end
 
 local function require_remote_pin_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! require_remote_pin_handler: %s !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   if ib.data.value then
     apply_cota_credentials_if_absent(device)
   else
@@ -300,6 +369,7 @@ end
 -- Number Of Week Day Schedules Supported Per User --
 -----------------------------------------------------
 local function max_week_schedule_of_user_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_week_schedule_of_user_handler: %s !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockSchedules.weekDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -307,6 +377,7 @@ end
 -- Number Of Year Day Schedules Supported Per User --
 -----------------------------------------------------
 local function max_year_schedule_of_user_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_year_schedule_of_user_handler: %s !!!!!!!!!!!!!", ib.data.value)) -- needs to remove
   device:emit_event(capabilities.lockSchedules.yearDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
@@ -315,8 +386,10 @@ end
 -- Lock/Unlock --
 -----------------
 local function handle_lock(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_lock !!!!!!!!!!!!!")) -- needs to remove
   local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  log.info_with({hub_logs=true}, string.format("cota_cred: %s", cota_cred))
   if cota_cred then
     device:send(
       DoorLock.server.commands.LockDoor(device, ep, cota_cred)
@@ -324,20 +397,13 @@ local function handle_lock(driver, device, command)
   else
     device:send(DoorLock.server.commands.LockDoor(device, ep))
   end
-
-  device:send(
-    DoorLock.server.commands.SetAliroReaderConfig(
-      device, ep,
-      "privateKey", -- Signing key
-      "publickKey", -- Verification key
-      "groupId"     -- Group identification
-    )
-  )
 end
 
 local function handle_unlock(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_unlock !!!!!!!!!!!!!")) -- needs to remove
   local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  log.info_with({hub_logs=true}, string.format("cota_cred: %s", cota_cred)) -- needs to remove
   if cota_cred then
     device:send(
       DoorLock.server.commands.UnlockDoor(device, ep, cota_cred)
@@ -351,6 +417,11 @@ end
 -- User Table --
 ----------------
 local function add_user_to_table(device, userIdx, usrType)
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_user_to_table !!!!!!!!!!!!!"))
+  log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("usrType: %s", usrType))
+
   -- Get latest user table
   local user_table = device:get_latest_state(
     "main",
@@ -370,6 +441,8 @@ local function add_user_to_table(device, userIdx, usrType)
 end
 
 local function update_user_in_table(device, userIdx, usrType)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! update_user_in_table !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get latest user table
   local user_table = device:get_latest_state(
     "main",
@@ -395,6 +468,7 @@ local function update_user_in_table(device, userIdx, usrType)
 end
 
 local function delete_user_from_table(device, userIdx)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! delete_user_from_table !!!!!!!!!!!!!")) -- needs to remove
   -- If User Index is ALL_INDEX, remove all entry from the table
   if userIdx == ALL_INDEX then
     device:emit_event(capabilities.lockUsers.users({}, {visibility = {displayed = false}}))
@@ -422,6 +496,8 @@ end
 -- Credential Table --
 ----------------------
 local function add_credential_to_table(device, userIdx, credIdx, credType)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_credential_to_table !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get latest credential table
   local cred_table = device:get_latest_state(
     "main",
@@ -441,6 +517,7 @@ local function add_credential_to_table(device, userIdx, credIdx, credType)
 end
 
 local function delete_credential_from_table(device, credIdx)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! delete_credential_from_table !!!!!!!!!!!!!")) -- needs to remove
   -- If Credential Index is ALL_INDEX, remove all entry from the table
   if credIdx == ALL_INDEX then
     device:emit_event(capabilities.lockCredentials.credentials({}))
@@ -469,6 +546,7 @@ local function delete_credential_from_table(device, credIdx)
 end
 
 local function delete_credential_from_table_as_user(device, userIdx)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! delete_credential_from_table_as_user !!!!!!!!!!!!!")) -- needs to remove
   -- If User Index is ALL_INDEX, remove all entry from the table
   if userIdx == ALL_INDEX then
     device:emit_event(capabilities.lockCredentials.credentials({}, {visibility = {displayed = false}}))
@@ -506,6 +584,7 @@ local WEEK_DAY_MAP = {
 }
 
 local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_week_schedule_to_table !!!!!!!!!!!!!")) -- needs to remove
 
   -- Get latest week day schedule table
   local week_schedule_table = device:get_latest_state(
@@ -528,6 +607,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
   local weekDayList = {}
   for _, weekday in ipairs(schedule.weekDays) do
     table.insert(weekDayList, weekday)
+    log.info_with({hub_logs=true}, string.format("weekDay: %s", weekday)) -- needs to remove
   end
 
   if i ~= 0 then -- Add schedule for existing user
@@ -553,6 +633,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
 
     new_week_schedule_table[i].schedules = new_schedule_table
   else -- Add schedule for new user
+    log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_week_schedule_to_table 2!!!!!!!!!!!!!")) -- needs to remove
     table.insert(
       new_week_schedule_table,
       {
@@ -573,6 +654,8 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
 end
 
 local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! delete_week_schedule_to_table !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get latest week day schedule table
   local week_schedule_table = device:get_latest_state(
     "main",
@@ -592,6 +675,7 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
 
   -- When there is no userIndex in the table
   if i == 0 then
+    log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! No userIndex in Week Day Schedule Table !!!!!!!!!!!!!", i)) -- needs to remove
     return
   end
 
@@ -605,6 +689,7 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
 
   -- If user has no schedule, remove user from the table
   if #new_schedule_table == 0 then
+    log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! No schedule for User !!!!!!!!!!!!!", i)) -- needs to remove
     table.remove(new_week_schedule_table, i)
   else
     new_week_schedule_table[i].schedules = new_schedule_table
@@ -617,6 +702,8 @@ end
 -- Add User --
 --------------
 local function handle_add_user(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_add_user !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "addUser"
   local userName = command.args.userName
@@ -650,12 +737,18 @@ local function handle_add_user(driver, device, command)
   -- device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true}) -- needs to find empty index
   device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userName: %s", userName))
+  log.info_with({hub_logs=true}, string.format("userType: %s", userType))
+  log.info_with({hub_logs=true}, string.format("userTypeMatter: %s", userTypeMatter))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DlDataOperationType.ADD, -- Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
       userName,         -- User Name
       nil,              -- Unique ID
       nil,              -- User Status
@@ -669,6 +762,8 @@ end
 -- Update User --
 -----------------
 local function handle_update_user(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_update_user !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
@@ -703,12 +798,18 @@ local function handle_update_user(driver, device, command)
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("userName: %s", userName))
+  log.info_with({hub_logs=true}, string.format("userType: %s", userType))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DlDataOperationType.MODIFY, -- Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
       userIdx,        -- User Index
       userName,       -- User Name
       nil,            -- Unique ID
@@ -723,6 +824,8 @@ end
 -- Set User Response --
 -----------------------
 local function set_user_response_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! set_user_response_handler !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
@@ -735,6 +838,12 @@ local function set_user_response_handler(driver, device, ib, response)
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
   end
+
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("userType: %s", userType))
+  log.info_with({hub_logs=true}, string.format("status: %s", status))
 
   -- Update User in table
   if status == "success" then
@@ -766,6 +875,8 @@ end
 -- Delete User --
 -----------------
 local function handle_delete_user(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_delete_user !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "deleteUser"
   local userIdx = command.args.userIndex
@@ -793,6 +904,10 @@ local function handle_delete_user(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
@@ -802,6 +917,8 @@ end
 -- Delete All Users --
 ----------------------
 local function handle_delete_all_users(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_delete_all_users !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "deleteAllUsers"
 
@@ -828,6 +945,8 @@ local function handle_delete_all_users(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, ALL_INDEX, {persist = true})
 
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName)) -- needs to remove
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(DoorLock.server.commands.ClearUser(device, ep, ALL_INDEX))
@@ -837,6 +956,8 @@ end
 -- Clear User Response --
 -------------------------
 local function clear_user_response_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! clear_user_response_handler !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
@@ -873,6 +994,8 @@ end
 -- Add Credential --
 --------------------
 local function handle_add_credential(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_add_credential !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "addCredential"
   local userIdx = command.args.userIndex
@@ -916,12 +1039,19 @@ local function handle_add_credential(driver, device, command)
   device:set_field(lock_utils.CRED_INDEX, INITIAL_COTA_INDEX, {persist = true})
   device:set_field(lock_utils.CRED_DATA, credData, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("userType: %s", userType))
+  log.info_with({hub_logs=true}, string.format("credIndex: %s", INITIAL_COTA_INDEX))
+  log.info_with({hub_logs=true}, string.format("credData: %s", credData))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
     DoorLock.server.commands.SetCredential(
       device, ep,
-      DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
       credential,     -- Credential
       credData,       -- Credential Data
       userIdx,        -- User Index
@@ -935,6 +1065,8 @@ end
 -- Update Credential --
 -----------------------
 local function handle_update_credential(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_update_credential !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "updateCredential"
   local userIdx = command.args.userIndex
@@ -969,12 +1101,18 @@ local function handle_update_credential(driver, device, command)
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("credentialIndex: %s", credIdx))
+  log.info_with({hub_logs=true}, string.format("credData: %s", credData))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
     DoorLock.server.commands.SetCredential(
       device, ep,
-      DoorLock.types.DlDataOperationType.MODIFY, -- Data Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Data Operation Type: Add(0), Modify(2)
       credential,  -- Credential
       credData,    -- Credential Data
       userIdx,     -- User Index
@@ -1038,6 +1176,14 @@ local function set_pin_response_handler(driver, device, ib, response)
   elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
     status = "failure"
   end
+  log.info_with({hub_logs=true}, string.format("Result: %s", status)) -- needs to remove
+
+  -- Error Handling
+  if status == "duplicate" then
+    generate_cota_cred_for_device(device)
+    device.thread:call_with_delay(0, function(t) set_cota_credential(device, credIdx) end)
+    return
+  end
   if status ~= "occupied" then
     local result = {
       commandName = cmdName,
@@ -1059,16 +1205,23 @@ local function set_pin_response_handler(driver, device, ib, response)
     -- Get parameters
     local credIdx = elements.next_credential_index.value
     local credential = {
-      credential_type = DoorLock.types.DlCredentialType.PIN,
+      credential_type = DoorLock.types.CredentialTypeEnum.PIN,
       credential_index = credIdx,
     }
-    local credData = device:get_field(lock_utils.CRED_DATA)
     local userIdx = device:get_field(lock_utils.USER_INDEX)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
     if userType == "guest" then
       userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+    elseif userType == "remote" then
+      userTypeMatter = DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
     end
+
+    -- needs to remove logs
+    log.info_with({hub_logs=true}, string.format("credentialIndex: %s", credIdx))
+    log.info_with({hub_logs=true}, string.format("credData: %s", credData))
+    log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+    log.info_with({hub_logs=true}, string.format("userType: %s", userType))
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
 
@@ -1077,7 +1230,7 @@ local function set_pin_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetCredential(
         device, ep,
-        DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+        DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
         credential,    -- Credential
         credData,      -- Credential Data
         userIdx,       -- User Index
@@ -1111,6 +1264,9 @@ end
 
 
 
+-----------------------
+-- Aliro Credential --
+-----------------------
 local function add_aliro_to_table(device, endpointKey)
   -- Get latest credential table
   local aliro_table = device:get_latest_state(
@@ -1156,10 +1312,8 @@ local function delete_credential_from_table(device, endpointKey)
   device:emit_event(aliroSetting.aliroEndpointKey(new_aliro_table, {visibility = {displayed = false}}))
 end
 
-
-
-
 local function set_aliro_response_handler(driver, device, ib, response)
+  local cmdName = "setAliroCredential"
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local credData = device:get_field(lock_utils.CRED_DATA)
@@ -1174,11 +1328,9 @@ local function set_aliro_response_handler(driver, device, ib, response)
       end
 
       -- Update Credential table
+      -- TODO
       local evictableEndpointKey = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
       userIdx = elements.user_index.value
-      if cmdName == "addCredential" then
-        add_credential_to_table(device, userIdx, credIdx, "pin")
-      end
 
       -- Update commandResult
       local result = {
@@ -1187,7 +1339,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
         credentialIndex = credIdx,
         statusCode = status
       }
-      local event = capabilities.lockCredentials.commandResult(
+      local event = aliroSetting.commandResult(
         result,
         {
           state_change = true,
@@ -1202,24 +1354,23 @@ local function set_aliro_response_handler(driver, device, ib, response)
       device:set_field(lock_utils.CRED_DATA, nil, {persist = true})
 
       -- Get parameters
-      local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
       local credential = {
         credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_EVICTABLE_ENDPOINT_KEY,
-        credential_index = credIdx
+        credential_index = credIdx + 1
       }
       local evictableEndpointKey = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
 
       -- Send command
-      local ep = device:component_to_endpoint(command.component)
+      local ep = find_default_endpoint(device, DoorLock.ID)
       device:send(
         DoorLock.server.commands.SetCredential(
           device, ep,
-          DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+          DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
           credential,           -- Credential
           evictableEndpointKey, -- Credential Data
           userIdx,              -- User Index
           nil,                  -- User Status
-          userTypeMatter        -- User Type
+          nil                   -- User Type
         )
       )
       return
@@ -1233,7 +1384,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
   elseif elements.status.value == DoorLock.types.DlStatus.DUPLICATE then
     status = "duplicate"
   elseif elements.status.value == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
+    status = "failure"
   elseif elements.status.value == DoorLock.types.DlStatus.RESOURCE_EXHAUSTED then
     status = "resourceExhausted"
   elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
@@ -1244,7 +1395,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
       commandName = cmdName,
       statusCode = status
     }
-    local event = capabilities.lockCredentials.commandResult(
+    local event = aliroSetting.commandResult(
       result,
       {
         state_change = true,
@@ -1263,14 +1414,12 @@ local function set_aliro_response_handler(driver, device, ib, response)
     if credData == nil then
       credType = DoorLock.types.CredentialTypeEnum.ALIRO_EVICTABLE_ENDPOINT_KEY
       credData = device:get_field(lock_utils.EVICTABLE_ENDPOINT_KEY)
-    end 
+    end
     local credential = {
       credential_type = credType,
       credential_index = credIdx
     }
     local userIdx = device:get_field(lock_utils.USER_INDEX)
-    local userType = device:get_field(lock_utils.USER_TYPE)
-    local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
 
     device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
 
@@ -1279,12 +1428,12 @@ local function set_aliro_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetCredential(
         device, ep,
-        DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+        DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
         credential,    -- Credential
         credData,      -- Credential Data
         userIdx,       -- User Index
         nil,           -- User Status
-        userTypeMatter -- User Type
+        nil            -- User Type
       )
     )
   else
@@ -1292,7 +1441,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
       commandName = cmdName,
       statusCode = "resourceExhausted" -- No more available credential index
     }
-    local event = capabilities.lockCredentials.commandResult(
+    local event = aliroSetting.commandResult(
       result,
       {
         state_change = true,
@@ -1303,36 +1452,6 @@ local function set_aliro_response_handler(driver, device, ib, response)
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 local function set_credential_response_handler(driver, device, ib, response)
   if ib.status ~= im.InteractionResponse.Status.SUCCESS then
@@ -1347,15 +1466,26 @@ local function set_credential_response_handler(driver, device, ib, response)
   end
 end
 
+
+
+
+
+
+
+
+
+
 -----------------------
 -- Delete Credential --
 -----------------------
 local function handle_delete_credential(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_delete_credential !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "deleteCredential"
   local credIdx = command.args.credentialIndex
   local credential = {
-    credential_type = DoorLock.types.DlCredentialType.PIN,
+    credential_type = DoorLock.types.CredentialTypeEnum.PIN,
     credential_index = credIdx,
   }
 
@@ -1382,6 +1512,10 @@ local function handle_delete_credential(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("credentialIndex: %s", credIdx))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
@@ -1391,10 +1525,12 @@ end
 -- Delete All Credentials --
 ----------------------------
 local function handle_delete_all_credentials(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_delete_all_credentials !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "deleteAllCredentials"
   local credential = {
-    credential_type = DoorLock.types.DlCredentialType.PIN,
+    credential_type = DoorLock.types.CredentialTypeEnum.PIN,
     credential_index = ALL_INDEX,
   }
 
@@ -1421,6 +1557,10 @@ local function handle_delete_all_credentials(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, ALL_INDEX, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("credentialIndex: %s", ALL_INDEX))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(DoorLock.server.commands.ClearUser(device, ep, credential))
@@ -1430,6 +1570,8 @@ end
 -- Clear Credential Response --
 -------------------------------
 local function clear_credential_response_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! clear_credential_response_handler !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
@@ -1468,6 +1610,8 @@ end
 -- Set Week Day Schedule --
 ---------------------------
 local function handle_set_week_day_schedule(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_week_day_schedule !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "setWeekDaySchedule"
   local scheduleIdx = command.args.scheduleIndex
@@ -1476,6 +1620,7 @@ local function handle_set_week_day_schedule(driver, device, command)
   local scheduleBit = 0
   for _, weekDay in ipairs(schedule.weekDays) do
     scheduleBit = scheduleBit + WEEK_DAY_MAP[weekDay]
+    log.info_with({hub_logs=true}, string.format("%s, %s", WEEK_DAY_MAP[weekDay], weekDay)) -- needs to remove
   end
   local startHour = schedule.startHour
   local startMinute = schedule.startMinute
@@ -1507,6 +1652,23 @@ local function handle_set_week_day_schedule(driver, device, command)
   device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
   device:set_field(lock_utils.SCHEDULE, schedule, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("scheduleIndex: %s", scheduleIdx))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("weekDay[1]: %s", schedule.weekDays[1]))
+  log.info_with({hub_logs=true}, string.format("weekDay[2]: %s", schedule.weekDays[2]))
+  log.info_with({hub_logs=true}, string.format("weekDay[3]: %s", schedule.weekDays[3]))
+  log.info_with({hub_logs=true}, string.format("weekDay[4]: %s", schedule.weekDays[4]))
+  log.info_with({hub_logs=true}, string.format("weekDay[5]: %s", schedule.weekDays[5]))
+  log.info_with({hub_logs=true}, string.format("weekDay[6]: %s", schedule.weekDays[6]))
+  log.info_with({hub_logs=true}, string.format("weekDay[7]: %s", schedule.weekDays[7]))
+  log.info_with({hub_logs=true}, string.format("scheduleBit: %s", scheduleBit))
+  log.info_with({hub_logs=true}, string.format("startHour: %s", startHour))
+  log.info_with({hub_logs=true}, string.format("startMinute: %s", startMinute))
+  log.info_with({hub_logs=true}, string.format("endHour: %s", endHour))
+  log.info_with({hub_logs=true}, string.format("endMinute: %s", endMinute))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
@@ -1527,6 +1689,8 @@ end
 -- Set Week Day Schedule Response --
 ------------------------------------
 local function set_week_day_schedule_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! set_week_day_schedule_handler !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
@@ -1566,6 +1730,8 @@ end
 -- Clear Week Day Schedule --
 -----------------------------
 local function handle_clear_week_day_schedule(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_clear_week_day_schedule !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get parameters
   local cmdName = "clearWeekDaySchedule"
   local scheduleIdx = command.args.scheduleIndex
@@ -1594,6 +1760,11 @@ local function handle_clear_week_day_schedule(driver, device, command)
   device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  log.info_with({hub_logs=true}, string.format("scheduleIndex: %s", scheduleIdx))
+  log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(DoorLock.server.commands.ClearWeekDaySchedule(device, ep, scheduleIdx, userIdx))
@@ -1603,6 +1774,8 @@ end
 -- Clear Week Day Schedule Response --
 ------------------------------------
 local function clear_week_day_schedule_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! clear_week_day_schedule_handler !!!!!!!!!!!!!")) -- needs to remove
+
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
@@ -1641,18 +1814,21 @@ end
 -- Set Year Day Schedule --
 ---------------------------
 local function handle_set_year_day_schedule(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_year_day_schedule !!!!!!!!!!!!!")) -- needs to remove
 end
 
 -----------------------------
 -- Clear Year Day Schedule --
 -----------------------------
 local function handle_clear_year_day_schedule(driver, device, command)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_clear_year_day_schedule !!!!!!!!!!!!!")) -- needs to remove
 end
 
 ----------------
 -- Lock Alarm --
 ----------------
 local function alarm_event_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! alarm_event_handler !!!!!!!!!!!!!")) -- needs to remove
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
   if alarm_code.value == DlAlarmCode.LOCK_JAMMED then
@@ -1672,6 +1848,7 @@ end
 -- Lock Operation --
 --------------------
 local function lock_op_event_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_op_event_handler !!!!!!!!!!!!!")) -- needs to remove
   local opType = ib.data.elements.lock_operation_type
   local opSource = ib.data.elements.operation_source
   local userIdx = ib.data.elements.user_index
@@ -1728,6 +1905,12 @@ local function lock_op_event_handler(driver, device, ib, response)
     userIdx = userIdx.value
   end
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("opType: %s", opType.NAME))
+  log.info_with({hub_logs=true}, string.format("opSource: %s", opSource))
+  log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("fabricId: %s", fabricId))
+
   local data_obj = {method = opSource, userIndex = userIdx}
   device:emit_event(opType({data = data_obj, state_change = true}))
 end
@@ -1736,6 +1919,7 @@ end
 -- Lock User Change --
 ----------------------
 local function lock_user_change_event_handler(driver, device, ib, response)
+  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! lock_user_change_event_handler !!!!!!!!!!!!!")) -- needs to remove
   local lockDataType = ib.data.elements.lock_data_type
   local dataOpType = ib.data.elements.data_operation_type
   local opSource = ib.data.elements.operation_source
@@ -1785,6 +1969,13 @@ local function lock_user_change_event_handler(driver, device, ib, response)
     fabricId = fabricId.value
   end
 
+  -- needs to remove logs
+  log.info_with({hub_logs=true}, string.format("lockDataType: %s", lockDataType))
+  log.info_with({hub_logs=true}, string.format("dataOpType: %s", dataOpType))
+  log.info_with({hub_logs=true}, string.format("opSource: %s", opSource))
+  log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
+  log.info_with({hub_logs=true}, string.format("fabricId: %s", fabricId))
+
   -- local data_obj = {method = opSource, userIndex = userIdx}
   -- device:emit_event(opType({data = data_obj}, {state_change = true}))
 end
@@ -1811,47 +2002,46 @@ end
 
 
 local function aliro_reader_verification_key_handler(driver, device, ib, response)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_verification_key_handler !!!!!!!!!!!!!"))
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_verification_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    return
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(ib.data.value))
   end
-  device:emit_event(aliroSetting.aliroReaderVerificationKey(ib.data.value))
 end
 
 
 
 local function aliro_reader_group_id_handler(driver, device, ib, response)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_id_handler !!!!!!!!!!!!!"))
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_id_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    return
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(ib.data.value))
   end
-  device:emit_event(aliroSetting.aliroReaderGroupIdentifier(ib.data.value))
 end
 
 local function aliro_reader_group_sub_id_handler(driver, device, ib, response)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_sub_id_handler !!!!!!!!!!!!!"))
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_sub_id_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
 end
 
 local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    return
+    device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
   end
-  device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
 end
 
 local function max_aliro_endpoint_key_handler(driver, device, ib, response)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    return
+    device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
   end
-  device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
 end
+
+
+
 
 
 
@@ -1880,14 +2070,15 @@ local function handle_set_reader_key(driver, device, command)
 end
 
 local function handle_set_aliro_credential(driver, device, command)
-  log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_aliro_credential !!!!!!!!!!!!!"))
   -- Get parameters
   local cmdName = "setAliroCredential"
   local userIdx = command.args.userIndex
+  local userTypeMatter = nil
   if userIdx == 0 then
     userIdx = nil
+    userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   end
-  local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
     credential_index = INITIAL_COTA_INDEX
@@ -1918,7 +2109,7 @@ local function handle_set_aliro_credential(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, INITIAL_COTA_INDEX, {persist = true})
-  device:set_field(lock_utils.CRED_DATA, issuerKey, {persist = true})  
+  device:set_field(lock_utils.CRED_DATA, issuerKey, {persist = true})
   device:set_field(lock_utils.EVICTABLE_ENDPOINT_KEY, evictableEndpointKey, {persist = true})
 
   -- Send command
@@ -1926,7 +2117,7 @@ local function handle_set_aliro_credential(driver, device, command)
   device:send(
     DoorLock.server.commands.SetCredential(
       device, ep,
-      DoorLock.types.DlDataOperationType.ADD, -- Data Operation Type: Add(0), Modify(2)
+      DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
       credential,     -- Credential
       issuerKey,      -- Credential Data
       userIdx,        -- User Index
@@ -1937,15 +2128,38 @@ local function handle_set_aliro_credential(driver, device, command)
 end
 
 local function handle_clear_aliro_credential(driver, device, command)
-  local ep = device:component_to_endpoint(command.component)
-  local cota_cred = device:get_field(lock_utils.COTA_CRED)
-  if cota_cred then
-    device:send(
-      DoorLock.server.commands.LockDoor(device, ep, cota_cred)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_clear_aliro_credential !!!!!!!!!!!!!"))
+  -- Get parameters
+  local cmdName = "clearAliroCredential"
+  local userIdx = command.args.userIndex
+  local endPointKey = command.args.endPointKey
+
+  -- Check busy state
+  local busy = device:get_field(lock_utils.BUSY_STATE)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = aliroSetting.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
     )
-  else
-    device:send(DoorLock.server.commands.LockDoor(device, ep))
+    device:emit_event(event)
+    return
   end
+
+  -- Save values to field
+  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  -- device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  -- device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
 end
 
 
