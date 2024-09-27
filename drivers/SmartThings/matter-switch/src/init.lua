@@ -151,13 +151,13 @@ local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
 local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
-local EXPORT_POLL_TIMER_IS_SET = "__export_poll_timer_is_set"
+local EXPORT_POLL_TIMER_SETTING_ATTEMPTED = "__export_poll_timer_setting_attempted"
 local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
 local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
 local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
 local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
-local SUBSCIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
+local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
@@ -179,7 +179,7 @@ local function delete_export_poll_schedule(device)
   if export_poll_timer then
     device.thread:cancel_timer(export_poll_timer)
     device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
-    device:set_field(EXPORT_POLL_TIMER_IS_SET, nil)
+    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
   end
 end
 
@@ -223,8 +223,8 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
   end
   if #cumul_eps > 0 and not is_cumulative_report then
     return
-  elseif not device:get_field(SUBSCIPTION_REPORT_OCCURRED) then
-    device:set_field(SUBSCIPTION_REPORT_OCCURRED, true)
+  elseif not device:get_field(SUBSCRIPTION_REPORT_OCCURRED) then
+    device:set_field(SUBSCRIPTION_REPORT_OCCURRED, true)
   elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
     device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
   else
@@ -236,7 +236,7 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
-    device:set_field(EXPORT_POLL_TIMER_IS_SET, true)
+    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
 
@@ -934,7 +934,7 @@ end
 
 local function energy_report_handler_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    if not device:get_field(EXPORT_POLL_TIMER_IS_SET) then
+    if not device:get_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED) then
       set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     if is_cumulative_report then
@@ -1167,6 +1167,13 @@ local matter_driver_template = {
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
+    [capabilities.energyMeter.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+    },
+    [capabilities.powerMeter.ID] = {
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower
+    }
   },
   subscribed_events = {
     [capabilities.button.ID] = {

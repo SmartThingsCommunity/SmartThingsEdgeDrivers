@@ -164,7 +164,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Ensure the total accumulated powerConsumption for both endpoins is reported every 15 minutes",
+  "Ensure the total accumulated powerConsumption for both endpoints is reported every 15 minutes",
   function()
     test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
@@ -189,6 +189,7 @@ test.register_coroutine_test(
       ELECTRICAL_SENSOR_EP_TWO,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 150000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --150Wh
 
+    test.wait_for_events()
     test.mock_time.advance_time(60 * 15)
 
     test.socket.capability:__expect_send(
