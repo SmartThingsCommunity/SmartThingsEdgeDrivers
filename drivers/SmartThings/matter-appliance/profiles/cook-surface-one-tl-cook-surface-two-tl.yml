@@ -24,4 +24,3 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
-#TODO: Update this profile with device presentation metadata to disable "on" command.
