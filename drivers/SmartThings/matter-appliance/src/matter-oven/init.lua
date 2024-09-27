@@ -158,21 +158,17 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
   local temp = ib.data.value / 100.0
   local unit = "C"
-  if version.rpc <= 4 then
-    unit = device:get_field(CURRENT_CONFIGURED_UNIT)
-    if unit == "F" then
-      min = utils.c_to_f(min)
-      max = utils.c_to_f(max)
-      temp = utils.c_to_f(temp)
-    end
-  end
   local range = {
     minimum = min,
     maximum = max,
   }
 
-  device:emit_event_for_endpoint(ib.endpoint_id,
-    capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit},{visibility = {displayed = false}}))
+  -- Only emit the capability for RPC version >= 5 (unit conversion for
+  -- range capabilities is only supported for RPC >= 5)
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id,
+      capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit},{visibility = {displayed = false}}))
+  end
 
   device:emit_event_for_endpoint(ib.endpoint_id,
     capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
@@ -239,31 +235,8 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
 
-  -- For RPC >= 5, temperature capabilities emitted from the driver are converted
-  -- to local temperature scale by the hub, so the driver should always use Celsius.
-  -- For lower versions, we can emit the capabilities with Fahrenheit as the hub
-  -- does not do this conversion.
-  if version.rpc >= 5 then
-    if value > OVEN_MAX_TEMP_IN_C then
-      value = utils.f_to_c(value)
-    end
-  else
-    local unit = "C"
-    if value <= OVEN_MAX_TEMP_IN_C then
-      device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
-      if temp_setpoint.unit == "F" then
-        temp_setpoint.value = utils.f_to_c(temp_setpoint.value)
-        temp_setpoint.unit = unit
-      end
-    else
-      unit = "F"
-      device:set_field(CURRENT_CONFIGURED_UNIT, unit, { persist = true })
-      value = utils.f_to_c(value)
-      if temp_setpoint.unit == "C" then
-        temp_setpoint.value = utils.c_to_f(temp_setpoint.value)
-        temp_setpoint.unit = unit
-      end
-    end
+  if value > OVEN_MAX_TEMP_IN_C then
+    value = utils.f_to_c(value)
   end
   if value < min or value > max then
     log.warn(string.format(
