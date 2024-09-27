@@ -1,0 +1,20 @@
+name: freeze-battery
+components:
+- id: main
+  capabilities:
+  - id: temperatureAlarm
+    version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: WaterFreezeDetector
