@@ -220,17 +220,17 @@ matterManufacturer:
     deviceProfileName: switch-binary
 #LeTainPai
   - id: "5163/4100"
-    deviceLabel: LeTianPai Smart Switch(with Neutral) 3 Gangs
+    deviceLabel: LeTianPai Smart Switch 3 Way
     vendorId: 0x142B
     productId: 0x1004
     deviceProfileName: switch-binary
   - id: "5163/4099"
-    deviceLabel: LeTianPai Smart Switch(with Neutral) 2 Gangs
+    deviceLabel: LeTianPai Smart Switch 2 Way
     vendorId: 0x142B
     productId: 0x1003
     deviceProfileName: switch-binary
   - id: "5163/4098"
-    deviceLabel: LeTianPai Smart Switch(with Neutral) 1 Gang
+    deviceLabel: LeTianPai Smart Switch 1 Way
     vendorId: 0x142B
     productId: 0x1002
     deviceProfileName: switch-binary  
