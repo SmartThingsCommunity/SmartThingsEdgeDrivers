@@ -1,4 +1,4 @@
-name: oven-cabinet-one-tm-cabinet-two-tm-cook-top-cook-surface-one-tl-cook-surface-two-tl
+name: oven-cabinet-one-tn-cabinet-two-tl-cook-top-cook-surface-one-tl-cook-surface-two-tl
 components:
 - id: main
   capabilities:

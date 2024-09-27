@@ -35,9 +35,9 @@ local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local TCC_DEVICE_TYPE_ID = 0x0071
 
--- This is a work around to handle the situation wheer units for temperatureSetpoint is changed in the App.
--- When the unit is switched, the driver does not receive any indication of this, as the command arguments don't contain the unit.
--- To handle this we assume the following ranges for each unit, considering usual oven temperatures:
+-- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- When units are switched, we will never know the recevied command value is for what unit as the arguments don't contain the unit.
+-- So to handle this we assume the following ranges considering usual oven temperatures:
 -- 1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
 -- 2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
 local OVEN_MAX_TEMP_IN_C = 260
@@ -241,7 +241,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
 
   -- For RPC >= 5, temperature capabilities emitted from the driver are converted
   -- to local temperature scale by the hub, so the driver should always use Celsius.
-  -- For lower versions, we can emit the capabilities with Fahrenheight as the hub
+  -- For lower versions, we can emit the capabilities with Fahrenheit as the hub
   -- does not do this conversion.
   if version.rpc >= 5 then
     if value > OVEN_MAX_TEMP_IN_C then

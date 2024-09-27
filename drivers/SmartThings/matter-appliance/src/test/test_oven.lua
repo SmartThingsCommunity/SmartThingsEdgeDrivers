@@ -28,7 +28,7 @@ clusters.OvenMode = require "OvenMode"
 clusters.TemperatureControl = require "TemperatureControl"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("oven-cabinet-one-tm-cabinet-two-tm-cook-top-cook-surface-one-tl-cook-surface-two-tl.yml"),
+  profile = t_utils.get_profile_definition("oven-cabinet-one-tn-cabinet-two-tl-cook-top-cook-surface-one-tl-cook-surface-two-tl.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -145,7 +145,7 @@ test.register_coroutine_test(
 
 
 test.register_message_test(
-  "First Oven TCC: This test case checks for the following events:\n1. Oven supportedModes must be registered.\n2. Setting Oven mode should send appropriate commands",
+  "Oven TCC One: This test case checks for the following events:\n1. Oven supportedModes must be registered.\n2. Setting Oven mode should send appropriate commands",
   {
     {
       channel = "matter",
@@ -230,7 +230,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 12800)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 12800) --128*C
       }
     },
     {
@@ -238,7 +238,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 20000)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 20000) --200*C
       }
     },
     {
@@ -246,7 +246,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 9000)
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 13000) --130*C
       }
     },
     {
@@ -257,7 +257,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 90.0, unit = "C"}))
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 130.0, unit = "C"}))
     },
     {
       channel = "capability",
@@ -279,7 +279,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Second Oven TCC: This test case checks for the following events:\n1. Oven supportedModes must be registered.\n2. Setting Oven mode should send appropriate commands",
+  "Oven TCC Two: This test case checks for the following events:\n1. Oven supportedModes must be registered.\n2. Setting Oven mode should send appropriate commands",
   {
     {
       channel = "matter",
@@ -338,7 +338,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Second Oven TCC: MeasuredValue of TemperatureMeasurement clusters should be reported correctly.",
+  "Oven TCC Two: MeasuredValue of TemperatureMeasurement clusters should be reported correctly.",
   {
     {
       channel = "matter",
@@ -520,6 +520,178 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("cookSurfaceTwo", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
+    }
+  }
+)
+
+
+test.register_message_test(
+  "Oven TCC One: When the temperature unit is switched from *C to *F, on receiving temperatureSetpoint commands the matter commands must be adjusted to *C and sent to the device.",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 12800) --128*C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 20000) --200*C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 13000) --130*C
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 130.0, unit = "C"}))
+    },
+
+    --mimic unit switch from *C to *F by receiving a temperatureSetpoint command in *F.
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "temperatureSetpoint", component = "tccOne", command = "setTemperatureSetpoint", args = {356}} --180 *C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 180 * 100, nil)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 18000) --180 *C
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=262.4,maximum=392.0}, unit = "F"}, {visibility = {displayed = false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 356.0, unit = "F"}))
+    }
+  }
+)
+
+
+test.register_message_test(
+  "Oven TCC One: When the temperature unit is switched from *F to *C, on receiving temperatureSetpoint commands the matter commands must be adjusted to *C and sent to the device.",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 12800) --128*C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 20000) --200*C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 13000) --130 *C
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 130.0, unit = "C"}))
+    },
+
+    -- mimic switching units to *F first.
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "temperatureSetpoint", component = "tccOne", command = "setTemperatureSetpoint", args = {356}} --180 *C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 180 * 100, nil)
+      }
+    },
+
+    -- Now that unit is configured as *F, mimic switching unit back to *C by receiving a temperatureSetpoint command in celsius range.
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "temperatureSetpoint", component = "tccOne", command = "setTemperatureSetpoint", args = {180}} --180 *C
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 180 * 100, nil)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, OVEN_TCC_ONE_ENDPOINT, 18000) --180 *C
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 180.0, unit = "C"}))
     }
   }
 )
