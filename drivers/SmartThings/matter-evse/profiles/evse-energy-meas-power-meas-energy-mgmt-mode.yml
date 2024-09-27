@@ -1,5 +1,5 @@
 #EVSE with Electrical Power Measurement & Electrical Energy Measurement Cluster in Electrical Sensor DT and Device Energy Management mode in Energy Management DT
-name: evse-energy-power-meas-energy-mgmt-mode
+name: evse-energy-meas-power-meas-energy-mgmt-mode
 components:
 - id: main
   capabilities:

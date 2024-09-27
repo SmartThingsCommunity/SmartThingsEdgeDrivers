@@ -19,6 +19,7 @@ local log = require "log"
 local utils = require "st.utils"
 local matter_driver_template = {}
 local embedded_cluster_utils = require "embedded_cluster_utils"
+
 local version = require "version"
 
 if version.api < 11 then
@@ -37,6 +38,8 @@ local SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP = "__supported_device_energy_
 local RECURRING_REPORT_POLL_TIMER = "__recurring_report_poll_timer"
 local RECURRING_POLL_TIMER = "__recurring_poll_timer"
 local LAST_REPORTED_TIME = "__last_reported_time"
+local POWER_CONSUMPTION_REPORT_TIME_INTERVAL = "__pcr_time_interval"
+local DEVICE_REPORTED_TIME_INTERVAL_CONSIDERED = "__timer_interval_considered"
 -- total in case there are multiple electrical sensors
 local TOTAL_CUMULATIVE_ENERGY_IMPORTED = "__total_cumulative_energy_imported"
 
@@ -103,7 +106,17 @@ local function epoch_to_iso8601(time)
   return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
 
-local EVSE_STATE_ENUM_MAP = {
+local function tbl_contains(array, value)
+  for _, element in ipairs(array) do
+    if element == value then
+      return true
+    end
+  end
+  return false
+end
+
+-- MAPS --
+local EVSE_STATE_ENUM_TO_CAPABILITY_MAP = {
   -- Since PLUGGED_IN_DISCHARGING is not to be supported, it is not checked.
   [clusters.EnergyEvse.types.StateEnum.NOT_PLUGGED_IN] = capabilities.evseState.state.notPluggedIn,
   [clusters.EnergyEvse.types.StateEnum.PLUGGED_IN_NO_DEMAND] = capabilities.evseState.state.pluggedInNoDemand,
@@ -113,7 +126,7 @@ local EVSE_STATE_ENUM_MAP = {
   [clusters.EnergyEvse.types.StateEnum.FAULT] = capabilities.evseState.state.fault,
 }
 
-local EVSE_SUPPLY_STATE_ENUM_MAP = {
+local EVSE_SUPPLY_STATE_ENUM_TO_CAPABILITY_MAP = {
   [clusters.EnergyEvse.types.SupplyStateEnum.DISABLED] = capabilities.evseState.supplyState.disabled,
   [clusters.EnergyEvse.types.SupplyStateEnum.CHARGING_ENABLED] = capabilities.evseState.supplyState.chargingEnabled,
   [clusters.EnergyEvse.types.SupplyStateEnum.DISCHARGING_ENABLED] = capabilities.evseState.supplyState.dischargingEnabled,
@@ -121,7 +134,7 @@ local EVSE_SUPPLY_STATE_ENUM_MAP = {
   [clusters.EnergyEvse.types.SupplyStateEnum.DISABLED_DIAGNOSTICS] = capabilities.evseState.supplyState.disabledDiagnostics,
 }
 
-local EVSE_FAULT_STATE_ENUM_MAP = {
+local EVSE_FAULTY_STATE_ENUM_TO_CAPABILITY_MAP = {
   [clusters.EnergyEvse.types.FaultStateEnum.NO_ERROR] = capabilities.evseState.faultState.noError,
   [clusters.EnergyEvse.types.FaultStateEnum.METER_FAILURE] = capabilities.evseState.faultState.meterFailure,
   [clusters.EnergyEvse.types.FaultStateEnum.OVER_VOLTAGE] = capabilities.evseState.faultState.overVoltage,
@@ -142,10 +155,12 @@ local EVSE_FAULT_STATE_ENUM_MAP = {
 }
 
 local function read_cumulative_energy_imported(device)
-  local electrical_energy_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  if electrical_energy_meas_eps and #electrical_energy_meas_eps > 0 then
-    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, electrical_energy_meas_eps[1])
-    for i, ep in ipairs(electrical_energy_meas_eps) do
+  local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID) or {}
+  if #electrical_energy_measurement_eps > 0 then
+    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device,
+      electrical_energy_measurement_eps[1])
+    for i, ep in ipairs(electrical_energy_measurement_eps) do
       if i > 1 then
         read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, ep))
       end
@@ -175,7 +190,8 @@ local function create_poll_report_schedule(device)
   end
 
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
-  local timer = device.thread:call_on_schedule(REPORT_TIMEOUT, function()
+  local pcr_interval = device:get_field(POWER_CONSUMPTION_REPORT_TIME_INTERVAL) or REPORT_TIMEOUT
+  local timer = device.thread:call_on_schedule(pcr_interval, function()
     local current_time = os.time()
     local last_time = device:get_field(LAST_REPORTED_TIME) or 0
     local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED) or {}
@@ -238,8 +254,8 @@ local function device_init(driver, device)
   create_poll_schedules_for_cumulative_energy_imported(device)
   local current_time = os.time()
   local current_time_iso8601 = epoch_to_iso8601(current_time)
-  device:emit_event(capabilities.evseChargingSession.targetEndTime(current_time_iso8601))
   --emit current time by default
+  device:emit_event(capabilities.evseChargingSession.targetEndTime(current_time_iso8601))
 end
 
 local function device_added(driver, device)
@@ -260,21 +276,19 @@ local function do_configure(driver, device)
   local device_energy_mgmt_eps = embedded_cluster_utils.get_endpoints(device, clusters.DeviceEnergyManagementMode) or {}
   local profile_name = "evse"
 
+  --As per spec, atleast one of electrical energy measurement or electrical power measurement clusters are to be supported.
   if #energy_meas_eps > 0 then
-    profile_name = profile_name .. "-energy"
+    profile_name = profile_name .. "-energy-meas"
   end
   if #power_meas_eps > 0 then
-    profile_name = profile_name .. "-power"
+    profile_name = profile_name .. "-power-meas"
   end
-
-  --As per spec, at least one of the electrical energy measurement or electrical power measurement clusters are to be supported.
-  profile_name = profile_name .. "-meas"
 
   if #device_energy_mgmt_eps > 0 then
     profile_name = profile_name .. "-energy-mgmt-mode"
   end
 
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  log.info_with({ hub_logs = true }, "Updating device profile to " .. profile_name)
   device:try_update_metadata({ profile = profile_name })
 end
 
@@ -314,7 +328,7 @@ local function evse_state_handler(driver, device, ib, response)
     capabilities.evseState.ID,
     capabilities.evseState.supplyState.NAME
   )
-  local event = EVSE_STATE_ENUM_MAP[evse_state]
+  local event = EVSE_STATE_ENUM_TO_CAPABILITY_MAP[evse_state]
   if event then
     device:emit_event_for_endpoint(ib.endpoint_id, event())
     charging_readiness_state_handler(driver, device, event, {NAME=latest_supply_state})
@@ -331,7 +345,7 @@ local function evse_supply_state_handler(driver, device, ib, response)
     capabilities.evseState.ID,
     capabilities.evseState.state.NAME
   )
-  local event = EVSE_SUPPLY_STATE_ENUM_MAP[evse_supply_state]
+  local event = EVSE_SUPPLY_STATE_ENUM_TO_CAPABILITY_MAP[evse_supply_state]
   if event then
     device:emit_event_for_endpoint(ib.endpoint_id, event())
     charging_readiness_state_handler(driver, device, {NAME=latest_evse_state}, event)
@@ -340,14 +354,14 @@ local function evse_supply_state_handler(driver, device, ib, response)
   end
 end
 
-local function evse_fault_state_handler(driver, device, ib, response)
-  local evse_fault_state = ib.data.value
-  local event = EVSE_FAULT_STATE_ENUM_MAP[evse_fault_state]
+local function evse_faulty_state_handler(driver, device, ib, response)
+  local evse_faulty_state = ib.data.value
+  local event = EVSE_FAULTY_STATE_ENUM_TO_CAPABILITY_MAP[evse_faulty_state]
   if event then
     device:emit_event_for_endpoint(ib.endpoint_id, event())
     return
   end
-  log.warn("Invalid EVSE fault state received: " .. evse_fault_state)
+  log.warn("evse_faulty_state_handler invalid EVSE Faulty State: " .. evse_faulty_state)
 end
 
 local function evse_charging_enabled_until_handler(driver, device, ib, response)
@@ -361,7 +375,7 @@ local function evse_charging_enabled_until_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ep, capabilities.evseChargingSession.targetEndTime(targetEndTime))
     return
   end
-  log.warn("Charging enabled handler received an invalid target end time, not reporting")
+  log.warn("evse_charging_enabled_until_handler invalid EVSE Target End TIme, not reporting!")
 end
 
 local function evse_current_limit_handler(event)
@@ -420,10 +434,13 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
   device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedEvseModesMap, { persist = true })
   local event = capabilities.mode.supportedModes(supportedEvseModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedEvseModes, { visibility = { displayed = false } })
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function energy_evse_mode_attr_handler(driver, device, ib, response)
-  device.log.info(string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
+  device.log.info_with({ hub_logs = true },
+    string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
 
   local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
   local supportedEvseModes = supportedEvseModesMap[ib.endpoint_id] or {}
@@ -447,10 +464,13 @@ local function device_energy_mgmt_supported_modes_attr_handler(driver, device, i
   device:set_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP, supportedDeviceEnergyMgmtModesMap, { persist = true })
   local event = capabilities.mode.supportedModes(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response)
-  device.log.info(string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
+  device.log.info_with({ hub_logs = true },
+    string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
 
   local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
   local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] or {}
@@ -468,11 +488,55 @@ local function cumulative_energy_imported_handler(driver, device, ib, response)
     clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
     local cumulative_energy_imported = ib.data.elements.energy.value
     local endpoint_id = string.format(ib.endpoint_id)
-    local cumulative_energy_imported_Wh = utils.round(1000 * cumulative_energy_imported)
+    local cumulative_energy_imported_Wh = utils.round(cumulative_energy_imported / 1000)
     local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED) or {}
 
     -- in case there are multiple electrical sensors store them in a table.
     total_cumulative_energy_imported[endpoint_id] = cumulative_energy_imported_Wh
+    device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED, total_cumulative_energy_imported, { persist = true })
+  end
+end
+
+local function periodic_energy_imported_handler(driver, device, ib, response)
+  local endpoint_id = ib.endpoint_id
+  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID,
+    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+
+  if ib.data then
+    if version.api < 11 then
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
+    end
+
+    local start_timestamp = ib.data.elements.start_timestamp.value or 0
+    local end_timestamp = ib.data.elements.end_timestamp.value or 0
+
+    local device_reporting_time_interval = end_timestamp - start_timestamp
+    if not device:get_field(DEVICE_REPORTED_TIME_INTERVAL_CONSIDERED) and device_reporting_time_interval > REPORT_TIMEOUT then
+      -- This is a one time setup in order to consider a larger time interval if the interval the device chooses to report is greater than 15 minutes.
+      device:set_field(DEVICE_REPORTED_TIME_INTERVAL_CONSIDERED, true, {persist=true})
+      local polling_schedule_timer = device:get_field(RECURRING_REPORT_POLL_TIMER)
+      if polling_schedule_timer ~= nil then
+        device.thread:cancel_timer(polling_schedule_timer)
+      end
+      device:set_field(POWER_CONSUMPTION_REPORT_TIME_INTERVAL, device_reporting_time_interval, {persist = true})
+      create_poll_report_schedule(device)
+    end
+
+    if tbl_contains(cumul_eps, endpoint_id) then
+      -- Since cluster in this endpoint supports both CUME & PERE features, we will prefer
+      -- cumulative_energy_imported_handler to handle the energy report for this endpoint over PeriodicEnergyImported.
+      return
+    end
+
+    local energy_imported = ib.data.elements.energy.value
+    endpoint_id = string.format(ib.endpoint_id)
+    local energy_imported_Wh = utils.round(energy_imported / 1000)
+    local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED) or {}
+
+    -- in case there are multiple electrical sensors store them in a table.
+    total_cumulative_energy_imported[endpoint_id] = total_cumulative_energy_imported[endpoint_id] or 0
+    total_cumulative_energy_imported[endpoint_id] = total_cumulative_energy_imported[endpoint_id] + energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED, total_cumulative_energy_imported, { persist = true })
   end
 end
@@ -507,7 +571,7 @@ local handle_set_charging_parameters = function(cap, arg)
       log.warn_with({hub_logs=true}, "Clipping Max Current as it cannot be greater than 80A")
     end
     local capability_event = cap(cmd.args[arg])
-    log.info("Setting value " .. (cmd.args[arg]) .. " for".. (cap.NAME))
+    log.info_with({hub_logs=true}, "Setting value " .. (cmd.args[arg]) .. " for".. (cap.NAME))
     device:emit_event(capability_event)
   end
 end
@@ -561,7 +625,7 @@ matter_driver_template = {
       [clusters.EnergyEvse.ID] = {
         [clusters.EnergyEvse.attributes.State.ID] = evse_state_handler,
         [clusters.EnergyEvse.attributes.SupplyState.ID] = evse_supply_state_handler,
-        [clusters.EnergyEvse.attributes.FaultState.ID] = evse_fault_state_handler,
+        [clusters.EnergyEvse.attributes.FaultState.ID] = evse_faulty_state_handler,
         [clusters.EnergyEvse.attributes.ChargingEnabledUntil.ID] = evse_charging_enabled_until_handler,
         [clusters.EnergyEvse.attributes.MinimumChargeCurrent.ID] = evse_current_limit_handler(capabilities
           .evseChargingSession.minCurrent),
@@ -585,6 +649,8 @@ matter_driver_template = {
       [clusters.ElectricalEnergyMeasurement.ID] = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] =
             cumulative_energy_imported_handler,
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] =
+            periodic_energy_imported_handler
       },
     },
   },
@@ -603,6 +669,9 @@ matter_driver_template = {
     },
     [capabilities.powerSource.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.PowerMode,
+    },
+    [capabilities.powerConsumptionReport.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
     },
     [capabilities.mode.ID] = {
       clusters.EnergyEvseMode.attributes.SupportedModes,
@@ -633,5 +702,6 @@ matter_driver_template = {
 }
 
 local matter_driver = MatterDriver("matter-evse", matter_driver_template)
-log.info(string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
+log.info_with({ hub_logs = true },
+  string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()

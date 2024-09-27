@@ -368,6 +368,12 @@ test.register_message_test(
         capabilities.mode.supportedModes({ "Auto-Scheduled", "Manual" }, { visibility = { displayed = false } }))
     },
     {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.mode.supportedArguments({ "Auto-Scheduled", "Manual" }, { visibility = { displayed = false } }))
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -439,6 +445,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("deviceEnergyManagement",
         capabilities.mode.supportedModes(
+        { "Grid Energy Management", "Home Energy Management", "Full Energy Management" },
+          { visibility = { displayed = false } }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("deviceEnergyManagement",
+        capabilities.mode.supportedArguments(
         { "Grid Energy Management", "Home Energy Management", "Full Energy Management" },
           { visibility = { displayed = false } }))
     },

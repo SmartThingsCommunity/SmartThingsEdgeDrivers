@@ -86,6 +86,7 @@ local function test_init()
     clusters.EnergyEvse.attributes.SessionEnergyCharged,
     clusters.EnergyEvseMode.attributes.SupportedModes,
     clusters.EnergyEvseMode.attributes.CurrentMode,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -163,7 +164,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Ensure the total accumulated powerConsumption for both endpoints is reported every 15 minutes",
+  "Ensure the total accumulated powerConsumption for both endpoins is reported every 15 minutes",
   function()
     test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
@@ -188,14 +189,13 @@ test.register_coroutine_test(
       ELECTRICAL_SENSOR_EP_TWO,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 150000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --150Wh
 
-    test.wait_for_events()
     test.mock_time.advance_time(60 * 15)
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({
-          energy = (150000 + 100000) * 1000,
-          deltaEnergy = (150000 + 100000) * 1000,
+          energy = 250,
+          deltaEnergy = 250,
           start = "1970-01-01T00:00:00Z",
           ["end"] = "1970-01-01T00:14:59Z"
         }))
