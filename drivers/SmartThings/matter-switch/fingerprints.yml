@@ -218,6 +218,12 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0005
     deviceProfileName: switch-binary
+#LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
