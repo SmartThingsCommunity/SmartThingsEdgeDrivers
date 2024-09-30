@@ -197,6 +197,9 @@ local function set_credential_response_handler(driver, device, ib, response)
     if device:get_field(lock_utils.NONFUNCTIONAL) and cota_cred_index == credential_index then
       device.log.info("Successfully set COTA credential after being non-functional")
       device:set_field(lock_utils.NONFUNCTIONAL, false, {persist = true})
+
+      -- TODO: Add check here for battery
+
       device:try_update_metadata({profile = "base-lock", provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
@@ -519,6 +522,29 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.DoorLock.ID)
 end
 
+local function do_configure(driver, device)
+  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+
+  local profile_name = "lock"
+
+  -- we need to check if a device is already fingerprinted.
+
+
+  -- check for lock codes
+  if #pin_eps == 0 then
+    profile_name = profile_name .. "nocodes"
+  end
+
+  -- check for battery type
+  if #power_source_eps == 0 then
+    profile_name = profile_name .. "-nobattery"
+  elseif #battery_feature_eps == 0 then
+    profile_name = profile_name .. "-batteryLevel"
+  end
+end
+
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
@@ -536,7 +562,7 @@ local function device_init(driver, device)
       device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
     end
   end
- end
+end
 
 local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
@@ -638,7 +664,7 @@ local matter_lock_driver = {
   sub_drivers = {
     require("new-matter-lock"),
   },
-  lifecycle_handlers = {init = device_init, added = device_added},
+  lifecycle_handlers = {init = device_init, added = device_added, doConfigure = do_configure },
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
