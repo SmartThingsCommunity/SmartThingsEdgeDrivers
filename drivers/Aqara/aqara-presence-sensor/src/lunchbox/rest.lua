@@ -145,13 +145,58 @@ local function parse_chunked_response(original_response, sock)
   return full_response
 end
 
+---Generate LTN12 source function with retries on timeout/wantread errors
+---@param sock table luasocket confirming table
+---@param max_retries integer number of retries before returning nil, err, partial default: 5 
+---@return fun(pat:string):string|nil,string|nil,string|nil
+local function retry_tcp_source(sock, max_retries)
+  local partial
+  local retries_remaining = max_retries or 5
+  ---Push into the `partial` variable only if `chunk` is non-nil
+  local function push_into_partial(chunk)
+    if not chunk then return end
+    partial = (partial or "") .. chunk
+  end
+  local function source(pat)
+    if pat == 0 then
+      return ""
+    end
+    if pat == nil then
+      pat = "*l"
+    end
+    -- attempt the receive
+    local chunk, err, part = sock:receive(pat)
+    -- if err is not nil
+    if err then
+      -- retry if timeout has been reached
+      if err == "timeout" or err == "wantread" then
+        push_into_partial(part)
+        retries_remaining = retries_remaining - 1
+        if retries_remaining < 0 then
+          return nil, err, partial
+        end
+        -- recursively calling this sosurce function to get the next bytes
+        return source(pat)
+      else
+        -- non-timeout errors should return the error and any partially collected
+        -- bytes
+        push_into_partial(part)
+        return nil, err, partial
+      end
+    end
+    push_into_partial(chunk)
+    return partial
+  end
+  return source
+end
+
 ---@param sock table
 ---@return Response|nil
 ---@return string? err
 ---@return string? partial
 local function handle_response(sock)
   if api_version >= 9 then
-    local response, err = Response.tcp_source(sock)
+    local response, err = Response.source(retry_tcp_source(sock))
     if err or (not response) then return response, (err or "unknown error") end
     return response, response:fill_body()
   end
