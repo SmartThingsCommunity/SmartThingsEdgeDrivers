@@ -218,7 +218,7 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0005
     deviceProfileName: switch-binary
-#LeTainPai
+#LeTianPai
   - id: "5163/4100"
     deviceLabel: LeTianPai Smart Switch 3 Way
     vendorId: 0x142B
