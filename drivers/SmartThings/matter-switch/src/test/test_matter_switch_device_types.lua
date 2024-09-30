@@ -460,26 +460,24 @@ local function test_init_parent_child_unsupported_device_type()
   })
 end
 
-local child_profiles = {
-  [child1_ep] = t_utils.get_profile_definition("light-level.yml"),
-  [child2_ep] = t_utils.get_profile_definition("light-color-level.yml"),
-  [child3_ep] = t_utils.get_profile_definition("light-color-level.yml")
-}
-
-local mock_children = {}
-for i, endpoint in ipairs(mock_device_parent_child_endpoints_out_of_order.endpoints) do
-  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
-    local child_data = {
-      profile = child_profiles[endpoint.endpoint_id],
-      device_network_id = string.format("%s:%d", mock_device_parent_child_endpoints_out_of_order.id, endpoint.endpoint_id),
-      parent_device_id = mock_device_parent_child_endpoints_out_of_order.id,
-      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
-    }
-    mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
-  end
-end
-
 local function test_init_parent_child_endpoints_out_of_order()
+  local child_profiles = {
+    [child1_ep] = t_utils.get_profile_definition("light-level.yml"),
+    [child2_ep] = t_utils.get_profile_definition("light-color-level.yml"),
+    [child3_ep] = t_utils.get_profile_definition("light-color-level.yml")
+  }
+  local mock_children = {}
+  for i, endpoint in ipairs(mock_device_parent_child_endpoints_out_of_order.endpoints) do
+    if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
+      local child_data = {
+        profile = child_profiles[endpoint.endpoint_id],
+        device_network_id = string.format("%s:%d", mock_device_parent_child_endpoints_out_of_order.id, endpoint.endpoint_id),
+        parent_device_id = mock_device_parent_child_endpoints_out_of_order.id,
+        parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
+      }
+      mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
+    end
+  end
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
