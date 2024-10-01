@@ -520,23 +520,14 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function do_configure(driver, device)
-  local fingerprinted_devices = {
-    { vendor_id = 0x115F, product_id = 0x2802 }, -- Aqara Smart Lock U200
-    { vendor_id = 0x115F, product_id = 0x2801 }, -- Aqara Smart Lock U300
-    { vendor_id = 0x129F, product_id = 0x0001 }, -- Level Lock Plus (Matter)
-    { vendor_id = 0x129F, product_id = 0x0003 }, -- Level Bolt (Matter)
-    { vendor_id = 0x135d, product_id = 0xb1 }, -- Nuki Smart Lock Pro
-    { vendor_id = 0x135d, product_id = 0xb0 }, -- Nuki Smart Lock
-  }
-
-  -- check if device has a wwst fingerprint
-  if device.manufacturer_info ~= nil then
-    for _, fingerprint in ipairs(fingerprinted_devices) do
-      if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-        device.manufacturer_info.product_id == fingerprint.product_id then
-        return
-      end
-    end
+  -- check if the device is NOT currently profiled as base-lock
+  -- by ANDing a query for every capability in the base-lock profiles.
+  -- If it does not use base-lock, it is WWST and does not need re-profiling.
+  if not (device:supports_capability(capabilities.lock) and
+    device:supports_capability(capabilities.lockCodes) and
+    device:supports_capability(capabilities.tamperAlert) and
+    device:supports_capability(capabilities.battery)) then
+    return
   end
 
   -- if not  fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
