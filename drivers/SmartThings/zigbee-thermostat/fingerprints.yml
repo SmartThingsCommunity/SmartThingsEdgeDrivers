@@ -92,7 +92,7 @@ zigbeeManufacturer:
   - id: "Stelpro/SAT402ZB"
     deviceLabel: Allia Thermostat
     manufacturer: Stello
-    model: SAT402ZB
+    model: HT402
     deviceProfileName: thermostat-stelpro-profile-no-rh
   - id: "Stelpro/SORB"
     deviceLabel: Stelpro Thermostat
