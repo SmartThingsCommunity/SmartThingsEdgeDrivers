@@ -1,0 +1,30 @@
+name: window-treatment-aqara-curtain-driver-e1
+components:
+  - id: main
+    capabilities:
+      - id: windowShade
+        version: 1
+      - id: windowShadeLevel
+        version: 1
+      - id: stse.initializedStateWithGuide
+        version: 1
+      - id: stse.hookLockState
+        version: 1
+      - id: battery
+        version: 1
+      - id: stse.chargingState
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Blind
+preferences:
+  - preferenceId: stse.reverseCurtainDirection
+    explicit: true
+  - preferenceId: stse.softTouch
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Curtain_Driver_E1    

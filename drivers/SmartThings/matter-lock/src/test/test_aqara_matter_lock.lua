@@ -100,7 +100,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Handle received Lock State from Matter device.", {
+  "Handle received LockState.LOCKED from Matter device.", {
     {
       channel = "matter",
       direction = "receive",
@@ -115,6 +115,46 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.UNLOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 1, clusters.DoorLock.attributes.LockState.UNLOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.NOT_FULLY_LOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 1, clusters.DoorLock.attributes.LockState.NOT_FULLY_LOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked()),
     },
   }
 )
@@ -158,7 +198,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.unableToLockTheDoor()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.unableToLockTheDoor({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -173,7 +216,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.lockFactoryReset()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.lockFactoryReset({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -188,7 +234,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.attemptsExceeded()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.attemptsExceeded({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -203,7 +252,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.damaged()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.damaged({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -218,7 +270,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.forcedOpeningAttempt()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true})
+      ),
     },
   }
 )
@@ -229,7 +284,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.clear({state_change = true})
+      )
     )
 end
 )

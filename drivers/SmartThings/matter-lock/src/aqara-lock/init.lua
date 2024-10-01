@@ -18,13 +18,11 @@ local device_lib = require "st.device"
 
 local DoorLock = clusters.DoorLock
 local AQARA_MANUFACTURER_ID = 0x115f
-local U200_PRODUCT_ID = 0x2802
 
 local function is_aqara_products(opts, driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-      device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
-      device.manufacturer_info.product_id == U200_PRODUCT_ID then
-        return true
+      device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
+    return true
   end
   return false
 end
@@ -52,14 +50,14 @@ local function device_init(driver, device)
  end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.lockAlarm.alarm.clear())
+  device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
 end
 
 local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
+    [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
   }
@@ -75,15 +73,15 @@ local function alarm_event_handler(driver, device, ib, response)
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
   if alarm_code.value == DlAlarmCode.LOCK_JAMMED then
-    device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor())
+    device:emit_event(capabilities.lockAlarm.alarm.unableToLockTheDoor({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.LOCK_FACTORY_RESET then
-    device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset())
+    device:emit_event(capabilities.lockAlarm.alarm.lockFactoryReset({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.WRONG_CODE_ENTRY_LIMIT then
-    device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded())
+    device:emit_event(capabilities.lockAlarm.alarm.attemptsExceeded({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED then
-    device:emit_event(capabilities.lockAlarm.alarm.damaged())
+    device:emit_event(capabilities.lockAlarm.alarm.damaged({state_change = true}))
   elseif alarm_code.value == DlAlarmCode.DOOR_FORCED_OPEN then
-    device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt())
+    device:emit_event(capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true}))
   end
 end
 
@@ -145,3 +143,4 @@ local aqara_lock_handler = {
 }
 
 return aqara_lock_handler
+
