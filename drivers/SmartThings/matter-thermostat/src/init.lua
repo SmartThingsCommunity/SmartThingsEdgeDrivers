@@ -468,7 +468,7 @@ local function do_configure(driver, device)
       profile_name = "fan-generic"
     end
 
-  elseif device_type == AP_DEVICE_TYPE_ID then 
+  elseif device_type == AP_DEVICE_TYPE_ID then
     local fan_eps_found
     profile_name, fan_eps_found = create_air_purifier_profile(device)
     if #thermostat_eps > 0 then
