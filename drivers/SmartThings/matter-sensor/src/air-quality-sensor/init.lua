@@ -208,10 +208,6 @@ local function create_level_measurement_profile(device)
   return meas_name, level_name
 end
 
--- local function match(_string, _sub_string)
---   return string.match(_string, _sub_string)
--- end
-
 local function configure(driver, device)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
