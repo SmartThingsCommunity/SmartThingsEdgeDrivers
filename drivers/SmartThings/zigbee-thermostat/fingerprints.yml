@@ -84,16 +84,16 @@ zigbeeManufacturer:
     manufacturer: Stelpro
     model: ST218
     deviceProfileName: thermostat-temperature-temperaturealarm
-  - id: "Maestro Thermostat"
-    deviceLabel: Maestro Thermostat
+  - id: "Stelpro/MaestroStat"
+    deviceLabel: Stelpro Thermostat
     manufacturer: Stelpro
-    model: SMT402AD
+    model: MaestroStat
     deviceProfileName: thermostat-stelpro-profile
-  - id: "SAT402ZB Thermostat"
-    deviceLabel: SAT402ZB Thermostat
+  - id: "Stelpro/SAT402ZB"
+    deviceLabel: Allia Thermostat
     manufacturer: Stello
-    model: HT402
-    deviceProfileName: thermostat-stelpro-profile
+    model: SAT402ZB
+    deviceProfileName: thermostat-stelpro-profile-no-rh
   - id: "Stelpro/SORB"
     deviceLabel: Stelpro Thermostat
     manufacturer: Stelpro
@@ -129,6 +129,11 @@ zigbeeManufacturer:
     manufacturer: Resideo Korea
     model: DT300ST-M000
     deviceProfileName: thermostat-resideo-dt300st-m000
+  - id: "LUMI/lumi.airrtc.agl001"
+    deviceLabel: Aqara Smart Radiator Thermostat E1
+    manufacturer: LUMI
+    model: lumi.airrtc.agl001
+    deviceProfileName: thermostat-aqara
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat
