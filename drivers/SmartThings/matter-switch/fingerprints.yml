@@ -197,6 +197,11 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0001
     deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: switch-4
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
