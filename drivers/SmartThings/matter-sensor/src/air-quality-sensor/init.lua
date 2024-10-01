@@ -254,7 +254,10 @@ local function configure(driver, device)
     end
 
     -- try to best match to existing profiles
-    if profile_name == "aqs-co" or meas_find("co-") or meas_find("no2") or meas_find("ozone") or meas_find("ch2o") or
+    -- the check meas_find("co-") includes a dash to distinguish the "co" case from the "co2" case.
+    -- However, the one case where there wouldn't be a dash is when meas_name ends with "co".
+    -- To catch this edge case, we use this check- meas_name:match("co$").
+    if profile_name == meas_name:match("co$") or meas_find("co-") or meas_find("no2") or meas_find("ozone") or meas_find("ch2o") or
       meas_find("pm1") or meas_find("pm10") or meas_find("radon") then
       profile_name = "aqs-temp-humidity-all-meas"
     elseif #humidity_eps > 0 or #temp_eps > 0 or meas_find("co2") or meas_find("pm25") or meas_find("tvoc") then
