@@ -32,11 +32,6 @@ matterManufacturer:
     vendorId: 0x135d
     productId: 0xb0
     deviceProfileName: lock-nocodes-notamper
-#Bridged Devices
-  - id: "matter/bridged/door-lock"
-    deviceLabel: Matter Bridged Door Lock
-    vendorId: 0x0
-    deviceProfileName: base-lock-nobattery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
