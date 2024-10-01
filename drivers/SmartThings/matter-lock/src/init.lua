@@ -524,6 +524,7 @@ local function do_configure(driver, device)
     { vendor_id = 0x115F, product_id = 0x2802 }, -- Aqara Smart Lock U200
     { vendor_id = 0x115F, product_id = 0x2801 }, -- Aqara Smart Lock U300
     { vendor_id = 0x129F, product_id = 0x0001 }, -- Level Lock Plus (Matter)
+    { vendor_id = 0x129F, product_id = 0x0003 }, -- Level Bolt (Matter)
     { vendor_id = 0x135d, product_id = 0xb1 }, -- Nuki Smart Lock Pro
     { vendor_id = 0x135d, product_id = 0xb0 }, -- Nuki Smart Lock
   }
