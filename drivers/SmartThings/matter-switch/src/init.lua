@@ -348,6 +348,8 @@ local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
   local all_eps = {}
+  table.sort(switch_eps)
+  table.sort(button_eps)
 
   local profile_name = nil
 
