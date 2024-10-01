@@ -197,7 +197,15 @@ local function set_credential_response_handler(driver, device, ib, response)
     if device:get_field(lock_utils.NONFUNCTIONAL) and cota_cred_index == credential_index then
       device.log.info("Successfully set COTA credential after being non-functional")
       device:set_field(lock_utils.NONFUNCTIONAL, false, {persist = true})
-      device:try_update_metadata({profile = "base-lock", provisioning_state = "PROVISIONED"})
+      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      local profile_name = "base-lock"
+      if #power_source_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      elseif #battery_feature_eps == 0 then
+        profile_name = profile_name .. "-batteryLevel"
+      end
+      device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
     -- Handle failure to set a COTA credential
@@ -530,7 +538,7 @@ local function do_configure(driver, device)
     return
   end
 
-  -- if not  fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
+  -- if not fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
   local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local profile_name = "base-lock"
@@ -573,7 +581,15 @@ local function device_added(driver, device)
   if #eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
       device.log.debug("Device does not support lockCodes. Switching profile.")
-      device:try_update_metadata({profile = "lock-without-codes"})
+      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      local profile_name = "lock-without-codes"
+      if #power_source_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      elseif #battery_feature_eps == 0 then
+        profile_name = profile_name .. "-batteryLevel"
+      end
+      device:try_update_metadata({profile = profile_name})
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
     end
