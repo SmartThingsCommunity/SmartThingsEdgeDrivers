@@ -197,9 +197,6 @@ local function set_credential_response_handler(driver, device, ib, response)
     if device:get_field(lock_utils.NONFUNCTIONAL) and cota_cred_index == credential_index then
       device.log.info("Successfully set COTA credential after being non-functional")
       device:set_field(lock_utils.NONFUNCTIONAL, false, {persist = true})
-
-      -- TODO: Add check here for battery
-
       device:try_update_metadata({profile = "base-lock", provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
@@ -523,19 +520,28 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function do_configure(driver, device)
+  local fingerprinted_devices = {
+    { vendor_id = 0x115F, product_id = 0x2802 }, -- Aqara Smart Lock U200
+    { vendor_id = 0x115F, product_id = 0x2801 }, -- Aqara Smart Lock U300
+    { vendor_id = 0x129F, product_id = 0x0001 }, -- Level Lock Plus (Matter)
+    { vendor_id = 0x135d, product_id = 0xb1 }, -- Nuki Smart Lock Pro
+    { vendor_id = 0x135d, product_id = 0xb0 }, -- Nuki Smart Lock
+  }
+
+  -- check if device has a wwst fingerprint
+  if device.manufacturer_info ~= nil then
+    for _, fingerprint in ipairs(fingerprinted_devices) do
+      if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+        device.manufacturer_info.product_id == fingerprint.product_id then
+        return
+      end
+    end
+  end
+
+  -- if not  fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
   local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-
-  local profile_name = "lock"
-
-  -- we need to check if a device is already fingerprinted.
-
-
-  -- check for lock codes
-  if #pin_eps == 0 then
-    profile_name = profile_name .. "nocodes"
-  end
+  local profile_name = "base-lock"
 
   -- check for battery type
   if #power_source_eps == 0 then
@@ -543,6 +549,9 @@ local function do_configure(driver, device)
   elseif #battery_feature_eps == 0 then
     profile_name = profile_name .. "-batteryLevel"
   end
+
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 local function device_init(driver, device)
