@@ -142,7 +142,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
     minimum = min,
     maximum = max,
   }
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}), { visibility = { displayed = false } })
 
   local temp = ib.data.value / 100.0
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
@@ -213,6 +213,8 @@ local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib,
   supportedRefrigeratorTccModesMap[ib.endpoint_id] = supportedRefrigeratorTccModes
   device:set_field(SUPPORTED_REFRIGERATOR_TCC_MODES_MAP, supportedRefrigeratorTccModesMap, {persist = true})
   local event = capabilities.mode.supportedModes(supportedRefrigeratorTccModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedRefrigeratorTccModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
