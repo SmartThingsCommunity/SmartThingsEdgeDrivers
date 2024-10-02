@@ -37,6 +37,21 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1031
     deviceProfileName: contact-battery
+  - id: "4619/4102"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1006
+    deviceProfileName: smoke
+  - id: "4619/4098"
+    deviceLabel: Heiman CO Sensor
+    vendorId: 0x120B
+    productId: 0x1002
+    deviceProfileName: co-comeas
+  - id: "4619/4099"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1003
+    deviceProfileName: smoke
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -133,3 +148,18 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076
     deviceProfileName: smoke-co
+  - id: "matter/rain/sensor"
+    deviceLabel: Matter Rain Sensor
+    deviceTypes:
+      - id: 0x0044
+    deviceProfileName: rain-battery
+  - id: "matter/freeze/detector"
+    deviceLabel: Matter Water Freeze Detector
+    deviceTypes:
+      - id: 0x0041
+    deviceProfileName: freeze-battery
+  - id: "matter/leak/detector"
+    deviceLabel: Matter Water Leak Detector
+    deviceTypes:
+      - id: 0x0043
+    deviceProfileName: leak-battery

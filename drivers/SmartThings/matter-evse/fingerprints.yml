@@ -1,0 +1,7 @@
+matterGeneric:
+  - id: "matter/evse"
+    deviceLabel: Matter EVSE
+    deviceTypes:
+      - id: 0x0510
+      - id: 0x050C
+    deviceProfileName: evse
