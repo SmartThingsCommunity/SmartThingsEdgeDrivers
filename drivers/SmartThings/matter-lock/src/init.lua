@@ -78,7 +78,7 @@ local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
   local LOCK_STATE = {
-    [LockState.NOT_FULLY_LOCKED] = attr.unknown(),
+    [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
     [UNLATCHED_STATE] = attr.unlocked(), -- Fully unlocked with latch pulled
@@ -94,6 +94,16 @@ end
 local function handle_battery_percent_remaining(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
+  end
+end
+
+local function handle_battery_charge_level(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
   end
 end
 
@@ -416,19 +426,22 @@ end
 
 local function handle_reload_all_codes(driver, device, command)
   if (device:get_field(lock_utils.CHECKING_CREDENTIAL) == nil) then
+    lock_utils.lock_codes_event(device, {})
     device:set_field(lock_utils.CHECKING_CREDENTIAL, 1)
   else
     device.log.info(string.format("Delaying scanning since currently checking credential %d", device:get_field(lock_utils.CHECKING_CREDENTIAL)))
     device.thread:call_with_delay(2, function(t) handle_reload_all_codes(driver, device, command) end)
     return
   end
-  device:emit_event(capabilities.lockCodes.scanCodes("Scanning"))
-  device:send(
-    clusters.DoorLock.server.commands.GetCredentialStatus(
-      device, device:component_to_endpoint(command.component),
-      {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = device:get_field(lock_utils.CHECKING_CREDENTIAL)}
+  device.thread:call_with_delay(5, function(t)
+    device:emit_event(capabilities.lockCodes.scanCodes("Scanning"))
+    device:send(
+      clusters.DoorLock.server.commands.GetCredentialStatus(
+        device, device:component_to_endpoint(command.component),
+        {credential_type = DoorLock.types.DlCredentialType.PIN, credential_index = device:get_field(lock_utils.CHECKING_CREDENTIAL)}
+      )
     )
-  )
+  end)
 end
 
 local function handle_request_code(driver, device, command)
@@ -573,6 +586,7 @@ local matter_lock_driver = {
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
+        [PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
       },
     },
     event = {
@@ -593,6 +607,7 @@ local matter_lock_driver = {
   subscribed_attributes = {
     [capabilities.lock.ID] = {DoorLock.attributes.LockState},
     [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
+    [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
   },
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
@@ -618,6 +633,7 @@ local matter_lock_driver = {
     capabilities.lockCodes,
     capabilities.tamperAlert,
     capabilities.battery,
+    capabilities.batteryLevel,
   },
   sub_drivers = {
     require("new-matter-lock"),
