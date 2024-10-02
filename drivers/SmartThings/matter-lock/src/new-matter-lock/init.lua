@@ -31,6 +31,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x101D, 0x0001}, -- Yale, Assure 2
+  {0x1421, 0x0041}, -- Kwikset
   {0x10E1, 0x2002} -- VDA
 }
 
@@ -1441,6 +1442,7 @@ end
 -- Lock Operation --
 --------------------
 local function lock_op_event_handler(driver, device, ib, response)
+  device.log.info("lock_op_event_handler")
   local opType = ib.data.elements.lock_operation_type
   local opSource = ib.data.elements.operation_source
   local userIdx = ib.data.elements.user_index

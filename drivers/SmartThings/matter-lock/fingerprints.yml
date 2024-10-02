@@ -33,6 +33,12 @@ matterManufacturer:
     vendorId: 0x101D
     productId: 0x0001
     deviceProfileName: lock-user-pin-schedule
+# Kwikset
+  - id: "Kwikset Matter Lock"
+    deviceLabel: Kwikset Matter Lock
+    vendorId: 0x1421
+    productId: 0x0041
+    deviceProfileName: lock-user-pin-schedule
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
