@@ -559,7 +559,7 @@ local function initialize_switch(driver, device)
     else
       configure_buttons(device)
     end
-  else
+  elseif #switch_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
