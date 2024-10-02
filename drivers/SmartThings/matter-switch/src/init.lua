@@ -257,8 +257,12 @@ end
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  table.sort(switch_eps)
+  table.sort(button_eps)
 
-  -- use first button endpoint as main endpoint if one exists
+  -- If button endpoints are present, use the first one as the main endpoint to
+  -- ensure that if switch endpoints are also present, the parent device will be
+  -- a multi-component device composed of all the button endpoints.
   for _,ep in ipairs(button_eps) do
     if ep ~= 0 then --0 is the matter RootNode endpoint
       return ep
@@ -347,7 +351,6 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local all_eps = {}
   table.sort(switch_eps)
   table.sort(button_eps)
 
@@ -361,14 +364,6 @@ local function initialize_switch(driver, device)
   if #switch_eps == 0 and #button_eps == 0 then
     return
   end
-
-  for _,v in ipairs(switch_eps) do
-    table.insert(all_eps, v)
-  end
-  for _,v in ipairs(button_eps) do
-    table.insert(all_eps, v)
-  end
-  table.sort(all_eps)
 
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
