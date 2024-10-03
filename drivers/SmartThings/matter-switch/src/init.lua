@@ -345,7 +345,7 @@ end
 --- In this case the function returns the lowest endpoint value that isn't 0
 --- and supports the OnOff or Switch cluster. This is done to bypass the
 --- BRIDGED_NODE_DEVICE_TYPE on bridged devices.
-local function find_default_endpoint(device, component)
+local function find_default_endpoint(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
   table.sort(switch_eps)
@@ -486,39 +486,35 @@ local function initialize_switch(driver, device)
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
 
-  if #button_eps > 0 then
-    for _, ep in ipairs(button_eps) do
-      -- Configure MCD for button endpoints
-      if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-        if ep ~= main_endpoint then
-          component_map[string.format("button%d", current_component_number)] = ep
-          current_component_number = current_component_number + 1
-        else
-          component_map["main"] = ep
-        end
-        component_map_used = true
+  for _, ep in ipairs(button_eps) do
+    -- Configure MCD for button endpoints
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if ep ~= main_endpoint then
+        component_map[string.format("button%d", current_component_number)] = ep
+        current_component_number = current_component_number + 1
+      else
+        component_map["main"] = ep
       end
+      component_map_used = true
     end
   end
-  if #switch_eps > 0 then
-    for _, ep in ipairs(switch_eps) do
-      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-        num_switch_server_eps = num_switch_server_eps + 1
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local child_profile = assign_child_profile(device, ep)
-          driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = child_profile,
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%d", ep),
-              vendor_provided_label = name
-            }
-          )
-          parent_child_device = true
-        end
+  for _, ep in ipairs(switch_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      num_switch_server_eps = num_switch_server_eps + 1
+      local name = string.format("%s %d", device.label, num_switch_server_eps)
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        local child_profile = assign_child_profile(device, ep)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = child_profile,
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
+        parent_child_device = true
       end
     end
   end
@@ -593,7 +589,7 @@ local function component_to_endpoint(device, component)
   if map[component] then
     return map[component]
   end
-  return find_default_endpoint(device, component)
+  return find_default_endpoint(device)
 end
 
 local function endpoint_to_component(device, ep)
