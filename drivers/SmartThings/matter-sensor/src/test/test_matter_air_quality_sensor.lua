@@ -144,6 +144,62 @@ local mock_device_level = test.mock_device.build_test_matter_device({
     }
 })
 
+local mock_device_co = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+      },
+      device_types = {
+        {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
+      }
+    }
+  }
+})
+
+local mock_device_co2 = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
+      },
+      device_types = {
+        {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
+      }
+    }
+  }
+})
+
 local function test_init()
   local subscribed_attributes = {
     [capabilities.relativeHumidityMeasurement.ID] = {
@@ -334,6 +390,56 @@ local function test_init_level()
 
   test.socket.matter:__expect_send({mock_device_level.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_level)
+end
+
+local function test_init_co_co2()
+  local attr_co = {
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
+  }
+
+  local attr_co2 = {
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+  }
+
+  local subscribe_request = nil
+  for _, attributes in pairs(attr_co) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_co)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_co))
+      end
+    end
+  end
+
+  test.socket.matter:__expect_send({mock_device_co.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_co)
+
+  subscribe_request = nil
+  for _, attributes in pairs(attr_co2) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_co2)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_co2))
+      end
+    end
+  end
+
+  test.socket.matter:__expect_send({mock_device_co2.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_co2)
 end
 
 test.register_message_test(
@@ -642,6 +748,41 @@ test.register_coroutine_test(
     mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_level }
+)
+
+
+test.register_coroutine_test(
+  "Configure should not catch co2, only co in the first check",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_co.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    mock_device_co:expect_metadata_update({ profile = "aqs-temp-humidity-all-meas" })
+    mock_device_co:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_co2.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    test.socket.matter:__expect_send({mock_device_co2.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+    mock_device_co2:expect_metadata_update({ profile = "aqs-temp-humidity-co2-pm25-tvoc-meas" })
+    mock_device_co2:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_co_co2 }
 )
 
 test.run_registered_tests()

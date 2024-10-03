@@ -208,7 +208,7 @@ local function create_level_measurement_profile(device)
   return meas_name, level_name
 end
 
-local function configure(driver, device)
+local function do_configure(driver, device)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
@@ -254,8 +254,8 @@ local function configure(driver, device)
     end
 
     -- try to best match to existing profiles
-    -- meas_find("co[^%d]?") matches the string to co and NOT co2.
-    if meas_find("co[^%d]?") or meas_find("no2") or meas_find("ozone") or meas_find("ch2o") or
+    -- these checks, meas_find("co%-") and meas_find("co$"), match the string to co and NOT co2.
+    if meas_find("co%-") or meas_find("co$") or meas_find("no2") or meas_find("ozone") or meas_find("ch2o") or
       meas_find("pm1") or meas_find("pm10") or meas_find("radon") then
       profile_name = "aqs-temp-humidity-all-meas"
     elseif #humidity_eps > 0 or #temp_eps > 0 or meas_find("co2") or meas_find("pm25") or meas_find("tvoc") then
@@ -416,7 +416,7 @@ local matter_air_quality_sensor_handler = {
   NAME = "matter-air-quality-sensor",
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = configure
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
