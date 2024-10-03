@@ -524,6 +524,12 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.DoorLock.ID)
 end
 
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
+end
+
 local function do_configure(driver, device)
   -- check if the device is NOT currently profiled as base-lock
   -- by ANDing a query for every capability in the base-lock profiles.
@@ -678,7 +684,12 @@ local matter_lock_driver = {
   sub_drivers = {
     require("aqara-lock"),
   },
-  lifecycle_handlers = {init = device_init, added = device_added, doConfigure = do_configure },
+  lifecycle_handlers = {
+    init = device_init,
+    added = device_added,
+    doConfigure = do_configure,
+    infoChanged = info_changed,
+  },
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
