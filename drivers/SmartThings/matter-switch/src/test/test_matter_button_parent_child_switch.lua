@@ -22,7 +22,8 @@ local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
 
 local parent_ep = 10
-local child_ep = 20
+local child1_ep = 20
+local child2_ep = 30
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
@@ -56,7 +57,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = child_ep,
+      endpoint_id = child1_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
@@ -65,12 +66,24 @@ local mock_device = test.mock_device.build_test_matter_device({
       device_types = {
         {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
       }
+    },
+    {
+      endpoint_id = child2_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 2} -- Dimmable Light
+      }
     }
   }
 })
 
 local child_profiles = {
-  [child_ep] = t_utils.get_profile_definition("light-color-level.yml")
+  [child1_ep] = t_utils.get_profile_definition("light-color-level.yml"),
+  [child2_ep] = t_utils.get_profile_definition("light-level.yml")
 }
 
 local mock_children = {}
@@ -127,7 +140,15 @@ local function test_init()
     label = "Matter Switch 1",
     profile = "light-color-level",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", child_ep)
+    parent_assigned_child_key = string.format("%d", child1_ep)
+  })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "light-level",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", child2_ep)
   })
 end
 
@@ -154,13 +175,13 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Child device: set color temperature should send the appropriate commands",
+  "First child device: set color temperature should send the appropriate commands",
   {
     {
       channel = "capability",
       direction = "receive",
       message = {
-        mock_children[child_ep].id,
+        mock_children[child1_ep].id,
         { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
       }
     },
@@ -169,7 +190,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child_ep, 370, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child1_ep, 370, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
     },
     {
@@ -177,7 +198,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, child_ep)
+        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, child1_ep)
       }
     },
     {
@@ -185,13 +206,33 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, child_ep, 370)
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, child1_ep, 370)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_children[child_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
+    },
+  }
+)
+
+
+test.register_message_test(
+  "Second child device: current level reports should generate appropriate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child2_ep, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
     },
   }
 )
