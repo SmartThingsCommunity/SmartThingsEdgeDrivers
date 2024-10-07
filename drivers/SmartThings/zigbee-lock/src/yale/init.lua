@@ -51,10 +51,11 @@ local set_code = function(driver, device, command)
       args = {command.args.codeSlot, command.args.codeName}
     })
   else
+    local user_type = command.args.codeSlot == 0 and UserTypeEnum.MASTER_USER or UserTypeEnum.UNRESTRICTED
     device:send(LockCluster.server.commands.SetPINCode(device,
             command.args.codeSlot,
             UserStatusEnum.OCCUPIED_ENABLED,
-            UserTypeEnum.UNRESTRICTED,
+            user_type,
             command.args.codePIN)
     )
     if (command.args.codeName ~= nil) then
