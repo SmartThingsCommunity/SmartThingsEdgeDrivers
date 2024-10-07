@@ -1,4 +1,10 @@
 zigbeeManufacturer:
+  #Confio
+  - id: "Confio/CT4RZB"
+    deviceLabel: Confio Switch 1
+    manufacturer: Confio
+    model: CT4RZB
+    deviceProfileName: basic-switch
   #SMARTvill
   - id: "SMARTvill/SLA06"
     deviceLabel: "SMARTvill Switch 1"
