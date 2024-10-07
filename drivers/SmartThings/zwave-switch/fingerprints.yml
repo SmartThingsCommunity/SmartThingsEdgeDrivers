@@ -387,7 +387,7 @@ zwaveManufacturer:
     productId: 0xA002
     deviceProfileName: switch-binary
   - id: 0063/4952
-    deviceLabel: Jasco Pro In-Wall Switch
+    deviceLabel: JascoPro In-Wall Switch
     manufacturerId: 0x0063
     productType: 0x4952
     deviceProfileName: switch-binary-indicator
