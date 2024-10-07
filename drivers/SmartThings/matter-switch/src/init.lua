@@ -1229,6 +1229,7 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
+    require("aqara-cube")
   }
 }
 

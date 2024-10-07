@@ -17,6 +17,7 @@ jobs:
           url: 'https://api.smartthings.com/distchannels/'
           method: GET
           bearerToken: ${{ secrets.TOKEN }}
+          timeout: 10000
       - name: Store channel name
         uses: actions/github-script@v5
         with:
