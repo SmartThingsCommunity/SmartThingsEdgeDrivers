@@ -1,5 +1,6 @@
 local log = require "log"
 local st_utils = require "st.utils"
+local capabilities = require "st.capabilities"
 
 local Discovery = require "disco"
 local Fields = require "fields"
@@ -43,6 +44,19 @@ local migration_handlers = utils.lazy_handler_loader("handlers.migration_handler
 ---@class LifecycleHandlers
 local LifecycleHandlers = {}
 
+local function emit_component_event_no_cache(device, component, capability_event)
+    if not device:supports_capability(capability_event.capability, component.id) then
+        local err_msg = string.format("Attempted to generate event for %s.%s but it does not support capability %s", device.id, component.id, capability_event.capability.NAME)
+        log.warn_with({ hub_logs = true }, err_msg)
+        return false, err_msg
+    end
+    local event, err = capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
+    if err ~= nil then
+        log.warn_with({ hub_logs = true }, err)
+    end
+    return event, err
+end
+
 ---@param driver HueDriver
 ---@param device HueDevice
 ---@param ... any arguments for device specific handler
@@ -55,6 +69,10 @@ function LifecycleHandlers.device_init(driver, device, ...)
     )
   )
   inner_handlers[device_type].init(driver, device, ...)
+
+  -- Remove usage of the state cache for hue devices to avoid large datastores
+  device:set_field("__state_cache", nil, {persist = true})
+  device:extend_device("emit_component_event", emit_component_event_no_cache)
 end
 
 ---@param driver HueDriver
