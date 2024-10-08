@@ -20,6 +20,7 @@ local im = require "st.matter.interaction_model"
 
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local cosock = require "cosock"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -83,6 +84,9 @@ local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
+local NUM_SUPPORTED_WIND_MODES = "__num_supported_wind_modes"
+local TX_WIND = "__tx_wind"
+local RX_WIND = "__rx_wind"
 
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
@@ -385,7 +389,21 @@ local function create_fan_profile(device)
     profile_name = profile_name .. "-rock"
   end
   if #wind_eps > 0 then
-    profile_name = profile_name .. "-wind"
+    local tx_wind, rx_wind = cosock.channel.new()
+    device:set_field(TX_WIND, tx_wind)
+    device:send(clusters.FanControl.attributes.WindSupport:read(device))
+    print("@@1")
+    cosock.spawn(function()
+      print("@@2")
+      rx_wind:receive()
+      print("@@4")
+      if device:get_field(NUM_SUPPORTED_WIND_MODES) > 1 then
+        profile_name = profile_name .. "-wind"
+      end
+      device:set_field(TX_WIND, nil)
+      device:set_field(RX_WIND, nil)
+    end)
+    print("@@5")
   end
   return profile_name
 end
@@ -540,7 +558,6 @@ local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
-  req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
   device:send(req)
 end
@@ -966,14 +983,21 @@ local function fan_speed_percent_attr_handler(driver, device, ib, response)
 end
 
 local function wind_support_handler(driver, device, ib, response)
+  print("@@-1")
   local supported_wind_modes = {capabilities.windMode.windMode.noWind.NAME}
   for mode, wind_mode in pairs(WIND_MODE_MAP) do
     if ((ib.data.value >> mode) & 1) > 0 then
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
-  local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  -- save the number of supported wind modes for use in do_configure.
+  device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes, {persist = true})
+  if #supported_wind_modes >= 2 then
+    local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
+  end
+  print("@@3")
+  device:get_field(TX_WIND):send(0)
 end
 
 local function wind_setting_handler(driver, device, ib, response)
