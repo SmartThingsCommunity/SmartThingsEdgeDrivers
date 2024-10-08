@@ -163,6 +163,18 @@ local function info_changed(driver, device, event, args)
   device:subscribe()
 end
 
+-- This function check busy_state and if busy_state is false, set it to true(current time)
+local function check_busy_state(device)
+  local c_time = os.time()
+  local busy_state = device:get_field(lock_utils.BUSY_STATE) or false
+  if busy_state == false or c_time - busy_state > 10 then
+    device:set_field(lock_utils.BUSY_STATE, c_time, {persist = true})
+    return false
+  else
+    return true
+  end
+end
+
 -- Matter Handler
 ----------------
 -- Lock State --
@@ -267,7 +279,7 @@ local function set_cota_credential(device, credential_index)
   device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
   local credential = {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = credential_index}
   -- Set the credential to a code
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  check_busy_state(device)
   device:set_field(lock_utils.COMMAND_NAME, "addCota")
   device:set_field(lock_utils.CRED_INDEX, credential_index)
   device:set_field(lock_utils.SET_CREDENTIAL, credential_index)
@@ -637,7 +649,7 @@ local function handle_update_user(driver, device, command)
   end
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -655,7 +667,6 @@ local function handle_update_user(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
@@ -730,7 +741,7 @@ local function handle_delete_user(driver, device, command)
   local userIdx = command.args.userIndex
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -748,7 +759,6 @@ local function handle_delete_user(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
 
@@ -765,7 +775,7 @@ local function handle_delete_all_users(driver, device, command)
   local cmdName = "deleteAllUsers"
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -783,7 +793,6 @@ local function handle_delete_all_users(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, ALL_INDEX, {persist = true})
 
@@ -852,7 +861,7 @@ local function handle_add_credential(driver, device, command)
   local credData = command.args.credentialData
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -870,7 +879,6 @@ local function handle_add_credential(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
@@ -907,7 +915,7 @@ local function handle_update_credential(driver, device, command)
   local credData = command.args.credentialData
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -925,7 +933,6 @@ local function handle_update_credential(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
@@ -1097,7 +1104,7 @@ local function handle_delete_credential(driver, device, command)
   }
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -1115,7 +1122,6 @@ local function handle_delete_credential(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
 
@@ -1136,7 +1142,7 @@ local function handle_delete_all_credentials(driver, device, command)
   }
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -1154,7 +1160,6 @@ local function handle_delete_all_credentials(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, ALL_INDEX, {persist = true})
 
@@ -1222,7 +1227,7 @@ local function handle_set_week_day_schedule(driver, device, command)
   local endMinute = schedule.endMinute
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -1240,7 +1245,6 @@ local function handle_set_week_day_schedule(driver, device, command)
   end
 
   -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
@@ -1313,7 +1317,7 @@ local function handle_clear_week_day_schedule(driver, device, command)
   local userIdx = command.args.userIndex
 
   -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
+  local busy = check_busy_state(device)
   if busy == true then
     local result = {
       commandName = cmdName,
@@ -1330,7 +1334,7 @@ local function handle_clear_week_day_schedule(driver, device, command)
     return
   end
 
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
+  -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
