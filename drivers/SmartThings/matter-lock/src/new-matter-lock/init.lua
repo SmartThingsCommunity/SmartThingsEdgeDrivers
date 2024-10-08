@@ -166,7 +166,7 @@ local function lock_state_handler(driver, device, ib, response)
     if ib.data.value ~= nil then
       device:emit_event(LOCK_STATE[ib.data.value])
     else
-      device:emit_event(attr.unknown())
+      device.log.warn("Lock State is nil")
     end
   end)
 end
@@ -201,7 +201,7 @@ local function total_users_supported_handler(driver, device, ib, response)
 end
 
 ----------------------------------
--- Number Of PIN User Supported --
+-- Number Of PIN Users Supported --
 ----------------------------------
 local function pin_users_supported_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCredentials.pinUsersSupported(ib.data.value, {visibility = {displayed = false}}))
@@ -433,7 +433,7 @@ local function add_credential_to_table(device, userIdx, credIdx, credType)
 end
 
 local function delete_credential_from_table(device, credIdx)
-  -- If Credential Index is ALL_INDEX, remove all entry from the table
+  -- If Credential Index is ALL_INDEX, remove all entries from the table
   if credIdx == ALL_INDEX then
     device:emit_event(capabilities.lockCredentials.credentials({}))
   end
@@ -507,7 +507,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
   ) or {}
   local new_week_schedule_table = {}
 
-  -- Find shcedule list
+  -- Find schedule list
   local i = 0
   for index, entry in pairs(week_schedule_table) do
     if entry.userIndex == userIdx then
@@ -605,59 +605,6 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(new_week_schedule_table, {visibility = {displayed = false}}))
 end
 
---------------
--- Add User --
---------------
-local function handle_add_user(driver, device, command)
-
-  -- Get parameters
-  local cmdName = "addUser"
-  local userName = command.args.userName
-  local userType = command.args.lockUserType
-  local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
-  if userType == "guest" then
-    userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
-  end
-
-  -- Check busy state
-  local busy = device:get_field(lock_utils.BUSY_STATE)
-  if busy == true then
-    local result = {
-      commandName = cmdName,
-      statusCode = "busy"
-    }
-    local event = capabilities.lockUsers.commandResult(
-      result,
-      {
-        state_change = true,
-        visibility = {displayed = false}
-      }
-    )
-    device:emit_event(event)
-    return
-  end
-
-  -- Save values to field
-  device:set_field(lock_utils.BUSY_STATE, true, {persist = true})
-  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
-  -- device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true}) -- needs to find empty index
-  device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
-
-  -- Send command
-  local ep = device:component_to_endpoint(command.component)
-  device:send(
-    DoorLock.server.commands.SetUser(
-      device, ep,
-      DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
-      userName,         -- User Name
-      nil,              -- Unique ID
-      nil,              -- User Status
-      userTypeMatter,   -- User Type
-      nil               -- Credential Rule
-    )
-  )
-end
-
 -----------------
 -- Update User --
 -----------------
@@ -736,6 +683,8 @@ local function set_user_response_handler(driver, device, ib, response)
     elseif cmdName == "updateUser" then
       update_user_in_table(device, userIdx, userType)
     end
+  else
+    device.log.warn(string.format("Failed to set user: %s", status))
   end
 
   -- Update commandResult
@@ -844,6 +793,8 @@ local function clear_user_response_handler(driver, device, ib, response)
   if status == "success" then
     delete_user_from_table(device, userIdx)
     delete_credential_from_table_as_user(device, userIdx)
+  else
+    device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
   -- Update commandResult
@@ -1044,6 +995,7 @@ local function set_credential_response_handler(driver, device, ib, response)
   elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
     status = "failure"
   end
+  device.log.warn(string.format("Failed to set credential: %s", status))
 
   -- Error Handling
   if status == "duplicate" then
@@ -1212,6 +1164,8 @@ local function clear_credential_response_handler(driver, device, ib, response)
   local userIdx = 0
   if status == "success" then
     userIdx = delete_credential_from_table(device, credIdx)
+  else
+    device.log.warn(string.format("Failed to clear credential: %s", status))
   end
 
   -- Update commandResult
@@ -1310,6 +1264,8 @@ local function set_week_day_schedule_handler(driver, device, ib, response)
   -- Add Week Day Schedule to table
   if status == "success" then
     add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule)
+  else
+    device.log.warn(string.format("Failed to set week day schedule: %s", status))
   end
 
   -- Update commandResult
@@ -1385,6 +1341,8 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   -- Delete Week Day Schedule to table
   if status == "success" then
     delete_week_schedule_to_table(device, userIdx, scheduleIdx)
+  else
+    device.log.warn(string.format("Failed to clear week day schedule: %s", status))
   end
 
   -- Update commandResult
@@ -1549,7 +1507,6 @@ local new_matter_lock_handler = {
       [capabilities.lock.commands.unlock.NAME] = handle_unlock,
     },
     [capabilities.lockUsers.ID] = {
-      [capabilities.lockUsers.commands.addUser.NAME] = handle_add_user,
       [capabilities.lockUsers.commands.updateUser.NAME] = handle_update_user,
       [capabilities.lockUsers.commands.deleteUser.NAME] = handle_delete_user,
       [capabilities.lockUsers.commands.deleteAllUsers.NAME] = handle_delete_all_users,

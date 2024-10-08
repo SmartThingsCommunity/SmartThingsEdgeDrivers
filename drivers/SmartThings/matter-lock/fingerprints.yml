@@ -33,3 +33,4 @@ matterGeneric:
     deviceTypes:
       - id: 0x000A # Door Lock
     deviceProfileName: base-lock
+    
