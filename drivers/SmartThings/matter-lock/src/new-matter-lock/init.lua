@@ -99,6 +99,20 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  for cap_id, attributes in pairs(subscribed_attributes) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, attr in ipairs(attributes) do
+        device:add_subscribed_attribute(attr)
+      end
+    end
+  end
+  for cap_id, events in pairs(subscribed_events) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, e in ipairs(events) do
+        device:add_subscribed_event(e)
+      end
+    end
+  end
   device:subscribe()
  end
 
@@ -129,6 +143,9 @@ local function do_configure(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
+  if device.profile.id == args.old_st_store.profile.id then
+    return
+  end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
