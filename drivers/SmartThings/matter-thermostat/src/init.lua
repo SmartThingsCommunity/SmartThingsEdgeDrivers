@@ -259,8 +259,8 @@ end
 local function component_to_endpoint(device, component_name)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
-  if device:supports_capability(capabilities.airPurifierFanMode) then
-    -- Fan Control is mandatory for the Air Purifier device type
+  if device:supports_capability(capabilities.airPurifierFanMode) or device:supports_capability(capabilities.airConditionerFanMode) then
+    -- Fan Control is mandatory for the Air Purifier device type and Air Conditioner device type
     return find_default_endpoint(device, clusters.FanControl.ID)
   else
     -- Thermostat is mandatory for Thermostat and Room AC device type
