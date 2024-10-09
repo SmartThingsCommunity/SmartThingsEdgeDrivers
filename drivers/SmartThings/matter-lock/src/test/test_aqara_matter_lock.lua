@@ -53,7 +53,15 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local function test_init()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
+  subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.NumberOfPINUsersSupported:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 end
