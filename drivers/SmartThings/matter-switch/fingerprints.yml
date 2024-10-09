@@ -197,6 +197,11 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0001
     deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: switch-4
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -224,6 +229,21 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x1001
     deviceProfileName: light-color-level
+  - id: "5163/4100"
+    deviceLabel: LeTianPai Smart Switch 3 Way
+    vendorId: 0x142B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "5163/4099"
+    deviceLabel: LeTianPai Smart Switch 2 Way
+    vendorId: 0x142B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "5163/4098"
+    deviceLabel: LeTianPai Smart Switch 1 Way
+    vendorId: 0x142B
+    productId: 0x1002
+    deviceProfileName: switch-binary  
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)

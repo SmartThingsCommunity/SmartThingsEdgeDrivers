@@ -357,38 +357,102 @@ local function create_level_measurement_profile(device)
   return meas_name, level_name
 end
 
-local function do_configure(driver, device)
-  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
-  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
-  local thermo_eps = device:get_endpoints(clusters.Thermostat.ID)
+local function create_air_quality_sensor_profile(device)
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
+  local profile_name = ""
+  if #aqs_eps > 0 then
+    profile_name = profile_name .. "-aqs"
+  end
+  local meas_name, level_name = create_level_measurement_profile(device)
+  if meas_name ~= "" then
+    profile_name = profile_name .. meas_name .. "-meas"
+  end
+  if level_name ~= "" then
+    profile_name = profile_name .. level_name .. "-level"
+  end
+  return profile_name
+end
+
+local function create_fan_profile(device)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
   local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- use get_endpoints for embedded clusters
+  local profile_name = ""
+  if #fan_eps > 0 then
+    profile_name = profile_name .. "-fan"
+  end
+  if #rock_eps > 0 then
+    profile_name = profile_name .. "-rock"
+  end
+  if #wind_eps > 0 then
+    profile_name = profile_name .. "-wind"
+  end
+  return profile_name
+end
+
+local function create_air_purifier_profile(device)
   local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
-  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
+  local fan_eps_seen = false
+  local profile_name = "air-purifier"
+  if #hepa_filter_eps > 0 then
+    profile_name = profile_name .. "-hepa"
+  end
+  if #ac_filter_eps > 0 then
+    profile_name = profile_name .. "-ac"
+  end
+
+  -- air purifier profiles include -fan later in the name for historical reasons.
+  -- save this information for use at that point.
+  local fan_profile = create_fan_profile(device)
+  if fan_profile ~= "" then
+    fan_eps_seen = true
+  end
+  fan_profile = string.gsub(fan_profile, "-fan", "")
+  profile_name = profile_name .. fan_profile
+
+  return profile_name, fan_eps_seen
+end
+
+local function create_thermostat_modes_profile(device)
+  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
+  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
+
+  local thermostat_modes = ""
+  if #heat_eps == 0 and #cool_eps == 0 then
+    device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
+    return "No Heating nor Cooling Support"
+  elseif #heat_eps > 0 and #cool_eps == 0 then
+    thermostat_modes = thermostat_modes .. "-heating-only"
+  elseif #cool_eps > 0 and #heat_eps == 0 then
+    thermostat_modes = thermostat_modes .. "-cooling-only"
+  end
+  return thermostat_modes
+end
+
+local function do_configure(driver, device)
+  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local device_type = get_device_type(driver, device)
-  local profile_name = "thermostat"
+  local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
     profile_name = "room-air-conditioner"
 
     if #humidity_eps > 0 then
       profile_name = profile_name .. "-humidity"
     end
-    if #fan_eps > 0 then
-      profile_name = profile_name .. "-fan"
-      if #wind_eps > 0 then
-        profile_name = profile_name .. "-wind"
-      end
-    end
 
-    if #heat_eps > 0 and #cool_eps > 0 then
+    -- Room AC does not support the rocking feature of FanControl.
+    local fan_name = create_fan_profile(device)
+    fan_name = string.gsub(fan_name, "-rock", "")
+    profile_name = profile_name .. fan_name
+
+    local thermostat_modes = create_thermostat_modes_profile(device)
+    if thermostat_modes == "" then
       profile_name = profile_name .. "-heating-cooling"
     else
-      device.log.warn_with({hub_logs=true}, "Room AC does not support both heating and cooling. No matching profile")
+      device.log.warn_with({hub_logs=true}, "Device does not support both heating and cooling. No matching profile")
       return
     end
 
@@ -396,55 +460,33 @@ local function do_configure(driver, device)
       profile_name = "room-air-conditioner"
     end
 
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
   elseif device_type == FAN_DEVICE_TYPE_ID then
-    profile_name = "fan"
-    if #rock_eps > 0 then
-      profile_name = profile_name .. "-rock"
-    end
-    if #wind_eps > 0 then
-      profile_name = profile_name .. "-wind"
-    end
+    profile_name = create_fan_profile(device)
+    -- remove leading "-"
+    profile_name = string.sub(profile_name, 2)
     if profile_name == "fan" then
       profile_name = "fan-generic"
     end
 
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
   elseif device_type == AP_DEVICE_TYPE_ID then
-    profile_name = "air-purifier"
-    if #hepa_filter_eps > 0 and #ac_filter_eps > 0 then
-      profile_name = profile_name .. "-hepa" .. "-ac"
-    elseif #hepa_filter_eps > 0 then
-      profile_name = profile_name .. "-hepa"
-    elseif #ac_filter_eps > 0 then
-      profile_name = profile_name .. "-ac"
-    end
-    if #rock_eps > 0 then
-      profile_name = profile_name .. "-rock"
-    end
-    if #wind_eps > 0 then
-      profile_name = profile_name .. "-wind"
-    end
-
-    if #thermo_eps > 0 then
+    local fan_eps_found
+    profile_name, fan_eps_found = create_air_purifier_profile(device)
+    if #thermostat_eps > 0 then
       profile_name = profile_name .. "-thermostat"
-      if #humidity_eps > 0 and #fan_eps > 0 then
-        profile_name = profile_name .. "-humidity" .. "-fan"
-      elseif #humidity_eps > 0 then
+
+      if #humidity_eps > 0 then
         profile_name = profile_name .. "-humidity"
-      elseif #fan_eps > 0 then
+      end
+
+      if fan_eps_found then
         profile_name = profile_name .. "-fan"
       end
 
-      if #heat_eps == 0 and #cool_eps == 0 then
-        device.log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
+      local thermostat_modes = create_thermostat_modes_profile(device)
+      if thermostat_modes == "No Heating nor Cooling Support" then
         return
-      elseif #heat_eps > 0 and #cool_eps == 0 then
-        profile_name = profile_name .. "-heating-only"
-      elseif #cool_eps > 0 and #heat_eps == 0 then
-        profile_name = profile_name .. "-cooling-only"
+      else
+        profile_name = profile_name .. thermostat_modes
       end
 
       profile_name = profile_name .. "-nostate"
@@ -453,39 +495,26 @@ local function do_configure(driver, device)
         profile_name = profile_name .. "-nobattery"
       end
     end
+    profile_name = profile_name .. create_air_quality_sensor_profile(device)
 
-    if #aqs_eps > 0 then
-      profile_name = profile_name .. "-aqs"
-    end
+  elseif #thermostat_eps > 0 then
+    profile_name = "thermostat"
 
-    local meas_name, level_name = create_level_measurement_profile(device)
-
-    if meas_name ~= "" then
-      profile_name = profile_name .. meas_name .. "-meas"
-    end
-
-    if level_name ~= "" then
-      profile_name = profile_name .. level_name .. "-level"
-    end
-
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
-  elseif #thermo_eps == 1 then
-    if #humidity_eps > 0 and #fan_eps > 0 then
-      profile_name = profile_name .. "-humidity" .. "-fan"
-    elseif #humidity_eps > 0 then
+    if #humidity_eps > 0 then
       profile_name = profile_name .. "-humidity"
-    elseif #fan_eps > 0 then
+    end
+
+    -- thermostat profiles support neither wind nor rocking FanControl attributes
+    local fan_name = create_fan_profile(device)
+    if fan_name ~= "" then
       profile_name = profile_name .. "-fan"
     end
 
-    if #heat_eps == 0 and #cool_eps == 0 then
-      device.log.warn_with({hub_logs=true}, "Thermostat does not support heating or cooling. No matching profile")
+    local thermostat_modes = create_thermostat_modes_profile(device)
+    if thermostat_modes == "No Heating nor Cooling Support" then
       return
-    elseif #heat_eps > 0 and #cool_eps == 0 then
-      profile_name = profile_name .. "-heating-only"
-    elseif #cool_eps > 0 and #heat_eps == 0 then
-      profile_name = profile_name .. "-cooling-only"
+    else
+      profile_name = profile_name .. thermostat_modes
     end
 
     -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
@@ -496,15 +525,14 @@ local function do_configure(driver, device)
     if #battery_eps == 0 then
       profile_name = profile_name .. "-nobattery"
     end
-
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
-  elseif #fan_eps == 1 then
-    profile_name = "fan"
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
   else
-    device.log.warn_with({hub_logs=true}, "Device does not support thermostat cluster")
+    device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
+    return
+  end
+
+  if profile_name then
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   end
 end
 

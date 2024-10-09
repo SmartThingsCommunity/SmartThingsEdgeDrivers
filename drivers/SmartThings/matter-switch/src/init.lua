@@ -458,6 +458,8 @@ end
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  table.sort(switch_eps)
+  table.sort(button_eps)
 
   local profile_name = nil
 
@@ -1227,6 +1229,7 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
+    require("aqara-cube")
   }
 }
 
