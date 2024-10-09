@@ -391,11 +391,12 @@ local function create_fan_profile(device)
   if #wind_eps > 0 then
     local tx_wind, rx_wind = cosock.channel.new()
     device:set_field(TX_WIND, tx_wind)
+    device:set_field(RX_WIND, rx_wind)
     device:send(clusters.FanControl.attributes.WindSupport:read(device))
     print("@@1")
     cosock.spawn(function()
       print("@@2")
-      rx_wind:receive()
+      device:get_field(RX_WIND):receive()
       print("@@4")
       if device:get_field(NUM_SUPPORTED_WIND_MODES) > 1 then
         profile_name = profile_name .. "-wind"
@@ -403,6 +404,7 @@ local function create_fan_profile(device)
       device:set_field(TX_WIND, nil)
       device:set_field(RX_WIND, nil)
     end)
+    cosock.run()
     print("@@5")
   end
   return profile_name
@@ -990,11 +992,15 @@ local function wind_support_handler(driver, device, ib, response)
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
+  print("@@-2")
   -- save the number of supported wind modes for use in do_configure.
   device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes, {persist = true})
   if #supported_wind_modes >= 2 then
+    print("@@-3")
     local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
+    print("@@-4")
     device:emit_event_for_endpoint(ib.endpoint_id, event)
+    print("@@-5")
   end
   print("@@3")
   device:get_field(TX_WIND):send(0)

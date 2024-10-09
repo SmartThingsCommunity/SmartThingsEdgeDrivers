@@ -15,6 +15,7 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local cosock = require "cosock"
 
 local mock_device = test.mock_device.build_test_matter_device({
     profile = t_utils.get_profile_definition("fan-rock-wind.yml"),
@@ -150,7 +151,6 @@ end
 
 local supportedFanWind = {
   capabilities.windMode.windMode.noWind.NAME,
-  capabilities.windMode.windMode.sleepWind.NAME,
   capabilities.windMode.windMode.naturalWind.NAME
 }
 
@@ -161,7 +161,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.FanControl.attributes.WindSupport:read()})
     test.socket.matter:__queue_receive({
       mock_device.id,
-      clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device_wind, 1, 0x02)
+      clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x02)
     })
     test.socket.matter:__expect_send({
       mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility={displayed=false}}))
