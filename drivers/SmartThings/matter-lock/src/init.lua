@@ -36,7 +36,7 @@ local function set_cota_credential(device, credential_index)
   if cota_cred == nil then
     -- Shouldn't happen but defensive to try to figure out if we need the cota cred and set it.
     device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, #eps > 0 and eps[1] or 1))
-    device.thread:call_with_delay(2, function(t) set_cota_credential(device, credential_index) end)
+    return
   elseif not cota_cred then
     device.log.debug("Device does not require PIN for remote operation. Not setting COTA credential")
     return
