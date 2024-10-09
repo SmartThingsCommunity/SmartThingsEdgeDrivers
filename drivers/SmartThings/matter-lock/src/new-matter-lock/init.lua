@@ -135,8 +135,6 @@ local function do_configure(driver, device)
     if #week_schedule_eps + #year_schedule_eps > 0 then
       profile_name = profile_name .. "-schedule"
     end
-  else
-    profile_name = "base-lock"
   end
   device.log.info(string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
