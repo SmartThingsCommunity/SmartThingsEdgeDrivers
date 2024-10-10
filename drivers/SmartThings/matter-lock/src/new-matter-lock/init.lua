@@ -621,6 +621,44 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
 end
 
+--------------
+-- Add User --
+--------------
+local function handle_add_user(driver, device, command)
+  -- Get parameters
+  local cmdName = "addUser"
+  local userName = command.args.userName
+  local userType = command.args.lockUserType
+
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockUsers.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, INITIAL_COTA_INDEX, {persist = true})
+  device:set_field(lock_utils.USER_NAME, userName, {persist = true})
+  device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
+
+  -- Get available user index
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.GetUser(device, ep, INITIAL_COTA_INDEX))
+end
+
 -----------------
 -- Update User --
 -----------------
@@ -672,6 +710,91 @@ local function handle_update_user(driver, device, command)
       nil             -- Credential Rule
     )
   )
+end
+
+-----------------------
+-- Get User Response --
+-----------------------
+local function get_user_response_handler(driver, device, ib, response)
+  local elements = ib.info_block.data.elements
+  local userIdx = elements.user_index.value
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local status = "success"
+  if ib.status == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  end
+  if status ~= "success" then
+    -- Update commandResult
+    local result = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = status
+    }
+    local event = capabilities.lockUsers.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  end
+
+  local ep = find_default_endpoint(device, DoorLock.ID)
+  local status = elements.user_status.value
+  local maxUser = device:get_latest_state(
+    "main",
+    capabilities.lockUsers.ID,
+    capabilities.lockUsers.totalUsersSupported.NAME
+  ) or 10
+
+  -- Found available user index
+  if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
+    local userName = device:get_field(lock_utils.USER_NAME)
+    local userType = device:get_field(lock_utils.USER_TYPE)
+    local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+    if userType == "guest" then
+      userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+    end
+
+    -- Save values to field
+    device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+
+    -- Send command
+    device:send(
+      DoorLock.server.commands.SetUser(
+        device, ep,
+        DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
+        userIdx,          -- User Index
+        userName,         -- User Name
+        nil,              -- Unique ID
+        nil,              -- User Status
+        userTypeMatter,   -- User Type
+        nil               -- Credential Rule
+      )
+    )
+  elseif userIdx >= maxUser then -- There's no available user index
+    -- Update commandResult
+    local result = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = "resourceExhausted"
+    }
+    local event = capabilities.lockUsers.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  else -- Check next user index
+    device:send(DoorLock.server.commands.GetUser(device, ep, userIdx + 1))
+  end
 end
 
 -----------------------
@@ -1499,6 +1622,7 @@ local new_matter_lock_handler = {
     cmd_response = {
       [DoorLock.ID] = {
         [DoorLock.server.commands.SetUser.ID] = set_user_response_handler,
+        [DoorLock.client.commands.GetUserResponse.ID] = get_user_response_handler,
         [DoorLock.server.commands.ClearUser.ID] = clear_user_response_handler,
         [DoorLock.client.commands.SetCredentialResponse.ID] = set_credential_response_handler,
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
@@ -1515,6 +1639,7 @@ local new_matter_lock_handler = {
       [capabilities.lock.commands.unlock.NAME] = handle_unlock,
     },
     [capabilities.lockUsers.ID] = {
+      [capabilities.lockUsers.commands.addUser.NAME] = handle_add_user,
       [capabilities.lockUsers.commands.updateUser.NAME] = handle_update_user,
       [capabilities.lockUsers.commands.deleteUser.NAME] = handle_delete_user,
       [capabilities.lockUsers.commands.deleteAllUsers.NAME] = handle_delete_all_users,

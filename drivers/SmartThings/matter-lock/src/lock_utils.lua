@@ -28,6 +28,7 @@ local lock_utils = {
   COTA_READ_INITIALIZED = "cotaReadInitialized",
   BUSY_STATE = "busyState",
   COMMAND_NAME = "commandName",
+  USER_NAME = "userName",
   USER_INDEX = "userIndex",
   USER_TYPE = "userType",
   CRED_INDEX = "credentialIndex",
