@@ -84,6 +84,14 @@ local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
+-- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
+-- So to handle this we assume the following ranges considering usual laundry temperatures:
+--   1. if the received setpoint command value is in range 5 ~ 39, it is inferred as *C
+--   2. if the received setpoint command value is in range 40 ~ 102, it is inferred as *F
+local THERMOSTAT_MAX_TEMP_IN_C = 39.0
+local THERMOSTAT_MIN_TEMP_IN_C = 5.0
+
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
   MIN_HEAT = "MIN_HEAT",
@@ -727,6 +735,13 @@ local temp_attr_handler_factory = function(minOrMax)
     end
     local temp = ib.data.value / 100.0
     local unit = "C"
+    if temp < THERMOSTAT_MIN_TEMP_IN_C or temp > THERMOSTAT_MAX_TEMP_IN_C then
+      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
+        temp = THERMOSTAT_MIN_TEMP_IN_C
+      else
+        temp = THERMOSTAT_MAX_TEMP_IN_C
+      end
+    end
     set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp)
     local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
     local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
@@ -1075,7 +1090,7 @@ end
 local function set_setpoint(setpoint)
   return function(driver, device, cmd)
     local value = cmd.args.setpoint
-    if (value >= 40) then -- assume this is a fahrenheit value
+    if (value >= THERMOSTAT_MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
       value = utils.f_to_c(value)
     end
 
@@ -1085,7 +1100,7 @@ local function set_setpoint(setpoint)
     local cached_cooling_val, cooling_setpoint = device:get_latest_state(
       cmd.component, capabilities.thermostatCoolingSetpoint.ID,
       capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME,
-      100, { value = 100, unit = "C" }
+      THERMOSTAT_MAX_TEMP_IN_C, { value = THERMOSTAT_MAX_TEMP_IN_C, unit = "C" }
     )
     if cooling_setpoint and cooling_setpoint.unit == "F" then
       cached_cooling_val = utils.f_to_c(cached_cooling_val)
@@ -1093,7 +1108,7 @@ local function set_setpoint(setpoint)
     local cached_heating_val, heating_setpoint = device:get_latest_state(
       cmd.component, capabilities.thermostatHeatingSetpoint.ID,
       capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME,
-      0, { value = 0, unit = "C" }
+      THERMOSTAT_MIN_TEMP_IN_C, { value = THERMOSTAT_MIN_TEMP_IN_C, unit = "C" }
     )
     if heating_setpoint and heating_setpoint.unit == "F" then
       cached_heating_val = utils.f_to_c(cached_heating_val)
@@ -1107,8 +1122,8 @@ local function set_setpoint(setpoint)
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
     if setpoint_type == "Heat" then
-      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or 100
+      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C
+      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -1126,8 +1141,8 @@ local function set_setpoint(setpoint)
         return
       end
     else
-      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or 0
-      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or 100
+      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or THERMOSTAT_MIN_TEMP_IN_C
+      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or THERMOSTAT_MAX_TEMP_IN_C
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
@@ -1155,6 +1170,13 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
+    if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
+      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
+        val = THERMOSTAT_MIN_TEMP_IN_C
+      else
+        val = THERMOSTAT_MAX_TEMP_IN_C
+      end
+    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
     local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
@@ -1178,6 +1200,13 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
+    if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
+      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
+        val = THERMOSTAT_MIN_TEMP_IN_C
+      else
+        val = THERMOSTAT_MAX_TEMP_IN_C
+      end
+    end
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
     local max = device:get_field(setpoint_limit_device_field.MAX_COOL)
