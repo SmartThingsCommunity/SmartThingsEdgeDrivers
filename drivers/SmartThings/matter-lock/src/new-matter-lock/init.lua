@@ -16,6 +16,7 @@ local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
+local utils = require "st.utils"
 local lock_utils = require "lock_utils"
 
 local version = require "version"
@@ -371,45 +372,40 @@ end
 ----------------
 local function add_user_to_table(device, userIdx, usrType)
   -- Get latest user table
-  local user_table = device:get_latest_state(
+  local user_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockUsers.ID,
-    capabilities.lockUsers.users.NAME
-  ) or {}
-  local new_user_table = {}
-
-  -- Recreate user table
-  for index, entry in pairs(user_table) do
-    table.insert(new_user_table, entry)
-  end
+    capabilities.lockUsers.users.NAME,
+    {}
+  ))
 
   -- Add new entry to table
-  table.insert(new_user_table, {userIndex = userIdx, userType = usrType})
-  device:emit_event(capabilities.lockUsers.users(new_user_table, {visibility = {displayed = false}}))
+  table.insert(user_table, {userIndex = userIdx, userType = usrType})
+  device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
 end
 
 local function update_user_in_table(device, userIdx, usrType)
   -- Get latest user table
-  local user_table = device:get_latest_state(
+  local user_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockUsers.ID,
-    capabilities.lockUsers.users.NAME
-  ) or {}
-  local new_user_table = {}
+    capabilities.lockUsers.users.NAME,
+    {}
+  ))
 
-  -- Recreate user table
+  -- Find user entry
   local i = 0
   for index, entry in pairs(user_table) do
     if entry.userIndex == userIdx then
       i = index
+      break
     end
-    table.insert(new_user_table, entry)
   end
 
   -- Update user entry
   if i ~= 0 then
-    new_user_table[i].userType = usrType
-    device:emit_event(capabilities.lockUsers.users(new_user_table, {visibility = {displayed = false}}))
+    user_table[i].userType = usrType
+    device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
   end
 end
 
@@ -421,20 +417,21 @@ local function delete_user_from_table(device, userIdx)
   end
 
   -- Get latest user table
-  local user_table = device:get_latest_state(
+  local user_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockUsers.ID,
-    capabilities.lockUsers.users.NAME
-  ) or {}
-  local new_user_table = {}
+    capabilities.lockUsers.users.NAME,
+    {}
+  ))
 
-  -- Recreate user table
+  -- Re-create user table
   for index, entry in pairs(user_table) do
-    if entry.userIndex ~= userIdx then
-      table.insert(new_user_table, entry)
+    if entry.userIndex == userIdx then
+      table.remove(user_table, index)
+      break
     end
   end
-  device:emit_event(capabilities.lockUsers.users(new_user_table, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
 end
 
 ----------------------
@@ -442,21 +439,16 @@ end
 ----------------------
 local function add_credential_to_table(device, userIdx, credIdx, credType)
   -- Get latest credential table
-  local cred_table = device:get_latest_state(
+  local cred_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockCredentials.ID,
-    capabilities.lockCredentials.credentials.NAME
-  ) or {}
-  local new_cred_table = {}
-
-  -- Recreat credential table
-  for index, entry in pairs(cred_table) do
-    table.insert(new_cred_table, entry)
-  end
+    capabilities.lockCredentials.credentials.NAME,
+    {}
+  ))
 
   -- Add new entry to table
-  table.insert(new_cred_table, {userIndex = userIdx, credentialIndex = credIdx, credentialType = credType})
-  device:emit_event(capabilities.lockCredentials.credentials(new_cred_table, {visibility = {displayed = false}}))
+  table.insert(cred_table, {userIndex = userIdx, credentialIndex = credIdx, credentialType = credType})
+  device:emit_event(capabilities.lockCredentials.credentials(cred_table, {visibility = {displayed = false}}))
 end
 
 local function delete_credential_from_table(device, credIdx)
@@ -466,24 +458,24 @@ local function delete_credential_from_table(device, credIdx)
   end
 
   -- Get latest credential table
-  local cred_table = device:get_latest_state(
+  local cred_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockCredentials.ID,
-    capabilities.lockCredentials.credentials.NAME
-  ) or {}
-  local new_cred_table = {}
+    capabilities.lockCredentials.credentials.NAME,
+    {}
+  ))
 
-  -- Recreate credential table
+  -- Delete an entry from credential table
   local userIdx = 0
   for index, entry in pairs(cred_table) do
-    if entry.credentialIndex ~= credIdx then
-      table.insert(new_cred_table, entry)
-    else
+    if entry.credentialIndex == credIdx then
+      table.remove(cred_table, index)
       userIdx = entry.userIndex
+      break
     end
   end
 
-  device:emit_event(capabilities.lockCredentials.credentials(new_cred_table, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.lockCredentials.credentials(cred_table, {visibility = {displayed = false}}))
   return userIdx
 end
 
@@ -501,7 +493,7 @@ local function delete_credential_from_table_as_user(device, userIdx)
   ) or {}
   local new_cred_table = {}
 
-  -- Recreate credential table
+  -- Re-create credential table
   for index, entry in pairs(cred_table) do
     if entry.userIndex ~= userIdx then
       table.insert(new_cred_table, entry)
@@ -525,39 +517,37 @@ local WEEK_DAY_MAP = {
 }
 
 local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule)
-
   -- Get latest week day schedule table
-  local week_schedule_table = device:get_latest_state(
+  local week_schedule_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockSchedules.ID,
-    capabilities.lockSchedules.weekDaySchedules.NAME
-  ) or {}
-  local new_week_schedule_table = {}
+    capabilities.lockSchedules.weekDaySchedules.NAME,
+    {}
+  ))
 
-  -- Find schedule list
+  -- Find schedule for specific user
   local i = 0
   for index, entry in pairs(week_schedule_table) do
     if entry.userIndex == userIdx then
       i = index
     end
-    table.insert(new_week_schedule_table, entry)
   end
 
-  -- Recreate weekDays list
+  -- Re-create weekDays list
   local weekDayList = {}
   for _, weekday in ipairs(schedule.weekDays) do
     table.insert(weekDayList, weekday)
   end
 
   if i ~= 0 then -- Add schedule for existing user
+    -- Exclude same scheduleIdx
     local new_schedule_table = {}
-    for index, entry in pairs(new_week_schedule_table[i].schedules) do
-      if entry.scheduleIndex == scheduleIdx then
-        return
+    for index, entry in pairs(week_schedule_table[i].schedules) do
+      if entry.scheduleIndex ~= scheduleIdx then
+        table.insert(new_schedule_table, entry)
       end
-      table.insert(new_schedule_table, entry)
     end
-
+    -- Add new entry to table
     table.insert(
       new_schedule_table,
       {
@@ -569,11 +559,11 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
         endMinute = schedule.endMinute
       }
     )
-
-    new_week_schedule_table[i].schedules = new_schedule_table
+    -- Update schedule for specific user
+    week_schedule_table[i].schedules = new_schedule_table
   else -- Add schedule for new user
     table.insert(
-      new_week_schedule_table,
+      week_schedule_table,
       {
         userIndex = userIdx,
         schedules = {{
@@ -588,25 +578,24 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
     )
   end
 
-  device:emit_event(capabilities.lockSchedules.weekDaySchedules(new_week_schedule_table, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
 end
 
 local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   -- Get latest week day schedule table
-  local week_schedule_table = device:get_latest_state(
+  local week_schedule_table = utils.deep_copy(device:get_latest_state(
     "main",
     capabilities.lockSchedules.ID,
-    capabilities.lockSchedules.weekDaySchedules.NAME
-  ) or {}
-  local new_week_schedule_table = {}
+    capabilities.lockSchedules.weekDaySchedules.NAME,
+    {}
+  ))
 
-  -- Find shcedule list
+  -- Find schedule for specific user
   local i = 0
   for index, entry in pairs(week_schedule_table) do
     if entry.userIndex == userIdx then
       i = index
     end
-    table.insert(new_week_schedule_table, entry)
   end
 
   -- When there is no userIndex in the table
@@ -614,9 +603,9 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
     return
   end
 
-  -- Recreate schedule table for the user
+  -- Re-create schedule table for the user
   local new_schedule_table = {}
-  for index, entry in pairs(new_week_schedule_table[i].schedules) do
+  for index, entry in pairs(week_schedule_table[i].schedules) do
     if entry.scheduleIndex ~= scheduleIdx then
       table.insert(new_schedule_table, entry)
     end
@@ -624,12 +613,12 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
 
   -- If user has no schedule, remove user from the table
   if #new_schedule_table == 0 then
-    table.remove(new_week_schedule_table, i)
+    table.remove(week_schedule_table, i)
   else
-    new_week_schedule_table[i].schedules = new_schedule_table
+    week_schedule_table[i].schedules = new_schedule_table
   end
 
-  device:emit_event(capabilities.lockSchedules.weekDaySchedules(new_week_schedule_table, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
 end
 
 -----------------
