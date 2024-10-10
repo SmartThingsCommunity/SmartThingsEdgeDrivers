@@ -15,28 +15,35 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
-
 local log = require "log"
 local utils = require "st.utils"
-
 local version = require "version"
+
+local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
+local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
+
 if version.api < 10 then
   clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
   clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
-local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
-local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local SUPPORTED_TEMPERATURE_LEVELS_MAP = "__supported_temperature_levels_map"
+local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes_map"
+
+-- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
+-- So to handle this we assume the following ranges considering usual laundry temperatures:
+--   1. if the received setpoint command value is in range -6 ~ 20, it is inferred as *C
+--   2. if the received setpoint command value is in range 21 ~ 70, it is inferred as *F
+local REFRIGERATOR_MAX_TEMP_IN_C = 20.0
+local REFRIGERATOR_MIN_TEMP_IN_C = -6.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP",
 }
-
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-local SUPPORTED_TEMPERATURE_LEVELS_MAP = "__supported_temperature_levels_map"
-local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes_map"
 
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
@@ -56,6 +63,18 @@ local function component_to_endpoint(device, component)
   return 1
 end
 
+local function is_matter_refrigerator(opts, driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == REFRIGERATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+-- Lifecycle Handlers --
 local function device_init(driver, device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
@@ -85,17 +104,6 @@ local function device_added(driver, device)
 end
 
 -- Matter Handlers --
-local function is_matter_refrigerator(opts, driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == REFRIGERATOR_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-  return false
-end
-
 local function supports_temperature_level_endpoint(device, endpoint)
   local feature = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = feature})
@@ -135,16 +143,21 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
-  local min = device:get_field(min_field) or 0
-  local max = device:get_field(max_field) or 100
+  local min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+  local temp = ib.data.value / 100.0
   local unit = "C"
   local range = {
     minimum = min,
     maximum = max,
   }
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}), { visibility = { displayed = false } })
 
-  local temp = ib.data.value / 100.0
+  -- Only emit the capability for RPC version >= 5, since unit conversion for
+  -- range capabilities is only supported in that case.
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}), { visibility = { displayed = false } })
+  end
+
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
 end
 
@@ -155,6 +168,16 @@ local function setpoint_limit_handler(limit_field)
     end
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
+
+    -- We clamp the max and min values as per the assumed refrigerator temperature ranges.
+    if val < REFRIGERATOR_MIN_TEMP_IN_C or val > REFRIGERATOR_MAX_TEMP_IN_C then
+      if limit_field == setpoint_limit_device_field.MIN_TEMP then
+        val = REFRIGERATOR_MIN_TEMP_IN_C
+      else
+        val = REFRIGERATOR_MAX_TEMP_IN_C
+      end
+    end
+
     log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
@@ -284,8 +307,13 @@ local function handle_temperature_setpoint(driver, device, cmd)
   )
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
-  local min = device:get_field(min_field) or 0
-  local max = device:get_field(max_field) or 100
+  local min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+
+  local max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
+  if value > max_temp_in_c then
+    value = utils.f_to_c(value)
+  end
   if value < min or value > max then
     log.warn(string.format(
       "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
