@@ -53,15 +53,15 @@ local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual laundry temperatures:
 -- Laundry Washer:
---   1. if the received setpoint command value is in range 12 ~ 55, it is inferred as *C
---   2. if the received setpoint command value is in range 56 ~ 132, it is inferred as *F
+--   1. if the received setpoint command value is in range 13 ~ 55, it is inferred as *C
+--   2. if the received setpoint command value is in range 55.4 ~ 131, it is inferred as *F
 -- Laundry Dryer:
---   1. if the received setpoint command value is in range 26 ~ 80, it is inferred as *C
---   2. if the received setpoint command value is in range 81 ~ 178, it is inferred as *F
+--   1. if the received setpoint command value is in range 27 ~ 80, it is inferred as *C
+--   2. if the received setpoint command value is in range 80.6 ~ 176, it is inferred as *F
 local LAUNDRYWASHER_MAX_TEMP_IN_C = 55.0
-local LAUNDRYWASHER_MIN_TEMP_IN_C = 12.0
+local LAUNDRYWASHER_MIN_TEMP_IN_C = 13.0
 local LAUNDRYDRYER_MAX_TEMP_IN_C = 80.0
-local LAUNDRYDRYER_MIN_TEMP_IN_C = 26.0
+local LAUNDRYDRYER_MIN_TEMP_IN_C = 27.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -216,7 +216,7 @@ local function setpoint_limit_handler(limit_field)
       end
     end
 
-    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
 end
