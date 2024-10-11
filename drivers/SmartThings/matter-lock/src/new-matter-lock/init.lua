@@ -262,7 +262,7 @@ local function set_cota_credential(device, credential_index)
     -- Shouldn't happen but defensive to try to figure out if we need the cota cred and set it.
     device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, #eps > 0 and eps[1] or 1))
     return
-  elseif not cota_cred then
+  elseif cota_cred == false then
     device.log.debug("Device does not require PIN for remote operation. Not setting COTA credential")
     return
   end
@@ -424,7 +424,7 @@ local function delete_user_from_table(device, userIdx)
     {}
   ))
 
-  -- Re-create user table
+  -- Remove element from user table
   for index, entry in pairs(user_table) do
     if entry.userIndex == userIdx then
       table.remove(user_table, index)
