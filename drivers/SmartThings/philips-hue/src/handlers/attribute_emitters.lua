@@ -35,8 +35,10 @@ local function _emit_light_events_inner(light_device, light_repr)
 
     if light_repr.on and light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.on())
+      light_device:set_field(Fields.SWITCH_STATE, "on", {persist = true})
     elseif light_repr.on and not light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.off())
+      light_device:set_field(Fields.SWITCH_STATE, "off", {persist = true})
     end
 
     if light_repr.dimming then
@@ -96,6 +98,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+        light_device:set_field(Fields.COLOR_HUE, adjusted_hue, {persist = true})
       end
 
       if utils.is_nan(adjusted_sat) then
@@ -107,6 +110,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
+        light_device:set_field(Fields.COLOR_SATURATION, adjusted_sat, {persist = true})
       end
     end
   end

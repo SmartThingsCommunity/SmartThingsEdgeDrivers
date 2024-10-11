@@ -1,0 +1,50 @@
+name: oven-cabinet-one-tn-cabinet-two-tl-cook-top-cook-surface-one-tl-cook-surface-two-tl
+components:
+- id: main
+  capabilities:
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Oven
+- id: tccOne
+  label: Oven Cabinet 1
+  capabilities:
+  - id: mode
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: temperatureSetpoint
+    version: 1
+- id: tccTwo
+  label: Oven Cabinet 2
+  capabilities:
+  - id: mode
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: temperatureLevel
+    version: 1
+- id: cookTop
+  label: Cook Top
+  capabilities:
+  - id: switch
+    version: 1
+- id: cookSurfaceOne
+  label: Cook Surface 1
+  capabilities:
+  - id: temperatureLevel
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+- id: cookSurfaceTwo
+  label: Cook Surface 2
+  capabilities:
+  - id: temperatureLevel
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-oven
