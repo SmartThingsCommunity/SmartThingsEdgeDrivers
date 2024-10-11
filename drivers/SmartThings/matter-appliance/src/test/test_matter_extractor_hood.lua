@@ -48,6 +48,36 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_onoff = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("extractor-hood-wind-light-binary.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = clusters.FanControl.types.FanControlFeature.WIND},
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x007A, device_type_revision = 1}, -- Extractor Hood
+        {device_type_id = 0x0100, device_type_revision = 1} -- OnOff Light
+      }
+    }
+  }
+})
+
 local function test_init()
   local subscribed_attributes = {
     [capabilities.fanMode.ID] = {
@@ -83,6 +113,25 @@ local function test_init()
 
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+end
+
+local function test_init_onoff()
+  local cluster_subscribe_list = {
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.FanMode,
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.FanControl.attributes.WindSupport,
+    clusters.FanControl.attributes.WindSetting,
+    clusters.OnOff.attributes.OnOff
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_onoff.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_onoff)
 end
 test.set_test_init_function(test_init)
 
@@ -575,6 +624,16 @@ test.register_message_test(
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
     },
   }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for extractor hood with onoff light",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure"})
+    mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light-binary" })
+    mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_onoff }
 )
 
 test.run_registered_tests()

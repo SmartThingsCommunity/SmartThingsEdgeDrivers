@@ -142,6 +142,7 @@ local function do_configure(driver, device)
   local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  local light_eps = device:get_endpoints(clusters.OnOff.ID)
   if dishwasher.can_handle({}, driver, device) then
     local profile_name = "dishwasher"
     if #tn_eps > 0 then
@@ -188,6 +189,9 @@ local function do_configure(driver, device)
     end
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
+    end
+    if #light_eps > 0 then
+      profile_name = profile_name .. "-light-binary"
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})

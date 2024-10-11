@@ -37,6 +37,12 @@ matterGeneric:
     deviceTypes:
       - id: 0x007A
     deviceProfileName: extractor-hood
+  - id: "matter/extractor-hood/on-off/light"
+    deviceLabel: Matter Extractor Hood/OnOff Light
+    deviceTypes:
+      - id: 0x007A
+      - id: 0x0100
+    deviceProfileName: extractor-hood-light-binary
   - id: "matter/laundry-dryer"
     deviceLabel: Matter Laundry Dryer
     deviceTypes:
