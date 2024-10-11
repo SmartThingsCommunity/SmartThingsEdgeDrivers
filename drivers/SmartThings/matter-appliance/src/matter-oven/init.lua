@@ -192,7 +192,7 @@ local function setpoint_limit_handler(limit_field)
       end
     end
 
-    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
 end

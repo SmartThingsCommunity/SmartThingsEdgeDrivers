@@ -42,10 +42,10 @@ local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual dishwasher temperatures:
---   1. if the received setpoint command value is in range 32 ~ 90, it is inferred as *C
---   2. if the received setpoint command value is in range 91 ~ 194, it is inferred as *F
+--   1. if the received setpoint command value is in range 33 ~ 90, it is inferred as *C
+--   2. if the received setpoint command value is in range 91.4 ~ 194, it is inferred as *F
 local DISHWASHER_MAX_TEMP_IN_C = 90.0
-local DISHWASHER_MIN_TEMP_IN_C = 32.0
+local DISHWASHER_MIN_TEMP_IN_C = 33.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",

@@ -87,9 +87,9 @@ local MGM3_PPM_CONVERSION_FACTOR = 24.45
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual laundry temperatures:
---   1. if the received setpoint command value is in range 5 ~ 39, it is inferred as *C
---   2. if the received setpoint command value is in range 40 ~ 102, it is inferred as *F
-local THERMOSTAT_MAX_TEMP_IN_C = 39.0
+--   1. if the received setpoint command value is in range 5 ~ 40, it is inferred as *C
+--   2. if the received setpoint command value is in range 41 ~ 104, it is inferred as *F
+local THERMOSTAT_MAX_TEMP_IN_C = 40.0
 local THERMOSTAT_MIN_TEMP_IN_C = 5.0
 
 local setpoint_limit_device_field = {

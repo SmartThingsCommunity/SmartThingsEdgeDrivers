@@ -34,11 +34,17 @@ local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes
 
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
--- So to handle this we assume the following ranges considering usual laundry temperatures:
+-- So to handle this we assume the following ranges considering usual refrigerator temperatures:
+-- Refrigerator:
 --   1. if the received setpoint command value is in range -6 ~ 20, it is inferred as *C
---   2. if the received setpoint command value is in range 21 ~ 70, it is inferred as *F
+--   2. if the received setpoint command value is in range 21.2 ~ 68, it is inferred as *F
+-- Freezer:
+--   1. if the received setpoint command value is in range -24 ~ -12, it is inferred as *C
+--   2. if the received setpoint command value is in range -11.2 ~ 10.4, it is inferred as *F
 local REFRIGERATOR_MAX_TEMP_IN_C = 20.0
 local REFRIGERATOR_MIN_TEMP_IN_C = -6.0
+local FREEZER_MAX_TEMP_IN_C = -12.0
+local FREEZER_MIN_TEMP_IN_C = -24.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -143,8 +149,18 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
-  local min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
-  local max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+  local min, max
+  local laundry_device_type = endpoint_to_component(device, ib.endpoint_id)
+  if laundry_device_type == "refrigerator" then
+    min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
+    max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+  elseif laundry_device_type == "freezer" then
+    min = device:get_field(min_field) or FREEZER_MIN_TEMP_IN_C
+    max = device:get_field(max_field) or FREEZER_MAX_TEMP_IN_C
+  else
+    device.log.warn(string.format("Not a supported device type"))
+    return
+  end
   local temp = ib.data.value / 100.0
   local unit = "C"
   local range = {
@@ -169,16 +185,28 @@ local function setpoint_limit_handler(limit_field)
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
 
+    local min_temp_in_c, max_temp_in_c
+    local laundry_device_type = endpoint_to_component(device, ib.endpoint_id)
+    if laundry_device_type == "refrigerator" then
+      min_temp_in_c = REFRIGERATOR_MIN_TEMP_IN_C
+      max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
+    elseif laundry_device_type == "freezer" then
+      min_temp_in_c =  FREEZER_MIN_TEMP_IN_C
+      max_temp_in_c =  FREEZER_MAX_TEMP_IN_C
+    else
+      device.log.warn(string.format("Not a supported device type"))
+      return
+    end
     -- We clamp the max and min values as per the assumed refrigerator temperature ranges.
-    if val < REFRIGERATOR_MIN_TEMP_IN_C or val > REFRIGERATOR_MAX_TEMP_IN_C then
+    if val < min_temp_in_c or val > max_temp_in_c then
       if limit_field == setpoint_limit_device_field.MIN_TEMP then
-        val = REFRIGERATOR_MIN_TEMP_IN_C
+        val = min_temp_in_c
       else
-        val = REFRIGERATOR_MAX_TEMP_IN_C
+        val = max_temp_in_c
       end
     end
 
-    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
 end
@@ -307,10 +335,22 @@ local function handle_temperature_setpoint(driver, device, cmd)
   )
   local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
   local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
-  local min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
-  local max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+  local min, max
+  local max_temp_in_c
+  local laundry_device_type = cmd.component
+  if laundry_device_type == "refrigerator" then
+    min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
+    max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
+    max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
+  elseif laundry_device_type == "freezer" then
+    min = device:get_field(min_field) or FREEZER_MIN_TEMP_IN_C
+    max = device:get_field(max_field) or FREEZER_MAX_TEMP_IN_C
+    max_temp_in_c = FREEZER_MAX_TEMP_IN_C
+  else
+    device.log.warn(string.format("Not a supported device type"))
+    return
+  end
 
-  local max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
   if value > max_temp_in_c then
     value = utils.f_to_c(value)
   end
