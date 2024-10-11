@@ -16,14 +16,6 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local version = require "version"
-
-if version.api < 10 then
-  clusters.DishwasherAlarm = require "DishwasherAlarm"
-  clusters.DishwasherMode = require "DishwasherMode"
-  clusters.OperationalState = require "OperationalState"
-  clusters.TemperatureControl = require "TemperatureControl"
-end
 
 local APPLICATION_ENDPOINT = 1
 

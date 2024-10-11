@@ -16,13 +16,6 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local version = require "version"
-
-if version.api < 10 then
-  clusters.RefrigeratorAlarm = require "RefrigeratorAlarm"
-  clusters.RefrigeratorAndTemperatureControlledCabinetMode = require "RefrigeratorAndTemperatureControlledCabinetMode"
-  clusters.TemperatureControl = require "TemperatureControl"
-end
 
 local refrigerator_ep = 1
 local freezer_ep = 2
