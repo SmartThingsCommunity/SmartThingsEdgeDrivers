@@ -1275,7 +1275,7 @@ local function handle_delete_all_credentials(driver, device, command)
 
   -- Send command
   local ep = device:component_to_endpoint(command.component)
-  device:send(DoorLock.server.commands.ClearUser(device, ep, credential))
+  device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
 end
 
 -------------------------------

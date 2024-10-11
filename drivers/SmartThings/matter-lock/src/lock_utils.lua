@@ -32,7 +32,9 @@ local lock_utils = {
   USER_INDEX = "userIndex",
   USER_TYPE = "userType",
   CRED_INDEX = "credentialIndex",
-  CRED_DATA = "credentialData"
+  CRED_DATA = "credentialData",
+  SCHEDULE_INDEX = "scheduleIndex",
+  SCHEDULE = "schedule"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
