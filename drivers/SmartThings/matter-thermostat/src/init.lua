@@ -280,7 +280,7 @@ local function device_init(driver, device)
       deadband_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
       device:send(deadband_read)
     end
-    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
+    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true, {persist = true})
   end
 end
 
