@@ -30,7 +30,7 @@ local SUB_WINDOW_COVERING_VID_PID = {
   {0x10e1, 0x1005} -- VDA
 }
 
-local function is_matter_sub_window_covering(opts, driver, device)
+local function is_matter_window_covering_position_updates_while_moving(opts, driver, device)
   if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
     return false
   end
@@ -44,7 +44,6 @@ local function is_matter_sub_window_covering(opts, driver, device)
 end
 
 local function device_init(driver, device)
-  device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
   device:subscribe()
 end
 
@@ -61,7 +60,7 @@ local function current_pos_handler(driver, device, ib, response)
   -- When stat_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
-  elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED then
+  elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
     if position == 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
     elseif position == 100 then
@@ -85,6 +84,7 @@ local function current_status_handler(driver, device, ib, response)
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID and
+       rb.info_block.data ~= nil and
        rb.info_block.data.value ~= nil then
       position = 100 - math.floor((rb.info_block.data.value / 100))
     end
@@ -127,8 +127,8 @@ local function current_status_handler(driver, device, ib, response)
   end
 end
 
-local matter_sub_window_covering_handler = {
-  NAME = "matter-sub-window-covering",
+local matter_window_covering_position_updates_while_moving_handler = {
+  NAME = "matter-window-covering-position-updates-while-moving",
   lifecycle_handlers = {
     init = device_init,
   },
@@ -142,7 +142,7 @@ local matter_sub_window_covering_handler = {
   },
   capability_handlers = {
   },
-  can_handle = is_matter_sub_window_covering,
+  can_handle = is_matter_window_covering_position_updates_while_moving,
 }
 
-return matter_sub_window_covering_handler
+return matter_window_covering_position_updates_while_moving_handler

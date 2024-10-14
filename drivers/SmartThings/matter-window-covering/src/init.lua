@@ -18,10 +18,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-
 local PROFILE_MATCHED = "__profile_matched"
-
-local subWindowCovering = require("matter-sub-window-covering")
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -226,7 +223,8 @@ local matter_driver_template = {
     capabilities.battery,
   },
   sub_drivers = {
-    subWindowCovering
+    -- for devices sending a position update while device is in motion
+    require("matter-window-covering-position-updates-while-moving")
   }
 }
 
