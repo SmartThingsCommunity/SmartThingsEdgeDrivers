@@ -1,0 +1,23 @@
+name: freeze-fault-freezeSensitivity
+components:
+- id: main
+  capabilities:
+  - id: temperatureAlarm
+    version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+  - id: hardwareFault
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: WaterFreezeDetector
+preferences:
+  - preferenceId: freezeSensitivity
+    explicit: true

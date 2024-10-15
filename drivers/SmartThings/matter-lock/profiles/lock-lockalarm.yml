@@ -10,7 +10,7 @@ components:
         enabledValues:
         - locked
         - unlocked
-        - unknown
+        - not fully locked
   - id: lockAlarm
     version: 1
   - id: battery

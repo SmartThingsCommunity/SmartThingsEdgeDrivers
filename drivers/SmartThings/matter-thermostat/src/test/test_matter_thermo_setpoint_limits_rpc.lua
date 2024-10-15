@@ -106,7 +106,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min and max cooling setpoint attributes do not set capability constraint for RPC version less than 4",
+  "Min and max cooling setpoint attributes do not set capability constraint for RPC version less than 5",
   {
     {
       channel = "matter",
@@ -128,7 +128,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min and max temperature attributes do not set capability constraint for RPC version less than 4",
+  "Min and max temperature attributes do not set capability constraint for RPC version less than 5",
   {
     {
       channel = "matter",

@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ local matter_endpoints = {
     endpoint_id = 1,
     clusters = {
       {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+    },
+    device_types = {
+      device_type_id = 0x0301, device_type_revision = 1, -- Thermostat
     }
   }
 }
@@ -61,7 +64,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Min and max temperature attributes do not set capability constraint when RPC version is less than 4",
+  "Min and max temperature attributes do not set capability constraint when RPC version is less than 5",
   {
     {
       channel = "matter",

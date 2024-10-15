@@ -1,11 +1,22 @@
 matterManufacturer:
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-
+#ELEGRP
+  - id: "5158/3"
+    deviceLabel: ELEGRP Smart Mini Plug
+    vendorId: 0x1426
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -144,11 +155,53 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006F
     deviceProfileName: plug-binary
+  - id: "4921/21"
+    deviceLabel: Cync Full Color A19
+    vendorId: 0x1339
+    productId: 0x0015
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/101"
     deviceLabel: Cync Full Color Deco Candle Base
     vendorId: 0x1339
     productId: 0x0065
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/105"
+    deviceLabel: Cync Full Color A21
+    vendorId: 0x1339
+    productId: 0x0069
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/173"
+    deviceLabel: Cync Full Color BR30
+    vendorId: 0x1339
+    productId: 0x00AD
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/107"
+    deviceLabel: Cync Reveal Full Color A19
+    vendorId: 0x1339
+    productId: 0x006B
+    deviceProfileName: light-color-level-2000K-7000K
+#Ledvance
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
+  - id: "4921/64"
+    deviceLabel: Cync Indoor Plug
+    vendorId: 0x1339
+    productId: 0x0040
+    deviceProfileName: plug-binary
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: switch-4
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -165,6 +218,27 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0007
     deviceProfileName: plug-binary
+  - id: "4129/5"
+    deviceLabel: Radiant Smart Switch
+    vendorId: 0x1021
+    productId: 0x0005
+    deviceProfileName: switch-binary
+#LeTianPai
+  - id: "5163/4100"
+    deviceLabel: LeTianPai Smart Switch 3 Way
+    vendorId: 0x142B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "5163/4099"
+    deviceLabel: LeTianPai Smart Switch 2 Way
+    vendorId: 0x142B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "5163/4098"
+    deviceLabel: LeTianPai Smart Switch 1 Way
+    vendorId: 0x142B
+    productId: 0x1002
+    deviceProfileName: switch-binary  
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -327,11 +401,46 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03F3
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "Linkind/Smart/Light/Bulb/A19/CCT"
+    deviceLabel: Smart Light Bulb A19 CCT
+    vendorId: 0x1168
+    productId: 0x03f9
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
   - id: "4456/1013"
     deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
     vendorId: 0x1168
     productId: 0x03F5
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1007"
+    deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
+    vendorId: 0x1168
+    productId: 0x03EF
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1005"
+    deviceLabel: Matter Smart Light Bulb A19 RGBTW 1100lm
+    vendorId: 0x1168
+    productId: 0x03ED
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1006"
+    deviceLabel: Matter Smart Light Bulb A19 RGBTW 1100lm
+    vendorId: 0x1168
+    productId: 0x03EE
+    deviceProfileName: light-color-level-1800K-6500K
+  - id: "4456/1102"
+    deviceLabel: Matter Smart Plug
+    vendorId: 0x1168
+    productId: 0x044E
+    deviceProfileName: plug-binary
+  - id: "4456/1019"
+    deviceLabel: Matter Smart Filament  Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FB
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1020"
+    deviceLabel: AiDot OREiN Matter Smart Filament Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FC
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -2164,6 +2273,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+#TUO
+  - id: "5150/1"
+    deviceLabel: "TUO Smart Button"
+    vendorId: 0x141E
+    productId: 0x0001
+    deviceProfileName: "button-battery"
 
 
 #Bridge devices need manufacturer specific fingerprints until
@@ -2280,6 +2395,22 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/on-off/plug/electrical-sensor"
+    deviceLabel: Matter OnOff Plug
+    deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "matter/water-valve"
+    deviceLabel: Matter Water Valve
+    deviceTypes:
+      - id: 0x0042 # Water Valve
+    deviceProfileName: water-valve
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
 
 matterThing:
   - id: SmartThings/MatterThing

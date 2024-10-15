@@ -242,11 +242,28 @@ local function device_added(driver, device)
   _initialize_device(driver, device)
 end
 
+local function emit_component_event_no_cache(device, component, capability_event)
+    if not device:supports_capability(capability_event.capability, component.id) then
+        local err_msg = string.format("Attempted to generate event for %s.%s but it does not support capability %s", device.id, component.id, capability_event.capability.NAME)
+        log.warn_with({ hub_logs = true }, err_msg)
+        return false, err_msg
+    end
+    local event, err = capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
+    if err ~= nil then
+        log.warn_with({ hub_logs = true }, err)
+    end
+    return event, err
+end
+
 --- @param driver SonosDriver
 --- @param device SonosDevice
 local function device_init(driver, device)
   log.trace(string.format("%s device init", device.label))
   _initialize_device(driver, device)
+
+  -- Remove usage of the state cache for sonos devices to avoid large datastores
+  device:set_field("__state_cache", nil, {persist = true})
+  device:extend_device("emit_component_event", emit_component_event_no_cache)
 
   device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
     capabilities.mediaPlayback.commands.play.NAME,

@@ -35,8 +35,10 @@ local function _emit_light_events_inner(light_device, light_repr)
 
     if light_repr.on and light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.on())
+      light_device:set_field(Fields.SWITCH_STATE, "on", {persist = true})
     elseif light_repr.on and not light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.off())
+      light_device:set_field(Fields.SWITCH_STATE, "off", {persist = true})
     end
 
     if light_repr.dimming then
@@ -96,6 +98,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+        light_device:set_field(Fields.COLOR_HUE, adjusted_hue, {persist = true})
       end
 
       if utils.is_nan(adjusted_sat) then
@@ -107,6 +110,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
+        light_device:set_field(Fields.COLOR_SATURATION, adjusted_sat, {persist = true})
       end
     end
   end
@@ -270,7 +274,7 @@ end
 
 local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
-  local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
+  local device_type = (device and utils.determine_device_type(device)) or "Unknown Device Type"
   log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
