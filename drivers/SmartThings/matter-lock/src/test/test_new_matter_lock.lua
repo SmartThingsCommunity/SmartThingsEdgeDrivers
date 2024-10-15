@@ -19,6 +19,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
+local lock_utils = require "lock_utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("lock-user-pin-schedule.yml"),
@@ -30,7 +31,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 0,
       clusters = {
-        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+        { cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER" },
       },
       device_types = {
         { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
@@ -43,7 +44,7 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = DoorLock.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0x0001, --u32 bitmap
+          feature_map = 0x0181, -- PIN & USR & COTA
         }
       },
       device_types = {
@@ -71,6 +72,246 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Assert profile applied over doConfigure",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ profile = "lock-user-pin" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received OperatingMode(Normal, Vacation) from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.OperatingMode:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.OperatingMode.NORMAL
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.remoteControlStatus.remoteControlEnabled("true", {visibility = {displayed = true}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.OperatingMode:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.OperatingMode.VACATION
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.remoteControlStatus.remoteControlEnabled("true", {visibility = {displayed = true}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received OperatingMode(Privacy, No Remote Lock UnLock, Passage) from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.OperatingMode:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.OperatingMode.PRIVACY
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.remoteControlStatus.remoteControlEnabled("false", {visibility = {displayed = true}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.OperatingMode:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.OperatingMode.NO_REMOTE_LOCK_UNLOCK
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.remoteControlStatus.remoteControlEnabled("false", {visibility = {displayed = true}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.OperatingMode:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.OperatingMode.PASSAGE
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.remoteControlStatus.remoteControlEnabled("false", {visibility = {displayed = true}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received NumberOfTotalUsersSupported from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.NumberOfTotalUsersSupported:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.NumberOfTotalUsersSupported(10)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(10, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received NumberOfPINUsersSupported from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.NumberOfPINUsersSupported:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.NumberOfPINUsersSupported(10)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(10, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received MinPINCodeLength from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.MinPINCodeLength:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.MinPINCodeLength(6)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received MaxPINCodeLength from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.MaxPINCodeLength:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.MaxPINCodeLength(8)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(8, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received NumberOfWeekDaySchedulesSupportedPerUser from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser(5)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockSchedules.weekDaySchedulesPerUser(5, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received NumberOfYearDaySchedulesSupportedPerUser from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser(5)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockSchedules.yearDaySchedulesPerUser(5, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received RequirePINforRemoteOperation(false) from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.RequirePINforRemoteOperation:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.RequirePINforRemoteOperation(false)
+        ),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "UnlockDoor uses cota cred when present",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = capabilities.lock.ID, command = "unlock", args = {}}
+      }
+    )
+    mock_device:set_field(lock_utils.COTA_CRED, "654123")
+    test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.DoorLock.server.commands.UnlockDoor(mock_device, 1, "654123"),
+      })
+  end
+)
+
+test.register_coroutine_test(
+  "LockDoor uses cota cred when present", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = capabilities.lock.ID, command = "lock", args = {}}
+      }
+    )
+    mock_device:set_field(lock_utils.COTA_CRED, "654123")
+    test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.DoorLock.server.commands.LockDoor(mock_device, 1, "654123"),
+      })
+  end
+)
 
 test.register_message_test(
   "Handle Lock command received from SmartThings.", {
@@ -191,7 +432,7 @@ test.register_message_test(
   }
 )
 
-local DlAlarmCode = DoorLock.types.DlAlarmCode
+local AlarmCodeEnum = DoorLock.types.AlarmCodeEnum
 test.register_message_test(
   "Handle DoorLockAlarm event from Matter device.", {
     {
@@ -200,7 +441,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 1, {alarm_code = DlAlarmCode.LOCK_JAMMED}
+          mock_device, 1, {alarm_code = AlarmCodeEnum.LOCK_JAMMED}
         ),
       },
     },
@@ -218,7 +459,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 1, {alarm_code = DlAlarmCode.LOCK_FACTORY_RESET}
+          mock_device, 1, {alarm_code = AlarmCodeEnum.LOCK_FACTORY_RESET}
         ),
       },
     },
@@ -236,7 +477,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 1, {alarm_code = DlAlarmCode.WRONG_CODE_ENTRY_LIMIT}
+          mock_device, 1, {alarm_code = AlarmCodeEnum.WRONG_CODE_ENTRY_LIMIT}
         ),
       },
     },
@@ -254,7 +495,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 1, {alarm_code = DlAlarmCode.FRONT_ESCEUTCHEON_REMOVED}
+          mock_device, 1, {alarm_code = AlarmCodeEnum.FRONT_ESCEUTCHEON_REMOVED}
         ),
       },
     },
@@ -272,7 +513,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         DoorLock.events.DoorLockAlarm:build_test_event_report(
-          mock_device, 1, {alarm_code = DlAlarmCode.DOOR_FORCED_OPEN}
+          mock_device, 1, {alarm_code = AlarmCodeEnum.DOOR_FORCED_OPEN}
         ),
       },
     },
@@ -316,6 +557,276 @@ test.register_message_test(
         "main",
         capabilities.lock.lock.unlocked(
           {data = {method = "keypad", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.LOCK,
+            operation_source = types.OperationSourceEnum.UNSPECIFIED,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
+            operation_source = types.OperationSourceEnum.MANUAL,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {method = "manual", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
+            operation_source = types.OperationSourceEnum.PROPRIETARY_REMOTE,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.unlocked(
+          {data = {method = "proprietaryRemote", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.LOCK,
+            operation_source = types.OperationSourceEnum.AUTO,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {method = "auto", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
+            operation_source = types.OperationSourceEnum.BUTTON,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {method = "button", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
+            operation_source = types.OperationSourceEnum.SCHEDULE,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.unlocked(
+          {data = {userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.LOCK,
+            operation_source = types.OperationSourceEnum.REMOTE,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {method = "command", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
+            operation_source = types.OperationSourceEnum.RFID,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.locked(
+          {data = {method = "rfid", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
+            operation_source = types.OperationSourceEnum.BIOMETRIC,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.unlocked(
+          {data = {method = "keypad", userIndex = 1}, state_change = true}
+        )
+      ),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        DoorLock.events.LockOperation:build_test_event_report(
+          mock_device, 1,
+          {
+            lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
+            operation_source = types.OperationSourceEnum.ALIRO,
+            user_index = 1,
+            fabric_index = 1,
+            source_node = 1
+          }
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.unlocked(
+          {data = {userIndex = 1}, state_change = true}
         )
       ),
     }
@@ -376,6 +887,94 @@ test.register_coroutine_test(
         nil
       )
     })
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetUser:build_test_command_response(
+          mock_device, 1
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({{userIndex = 1, userType = "adminMember"}}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="addUser", statusCode="success", userIndex=1},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Add User command received from SmartThings and commandResult is busy",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = capabilities.lockUsers.ID,
+        command = "addUser",
+        args = {"Guest1", "adminMember"}
+      },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="addUser", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Add User command received from SmartThings and commandResult is resourceExhausted",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = capabilities.lockUsers.ID,
+        command = "addUser",
+        args = {"Guest1", "adminMember"}
+      },
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.GetUser(
+        mock_device, 1,
+        1 -- user_index
+      )
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.GetUserResponse:build_test_command_response(
+        mock_device, 1,
+        10, --user_index
+        nil, nil,
+        DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED, --user_state
+        nil, nil, nil, nil, nil, nil
+      ),
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="addUser", statusCode="resourceExhausted", userIndex=10},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
   end
 )
 
@@ -403,11 +1002,54 @@ test.register_coroutine_test(
         nil
       )
     })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetUser:build_test_command_response(
+          mock_device, 1
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="updateUser", statusCode="success", userIndex=1},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+    test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
-  "Handle delete User command received from SmartThings.",
+  "Update User command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = capabilities.lockUsers.ID,
+        command = "updateUser",
+        args = {1, "Guest1", "adminMember"}
+      },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="updateUser", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Delete User command received from SmartThings.",
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -424,11 +1066,65 @@ test.register_coroutine_test(
         1
       )
     })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearUser:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="deleteUser", statusCode="success", userIndex=1},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
   end
 )
 
 test.register_coroutine_test(
-  "Handle delete all Users command received from SmartThings.",
+  "Delete User command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = capabilities.lockUsers.ID,
+        command = "deleteUser",
+        args = {1}
+      },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="deleteUser", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Delete All Users command received from SmartThings.",
   function()
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -445,6 +1141,60 @@ test.register_coroutine_test(
         0xFFFE
       )
     })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearUser:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="deleteAllUsers", statusCode="success", userIndex=65534},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Delete All Users command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = capabilities.lockUsers.ID,
+        command = "deleteAllUsers",
+        args = {}
+      },
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          {commandName="deleteAllUsers", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
   end
 )
 
@@ -482,7 +1232,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
-          mock_device, 1, -- endpoint_id
+          mock_device, 1,
           DoorLock.types.DlStatus.SUCCESS, -- status
           1, -- user_index
           2 -- next_credential_index
@@ -503,6 +1253,199 @@ test.register_coroutine_test(
         "main",
         capabilities.lockCredentials.commandResult(
           {commandName="addCredential", credentialIndex=1, statusCode="success", userIndex=1},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Add Credential command received from SmartThings and commandResult is busy",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "addCredential",
+          args = {1, "adminMember", "pin", "654123"}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="addCredential", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Add Credential command received from SmartThings and commandResult is invalidCommand",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "addCredential",
+          args = {1, "adminMember", "pin", "654123"}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+          ), -- credential
+          "654123", -- credential_data
+          1, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.INVALID_FIELD, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="addCredential", statusCode="invalidCommand"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Add Credential command received from SmartThings and user_index is occupied",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "addCredential",
+          args = {1, "adminMember", "pin", "654123"}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+          ), -- credential
+          "654123", -- credential_data
+          1, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 2}
+          ), -- credential
+          "654123", -- credential_data
+          1, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Add Credential command received from SmartThings and commandResult is resourceExhausted",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "addCredential",
+          args = {1, "adminMember", "pin", "654123"}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+          ), -- credential
+          "654123", -- credential_data
+          1, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          nil -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="addCredential", statusCode="resourceExhausted"},
           {state_change=true, visibility={displayed=false}}
         )
       )
@@ -544,7 +1487,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
-          mock_device, 1, -- endpoint_id
+          mock_device, 1,
           DoorLock.types.DlStatus.SUCCESS, -- status
           1, -- user_index
           2 -- next_credential_index
@@ -556,6 +1499,32 @@ test.register_coroutine_test(
         "main",
         capabilities.lockCredentials.commandResult(
           {commandName="updateCredential", credentialIndex=1, statusCode="success", userIndex=1},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Update Credential command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "updateCredential",
+          args = {1, 1, "pin", "654123"}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="updateCredential", statusCode="busy"},
           {state_change=true, visibility={displayed=false}}
         )
       )
@@ -587,6 +1556,56 @@ test.register_coroutine_test(
         ),
       }
     )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearCredential:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="deleteCredential", credentialIndex=1, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Delete Credential command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "deleteCredential",
+          args = {1, "pin"}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="deleteCredential", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
   end
 )
 
@@ -613,6 +1632,150 @@ test.register_coroutine_test(
           )
         ),
       }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearCredential:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="deleteAllCredentials", credentialIndex=65534, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Delete all Credentials command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "deleteAllCredentials",
+          args = {"pin"}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="deleteAllCredentials", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Add Week Day Schedule command received from SmartThings.",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "setWeekDaySchedule",
+          args = {1, 1, {weekDays={"Monday"}, startHour=12, startMinute=30, endHour=17, endMinute=30}}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetWeekDaySchedule(
+          mock_device, 1, -- endpoint
+          1, -- Week Day Schedule Index
+          1, -- User Index
+          2, -- Days Mask
+          12, -- Start Hour
+          30, -- Start Minute
+          17, -- End Hour
+          30 -- End Minute
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetWeekDaySchedule:build_test_command_response(
+          mock_device, 1
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules(
+          {{
+            userIndex=1,
+            schedules={{
+              scheduleIndex=1,
+              weekdays={"Monday"},
+              startHour=12,
+              startMinute=30,
+              endHour=17,
+              endMinute=30
+            }},
+          }},
+          {visibility={displayed=false}}
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="setWeekDaySchedule", userIndex=1, scheduleIndex=1, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Add Week Day Schedule command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "setWeekDaySchedule",
+          args = {1, 1, {weekDays={"Monday"}, startHour=12, startMinute=30, endHour=17, endMinute=30}}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="setWeekDaySchedule", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
     )
   end
 )
@@ -642,6 +1805,53 @@ test.register_coroutine_test(
           1  -- user index
         ),
       }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearWeekDaySchedule:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="clearWeekDaySchedules", userIndex = 1, scheduleIndex=1, statusCode="success"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Clear Week Day Schedule command received from SmartThings and send busy state",
+  function()
+    mock_device:set_field(lock_utils.BUSY_STATE, os.time(), {persist = true})
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockSchedules.ID,
+          command = "clearWeekDaySchedules",
+          args = {
+            1, -- user index
+            1, -- schedule index
+          }
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.commandResult(
+          {commandName="clearWeekDaySchedules", statusCode="busy"},
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
     )
   end
 )
