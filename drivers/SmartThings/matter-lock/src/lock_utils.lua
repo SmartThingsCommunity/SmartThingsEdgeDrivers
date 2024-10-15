@@ -34,7 +34,11 @@ local lock_utils = {
   CRED_INDEX = "credentialIndex",
   CRED_DATA = "credentialData",
   SCHEDULE_INDEX = "scheduleIndex",
-  SCHEDULE = "schedule"
+  SCHEDULE_WEEK_DAYS = "scheduleWeekDays",
+  SCHEDULE_START_HOUR = "scheduleStartHour",
+  SCHEDULE_START_MINUTE = "scheduleStartMinute",
+  SCHEDULE_END_HOUR = "scheduleEndHour",
+  SCHEDULE_END_MINUTE = "scheduleEndMinute"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"

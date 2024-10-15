@@ -252,9 +252,6 @@ end
 --------------------------------------
 -- Require PIN For Remote Operation --
 --------------------------------------
---- If a device needs a cota credential this function attempts to set the credential
---- at the index provided. The set_credential_response_handler handles all failures
---- and retries with the appropriate index when necessary.
 local function set_cota_credential(device, credential_index)
   local eps = device:get_endpoints(DoorLock.ID)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
@@ -267,7 +264,8 @@ local function set_cota_credential(device, credential_index)
     return
   end
 
-  if device:get_field(lock_utils.SET_CREDENTIAL) ~= nil then
+  -- Check Busy State
+  if check_busy_state(device) == true then
     device.log.debug("delaying setting COTA credential since a credential is currently being set")
     device.thread:call_with_delay(2, function(t)
       set_cota_credential(device, credential_index)
@@ -275,15 +273,18 @@ local function set_cota_credential(device, credential_index)
     return
   end
 
-  device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
-  local credential = {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = credential_index}
-  -- Set the credential to a code
-  check_busy_state(device)
+  -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, "addCota")
   device:set_field(lock_utils.CRED_INDEX, credential_index)
-  device:set_field(lock_utils.SET_CREDENTIAL, credential_index)
+  device:set_field(lock_utils.COTA_CRED_INDEX, credential_index, {persist = true})
   device:set_field(lock_utils.USER_TYPE, "remote")
+
+  -- Send command
   device.log.info(string.format("Attempting to set COTA credential at index %s", credential_index))
+  local credential = {
+    credential_type = DoorLock.types.CredentialTypeEnum.PIN,
+    credential_index = credential_index
+  }
   device:send(DoorLock.server.commands.SetCredential(
     device,
     #eps > 0 and eps[1] or 1,
@@ -454,7 +455,8 @@ end
 local function delete_credential_from_table(device, credIdx)
   -- If Credential Index is ALL_INDEX, remove all entries from the table
   if credIdx == ALL_INDEX then
-    device:emit_event(capabilities.lockCredentials.credentials({}))
+    device:emit_event(capabilities.lockCredentials.credentials({}, {visibility = {displayed = false}}))
+    return
   end
 
   -- Get latest credential table
@@ -483,6 +485,7 @@ local function delete_credential_from_table_as_user(device, userIdx)
   -- If User Index is ALL_INDEX, remove all entry from the table
   if userIdx == ALL_INDEX then
     device:emit_event(capabilities.lockCredentials.credentials({}, {visibility = {displayed = false}}))
+    return
   end
 
   -- Get latest credential table
@@ -628,7 +631,7 @@ local function handle_add_user(driver, device, command)
   -- Get parameters
   local cmdName = "addUser"
   local userName = command.args.userName
-  local userType = command.args.lockUserType
+  local userType = command.args.userType
 
   -- Check busy state
   local busy = check_busy_state(device)
@@ -942,7 +945,7 @@ local function clear_user_response_handler(driver, device, ib, response)
   local event = capabilities.lockUsers.commandResult(
     result,
     {
-
+      state_change = true,
       visibility = {displayed = false}
     })
   device:emit_event(event)
@@ -1065,6 +1068,15 @@ end
 -----------------------------
 -- Set Credential Response --
 -----------------------------
+local RESPONSE_STATUS_MAP = {
+  [DoorLock.types.DlStatus.FAILURE] = "failure",
+  [DoorLock.types.DlStatus.DUPLICATE] = "duplicate",
+  [DoorLock.types.DlStatus.OCCUPIED] = "occupied",
+  [DoorLock.types.DlStatus.INVALID_FIELD] = "invalidCommand",
+  [DoorLock.types.DlStatus.RESOURCE_EXHAUSTED] = "resourceExhausted",
+  [DoorLock.types.DlStatus.NOT_FOUND] = "failure"
+}
+
 local function set_credential_response_handler(driver, device, ib, response)
   if ib.status ~= im.InteractionResponse.Status.SUCCESS then
     device.log.error("Failed to set credential for device")
@@ -1073,21 +1085,20 @@ local function set_credential_response_handler(driver, device, ib, response)
 
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local credData = device:get_field(lock_utils.CRED_DATA)
-  if cmdName == "addCota" then
-    credData = device:get_field(lock_utils.COTA_CRED)
-    cmdName = "addCredential"
-  end
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local status = "success"
   local elements = ib.info_block.data.elements
   if elements.status.value == DoorLock.types.DlStatus.SUCCESS then
+    -- Don't save user and credential for COTA
+    if cmdName == "addCota" then
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+      return
+    end
+
     -- If user is added also, update User table
     if userIdx == nil then
       local userType = device:get_field(lock_utils.USER_TYPE)
-      if userType == "remote" then
-        userType = "adminMember"
-      end
       add_user_to_table(device, elements.user_index.value, userType)
     end
 
@@ -1117,27 +1128,15 @@ local function set_credential_response_handler(driver, device, ib, response)
   end
 
   -- Update commandResult
-  status = "occupied"
-  if elements.status.value == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
-  elseif elements.status.value == DoorLock.types.DlStatus.DUPLICATE then
-    status = "duplicate"
-  elseif elements.status.value == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
-  elseif elements.status.value == DoorLock.types.DlStatus.RESOURCE_EXHAUSTED then
-    status = "resourceExhausted"
-  elseif elements.status.value == DoorLock.types.DlStatus.NOT_FOUND then
-    status = "failure"
-  end
+  status = RESPONSE_STATUS_MAP[elements.status.value]
   device.log.warn(string.format("Failed to set credential: %s", status))
 
-  -- Error Handling
-  if status == "duplicate" then
+  -- Set commandResult to error status
+  if status == "duplicate" and cmdName == "addCota" then
     generate_cota_cred_for_device(device)
     device.thread:call_with_delay(0, function(t) set_cota_credential(device, credIdx) end)
     return
-  end
-  if status ~= "occupied" then
+  elseif status ~= "occupied" then
     local result = {
       commandName = cmdName,
       statusCode = status
@@ -1153,6 +1152,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
+
   if elements.next_credential_index.value ~= nil then
     -- Get parameters
     local credIdx = elements.next_credential_index.value
@@ -1296,6 +1296,9 @@ local function clear_credential_response_handler(driver, device, ib, response)
   local userIdx = 0
   if status == "success" then
     userIdx = delete_credential_from_table(device, credIdx)
+    if userIdx == 0 then
+      userIdx = nil
+    end
   else
     device.log.warn(string.format("Failed to clear credential: %s", status))
   end
@@ -1327,9 +1330,11 @@ local function handle_set_week_day_schedule(driver, device, command)
   local scheduleIdx = command.args.scheduleIndex
   local userIdx = command.args.userIndex
   local schedule = command.args.schedule
+  local wDays = {}
   local scheduleBit = 0
   for _, weekDay in ipairs(schedule.weekDays) do
     scheduleBit = scheduleBit + WEEK_DAY_MAP[weekDay]
+    table.insert(wDays, weekDay)
   end
   local startHour = schedule.startHour
   local startMinute = schedule.startMinute
@@ -1358,7 +1363,11 @@ local function handle_set_week_day_schedule(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
-  device:set_field(lock_utils.SCHEDULE, schedule, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_WEEK_DAYS, wDays, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_START_HOUR, startHour, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_START_MINUTE, startMinute, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_END_HOUR, endHour, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_END_MINUTE, endMinute, {persist = true})
 
   -- Send command
   local ep = device:component_to_endpoint(command.component)
@@ -1384,7 +1393,18 @@ local function set_week_day_schedule_handler(driver, device, ib, response)
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
-  local schedule = device:get_field(lock_utils.SCHEDULE)
+  local days = device:get_field(lock_utils.SCHEDULE_WEEK_DAYS)
+  local sHour = device:get_field(lock_utils.SCHEDULE_START_HOUR)
+  local sMinute = device:get_field(lock_utils.SCHEDULE_START_MINUTE)
+  local eHour = device:get_field(lock_utils.SCHEDULE_END_HOUR)
+  local eMinute = device:get_field(lock_utils.SCHEDULE_END_MINUTE)
+  local schedule = {
+    weekDays = days,
+    startHour = sHour,
+    startMinute = sMinute,
+    endHour = eHour,
+    endMinute = eMinute
+  }
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
@@ -1422,7 +1442,7 @@ end
 -----------------------------
 local function handle_clear_week_day_schedule(driver, device, command)
   -- Get parameters
-  local cmdName = "clearWeekDaySchedule"
+  local cmdName = "clearWeekDaySchedules"
   local scheduleIdx = command.args.scheduleIndex
   local userIdx = command.args.userIndex
 
