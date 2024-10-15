@@ -24,7 +24,7 @@ end
 
 local embedded_cluster_utils = {}
 
-local embedded_clusters = {
+local embedded_clusters_api_10 = {
   [clusters.AirQuality.ID] = clusters.AirQuality,
   [clusters.CarbonMonoxideConcentrationMeasurement.ID] = clusters.CarbonMonoxideConcentrationMeasurement,
   [clusters.CarbonDioxideConcentrationMeasurement.ID] = clusters.CarbonDioxideConcentrationMeasurement,
@@ -39,11 +39,16 @@ local embedded_clusters = {
   [clusters.SmokeCoAlarm.ID] = clusters.SmokeCoAlarm,
 }
 
+local embedded_clusters_api_11 = {
+  [clusters.BooleanStateConfiguration.ID] = clusters.BooleanStateConfiguration
+}
+
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)
     -- If using older lua libs and need to check for an embedded cluster feature,
     -- we must use the embedded cluster definitions here
-    if version.api < 10 and embedded_clusters[cluster_id] ~= nil then
-      local embedded_cluster = embedded_clusters[cluster_id]
+    if version.api < 10 and embedded_clusters_api_10[cluster_id] ~= nil or
+       version.api < 11 and embedded_clusters_api_11[cluster_id] ~= nil then
+      local embedded_cluster = embedded_clusters_api_10[cluster_id] or embedded_clusters_api_11[cluster_id]
       local opts = opts or {}
       if utils.table_size(opts) > 1 then
         device.log.warn_with({hub_logs = true}, "Invalid options for get_endpoints")

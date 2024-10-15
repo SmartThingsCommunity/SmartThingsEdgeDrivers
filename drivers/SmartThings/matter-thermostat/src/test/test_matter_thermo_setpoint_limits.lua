@@ -250,6 +250,19 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Set MIN_SETPOINT_DEADBAND_CHECKED flag on MinSetpointDeadBand attribute handler",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(mock_device, 1, 16) --1.6 celcius
+    })
+    test.wait_for_events()
+    local min_setpoint_deadband_checked = mock_device:get_field("MIN_SETPOINT_DEADBAND_CHECKED")
+    assert(min_setpoint_deadband_checked == true, "min_setpoint_deadband_checked is True")
+  end
+)
+
 test.register_message_test(
   "Min and max heating setpoint attributes set capability constraint",
   {
