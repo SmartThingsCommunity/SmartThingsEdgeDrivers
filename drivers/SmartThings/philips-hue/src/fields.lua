@@ -26,6 +26,7 @@ local Fields = {
   IS_MULTI_SERVICE = "is_multi_service",
   MIN_DIMMING = "mindim",
   MIN_KELVIN = "mintemp",
+  MAX_KELVIN = "maxtemp",
   MODEL_ID = "modelid",
   PARENT_DEVICE_ID = "parent_device_id_local",
   RESOURCE_ID = "rid",
