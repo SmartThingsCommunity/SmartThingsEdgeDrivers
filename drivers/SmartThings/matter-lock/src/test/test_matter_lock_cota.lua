@@ -56,7 +56,7 @@ local mock_device_record = {
           cluster_type = "SERVER",
           feature_map = 0x0181, -- PIN & USR & COTA
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
