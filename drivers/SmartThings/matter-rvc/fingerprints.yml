@@ -3,11 +3,11 @@ matterManufacturer:
     deviceLabel: Matter RVC
     vendorId: 0x10e1
     productId: 0x1025
-    deviceProfileName: rvc
+    deviceProfileName: rvc-clean-mode
 
 matterGeneric:
   - id: "matter/rvc"
     deviceLabel: Matter RVC
     deviceTypes:
       - id: 0x0074
-    deviceProfileName: rvc
+    deviceProfileName: rvc-clean-mode
