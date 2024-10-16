@@ -12,6 +12,9 @@ local clusters = require "st.matter.clusters"
 -- and this is to avoid the crash of the test case that occurs when try_update_metadata is performed in the device_init stage.
 local TEST_CONFIGURE = "__test_configure"
 
+-- when all cases are placed in test_aqara_cube.lua, there is a problem that the mock_device:set_field (TEST_CONFIGURE, true)
+-- is not possible in the second test case, so the test file is separated.
+
 --mock the actual device
 local mock_device = test.mock_device.build_test_matter_device(
   {
@@ -59,13 +62,13 @@ local mock_device = test.mock_device.build_test_matter_device(
         },
       },
       {
-        endpoint_id = 6,
+        endpoint_id = 250,
         clusters = {
           {cluster_id = clusters.Switch.ID, feature_map = clusters.Switch.types.Feature.MOMENTARY_SWITCH, cluster_type = "SERVER"},
         },
       },
       {
-        endpoint_id = 7,
+        endpoint_id = 251,
         clusters = {
           {cluster_id = clusters.Switch.ID, feature_map = clusters.Switch.types.Feature.MOMENTARY_SWITCH, cluster_type = "SERVER"},
         },
@@ -105,7 +108,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Handle single press sequence when changing the device_lifecycle",
+  "Handle single press sequence in case of exhausted endpoint",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
       test.mock_devices_api._expected_device_updates[mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
@@ -122,7 +125,7 @@ test.register_coroutine_test(
         {
           mock_device.id,
           clusters.Switch.events.InitialPress:build_test_event_report(
-            mock_device, 2, {new_position = 1}  --move to position 1?
+            mock_device, 250, {new_position = 1}  --move to position 1?
           )
         }
       )
@@ -133,21 +136,6 @@ test.register_coroutine_test(
 
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", cubeFace.cubeFace({value = "face1Up"}))
-      )
-
-      test.socket.matter:__queue_receive(
-        {
-          mock_device.id,
-          clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-          mock_device, 2, 150
-          )
-        }
-      )
-
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message(
-          "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
-        )
       )
     end
 )
