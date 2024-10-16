@@ -636,4 +636,48 @@ test.register_coroutine_test(
   { test_init = test_init_onoff }
 )
 
+test.register_coroutine_test(
+  "On and off commands should send the appropriate commands",
+  function()
+    test.socket.capability:__queue_receive({
+      mock_device_onoff.id,
+      { capability = "switch", component = "light", command = "on", args = { } }
+    })
+    test.socket.matter:__expect_send({
+      mock_device_onoff.id,
+      clusters.OnOff.server.commands.On(mock_device_onoff, 1)
+    })
+    test.socket.capability:__queue_receive({
+      mock_device_onoff.id,
+      { capability = "switch", component = "light", command = "off", args = { } }
+    })
+    test.socket.matter:__expect_send({
+      mock_device_onoff.id,
+      clusters.OnOff.server.commands.Off(mock_device_onoff, 1)
+    })
+  end,
+  { test_init = test_init_onoff }
+)
+
+test.register_coroutine_test(
+  "Light on and off command handler",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device_onoff.id,
+      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 1, true)
+    })
+    test.socket.capability:__expect_send(
+      mock_device_onoff:generate_test_message("light", capabilities.switch.switch.on())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device_onoff.id,
+      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 1, false)
+    })
+    test.socket.capability:__expect_send(
+      mock_device_onoff:generate_test_message("light", capabilities.switch.switch.off())
+    )
+  end,
+  { test_init = test_init_onoff }
+)
+
 test.run_registered_tests()
