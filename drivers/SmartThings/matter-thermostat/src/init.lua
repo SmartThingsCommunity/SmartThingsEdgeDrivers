@@ -1089,7 +1089,7 @@ end
 local function set_setpoint(setpoint)
   return function(driver, device, cmd)
     local value = cmd.args.setpoint
-    if (value >= THERMOSTAT_MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
+    if (value > THERMOSTAT_MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
       value = utils.f_to_c(value)
     end
 
@@ -1170,7 +1170,7 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
     end
     local val = ib.data.value / 100.0
     if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
-      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
+      if minOrMax == setpoint_limit_device_field.MIN_HEAT then
         val = THERMOSTAT_MIN_TEMP_IN_C
       else
         val = THERMOSTAT_MAX_TEMP_IN_C
@@ -1200,7 +1200,7 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
     end
     local val = ib.data.value / 100.0
     if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
-      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
+      if minOrMax == setpoint_limit_device_field.MIN_COOL then
         val = THERMOSTAT_MIN_TEMP_IN_C
       else
         val = THERMOSTAT_MAX_TEMP_IN_C
