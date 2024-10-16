@@ -1,5 +1,7 @@
 local handlers = require "api.event_handlers"
 local log = require "log"
+local st_utils = require "st.utils"
+
 local PlayerFields = require "fields".SonosPlayerFields
 
 --- @module 'sonos.types'
@@ -166,7 +168,13 @@ function SonosState.new()
   --- @param groups_event SonosGroupsResponseBody
   --- @param device SonosDevice|nil
   ret.update_household_info = function(self, id, groups_event, device)
-    log.debug(string.format("Update household info for household %s", id))
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        {name = (device or { label = "<no device>" }).label, event = groups_event },
+        string.format("Update household info for household %s", id),
+        true
+      )
+    )
     if device and device.label then
       log.debug(string.format("Household update triggered by device %s to update capabilities", device.label))
     end
@@ -220,28 +228,35 @@ function SonosState.new()
         role = "auxilary"
       end
 
-      if type(coordinator_id) == "table" then
-        --info gather since post migration we have seen once that coordinator_id is sometimes a table,
-        -- which causes a crash when emitting the mediaGroup.groupPrimaryDeviceId capability event
-        local ut = require "st.utils"
-        log.warn(ut.stringify_table({ household = household, coordinator_id = coordinator_id },
-          "Household update with invalid coordinator_id data:", false
-        ))
+      local group_update_payload = { role, coordinator_id, group_id }
+      if type(coordinator_id) == "string" and type(group_id) == "string" then
+        handlers.handle_group_update(device, group_update_payload)
+      else
+        log.warn(
+        st_utils.stringify_table(
+            { household = household, group_update_payload = group_update_payload },
+            "Household update with invalid data",
+            false
+          )
+        )
       end
-      handlers.handle_group_update(device, { role, coordinator_id, group_id })
     end
   end
 
   --- @param self SonosState
   --- @param household_id HouseholdId
   --- @param player_id PlayerId
-  --- @return GroupId
+  --- @return GroupId?,string?
   ret.get_group_for_player = function(self, household_id, player_id)
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { household_id = household_id, player_id = player_id }, "Get Group For Player", true
+      )
+    )
     local household = private.households[household_id]
     if household == nil then
-      local ut = require "st.utils"
-      log.error(ut.stringify_table({ household = household }, "Get group for invalid household", false))
-      return
+      log.error(st_utils.stringify_table({ household = household }, "Get group for invalid household", false))
+      return nil, st_utils.stringify_table({ household = household }, "Get group for invalid household", false)
     end
     return household.player_to_group_map[player_id]
   end
@@ -249,13 +264,17 @@ function SonosState.new()
   --- @param self SonosState
   --- @param household_id HouseholdId
   --- @param group_id GroupId
-  --- @return PlayerId
+  --- @return PlayerId?,string?
   ret.get_coordinator_for_group = function(self, household_id, group_id)
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { household_id = household_id, group_id = group_id }, "Get Coordinator For Group", true
+      )
+    )
     local household = private.households[household_id]
     if household == nil then
-      local ut = require "st.utils"
-      log.error(ut.stringify_table({ household = household }, "Get coordinator for invalid household", false))
-      return
+      log.error(st_utils.stringify_table({ household = household }, "Get coordinator for invalid household", false))
+      return nil, st_utils.stringify_table({ household = household }, "Get coordinator for invalid household", false)
     end
     return household.group_to_coordinator_map[group_id]
   end
@@ -263,8 +282,13 @@ function SonosState.new()
   --- @param self SonosState
   --- @param household_id HouseholdId
   --- @param player_id PlayerId
-  --- @return PlayerId
+  --- @return PlayerId?,string?
   ret.get_coordinator_for_player = function(self, household_id, player_id)
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { household_id = household_id, player_id = player_id }, "Get Coordinator For Player", true
+      )
+    )
     return self:get_coordinator_for_group(
       household_id,
       self:get_group_for_player(household_id, player_id)
@@ -278,7 +302,14 @@ function SonosState.new()
   --- @return nil|string error nil on success
   ret.get_player_for_device = function(self, device)
     local household_id, player_id = device:get_field(PlayerFields.HOUSEHOULD_ID),
-        device:get_field(PlayerFields.PLAYER_ID)
+      device:get_field(PlayerFields.PLAYER_ID)
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        "Get Player For Device",
+        true
+      )
+    )
 
     if not (device:get_field(PlayerFields._IS_INIT) or household_id or player_id) then
       return nil, nil,
@@ -295,7 +326,13 @@ function SonosState.new()
   --- @return nil|string error nil on success
   ret.get_coordinator_for_device = function(self, device)
     local household_id, player_id, err = self:get_player_for_device(device)
-
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        "Get Coordinator For Device",
+        true
+      )
+    )
     if err then
       return nil, nil, err
     end
@@ -316,7 +353,13 @@ function SonosState.new()
   --- @return nil|string error nil on success
   ret.get_group_for_device = function(self, device)
     local household_id, player_id, err = self:get_player_for_device(device)
-
+    log.debug_with({ hub_logs = true },
+      st_utils.stringify_table(
+        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        "Get Group For Device",
+        true
+      )
+    )
     if err then
       return nil, nil, err
     end
