@@ -100,7 +100,7 @@ local subscribed_attributes = {
 }
 
 local cumulative_report_val_19 = {
-  energy = 19,
+  energy = 19000,
   start_timestamp = 0,
   end_timestamp = 0,
   start_systime = 0,
@@ -108,7 +108,7 @@ local cumulative_report_val_19 = {
 }
 
 local cumulative_report_val_29 = {
-  energy = 29,
+  energy = 29000,
   start_timestamp = 0,
   end_timestamp = 0,
   start_systime = 0,
@@ -116,7 +116,7 @@ local cumulative_report_val_29 = {
 }
 
 local cumulative_report_val_39 = {
-  energy = 39,
+  energy = 39000,
   start_timestamp = 0,
   end_timestamp = 0,
   start_systime = 0,
@@ -124,7 +124,7 @@ local cumulative_report_val_39 = {
 }
 
 local periodic_report_val_23 = {
-  energy = 23,
+  energy = 23000,
   start_timestamp = 0,
   end_timestamp = 0,
   start_systime = 0,
@@ -245,13 +245,13 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalPowerMeasurement.server.attributes.ActivePower:build_test_report_data(mock_device, 1, 17)
+        clusters.ElectricalPowerMeasurement.server.attributes.ActivePower:build_test_report_data(mock_device, 1, 17000)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({value = 17, unit="W"}))
+      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({value = 17.0, unit="W"}))
     },
   }
 )
@@ -270,7 +270,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19, unit="Wh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19.0, unit="Wh"}))
     },
     {
       channel = "matter",
@@ -283,7 +283,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19, unit="Wh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19.0, unit="Wh"}))
     },
     {
       channel = "matter",
@@ -300,13 +300,13 @@ test.register_message_test(
         start = "1970-01-01T00:00:00Z",
         ["end"] = "1969-12-31T23:59:59Z",
         deltaEnergy = 0.0,
-        energy = 19
+        energy = 19.0
       }))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 29, unit="Wh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 29.0, unit="Wh"}))
     },
     {
       channel = "matter",
@@ -319,7 +319,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 39, unit="Wh"}))
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 39.0, unit="Wh"}))
     },
   }
 )
@@ -360,7 +360,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 23, unit="Wh"}))
+      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 23.0, unit="Wh"}))
     },
     {
       channel = "matter",
@@ -373,7 +373,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 46, unit="Wh"}))
+      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 46.0, unit="Wh"}))
     },
     {
       channel = "matter",
@@ -390,13 +390,13 @@ test.register_message_test(
         start = "1970-01-01T00:00:00Z",
         ["end"] = "1969-12-31T23:59:59Z",
         deltaEnergy = 0.0,
-        energy = 46
+        energy = 46.0
       }))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 69, unit="Wh"}))
+      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 69.0, unit="Wh"}))
     },
   },
   { test_init = test_init_periodic }
@@ -416,7 +416,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.socket["matter"]:__queue_receive(
       {
@@ -427,7 +427,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.wait_for_events()
     test.mock_time.advance_time(899)
@@ -444,11 +444,11 @@ test.register_coroutine_test(
             start = "1970-01-01T00:00:00Z",
             ["end"] = "1970-01-01T00:14:58Z",
             deltaEnergy = 0.0,
-            energy = 19
+            energy = 19.0
         }))
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
@@ -471,7 +471,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.socket["matter"]:__queue_receive(
       {
@@ -482,7 +482,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.wait_for_events()
     test.mock_time.advance_time(2000)
@@ -499,11 +499,11 @@ test.register_coroutine_test(
             start = "1970-01-01T00:00:00Z",
             ["end"] = "1970-01-01T00:33:19Z",
             deltaEnergy = 0.0,
-            energy = 19
+            energy = 19.0
         }))
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
@@ -526,7 +526,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.socket["matter"]:__queue_receive(
       {
@@ -537,7 +537,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
     test.wait_for_events()
     test.mock_time.advance_time(2000)
@@ -554,11 +554,11 @@ test.register_coroutine_test(
             start = "1970-01-01T00:00:00Z",
             ["end"] = "1970-01-01T00:33:19Z",
             deltaEnergy = 0.0,
-            energy = 19
+            energy = 19.0
         }))
     )
     test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29, unit = "Wh" }))
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
@@ -588,7 +588,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 23, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 23.0, unit = "Wh" }))
     )
     test.socket["matter"]:__queue_receive(
       {
@@ -599,7 +599,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 46, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 46.0, unit = "Wh" }))
     )
     test.wait_for_events()
     test.mock_time.advance_time(899)
@@ -615,12 +615,12 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         deltaEnergy=0.0,
         ["end"]="1970-01-01T00:14:58Z",
-        energy=46,
+        energy=46.0,
         start="1970-01-01T00:00:00Z"
       }))
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_export_poll_timer = mock_device_periodic:get_field("__recurring_export_report_poll_timer")
@@ -644,7 +644,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 23, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 23.0, unit = "Wh" }))
     )
     test.socket["matter"]:__queue_receive(
       {
@@ -655,7 +655,7 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 46, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 46.0, unit = "Wh" }))
     )
     test.wait_for_events()
     test.mock_time.advance_time(2000)
@@ -671,12 +671,12 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         deltaEnergy=0.0,
         ["end"] = "1970-01-01T00:33:19Z",
-        energy=46,
+        energy=46.0,
         start="1970-01-01T00:00:00Z"
       }))
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69, unit = "Wh" }))
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_export_poll_timer = mock_device_periodic:get_field("__recurring_export_report_poll_timer")
