@@ -158,7 +158,7 @@ local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
 local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
-local CONVERSION_MILLIWATTS_TO_WATTS = 0.001 -- A milliwatt is 1/1000th of a watt
+local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
 
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
@@ -925,7 +925,7 @@ end
 
 local function cumul_energy_exported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value * CONVERSION_MILLIWATTS_TO_WATTS
+    local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
     device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
   end
@@ -933,7 +933,7 @@ end
 
 local function per_energy_exported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value * CONVERSION_MILLIWATTS_TO_WATTS
+    local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
     device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
@@ -989,7 +989,7 @@ end
 
 local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
-    local watt_value = ib.data.value * CONVERSION_MILLIWATTS_TO_WATTS
+    local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
   end
 end
