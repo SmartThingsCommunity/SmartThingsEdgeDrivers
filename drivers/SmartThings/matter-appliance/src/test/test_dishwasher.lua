@@ -20,7 +20,7 @@ local clusters = require "st.matter.clusters"
 local APPLICATION_ENDPOINT = 1
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("laundry-dryer-tn-tl.yml"),
+  profile = t_utils.get_profile_definition("dishwasher-tn-tl.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -43,47 +43,13 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_type = "SERVER",
           cluster_revision = 1,
         },
-        { cluster_id = clusters.LaundryWasherMode.ID,  cluster_type = "SERVER" },
+        { cluster_id = clusters.DishwasherAlarm.ID,  cluster_type = "SERVER" },
+        { cluster_id = clusters.DishwasherMode.ID,  cluster_type = "SERVER" },
         { cluster_id = clusters.OperationalState.ID,   cluster_type = "SERVER" },
         { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 3},
       },
       device_types = {
-        { device_type_id = 0x007C, device_type_revision = 1 } -- LaundryDryer
-      }
-    }
-  }
-})
-
-local mock_device_washer = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("laundry-washer-tn-tl.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
-      },
-      device_types = {
-        { device_type_id = 0x0016, device_type_revision = 1 }, -- RootNode
-      }
-    },
-    {
-      endpoint_id = 1,
-      clusters = {
-        {
-          cluster_id = clusters.OnOff.ID,
-          cluster_type = "SERVER",
-          cluster_revision = 1,
-        },
-        { cluster_id = clusters.LaundryWasherMode.ID,  cluster_type = "SERVER" },
-        { cluster_id = clusters.OperationalState.ID,   cluster_type = "SERVER" },
-        { cluster_id = clusters.TemperatureControl.ID, cluster_type = "SERVER", feature_map = 3},
-      },
-      device_types = {
-        { device_type_id = 0x0073, device_type_revision = 1 } -- LaundryWasher
+        { device_type_id = 0x0075, device_type_revision = 1 } -- Dishwasher
       }
     }
   }
@@ -92,8 +58,9 @@ local mock_device_washer = test.mock_device.build_test_matter_device({
 local function test_init()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
-    clusters.LaundryWasherMode.attributes.CurrentMode,
-    clusters.LaundryWasherMode.attributes.SupportedModes,
+    clusters.DishwasherMode.attributes.CurrentMode,
+    clusters.DishwasherMode.attributes.SupportedModes,
+    clusters.DishwasherAlarm.attributes.State,
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
     clusters.OperationalState.attributes.AcceptedCommandList,
@@ -110,25 +77,15 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
-  local subscribe_request_washer = cluster_subscribe_list[1]:subscribe(mock_device_washer)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request_washer:merge(cluster:subscribe(mock_device_washer))
-    end
-  end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request_washer })
   test.mock_device.add_test_device(mock_device)
-  test.mock_device.add_test_device(mock_device_washer)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "added" })
   test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
   "Off command should send appropriate commands",
-  -- we do not test "on" command, as laundry devices are supposed to have offOnly feature.
   {
     {
       channel = "capability",
@@ -421,17 +378,17 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Laundry Washer Suppoerted Modes must be registered and Laundry Washer Mode command should send appropriate commands",
+  "Dishwasher Supported Modes must be registered and Dishwasher Mode command should send appropriate commands",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.LaundryWasherMode.attributes.SupportedModes:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
+        clusters.DishwasherMode.attributes.SupportedModes:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
           {
-            clusters.LaundryWasherMode.types.ModeOptionStruct({ ["label"] = "Quick", ["mode"] = 0, ["mode_tags"] = {} }),
-            clusters.LaundryWasherMode.types.ModeOptionStruct({ ["label"] = "Super Dry", ["mode"] = 1, ["mode_tags"] = {} })
+            clusters.DishwasherMode.types.ModeOptionStruct({ ["label"] = "Quick", ["mode"] = 0, ["mode_tags"] = {} }),
+            clusters.DishwasherMode.types.ModeOptionStruct({ ["label"] = "Super Dry", ["mode"] = 1, ["mode_tags"] = {} })
           }
         )
       }
@@ -459,7 +416,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LaundryWasherMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 0) --0 is the index where Quick is stored.
+        clusters.DishwasherMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 0) --0 is the index where Quick is stored.
       }
     },
     {
@@ -475,7 +432,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LaundryWasherMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 1) --1 is the index where Super Dry is stored.
+        clusters.DishwasherMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 1) --1 is the index where Super Dry is stored.
       }
     }
   }
@@ -519,63 +476,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry dryer",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 3000)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 7000)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 6000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=30.0,maximum=70.0}, unit = "C"}, {visibility = {displayed = false}}))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 60.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {40.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, APPLICATION_ENDPOINT, 40 * 100, nil)
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry dryer, temp bounds out of range and temp setpoint converted from F to C",
+  "temperatureSetpoint command should send appropriate commands",
   {
     {
       channel = "matter",
@@ -598,25 +499,25 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 5000)
+        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 9000)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=33.0,maximum=90.0}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 50.0, unit = "C"}))
+      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 90.0, unit = "C"}))
     },
     {
       channel = "capability",
       direction = "receive",
       message = {
         mock_device.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {104.0}}
+        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {40.0}}
       }
     },
     {
@@ -625,118 +526,6 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.TemperatureControl.commands.SetTemperature(mock_device, APPLICATION_ENDPOINT, 40 * 100, nil)
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry washer",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 1500)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 5000)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 4000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=15.0,maximum=50.0}, unit = "C"}, {visibility = {displayed = false}}))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 40.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {25.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, APPLICATION_ENDPOINT, 25 * 100, nil)
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry washer, temp bounds out of range and temp setpoint converted from F to C",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 10000)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.attributes.TemperatureSetpoint:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 3000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0}, unit = "C"}, {visibility = {displayed = false}}))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 30.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {122.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, APPLICATION_ENDPOINT, 50 * 100, nil)
       }
     },
   }
