@@ -1,0 +1,12 @@
+name: flow
+components:
+- id: main
+  capabilities:
+  - id: flowMeasurement
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: FlowSensor
