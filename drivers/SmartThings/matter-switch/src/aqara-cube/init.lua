@@ -15,7 +15,9 @@ local CUBEACTION_TIMER = "__cubeAction_timer"
 local CUBEACTION_TIME = 3
 
 local function is_aqara_cube(opts, driver, device)
-  local name = string.format("%s", device.label)
+  -- device.label is a value that can be changed by the user,
+  -- so it is changed to read only value(device.manufacturer_info.product_name).
+  local name = string.format("%s", device.manufacturer_info.product_name)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
     string.find(name, "Aqara Cube T1 Pro") then
       return true
@@ -106,13 +108,6 @@ local function endpoint_to_component(device, endpoint)
   return "main"
 end
 
-local function device_init(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    device:subscribe()
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-  end
-end
-
 -- This is called either on add for parent/child devices, or after the device profile changes for components
 local function configure_buttons(device)
   if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
@@ -173,6 +168,16 @@ local function info_changed(driver, device, event, args)
     -- profile has changed, and we deferred setting up our buttons, so do that now
     configure_buttons(device)
     device:set_field(DOING_CONFIGURE, nil)
+  end
+end
+
+local function device_init(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:subscribe()
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+
+    -- to read the capability again when the driver is updated with a new capability.
+    device_added(driver, device)
   end
 end
 
