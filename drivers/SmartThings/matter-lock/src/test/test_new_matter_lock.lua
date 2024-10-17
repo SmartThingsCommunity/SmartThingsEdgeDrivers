@@ -267,6 +267,152 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Handle received RequirePINforRemoteOperation(true) from Matter device.",
+  function()
+    test.socket.matter:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.RequirePINforRemoteOperation:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.RequirePINforRemoteOperation(true)
+        ),
+      }
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.mock_time.advance_time(1)
+    test.wait_for_events()
+    mock_device:set_field(lock_utils.COTA_CRED, "654123", {persist = true}) --overwrite random cred for test expectation
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+          ), -- credential
+          "654123", -- credential_data
+          nil, -- user_index
+          DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED, -- user_status
+          DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER -- user_type
+        ),
+      }
+    )
+    test.mock_time.advance_time(1)
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          nil, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 2}
+          ), -- credential
+          "654123", -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER -- user_type
+        ),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+"Handle for duplicated pincode during COTA setting",
+function()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      DoorLock.attributes.RequirePINforRemoteOperation:build_test_report_data(
+        mock_device, 1, DoorLock.attributes.RequirePINforRemoteOperation(true)
+      ),
+    }
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+  test.mock_time.advance_time(1)
+  test.wait_for_events()
+  mock_device:set_field(lock_utils.COTA_CRED, "654123", {persist = true}) --overwrite random cred for test expectation
+  test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+
+  test.socket.matter:__expect_send(
+    {
+      mock_device.id,
+      DoorLock.server.commands.SetCredential(
+        mock_device, 1, -- endpoint
+        DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+        DoorLock.types.CredentialStruct(
+          {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+        ), -- credential
+        "654123", -- credential_data
+        nil, -- user_index
+        DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED, -- user_status
+        DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER -- user_type
+      ),
+    }
+  )
+  test.mock_time.advance_time(1)
+  test.wait_for_events()
+
+  test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+        mock_device, 1,
+        DoorLock.types.DlStatus.DUPLICATE, -- status
+        1, -- user_index
+        2 -- next_credential_index
+      ),
+    }
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(11, "oneshot")
+  test.mock_time.advance_time(10) --trigger remote pin handling
+  test.wait_for_events()
+  mock_device:set_field(lock_utils.COTA_CRED, "654123", {persist = true}) --overwrite random cred for test expectation
+  test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+
+  test.socket.matter:__expect_send(
+    {
+      mock_device.id,
+      DoorLock.server.commands.SetCredential(
+        mock_device, 1, -- endpoint
+        DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+        DoorLock.types.CredentialStruct(
+          {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+        ), -- credential
+        "654123", -- credential_data
+        nil, -- user_index
+        DoorLock.types.UserStatusEnum.OCCUPIED_ENABLED, -- user_status
+        DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER -- user_type
+      ),
+    }
+  )
+  test.mock_time.advance_time(1)
+  test.wait_for_events()
+end
+)
+
+test.register_coroutine_test(
   "Handle received RequirePINforRemoteOperation(false) from Matter device.",
   function()
     test.socket.matter:__queue_receive(

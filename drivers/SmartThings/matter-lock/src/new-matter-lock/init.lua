@@ -306,7 +306,7 @@ end
 
 local function apply_cota_credentials_if_absent(device)
   if not device:get_field(lock_utils.COTA_CRED) then
-    --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
+    -- Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
     device.thread:call_with_delay(0, function(t)
       generate_cota_cred_for_device(device)
       -- delay needed to allow test to override the random credential data
@@ -1085,6 +1085,9 @@ local function set_credential_response_handler(driver, device, ib, response)
 
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local credData = device:get_field(lock_utils.CRED_DATA)
+  if cmdName == "addCota" then
+    credData = device:get_field(lock_utils.COTA_CRED)
+  end
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local status = "success"
