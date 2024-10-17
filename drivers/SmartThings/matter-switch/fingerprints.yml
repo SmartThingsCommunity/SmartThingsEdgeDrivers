@@ -2273,6 +2273,22 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+#Uascent
+  - id: "5120/1031"
+    deviceLabel: Uascent WIFI Smart Switch
+    vendorId: 0x1400
+    productId: 0x0407
+    deviceProfileName: switch-binary
+  - id: "5120/1030"
+    deviceLabel: Uascent WIFI Smart Switch
+    vendorId: 0x1400
+    productId: 0x0406
+    deviceProfileName: switch-binary
+  - id: "5120/1029"
+    deviceLabel: Uascent WIFI Smart Switch
+    vendorId: 0x1400
+    productId: 0x0405
+    deviceProfileName: switch-binary    
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
@@ -2324,6 +2340,7 @@ matterManufacturer:
     vendorId: 0x138A
     productId: 0x1392
     deviceProfileName: matter-bridge
+
 
 
 matterGeneric:

@@ -381,7 +381,9 @@ local function assign_child_profile(device, child_ep)
       -- matching to the device type with the highest ID
       local id = 0
       for _, dt in ipairs(ep.device_types) do
+        if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
         id = math.max(id, dt.device_type_id)
+        end
       end
       profile = device_type_profile_map[id]
     end
@@ -467,11 +469,10 @@ local function initialize_switch(driver, device)
   local current_component_number = 2
   local component_map_used = false
   local parent_child_device = false
-
+  
   if #switch_eps == 0 and #button_eps == 0 then
     return
   end
-
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
