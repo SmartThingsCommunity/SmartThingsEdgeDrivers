@@ -4,12 +4,12 @@ matterManufacturer:
     deviceLabel: Aqara Smart Lock U200
     vendorId: 0x115F
     productId: 0x2802
-    deviceProfileName: lock-lockalarm-nobattery
+    deviceProfileName: lock-user-pin
   - id: "4447/10241"
     deviceLabel: Aqara Smart Lock U300
     vendorId: 0x115F
     productId: 0x2801
-    deviceProfileName: lock-lockalarm-nobattery
+    deviceProfileName: lock-user-pin
 #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
