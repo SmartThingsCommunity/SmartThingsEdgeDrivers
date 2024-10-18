@@ -35,7 +35,7 @@ local mock_device_record = {
       endpoint_id = 10,
       clusters = {
         {cluster_id = clusters.DoorLock.ID, cluster_type = "SERVER", feature_map = 0x0000},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
