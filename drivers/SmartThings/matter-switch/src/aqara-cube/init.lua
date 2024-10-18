@@ -1,6 +1,7 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
+local log = require "log"
 
 local cubeAction = capabilities["stse.cubeAction"]
 local cubeFace = capabilities["stse.cubeFace"]
@@ -18,8 +19,6 @@ local CUBEACTION_TIMER = "__cubeAction_timer"
 local CUBEACTION_TIME = 3
 
 local function is_aqara_cube(opts, driver, device)
-  -- device.label is a value that can be changed by the user,
-  -- so it is changed to read only value(device.manufacturer_info.product_name).
   local name = string.format("%s", device.manufacturer_info.product_name)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
     string.find(name, "Aqara Cube T1 Pro") then
@@ -126,18 +125,21 @@ end
 
 local function set_configure(driver, device)
   local MS = get_reordered_endpoints(driver, device)
-  local main_endpoint = device.MATTER_DEFAULT_ENDPOINT
-  if #MS > 0 then
-    main_endpoint = MS[1] -- the endpoint matching to the non-child device
-    if MS[1] == 0 then main_endpoint = MS[2] end -- we shouldn't hit this, but just in case
+  local main_endpoint
+  if #MS > 0 and MS[1] == 0 then -- we shouldn't hit this, but just in case
+    main_endpoint = MS[2]
+  elseif #MS > 0 then
+    main_endpoint = MS[1] -- matches to the non-child device
+  else
+    main_endpoint = device.MATTER_DEFAULT_ENDPOINT
   end
-  device.log.debug("main button endpoint is "..main_endpoint)
+  device.log.debug_with({hub_logs = true}, "The main button endpoint for the Aqara T1 Pro is " .. main_endpoint)
 
   -- At the moment, we're taking it for granted that all momentary switches only have 2 positions
   local current_component_number = 1
   local component_map = {}
   for _, ep in ipairs(MS) do -- for each momentary switch endpoint (including main)
-    device.log.debug("Configuring endpoint "..ep)
+    log.debug_with({hub_logs = true}, "Configuring endpoint: " .. ep)
     -- build the mapping of endpoints to components
     component_map[string.format("%d", current_component_number)] = ep
     current_component_number = current_component_number + 1
@@ -153,11 +155,8 @@ local function device_init(driver, device)
     device:subscribe()
     device:set_endpoint_to_component_fn(endpoint_to_component)
 
-    -- during driver update, only device_init is called, so configuration including profile change should be set here.
-    -- vid_0x115f_Cube is a label used in the unit test. This is used to avoid profile updates because the test framework
-    -- does not allow profile updates in the device_init stage. And it must be executed unconditionally in the user environment.
-    local name = string.format("%s", device.label)
-    if string.find(name, "vid_0x115f_Cube") == nil then
+    -- when unit testing, call set_configure elsewhere
+    if not device:get_field(TEST_CONFIGURE) then
       set_configure(driver, device)
     end
   end
@@ -179,13 +178,10 @@ local function info_changed(driver, device, event, args)
     and device:get_field(DEFERRED_CONFIGURE)
     and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
 
-    -- At the time of device_added, there is an error that the corresponding capability cannot be found
-    -- because the profile has not been changed from the generic profile of fingerprint to the Aqara Cube.
     reset_thread(device)
     device:emit_event(cubeAction.cubeAction("flipToSide1"))
     device:emit_event(cubeFace.cubeFace("face1Up"))
 
-    -- the profile change has been delayed.
     device:set_field(DEFERRED_CONFIGURE, nil)
   end
 end
