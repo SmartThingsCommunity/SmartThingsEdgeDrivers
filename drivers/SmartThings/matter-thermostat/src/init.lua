@@ -733,13 +733,7 @@ local temp_attr_handler_factory = function(minOrMax)
     end
     local temp = ib.data.value / 100.0
     local unit = "C"
-    if temp < THERMOSTAT_MIN_TEMP_IN_C or temp > THERMOSTAT_MAX_TEMP_IN_C then
-      if minOrMax == setpoint_limit_device_field.MIN_TEMP then
-        temp = THERMOSTAT_MIN_TEMP_IN_C
-      else
-        temp = THERMOSTAT_MAX_TEMP_IN_C
-      end
-    end
+    temp = utils.clamp_value(temp, THERMOSTAT_MIN_TEMP_IN_C, THERMOSTAT_MAX_TEMP_IN_C)
     set_field_for_endpoint(device, minOrMax, ib.endpoint_id, temp)
     local min = get_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
     local max = get_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
@@ -1169,13 +1163,7 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
-    if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
-      if minOrMax == setpoint_limit_device_field.MIN_HEAT then
-        val = THERMOSTAT_MIN_TEMP_IN_C
-      else
-        val = THERMOSTAT_MAX_TEMP_IN_C
-      end
-    end
+    val = utils.clamp_value(val, THERMOSTAT_MIN_TEMP_IN_C, THERMOSTAT_MAX_TEMP_IN_C)
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
     local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
@@ -1199,13 +1187,7 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
       return
     end
     local val = ib.data.value / 100.0
-    if val < THERMOSTAT_MIN_TEMP_IN_C or val > THERMOSTAT_MAX_TEMP_IN_C then
-      if minOrMax == setpoint_limit_device_field.MIN_COOL then
-        val = THERMOSTAT_MIN_TEMP_IN_C
-      else
-        val = THERMOSTAT_MAX_TEMP_IN_C
-      end
-    end
+    val = utils.clamp_value(val, THERMOSTAT_MIN_TEMP_IN_C, THERMOSTAT_MAX_TEMP_IN_C)
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_COOL)
     local max = device:get_field(setpoint_limit_device_field.MAX_COOL)

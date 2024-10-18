@@ -197,14 +197,8 @@ local function setpoint_limit_handler(limit_field)
       device.log.warn(string.format("Not a supported device type"))
       return
     end
-    -- We clamp the max and min values as per the assumed refrigerator temperature ranges.
-    if val < min_temp_in_c or val > max_temp_in_c then
-      if limit_field == setpoint_limit_device_field.MIN_TEMP then
-        val = min_temp_in_c
-      else
-        val = max_temp_in_c
-      end
-    end
+
+    val = utils.clamp_value(val, min_temp_in_c, max_temp_in_c)
 
     device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })

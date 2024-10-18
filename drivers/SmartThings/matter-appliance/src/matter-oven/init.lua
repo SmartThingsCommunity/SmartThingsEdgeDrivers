@@ -183,14 +183,7 @@ local function setpoint_limit_handler(limit_field)
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
 
-    -- We clamp the max and min values as per the assumed oven temperature ranges.
-    if val < OVEN_MIN_TEMP_IN_C or val > OVEN_MAX_TEMP_IN_C then
-      if limit_field == setpoint_limit_device_field.MIN_TEMP then
-        val = OVEN_MIN_TEMP_IN_C
-      else
-        val = OVEN_MAX_TEMP_IN_C
-      end
-    end
+    val = utils.clamp_value(val, OVEN_MIN_TEMP_IN_C, OVEN_MAX_TEMP_IN_C)
 
     device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
