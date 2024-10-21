@@ -160,6 +160,11 @@ zigbeeManufacturer:
     manufacturer: TOTEM
     model: R60
     deviceProfileName: lock-battery
+  - id: TOTEM/R71
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: R71
+    deviceProfileName: lock-battery
   - id: TOTEM/P70
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
