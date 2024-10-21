@@ -249,7 +249,11 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
     minimum = min,
     maximum = max,
   }
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
+  -- Only emit the capability for RPC version >= 5, since unit conversion for
+  -- range capabilities is only supported in that case.
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}))
+  end
 
   local temp = ib.data.value / 100.0
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
