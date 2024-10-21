@@ -426,7 +426,6 @@ local function create_thermostat_modes_profile(device)
 
   local thermostat_modes = ""
   if #heat_eps == 0 and #cool_eps == 0 then
-    device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
     return "No Heating nor Cooling Support"
   elseif #heat_eps > 0 and #cool_eps == 0 then
     thermostat_modes = thermostat_modes .. "-heating-only"
@@ -489,9 +488,7 @@ local function do_configure(driver, device)
       end
 
       local thermostat_modes = create_thermostat_modes_profile(device)
-      if thermostat_modes == "No Heating nor Cooling Support" then
-        return
-      else
+      if thermostat_modes ~= "No Heating nor Cooling Support" then
         profile_name = profile_name .. thermostat_modes
       end
 
@@ -518,6 +515,7 @@ local function do_configure(driver, device)
 
     local thermostat_modes = create_thermostat_modes_profile(device)
     if thermostat_modes == "No Heating nor Cooling Support" then
+      device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
       return
     else
       profile_name = profile_name .. thermostat_modes
@@ -537,7 +535,7 @@ local function do_configure(driver, device)
   end
 
   if profile_name then
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
 end
