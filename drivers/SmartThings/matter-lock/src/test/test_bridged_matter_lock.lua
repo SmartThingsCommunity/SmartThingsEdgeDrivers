@@ -40,9 +40,9 @@ local mock_device_record = {
 }
 local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
 
-local mock_device_record_aqara = {
-    profile = t_utils.get_profile_definition("lock-lockalarm-nobattery.yml"),
-    manufacturer_info = {vendor_id = 0x115F, product_id = 0x2801}, -- Aqara Smart Lock U300
+local mock_device_record_level = {
+    profile = t_utils.get_profile_definition("lock-nocodes-notamper-batteryLevel.yml"),
+    manufacturer_info = {vendor_id = 0x129F, product_id = 0x0001}, -- Level Lock Plus
     endpoints = {
       {
         endpoint_id = 2,
@@ -62,7 +62,7 @@ local mock_device_record_aqara = {
     },
 }
 
-local mock_device_aqara = test.mock_device.build_test_matter_device(mock_device_record_aqara)
+local mock_device_level = test.mock_device.build_test_matter_device(mock_device_record_level)
 
 local function test_init()
     local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
@@ -72,10 +72,9 @@ local function test_init()
     test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
     test.mock_device.add_test_device(mock_device)
 
-    local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device_aqara)
-    subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device_aqara))
-    test.socket["matter"]:__expect_send({mock_device_aqara.id, subscribe_request})
-    test.mock_device.add_test_device(mock_device_aqara)
+    local subscribe_request_level = clusters.DoorLock.attributes.LockState:subscribe(mock_device_level)
+    test.socket["matter"]:__expect_send({mock_device_level.id, subscribe_request_level})
+    test.mock_device.add_test_device(mock_device_level)
 end
 test.set_test_init_function(test_init)
 
@@ -89,10 +88,10 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "doConfigure lifecycle event for aqara lock",
+    "doConfigure lifecycle event for Level Lock Plus profile",
     function()
-        test.socket.device_lifecycle:__queue_receive({ mock_device_aqara.id, "doConfigure" })
-        mock_device_aqara:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+        test.socket.device_lifecycle:__queue_receive({ mock_device_level.id, "doConfigure" })
+        mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
