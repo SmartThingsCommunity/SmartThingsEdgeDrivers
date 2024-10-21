@@ -18,17 +18,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-
-local DEFAULT_LEVEL = 0
 local PROFILE_MATCHED = "__profile_matched"
-local IS_MOVING = "__is_moving"
-local EVENT_STATE = "__event_state"
-
-local WindowCoveringEventEnum = {
-  NO_EVENT = 0x00,
-  CURRENT_POSITION_EVENT = 0x01,
-  OPERATIONAL_STATE_EVENT = 0x02
-}
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -62,8 +52,6 @@ local function match_profile(device)
 end
 
 local function device_init(driver, device)
-  device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
-  device:set_field(IS_MOVING, false)
   if not device:get_field(PROFILE_MATCHED) then
     match_profile(device)
   end
@@ -137,75 +125,33 @@ end
 
 -- current lift percentage, changed to 100ths percent
 local function current_pos_handler(driver, device, ib, response)
-  local position = 0
-  if ib.data.value ~= nil then
-    position = 100 - math.floor((ib.data.value / 100))
-    device:emit_event_for_endpoint(
-      ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
-    )
+  if ib.data.value == nil then
+    return
   end
-  if device:get_field(EVENT_STATE) == WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT then
-    if not device:get_field(IS_MOVING) then
-      if position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
-      elseif position == 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
-      elseif position > 0 and position < 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.partially_open())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
-      end
-      device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
-    end
+  local windowShade = capabilities.windowShade.windowShade
+  local position = 100 - math.floor((ib.data.value / 100))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position))
+  if position == 0 then
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+  elseif position == 100 then
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+  elseif position > 0 and position < 100 then
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
   else
-    device:set_field(EVENT_STATE, WindowCoveringEventEnum.CURRENT_POSITION_EVENT)
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
   end
 end
 
 -- checks the current position of the shade
 local function current_status_handler(driver, device, ib, response)
-  local attr = capabilities.windowShade.windowShade
-  local position = device:get_latest_state(
-                     "main", capabilities.windowShadeLevel.ID,
-                       capabilities.windowShadeLevel.shadeLevel.NAME
-                   ) or DEFAULT_LEVEL
-  for _, rb in ipairs(response.info_blocks) do
-    if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
-       rb.info_block.cluster_id == clusters.WindowCovering.ID and
-       rb.info_block.data.value ~= nil then
-      position = 100 - math.floor((rb.info_block.data.value / 100))
-    end
-  end
+  local windowShade = capabilities.windowShade.windowShade
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
-  if device:get_field(EVENT_STATE) == WindowCoveringEventEnum.CURRENT_POSITION_EVENT then
-    if state == 0 then -- not moving
-      if position == 100 then -- open
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
-      elseif position == 0 then -- closed
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
-      end
-      device:set_field(IS_MOVING, false)
-    elseif state == 1 then -- opening
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-    elseif state == 2 then -- closing
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
-    end
-    device:set_field(EVENT_STATE, WindowCoveringEventEnum.NO_EVENT)
-  else
-    if state == 1 then -- opening
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
-      device:set_field(IS_MOVING, true)
-    elseif state == 2 then -- closing
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
-      device:set_field(IS_MOVING, true)
-    else
-      device:set_field(IS_MOVING, false)
-      device:set_field(EVENT_STATE, WindowCoveringEventEnum.OPERATIONAL_STATE_EVENT)
-    end
+  if state == 1 then -- opening
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.opening())
+  elseif state == 2 then -- closing
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closing())
+  elseif state ~= 0 then -- unknown
+    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
   end
 end
 
@@ -276,6 +222,10 @@ local matter_driver_template = {
     capabilities.windowShadePreset,
     capabilities.battery,
   },
+  sub_drivers = {
+    -- for devices sending a position update while device is in motion
+    require("matter-window-covering-position-updates-while-moving")
+  }
 }
 
 local matter_driver = MatterDriver("matter-window-covering", matter_driver_template)

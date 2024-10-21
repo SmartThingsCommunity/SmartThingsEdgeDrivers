@@ -271,7 +271,6 @@ end
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
-
   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
     --Query min setpoint deadband if needed
@@ -280,7 +279,6 @@ local function device_init(driver, device)
       deadband_read:merge(clusters.Thermostat.attributes.MinSetpointDeadBand:read())
       device:send(deadband_read)
     end
-    device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true)
   end
 end
 
@@ -808,6 +806,7 @@ local function min_deadband_limit_handler(driver, device, ib, response)
   local val = ib.data.value / 10.0
   log.info("Setting " .. setpoint_limit_device_field.MIN_DEADBAND .. " to " .. string.format("%s", val))
   device:set_field(setpoint_limit_device_field.MIN_DEADBAND, val, { persist = true })
+  device:set_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED, true, {persist = true})
 end
 
 local function fan_mode_handler(driver, device, ib, response)
