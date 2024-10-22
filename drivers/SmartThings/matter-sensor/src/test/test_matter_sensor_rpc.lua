@@ -35,6 +35,9 @@ local matter_endpoints = {
     endpoint_id = 1,
     clusters = {
       {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+    },
+    device_types = {
+      device_type_id = 0x0301, device_type_revision = 1, -- Thermostat
     }
   }
 }

@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local PressureMeasurementCluster = require "PressureMeasurement"
@@ -38,6 +37,9 @@ local matter_endpoints = {
     clusters = {
       {cluster_id = PressureMeasurementCluster.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+    },
+    device_types = {
+      {device_type_id = 0x0305, device_type_revision = 1} -- Pressure Sensor
     }
   }
 }

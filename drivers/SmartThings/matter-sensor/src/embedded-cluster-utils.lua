@@ -18,6 +18,10 @@ if version.api < 10 then
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
 end
 
+if version.api < 11 then
+  clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
+end
+
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
