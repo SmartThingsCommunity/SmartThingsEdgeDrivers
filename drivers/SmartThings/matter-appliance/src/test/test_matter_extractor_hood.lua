@@ -49,7 +49,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_onoff = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("extractor-hood-wind-light-binary.yml"),
+  profile = t_utils.get_profile_definition("extractor-hood-wind-light.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -630,7 +630,7 @@ test.register_coroutine_test(
   "Test profile change on init for extractor hood with onoff light",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure"})
-    mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light-binary" })
+    mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light" })
     mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_onoff }

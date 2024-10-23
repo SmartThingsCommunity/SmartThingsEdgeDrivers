@@ -1,4 +1,4 @@
-name: extractor-hood-light-binary
+name: extractor-hood-light
 components:
 - id: main
   capabilities:

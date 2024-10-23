@@ -1,4 +1,4 @@
-name: extractor-hood-hepa-ac-light-binary
+name: extractor-hood-ac-light
 components:
 - id: main
   label: Main
@@ -10,15 +10,6 @@ components:
   - id: firmwareUpdate
     version: 1
   - id: refresh
-    version: 1
-  categories:
-  - name: KitchenHood
-- id: hepaFilter
-  label: Hepa filter
-  capabilities:
-  - id: filterState
-    version: 1
-  - id: filterStatus
     version: 1
   categories:
   - name: KitchenHood

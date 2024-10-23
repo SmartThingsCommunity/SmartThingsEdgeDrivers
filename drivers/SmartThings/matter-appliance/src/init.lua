@@ -191,7 +191,7 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-wind"
     end
     if #light_eps > 0 then
-      profile_name = profile_name .. "-light-binary"
+      profile_name = profile_name .. "-light"
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})

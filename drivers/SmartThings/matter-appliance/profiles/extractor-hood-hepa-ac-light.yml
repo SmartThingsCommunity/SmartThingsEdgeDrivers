@@ -1,4 +1,4 @@
-name: extractor-hood-ac-wind-light-binary
+name: extractor-hood-hepa-ac-light
 components:
 - id: main
   label: Main
@@ -7,11 +7,18 @@ components:
     version: 1
   - id: fanSpeedPercent
     version: 1
-  - id: windMode
-    version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
+    version: 1
+  categories:
+  - name: KitchenHood
+- id: hepaFilter
+  label: Hepa filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
     version: 1
   categories:
   - name: KitchenHood

@@ -1,4 +1,4 @@
-name: extractor-hood-hepa-light-binary
+name: extractor-hood-hepa-light
 components:
 - id: main
   label: Main

@@ -1,4 +1,4 @@
-name: extractor-hood-hepa-wind-light-binary
+name: extractor-hood-hepa-ac-wind-light
 components:
 - id: main
   label: Main
@@ -17,6 +17,15 @@ components:
   - name: KitchenHood
 - id: hepaFilter
   label: Hepa filter
+  capabilities:
+  - id: filterState
+    version: 1
+  - id: filterStatus
+    version: 1
+  categories:
+  - name: KitchenHood
+- id: activatedCarbonFilter
+  label: Activated carbon filter
   capabilities:
   - id: filterState
     version: 1
