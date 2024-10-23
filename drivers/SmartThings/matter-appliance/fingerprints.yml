@@ -38,7 +38,7 @@ matterGeneric:
       - id: 0x007A
     deviceProfileName: extractor-hood
   - id: "matter/extractor-hood/on-off/light"
-    deviceLabel: Matter Extractor Hood/OnOff Light
+    deviceLabel: Matter Extractor Hood/OnOff Light Switch
     deviceTypes:
       - id: 0x007A
       - id: 0x0103
