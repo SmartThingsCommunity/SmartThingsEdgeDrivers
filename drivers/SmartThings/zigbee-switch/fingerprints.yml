@@ -2282,7 +2282,7 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401S2I
     deviceProfileName: wallhero
-  # End Wall Hero
+  # NEXENTRO
   - id: "Insta GmbH/Switching Actuator"
     deviceLabel: NEXENTRO Switching Actuator
     manufacturer: Insta GmbH
