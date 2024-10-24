@@ -260,7 +260,7 @@ local function find_default_endpoint(device, cluster)
       return v
     end
   end
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return res
 end
 
@@ -426,7 +426,6 @@ local function create_thermostat_modes_profile(device)
 
   local thermostat_modes = ""
   if #heat_eps == 0 and #cool_eps == 0 then
-    device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
     return "No Heating nor Cooling Support"
   elseif #heat_eps > 0 and #cool_eps == 0 then
     thermostat_modes = thermostat_modes .. "-heating-only"
@@ -458,7 +457,7 @@ local function do_configure(driver, device)
     if thermostat_modes == "" then
       profile_name = profile_name .. "-heating-cooling"
     else
-      device.log.warn_with({hub_logs=true}, "Device does not support both heating and cooling. No matching profile")
+      log.warn_with({hub_logs=true}, "Device does not support both heating and cooling. No matching profile")
       return
     end
 
@@ -489,9 +488,7 @@ local function do_configure(driver, device)
       end
 
       local thermostat_modes = create_thermostat_modes_profile(device)
-      if thermostat_modes == "No Heating nor Cooling Support" then
-        return
-      else
+      if thermostat_modes ~= "No Heating nor Cooling Support" then
         profile_name = profile_name .. thermostat_modes
       end
 
@@ -518,6 +515,7 @@ local function do_configure(driver, device)
 
     local thermostat_modes = create_thermostat_modes_profile(device)
     if thermostat_modes == "No Heating nor Cooling Support" then
+      log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
       return
     else
       profile_name = profile_name .. thermostat_modes
@@ -532,12 +530,12 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-nobattery"
     end
   else
-    device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
+    log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
     return
   end
 
   if profile_name then
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
 end
@@ -747,7 +745,7 @@ local temp_attr_handler_factory = function(minOrMax)
         set_field_for_endpoint(device, setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id, nil)
         set_field_for_endpoint(device, setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id, nil)
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+        log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
       end
     end
   end
@@ -1175,7 +1173,7 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
           device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
         end
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
+        log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
       end
     end
   end
@@ -1199,7 +1197,7 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
           device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
         end
       else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
+        log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
       end
     end
   end
