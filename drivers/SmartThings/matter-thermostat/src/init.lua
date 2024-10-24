@@ -718,12 +718,46 @@ local function on_off_attr_handler(driver, device, ib, response)
   end
 end
 
-local function temp_event_handler(attribute)
-  return function(driver, device, ib, response)
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
+local function local_temp_event_handler(driver, device, ib, response)
+  local temp = ib.data.value / 100.0
+  local unit = "C"
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+end
+
+local function cooling_setpoint_event_handler(driver, device, ib, response)
+  local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or THERMOSTAT_MIN_TEMP_IN_C
+  local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or THERMOSTAT_MAX_TEMP_IN_C
+  local unit = "C"
+  local range = {
+    minimum = min,
+    maximum = max,
+  }
+  -- Only emit the capability for RPC version >= 5, since unit conversion for
+  -- range capabilities is only supported in that case.
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({value = range, unit = unit}))
   end
+
+  local temp = ib.data.value / 100.0
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = temp, unit = unit}))
+end
+
+local function heating_setpoint_event_handler(driver, device, ib, response)
+  local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C
+  local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C
+  local unit = "C"
+  local range = {
+    minimum = min,
+    maximum = max,
+  }
+  -- Only emit the capability for RPC version >= 5, since unit conversion for
+  -- range capabilities is only supported in that case.
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({value = range, unit = unit}))
+  end
+
+  local temp = ib.data.value / 100.0
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = temp, unit = unit}))
 end
 
 local temp_attr_handler_factory = function(minOrMax)
@@ -1313,9 +1347,9 @@ local matter_driver_template = {
         [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
       },
       [clusters.Thermostat.ID] = {
-        [clusters.Thermostat.attributes.LocalTemperature.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
-        [clusters.Thermostat.attributes.OccupiedCoolingSetpoint.ID] = temp_event_handler(capabilities.thermostatCoolingSetpoint.coolingSetpoint),
-        [clusters.Thermostat.attributes.OccupiedHeatingSetpoint.ID] = temp_event_handler(capabilities.thermostatHeatingSetpoint.heatingSetpoint),
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = local_temp_event_handler,
+        [clusters.Thermostat.attributes.OccupiedCoolingSetpoint.ID] = cooling_setpoint_event_handler,
+        [clusters.Thermostat.attributes.OccupiedHeatingSetpoint.ID] = heating_setpoint_event_handler,
         [clusters.Thermostat.attributes.SystemMode.ID] = system_mode_handler,
         [clusters.Thermostat.attributes.ThermostatRunningState.ID] = running_state_handler,
         [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = sequence_of_operation_handler,
@@ -1335,7 +1369,7 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.RockSetting.ID] = rock_setting_handler,
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler(capabilities.temperatureMeasurement.temperature),
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = local_temp_event_handler,
         [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(setpoint_limit_device_field.MIN_TEMP),
         [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(setpoint_limit_device_field.MAX_TEMP),
       },
