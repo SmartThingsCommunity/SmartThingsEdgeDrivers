@@ -165,6 +165,15 @@ local function activated_carbon_filter_change_indication_handler(driver, device,
   end
 end
 
+local function on_off_attr_handler(driver, device, ib, response)
+  local component = device.profile.components["light"]
+  if ib.data.value then
+    device:emit_component_event(component, capabilities.switch.switch.on())
+  else
+    device:emit_component_event(component, capabilities.switch.switch.off())
+  end
+end
+
 -- Capability Handlers --
 local function set_fan_mode(driver, device, cmd)
   local fan_mode_id
@@ -206,6 +215,9 @@ local matter_extractor_hood_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+      },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
         [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = hepa_filter_change_indication_handler
