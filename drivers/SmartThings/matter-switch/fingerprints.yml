@@ -224,6 +224,11 @@ matterManufacturer:
     productId: 0x0005
     deviceProfileName: switch-binary
 #LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
   - id: "5163/4100"
     deviceLabel: LeTianPai Smart Switch 3 Way
     vendorId: 0x142B
