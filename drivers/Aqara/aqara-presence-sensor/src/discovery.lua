@@ -40,7 +40,7 @@ local function try_add_device(driver, device_dni, device_ip)
     if driver.datastore.discovery_cache[device_dni] and driver.datastore.discovery_cache[device_dni].credential then
       log.info(string.format("use stored credential. This may have expired. dni= %s, ip= %s", device_dni, device_ip))
     else
-      log.error(string.format("Failed to get credential. dni= %s, ip= %s", device_dni, device_ip))
+      log.error(string.format("Failed to get credential. The device appears to have already generated a credential. In that case, a device reset is needed to generate a new credential. dni= %s, ip= %s", device_dni, device_ip))
       return "credential not found"
     end
   else

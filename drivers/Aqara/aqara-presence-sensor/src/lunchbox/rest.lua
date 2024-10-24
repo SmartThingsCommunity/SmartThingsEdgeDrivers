@@ -182,6 +182,7 @@ local function handle_response(sock)
   if api_version >= 9 then
     local response, err = Response.tcp_source(sock)
     if err or (not response) then return response, (err or "unknown error") end
+    if response.status == 403 then return response, "403 Forbidden" end
     return response, response:fill_body()
   end
   -- called select right before passing in so we receive immediately
