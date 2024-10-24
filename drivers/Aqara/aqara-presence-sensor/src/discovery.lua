@@ -4,47 +4,59 @@ local fields = require "fields"
 local discovery_mdns = require "discovery_mdns"
 local socket = require "cosock.socket"
 
--- mapping from device DNI to info needed at discovery/init time
-local device_discovery_cache = {}
+local processing_devices = {}
 
-local function set_device_field(driver, device)
-  local device_cache_value = device_discovery_cache[device.device_network_id]
+function discovery.set_device_field(driver, device)
+  local device_cache_value = driver.datastore.discovery_cache[device.device_network_id]
 
   -- persistent fields
   if device_cache_value ~= nil then
+    device:set_field(fields.CREDENTIAL, device_cache_value.credential, { persist = true })
     device:set_field(fields.DEVICE_IPV4, device_cache_value.ip, { persist = true })
     device:set_field(fields.DEVICE_INFO, device_cache_value.device_info, { persist = true })
-    device:set_field(fields.CREDENTIAL, device_cache_value.credential, { persist = true })
   end
+
+  driver.datastore.discovery_cache[device.device_network_id] = nil
 end
 
-local function update_device_discovery_cache(driver, dni, ip, credential)
+local function update_device_discovery_cache(driver, dni, ip)
   local device_info = driver.discovery_helper.get_device_info(driver, dni, ip)
-  device_discovery_cache[dni] = {
-    ip = ip,
-    device_info = device_info,
-    credential = credential,
-  }
+  if driver.datastore.discovery_cache[dni] == nil then
+    driver.datastore.discovery_cache[dni] = {}
+  end
+  driver.datastore.discovery_cache[dni].ip = ip
+  driver.datastore.discovery_cache[dni].device_info = device_info
 end
 
 local function try_add_device(driver, device_dni, device_ip)
   log.trace(string.format("try_add_device : dni= %s, ip= %s", device_dni, device_ip))
 
+  update_device_discovery_cache(driver, device_dni, device_ip)
+  local create_device_msg = driver.discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
+
   local credential = driver.discovery_helper.get_credential(driver, device_dni, device_ip)
 
   if not credential then
-    log.error(string.format("failed to get credential. dni= %s, ip= %s", device_dni, device_ip))
-    return
+    if driver.datastore.discovery_cache[device_dni] and driver.datastore.discovery_cache[device_dni].credential then
+      log.info(string.format("use stored credential. This may have expired. dni= %s, ip= %s", device_dni, device_ip))
+    else
+      log.error(string.format("Failed to get credential. dni= %s, ip= %s", device_dni, device_ip))
+      return "credential not found"
+    end
+  else
+    log.info(string.format("success to get credential. dni= %s, ip= %s", device_dni, device_ip))
+    driver.datastore.discovery_cache[device_dni].credential = credential
   end
 
-  update_device_discovery_cache(driver, device_dni, device_ip, credential)
-  local create_device_msg = driver.discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
+  log.info(string.format("try_create_device. dni= %s, ip= %s", device_dni, device_ip))
+  processing_devices[device_dni] = true
   driver:try_create_device(create_device_msg)
+  return nil
 end
 
 function discovery.device_added(driver, device)
-  set_device_field(driver, device)
-  device_discovery_cache[device.device_network_id] = nil
+  discovery.set_device_field(driver, device)
+  processing_devices[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
 end
 
@@ -77,7 +89,7 @@ local function discovery_device(driver)
 
   for dni, ip in pairs(unknown_discovered_devices) do
     log.trace(string.format("unknown dni= %s, ip= %s", dni, ip))
-    if not device_discovery_cache[dni] then
+    if not processing_devices[dni] then
       try_add_device(driver, dni, ip)
     end
   end
@@ -86,7 +98,7 @@ end
 function discovery.do_network_discovery(driver, _, should_continue)
   while should_continue() do
     discovery_device(driver)
-    socket.sleep(0.2)
+    socket.sleep(1)
   end
 end
 

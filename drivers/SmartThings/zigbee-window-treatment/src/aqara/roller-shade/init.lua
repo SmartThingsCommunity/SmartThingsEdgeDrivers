@@ -47,7 +47,7 @@ local function window_shade_close_cmd(driver, device, command)
 end
 
 local function set_rotate_command_handler(driver, device, command)
-  device:emit_event(shadeRotateState.rotateState.idle({state_change = true})) -- update UI
+  device:emit_event(shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }})) -- update UI
 
   -- Cannot be controlled if not initialized
   local initialized = device:get_latest_state("main", initializedStateWithGuide.ID,
@@ -96,7 +96,7 @@ local function device_added(driver, device)
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
-  device:emit_event(shadeRotateState.rotateState.idle())
+  device:emit_event(shadeRotateState.rotateState.idle({ visibility = { displayed = false }}))
 
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,
     aqara_utils.PRIVATE_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Uint8, 1))

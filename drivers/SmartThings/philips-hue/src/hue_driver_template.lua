@@ -62,7 +62,7 @@ local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_colo
 --- @field public bridge_netinfo table<string,HueBridgeInfo>
 --- @field public dni_to_device_id table<string,string>
 --- @field public api_keys table<string,string>
---- @field public commit fun(self: HueDriverDatastore)
+--- @field public commit fun(self: HueDriverDatastore)|nil
 --- @field public save fun(self: HueDriverDatastore)
 
 --- @class HueDriver:Driver
