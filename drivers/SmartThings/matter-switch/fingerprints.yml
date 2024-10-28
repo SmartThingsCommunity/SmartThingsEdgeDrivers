@@ -180,6 +180,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - - id: "4921/125"
+    deviceLabel: Cync Paddle Dimmer
+    vendorId: 0x1339
+    productId: 0x007D
+    deviceProfileName: switch-level
 #Ledvance
   - id: "4489/844"
     deviceLabel: Matter Filament RGBW
