@@ -341,7 +341,7 @@ end
 --- BRIDGED_NODE_DEVICE_TYPE on bridged devices.
 local function find_default_endpoint(device, component)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local all_eps = {}
 
   for _,ep in ipairs(switch_eps) do
@@ -417,12 +417,12 @@ end
 
 local function configure_buttons(device)
   if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-    local MSR = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH_RELEASE})
+    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    local MSR = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
     device.log.debug(#MSR.." momentary switch release endpoints")
-    local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH_LONG_PRESS})
+    local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
     device.log.debug(#MSL.." momentary switch long press endpoints")
-    local MSM = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH_MULTI_PRESS})
+    local MSM = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
     device.log.debug(#MSM.." momentary switch multi press endpoints")
     for _, ep in ipairs(MS) do
       local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
@@ -458,7 +458,7 @@ end
 
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   table.sort(switch_eps)
   table.sort(button_eps)
 
@@ -557,7 +557,7 @@ local function initialize_switch(driver, device)
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.Feature.BATTERY}) > 0 then
+      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
       battery_support = true
     end
     if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
@@ -673,7 +673,7 @@ local function handle_set_switch_level(driver, device, cmd)
   end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level/100.0 * 254)
-  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0 ,0)
+  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0)
   device:send(req)
 end
 
@@ -1044,7 +1044,7 @@ local function max_press_handler(driver, device, ib, response)
     log.info("Device supports more than 6 presses")
     max = 6
   end
-  local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH_LONG_PRESS})
+  local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local supportsHeld = tbl_contains(MSL, ib.endpoint_id)
   local values = create_multi_press_values_list(max, supportsHeld)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
