@@ -2411,6 +2411,20 @@ matterGeneric:
     deviceTypes:
       - id: 0x000F
     deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
+  - id: "matter/dimmable/light/button"
+    deviceLabel: Matter Dimmable Light/Button
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x000F # Generic Switch
+    deviceProfileName: light-level-button
+  - id: "matter/dimmer/color/light/button"
+    deviceLabel: "Matter Dimmable Light/Dimmer Switch/Extended Color Light/Button"
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0104 # Dimmer Switch
+      - id: 0x010D # Extended Color Light
+      - id: 0x000F # Generic Switch
+    deviceProfileName: "light-level-switch-level-light-colorTemperature-button"
 
 matterThing:
   - id: SmartThings/MatterThing

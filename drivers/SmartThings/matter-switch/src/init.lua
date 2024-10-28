@@ -465,7 +465,6 @@ local function initialize_switch(driver, device)
   local profile_name = nil
 
   local component_map = {}
-  local current_component_number = 2
   local component_map_used = false
   local parent_child_device = false
 
@@ -478,7 +477,33 @@ local function initialize_switch(driver, device)
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-  if #switch_eps > 0 then
+  if #switch_eps > 0 and #button_eps > 0 then
+    if #button_eps == 1 or tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      -- For switch devices, the profile components follow the naming convention "switch%d",
+      -- with the exception of "main" being the first component. Each component will then map
+      -- to the next lowest endpoint that hasn't been mapped yet.
+      -- Additionally, since we do not support bindings at the moment, we only want to count
+      -- On/Off clusters that have been implemented as server. This can be removed when we have
+      -- support for bindings.
+      local current_component_number = 1
+      for _, ep in ipairs(switch_eps) do
+        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+          if current_component_number == 1 then
+            component_map["main"] = ep
+          else
+            component_map[string.format("switch%d", current_component_number)] = ep
+          end
+          current_component_number = current_component_number + 1;
+        end
+      end
+      current_component_number = 1
+      for _, ep in ipairs(button_eps) do
+        component_map[string.format("button%d", current_component_number)] = ep
+        current_component_number = current_component_number + 1
+      end
+      component_map_used = true
+    end
+  elseif #switch_eps > 0 then
     for _, ep in ipairs(switch_eps) do
       if device:supports_server_cluster(clusters.OnOff.ID, ep) then
         num_switch_server_eps = num_switch_server_eps + 1
@@ -500,9 +525,10 @@ local function initialize_switch(driver, device)
       end
     end
   elseif #button_eps > 0 then
-    for _, ep in ipairs(button_eps) do
+    local current_component_number = 2
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
       -- Configure MCD for button endpoints
-      if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      for _, ep in ipairs(button_eps) do
         if ep ~= main_endpoint then
           component_map[string.format("button%d", current_component_number)] = ep
           current_component_number = current_component_number + 1
@@ -527,7 +553,41 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if num_switch_server_eps > 0 then
+  if #switch_eps > 0 and #button_eps > 0 then
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      local dimmable_light = false
+      local dimmer_switch = false
+      local extended_color_light = false
+      for _, ep in ipairs(device.endpoints) do
+        for _, dt in ipairs(ep.device_types) do
+          if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+            dimmable_light = true
+          elseif dt.device_type_id == ON_OFF_DIMMER_SWITCH_ID then
+            dimmer_switch = true
+          elseif dt.device_type_id == EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID then
+            extended_color_light = true
+          end
+        end
+      end
+      if dimmable_light then
+        profile_name = "light-level"
+      end
+      if dimmer_switch then
+        profile_name = profile_name .. "-switch-level"
+      end
+      if extended_color_light then
+        profile_name = profile_name .. "-light-colorTemperature"
+      end
+    end
+
+    if profile_name then
+      profile_name = profile_name .. string.format("-%d-button", #button_eps)
+      device:try_update_metadata({profile = profile_name})
+      device:set_field(DEFERRED_CONFIGURE, true)
+    else
+      configure_buttons(device)
+    end
+  elseif #switch_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -535,7 +595,7 @@ local function initialize_switch(driver, device)
     -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
     -- claim to be Light Switch device types and still implement their clusters as server, so this is a
     -- workaround for those devices.
-    if detect_matter_thing(device) then
+    if detect_matter_thing(device) and num_switch_server_eps > 0 then
       local id = 0
       for _, ep in ipairs(device.endpoints) do
         -- main_endpoint only supports server cluster by definition of get_endpoints()
