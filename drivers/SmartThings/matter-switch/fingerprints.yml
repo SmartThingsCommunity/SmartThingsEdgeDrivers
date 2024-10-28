@@ -180,6 +180,17 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
+#Ledvance
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
   - id: "4921/64"
     deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
@@ -191,6 +202,11 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0001
     deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: switch-4
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -212,6 +228,27 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0005
     deviceProfileName: switch-binary
+#LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
+  - id: "5163/4100"
+    deviceLabel: LeTianPai Smart Switch 3 Way
+    vendorId: 0x142B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "5163/4099"
+    deviceLabel: LeTianPai Smart Switch 2 Way
+    vendorId: 0x142B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "5163/4098"
+    deviceLabel: LeTianPai Smart Switch 1 Way
+    vendorId: 0x142B
+    productId: 0x1002
+    deviceProfileName: switch-binary  
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -2368,6 +2405,17 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/on-off/plug/electrical-sensor"
+    deviceLabel: Matter OnOff Plug
+    deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "matter/water-valve"
+    deviceLabel: Matter Water Valve
+    deviceTypes:
+      - id: 0x0042 # Water Valve
+    deviceProfileName: water-valve
   - id: "button"
     deviceLabel: Matter Button
     deviceTypes:

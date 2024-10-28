@@ -41,7 +41,7 @@
 ---@field public on { on: boolean }
 ---@field public color { xy: HueColorCoords, gamut: HueGamut, gamut_type: string }
 ---@field public dimming { brightness: number, min_dim_level: number }
----@field public color_temperature { mirek: number?, mirek_valid: boolean}
+---@field public color_temperature { mirek: number?, mirek_valid: boolean, mirek_schema: { mirek_minimum: number, mirek_maximum: number }?}
 ---@field public mode string
 
 ---@class HueMotionInfo: HueResourceInfo

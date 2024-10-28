@@ -1,0 +1,17 @@
+name: leak-fault-leakSensitivity
+components:
+- id: main
+  capabilities:
+  - id: waterSensor
+    version: 1
+  - id: hardwareFault
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: LeakSensor
+preferences:
+  - preferenceId: leakSensitivity
+    explicit: true
