@@ -23,7 +23,7 @@ zwaveManufacturer:
     productType: 0x4457
     deviceProfileName: switch-level-indicator
   - id: 0063/4944
-    deviceLabel: GE Dimmer Switch
+    deviceLabel: JascoPro In-Wall Dimmer
     manufacturerId: 0x0063
     productType: 0x4944
     deviceProfileName: switch-level-indicator
@@ -387,7 +387,7 @@ zwaveManufacturer:
     productId: 0xA002
     deviceProfileName: switch-binary
   - id: 0063/4952
-    deviceLabel: GE Switch
+    deviceLabel: JascoPro In-Wall Switch
     manufacturerId: 0x0063
     productType: 0x4952
     deviceProfileName: switch-binary-indicator

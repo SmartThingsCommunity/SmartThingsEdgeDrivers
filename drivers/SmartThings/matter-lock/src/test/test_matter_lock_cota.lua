@@ -56,7 +56,7 @@ local mock_device_record = {
           cluster_type = "SERVER",
           feature_map = 0x0181, -- PIN & USR & COTA
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
@@ -77,6 +77,15 @@ end
 test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function(dev)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({}), {visibility = {displayed = false}}
+      )
+    )
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+  test.mock_time.advance_time(5)
   local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
   test.socket.capability:__expect_send(
     dev:generate_test_message(
