@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ local FREEZE_ALRAM_TEMPERATURE = 0
 local HEAT_ALRAM_TEMPERATURE = 50
 
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Stelpro", model = "MaestroStat" },
+  { mfr = "Stelpro", model = "SMT402AD" },
   { mfr = "Stello", model = "HT402" },
   { mfr = "Stelpro", model = "SORB" },
   { mfr = "Stelpro", model = "SonomaStyle" }
