@@ -197,7 +197,15 @@ local function set_credential_response_handler(driver, device, ib, response)
     if device:get_field(lock_utils.NONFUNCTIONAL) and cota_cred_index == credential_index then
       device.log.info("Successfully set COTA credential after being non-functional")
       device:set_field(lock_utils.NONFUNCTIONAL, false, {persist = true})
-      device:try_update_metadata({profile = "base-lock", provisioning_state = "PROVISIONED"})
+      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      local profile_name = "base-lock"
+      if #power_source_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      elseif #battery_feature_eps == 0 then
+        profile_name = profile_name .. "-batteryLevel"
+      end
+      device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
     -- Handle failure to set a COTA credential
@@ -519,6 +527,39 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.DoorLock.ID)
 end
 
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
+  end
+end
+
+local function do_configure(driver, device)
+  -- check if the device is NOT currently profiled as base-lock
+  -- by ANDing a query for every capability in the base-lock profiles.
+  -- If it does not use base-lock, it is WWST and does not need re-profiling.
+  if not (device:supports_capability(capabilities.lock) and
+    device:supports_capability(capabilities.lockCodes) and
+    device:supports_capability(capabilities.tamperAlert) and
+    device:supports_capability(capabilities.battery)) then
+    return
+  end
+
+  -- if not fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
+  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local profile_name = "base-lock"
+
+  -- check for battery type
+  if #power_source_eps == 0 then
+    profile_name = profile_name .. "-nobattery"
+  elseif #battery_feature_eps == 0 then
+    profile_name = profile_name .. "-batteryLevel"
+  end
+
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
+end
+
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
@@ -536,7 +577,7 @@ local function device_init(driver, device)
       device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
     end
   end
- end
+end
 
 local function device_added(driver, device)
   --Note: May want to write OperatingMode to NORMAL, to attempt to ensure remote operation works
@@ -546,7 +587,15 @@ local function device_added(driver, device)
   if #eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
       device.log.debug("Device does not support lockCodes. Switching profile.")
-      device:try_update_metadata({profile = "lock-without-codes"})
+      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      local profile_name = "lock-without-codes"
+      if #power_source_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      elseif #battery_feature_eps == 0 then
+        profile_name = profile_name .. "-batteryLevel"
+      end
+      device:try_update_metadata({profile = profile_name})
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
     end
@@ -638,7 +687,12 @@ local matter_lock_driver = {
   sub_drivers = {
     require("new-matter-lock"),
   },
-  lifecycle_handlers = {init = device_init, added = device_added},
+  lifecycle_handlers = {
+    init = device_init,
+    added = device_added,
+    doConfigure = do_configure,
+    infoChanged = info_changed,
+  },
 }
 
 -----------------------------------------------------------------------------------------------------------------------------
