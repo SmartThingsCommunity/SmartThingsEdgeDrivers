@@ -456,7 +456,7 @@ matterManufacturer:
     deviceLabel: U-tec Smart Matter Plug
     vendorId: 0x147F
     productId: 0x0003
-    deviceProfileName: switch-binary
+    deviceProfileName: plug-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
