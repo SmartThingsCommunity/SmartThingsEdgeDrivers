@@ -12,7 +12,7 @@ components:
     version: 1
   categories:
   - name: KitchenHood
-- id: switch
+- id: light
   capabilities:
     - id: switch
       version: 1

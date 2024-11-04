@@ -68,11 +68,18 @@ local mock_device_onoff = test.mock_device.build_test_matter_device({
       endpoint_id = 1,
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = clusters.FanControl.types.FanControlFeature.WIND},
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
       },
       device_types = {
         {device_type_id = 0x007A, device_type_revision = 1}, -- Extractor Hood
-        {device_type_id = 0x0100, device_type_revision = 1} -- OnOff Light
+      }
+    },
+    {
+      endpoint_id = 2,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0103, device_type_revision = 1} -- OnOff Light
       }
     }
   }
@@ -113,6 +120,7 @@ local function test_init()
 
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 end
 
 local function test_init_onoff()
@@ -132,6 +140,7 @@ local function test_init_onoff()
   end
   test.socket.matter:__expect_send({mock_device_onoff.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_onoff)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "added" })
 end
 test.set_test_init_function(test_init)
 
@@ -629,7 +638,7 @@ test.register_message_test(
 test.register_coroutine_test(
   "Test profile change on init for extractor hood with onoff light",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure"})
+    test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure" })
     mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light" })
     mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
@@ -645,7 +654,7 @@ test.register_coroutine_test(
     })
     test.socket.matter:__expect_send({
       mock_device_onoff.id,
-      clusters.OnOff.server.commands.On(mock_device_onoff, 1)
+      clusters.OnOff.server.commands.On(mock_device_onoff, 2)
     })
     test.socket.capability:__queue_receive({
       mock_device_onoff.id,
@@ -653,7 +662,7 @@ test.register_coroutine_test(
     })
     test.socket.matter:__expect_send({
       mock_device_onoff.id,
-      clusters.OnOff.server.commands.Off(mock_device_onoff, 1)
+      clusters.OnOff.server.commands.Off(mock_device_onoff, 2)
     })
   end,
   { test_init = test_init_onoff }
@@ -664,14 +673,14 @@ test.register_coroutine_test(
   function()
     test.socket.matter:__queue_receive({
       mock_device_onoff.id,
-      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 1, true)
+      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 2, true)
     })
     test.socket.capability:__expect_send(
       mock_device_onoff:generate_test_message("light", capabilities.switch.switch.on())
     )
     test.socket.matter:__queue_receive({
       mock_device_onoff.id,
-      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 1, false)
+      clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device_onoff, 2, false)
     })
     test.socket.capability:__expect_send(
       mock_device_onoff:generate_test_message("light", capabilities.switch.switch.off())
