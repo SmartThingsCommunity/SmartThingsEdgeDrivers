@@ -58,7 +58,6 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x005D
     deviceProfileName: switch-binary
-
 #GE
   - id: "4921/177"
     deviceLabel: Cync Full Color 2 Inch Wafer
