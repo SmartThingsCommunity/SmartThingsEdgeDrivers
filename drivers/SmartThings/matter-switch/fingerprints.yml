@@ -185,6 +185,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x007D
     deviceProfileName: switch-level
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
 #Ledvance
   - id: "4489/844"
     deviceLabel: Matter Filament RGBW
