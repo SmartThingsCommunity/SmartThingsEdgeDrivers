@@ -17,6 +17,17 @@ matterManufacturer:
     vendorId: 0x1426
     productId: 0x0003
     deviceProfileName: plug-binary
+#Elko
+  - id: "5170/4096"
+    deviceLabel: RFSAI-62B-SL/MT
+    vendorId: 0x1432
+    productId: 0x1000
+    deviceProfileName: switch-2
+  - id: "5170/4097"
+    deviceLabel: RFGB-40B(W)/MT
+    vendorId: 0x1432
+    productId: 0x1001
+    deviceProfileName: 4-button-battery
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
