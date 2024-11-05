@@ -348,17 +348,16 @@ end
 local function find_default_endpoint(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.Feature.MOMENTARY_SWITCH})
-  local all_eps = {}
+  table.sort(switch_eps)
+  table.sort(button_eps)
 
+  -- Use the first switch endpoint as the main endpoint if one is present.
   for _,ep in ipairs(switch_eps) do
-    table.insert(all_eps, ep)
+    if ep ~= 0 then --0 is the matter RootNode endpoint
+      return ep
+    end
   end
   for _,ep in ipairs(button_eps) do
-    table.insert(all_eps, ep)
-  end
-  table.sort(all_eps)
-
-  for _, ep in ipairs(all_eps) do
     if ep ~= 0 then --0 is the matter RootNode endpoint
       return ep
     end
