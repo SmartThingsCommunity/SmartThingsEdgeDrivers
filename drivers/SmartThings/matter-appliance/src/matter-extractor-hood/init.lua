@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local utils = require "st.utils"
 
 local EXTRACTOR_HOOD_DEVICE_TYPE_ID = 0x007A
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -31,6 +32,9 @@ local WIND_MODE_MAP = {
   [0]		= capabilities.windMode.windMode.sleepWind,
   [1]		= capabilities.windMode.windMode.naturalWind
 }
+
+local MIN_ALLOWED_PERCENT_VALUE = 0
+local MAX_ALLOWED_PERCENT_VALUE = 100
 
 -- Helper functions --
 local function get_endpoints_for_dt(device, device_type)
@@ -156,10 +160,11 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = ib.data.value
-  if speed ~= nil and speed <= 100 then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
+  local speed = 0
+  if ib.data.value ~= nil then
+    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
   end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
 
 local function wind_support_handler(driver, device, ib, response)
