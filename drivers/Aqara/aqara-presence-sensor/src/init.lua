@@ -105,12 +105,16 @@ end
 local function check_and_update_connection(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
   if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
-    device:offline()
     find_new_connection(driver, device)
     conn_info = device:get_field(fields.CONN_INFO)
-  end
 
-  if driver.device_manager.is_valid_connection(driver, device, conn_info) then
+    -- Check if the new connection works well
+    if driver.device_manager.is_valid_connection(driver, device, conn_info) then
+      device:online()
+    else
+      device:offline()
+    end
+  else
     device:online()
   end
 end
