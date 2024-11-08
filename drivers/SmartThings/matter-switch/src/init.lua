@@ -471,76 +471,47 @@ local function initialize_switch(driver, device)
 
   local component_map = {}
   local component_map_used = false
+  local current_component_number = 1
   local parent_child_device = false
-
-  if #switch_eps == 0 and #button_eps == 0 then
-    return
-  end
 
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-  if #switch_eps > 0 and #button_eps > 0 then
-    if #button_eps == 1 or tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      -- For switch devices, the profile components follow the naming convention "switch%d",
-      -- with the exception of "main" being the first component. Each component will then map
-      -- to the next lowest endpoint that hasn't been mapped yet.
-      -- Additionally, since we do not support bindings at the moment, we only want to count
-      -- On/Off clusters that have been implemented as server. This can be removed when we have
-      -- support for bindings.
-      local current_component_number = 1
-      for _, ep in ipairs(switch_eps) do
-        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-          if current_component_number == 1 then
-            component_map["main"] = ep
-          else
-            component_map[string.format("switch%d", current_component_number)] = ep
-          end
-          current_component_number = current_component_number + 1;
-        end
-      end
-      current_component_number = 1
-      for _, ep in ipairs(button_eps) do
+
+  -- If button endpoints are present, use MCD for the main endpoint and all button
+  -- endpoints. Note that if switch endpoints are present, the first switch
+  -- endpoint will be considered the main endpoint. Otherwise, the first button
+  -- endpoint will be considered the main endpoint.
+  if #button_eps == 1 or tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+    component_map["main"] = main_endpoint
+    for _, ep in ipairs(button_eps) do
+      if ep ~= main_endpoint then
         component_map[string.format("button%d", current_component_number)] = ep
-        current_component_number = current_component_number + 1
       end
-      component_map_used = true
+      current_component_number = current_component_number + 1
     end
-  elseif #switch_eps > 0 then
-    for _, ep in ipairs(switch_eps) do
-      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-        num_switch_server_eps = num_switch_server_eps + 1
+    component_map_used = true
+  end
+
+  for _, ep in ipairs(switch_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      num_switch_server_eps = num_switch_server_eps + 1
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local child_profile = assign_child_profile(device, ep)
-          driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = child_profile,
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%d", ep),
-              vendor_provided_label = name
-            }
-          )
-          parent_child_device = true
-        end
-      end
-    end
-  elseif #button_eps > 0 then
-    local current_component_number = 2
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      -- Configure MCD for button endpoints
-      for _, ep in ipairs(button_eps) do
-        if ep ~= main_endpoint then
-          component_map[string.format("button%d", current_component_number)] = ep
-          current_component_number = current_component_number + 1
-        else
-          component_map["main"] = ep
-        end
-        component_map_used = true
+        local child_profile = assign_child_profile(device, ep)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = child_profile,
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
+        parent_child_device = true
       end
     end
   end
