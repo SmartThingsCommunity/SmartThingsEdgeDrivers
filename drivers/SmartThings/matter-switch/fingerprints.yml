@@ -180,6 +180,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
 #Ledvance
   - id: "4489/844"
     deviceLabel: Matter Filament RGBW
@@ -224,6 +229,11 @@ matterManufacturer:
     productId: 0x0005
     deviceProfileName: switch-binary
 #LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
   - id: "5163/4100"
     deviceLabel: LeTianPai Smart Switch 3 Way
     vendorId: 0x142B
