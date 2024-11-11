@@ -191,7 +191,7 @@ matterManufacturer:
     productId: 0x0040
     deviceProfileName: plug-binary
 #Ledvance
-  - id: 4489/843
+  - id: "4489/843"
     deviceLabel: Matter Filament RGBW
     vendorId: 0x1189
     productId: 0x034B
@@ -298,7 +298,7 @@ matterManufacturer:
     deviceLabel: LeTianPai Smart Switch 1 Way
     vendorId: 0x142B
     productId: 0x1002
-    deviceProfileName: switch-binary  
+    deviceProfileName: switch-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
