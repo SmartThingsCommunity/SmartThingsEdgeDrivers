@@ -32,6 +32,11 @@ matterManufacturer:
     vendorId: 0x135d
     productId: 0xb0
     deviceProfileName: lock-nocodes-notamper
+  - id: "4957/161"
+    deviceLabel: Nuki Smart Lock Ultra
+    vendorId: 0x135D
+    productId: 0x00A1
+    deviceProfileName: lock-nocodes-notamper
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
