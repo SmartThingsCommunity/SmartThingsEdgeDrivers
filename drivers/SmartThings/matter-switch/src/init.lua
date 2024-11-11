@@ -252,7 +252,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {2, 3, 4, 5, 6, 7, 8}
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 
@@ -341,6 +341,28 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
+local function is_supported_combination_button_switch_device_type(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then
+      for _, dt in ipairs(ep.device_types) do
+        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+local function get_first_non_zero_endpoint(endpoints)
+  for _,ep in ipairs(endpoints) do
+    if ep ~= 0 then -- 0 is the matter RootNode endpoint
+      return ep
+    end
+  end
+  return nil
+end
+
 --- find_default_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
@@ -352,17 +374,28 @@ local function find_default_endpoint(device)
   table.sort(switch_eps)
   table.sort(button_eps)
 
-  -- Use the first switch endpoint as the main endpoint if one is present.
-  for _,ep in ipairs(switch_eps) do
-    if ep ~= 0 then --0 is the matter RootNode endpoint
-      return ep
+  -- Return the first switch endpoint as the default endpoint if no button endpoints are available
+  if #button_eps == 0 and #switch_eps > 0 then
+    return get_first_non_zero_endpoint(switch_eps)
+  end
+
+  -- Return the first button endpoint as the default endpoint if no switch endpoints are available
+  if #switch_eps == 0 and #button_eps > 0 then
+    return get_first_non_zero_endpoint(button_eps)
+  end
+
+  -- If both switch and button endpoints are present, check the device type on the main switch
+  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- default endpoint.
+  if #switch_eps > 0 and #button_eps > 0 then
+    local main_endpoint = get_first_non_zero_endpoint(switch_eps)
+    if is_supported_combination_button_switch_device_type(device, main_endpoint) then
+      return main_endpoint
+    else
+      return get_first_non_zero_endpoint(button_eps)
     end
   end
-  for _,ep in ipairs(button_eps) do
-    if ep ~= 0 then --0 is the matter RootNode endpoint
-      return ep
-    end
-  end
+
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return device.MATTER_DEFAULT_ENDPOINT
 end
@@ -484,7 +517,7 @@ local function initialize_switch(driver, device)
   -- If a switch endpoint is present, it will be the main endpoint and therefore the
   -- main component. If button endpoints are present, they will be added as
   -- additional components in a MCD profile.
-  if #button_eps == 1 or tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     component_map["main"] = main_endpoint
     for _, ep in ipairs(button_eps) do
       if ep ~= main_endpoint then
@@ -529,19 +562,28 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if #switch_eps > 0 and #button_eps > 0 then
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      for _, ep in ipairs(device.endpoints) do
-        for _, dt in ipairs(ep.device_types) do
-          if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-            profile_name = "light-level"
-          end
-        end
+  if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
+    profile_name = "light-level" .. string.format("-%d-button", #button_eps)
+    device:try_update_metadata({profile = profile_name})
+    device:set_field(DEFERRED_CONFIGURE, true)
+  elseif #button_eps > 0 then
+    local battery_support = false
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+      battery_support = true
+    end
+    if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if battery_support then
+        profile_name = string.format("%d-button-battery", #button_eps)
+      else
+        profile_name = string.format("%d-button", #button_eps)
       end
+    elseif not battery_support then
+      -- a battery-less button/remote (either single or will use parent/child)
+      profile_name = "button"
     end
 
     if profile_name then
-      profile_name = profile_name .. string.format("-%d-button", #button_eps)
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
     else
@@ -573,29 +615,6 @@ local function initialize_switch(driver, device)
       if device_type_profile_map[id] ~= nil then
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
-    end
-  elseif #button_eps > 0 then
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-      battery_support = true
-    end
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
-      else
-        profile_name = string.format("%d-button", #button_eps)
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
-      profile_name = "button"
-    end
-
-    if profile_name then
-      device:try_update_metadata({profile = profile_name})
-      device:set_field(DEFERRED_CONFIGURE, true)
-    else
-      configure_buttons(device)
     end
   end
 end
