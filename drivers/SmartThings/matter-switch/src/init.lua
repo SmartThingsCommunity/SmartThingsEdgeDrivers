@@ -481,10 +481,9 @@ local function initialize_switch(driver, device)
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
 
-  -- If button endpoints are present, use MCD for the main endpoint and all button
-  -- endpoints. Note that if switch endpoints are present, the first switch
-  -- endpoint will be considered the main endpoint. Otherwise, the first button
-  -- endpoint will be considered the main endpoint.
+  -- If a switch endpoint is present, it will be the main endpoint and therefore the
+  -- main component. If button endpoints are present, they will be added as
+  -- additional components in a MCD profile.
   if #button_eps == 1 or tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     component_map["main"] = main_endpoint
     for _, ep in ipairs(button_eps) do
@@ -532,16 +531,12 @@ local function initialize_switch(driver, device)
 
   if #switch_eps > 0 and #button_eps > 0 then
     if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      local dimmable_light = false
       for _, ep in ipairs(device.endpoints) do
         for _, dt in ipairs(ep.device_types) do
           if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-            dimmable_light = true
+            profile_name = "light-level"
           end
         end
-      end
-      if dimmable_light then
-        profile_name = "light-level"
       end
     end
 
@@ -552,7 +547,7 @@ local function initialize_switch(driver, device)
     else
       configure_buttons(device)
     end
-  elseif #switch_eps > 0 then
+  elseif num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -560,7 +555,7 @@ local function initialize_switch(driver, device)
     -- do not have a generic fingerprint and will join as a matter-thing. However, we have seen some devices
     -- claim to be Light Switch device types and still implement their clusters as server, so this is a
     -- workaround for those devices.
-    if detect_matter_thing(device) and num_switch_server_eps > 0 then
+    if detect_matter_thing(device) then
       local id = 0
       for _, ep in ipairs(device.endpoints) do
         -- main_endpoint only supports server cluster by definition of get_endpoints()
