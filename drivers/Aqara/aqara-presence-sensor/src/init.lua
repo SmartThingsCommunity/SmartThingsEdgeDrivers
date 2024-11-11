@@ -167,6 +167,11 @@ local function device_init(driver, device)
   local device_dni = device.device_network_id
   driver.controlled_devices[device_dni] = device
 
+  if driver.datastore.discovery_cache[device_dni] then
+    log.warn("set unsaved device field")
+    discovery.set_device_field(driver, device)
+  end
+
   local device_ip = device:get_field(fields.DEVICE_IPV4)
   local device_info = device:get_field(fields.DEVICE_INFO)
   local credential = device:get_field(fields.CREDENTIAL)
@@ -215,5 +220,9 @@ local lan_driver = Driver("aqara-fp2",
     controlled_devices = {},
   }
 )
+
+if lan_driver.datastore.discovery_cache == nil then
+  lan_driver.datastore.discovery_cache = {}
+end
 
 lan_driver:run()

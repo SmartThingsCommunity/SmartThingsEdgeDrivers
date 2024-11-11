@@ -40,11 +40,11 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "lifecycle - added test",
+  "lifecycle - doConfigure test",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     -- private protocol enable
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
@@ -56,6 +56,8 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, RESET_MODE, MFG_CODE,
         data_types.Uint8, 1) })
+
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
