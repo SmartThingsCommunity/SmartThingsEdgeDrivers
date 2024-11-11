@@ -98,6 +98,61 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_mcd_unsupported_switch_device_type = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 7,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0103, device_type_revision = 1} -- OnOff Switch
+      }
+    },
+    {
+      endpoint_id = 20,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
+    },
+    {
+      endpoint_id = 30,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
+    },
+  }
+})
+
 local child_profile = t_utils.get_profile_definition("light-color-level.yml")
 local child_data = {
   profile = child_profile,
@@ -159,6 +214,33 @@ local function test_init()
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+end
+
+local function test_init_mcd_unsupported_switch_device_type()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.Switch.server.events.InitialPress,
+    clusters.Switch.server.events.LongPress,
+    clusters.Switch.server.events.ShortRelease,
+    clusters.Switch.server.events.MultiPressComplete,
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mcd_unsupported_switch_device_type)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_mcd_unsupported_switch_device_type))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_mcd_unsupported_switch_device_type)
+  mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ profile = "2-button" })
+
+  mock_device_mcd_unsupported_switch_device_type:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 1",
+    profile = "switch-binary",
+    parent_device_id = mock_device_mcd_unsupported_switch_device_type.id,
+    parent_assigned_child_key = string.format("%d", 7)
+  })
 end
 
 test.set_test_init_function(test_init)
@@ -319,6 +401,13 @@ test.register_message_test(
       message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
   }
+)
+
+test.register_coroutine_test(
+  "Test MCD configuration not including switch for unsupported switch device type, create child device instead",
+  function()
+  end,
+  { test_init = test_init_mcd_unsupported_switch_device_type }
 )
 
 -- run the tests
