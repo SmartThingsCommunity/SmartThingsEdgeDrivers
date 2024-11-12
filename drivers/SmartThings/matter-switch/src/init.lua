@@ -1056,6 +1056,8 @@ local function valve_level_attr_handler(driver, device, ib, response)
 end
 
 local function multi_press_complete_event_handler(driver, device, ib, response)
+  log.info(string.format("Multi press complete. EP: %d", ib.endpoint_id))
+  log.info(string.format("Component: %s", endpoint_to_component(device, ib.endpoint_id)))
   -- in the case of multiple button presses
   -- emit number of times, multiple presses have been completed
   if ib.data and not get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
@@ -1284,7 +1286,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube")
+    require("aqara-cube"),
+    require("inovelli-vtm31-sn")
   }
 }
 
