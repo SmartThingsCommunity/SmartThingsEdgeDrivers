@@ -506,6 +506,12 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1000
     deviceProfileName: light-color-level-1800K-6500K
+#U-Tec
+  - id: "5247/3"
+    deviceLabel: U-tec Smart Matter Plug
+    vendorId: 0x147F
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
