@@ -58,7 +58,6 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x005D
     deviceProfileName: switch-binary
-
 #GE
   - id: "4921/177"
     deviceLabel: Cync Full Color 2 Inch Wafer
@@ -180,17 +179,77 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
-#Ledvance
-  - id: "4489/844"
-    deviceLabel: Matter Filament RGBW
-    vendorId: 0x1189
-    productId: 0x034C
-    deviceProfileName: light-color-level
+  - id: "4921/125"
+    deviceLabel: Cync Paddle Dimmer
+    vendorId: 0x1339
+    productId: 0x007D
+    deviceProfileName: switch-level
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/64"
     deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+#Ledvance
+  - id: "4489/843"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034B
+    deviceProfileName: light-color-level
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
+  - id: "4489/845"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034D
+    deviceProfileName: light-color-level
+  - id: "4489/828"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033C
+    deviceProfileName: light-color-level
+  - id: "4489/829"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033D
+    deviceProfileName: light-color-level
+  - id: "4489/831"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033F
+    deviceProfileName: light-color-level
+  - id: "4489/832"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x0340
+    deviceProfileName: light-color-level
+  - id: "4489/833"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0341
+    deviceProfileName: light-color-level
+  - id: "4489/835"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0343
+    deviceProfileName: light-color-level
+  - id: "4489/1120"
+    deviceLabel: Ledvance Matter PAR16 RGBW
+    vendorId: 0x1189
+    productId: 0x0460
+    deviceProfileName: light-color-level
+  - id: "4489/1121"
+    deviceLabel: Ledvance Matter Classic G RGBW
+    vendorId: 0x1189
+    productId: 0x0461
+    deviceProfileName: light-color-level
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -224,6 +283,11 @@ matterManufacturer:
     productId: 0x0005
     deviceProfileName: switch-binary
 #LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
   - id: "5163/4100"
     deviceLabel: LeTianPai Smart Switch 3 Way
     vendorId: 0x142B
@@ -238,7 +302,7 @@ matterManufacturer:
     deviceLabel: LeTianPai Smart Switch 1 Way
     vendorId: 0x142B
     productId: 0x1002
-    deviceProfileName: switch-binary  
+    deviceProfileName: switch-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -441,6 +505,17 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03FC
     deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "5014/4096"
+    deviceLabel: Linkind LED Light Strip EL6
+    vendorId: 0x1396
+    productId: 0x1000
+    deviceProfileName: light-color-level-1800K-6500K
+#U-Tec
+  - id: "5247/3"
+    deviceLabel: U-tec Smart Matter Plug
+    vendorId: 0x147F
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19

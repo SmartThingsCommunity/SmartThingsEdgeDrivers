@@ -184,9 +184,9 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-005
     deviceProfileName: SLED-three-buttons  
-  # # Wall Hero
+  # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
-    deviceLabel: 语音场景(4寸）面板
+    deviceLabel: WallHero Remote Control (4-Inch)
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
