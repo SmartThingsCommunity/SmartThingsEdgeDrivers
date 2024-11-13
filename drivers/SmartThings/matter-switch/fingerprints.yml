@@ -58,7 +58,6 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x005D
     deviceProfileName: switch-binary
-
 #GE
   - id: "4921/177"
     deviceLabel: Cync Full Color 2 Inch Wafer
@@ -180,6 +179,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/125"
+    deviceLabel: Cync Paddle Dimmer
+    vendorId: 0x1339
+    productId: 0x007D
+    deviceProfileName: switch-level
   - id: "4921/108"
     deviceLabel: Cync Reveal Full Color BR30
     vendorId: 0x1339
@@ -506,6 +510,12 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1000
     deviceProfileName: light-color-level-1800K-6500K
+#U-Tec
+  - id: "5247/3"
+    deviceLabel: U-tec Smart Matter Plug
+    vendorId: 0x147F
+    productId: 0x0003
+    deviceProfileName: plug-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
