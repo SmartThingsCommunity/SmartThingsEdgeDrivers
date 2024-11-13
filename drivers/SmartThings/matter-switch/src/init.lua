@@ -19,6 +19,7 @@ local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
+local data_types = require "st.matter.data_types"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -154,6 +155,21 @@ local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
 
+local fingerprint_profile_overrides = {
+  { vendor_id = 0x1361, product_id = 0x0001 }, -- Inovelli VTM31-SN
+}
+
+local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
+
+local preference_map = {
+  switchMode = {parameter_number = 1, size = data_types.Uint8},
+  smartBulbMode = {parameter_number = 2, size = data_types.Uint8},
+  dimmingEdge = {parameter_number = 3, size = data_types.Uint8},
+  dimmingSpeed = {parameter_number = 4, size = data_types.Uint8},
+  relayClick = {parameter_number = 5, size = data_types.Uint8},
+  ledIndicatorColor = {parameter_number = 6, size = data_types.Uint8},
+}
+
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
@@ -246,6 +262,14 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
+end
+
+local preferences_to_numeric_value = function(new_value)
+  local numeric = tonumber(new_value)
+  if numeric == nil then -- in case the value is Boolean
+    numeric = new_value and 1 or 0
+  end
+  return numeric
 end
 
 local START_BUTTON_PRESS = "__start_button_press"
@@ -560,6 +584,16 @@ local function initialize_switch(driver, device)
 
   if component_map_used then
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  end
+
+  for _, fingerprint in ipairs(fingerprint_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+      device.manufacturer_info.product_id == fingerprint.product_id then
+      if #button_eps > 0 then
+        configure_buttons(device)
+      end
+      return
+    end
   end
 
   if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
@@ -1056,8 +1090,6 @@ local function valve_level_attr_handler(driver, device, ib, response)
 end
 
 local function multi_press_complete_event_handler(driver, device, ib, response)
-  log.info(string.format("Multi press complete. EP: %d", ib.endpoint_id))
-  log.info(string.format("Component: %s", endpoint_to_component(device, ib.endpoint_id)))
   -- in the case of multiple button presses
   -- emit number of times, multiple presses have been completed
   if ib.data and not get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
@@ -1106,6 +1138,24 @@ local function info_changed(driver, device, event, args)
       -- profile has changed, and we deferred setting up our buttons, so do that now
       configure_buttons(device)
       device:set_field(DEFERRED_CONFIGURE, nil)
+    end
+  end
+  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+    local time_diff = 3
+    local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
+    if last_clock_set_time ~= nil then
+      time_diff = os.difftime(os.time(), last_clock_set_time)
+    end
+    device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
+    if time_diff > 2 then
+      local preferences = preference_map
+      for id, value in pairs(device.preferences) do
+        if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
+          local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+          local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number, new_parameter_value)
+          device:send(req)
+        end
+      end
     end
   end
 end
@@ -1286,8 +1336,7 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube"),
-    require("inovelli-vtm31-sn")
+    require("aqara-cube")
   }
 }
 

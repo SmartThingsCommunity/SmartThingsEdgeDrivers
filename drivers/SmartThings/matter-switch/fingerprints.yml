@@ -2346,7 +2346,7 @@ matterManufacturer:
     deviceProfileName: "button-battery"
   # Inovelli
   - id: "4961/1"
-    deviceLabel: "Inovelli 2-in-1 Blue Series"
+    deviceLabel: "Inovelli Dimmer Switch"
     vendorId: 0x1361
     productId: 0x0001
     deviceProfileName: inovelli-vtm31-sn
@@ -2395,6 +2395,7 @@ matterManufacturer:
     vendorId: 0x138A
     productId: 0x1392
     deviceProfileName: matter-bridge
+
 
 matterGeneric:
   - id: "matter/bridge"

@@ -6,10 +6,6 @@ components:
         version: 1
       - id: switchLevel
         version: 1
-      - id: powerMeter
-        version: 1
-      - id: energyMeter
-        version: 1
       - id: refresh
         version: 1
       - id: configuration
@@ -19,14 +15,14 @@ components:
     categories:
       - name: Switch
   - id: button1
-    label: Down Button
+    label: Up Button
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
   - id: button2
-    label: Up Button
+    label: Down Button
     capabilities:
       - id: button
         version: 1
@@ -40,66 +36,24 @@ components:
     categories:
       - name: RemoteController
 preferences:
-  - name: "notificationChild"
-    title: "Add Child Device - Notification"
-    description: "Create Separate Child Device for Notification Control"
-    required: false
-    preferenceType: boolean
-    definition:
-      default: false
-  - name: "notificationType"
-    title: "Notification Effect"
-    description: "This is the notification effect used by the notification child device"
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "255": "Clear"
-        "1": "Solid"
-        "2": "Fast Blink"
-        "3": "Slow Blink"
-        "4": "Pulse"
-        "5": "Chase"
-        "6": "Open/Close"
-        "7": "Small-to-Big"
-        "8": "Aurora"
-        "9": "Slow Falling"
-        "10": "Medium Falling"
-        "11": "Fast Falling"
-        "12": "Slow Rising"
-        "13": "Medium Rising"
-        "14": "Fast Rising"
-        "15": "Medium Blink"
-        "16": "Slow Chase"
-        "17": "Fast Chase"
-        "18": "Fast Siren"
-        "19": "Slow Siren"
-      default: 1
-  - name: "parameter258"
-    title: "258. Switch Mode"
+  - name: "switchMode"
+    title: "1. Switch Mode"
     description: "Use as a Dimmer or an On/Off switch"
     required: false
     preferenceType: enumeration
     definition:
       options:
-        "0": "Dimmer"
-        "1": "On/Off (default)"
-      default: 1
-  - name: "parameter22"
-    title: "22. Aux Switch Type"
-    description: "Set the Aux switch type. Smart Bulb Mode does not work in Dumb 3-Way Switch mode."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "None (default)"
-        "1": "3-Way Dumb Switch"
-        "2": "3-Way Aux Switch"
-        "3": "Full Sine Wave (fw 2.11+)"
+        "0": "On/Off + Single (default)"
+        "1": "On/OFf + Dumb"
+        "2": "On/Off + Aux"
+        "3": "On/OFf + Full Wave"
+        "4": "Dimmer + Single"
+        "5": "Dimmer + Dumb"
+        "6": "Dimmer + Aux"
       default: 0
-  - name: "parameter52"
-    title: "52. Smart Bulb Mode"
-    description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power. Smart Bulb Mode does not work in Dumb 3-Way Switch mode."
+  - name: "smartBulbMode"
+    title: "2. Smart Bulb Mode"
+    description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power. Smart Bulb Mode does not work in Sumb 3-Way Switch mode."
     required: false
     preferenceType: enumeration
     definition:
@@ -107,163 +61,67 @@ preferences:
         "0": "Disabled (default)"
         "1": "Smart Bulb Mode"
       default: 0
-  - name: "parameter1"
-    title: "1. Dimming Speed (Remote)"
-    description: "This changes the speed that the light dims up when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  Default=25 (2500ms or 2.5s)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 126
-      default: 25
-  - name: "parameter2"
-    title: "2. Dimming Speed (Local)"
-    description: "This changes the speed that the light dims up when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter3"
-    title: "3. Ramp Rate (Remote)"
-    description: "This changes the speed that the light turns on when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter4"
-    title: "4. Ramp Rate (Local)"
-    description: "This changes the speed that the light turns on when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 3)"
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 127
-      default: 127
-  - name: "parameter9"
-    title: "9. Minimum Level"
-    description: "The minimum level that the light can be dimmed. Useful when the user has a light that does not turn on or flickers at a lower level."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 99
-      default: 1
-  - name: "parameter10"
-    title: "10. Maximum Level"
-    description: "The maximum level that the light can be dimmed. Useful when the user wants to limit the maximum brighness."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 2
-      maximum: 100
-      default: 100
-  - name: "parameter11"
-    title: "11. Invert Switch"
-    description: "Inverts the orientation of the switch. Useful when the switch is installed upside down. Essentially up becomes down and down becomes up."
+  - name: "dimmingEdge"
+    title: "3. Dimming Edge"
+    description: "Change dimming type to leading edge (default) or trailing edge for better bulb compatibility"
     required: false
     preferenceType: enumeration
     definition:
       options:
-        "0": "No (default)"
-        "1": "Yes"
+        "0": "Leading (default)"
+        "1": "Trailing"
       default: 0
-  - name: "parameter15"
-    title: "15. Level After Power Restored"
-    description: "The level the switch will return to when power is restored after power failure.
-  0=Off
-  1-100=Set Level
-  101=Use previous level."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 101
-      default: 101
-  - name: "parameter17"
-    title: "17. Load Level Indicator Timeout"
-    description: "Shows the level that the load is at for x number of seconds after the load is adjusted and then returns to the Default LED state."
+  - name: "dimmingSpeed"
+    title: "4. Dimming Speed"
+    description: "This changes the speed that the light dims. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Default=25 (2500ms or 2.5s)"
     required: false
     preferenceType: enumeration
     definition:
       options:
-        "0": "Do not display Load Level"
-        "1": "1 Second"
-        "2": "2 Seconds"
-        "3": "3 Seconds"
-        "4": "4 Seconds"
-        "5": "5 Seconds"
-        "6": "6 Seconds"
-        "7": "7 Seconds"
-        "8": "8 Seconds"
-        "9": "9 Seconds"
-        "10": "10 Seconds"
-        "11": "Display Load Level with no timeout"
-      default: 11
-  - name: "parameter95"
-    title: "95. LED Indicator Color (w/On)"
+        "0": "Instant"
+        "1": "500ms"
+        "2": "800ms"
+        "3": "1s"
+        "4": "1.5s"
+        "5": "2s"
+        "6": "2.5s (default)"
+        "7": "3s"
+        "8": "3.5s"
+        "9": "4s"
+        "10": "5s"
+        "11": "6s"
+        "12": "7s"
+        "13": "8s"
+        "14": "10s"
+      default: 6
+  - name: "relayClick"
+    title: "5. Relay Click"
+    description: "Audible Click in On/Off mode"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Enabled (default)"
+        "1": "Disabled"
+      default: 0
+  - name: "ledIndicatorColor"
+    title: "6. LED Indicator Color (w/On)"
     description: "Set the color of the Full LED Indicator when the load is on."
     required: false
     preferenceType: enumeration
     definition:
       options:
         "0": "Red"
-        "7": "Orange"
-        "28": "Lemon"
-        "64": "Lime"
-        "85": "Green"
-        "106": "Teal"
-        "127": "Cyan"
-        "148": "Aqua"
-        "170": "Blue (default)"
-        "190": "Violet"
-        "212": "Magenta"
-        "234": "Pink"
-        "255": "White"
-      default: 170
-  - name: "parameter96"
-    title: "96. LED Indicator Color (w/Off)"
-    description: "Set the color of the Full LED Indicator when the load is off."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Red"
-        "7": "Orange"
-        "28": "Lemon"
-        "64": "Lime"
-        "85": "Green"
-        "106": "Teal"
-        "127": "Cyan"
-        "148": "Aqua"
-        "170": "Blue (default)"
-        "190": "Violet"
-        "212": "Magenta"
-        "234": "Pink"
-        "255": "White"
-      default: 170
-  - name: "parameter97"
-    title: "97. LED Indicator Intensity (w/On)"
-    description: "Set the intensity of the Full LED Indicator when the load is on."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 100
-      default: 50
-  - name: "parameter98"
-    title: "98. LED Indicator Intensity (w/Off)"
-    description: "Set the intensity of the Full LED Indicator when the load is off."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 0
-      maximum: 100
-      default: 5
+        "1": "Orange"
+        "2": "Lemon"
+        "3": "Lime"
+        "4": "Green"
+        "5": "Teal"
+        "6": "Cyan"
+        "7": "Aqua"
+        "8": "Blue (default)"
+        "9": "Violet"
+        "10": "Magenta"
+        "11": "Pink"
+        "12": "White"
+      default: 8
