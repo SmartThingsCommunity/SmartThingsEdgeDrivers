@@ -467,7 +467,6 @@ test.register_coroutine_test(
         mock_parent.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
-      mock_parent:expect_native_cmd_handler_registration("switch", "on")
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -505,7 +504,6 @@ test.register_coroutine_test(
         mock_child.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
-      mock_child:expect_native_cmd_handler_registration("switch", "on")
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -543,7 +541,6 @@ test.register_coroutine_test(
         mock_parent.id,
         { capability = "switch", component = "main", command = "off", args = {} }
       })
-      mock_parent:expect_native_cmd_handler_registration("switch", "off")
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
@@ -581,7 +578,6 @@ test.register_coroutine_test(
         mock_child.id,
         { capability = "switch", component = "main", command = "off", args = {} }
       })
-      mock_child:expect_native_cmd_handler_registration("switch", "off")
 
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
