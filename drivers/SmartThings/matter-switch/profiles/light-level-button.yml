@@ -16,7 +16,7 @@ components:
         version: 1
     categories:
       - name: Light
-  - id: button1
+  - id: button
     capabilities:
       - id: button
         version: 1

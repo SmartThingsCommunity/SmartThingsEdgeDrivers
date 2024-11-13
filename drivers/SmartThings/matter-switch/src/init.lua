@@ -341,6 +341,9 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
+--- is_supported_combination_button_switch_device_type helper function used to check
+--- whether the device type for an endpoint is currently supported by a profile for
+--- combination button/switch devices.
 local function is_supported_combination_button_switch_device_type(device, endpoint_id)
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == endpoint_id then
@@ -392,6 +395,7 @@ local function find_default_endpoint(device)
     if is_supported_combination_button_switch_device_type(device, main_endpoint) then
       return main_endpoint
     else
+      device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(button_eps)
     end
   end
@@ -521,7 +525,11 @@ local function initialize_switch(driver, device)
     component_map["main"] = main_endpoint
     for _, ep in ipairs(button_eps) do
       if ep ~= main_endpoint then
-        component_map[string.format("button%d", current_component_number)] = ep
+        if #button_eps == 1 then
+          component_map[string.format("button", current_component_number)] = ep
+        else
+          component_map[string.format("button%d", current_component_number)] = ep
+        end
       end
       current_component_number = current_component_number + 1
     end
@@ -563,7 +571,11 @@ local function initialize_switch(driver, device)
   end
 
   if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
-    profile_name = "light-level" .. string.format("-%d-button", #button_eps)
+    if #button_eps == 1 then
+      profile_name = "light-level-button"
+    else
+      profile_name = "light-level" .. string.format("-%d-button", #button_eps)
+    end
     device:try_update_metadata({profile = profile_name})
     device:set_field(DEFERRED_CONFIGURE, true)
   elseif #button_eps > 0 then
@@ -579,7 +591,7 @@ local function initialize_switch(driver, device)
         profile_name = string.format("%d-button", #button_eps)
       end
     elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
+      -- a battery-less button/remote
       profile_name = "button"
     end
 
@@ -673,12 +685,8 @@ local function device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
-          if id == GENERIC_SWITCH_ID then
-            if attr == clusters.PowerSource.attributes.BatPercentRemaining then
-              device:add_subscribed_attribute(attr)
-            else
-              device:add_subscribed_event(attr)
-            end
+          if id == GENERIC_SWITCH_ID and attr ~= clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_event(attr)
           else
             device:add_subscribed_attribute(attr)
           end
