@@ -83,7 +83,7 @@ local function test_init()
 
   test.mock_device.add_test_device(mock_device)
 
-  test.set_rpc_version(4)
+  test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
 
@@ -99,11 +99,11 @@ local function configure(device)
   --populate cached setpoint values. This would normally happen due to subscription setup.
   test.socket.matter:__queue_receive({
     device.id,
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint:build_test_report_data(device, 1, 2444) --24.44 celcius
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint:build_test_report_data(mock_device, 1, 2444) --24.44 celcius
   })
   test.socket.matter:__queue_receive({
     device.id,
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(device, 1, 2667) --26.67 celcius
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 2667) --26.67 celcius
   })
   test.socket.capability:__expect_send(
     device:generate_test_message("main", cached_heating_setpoint)
@@ -250,6 +250,19 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Set MIN_SETPOINT_DEADBAND_CHECKED flag on MinSetpointDeadBand attribute handler",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(mock_device, 1, 16) --1.6 celcius
+    })
+    test.wait_for_events()
+    local min_setpoint_deadband_checked = mock_device:get_field("MIN_SETPOINT_DEADBAND_CHECKED")
+    assert(min_setpoint_deadband_checked == true, "min_setpoint_deadband_checked is True")
+  end
+)
+
 test.register_message_test(
   "Min and max heating setpoint attributes set capability constraint",
   {
@@ -320,13 +333,13 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000)
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 3900)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 39.00 }, unit = "C" }))
     }
   }
 )

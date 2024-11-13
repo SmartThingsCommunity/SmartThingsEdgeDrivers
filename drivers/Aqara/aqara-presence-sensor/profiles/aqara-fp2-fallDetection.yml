@@ -1,0 +1,20 @@
+name: aqara-fp2-fallDetection
+components:
+  - id: main
+    capabilities:
+      - id: activitySensor
+        version: 1
+      - id: presenceSensor
+        version: 1
+      - id: illuminanceMeasurement
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: PresenceSensor
+  - id: mode
+    capabilities:
+      - id: stse.deviceMode
+        version: 1
+    categories:
+      - name: PresenceSensor

@@ -35,12 +35,22 @@ local function _emit_light_events_inner(light_device, light_repr)
 
     if light_repr.on and light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.on())
+      light_device:set_field(Fields.SWITCH_STATE, "on", {persist = true})
     elseif light_repr.on and not light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.off())
+      light_device:set_field(Fields.SWITCH_STATE, "off", {persist = true})
     end
 
     if light_repr.dimming then
-      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, 1, 100))
+      local min_dim = light_device:get_field(Fields.MIN_DIMMING)
+      local api_min_dim = st_utils.round(st_utils.clamp_value(light_repr.dimming.min_dim_level or Consts.DEFAULT_MIN_DIMMING, 1, 100))
+      if min_dim ~= api_min_dim then
+        min_dim = api_min_dim
+        light_device:set_field(Fields.MIN_DIMMING, min_dim, { persist = true })
+        log.info("EMITTING DIMMING CAP RANGE")
+        light_device:emit_event(capabilities.switchLevel.levelRange({ minimum = min_dim, maximum = 100 }))
+      end
+      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, min_dim, 100))
       if utils.is_nan(adjusted_level) then
         light_device.log.warn(
           string.format(
@@ -54,13 +64,42 @@ local function _emit_light_events_inner(light_device, light_repr)
     end
 
     if light_repr.color_temperature then
-      local mirek = Consts.DEFAULT_MIREK
+      local mirek = Consts.DEFAULT_MIN_MIREK
       if light_repr.color_temperature.mirek_valid then
         mirek = light_repr.color_temperature.mirek
       end
-      local min = light_device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+      local mirek_schema = light_repr.color_temperature.mirek_schema or {
+        mirek_minimum = Consts.DEFAULT_MIN_MIREK,
+        mirek_maximum = Consts.DEFAULT_MAX_MIREK
+      }
+
+      -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
+      -- if the below is not intuitive.
+      local min_kelvin = light_device:get_field(Fields.MIN_KELVIN)
+      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+      local max_kelvin = light_device:get_field(Fields.MAX_KELVIN)
+      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum) or Consts.MAX_TEMP_KELVIN)
+
+      local update_range = false
+      if min_kelvin ~= api_min_kelvin then
+        update_range = true
+        min_kelvin = api_min_kelvin
+        light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
+      end
+
+      if max_kelvin ~= api_max_kelvin then
+        update_range = true
+        max_kelvin = api_max_kelvin
+        light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
+      end
+
+      if update_range then
+        light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+      end
+
+      -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
       local kelvin = math.floor(
-        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min, Consts.MAX_TEMP_KELVIN)
+        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min_kelvin, max_kelvin)
       )
       if utils.is_nan(kelvin) then
         light_device.log.warn(
@@ -96,6 +135,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+        light_device:set_field(Fields.COLOR_HUE, adjusted_hue, {persist = true})
       end
 
       if utils.is_nan(adjusted_sat) then
@@ -107,6 +147,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
+        light_device:set_field(Fields.COLOR_SATURATION, adjusted_sat, {persist = true})
       end
     end
   end
@@ -270,7 +311,7 @@ end
 
 local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
-  local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
+  local device_type = (device and utils.determine_device_type(device)) or "Unknown Device Type"
   log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
