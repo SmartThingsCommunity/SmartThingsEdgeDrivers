@@ -473,6 +473,18 @@ local function initialize_switch(driver, device)
     return
   end
 
+  -- create dummy child device
+  driver:try_create_device(
+    {
+      type = "EDGE_CHILD",
+      label = "Child Device",
+      profile = "matter-thing",
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%d", 99),
+      vendor_provided_label = "Child Device"
+    }
+  )
+
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
