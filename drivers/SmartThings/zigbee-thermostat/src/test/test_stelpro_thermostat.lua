@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ local zigbee_thermostat_profile = {
 }
 
 local mock_device = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "SORB", server_clusters = {0x0201, 0x0204, 0x0405}} } })
-local mock_device_maestro = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "MaestroStat", server_clusters = {0x0201, 0x0204, 0x0405}} } })
+local mock_device_maestro = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "SMT402AD", server_clusters = {0x0201, 0x0204, 0x0405}} } })
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
@@ -376,7 +376,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Refresh necessary attributes - MaestroStat",
+    "Refresh necessary attributes - SMT402AD",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device_maestro.id, "added" })
       test.socket.capability:__expect_send(
@@ -413,7 +413,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Configure should configure all necessary attributes - MaestroStat",
+    "Configure should configure all necessary attributes - SMT402AD",
     function ()
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle:__queue_receive({mock_device_maestro.id, "doConfigure"})
