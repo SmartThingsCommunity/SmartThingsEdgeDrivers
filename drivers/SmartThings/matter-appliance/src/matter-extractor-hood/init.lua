@@ -33,9 +33,6 @@ local WIND_MODE_MAP = {
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
-local MIN_ALLOWED_PERCENT_VALUE = 0
-local MAX_ALLOWED_PERCENT_VALUE = 100
-
 -- Helper functions --
 local function get_endpoints_for_dt(device, device_type)
   local endpoints = {}
@@ -160,10 +157,10 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = 0
-  if ib.data.value ~= nil then
-    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
+  if ib.data.value == nil then
+    return
   end
+  local speed = utils.clamp_value(ib.data.value, 0, 100)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
 
