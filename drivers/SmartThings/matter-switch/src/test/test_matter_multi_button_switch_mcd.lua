@@ -76,7 +76,9 @@ local mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {
           cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
           cluster_type = "SERVER"
         },
       },
@@ -188,7 +190,7 @@ local function configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
 
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, mock_device_ep4)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 end
 
@@ -197,6 +199,7 @@ local function test_init()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
+  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
@@ -217,7 +220,6 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
@@ -337,7 +339,7 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "Third button component: Handle single press sequence for a long hold on long-release-capable button", -- only a long press event should generate a held event
+  "Third button component: Handle single press sequence for a long hold on long-release-capable button",
   function ()
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive({
@@ -350,12 +352,33 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.matter:__queue_receive({
       mock_device.id,
-      clusters.Switch.events.ShortRelease:build_test_event_report(
-        mock_device, mock_device_ep4, {previous_position = 0}
+      clusters.Switch.events.LongPress:build_test_event_report(
+        mock_device, mock_device_ep4, {new_position = 0}
       )
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.held({state_change = true})))
   end
+)
+
+test.register_message_test(
+  "Receiving a max press attribute of 5 should emit correct event", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Switch.attributes.MultiPressMax:build_test_report_data(
+          mock_device, mock_device_ep4, 5
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("button3",
+        capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x", "pushed_4x", "pushed_5x"}, {visibility = {displayed = false}}))
+    }
+  }
 )
 
 test.register_message_test(

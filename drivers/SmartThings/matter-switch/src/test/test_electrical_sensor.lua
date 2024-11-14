@@ -725,6 +725,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
@@ -735,6 +743,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 2, true)
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
     {
