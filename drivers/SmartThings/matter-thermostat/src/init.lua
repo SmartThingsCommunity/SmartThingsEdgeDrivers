@@ -1122,7 +1122,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value > (cached_cooling_val - deadband) then
@@ -1130,7 +1130,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s)",
           value, cooling_setpoint, deadband
         ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
     else
@@ -1141,7 +1141,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value < (cached_heating_val + deadband) then
@@ -1149,7 +1149,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s)",
           value, heating_setpoint, deadband
         ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
     end

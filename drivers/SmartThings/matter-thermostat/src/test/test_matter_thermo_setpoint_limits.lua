@@ -87,8 +87,8 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" })
-local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" })
+local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }, {state_change = true})
+local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }, {state_change = true})
 
 local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -106,10 +106,10 @@ local function configure(device)
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 2667) --26.67 celcius
   })
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", cached_heating_setpoint)
+    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }))
   )
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", cached_cooling_setpoint)
+    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }))
   )
   test.wait_for_events()
 end
