@@ -19,6 +19,7 @@ local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
+local buttons = require "buttons"
 local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
@@ -519,41 +520,6 @@ local function assign_child_profile(device, child_ep)
   return profile or "switch-binary"
 end
 
-local function configure_buttons(device)
-  local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
-  local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
-  local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
-
-  for _, ep in ipairs(ms_eps) do
-    if device.profile.components[endpoint_to_component(device, ep)] then
-      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
-      local supportedButtonValues_event
-      -- this ordering is important, since MSM & MSL devices must also support MSR
-      if tbl_contains(msm_eps, ep) then
-        supportedButtonValues_event = nil -- deferred to the max press handler
-        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-      elseif tbl_contains(msl_eps, ep) then
-        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      elseif tbl_contains(msr_eps, ep) then
-        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-        set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
-      else -- this switch endpoint only supports momentary switch, no release events
-        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-        set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
-      end
-
-      if supportedButtonValues_event then
-        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
-      end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
-    else
-      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
-    end
-  end
-end
-
 local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
@@ -656,7 +622,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     build_button_component_map(device, main_endpoint, button_eps)
-    configure_buttons(device)
+    buttons.configure(device)
     profile_found = true
   end
 
@@ -1305,7 +1271,7 @@ local function info_changed(driver, device, event, args)
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      configure_buttons(device)
+      buttons.configure(device)
     end
   end
 end
@@ -1632,8 +1598,9 @@ local matter_driver_template = {
     capabilities.fanSpeedPercent
   },
   sub_drivers = {
-    require("eve-energy"),
     require("aqara-cube"),
+    require("eve-energy"),
+    require("inovelli-vtm31-sn"),
     require("third-reality-mk1")
   }
 }
