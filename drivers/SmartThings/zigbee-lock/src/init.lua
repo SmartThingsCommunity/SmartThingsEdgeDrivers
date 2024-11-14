@@ -302,6 +302,8 @@ end
 
 local function init(driver, device)
   lock_utils.populate_state_from_data(device)
+  -- temp fix before this can be changed to non-persistent
+  device:set_field(lock_utils.CODE_STATE, nil, { persist = true })
 end
 
 -- The following two functions are from the lock defaults. They are in the base driver temporarily
