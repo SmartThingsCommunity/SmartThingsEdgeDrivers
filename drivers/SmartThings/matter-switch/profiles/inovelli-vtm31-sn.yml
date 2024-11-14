@@ -1,0 +1,127 @@
+name: inovelli-vtm31-sn
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+      - id: refresh
+        version: 1
+      - id: configuration
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+    categories:
+      - name: Switch
+  - id: button1
+    label: Up Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button2
+    label: Down Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button3
+    label: Config Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - name: "switchMode"
+    title: "1. Switch Mode"
+    description: "Use as a Dimmer or an On/Off switch"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "On/Off + Single (default)"
+        "1": "On/OFf + Dumb"
+        "2": "On/Off + Aux"
+        "3": "On/OFf + Full Wave"
+        "4": "Dimmer + Single"
+        "5": "Dimmer + Dumb"
+        "6": "Dimmer + Aux"
+      default: 0
+  - name: "smartBulbMode"
+    title: "2. Smart Bulb Mode"
+    description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power. Smart Bulb Mode does not work in Sumb 3-Way Switch mode"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Smart Bulb Mode"
+      default: 0
+  - name: "dimmingEdge"
+    title: "3. Dimming Edge"
+    description: "Change dimming type to leading edge (default) or trailing edge for better bulb compatibility"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Leading (default)"
+        "1": "Trailing"
+      default: 0
+  - name: "dimmingSpeed"
+    title: "4. Dimming Speed"
+    description: "This changes the speed that the light dims. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Default=25 (2500ms or 2.5s)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Instant"
+        "1": "500ms"
+        "2": "800ms"
+        "3": "1s"
+        "4": "1.5s"
+        "5": "2s"
+        "6": "2.5s (default)"
+        "7": "3s"
+        "8": "3.5s"
+        "9": "4s"
+        "10": "5s"
+        "11": "6s"
+        "12": "7s"
+        "13": "8s"
+        "14": "10s"
+      default: 6
+  - name: "relayClick"
+    title: "5. Relay Click"
+    description: "Audible Click in On/Off mode"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Enabled (default)"
+        "1": "Disabled"
+      default: 0
+  - name: "ledIndicatorColor"
+    title: "6. LED Indicator Color (w/On)"
+    description: "Set the color of the Full LED Indicator when the load is on"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "1": "Orange"
+        "2": "Lemon"
+        "3": "Lime"
+        "4": "Green"
+        "5": "Teal"
+        "6": "Cyan"
+        "7": "Aqua"
+        "8": "Blue (default)"
+        "9": "Violet"
+        "10": "Magenta"
+        "11": "Pink"
+        "12": "White"
+      default: 8
