@@ -103,6 +103,8 @@ end
 
 local init_handler = function(driver, device, event)
   populate_state_from_data(device)
+  -- temp fix before this can be changed from being persisted in memory
+  device:set_field(constants.CODE_STATE, nil, { persist = true })
 end
 
 local do_refresh = function(self, device)
