@@ -126,7 +126,7 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     )
     configure(mock_device)
     test.socket.capability:__queue_receive({
@@ -151,7 +151,7 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1  }, unit = "C" }))
     )
     configure(mock_device)
     test.socket.capability:__queue_receive({
@@ -176,7 +176,7 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1  }, unit = "C" }))
     )
     configure(mock_device)
     test.socket.capability:__queue_receive({
@@ -201,7 +201,7 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1  }, unit = "C" }))
     )
     configure(mock_device)
     test.socket.capability:__queue_receive({
@@ -285,7 +285,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1  }, unit = "C" }))
     }
   }
 )
@@ -312,7 +312,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1  }, unit = "C" }))
     }
   }
 )
