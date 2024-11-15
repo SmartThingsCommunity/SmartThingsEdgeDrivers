@@ -28,6 +28,11 @@ matterManufacturer:
     vendorId: 0x1432
     productId: 0x1001
     deviceProfileName: 4-button-battery
+  - id: "5170/4099"
+    deviceLabel: RFWB-40G/MT
+    vendorId: 0x1432
+    productId: 0x1003
+    deviceProfileName: 4-button-battery
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
