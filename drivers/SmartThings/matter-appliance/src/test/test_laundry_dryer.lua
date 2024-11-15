@@ -122,7 +122,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_device_washer)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "added" })
-  test.set_rpc_version(5)
+  test.set_rpc_version(6)
 end
 test.set_test_init_function(test_init)
 
@@ -575,14 +575,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry dryer, temp bounds out of range and temp setpoint converted from F to C",
+  "temperatureSetpoint command should send appropriate commands for laundry dryer, temp bounds out of range",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 0)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, -1500)
       }
     },
     {
@@ -590,7 +590,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 10000)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 11000)
       }
     },
     {
@@ -604,29 +604,13 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=100.0}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 50.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {104.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, APPLICATION_ENDPOINT, 40 * 100, nil)
-      }
-    },
+    }
   }
 )
 
@@ -687,14 +671,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for laundry washer, temp bounds out of range and temp setpoint converted from F to C",
+  "temperatureSetpoint command should send appropriate commands for laundry washer, temp bounds out of range",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 0)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, -1000)
       }
     },
     {
@@ -702,7 +686,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device_washer.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 10000)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device_washer, APPLICATION_ENDPOINT, 12000)
       }
     },
     {
@@ -716,29 +700,13 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=100.0}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 30.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device_washer.id,
-        { capability = "temperatureSetpoint", component = "main", command = "setTemperatureSetpoint", args = {122.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device_washer.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, APPLICATION_ENDPOINT, 50 * 100, nil)
-      }
-    },
+    }
   }
 )
 

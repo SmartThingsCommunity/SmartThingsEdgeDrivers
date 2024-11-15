@@ -32,7 +32,7 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_TEMPERATURE_LEVELS_MAP = "__supported_temperature_levels_map"
 local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes_map"
 
--- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual refrigerator temperatures:
 -- Refrigerator:
@@ -41,10 +41,12 @@ local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes
 -- Freezer:
 --   1. if the received setpoint command value is in range -24 ~ -12, it is inferred as *C
 --   2. if the received setpoint command value is in range -11.2 ~ 10.4, it is inferred as *F
-local REFRIGERATOR_MAX_TEMP_IN_C = 20.0
-local REFRIGERATOR_MIN_TEMP_IN_C = -6.0
-local FREEZER_MAX_TEMP_IN_C = -12.0
-local FREEZER_MIN_TEMP_IN_C = -24.0
+-- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
+-- is in Celsius, but we still limit the setpoint range to reasonable values.
+local REFRIGERATOR_MAX_TEMP_IN_C = version.rpc >= 6 and 30.0 or 20.0
+local REFRIGERATOR_MIN_TEMP_IN_C = version.rpc >= 6 and -10.0 or -6.0
+local FREEZER_MAX_TEMP_IN_C = version.rpc >= 6 and 0.0 or -12.0
+local FREEZER_MIN_TEMP_IN_C = version.rpc >= 6 and -30.0 or -24.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -345,7 +347,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     return
   end
 
-  if value > max_temp_in_c then
+  if version.rpc <= 5 and value > max_temp_in_c then
     value = utils.f_to_c(value)
   end
   if value < min or value > max then
