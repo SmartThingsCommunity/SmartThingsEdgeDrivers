@@ -18,6 +18,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local PowerConfiguration = clusters.PowerConfiguration
 local Thermostat = clusters.Thermostat
 local FanControl = clusters.FanControl
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -110,6 +111,43 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Temperature report should be handled (C) for the temperature cluster",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 2500) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
+      }
+    }
+)
+
+test.register_message_test(
+  "Minimum & Maximum Temperature report should be handled (C) for the temperature cluster",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, TemperatureMeasurement.attributes.MinMeasuredValue:build_test_attr_report(mock_device, 2000) }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_attr_report(mock_device, 3000) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
+    }
+  }
+)
+
+test.register_message_test(
     "Heating setpoint reports are handled",
     {
       {
@@ -139,6 +177,62 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
+      }
+    }
+)
+
+test.register_message_test(
+    "Thermostat cooling setpoint bounds are handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device,
+                                                                                                        1000)}
+      },
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device,
+                                                                                                        3500)}
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
+          {
+            unit = 'C',
+            value = {minimum = 10.0, maximum = 35.0}
+          }
+        ))
+      }
+    }
+)
+
+test.register_message_test(
+    "Thermostat heating setpoint bounds are handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device,
+                                                                                                        1000)}
+      },
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device,
+                                                                                                        3500)}
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+          {
+            unit = 'C',
+            value = {minimum = 10.0, maximum = 35.0}
+          }
+        ))
       }
     }
 )
@@ -510,6 +604,22 @@ test.register_message_test(
         direction = "send",
         message = {
           mock_device.id,
+          TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
           Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device)
         }
       },
@@ -551,6 +661,38 @@ test.register_message_test(
         message = {
           mock_device.id,
           Thermostat.attributes.SystemMode:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinCoolSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxCoolSetpointLimit:read(mock_device)
         }
       },
       {
@@ -642,6 +784,38 @@ test.register_message_test(
         message = {
           mock_device.id,
           Thermostat.attributes.SystemMode:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxHeatSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MinCoolSetpointLimit:read(mock_device)
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          Thermostat.attributes.MaxCoolSetpointLimit:read(mock_device)
         }
       },
       {

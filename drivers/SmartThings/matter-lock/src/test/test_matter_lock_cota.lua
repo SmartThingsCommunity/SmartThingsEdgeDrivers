@@ -28,6 +28,7 @@
 -- Mock out globals
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
+test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
 local json = require "st.json"
 local clusters = require "st.matter.clusters"
@@ -55,7 +56,7 @@ local mock_device_record = {
           cluster_type = "SERVER",
           feature_map = 0x0181, -- PIN & USR & COTA
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
@@ -69,12 +70,22 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
   test.mock_device.add_test_device(mock_device)
 end
 
 test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function(dev)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({}), {visibility = {displayed = false}}
+      )
+    )
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+  test.mock_time.advance_time(5)
   local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
   test.socket.capability:__expect_send(
     dev:generate_test_message(

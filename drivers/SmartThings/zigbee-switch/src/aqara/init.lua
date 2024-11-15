@@ -28,6 +28,7 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.plug.maeu01" },
   { mfr = "LUMI", model = "lumi.plug.macn01" },
   { mfr = "LUMI", model = "lumi.switch.n0agl1" },
+  { mfr = "LUMI", model = "lumi.switch.l0agl1" },
   { mfr = "LUMI", model = "lumi.switch.n0acn2" },
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
@@ -36,7 +37,10 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
   { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
   { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.l2aeu1" }
+  { mfr = "LUMI", model = "lumi.switch.l2aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.b1nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b2nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b3n01" }
 }
 
 local preference_map = {
@@ -161,9 +165,20 @@ local function wireless_switch_handler(driver, device, value, zb_rx)
   end
 end
 
-local function energy_meter_power_consumption_report(device, raw_value)
+local function energy_meter_power_consumption_report(driver, device, value, zb_rx)
+  -- ignore unexpected event when the device is private mode
+  local private_mode = device:get_field(PRIVATE_MODE) or 0
+  if private_mode == 1 then return end
+
+  local raw_value = value.value
   -- energy meter
-  device:emit_event(capabilities.energyMeter.energy({ value = raw_value, unit = "Wh" }))
+  local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
+  if raw_value < offset then
+    --- somehow our value has gone below the offset, so we'll reset the offset, since the device seems to have
+    offset = 0
+    device:set_field(constants.ENERGY_METER_OFFSET, offset, {persist = true})
+  end
+  device:emit_event(capabilities.energyMeter.energy({ value = raw_value - offset, unit = "Wh" }))
 
   -- report interval
   local current_time = os.time()
@@ -185,20 +200,21 @@ local function energy_meter_power_consumption_report(device, raw_value)
 end
 
 local function power_meter_handler(driver, device, value, zb_rx)
+  -- ignore unexpected event when the device is private mode
+  local private_mode = device:get_field(PRIVATE_MODE) or 0
+  if private_mode == 1 then return end
+
   local raw_value = value.value -- '10W'
   raw_value = raw_value / 10
   device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value -- 'Wh'
-  energy_meter_power_consumption_report(device, raw_value)
-end
-
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
-  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
-  device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
+  if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
+    device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
+    device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
+  end
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -228,9 +244,10 @@ local function do_configure(self, device)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-  device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
-
+  if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
+    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
+    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+  end
 end
 
 local aqara_switch_handler = {
@@ -251,7 +268,7 @@ local aqara_switch_handler = {
         [ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
       },
       [SimpleMetering.ID] = {
-        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_power_consumption_report
       },
       [WIRELESS_SWITCH_CLUSTER_ID] = {
         [WIRELESS_SWITCH_ATTRIBUTE_ID] = wireless_switch_handler

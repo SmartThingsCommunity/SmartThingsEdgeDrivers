@@ -124,6 +124,57 @@ zigbeeManufacturer:
     manufacturer:
     model: E261-KR0B0Z0-HA
     deviceProfileName: lock-battery
+  # TOTEM
+  - id: TOTEM/G30
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: G30
+    deviceProfileName: lock-battery
+  - id: TOTEM/H60/H90
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: H60/H90
+    deviceProfileName: lock-battery
+  - id: TOTEM/N60
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: N60
+    deviceProfileName: lock-battery
+  - id: TOTEM/P30
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: P30
+    deviceProfileName: lock-battery
+  - id: TOTEM/Q30
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: Q30
+    deviceProfileName: lock-battery
+  - id: TOTEM/R50
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: R50
+    deviceProfileName: lock-battery
+  - id: TOTEM/R60
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: R60
+    deviceProfileName: lock-battery
+  - id: TOTEM/R71
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: R71
+    deviceProfileName: lock-battery
+  - id: TOTEM/P70
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: P70
+    deviceProfileName: lock-battery
+  - id: TOTEM/P90
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: P90
+    deviceProfileName: lock-battery
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock

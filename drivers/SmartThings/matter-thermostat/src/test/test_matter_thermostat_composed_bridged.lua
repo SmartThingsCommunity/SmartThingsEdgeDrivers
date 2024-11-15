@@ -286,7 +286,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "emergency heat" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "emergency heat" }, {visibility={displayed=false}}))
     },
   }
 )
@@ -308,7 +308,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -322,7 +322,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -336,7 +336,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto",  "cool" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto",  "cool" }, {visibility={displayed=false}}))
     },
   }
 )
@@ -356,7 +356,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -375,7 +375,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat", "emergency heat" }))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat", "emergency heat" }, {visibility={displayed=false}}))
     }
   }
 )
@@ -443,7 +443,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.supportedThermostatFanModes({ "on" }))
+        capabilities.thermostatFanMode.supportedThermostatFanModes({ "on" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -457,7 +457,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on" }))
+        capabilities.thermostatFanMode.supportedThermostatFanModes({ "auto", "on" }, {visibility={displayed=false}}))
     },
   }
 )

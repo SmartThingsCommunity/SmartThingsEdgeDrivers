@@ -6,13 +6,35 @@ local version = require "version"
 if version.api < 10 then
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+  clusters.AirQuality = require "AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
   [clusters.HepaFilterMonitoring.ID] = clusters.HepaFilterMonitoring,
-  [clusters.ActivatedCarbonFilterMonitoring.ID] = clusters.ActivatedCarbonFilterMonitoring
+  [clusters.ActivatedCarbonFilterMonitoring.ID] = clusters.ActivatedCarbonFilterMonitoring,
+  [clusters.AirQuality.ID] = clusters.AirQuality,
+  [clusters.CarbonMonoxideConcentrationMeasurement.ID] = clusters.CarbonMonoxideConcentrationMeasurement,
+  [clusters.CarbonDioxideConcentrationMeasurement.ID] = clusters.CarbonDioxideConcentrationMeasurement,
+  [clusters.FormaldehydeConcentrationMeasurement.ID] = clusters.FormaldehydeConcentrationMeasurement,
+  [clusters.NitrogenDioxideConcentrationMeasurement.ID] = clusters.NitrogenDioxideConcentrationMeasurement,
+  [clusters.OzoneConcentrationMeasurement.ID] = clusters.OzoneConcentrationMeasurement,
+  [clusters.Pm1ConcentrationMeasurement.ID] = clusters.Pm1ConcentrationMeasurement,
+  [clusters.Pm10ConcentrationMeasurement.ID] = clusters.Pm10ConcentrationMeasurement,
+  [clusters.Pm25ConcentrationMeasurement.ID] = clusters.Pm25ConcentrationMeasurement,
+  [clusters.RadonConcentrationMeasurement.ID] = clusters.RadonConcentrationMeasurement,
+  [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement,
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)

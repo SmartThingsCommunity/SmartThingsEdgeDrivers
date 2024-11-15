@@ -54,6 +54,14 @@ Discovery.api_keys = setmetatable({}, {
     )
     hue.datastore.api_keys[k] = v
     hue.datastore:save()
+    if hue.datastore.commit then
+      -- Because we never actually store keys on the metatable target itself,
+      -- __newindex is invoked for ever mutation; values for a new key, updating
+      -- the value for an existing key, and setting an existing key to `nil` will
+      -- all hit this path.
+      local commit_result = table.pack(hue.datastore:commit())
+      log.trace(st_utils.stringify_table(commit_result, "[DataStoreCommit] commit result", true))
+    end
   end,
   __index = function(self, k)
     return hue.datastore.api_keys[k]
@@ -67,6 +75,6 @@ hue:call_with_delay(3, Discovery.do_mdns_scan, "Philips Hue mDNS Initial Scan")
 local MDNS_SCAN_INTERVAL_SECONDS = 600
 hue:call_on_schedule(MDNS_SCAN_INTERVAL_SECONDS, Discovery.do_mdns_scan, "Philips Hue mDNS Scan Task")
 
-log.info(true, "Starting Hue driver")
+log.info("Starting Hue driver")
 hue:run()
-log.warn(true, "Hue driver exiting")
+log.warn("Hue driver exiting")

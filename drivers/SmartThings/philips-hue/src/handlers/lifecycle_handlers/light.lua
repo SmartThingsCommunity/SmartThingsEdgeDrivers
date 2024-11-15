@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
 
@@ -139,7 +139,48 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
   local minimum_dimming = 2
 
-  if light_info.dimming and light_info.dimming.min_dim_level then minimum_dimming = light_info.dimming.min_dim_level end
+  if light_info.dimming and light_info.dimming.min_dim_level then
+    minimum_dimming = st_utils.round(st_utils.clamp_value(light_info.dimming.min_dim_level, 1, 100))
+  end
+
+  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
+
+  -- Remembering that mirek are reciprocal to kelvin, note the following:
+  --  ** Minimum Mirek -> _Maximum_ Kelvin
+  --  ** Maximum Mirek -> _Minimum_ Kelvin
+  --
+  -- Not necessarily obvious/intuitive, but easy enough to validate with the math:
+  --
+  -- Given that `kelvin = 1000000 / mirek`, and `mirek = 1000000 / kelvin`, pick
+  -- one of our minimum consts: `Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE = 2000`
+  --
+  -- `floor(1000000 / 2000) = 500` and 500 is the max mirek we see on almost all Hue lights.
+  -- Similarly:
+  -- `floor(1000000 / 6500) = 153`, which is the minimum we see from the API for color control lights.
+  if light_info.color_temperature and light_info.color_temperature.mirek_schema then
+    local caps = device.profile.components.main.capabilities
+    if caps.colorTemperature then
+      local min_ct_kelvin, max_ct_kelvin = nil, nil
+      if type(light_info.color_temperature.mirek_schema.mirek_maximum) == "number" then
+        min_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_maximum))
+      end
+      if type(light_info.color_temperature.mirek_schema.mirek_minimum) == "number" then
+        max_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_minimum))
+      end
+      if not min_ct_kelvin then
+        if caps.colorControl then
+          min_ct_kelvin = Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE
+        else
+          min_ct_kelvin = Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+        end
+      end
+      if not max_ct_kelvin then
+        max_ct_kelvin = Consts.MAX_TEMP_KELVIN
+      end
+      device:set_field(Fields.MIN_KELVIN, min_ct_kelvin, { persist = true })
+      device:set_field(Fields.MAX_KELVIN, max_ct_kelvin, { persist = true })
+    end
+  end
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
@@ -147,7 +188,6 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
   end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
-  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
@@ -164,14 +204,7 @@ end
 function LightLifecycleHandlers.init(driver, device)
   log.info(
     string.format("Init Light for device %s", (device.label or device.id or "unknown device")))
-  local caps = device.profile.components.main.capabilities
-  if caps.colorTemperature then
-    if caps.colorControl then
-      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
-    else
-      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
-    end
-  end
+
   local device_light_resource_id =
       utils.get_hue_rid(device) or
       device.device_network_id

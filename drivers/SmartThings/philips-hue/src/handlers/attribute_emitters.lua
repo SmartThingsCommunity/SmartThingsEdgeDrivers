@@ -1,5 +1,5 @@
 local capabilities = require "st.capabilities"
-local log = require "logjam"
+local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: table, name: string?, multi_line: boolean?): string
@@ -35,12 +35,22 @@ local function _emit_light_events_inner(light_device, light_repr)
 
     if light_repr.on and light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.on())
+      light_device:set_field(Fields.SWITCH_STATE, "on", {persist = true})
     elseif light_repr.on and not light_repr.on.on then
       light_device:emit_event(capabilities.switch.switch.off())
+      light_device:set_field(Fields.SWITCH_STATE, "off", {persist = true})
     end
 
     if light_repr.dimming then
-      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, 1, 100))
+      local min_dim = light_device:get_field(Fields.MIN_DIMMING)
+      local api_min_dim = st_utils.round(st_utils.clamp_value(light_repr.dimming.min_dim_level or Consts.DEFAULT_MIN_DIMMING, 1, 100))
+      if min_dim ~= api_min_dim then
+        min_dim = api_min_dim
+        light_device:set_field(Fields.MIN_DIMMING, min_dim, { persist = true })
+        log.info("EMITTING DIMMING CAP RANGE")
+        light_device:emit_event(capabilities.switchLevel.levelRange({ minimum = min_dim, maximum = 100 }))
+      end
+      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, min_dim, 100))
       if utils.is_nan(adjusted_level) then
         light_device.log.warn(
           string.format(
@@ -54,13 +64,42 @@ local function _emit_light_events_inner(light_device, light_repr)
     end
 
     if light_repr.color_temperature then
-      local mirek = Consts.DEFAULT_MIREK
+      local mirek = Consts.DEFAULT_MIN_MIREK
       if light_repr.color_temperature.mirek_valid then
         mirek = light_repr.color_temperature.mirek
       end
-      local min = light_device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+      local mirek_schema = light_repr.color_temperature.mirek_schema or {
+        mirek_minimum = Consts.DEFAULT_MIN_MIREK,
+        mirek_maximum = Consts.DEFAULT_MAX_MIREK
+      }
+
+      -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
+      -- if the below is not intuitive.
+      local min_kelvin = light_device:get_field(Fields.MIN_KELVIN)
+      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+      local max_kelvin = light_device:get_field(Fields.MAX_KELVIN)
+      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum) or Consts.MAX_TEMP_KELVIN)
+
+      local update_range = false
+      if min_kelvin ~= api_min_kelvin then
+        update_range = true
+        min_kelvin = api_min_kelvin
+        light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
+      end
+
+      if max_kelvin ~= api_max_kelvin then
+        update_range = true
+        max_kelvin = api_max_kelvin
+        light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
+      end
+
+      if update_range then
+        light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+      end
+
+      -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
       local kelvin = math.floor(
-        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min, Consts.MAX_TEMP_KELVIN)
+        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min_kelvin, max_kelvin)
       )
       if utils.is_nan(kelvin) then
         light_device.log.warn(
@@ -96,6 +135,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.hue(adjusted_hue))
+        light_device:set_field(Fields.COLOR_HUE, adjusted_hue, {persist = true})
       end
 
       if utils.is_nan(adjusted_sat) then
@@ -107,6 +147,7 @@ local function _emit_light_events_inner(light_device, light_repr)
         )
       else
         light_device:emit_event(capabilities.colorControl.saturation(adjusted_sat))
+        light_device:set_field(Fields.COLOR_SATURATION, adjusted_sat, {persist = true})
       end
     end
   end
@@ -131,7 +172,7 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
   end
 
   if button_info.power_state and type(button_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     button_device:emit_event(
       capabilities.battery.battery(
         st_utils.clamp_value(button_info.power_state.battery_level, 0, 100)
@@ -186,12 +227,12 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
   end
 
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
 
   if sensor_info.tamper_reports then
-    log.debug(true, "emit tamper")
+    log.debug("emit tamper")
     local tampered = false
     for _, tamper in ipairs(sensor_info.tamper_reports) do
       if tamper.state == "tampered" then
@@ -208,7 +249,7 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
   end
 
   if sensor_info.contact_report then
-    log.debug(true, "emit contact")
+    log.debug("emit contact")
     if sensor_info.contact_report.state == "contact" then
       sensor_device:emit_event(capabilities.contactSensor.contact.closed())
     else
@@ -224,12 +265,12 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
-    log.debug(true, "emit power")
+    log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
   end
 
   if sensor_info.temperature and sensor_info.temperature.temperature_valid then
-    log.debug(true, "emit temp")
+    log.debug("emit temp")
     sensor_device:emit_event(capabilities.temperatureMeasurement.temperature({
       value = sensor_info.temperature.temperature,
       unit = "C"
@@ -237,7 +278,7 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.light and sensor_info.light.light_level_valid then
-    log.debug(true, "emit light")
+    log.debug("emit light")
     -- From the Hue docs: Light level in 10000*log10(lux) +1
     local raw_light_level = sensor_info.light.light_level
     -- Convert from the Hue value to lux
@@ -246,7 +287,7 @@ function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, se
   end
 
   if sensor_info.motion and sensor_info.motion.motion_valid then
-    log.debug(true, "emit motion")
+    log.debug("emit motion")
     if sensor_info.motion.motion then
       sensor_device:emit_event(capabilities.motionSensor.motion.active())
     else
@@ -259,19 +300,19 @@ end
 ---@param light_repr table
 function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
-    log.warn(true, "Tried to emit light status event for device that has been deleted")
+    log.warn("Tried to emit light status event for device that has been deleted")
     return
   end
   local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)
   if not success then
-    log.error_with({ hub_logs = true, on = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
+    log.error_with({ hub_logs = true }, string.format("Failed to invoke emit light status handler. Reason: %s", maybe_err))
   end
 end
 
 local function noop_event_emitter(device, ...)
   local label = (device and device.label) or "Unknown Device Name"
-  local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
-  log.warn(true, string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
+  local device_type = (device and utils.determine_device_type(device)) or "Unknown Device Type"
+  log.warn(string.format("Tried to find attribute event emitter for device [%s] of unsupported type [%s], ignoring", label, device_type))
 end
 
 function AttributeEmitters.emitter_for_device_type(device_type)

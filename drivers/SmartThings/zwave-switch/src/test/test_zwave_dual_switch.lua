@@ -467,6 +467,7 @@ test.register_coroutine_test(
         mock_parent.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
+
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
@@ -503,6 +504,7 @@ test.register_coroutine_test(
         mock_child.id,
         { capability = "switch", component = "main", command = "on", args = {} }
       })
+
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
@@ -539,6 +541,7 @@ test.register_coroutine_test(
         mock_parent.id,
         { capability = "switch", component = "main", command = "off", args = {} }
       })
+
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,
@@ -575,6 +578,7 @@ test.register_coroutine_test(
         mock_child.id,
         { capability = "switch", component = "main", command = "off", args = {} }
       })
+
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_parent,

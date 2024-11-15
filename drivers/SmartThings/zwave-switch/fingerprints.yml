@@ -23,7 +23,7 @@ zwaveManufacturer:
     productType: 0x4457
     deviceProfileName: switch-level-indicator
   - id: 0063/4944
-    deviceLabel: GE Dimmer Switch
+    deviceLabel: JascoPro In-Wall Dimmer
     manufacturerId: 0x0063
     productType: 0x4944
     deviceProfileName: switch-level-indicator
@@ -387,7 +387,7 @@ zwaveManufacturer:
     productId: 0xA002
     deviceProfileName: switch-binary
   - id: 0063/4952
-    deviceLabel: GE Switch
+    deviceLabel: JascoPro In-Wall Switch
     manufacturerId: 0x0063
     productType: 0x4952
     deviceProfileName: switch-binary-indicator
@@ -448,6 +448,18 @@ zwaveManufacturer:
     productType: 0x1603
     productId: 0x0334
     deviceProfileName: smartplug-binary
+  - id: 001D/0041/0002
+    deviceLabel: Leviton ZW6HD In-wall Dimmer
+    manufacturerId: 0x001D
+    productType: 0x0041
+    productId: 0x0002
+    deviceProfileName: leviton-ZW6HD
+  - id: 001D/0042/0002
+    deviceLabel: Leviton ZW15S In-wall Switch
+    manufacturerId: 0x001D
+    productType: 0x0042
+    productId: 0x0002
+    deviceProfileName: leviton-ZW15S
   - id: 011A/0101/0102
     deviceLabel: Enerwave Switch
     manufacturerId: 0x011A
@@ -911,6 +923,60 @@ zwaveManufacturer:
     productId: 0x0088
     productType: 0x0002
     deviceProfileName: smartplug-switch-power-energy
+  - id: 1120/2/129
+    deviceLabel: Wave 2PM 1
+    manufacturerId: 0x0460
+    productId: 0x0081
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/131
+    deviceLabel: Wave 1
+    manufacturerId: 0x0460
+    productId: 0x0083
+    productType: 0x0002
+    deviceProfileName: switch-binary 
+  - id: 1120/2/132
+    deviceLabel: Wave 1PM
+    manufacturerId: 0x0460
+    productId: 0x0084
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/138
+    deviceLabel: Wave Pro 1
+    manufacturerId: 0x0460
+    productId: 0x008A
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/139
+    deviceLabel: Wave Pro 1PM
+    manufacturerId: 0x0460
+    productId: 0x008B
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/140
+    deviceLabel: Wave Pro 2 1
+    manufacturerId: 0x0460
+    productId: 0x008C
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/141
+    deviceLabel: Wave Pro 2PM 1
+    manufacturerId: 0x0460
+    productId: 0x008D
+    productType: 0x0002
+    deviceProfileName: metering-switch
+  - id: 1120/2/142
+    deviceLabel: Wave 1 Mini
+    manufacturerId: 0x0460
+    productId: 0x008E
+    productType: 0x0002
+    deviceProfileName: switch-binary
+  - id: 1120/2/143
+    deviceLabel: Wave 1PM Mini
+    manufacturerId: 0x0460
+    productId: 0x008F
+    productType: 0x0002
+    deviceProfileName: metering-switch
 zwaveGeneric:
   - id: "GenericSwitch/1"
     deviceLabel: Switch

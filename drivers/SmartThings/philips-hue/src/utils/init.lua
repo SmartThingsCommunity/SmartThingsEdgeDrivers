@@ -1,4 +1,4 @@
-local log = require "logjam"
+local log = require "log"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -17,6 +17,7 @@ function utils.lazy_handler_loader(parent_module)
     {},
     {
       __index = function(tbl, key)
+        if key == nil then return nil end
         if nils[key] then return nil end
         if rawget(tbl, key) == nil then
           local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
@@ -283,7 +284,7 @@ end
 function utils.is_bridge(driver, device)
   return (device:get_field(Fields.DEVICE_TYPE) == "bridge")
       or (driver.datastore.bridge_netinfo[device.device_network_id] ~= nil)
-      or utils.is_edge_bridge(device) or utils.is_dth_light(device)
+      or utils.is_edge_bridge(device) or utils.is_dth_bridge(device)
       or (device.parent_assigned_child_key == nil)
 end
 

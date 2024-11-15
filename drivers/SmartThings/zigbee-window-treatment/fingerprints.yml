@@ -24,6 +24,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.curtain.v1
     deviceProfileName: window-treatment-aqara
+  - id: "LUMI/lumi.curtain.agl001"
+    deviceLabel: Aqara Curtain Driver E1
+    manufacturer: LUMI
+    model: lumi.curtain.agl001
+    deviceProfileName: window-treatment-aqara-curtain-driver-e1
   - id: "REXENSE/KG0001"
     deviceLabel: Window Treatment
     manufacturer: REXENSE
@@ -108,6 +113,11 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Blinds Actuator
     deviceProfileName: window-treatment-profile
+  - id: "ScreenInnovations/WM25/L-Z"
+    deviceLabel: Screen Innovations Window Treatment
+    manufacturer: Screen Innovations
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-powerSource
 
 zigbeeGeneric:
   - id: "genericShade"

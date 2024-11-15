@@ -155,14 +155,17 @@ local function rvc_run_mode_supported_mode_attr_handler(driver, device, ib, resp
       break
     end
   end
-  local labels_of_supported_modes = get_labels_of_supported_modes_filter_by_current_mode(device,
+  local labels_of_supported_arguments = get_labels_of_supported_modes_filter_by_current_mode(device,
     RVC_RUN_MODE_SUPPORTED_MODES,
     clusters.RvcRunMode.types.ModeTag.IDLE,
     current_mode
   )
-
+  local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES)
   local component = device.profile.components["runMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
+  local event = capabilities.mode.supportedArguments(labels_of_supported_arguments, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+  event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -186,7 +189,8 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
         clusters.RvcRunMode.types.ModeTag.IDLE,
         mode
       )
-      device:emit_component_event(component, capabilities.mode.supportedModes(filtered_labels))
+      local event = capabilities.mode.supportedModes(filtered_labels, {visibility = {displayed = false}})
+      device:emit_component_event(component, event)
 
       -- State Machine Rules 2. RVC Clean Mode - Mode Change Restrictions
       local is_idle = is_idle_mode(device, RVC_RUN_MODE_SUPPORTED_MODES, i, clusters.RvcRunMode.types.ModeTag.IDLE)
@@ -197,9 +201,11 @@ local function rvc_run_mode_current_mode_attr_handler(driver, device, ib, respon
           clusters.RvcCleanMode.ID,
           clusters.RvcCleanMode.attributes.SupportedModes.ID,
           response)
-        device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_rvc_clean_mode))
+        local event = capabilities.mode.supportedModes(labels_of_rvc_clean_mode, {visibility = {displayed = false}})
+        device:emit_component_event(component, event)
       else
-        device:emit_component_event(component, capabilities.mode.supportedModes({}))
+        local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
+        device:emit_component_event(component, event)
       end
       break
     end
@@ -211,7 +217,10 @@ local function rvc_clean_mode_supported_mode_attr_handler(driver, device, ib, re
   local labels_of_supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES)
 
   local component = device.profile.components["cleanMode"]
-  device:emit_component_event(component, capabilities.mode.supportedModes(labels_of_supported_modes))
+  local event = capabilities.mode.supportedArguments(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+  event = capabilities.mode.supportedModes(labels_of_supported_modes, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
 end
 
 local function rvc_clean_mode_current_mode_attr_handler(driver, device, ib, response)
@@ -292,12 +301,12 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
-  local ENDPOINT = 1
+  local endpoint_id = device:component_to_endpoint(cmd.component)
   if cmd.component == "runMode" then
     local supported_modes = get_field_labels_of_supported_modes(device, RVC_RUN_MODE_SUPPORTED_MODES) or {}
     for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
-        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, i - 1))
         return
       end
     end
@@ -305,7 +314,7 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
     local supported_modes = get_field_labels_of_supported_modes(device, RVC_CLEAN_MODE_SUPPORTED_MODES) or {}
     for i, mode in ipairs(supported_modes) do
       if cmd.args.mode == mode then
-        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, ENDPOINT, i - 1))
+        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, endpoint_id, i - 1))
         return
       end
     end

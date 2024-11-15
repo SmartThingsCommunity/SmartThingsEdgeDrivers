@@ -1,0 +1,33 @@
+name: tv-hub
+components:
+  - id: main
+    label: main
+    capabilities:
+    - id: bridge
+      version: 1
+      ephemeral: false
+    categories:
+      - name: Hub
+        categoryType: manufacturer
+deviceConfig:
+  icons:
+  - group: main
+    badge:
+    - iconUrl: 'badge://tv'
+  dashboard:
+    states:
+    - component: main
+      capability: bridge
+      version: 1
+  dpInfo:
+  - os: ios
+    dpUri: 'plugin://com.samsung.ios.plugin.stplugin/assets/files/index.html'
+  - os: android
+    dpUri: 'plugin://com.samsung.android.plugin.stplugin'
+  - os: web
+    dpUri: 'wwst://com.samsung.one.plugin.stplugin'
+    arguments:
+    - key: int_hub
+      value: 'wwst://com.samsung.one.plugin.chargerplugin'
+metadata:
+  ocfDeviceType: x.com.st.d.hub

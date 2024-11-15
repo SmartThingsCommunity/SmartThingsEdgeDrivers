@@ -78,6 +78,22 @@ test.register_message_test(
       message = {mock_device.id, "added"}
     },
     {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+          mock_device.id,
+          TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+      }
+    },
+    {
       channel = "capability",
       direction = "receive",
       message = {
