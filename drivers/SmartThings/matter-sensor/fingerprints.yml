@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  #Elko
+  - id: "5170/4098"
+    deviceLabel: RFWD-100/MT
+    vendorId: 0x1432
+    productId: 0x1002
+    deviceProfileName: contact-battery
   #Eve
   - id: "Eve Motion"
     deviceLabel: Eve Motion
