@@ -1158,23 +1158,25 @@ local function info_changed(driver, device, event, args)
     end
   end
 
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    if device.manufacturer_info.vendor_id == fingerprint_profile_overrides[1].vendor_id and
-      device.manufacturer_info.product_id == fingerprint_profile_overrides[1].product_id then
-      local time_diff = 3
-      local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
-      if last_clock_set_time ~= nil then
-        time_diff = os.difftime(os.time(), last_clock_set_time)
-      end
-      device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
-      if time_diff > 2 then
-        local preferences = preference_map_inovelli_vtm31sn
-        for id, value in pairs(device.preferences) do
-          if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-            local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
-            local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number, new_parameter_value)
-            device:send(req)
-          end
+  if not device.preferences or device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    return
+  end
+
+  if device.manufacturer_info.vendor_id == fingerprint_profile_overrides[1].vendor_id and
+    device.manufacturer_info.product_id == fingerprint_profile_overrides[1].product_id then
+    local time_diff = 3
+    local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
+    if last_clock_set_time ~= nil then
+      time_diff = os.difftime(os.time(), last_clock_set_time)
+    end
+    device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
+    if time_diff > 2 then
+      local preferences = preference_map_inovelli_vtm31sn
+      for id, value in pairs(device.preferences) do
+        if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
+          local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+          local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number, new_parameter_value)
+          device:send(req)
         end
       end
     end
