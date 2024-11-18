@@ -38,6 +38,7 @@ local zigbee_thermostat_profile = {
 }
 
 local mock_device = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "SORB", server_clusters = {0x0201, 0x0204, 0x0405}} } })
+local mock_device_maestro = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "MaestroStat", server_clusters = {0x0201, 0x0204, 0x0405}} } })
 local mock_device_maestro = test.mock_device.build_test_zigbee_device({ profile = zigbee_thermostat_profile, zigbee_endpoints ={ [1] = {id = 1, manufacturer = "Stelpro", model = "SMT402AD", server_clusters = {0x0201, 0x0204, 0x0405}} } })
 
 zigbee_test_utils.prepare_zigbee_env_info()
@@ -372,6 +373,85 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end
+)
+
+test.register_coroutine_test(
+    "Refresh necessary attributes - MaestroStat",
+    function()
+      test.socket.device_lifecycle:__queue_receive({ mock_device_maestro.id, "added" })
+      test.socket.capability:__expect_send(
+        mock_device_maestro:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+      )
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        Thermostat.attributes.LocalTemperature:read(mock_device_maestro)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        Thermostat.attributes.PIHeatingDemand:read(mock_device_maestro)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device_maestro)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode:read(mock_device_maestro)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:read(mock_device_maestro)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device_maestro.id,
+        RelativeHumidity.attributes.MeasuredValue:read(mock_device_maestro)
+      })
+      test.wait_for_events()
+
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+    end
+)
+
+test.register_coroutine_test(
+    "Configure should configure all necessary attributes - MaestroStat",
+    function ()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({mock_device_maestro.id, "doConfigure"})
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         zigbee_test_utils.build_bind_request(
+                                             mock_device_maestro,
+                                             zigbee_test_utils.mock_hub_eui,
+                                             Thermostat.ID
+                                         )
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         Thermostat.attributes.LocalTemperature:configure_reporting(mock_device_maestro, 10, 60, 50)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         Thermostat.attributes.OccupiedHeatingSetpoint:configure_reporting(mock_device_maestro, 1, 600, 50)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         Thermostat.attributes.PIHeatingDemand:configure_reporting(mock_device_maestro, 1, 3600, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode:configure_reporting(mock_device_maestro, 1, 0, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:configure_reporting(mock_device_maestro, 1, 0, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device_maestro.id,
+                                         RelativeHumidity.attributes.MeasuredValue:configure_reporting(mock_device_maestro, 10, 300, 1)
+                                       })
+
+      mock_device_maestro:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
