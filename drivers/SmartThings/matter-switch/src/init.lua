@@ -252,14 +252,6 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
   end
 end
 
-local preferences_to_numeric_value = function(new_value)
-  local numeric = tonumber(new_value)
-  if numeric == nil then -- in case the value is Boolean
-    numeric = new_value and 1 or 0
-  end
-  return numeric
-end
-
 local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
