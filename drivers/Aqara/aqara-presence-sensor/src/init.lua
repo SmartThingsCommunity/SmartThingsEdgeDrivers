@@ -26,9 +26,6 @@ local function status_update(driver, device)
     if err or status ~= 200 then
       log.error(string.format("refresh : failed to get attr, dni= %s, err= %s, status= %s", device.device_network_id, err,
         status))
-      if status == 404 then
-        device:offline()
-      end
     else
       driver.device_manager.handle_status(driver, device, resp)
     end
@@ -64,7 +61,9 @@ local function create_sse(driver, device, credential)
     end
 
     eventsource.onopen = function()
+      log.info(string.format("Eventsource open: dni= %s", device.device_network_id))
       device:online()
+      status_update(driver, device)
     end
 
     local old_eventsource = device:get_field(fields.EVENT_SOURCE)
