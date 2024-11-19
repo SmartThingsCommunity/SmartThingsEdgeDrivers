@@ -39,14 +39,6 @@ local function process_rest_response(response, err, partial)
   end
 end
 
-local function retry_fn(retry_attempts)
-  local count = 0
-  return function()
-    count = count + 1
-    return count < retry_attempts
-  end
-end
-
 local function do_get(api_instance, path)
   return process_rest_response(RestClient.one_shot_get(api_instance.base_url .. path, api_instance.headers, api_instance.socket_builder))
 end
