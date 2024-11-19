@@ -19,7 +19,6 @@ local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
-local data_types = require "st.matter.data_types"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -157,17 +156,6 @@ local child_device_profile_overrides = {
 
 local fingerprint_profile_overrides = {
   { vendor_id = 0x1361, product_id = 0x0001 }, -- Inovelli VTM31-SN
-}
-
-local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
-
-local preference_map_inovelli_vtm31sn = {
-  switchMode = {parameter_number = 1, size = data_types.Uint8},
-  smartBulbMode = {parameter_number = 2, size = data_types.Uint8},
-  dimmingEdge = {parameter_number = 3, size = data_types.Uint8},
-  dimmingSpeed = {parameter_number = 4, size = data_types.Uint8},
-  relayClick = {parameter_number = 5, size = data_types.Uint8},
-  ledIndicatorColor = {parameter_number = 6, size = data_types.Uint8},
 }
 
 local detect_matter_thing
@@ -1157,30 +1145,6 @@ local function info_changed(driver, device, event, args)
       device:set_field(DEFERRED_CONFIGURE, nil)
     end
   end
-
-  if not device.preferences or device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    return
-  end
-
-  if device.manufacturer_info.vendor_id == fingerprint_profile_overrides[1].vendor_id and
-    device.manufacturer_info.product_id == fingerprint_profile_overrides[1].product_id then
-    local time_diff = 3
-    local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
-    if last_clock_set_time ~= nil then
-      time_diff = os.difftime(os.time(), last_clock_set_time)
-    end
-    device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
-    if time_diff > 2 then
-      local preferences = preference_map_inovelli_vtm31sn
-      for id, value in pairs(device.preferences) do
-        if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-          local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
-          local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number, new_parameter_value)
-          device:send(req)
-        end
-      end
-    end
-  end
 end
 
 local function device_added(driver, device)
@@ -1358,8 +1322,9 @@ local matter_driver_template = {
     capabilities.battery
   },
   sub_drivers = {
+    require("aqara-cube"),
     require("eve-energy"),
-    require("aqara-cube")
+    require("inovelli-vtm31-sn")
   }
 }
 
