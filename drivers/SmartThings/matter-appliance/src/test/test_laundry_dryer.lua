@@ -548,7 +548,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=30.0,maximum=70.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=30.0,maximum=70.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -604,7 +604,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -660,7 +660,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=15.0,maximum=50.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=15.0,maximum=50.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -716,7 +716,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
