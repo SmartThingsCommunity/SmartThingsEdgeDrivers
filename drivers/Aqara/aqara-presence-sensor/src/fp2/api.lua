@@ -48,7 +48,7 @@ local function retry_fn(retry_attempts)
 end
 
 local function do_get(api_instance, path)
-  return process_rest_response(api_instance.client:get(path, api_instance.headers, retry_fn(5)))
+  return process_rest_response(RestClient.one_shot_get(api_instance.base_url .. path, api_instance.headers, api_instance.socket_builder))
 end
 
 function fp2_api.new_device_manager(device_ip, bridge_info, socket_builder)
@@ -57,7 +57,7 @@ function fp2_api.new_device_manager(device_ip, bridge_info, socket_builder)
   return setmetatable(
     {
       headers = ADDITIONAL_HEADERS,
-      client = RestClient.new(base_url, socket_builder),
+      socket_builder = socket_builder,
       base_url = base_url,
     }, fp2_api
   )
