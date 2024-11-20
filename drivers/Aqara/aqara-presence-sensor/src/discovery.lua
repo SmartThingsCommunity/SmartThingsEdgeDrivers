@@ -11,9 +11,12 @@ function discovery.set_device_field(driver, device)
 
   -- persistent fields
   if device_cache_value ~= nil then
+    log.info_with({ hub_logs = true }, string.format("device found in cache. dni= %s", device.device_network_id))
     device:set_field(fields.CREDENTIAL, device_cache_value.credential, { persist = true })
     device:set_field(fields.DEVICE_IPV4, device_cache_value.ip, { persist = true })
     device:set_field(fields.DEVICE_INFO, device_cache_value.device_info, { persist = true })
+  else
+    log.error_with({ hub_logs = true }, string.format("device not found in cache. dni= %s", device.device_network_id))
   end
 
   driver.datastore.discovery_cache[device.device_network_id] = nil
@@ -40,7 +43,7 @@ local function try_add_device(driver, device_dni, device_ip)
     if driver.datastore.discovery_cache[device_dni] and driver.datastore.discovery_cache[device_dni].credential then
       log.info(string.format("use stored credential. This may have expired. dni= %s, ip= %s", device_dni, device_ip))
     else
-      log.error(string.format("Failed to get credential. The device appears to have already generated a credential. In that case, a device reset is needed to generate a new credential. dni= %s, ip= %s", device_dni, device_ip))
+      log.error_with({ hub_logs = true }, string.format("Failed to get credential. The device appears to have already generated a credential. In that case, a device reset is needed to generate a new credential. dni= %s, ip= %s", device_dni, device_ip))
       return "credential not found"
     end
   else
@@ -48,13 +51,14 @@ local function try_add_device(driver, device_dni, device_ip)
     driver.datastore.discovery_cache[device_dni].credential = credential
   end
 
-  log.info(string.format("try_create_device. dni= %s, ip= %s", device_dni, device_ip))
+  log.info_with({ hub_logs = true }, string.format("try_create_device. dni= %s, ip= %s", device_dni, device_ip))
   processing_devices[device_dni] = true
   driver:try_create_device(create_device_msg)
   return nil
 end
 
 function discovery.device_added(driver, device)
+  log.info_with({ hub_logs = true }, string.format("device_added. dni= %s", device.device_network_id))
   discovery.set_device_field(driver, device)
   processing_devices[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
@@ -96,6 +100,7 @@ local function discovery_device(driver)
 end
 
 function discovery.do_network_discovery(driver, _, should_continue)
+  log.info_with({ hub_logs = true }, string.format("discovery start for Aqara FP2"))
   while should_continue() do
     discovery_device(driver)
     socket.sleep(1)
