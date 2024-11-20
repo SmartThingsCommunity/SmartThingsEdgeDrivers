@@ -52,7 +52,8 @@ local zigbee_valve_driver_template = {
     added = device_added
   },
   sub_drivers = {
-    require("sinope")
+    require("sinope"),
+    require("ezex")
   }
 }
 
