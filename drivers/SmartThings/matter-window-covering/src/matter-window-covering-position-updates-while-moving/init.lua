@@ -18,6 +18,7 @@ local device_lib = require "st.device"
 
 local DEFAULT_LEVEL = 0
 local STATE_MACHINE = "__state_machine"
+local REVERSE_POLARITY = "__reverse_polarity"
 
 local StateMachineEnum = {
   STATE_IDLE = 0x00,
@@ -51,7 +52,10 @@ end
 local function current_pos_handler(driver, device, ib, response)
   local position = 0
   if ib.data.value ~= nil then
-    position = 100 - math.floor((ib.data.value / 100))
+    position = math.floor((ib.data.value / 100))
+    if not device:get_field(REVERSE_POLARITY) then
+      position = 100 - position
+    end
     device:emit_event_for_endpoint(
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
@@ -61,10 +65,18 @@ local function current_pos_handler(driver, device, ib, response)
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
-    if position == 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
-    elseif position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
+    if position == 0 then -- normal polarity: closed, reversed polarity: open
+      if device:get_field(REVERSE_POLARITY) then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
+      end
+    elseif position == 100 then -- normal polarity: open, reversed polarity: closed
+      if device:get_field(REVERSE_POLARITY) then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
+      end
     elseif position > 0 and position < 100 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.partially_open())
     else
@@ -81,12 +93,18 @@ local function current_status_handler(driver, device, ib, response)
                      "main", capabilities.windowShadeLevel.ID,
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
+  if device:get_field(REVERSE_POLARITY) then
+    position = 100 - position
+  end
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID and
        rb.info_block.data ~= nil and
        rb.info_block.data.value ~= nil then
-      position = 100 - math.floor((rb.info_block.data.value / 100))
+      position = math.floor((rb.info_block.data.value / 100))
+      if not device:get_field(REVERSE_POLARITY) then
+        position = 100 - position
+      end
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
@@ -113,10 +131,18 @@ local function current_status_handler(driver, device, ib, response)
     end
   elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
     if state == 0 then -- not moving
-      if position == 100 then -- open
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
-      elseif position == 0 then -- closed
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+      if position == 100 then -- normal polarity: open, reversed polarity: closed
+        if device:get_field(REVERSE_POLARITY) then
+          device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+        else
+          device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
+        end
+      elseif position == 0 then -- normal polarity: closed, reversed polarity: open
+        if device:get_field(REVERSE_POLARITY) then
+          device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
+        else
+          device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+        end
       else
         device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
       end
