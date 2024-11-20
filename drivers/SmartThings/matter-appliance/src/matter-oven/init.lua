@@ -28,7 +28,6 @@ clusters.OvenMode = require "OvenMode"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_OVEN_MODES_MAP = "__supported_oven_modes_map_key_"
-local CURRENT_CONFIGURED_UNIT = "__current_configured_unit"
 
 local OVEN_DEVICE_ID = 0x007B
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
@@ -38,8 +37,8 @@ local TCC_DEVICE_TYPE_ID = 0x0071
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the recevied command value is for what unit as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual oven temperatures:
--- 1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
--- 2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
+--   1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
+--   2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
 local OVEN_MAX_TEMP_IN_C = 260
 local OVEN_MIN_TEMP_IN_C = 127
 
@@ -80,12 +79,19 @@ local function component_to_endpoint(device, component)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
+local function is_oven_device(opts, driver, device)
+  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
+  if #oven_eps > 0 then
+    return true
+  end
+  return false
+end
+
 -- Lifecycle Handlers --
 local function device_init(driver, device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_field(CURRENT_CONFIGURED_UNIT, "C")
 end
 
 local function device_added(driver, device)
@@ -101,14 +107,6 @@ local function device_added(driver, device)
     ["cookSurfaceTwo"] = cook_surface_endpoints[2]
   }
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
-end
-
-local function is_oven_device(opts, driver, device)
-  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
-  if #oven_eps > 0 then
-    return true
-  end
-  return false
 end
 
 -- Matter Handlers --
@@ -161,6 +159,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
 
   -- Only emit the capability for RPC version >= 5, since unit conversion for
@@ -185,16 +184,9 @@ local function setpoint_limit_handler(limit_field)
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
 
-    -- We clamp the max and min values as per the assumed oven temperature ranges.
-    if val < OVEN_MIN_TEMP_IN_C or val > OVEN_MAX_TEMP_IN_C then
-      if limit_field == setpoint_limit_device_field.MIN_TEMP then
-        val = OVEN_MIN_TEMP_IN_C
-      else
-        val = OVEN_MAX_TEMP_IN_C
-      end
-    end
+    val = utils.clamp_value(val, OVEN_MIN_TEMP_IN_C, OVEN_MAX_TEMP_IN_C)
 
-    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
 end
