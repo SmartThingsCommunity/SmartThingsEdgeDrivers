@@ -20,19 +20,19 @@ local function status_update(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
   if not conn_info then
     log.warn(string.format("refresh : failed to find conn_info, dni = %s", device.device_network_id))
-    return "failed to find conn_info"
+    return false, "failed to find conn_info"
   else
     local resp, err, status = conn_info:get_attr()
 
     if err or status ~= 200 then
       log.error(string.format("refresh : failed to get attr, dni= %s, err= %s, status= %s", device.device_network_id, err,
         status))
-      return "failed to get attr"
+      return false, "failed to get attr"
     else
       driver.device_manager.handle_status(driver, device, resp)
     end
   end
-  return nil
+  return true
 end
 
 local function create_sse(driver, device, credential)
@@ -61,7 +61,14 @@ local function create_sse(driver, device, credential)
     eventsource.onopen = function()
       log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s", device.device_network_id))
       device:online()
-      status_update(driver, device)
+      local success, err = status_update(driver, device)
+      if not success then
+        log.warn(string.format("Failed to status_update during eventsource.onopen, err = %s dni= %s", err, device.device_network_id))
+        success, err = status_update(driver, device)
+        if not success then
+          log.error_with({ hub_logs = true }, string.format("Failed to status_update during eventsource.onopen again, err = %s dni= %s", err, device.device_network_id))
+        end
+      end
     end
 
     local old_eventsource = device:get_field(fields.EVENT_SOURCE)
@@ -123,8 +130,9 @@ end
 
 
 local function do_refresh(driver, device, cmd)
-  local err = status_update(driver, device)
-  if err then
+  local success, err = status_update(driver, device)
+  if not success then
+    log.info(string.format("Failed to status_update during do_refresh, err = %s dni= %s", err, device.device_network_id))
     check_and_update_connection(driver, device)
   end
   driver.device_manager.init_presence(driver, device)
