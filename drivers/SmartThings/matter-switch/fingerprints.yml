@@ -320,6 +320,11 @@ matterManufacturer:
     productId: 0x1002
     deviceProfileName: switch-binary
 #Lifx
+  - id: "5155/161"
+    deviceLabel: LIFX Neon Outdoor
+    vendorId: 0x1423
+    productId: 0x00A1
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
     vendorId: 0x1423
@@ -349,6 +354,21 @@ matterManufacturer:
     deviceLabel: LIFX Ceiling
     vendorId: 0x1423
     productId: 0x00B0
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/201"
+    deviceLabel: LIFX Ceiling 13x26
+    vendorId: 0x1423
+    productId: 0x00C9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/213"
+    deviceLabel: LIFX Permanent Outdoor
+    vendorId: 0x1423
+    productId: 0x00D5
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/215"
+    deviceLabel: LIFX Candle (B10)
+    vendorId: 0x1423
+    productId: 0x00D7
     deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/217"
     deviceLabel: LIFX Tube
