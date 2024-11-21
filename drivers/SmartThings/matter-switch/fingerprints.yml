@@ -350,6 +350,11 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/217"
+    deviceLabel: LIFX Tube
+    vendorId: 0x1423
+    productId: 0x00D9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
