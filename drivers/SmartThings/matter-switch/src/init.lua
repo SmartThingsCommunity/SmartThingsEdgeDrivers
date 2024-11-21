@@ -60,6 +60,7 @@ local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 local COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
+local COLOR_MODE = "__color_mode"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
@@ -881,14 +882,26 @@ end
 local function hue_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+    local current_color_mode = get_field_for_endpoint(device, COLOR_MODE, ib.endpoint_id)
+    -- don't send capability events if the color of the device is being determined by CurrentX and CurrentY (1) or ColorTemperatureMireds (2)
+    if current_color_mode == 1 or current_color_mode == 2 then
+      log.info_with({hub_logs=true}, string.format("CurrentHue and CurrentSaturation are not currently determining the color of the device. ColorMode is %d", current_color_mode))
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+    end
   end
 end
 
 local function sat_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+    local current_color_mode = get_field_for_endpoint(device, COLOR_MODE, ib.endpoint_id)
+    -- don't send capability events if the color of the device is being determined by CurrentX and CurrentY (1) or ColorTemperatureMireds (2)
+    if current_color_mode == 1 or current_color_mode == 2 then
+      log.info_with({hub_logs=true}, string.format("CurrentHue and CurrentSaturation are not currently determining the color of the device. ColorMode is %d", current_color_mode))
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+    end
   end
 end
 
@@ -999,8 +1012,14 @@ local function x_attr_handler(driver, device, ib, response)
   else
     local x = ib.data.value
     local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
+    local current_color_mode = get_field_for_endpoint(device, COLOR_MODE, ib.endpoint_id)
+    -- don't send capability events if the color of the device is being determined by CurrentHue and CurrentSaturation (0) or ColorTemperatureMireds (2)
+    if current_color_mode == 0 or current_color_mode == 2 then
+      log.info_with({hub_logs=true}, string.format("CurrentX and CurrentY are not currently determining the color of the device. ColorMode is %d", current_color_mode))
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
+    end
     device:set_field(RECEIVED_Y, nil)
   end
 end
@@ -1012,9 +1031,21 @@ local function y_attr_handler(driver, device, ib, response)
   else
     local y = ib.data.value
     local h, s, _ = color_utils.safe_xy_to_hsv(x, y)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
+    local current_color_mode = get_field_for_endpoint(device, COLOR_MODE, ib.endpoint_id)
+    -- don't send capability events if the color of the device is being determined by CurrentHue and CurrentSaturation (0) or ColorTemperatureMireds (2)
+    if current_color_mode == 0 or current_color_mode == 2 then
+      log.info_with({hub_logs=true}, string.format("CurrentX and CurrentY are not currently determining the color of the device. ColorMode is %d", current_color_mode))
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
+    end
     device:set_field(RECEIVED_X, nil)
+  end
+end
+
+local function color_mode_attr_handler(driver, device, ib, response)
+  if ib.data.value ~= nil then
+    set_field_for_endpoint(device, COLOR_MODE, ib.endpoint_id, tonumber(ib.data.value), {persist = true})
   end
 end
 
@@ -1308,6 +1339,7 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.ColorTemperatureMireds.ID] = temp_attr_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
+        [clusters.ColorControl.attributes.ColorMode.ID] = color_mode_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
         [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MIN), -- max mireds = min kelvin
         [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MAX), -- min mireds = max kelvin
@@ -1370,6 +1402,7 @@ local matter_driver_template = {
       clusters.ColorControl.attributes.CurrentSaturation,
       clusters.ColorControl.attributes.CurrentX,
       clusters.ColorControl.attributes.CurrentY,
+      clusters.ColorControl.attributes.ColorMode,
     },
     [capabilities.colorTemperature.ID] = {
       clusters.ColorControl.attributes.ColorTemperatureMireds,
