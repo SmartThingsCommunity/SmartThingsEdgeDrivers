@@ -905,4 +905,116 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "colorControl capability sent based on CurrentHue and CurrentSaturation but not CurrentX and CurrentY due to ColorMode",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, 0xFE)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(100))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, 0xFE)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "colorControl capability sent based on CurrentX and CurrentY but not CurrentHue and CurrentSaturation due to ColorMode",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, 0xFE)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, 0xFE)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(72))
+    },
+  }
+)
+
 test.run_registered_tests()
