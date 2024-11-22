@@ -42,3 +42,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0202 # Window Covering
     deviceProfileName: window-covering
+#WISTAR
+  - id: "5207/17"
+    deviceLabel: WISTAR WSER40 Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0011
+    deviceProfileName: window-covering
