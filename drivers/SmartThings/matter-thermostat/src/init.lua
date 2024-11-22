@@ -158,6 +158,9 @@ local subscribed_attributes = {
   [capabilities.battery.ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining
   },
+  [capabilities.batteryLevel.ID] = {
+    clusters.PowerSource.attributes.BatChargeLevel
+  },
   [capabilities.filterState.ID] = {
     clusters.HepaFilterMonitoring.attributes.Condition,
     clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
@@ -439,6 +442,7 @@ end
 local function do_configure(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local device_type = get_device_type(driver, device)
   local profile_name
@@ -497,8 +501,10 @@ local function do_configure(driver, device)
 
       profile_name = profile_name .. "-nostate"
 
-      if #battery_eps == 0 then
+      if #power_source_eps == 0 then
         profile_name = profile_name .. "-nobattery"
+      elseif #battery_eps == 0 then
+        profile_name = profile_name .. "-batteryLevel"
       end
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
@@ -528,8 +534,10 @@ local function do_configure(driver, device)
     -- Add nobattery profiles if updated
     profile_name = profile_name .. "-nostate"
 
-    if #battery_eps == 0 then
+    if #power_source_eps == 0 then
       profile_name = profile_name .. "-nobattery"
+    elseif #battery_eps == 0 then
+      profile_name = profile_name .. "-batteryLevel"
     end
   else
     device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
@@ -1324,6 +1332,16 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -1367,7 +1385,8 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
@@ -1485,6 +1504,7 @@ local matter_driver_template = {
     capabilities.windMode,
     capabilities.fanOscillationMode,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.filterState,
     capabilities.filterStatus,
     capabilities.airQualityHealthConcern,

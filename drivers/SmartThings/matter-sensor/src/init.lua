@@ -88,16 +88,6 @@ local function set_boolean_device_type_per_endpoint(driver, device)
   end
 end
 
-local function supports_battery_percentage_remaining(device)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
-    return true
-  end
-  return false
-end
-
 local function supports_sensitivity_preferences(device)
   local preference_names = ""
   local sensitivity_eps = embedded_cluster_utils.get_endpoints(device, clusters.BooleanStateConfiguration.ID,
@@ -157,8 +147,12 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  if supports_battery_percentage_remaining(device) then
+  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
     profile_name = profile_name .. "-battery"
+  elseif #power_source_eps > 0 then
+    profile_name = profile_name .. "-batteryLevel"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -314,6 +308,16 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
 local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
@@ -352,6 +356,7 @@ local matter_driver_template = {
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
@@ -386,7 +391,10 @@ local matter_driver_template = {
       clusters.BooleanState.attributes.StateValue
     },
     [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.BatPercentRemaining
+      clusters.PowerSource.attributes.BatPercentRemaining,
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel
     },
     [capabilities.atmosphericPressureMeasurement.ID] = {
       clusters.PressureMeasurement.attributes.MeasuredValue
@@ -498,6 +506,7 @@ local matter_driver_template = {
     capabilities.contactSensor,
     capabilities.motionSensor,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
