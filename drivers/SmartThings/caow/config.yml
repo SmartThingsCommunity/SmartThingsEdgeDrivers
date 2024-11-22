@@ -1,0 +1,6 @@
+name: 'Zigbee Switch'
+packageKey: 'cccc'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee switch devices"
+vendorSupportInformation: "https://support.smartthings.com"
