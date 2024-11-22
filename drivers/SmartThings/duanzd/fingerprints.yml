@@ -1,0 +1,7 @@
+zigbeeManufacturer:
+  #REXENSE
+  - id: "REXENSE/HY0002"
+    deviceLabel: "Duan REXENSE HY0002"
+    manufacturer: REXENSE
+    model: HY0002
+    deviceProfileName: duan-switch-test1
