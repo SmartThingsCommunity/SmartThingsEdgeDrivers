@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "REXENSE/HY0002"
+    deviceLabel: "Zhoucy 开关"
+    manufacturer: REXENSE
+    model: HY0002
+    deviceProfileName: basic-switch
