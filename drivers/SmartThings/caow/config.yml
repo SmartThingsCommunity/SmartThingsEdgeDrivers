@@ -1,6 +1,6 @@
-name: 'Zigbee Switch'
-packageKey: 'cccc'
+name: 'Caow'
+packageKey: 'Caow'
 permissions:
   zigbee: {}
-description: "SmartThings driver for Zigbee switch devices"
+description: "Caow dev"
 vendorSupportInformation: "https://support.smartthings.com"

@@ -1,7 +1,7 @@
 # REXENSE
 zigbeeManufacturer:
 - id: "REXENSE/HY0002"
-  deviceLabel: 开关
+  deviceLabel: 开关 (3 way)
   manufacturer: REXENSE
   MODEL: HY0002
   deviceProfileName: basic-switch
