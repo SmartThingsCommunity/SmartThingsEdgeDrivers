@@ -91,7 +91,7 @@ end
 
 local function battery_device_not_support_bat_percent_remaining(device)
   for i = 1, #NOT_SUPPORT_BAT_PERCENT_REMAINING_VID do
-    if device.manufacturer_info.vendor_id == NOT_SUPPORT_BAT_PERCENT_REMAINING_VID[I] then
+    if device.manufacturer_info.vendor_id == NOT_SUPPORT_BAT_PERCENT_REMAINING_VID[i] then
       return false
     end
   end
