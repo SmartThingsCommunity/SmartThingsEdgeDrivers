@@ -79,6 +79,9 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "lock-user-pin" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
   end
 )
 
@@ -755,7 +758,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message(
         "main",
-        capabilities.lock.lock.locked(
+        capabilities.lock.lock.unlatched(
           {data = {method = "manual", userIndex = 1}, state_change = true}
         )
       ),
@@ -836,7 +839,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message(
         "main",
-        capabilities.lock.lock.locked(
+        capabilities.lock.lock.unlatched(
           {data = {method = "button", userIndex = 1}, state_change = true}
         )
       ),
@@ -917,7 +920,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message(
         "main",
-        capabilities.lock.lock.locked(
+        capabilities.lock.lock.unlatched(
           {data = {method = "rfid", userIndex = 1}, state_change = true}
         )
       ),

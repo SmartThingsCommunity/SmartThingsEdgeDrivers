@@ -140,6 +140,9 @@ local function do_configure(driver, device)
   end
   if #unbolt_eps > 0 then
     profile_name = profile_name .. "-unlatch"
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+  else
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
   end
   device.log.info(string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
@@ -218,9 +221,14 @@ local function operating_modes_handler(driver, device, ib, response)
     [op_type.PASSAGE] = false,
   }
   local result = opMode_map[ib.data.value]
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
   if result == true then
     device:emit_event(status("true", {visibility = {displayed = true}}))
-    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    if #unbolt_eps > 0 then
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+    else
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    end
   elseif result == false then
     device:emit_event(status("false", {visibility = {displayed = true}}))
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
@@ -366,7 +374,7 @@ local function handle_unlock(driver, device, command)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
   local ep = device:component_to_endpoint(command.component)
 
-  if unbolt_eps then
+  if #unbolt_eps > 0 then
     if cota_cred then
       device:send(
         DoorLock.server.commands.UnboltDoor(device, ep, cota_cred)
