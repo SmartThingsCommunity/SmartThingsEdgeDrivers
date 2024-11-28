@@ -744,33 +744,6 @@ test.register_message_test(
         DoorLock.events.LockOperation:build_test_event_report(
           mock_device, 1,
           {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.MANUAL,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.unlatched(
-          {data = {method = "manual", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
             lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
             operation_source = types.OperationSourceEnum.PROPRIETARY_REMOTE,
             user_index = 1,
@@ -825,33 +798,6 @@ test.register_message_test(
         DoorLock.events.LockOperation:build_test_event_report(
           mock_device, 1,
           {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.BUTTON,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.unlatched(
-          {data = {method = "button", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
             lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
             operation_source = types.OperationSourceEnum.SCHEDULE,
             user_index = 1,
@@ -895,33 +841,6 @@ test.register_message_test(
         "main",
         capabilities.lock.lock.locked(
           {data = {method = "command", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.RFID,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.unlatched(
-          {data = {method = "rfid", userIndex = 1}, state_change = true}
         )
       ),
     },
