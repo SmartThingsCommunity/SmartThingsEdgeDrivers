@@ -343,8 +343,10 @@ local function open_action(source)
       return
     else
       --- real error, close the connection.
-      source._sock:close()
-      source._sock = nil
+      if source._sock ~= nil then
+        source._sock:close()
+        source._sock = nil
+      end
       source.ready_state = EventSource.ReadyStates.CLOSED
       return nil, err, partial
     end
@@ -360,8 +362,10 @@ local function open_action(source)
         return
       else
         --- real error, close the connection.
-        source._sock:close()
-        source._sock = nil
+        if source._sock ~= nil then
+          source._sock:close()
+          source._sock = nil
+        end
         source.ready_state = EventSource.ReadyStates.CLOSED
         return nil, err, partial
       end
@@ -373,8 +377,10 @@ local function open_action(source)
         return
       else
         --- real error, close the connection.
-        source._sock:close()
-        source._sock = nil
+        if source._sock ~= nil then
+          source._sock:close()
+          source._sock = nil
+        end
         source.ready_state = EventSource.ReadyStates.CLOSED
         return nil, err, partial
       end
