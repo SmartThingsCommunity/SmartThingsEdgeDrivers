@@ -26,7 +26,7 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xFF15
     deviceProfileName: window-covering
-  - id: 5020/64050
+  - id: "5020/64050"
     deviceLabel: Zemismart ZM02 Smart Curtain
     vendorId: 0x139C
     productId: 0xFA32
