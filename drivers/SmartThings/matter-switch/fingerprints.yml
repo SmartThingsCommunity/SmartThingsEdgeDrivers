@@ -165,6 +165,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x007B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/107"
+    deviceLabel: Cync Reveal Full Color A19
+    vendorId: 0x1339
+    productId: 0x006D
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339
