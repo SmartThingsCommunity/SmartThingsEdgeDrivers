@@ -108,7 +108,10 @@ end
 
 local function check_and_update_connection(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
-  if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
+  local eventsource = device:get_field(fields.EVENT_SOURCE)
+  if eventsource and eventsource.ready_state == eventsource.ReadyStates.OPEN then
+    log.info(string.format("SSE connection is being maintained well, dni = %s", device.device_network_id))
+  elseif not driver.device_manager.is_valid_connection(driver, device, conn_info) then
     find_new_connection(driver, device)
   end
 end
