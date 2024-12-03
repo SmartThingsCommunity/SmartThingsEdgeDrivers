@@ -17,7 +17,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device_humidity_battery = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("humidity-battery.yml"),
+  profile = t_utils.get_profile_definition("humidity-batteryLevel.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -109,8 +109,8 @@ local mock_device_temp_humidity = test.mock_device.build_test_matter_device({
 })
 
 local cluster_subscribe_list_humidity_battery = {
+  clusters.PowerSource.attributes.BatChargeLevel,
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-  clusters.PowerSource.attributes.BatPercentRemaining
 }
 
 local cluster_subscribe_list_humidity_no_battery = {
@@ -136,8 +136,10 @@ local function test_init_humidity_battery()
   test.mock_device.add_test_device(mock_device_humidity_battery)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "added" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device_humidity_battery.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
-  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
+  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-batteryLevel" })
   mock_device_humidity_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -153,6 +155,8 @@ local function test_init_humidity_no_battery()
   test.mock_device.add_test_device(mock_device_humidity_no_battery)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_no_battery.id, "added" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device_humidity_no_battery.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_no_battery.id, "doConfigure" })
   mock_device_humidity_no_battery:expect_metadata_update({ profile = "humidity" })
   mock_device_humidity_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -170,6 +174,8 @@ local function test_init_temp_humidity()
   test.mock_device.add_test_device(mock_device_temp_humidity)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_temp_humidity.id, "added" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device_temp_humidity.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_temp_humidity.id, "doConfigure" })
   mock_device_temp_humidity:expect_metadata_update({ profile = "temperature-humidity" })
   mock_device_temp_humidity:expect_metadata_update({ provisioning_state = "PROVISIONED" })
