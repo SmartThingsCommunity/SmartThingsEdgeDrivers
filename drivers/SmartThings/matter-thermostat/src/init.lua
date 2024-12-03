@@ -103,6 +103,8 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP"
 }
 
+local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
+
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff
@@ -439,11 +441,10 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function do_configure(driver, device)
+local function match_profile(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -503,7 +504,7 @@ local function do_configure(driver, device)
 
       if #power_source_eps == 0 then
         profile_name = profile_name .. "-nobattery"
-      elseif #battery_eps == 0 then
+      elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
         profile_name = profile_name .. "-batteryLevel"
       end
     end
@@ -536,7 +537,7 @@ local function do_configure(driver, device)
 
     if #power_source_eps == 0 then
       profile_name = profile_name .. "-nobattery"
-    elseif #battery_eps == 0 then
+    elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
       profile_name = profile_name .. "-batteryLevel"
     end
   else
@@ -550,12 +551,17 @@ local function do_configure(driver, device)
   end
 end
 
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
 local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
+  req:merge(clusters.PowerSource.attributes.AttributeList:read())
   device:send(req)
 end
 
@@ -1342,6 +1348,21 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
   end
 end
 
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    for _, attr in ipairs(ib.data.elements) do
+      -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+      if attr.value == 0x0C then
+        device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
+        match_profile(driver, device)
+        return
+      end
+    end
+  end
+  device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -1385,8 +1406,9 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
-        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,

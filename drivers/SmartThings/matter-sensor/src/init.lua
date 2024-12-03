@@ -53,8 +53,6 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
-local HUE_MANUFACTURER_ID = 0x100B
-
 local subscribed_attributes = {
   [capabilities.relativeHumidityMeasurement.ID] = {
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
@@ -242,7 +240,7 @@ local function device_added(driver, device)
   end
 end
 
-local function profile_device(driver, device)
+local function match_profile(driver, device)
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
@@ -305,7 +303,7 @@ local function profile_device(driver, device)
 end
 
 local function do_configure(driver, device)
-  profile_device(driver, device)
+  match_profile(driver, device)
 end
 
 local function device_init(driver, device)
@@ -465,15 +463,13 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
-  print(utils.stringify_table(ib, "", true))
-
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
     for _, attr in ipairs(ib.data.elements) do
       -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
       if attr.value == 0x0C then
         device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
-        profile_device(driver, device)
+        match_profile(driver, device)
         return
       end
     end
@@ -519,8 +515,8 @@ local matter_driver_template = {
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler,
