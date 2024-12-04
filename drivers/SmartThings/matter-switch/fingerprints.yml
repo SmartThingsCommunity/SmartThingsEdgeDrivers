@@ -17,6 +17,22 @@ matterManufacturer:
     vendorId: 0x1426
     productId: 0x0003
     deviceProfileName: plug-binary
+#Elko
+  - id: "5170/4096"
+    deviceLabel: RFSAI-62B-SL/MT
+    vendorId: 0x1432
+    productId: 0x1000
+    deviceProfileName: switch-binary
+  - id: "5170/4097"
+    deviceLabel: RFGB-40B(W)/MT
+    vendorId: 0x1432
+    productId: 0x1001
+    deviceProfileName: 4-button-battery
+  - id: "5170/4099"
+    deviceLabel: RFWB-40G/MT
+    vendorId: 0x1432
+    productId: 0x1003
+    deviceProfileName: 4-button-battery
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -148,6 +164,11 @@ matterManufacturer:
     deviceLabel: Cync Indoor Light Strip 32ft
     vendorId: 0x1339
     productId: 0x007B
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/109"
+    deviceLabel: Cync Reveal Full Color A21
+    vendorId: 0x1339
+    productId: 0x006D
     deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
@@ -516,6 +537,11 @@ matterManufacturer:
     vendorId: 0x147F
     productId: 0x0003
     deviceProfileName: plug-binary
+  - id: "5247/4"
+    deviceLabel: U-tec Smart Matter Switch
+    vendorId: 0x147F
+    productId: 0x0004
+    deviceProfileName: switch-binary
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -2333,6 +2359,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
+  - id: "5020/43784"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB08
+    deviceProfileName: switch-binary
   - id: "5020/43825"
     deviceLabel: Zemismart WiFi Smart Switch
     vendorId: 0x139C
@@ -2347,6 +2378,11 @@ matterManufacturer:
     deviceLabel: Zemismart WiFi Smart Switch
     vendorId: 0x139C
     productId: 0xAB01
+    deviceProfileName: switch-binary
+  - id: "5020/43843"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB43
     deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"

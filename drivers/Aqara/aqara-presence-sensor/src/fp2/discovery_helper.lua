@@ -33,10 +33,17 @@ function discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
     return nil
   end
 
+  local device_label = device_info.label or "Aqara-FP2"
+  if device_dni then
+    -- To make it easier to distinguish devices, add the last four letters of dni to the label
+    -- for example, if device_info.label is "Aqara-FP2" and device_dni is "00:11:22:33:44:55", then device_label will be "Aqara-FP2 (4455)"
+    device_label = string.format("%s (%s)", device_label, string.sub(string.gsub(tostring(device_dni), ":", ""), -4))
+  end
+
   local create_device_msg = {
     type = "LAN",
     device_network_id = device_dni,
-    label = device_info.label,
+    label = device_label,
     profile = "aqara-fp2-zoneDetection",
     manufacturer = device_info.manufacturerName,
     model = device_info.modelName,

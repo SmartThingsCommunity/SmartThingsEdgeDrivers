@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  #Elko
+  - id: "5170/4098"
+    deviceLabel: RFWD-100/MT
+    vendorId: 0x1432
+    productId: 0x1002
+    deviceProfileName: contact-battery
   #Eve
   - id: "Eve Motion"
     deviceLabel: Eve Motion
@@ -52,6 +58,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1003
     deviceProfileName: smoke
+  - id: "4619/4103"
+    deviceLabel: Smart co sensor
+    vendorId: 0x120B
+    productId: 0x1007
+    deviceProfileName: co  
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
