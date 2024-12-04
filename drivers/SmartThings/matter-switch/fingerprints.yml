@@ -2374,6 +2374,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+  - id: "5020/43843"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB43
+    deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
