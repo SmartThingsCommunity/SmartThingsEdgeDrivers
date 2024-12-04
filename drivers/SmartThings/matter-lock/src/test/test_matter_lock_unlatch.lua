@@ -276,7 +276,7 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "Handle Lock Operation event from Matter device.", {
+  "Handle Unlatch Operation event from Matter device.", {
     {
       channel = "matter",
       direction = "receive",

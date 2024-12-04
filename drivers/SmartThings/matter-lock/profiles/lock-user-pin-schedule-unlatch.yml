@@ -53,11 +53,6 @@ deviceConfig:
         value: '{{i18n.attributes.lock.i18n.value.unlocked.label}}'
       - key: unlatched
         value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
-      - key: unknown
-        type: inactive
-        value: '{{i18n.attributes.lock.i18n.value.unknown.label}}'
-      - key: unlocked with timeout
-        value: '{{i18n.attributes.lock.i18n.value.unlocked with timeout.label}}'
       - key: not fully locked
         value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
     patch:
@@ -86,11 +81,6 @@ deviceConfig:
           value: '{{i18n.attributes.lock.i18n.value.unlocked.label}}'
         - key: unlatched
           value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
-        - key: unknown
-          type: inactive
-          value: '{{i18n.attributes.lock.i18n.value.unknown.label}}'
-        - key: unlocked with timeout
-          value: '{{i18n.attributes.lock.i18n.value.unlocked with timeout.label}}'
         - key: not fully locked
           value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
     actions:
