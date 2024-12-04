@@ -146,6 +146,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
 
   -- Only emit the capability for RPC version >= 5, since unit conversion for

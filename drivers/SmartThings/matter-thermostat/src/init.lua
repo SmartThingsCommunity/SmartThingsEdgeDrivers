@@ -720,8 +720,32 @@ end
 
 local function temp_event_handler(attribute)
   return function(driver, device, ib, response)
-    local temp = ib.data.value / 100.0
     local unit = "C"
+
+    -- Only emit the capability for RPC version >= 5, since unit conversion for
+    -- range capabilities is only supported in that case.
+    if version.rpc >= 5 then
+      local event
+      if attribute == capabilities.thermostatCoolingSetpoint.coolingSetpoint then
+        local range = {
+          minimum = device:get_field(setpoint_limit_device_field.MIN_COOL) or THERMOSTAT_MIN_TEMP_IN_C,
+          maximum = device:get_field(setpoint_limit_device_field.MAX_COOL) or THERMOSTAT_MAX_TEMP_IN_C,
+          step = 0.1
+        }
+        event = capabilities.thermostatCoolingSetpoint.coolingSetpointRange({value = range, unit = unit})
+        device:emit_event_for_endpoint(ib.endpoint_id, event)
+      elseif attribute == capabilities.thermostatHeatingSetpoint.heatingSetpoint then
+        local range = {
+          minimum = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C,
+          maximum = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C,
+          step = 0.1
+        }
+        event = capabilities.thermostatHeatingSetpoint.heatingSetpointRange({value = range, unit = unit})
+        device:emit_event_for_endpoint(ib.endpoint_id, event)
+      end
+    end
+
+    local temp = ib.data.value / 100.0
     device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
   end
 end
@@ -1172,7 +1196,7 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- heating setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
@@ -1196,7 +1220,7 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- cooling setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))

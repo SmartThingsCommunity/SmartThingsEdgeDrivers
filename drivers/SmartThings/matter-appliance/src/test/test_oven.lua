@@ -253,7 +253,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
+      message = mock_device:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
