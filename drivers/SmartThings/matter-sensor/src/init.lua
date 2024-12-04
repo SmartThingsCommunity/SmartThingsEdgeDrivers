@@ -233,7 +233,8 @@ end
 local function device_added(driver, device)
   set_boolean_device_type_per_endpoint(driver, device)
 
-  if device:get_field(SUPPORT_BATTERY_PERCENTAGE) == nil then
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 and device:get_field(SUPPORT_BATTERY_PERCENTAGE) == nil then
     local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(attribute_list_read)
@@ -279,8 +280,8 @@ local function match_profile(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
-  if #power_source_eps > 0 then
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
     if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
       profile_name = profile_name .. "-battery"
     else
@@ -463,15 +464,12 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    for _, attr in ipairs(ib.data.elements) do
-      -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
-      if attr.value == 0x0C then
-        device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
-        match_profile(driver, device)
-        return
-      end
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    if attr.value == 0x0C then
+      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
+      match_profile(driver, device)
+      return
     end
   end
   device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
