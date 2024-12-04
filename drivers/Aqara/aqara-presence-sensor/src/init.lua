@@ -20,32 +20,27 @@ local function status_update(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
   if not conn_info then
     log.warn(string.format("refresh : failed to find conn_info, dni = %s", device.device_network_id))
+    return false, "failed to find conn_info"
   else
     local resp, err, status = conn_info:get_attr()
 
     if err or status ~= 200 then
       log.error(string.format("refresh : failed to get attr, dni= %s, err= %s, status= %s", device.device_network_id, err,
         status))
-      if status == 404 then
-        device:offline()
-      end
+      return false, "failed to get attr"
     else
       driver.device_manager.handle_status(driver, device, resp)
     end
   end
+  return true
 end
 
 local function create_sse(driver, device, credential)
   local conn_info = device:get_field(fields.CONN_INFO)
 
-  if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
-    log.warn("create_sse : invalid connection")
-    return
-  end
-
   local sse_url = driver.device_manager.get_sse_url(driver, device, conn_info)
   if not sse_url then
-    log.error("failed to get sse_url")
+    log.error_with({ hub_logs = true }, "failed to get sse_url")
   else
     log.trace(string.format("Creating SSE EventSource for %s, sse_url= %s", device.device_network_id, sse_url))
     local label = string.format("%s-SSE", device.device_network_id)
@@ -64,7 +59,16 @@ local function create_sse(driver, device, credential)
     end
 
     eventsource.onopen = function()
+      log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s", device.device_network_id))
       device:online()
+      local success, err = status_update(driver, device)
+      if not success then
+        log.warn(string.format("Failed to status_update during eventsource.onopen, err = %s dni= %s", err, device.device_network_id))
+        success, err = status_update(driver, device)
+        if not success then
+          log.error_with({ hub_logs = true }, string.format("Failed to status_update during eventsource.onopen again, err = %s dni= %s", err, device.device_network_id))
+        end
+      end
     end
 
     local old_eventsource = device:get_field(fields.EVENT_SOURCE)
@@ -104,14 +108,11 @@ end
 
 local function check_and_update_connection(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
-  if not driver.device_manager.is_valid_connection(driver, device, conn_info) then
-    device:offline()
+  local eventsource = device:get_field(fields.EVENT_SOURCE)
+  if eventsource and eventsource.ready_state == eventsource.ReadyStates.OPEN then
+    log.info(string.format("SSE connection is being maintained well, dni = %s", device.device_network_id))
+  elseif not driver.device_manager.is_valid_connection(driver, device, conn_info) then
     find_new_connection(driver, device)
-    conn_info = device:get_field(fields.CONN_INFO)
-  end
-
-  if driver.device_manager.is_valid_connection(driver, device, conn_info) then
-    device:online()
   end
 end
 
@@ -132,8 +133,11 @@ end
 
 
 local function do_refresh(driver, device, cmd)
-  check_and_update_connection(driver, device)
-  status_update(driver, device)
+  local success, err = status_update(driver, device)
+  if not success then
+    log.info(string.format("Failed to status_update during do_refresh, err = %s dni= %s", err, device.device_network_id))
+    check_and_update_connection(driver, device)
+  end
   driver.device_manager.init_presence(driver, device)
   driver.device_manager.init_movement(driver, device)
   driver.device_manager.init_activity(driver, device)
@@ -163,6 +167,7 @@ local function device_init(driver, device)
   if device:get_field(fields._INIT) then
     return
   end
+  device:set_field(fields._INIT, true, { persist = false })
 
   local device_dni = device.device_network_id
   driver.controlled_devices[device_dni] = device
@@ -177,19 +182,19 @@ local function device_init(driver, device)
   local credential = device:get_field(fields.CREDENTIAL)
 
   if not credential then
-    log.error("failed to find credential.")
+    log.error_with({ hub_logs = true }, "failed to find credential.")
     device:offline()
     return
   end
 
-  log.trace(string.format("Creating device monitoring for %s", device.device_network_id))
-  create_monitoring_thread(driver, device, device_info)
-  update_connection(driver, device, device_ip, device_info)
-
   driver.device_manager.set_zone_info_to_latest_state(driver, device)
 
+  log.trace(string.format("Creating device monitoring for %s", device.device_network_id))
+  create_monitoring_thread(driver, device, device_info)
+
+  update_connection(driver, device, device_ip, device_info)
+
   do_refresh(driver, device, nil)
-  device:set_field(fields._INIT, true, { persist = false })
 end
 
 local function device_info_changed(driver, device, event, args)
@@ -210,8 +215,6 @@ local lan_driver = Driver("aqara-fp2",
         [capabilities.refresh.commands.refresh.NAME] = do_refresh,
       },
       [multipleZonePresence.id] = {
-        [multipleZonePresence.commands.createZone.name] = multipleZonePresence.commands.createZone.handler,
-        [multipleZonePresence.commands.deleteZone.name] = multipleZonePresence.commands.deleteZone.handler,
         [multipleZonePresence.commands.updateZoneName.name] = multipleZonePresence.commands.updateZoneName.handler,
       }
     },

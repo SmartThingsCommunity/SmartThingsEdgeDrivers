@@ -58,6 +58,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1003
     deviceProfileName: smoke
+  - id: "4619/4103"
+    deviceLabel: Smart co sensor
+    vendorId: 0x120B
+    productId: 0x1007
+    deviceProfileName: co  
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
