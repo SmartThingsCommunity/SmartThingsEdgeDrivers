@@ -15,6 +15,7 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local mock_device_humidity_battery = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("humidity-batteryLevel.yml"),
@@ -74,194 +75,25 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
--- The encoded TLV value of "\x16\x04\x00\x04\x01\x04\x02\x04\x0C\x04\x1F\x05\xF8\xFF\x05\xF9\xFF\x05\xFB\xFF\x05\xFC\xFF\x05\xFD\xFF\x18" corresponds to the following table.
---
---{
---  attribute={
---    ID=65531,
---    NAME="AttributeList",
---    _cluster={
---      FeatureMap={
---        BASE_MASK=65535,
---        BATTERY=2,
---        RECHARGEABLE=4,
---        REPLACEABLE=8,
---        WIRED=1,
---        augment_type=function: 0xd155a8,
---        bits_are_valid=function: 0xd04af0,
---        is_battery_set=function: 0xd11d98,
---        is_rechargeable_set=function: 0xd04da0,
---        is_replaceable_set=function: 0xd13188,
---        is_wired_set=function: 0xd04100,
---        mask_fields={
---          BASE_MASK=65535,
---          BATTERY=2,
---          RECHARGEABLE=4,
---          REPLACEABLE=8,
---          WIRED=1,
---        },
---        mask_methods={
---          is_battery_set=function: 0xd11d98,
---          is_rechargeable_set=function: 0xd04da0,
---          is_replaceable_set=function: 0xd13188,
---          is_wired_set=function: 0xd04100,
---          set_battery=function: 0xd09128,
---          set_rechargeable=function: 0xcfa258,
---          set_replaceable=function: 0xd04e78,
---          set_wired=function: 0xd05be8,
---          unset_battery=function: 0xcff0a0,
---          unset_rechargeable=function: 0xd12330,
---          unset_replaceable=function: 0xd02548,
---          unset_wired=function: 0xd04b98,
---        },
---        set_battery=function: 0xd09128,
---        set_rechargeable=function: 0xcfa258,
---        set_replaceable=function: 0xd04e78,
---        set_wired=function: 0xd05be8,
---        unset_battery=function: 0xcff0a0,
---        unset_rechargeable=function: 0xd12330,
---        unset_replaceable=function: 0xd02548,
---        unset_wired=function: 0xd04b98,
---      },
---      ID=47,
---      NAME="PowerSource",
---      are_features_supported=function: 0xcfd118,
---      attribute_direction_map={
---        AcceptedCommandList="server",
---        ActiveBatChargeFaults="server",
---        ActiveBatFaults="server",
---        ActiveWiredFaults="server",
---        AttributeList="server",
---        BatANSIDesignation="server",
---        BatApprovedChemistry="server",
---        BatCapacity="server",
---        BatChargeLevel="server",
---        BatChargeState="server",
---        BatChargingCurrent="server",
---        BatCommonDesignation="server",
---        BatFunctionalWhileCharging="server",
---        BatIECDesignation="server",
---        BatPercentRemaining="server",
---        BatPresent="server",
---        BatQuantity="server",
---        BatReplaceability="server",
---        BatReplacementDescription="server",
---        BatReplacementNeeded="server",
---        BatTimeRemaining="server",
---        BatTimeToFullCharge="server",
---        BatVoltage="server",
---        Description="server",
---        EndpointList="server",
---        EventList="server",
---        Order="server",
---        Status="server",
---        WiredAssessedCurrent="server",
---        WiredAssessedInputFrequency="server",
---        WiredAssessedInputVoltage="server",
---        WiredCurrentType="server",
---        WiredMaximumCurrent="server",
---        WiredNominalVoltage="server",
---        WiredPresent="server",
---      },
---      attributes={},
---      client={},
---      command_direction_map={},
---      commands={},
---      events={},
---      get_attribute_by_id=function: 0xd12f90,
---      get_event_by_id=function: 0xcfa000,
---      get_server_command_by_id=function: 0xd12580,
---      server={
---        attributes={
---        _cluster=RecursiveTable: _cluster,
---        set_parent_cluster=function: 0xd12318,
---        },
---        commands={
---          _cluster=RecursiveTable: _cluster,
---          set_parent_cluster=function: 0xd02580,
---        },
---        events={
---          _cluster=RecursiveTable: _cluster,
---          set_parent_cluster=function: 0xd04968,
---        },
---      },
---      types={},
---    },
---    augment_type=function: 0xd6fa00,
---    base_type={},
---    build_test_report_data=function: 0xcec2d8,
---    deserialize=function: 0xd60f90,
---    element_type={},
---    new_value=function: 0xd70660,
---    read=function: 0xd709e0,
---    set_parent_cluster=function: 0xd45a70,
---    subscribe=function: 0xd6fa20,
---  },
---  attribute_id=65531,
---  cluster=RecursiveTable: _cluster,
---  cluster_id=47,
---  data={
---    elements={
---      {
---        value=0,
---      },
---      {
---        value=1,
---      },
---      {
---        value=2,
---      },
---      {
---        value=12,
---      },
---      {
---        value=31,
---      },
---      {
---        value=65528,
---      },
---      {
---        value=65529,
---      },
---      {
---        value=65531,
---      },
---      {
---        value=65532,
---      },
---      {
---        value=65533,
---      },
---    },
---    num_elements=10,
---  },
---  endpoint_id=1,
---  tlv="\x16\x04\x00\x04\x01\x04\x02\x04\x0C\x04\x1F\x05\xF8\xFF\x05\xF9\xFF\x05\xFB\xFF\x05\xFC\xFF\x05\xFD\xFF\x18",
---}
-
-local im = require "st.matter.interaction_model"
-local function create_interaction_response(tlv_encoded)
-  local status = im.InteractionResponse.Status.SUCCESS
-  local interaction_info_block = im.InteractionInfoBlock(
-    2, 47, 65531, nil, nil, tlv_encoded
-  )
-  local interaction_response_info_block = im.InteractionResponseInfoBlock(
-    interaction_info_block, status, nil, nil
-  )
-  local interaction_response = im.InteractionResponse(
-    im.InteractionResponse.ResponseType.REPORT_DATA,
-    {interaction_response_info_block}, nil, nil
-  )
-  return interaction_response
-end
-
 test.register_coroutine_test(
-  "Test profile change when battery percent remaining attribute is available",
+  "Test profile change when battery percent remaining attribute (attribute ID 12) is available",
   function()
     test.socket.matter:__queue_receive(
       {
         mock_device_humidity_battery.id,
-        create_interaction_response("\x16\x04\x00\x04\x01\x04\x02\x04\x0C\x04\x1F\x05\xF8\xFF\x05\xF9\xFF\x05\xFB\xFF\x05\xFC\xFF\x05\xFD\xFF\x18")
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_humidity_battery, 2,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(12),
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
       }
     )
     mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
@@ -274,7 +106,18 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device_humidity_battery.id,
-        create_interaction_response("\x16\x18")
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_humidity_battery, 2,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
       }
     )
   end
