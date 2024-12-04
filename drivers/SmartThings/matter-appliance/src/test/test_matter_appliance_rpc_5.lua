@@ -394,7 +394,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=33.0,maximum=90.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=33.0,maximum=90.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 90.0, unit = "C"}))
@@ -434,7 +434,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=33.0,maximum=90.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=33.0,maximum=90.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_dishwasher:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 90.0, unit = "C"}))
@@ -474,7 +474,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=20.0,maximum=40.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=20.0,maximum=40.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 35.0, unit = "C"}))
@@ -514,7 +514,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=13.0,maximum=55.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 30.0, unit = "C"}))
@@ -554,7 +554,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=30.0,maximum=70.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=30.0,maximum=70.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 60.0, unit = "C"}))
@@ -594,7 +594,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=27.0,maximum=80.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_dryer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 50.0, unit = "C"}))
@@ -634,7 +634,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=128.0,maximum=200.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 130.0, unit = "C"}))
@@ -674,7 +674,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=127.0,maximum=260.0}, unit = "C"}, {visibility = {displayed = false}}))
+      mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=127.0,maximum=260.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_oven:generate_test_message("tccOne", capabilities.temperatureSetpoint.temperatureSetpoint({value = 130.0, unit = "C"}))
@@ -714,7 +714,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0,step=0.1}, unit = "C"}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -754,7 +754,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0,step=0.1}, unit = "C"}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -794,7 +794,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0,step=0.1}, unit = "C"}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -17.0, unit = "C"}))
@@ -834,7 +834,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0,step=0.1}, unit = "C"}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -15.0, unit = "C"}))
