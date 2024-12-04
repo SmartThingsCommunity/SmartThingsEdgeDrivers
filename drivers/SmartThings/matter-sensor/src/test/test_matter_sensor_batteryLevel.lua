@@ -240,9 +240,8 @@ test.set_test_init_function(test_init)
 --}
 
 local im = require "st.matter.interaction_model"
-local function create_interaction_response()
+local function create_interaction_response(tlv_encoded)
   local status = im.InteractionResponse.Status.SUCCESS
-  local tlv_encoded = "\x16\x04\x00\x04\x01\x04\x02\x04\x0C\x04\x1F\x05\xF8\xFF\x05\xF9\xFF\x05\xFB\xFF\x05\xFC\xFF\x05\xFD\xFF\x18"
   local interaction_info_block = im.InteractionInfoBlock(
     2, 47, 65531, nil, nil, tlv_encoded
   )
@@ -262,7 +261,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device_humidity_battery.id,
-        create_interaction_response()
+        create_interaction_response("\x16\x04\x00\x04\x01\x04\x02\x04\x0C\x04\x1F\x05\xF8\xFF\x05\xF9\xFF\x05\xFB\xFF\x05\xFC\xFF\x05\xFD\xFF\x18")
       }
     )
     mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-battery" })
@@ -275,7 +274,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device_humidity_battery.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_humidity_battery, 2, {})
+        create_interaction_response("\x16\x18")
       }
     )
   end
