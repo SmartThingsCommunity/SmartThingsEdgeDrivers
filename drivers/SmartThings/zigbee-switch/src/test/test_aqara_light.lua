@@ -33,6 +33,7 @@ local TURN_OFF_INDICATOR_ATTRIBUTE_ID = 0x0203
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("aqara-light.yml"),
+    preferences = { ["stse.lightFadeInTimeInSec"] = 0, ["stse.lightFadeOutTimeInSec"] = 0 },
     fingerprinted_endpoint_id = 0x01,
     zigbee_endpoints = {
       [1] = {
@@ -70,6 +71,9 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
+
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnTransitionTime:write(mock_device, 0) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OffTransitionTime:write(mock_device, 0) })
 
     test.socket.zigbee:__expect_send(
       {
