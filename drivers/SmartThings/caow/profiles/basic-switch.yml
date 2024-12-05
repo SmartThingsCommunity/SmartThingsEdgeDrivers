@@ -10,7 +10,7 @@ components:
     version: 1
   categories:
     - name: Switch
-preferences:
-    - preferenceId: stse.turnOffIndicatorLight
-      explicit: true
+# preferences:
+#     - preferenceId: stse.turnOffIndicatorLight
+#       explicit: true
 
