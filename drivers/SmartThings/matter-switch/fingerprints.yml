@@ -1,4 +1,15 @@
 matterManufacturer:
+#Aqara
+  - id: "4447/6145"
+    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    vendorId: 0x115F
+    productId: 0x1801
+    deviceProfileName: light-color-level
+  - id: "4447/6146"
+    deviceLabel: Aqara LED Bulb T2 CCT
+    vendorId: 0x115F
+    productId: 0x1802
+    deviceProfileName: light-level-colorTemperature-2700K-6500K  
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
