@@ -155,6 +155,10 @@ local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
 
+local fingerprint_profile_overrides = {
+  { vendor_id = 0x137F, product_id = 0x027B }, -- NEO Power Plug
+}
+
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
@@ -500,6 +504,16 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+local function check_fingerprint_profile_overrides(device)
+  for _, fingerprint in ipairs(fingerprint_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+      device.manufacturer_info.product_id == fingerprint.product_id then
+      return true
+    end
+  end
+  return false
+end
+
 local function initialize_switch(driver, device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
@@ -569,6 +583,15 @@ local function initialize_switch(driver, device)
 
   if component_map_used then
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  end
+
+  -- If there is a custom static profile for the device, configure buttons if needed and
+  -- then return to prevent profile from being updated.
+  if check_fingerprint_profile_overrides(device) then
+    if #button_eps > 0 then
+      configure_buttons(device)
+    end
+    return
   end
 
   if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
