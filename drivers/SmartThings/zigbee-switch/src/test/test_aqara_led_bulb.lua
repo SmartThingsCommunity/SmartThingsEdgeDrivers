@@ -53,20 +53,23 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "Handle added lifecycle",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+    test.socket.zigbee:__expect_send({
+      mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+      PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+  end
+)
+
+test.register_coroutine_test(
   "Configure should configure all necessary attributes and refresh device",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
 
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID
-          , MFG_CODE, data_types.Uint8, 1)
-      }
-    )
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnTransitionTime:write(mock_device, 0) })
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OffTransitionTime:write(mock_device, 0) })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
