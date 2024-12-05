@@ -1120,6 +1120,16 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SQM300Z3
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
