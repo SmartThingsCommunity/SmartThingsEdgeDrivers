@@ -1,4 +1,4 @@
-name: rvc
+name: rvc-clean-mode
 components:
   - id: main
     label: Main
@@ -13,6 +13,13 @@ components:
     - name: RobotCleaner
   - id: runMode
     label: Run mode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+    - name: RobotCleaner
+  - id: cleanMode
+    label: Clean mode
     capabilities:
       - id: mode
         version: 1
