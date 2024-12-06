@@ -213,7 +213,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     --TODO why does provisiong state get added in the do configure event handle, but not the refres?
-    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
+    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate-batteryLevel" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 )
@@ -237,7 +237,7 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
-    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
+    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-batteryLevel" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 )
