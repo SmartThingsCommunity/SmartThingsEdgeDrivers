@@ -24,7 +24,7 @@ clusters.RvcRunMode = require "RvcRunMode"
 clusters.OperationalState = require "OperationalState"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("rvc.yml"),
+  profile = t_utils.get_profile_definition("rvc-clean-mode.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -81,6 +81,129 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
+
+
+
+
+
+
+
+
+
+
+
+local expect_reload_all_codes_messages = function(dev)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({}), {visibility = {displayed = false}}
+      )
+    )
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+  test.mock_time.advance_time(5)
+  local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes.scanCodes("Scanning")
+    )
+  )
+  test.socket.matter:__expect_send(
+    {dev.id, DoorLock.server.commands.GetCredentialStatus(dev, 10, credential)}
+  )
+  test.wait_for_events()
+
+  local next_credential_index = 2
+  test.socket.matter:__queue_receive(
+    {
+      dev.id,
+      DoorLock.client.commands.GetCredentialStatusResponse:build_test_command_response(
+        dev, 10, -- endpoint
+        true, --credential exists
+        1,  --user_index
+        nil, --creator fabric index
+        nil, --last modified fabric index
+        next_credential_index
+      ),
+    }
+  )
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes
+        .codeChanged("1 set", {data = {codeName = "Code 1"}, state_change = true})
+    )
+  )
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({["1"] = "Code 1"}), {visibility = {displayed = false}}
+      )
+    )
+  )
+  local credential1 = types.DlCredential(
+                      {
+    credential_type = DoorLock.types.DlCredentialType.PIN,
+    credential_index = next_credential_index,
+  })
+  test.socket.matter:__expect_send(
+    {dev.id, DoorLock.server.commands.GetCredentialStatus(dev, 10, credential1)}
+  )
+  test.wait_for_events()
+
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes
+        .codeChanged("2 set", {data = {codeName = "Code 2"}, state_change = true})
+    )
+  )
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({["1"] = "Code 1", ["2"] = "Code 2"}), {visibility = {displayed = false}}
+      )
+    )
+  )
+
+  test.socket.matter:__queue_receive(
+    {
+      dev.id,
+      DoorLock.client.commands.GetCredentialStatusResponse:build_test_command_response(
+        dev, 10, -- endpoint
+        true, --credential exists
+        1,    --user_index
+        nil,  --creator fabric index
+        nil,  --last modified fabric index
+        nil   --next credential index
+      ),
+    }
+  )
+
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes.scanCodes("Complete", {visibility = {displayed = false}})
+    )
+  )
+  test.socket.capability:__expect_send(
+    dev:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({["1"] = "Code 1", ["2"] = "Code 2"}),
+          {visibility = {displayed = false}}
+      )
+    )
+  )
+end
+
+
+
+
+
+
+
+
+
+
+
+
 
 test.register_message_test(
   "Operational state should generate correct messages",
