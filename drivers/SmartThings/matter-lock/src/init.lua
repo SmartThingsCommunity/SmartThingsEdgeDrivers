@@ -129,7 +129,7 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
   if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
     profile_name = profile_name .. "-batteryLevel"
   end
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device.log.info(string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
 
@@ -231,7 +231,7 @@ local function set_credential_response_handler(driver, device, ib, response)
       elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
         profile_name = profile_name .. "-batteryLevel"
       end
-      device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+      device.log.info(string.format("Updating device profile to %s.", profile_name))
       device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
@@ -557,13 +557,6 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    for cap_id, attributes in pairs(subscribed_attributes) do
-      if device:supports_capability_by_id(cap_id) then
-        for _, attr in ipairs(attributes) do
-          device:add_subscribed_attribute(attr)
-        end
-      end
-    end
     device:subscribe()
   end
 end
@@ -585,11 +578,9 @@ local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps == 0 then
     profile_name = profile_name .. "-nobattery"
-  elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-    profile_name = profile_name .. "-batteryLevel"
+    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   end
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-  device:try_update_metadata({profile = profile_name})
 
   if #battery_feature_eps > 0 then
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -630,10 +621,8 @@ local function device_added(driver, device)
       local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
       if #battery_feature_eps == 0 then
         profile_name = profile_name .. "-nobattery"
-      elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-        profile_name = profile_name .. "-batteryLevel"
       end
-      device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+      device.log.info(string.format("Updating device profile to %s.", profile_name))
       device:try_update_metadata({profile = profile_name})
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
