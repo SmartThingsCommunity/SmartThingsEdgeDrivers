@@ -1,4 +1,15 @@
 matterManufacturer:
+#Aqara
+  - id: "4447/6145"
+    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    vendorId: 0x115F
+    productId: 0x1801
+    deviceProfileName: light-color-level
+  - id: "4447/6146"
+    deviceLabel: Aqara LED Bulb T2 CCT
+    vendorId: 0x115F
+    productId: 0x1802
+    deviceProfileName: light-level-colorTemperature-2700K-6500K  
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -164,6 +175,11 @@ matterManufacturer:
     deviceLabel: Cync Indoor Light Strip 32ft
     vendorId: 0x1339
     productId: 0x007B
+    deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/109"
+    deviceLabel: Cync Reveal Full Color A21
+    vendorId: 0x1339
+    productId: 0x006D
     deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
@@ -2354,6 +2370,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
+  - id: "5020/43784"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB08
+    deviceProfileName: switch-binary
   - id: "5020/43825"
     deviceLabel: Zemismart WiFi Smart Switch
     vendorId: 0x139C
@@ -2368,6 +2389,11 @@ matterManufacturer:
     deviceLabel: Zemismart WiFi Smart Switch
     vendorId: 0x139C
     productId: 0xAB01
+    deviceProfileName: switch-binary
+  - id: "5020/43843"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB43
     deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"

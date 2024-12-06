@@ -62,6 +62,18 @@ preferences.update_preferences = function(driver, device, args)
   end
 end
 
+preferences.sync_preferences = function(driver, device)
+  local prefs = preferences.get_device_parameters(device)
+  if prefs ~= nil then
+    for id, value in pairs(device.preferences) do
+      if prefs and prefs[id] then
+        local message = prefs[id](device, value)
+        device:send(message)
+      end
+    end
+  end
+end
+
 preferences.get_device_parameters = function(zigbee_device)
   for _, device in pairs(devices) do
     if zigbee_device:get_manufacturer() == device.MATCHING_MATRIX.mfr and
