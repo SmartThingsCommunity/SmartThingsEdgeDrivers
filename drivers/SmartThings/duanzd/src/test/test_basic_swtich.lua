@@ -19,6 +19,10 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
 
+local capabilities = require "st.capabilities"
+local profile_def = t_utils.get_profile_definition("duan-switch-test1.yml")
+
+--[[
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("duan-switch-test1.yml"),
     fingerprinted_endpoint_id = 0x01,
@@ -32,15 +36,44 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     }
   }
 )
+]]--
+
+local mock_parent_device = test.mock_device.build_test_zigbee_device(
+  {
+    profile = profile_def,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "REXENSE",
+        model = "HY0002",
+        server_clusters = { 0x0006 }
+      }
+    },
+    fingerprinted_endpoint_id = 0x01
+  }
+)
+
+local mock_first_child = test.mock_device.build_test_child_device(
+  {
+    profile = profile_def,
+    device_network_id = string.format("%04X:%02X", mock_parent_device:get_short_address(), 2),
+    parent_device_id = mock_parent_device.id,
+    parent_assigned_child_key = string.format("%02X", 2)
+  }
+)
 
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
+--  test.mock_device.add_test_device(mock_device)
+--  test.mock_device.add_test_device(mock_base_device)
+  test.mock_device.add_test_device(mock_parent_device)
+  test.mock_device.add_test_device(mock_first_child)
 end
 
 test.set_test_init_function(test_init)
 
+--[[
 test.register_coroutine_test(
   "Configure should configure all necessary attributes and refresh device",
   function()
@@ -83,6 +116,172 @@ test.register_message_test(
   {
     inner_block_ordering = "relaxed"
   }
+)
+]]--
+
+test.register_message_test(
+    "Reported on off status should be handled by parent device: on",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_parent_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
+            true)                               :from_endpoint(0x01) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_parent_device:generate_test_message("main", capabilities.switch.switch.on())
+      }
+    }
+)
+
+test.register_message_test(
+    "Reported on off status should be handled by first child device: on",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_first_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
+            true)                             :from_endpoint(0x02) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_first_child:generate_test_message("main", capabilities.switch.switch.on())
+      }
+    }
+)
+
+
+test.register_message_test(
+    "reported on off status should be handled by parent device: off",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_parent_device.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
+            false)                               :from_endpoint(0x01) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_parent_device:generate_test_message("main", capabilities.switch.switch.off())
+      }
+    }
+)
+
+test.register_message_test(
+    "Reported on off status should be handled by first child device: off",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_first_child.id, OnOff.attributes.OnOff:build_test_attr_report(mock_parent_device,
+        false)                             :from_endpoint(0x02) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_first_child:generate_test_message("main", capabilities.switch.switch.off())
+      }
+    }
+)
+
+test.register_message_test(
+    "Capability on command switch on should be handled : parent device",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_parent_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x01) }
+      }
+    }
+)
+
+test.register_message_test(
+    "Capability on command switch on should be handled : first child device",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_first_child.id, { capability = "switch", component = "main", command = "on", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_first_child.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
+      }
+    }
+)
+
+test.register_message_test(
+    "Capability off command switch off should be handled : parent device",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_parent_device.id, { capability = "switch", component = "main", command = "off", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "switch", capability_cmd_id = "off" }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x01) }
+      }
+    }
+)
+
+test.register_message_test(
+    "Capability off command switch off should be handled : first child device",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_first_child.id, { capability = "switch", component = "main", command = "off", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_first_child.id, capability_id = "switch", capability_cmd_id = "off" }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
+      }
+    }
 )
 
 test.run_registered_tests()
