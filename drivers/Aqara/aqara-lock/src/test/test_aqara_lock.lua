@@ -42,6 +42,10 @@ local function test_init()
   "highTemperature", "attemptsExceeded" }
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     lockAlarm.supportedAlarmValues(SUPPORTED_ALARM_VALUES, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    Lock.supportedUnlockDirections({"fromInside", "fromOutside"}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.type("AA")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.quantity(8)))
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
