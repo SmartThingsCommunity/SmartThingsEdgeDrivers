@@ -271,7 +271,7 @@ end
 local function do_configure(driver, device)
   local power_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) or {}
   local energy_meas_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) or {}
-  local device_energy_mgmt_eps = embedded_cluster_utils.get_endpoints(device, clusters.DeviceEnergyManagementMode) or {}
+  local device_energy_mgmt_eps = embedded_cluster_utils.get_endpoints(device, clusters.DeviceEnergyManagementMode.ID) or {}
   local profile_name = "evse"
 
   -- As per spec, at least one of the electrical energy measurement or electrical power measurement clusters are to be supported.
@@ -428,7 +428,7 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
     clusters.EnergyEvseMode.types.ModeOptionStruct:augment_type(mode)
     table.insert(supportedEvseModes, mode.elements.label.value)
   end
-  supportedEvseModesMap[ib.endpoint_id] = supportedEvseModes
+  supportedEvseModesMap[string.format(ib.endpoint_id)] = supportedEvseModes
   device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedEvseModesMap, { persist = true })
   local event = capabilities.mode.supportedModes(supportedEvseModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
@@ -440,7 +440,7 @@ local function energy_evse_mode_attr_handler(driver, device, ib, response)
   device.log.info(string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
 
   local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
-  local supportedEvseModes = supportedEvseModesMap[ib.endpoint_id] or {}
+  local supportedEvseModes = supportedEvseModesMap[string.format(ib.endpoint_id)] or {}
   local currentMode = ib.data.value
   for i, mode in ipairs(supportedEvseModes) do
     if i - 1 == currentMode then
@@ -454,10 +454,10 @@ local function device_energy_mgmt_supported_modes_attr_handler(driver, device, i
   local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
   local supportedDeviceEnergyMgmtModes = {}
   for _, mode in ipairs(ib.data.elements) do
-    clusters.EnergyEvseMode.types.ModeOptionStruct:augment_type(mode)
+    clusters.DeviceEnergyManagementMode.types.ModeOptionStruct:augment_type(mode)
     table.insert(supportedDeviceEnergyMgmtModes, mode.elements.label.value)
   end
-  supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] = supportedDeviceEnergyMgmtModes
+  supportedDeviceEnergyMgmtModesMap[string.format(ib.endpoint_id)] = supportedDeviceEnergyMgmtModes
   device:set_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP, supportedDeviceEnergyMgmtModesMap, { persist = true })
   local event = capabilities.mode.supportedModes(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
@@ -469,7 +469,7 @@ local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response
   device.log.info(string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
 
   local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
-  local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] or {}
+  local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[string.format(ib.endpoint_id)] or {}
   local currentMode = ib.data.value
   for i, mode in ipairs(supportedDeviceEnergyMgmtModes) do
     if i - 1 == currentMode then
@@ -555,6 +555,11 @@ local function handle_enable_charging(driver, device, cmd)
   local charging_enabled_until_iso8601 = cmd.args.time or default_charging_enabled_until_iso8601
   local minimum_current = cmd.args.minCurrent or default_min_current
   local maximum_current = cmd.args.maxCurrent or default_max_current
+  if version.api < 10 then
+    --hubs running lua-libs v9 and below use DataABC as base def for Int64 and require the value to be of string type.
+    minimum_current = string.format(minimum_current)
+    maximum_current = string.format(maximum_current)
+  end
   local charging_enabled_until_epoch_s = iso8601_to_epoch(charging_enabled_until_iso8601)
   device:send(clusters.EnergyEvse.commands.EnableCharging(device, ep, charging_enabled_until_epoch_s, minimum_current,
     maximum_current))
@@ -582,7 +587,7 @@ local function handle_set_mode_command(driver, device, cmd)
     ["main"] = function( ... )
       local ep = component_to_endpoint(device, cmd.component)
       local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP)
-      local supportedEvseModes = supportedEvseModesMap[ep] or {}
+      local supportedEvseModes = supportedEvseModesMap[string.format(ep)] or {}
       for i, mode in ipairs(supportedEvseModes) do
         if cmd.args.mode == mode then
           device:send(clusters.EnergyEvseMode.commands.ChangeToMode(device, ep, i - 1))
@@ -594,7 +599,7 @@ local function handle_set_mode_command(driver, device, cmd)
     ["deviceEnergyManagement"] = function( ... )
       local ep = component_to_endpoint(device, cmd.component)
       local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP)
-      local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ep] or {}
+      local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[string.format(ep)] or {}
       for i, mode in ipairs(supportedDeviceEnergyMgmtModes) do
         if cmd.args.mode == mode then
           device:send(clusters.DeviceEnergyManagementMode.commands.ChangeToMode(device, ep, i - 1))
