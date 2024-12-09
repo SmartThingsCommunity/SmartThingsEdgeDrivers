@@ -92,7 +92,7 @@ local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSe
 
 local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
+  mock_device:expect_metadata_update({ profile = "thermostat-nostate-batteryLevel" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.wait_for_events()
 
