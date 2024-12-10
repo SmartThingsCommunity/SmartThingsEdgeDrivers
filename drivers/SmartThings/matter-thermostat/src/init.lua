@@ -270,6 +270,8 @@ local function component_to_endpoint(device, component_name)
   if device:supports_capability(capabilities.airPurifierFanMode) then
     -- Fan Control is mandatory for the Air Purifier device type
     return find_default_endpoint(device, clusters.FanControl.ID)
+  elseif device:supports_capability(capabilities.fanSpeedPercent) then
+    return find_default_endpoint(device, clusters.FanControl.ID)
   else
     -- Thermostat is mandatory for Thermostat and Room AC device type
     return find_default_endpoint(device, clusters.Thermostat.ID)
@@ -440,6 +442,7 @@ local function do_configure(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local fan_speed_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -467,9 +470,36 @@ local function do_configure(driver, device)
     end
 
   elseif device_type == FAN_DEVICE_TYPE_ID then
-    profile_name = create_fan_profile(device)
+    if #thermostat_eps > 0 then
+      profile_name = "thermostat"
+
+      if #humidity_eps > 0 then
+        profile_name = profile_name .. "-humidity"
+      end
+
+      profile_name = profile_name .. "-fan"
+
+      if #fan_speed_eps > 0 then
+        profile_name = profile_name .. "-speed"
+      end
+
+      local thermostat_modes = create_thermostat_modes_profile(device)
+      if thermostat_modes == "No Heating nor Cooling Support" then
+        return
+      else
+        profile_name = profile_name .. thermostat_modes
+      end
+
+      profile_name = profile_name .. "-nostate"
+
+      if #battery_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      end
+    else
+      profile_name = create_fan_profile(device)
+      profile_name = string.sub(profile_name, 2)
+    end
     -- remove leading "-"
-    profile_name = string.sub(profile_name, 2)
     if profile_name == "fan" then
       profile_name = "fan-generic"
     end
@@ -514,6 +544,10 @@ local function do_configure(driver, device)
     local fan_name = create_fan_profile(device)
     if fan_name ~= "" then
       profile_name = profile_name .. "-fan"
+    end
+    
+    if #fan_speed_eps > 0 then
+      profile_name = profile_name .. "-speed"
     end
 
     local thermostat_modes = create_thermostat_modes_profile(device)
