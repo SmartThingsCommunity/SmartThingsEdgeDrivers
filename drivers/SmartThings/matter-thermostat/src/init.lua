@@ -553,9 +553,6 @@ end
 
 local function do_configure(driver, device)
   match_profile(driver, device)
-end
-
-local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
@@ -1366,7 +1363,6 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed,
   },

@@ -115,6 +115,11 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "fan-rock-wind" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+    read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+    read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+    read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+    test.socket.matter:__expect_send({mock_device.id, read_req})
   end,
   { test_init = test_init }
 )
@@ -125,6 +130,11 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_generic.id, "doConfigure" })
     mock_device_generic:expect_metadata_update({ profile = "fan-generic" })
     mock_device_generic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+    read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+    read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+    read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+    test.socket.matter:__expect_send({mock_device_generic.id, read_req})
   end,
   { test_init = test_init_generic }
 )

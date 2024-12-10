@@ -215,6 +215,12 @@ test.register_coroutine_test(
     --TODO why does provisiong state get added in the do configure event handle, but not the refres?
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate-batteryLevel" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+    read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+    read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+    read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+    read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    test.socket.matter:__expect_send({mock_device.id, read_req})
 end
 )
 
@@ -239,6 +245,12 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-batteryLevel" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+    read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+    read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+    read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+    read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    test.socket.matter:__expect_send({mock_device_simple.id, read_req})
 end
 )
 
@@ -248,6 +260,11 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_no_battery.id, "doConfigure" })
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
     mock_device_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+    read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+    read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+    read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+    test.socket.matter:__expect_send({mock_device_no_battery.id, read_req})
 end
 )
 

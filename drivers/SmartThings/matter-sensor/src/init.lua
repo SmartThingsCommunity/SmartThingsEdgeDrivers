@@ -232,13 +232,6 @@ end
 
 local function device_added(driver, device)
   set_boolean_device_type_per_endpoint(driver, device)
-
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 and device:get_field(SUPPORT_BATTERY_PERCENTAGE) == nil then
-    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(attribute_list_read)
-  end
 end
 
 local function match_profile(driver, device)
@@ -305,6 +298,12 @@ end
 
 local function do_configure(driver, device)
   match_profile(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(attribute_list_read)
+  end
 end
 
 local function device_init(driver, device)
