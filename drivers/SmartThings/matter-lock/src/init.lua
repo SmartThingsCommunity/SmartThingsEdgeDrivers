@@ -580,9 +580,7 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-nobattery"
     device.log.info(string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
-  end
-
-  if #battery_feature_eps > 0 then
+  else
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(req)

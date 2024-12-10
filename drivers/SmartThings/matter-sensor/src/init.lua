@@ -315,13 +315,6 @@ end
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     set_boolean_device_type_per_endpoint(driver, device)
-    for cap_id, attributes in pairs(subscribed_attributes) do
-      if device:supports_capability_by_id(cap_id) then
-        for _, attr in ipairs(attributes) do
-          device:add_subscribed_attribute(attr)
-        end
-      end
-    end
     device:subscribe()
   end
   if not device.preferences then
