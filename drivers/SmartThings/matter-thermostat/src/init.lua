@@ -734,6 +734,9 @@ end
 
 local function temp_event_handler(attribute)
   return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
     local unit = "C"
 
     -- Only emit the capability for RPC version >= 5, since unit conversion for
