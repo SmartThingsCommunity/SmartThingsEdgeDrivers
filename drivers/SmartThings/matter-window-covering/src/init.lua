@@ -41,6 +41,15 @@ end
 
 local function match_profile(device)
   local profile_name = "window-covering"
+  local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
+  local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
+  if #tilt_eps > 0 then
+    if #lift_eps > 0 then
+      profile_name = profile_name .. "-tilt"
+    else
+      profile_name = profile_name .. "-tilt-only"
+    end
+  end
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
           {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
 
@@ -111,8 +120,7 @@ local function handle_pause(driver, device, cmd)
   device:send(req)
 end
 
--- move to shade level
--- beteween 0-100
+-- move to shade level between 0-100
 local function handle_shade_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local lift_percentage_value = 100 - cmd.args.shadeLevel
@@ -123,29 +131,42 @@ local function handle_shade_level(driver, device, cmd)
   device:send(req)
 end
 
--- current lift percentage, changed to 100ths percent
-local function current_pos_handler(driver, device, ib, response)
-  if ib.data.value == nil then
-    return
-  end
-  local windowShade = capabilities.windowShade.windowShade
-  local position = 100 - math.floor((ib.data.value / 100))
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position))
-  if position == 0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-  elseif position == 100 then
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
-  elseif position > 0 and position < 100 then
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-  else
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+-- move to shade tilt level between 0-100
+local function handle_shade_tilt_level(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local tilt_percentage_value = 100 - cmd.args.level
+  local hundredths_tilt_percentage = tilt_percentage_value * 100
+  local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
+    device, endpoint_id, hundredths_tilt_percentage
+  )
+  device:send(req)
+end
+
+-- current lift/tilt percentage, changed to 100ths percent
+local current_pos_handler = function(attribute)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local windowShade = capabilities.windowShade.windowShade
+    local position = 100 - math.floor((ib.data.value / 100))
+    device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
+    if position == 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+    elseif position == 100 then
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+    elseif position > 0 and position < 100 then
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+    end
   end
 end
 
 -- checks the current position of the shade
 local function current_status_handler(driver, device, ib, response)
   local windowShade = capabilities.windowShade.windowShade
-  local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
+  local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
   if state == 1 then -- opening
     device:emit_event_for_endpoint(ib.endpoint_id, windowShade.opening())
   elseif state == 2 then -- closing
@@ -180,7 +201,8 @@ local matter_driver_template = {
       },
       [clusters.WindowCovering.ID] = {
         --uses percent100ths more often
-        [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = current_pos_handler,
+        [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = current_pos_handler(capabilities.windowShadeLevel.shadeLevel),
+        [clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths.ID] = current_pos_handler(capabilities.windowShadeTiltLevel.shadeTiltLevel),
         [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler,
       },
       [clusters.PowerSource.ID] = {
@@ -195,6 +217,9 @@ local matter_driver_template = {
     [capabilities.windowShadeLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
       clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths,
+    },
+    [capabilities.windowShadeTiltLevel.ID] = {
+      clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths,
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
@@ -215,9 +240,13 @@ local matter_driver_template = {
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = handle_shade_level,
     },
+    [capabilities.windowShadeTiltLevel.ID] = {
+      [capabilities.windowShadeTiltLevel.commands.setShadeTiltLevel.NAME] = handle_shade_tilt_level,
+    },
   },
   supported_capabilities = {
     capabilities.windowShadeLevel,
+    capabilities.windowShadeTiltLevel,
     capabilities.windowShade,
     capabilities.windowShadePreset,
     capabilities.battery,
