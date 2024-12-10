@@ -66,7 +66,6 @@ local function test_init()
   test.mock_device.add_test_device(mock_device_sengled)
   test.mock_device.add_test_device(mock_device_nyce)
   test.mock_device.add_test_device(mock_device_visonic)
-  zigbee_test_utils.init_noop_health_check_timer()
 end
 
 local test_devices = {}
