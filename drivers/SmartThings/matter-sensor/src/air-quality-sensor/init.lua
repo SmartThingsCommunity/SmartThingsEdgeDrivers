@@ -162,6 +162,7 @@ local supported_profiles =
   "aqs-temp-humidity-all-meas",
   "aqs-temp-humidity-co2-pm25-tvoc-meas",
   "aqs-temp-humidity-tvoc-level-pm25-meas",
+  "aqs-temp-humidity-tvoc-meas",
 }
 
 local AIR_QUALITY_MAP = {
