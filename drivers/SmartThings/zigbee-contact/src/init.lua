@@ -106,6 +106,7 @@ local zigbee_contact_driver_template = {
     require("smartsense-multi"),
     require("sengled")
   },
+  health_check = false,
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }
 
