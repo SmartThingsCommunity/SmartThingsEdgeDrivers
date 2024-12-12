@@ -69,6 +69,7 @@ local cluster_subscribe_list = {
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+  clusters.PowerSource.attributes.BatChargeLevel,
 }
 
 local function test_init()
