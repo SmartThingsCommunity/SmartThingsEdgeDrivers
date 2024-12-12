@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceCon
 
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
+  { mfr = "Stello", model = "HT402" },
 }
 
 local is_stelpro_thermostat = function(opts, driver, device)
