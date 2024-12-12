@@ -78,6 +78,7 @@ local ROCK_MODE_MAP = {
 local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
+local TMST_DEVICE_TYPE_ID = 0x0301
 
 local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
@@ -313,6 +314,8 @@ local function get_device_type(driver, device)
         return AP_DEVICE_TYPE_ID
       elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
         return FAN_DEVICE_TYPE_ID
+      elseif dt.device_type_id == TMST_DEVICE_TYPE_ID then
+        return TMST_DEVICE_TYPE_ID
       end
     end
   end
@@ -440,6 +443,7 @@ local function do_configure(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local fan_speed_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -503,7 +507,7 @@ local function do_configure(driver, device)
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
 
-  elseif #thermostat_eps > 0 then
+  elseif #thermostat_eps > 0 or device_type == TMST_DEVICE_TYPE_ID then
     profile_name = "thermostat"
 
     if #humidity_eps > 0 then
@@ -514,6 +518,10 @@ local function do_configure(driver, device)
     local fan_name = create_fan_profile(device)
     if fan_name ~= "" then
       profile_name = profile_name .. "-fan"
+    end
+    
+    if #fan_speed_eps > 0 then
+      profile_name = profile_name .. "-speed"
     end
 
     local thermostat_modes = create_thermostat_modes_profile(device)
