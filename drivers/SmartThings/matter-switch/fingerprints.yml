@@ -417,6 +417,12 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x004B
     deviceProfileName: light-color-level-2700K-6500K
+#Neo
+  - id: "4991/635"
+    deviceLabel: Power Plug
+    vendorId: 0x137F
+    productId: 0x027B
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
