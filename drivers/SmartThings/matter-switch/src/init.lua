@@ -1293,7 +1293,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube")
+    require("aqara-cube"),
+    require("aqara-light-switch-h2")
   }
 }
 
