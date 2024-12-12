@@ -275,7 +275,7 @@ matterManufacturer:
     deviceLabel: MATTER PLUG EU WH
     vendorId: 0x1189
     productId: 0x055C
-    deviceProfileName: plug-energy-powerConsumption
+    deviceProfileName: plug-binary
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
