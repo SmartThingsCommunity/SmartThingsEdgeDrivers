@@ -248,6 +248,9 @@ local matter_smoke_co_alarm_handler = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     }
   },
+  sub_drivers = {
+    require("tuya-smoke-co-alarm")
+  },
   can_handle = is_matter_smoke_co_alarm
 }
 
