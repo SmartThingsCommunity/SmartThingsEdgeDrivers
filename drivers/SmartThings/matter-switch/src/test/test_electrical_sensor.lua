@@ -90,11 +90,13 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
 
 local subscribed_attributes_periodic = {
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported,
 }

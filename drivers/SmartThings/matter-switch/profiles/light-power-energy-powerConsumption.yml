@@ -1,10 +1,14 @@
-name: light-button
+name: light-power-energy-powerConsumption
 components:
   - id: main
     capabilities:
       - id: switch
         version: 1
-      - id: button
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
         version: 1
       - id: firmwareUpdate
         version: 1
@@ -12,3 +16,4 @@ components:
         version: 1
     categories:
       - name: Light
+
