@@ -179,6 +179,16 @@ local function device_init(driver, device)
 
   refresh(driver, device, nil)
   device:set_field(fields._INIT, true, { persist = false })
+
+  device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
+    capabilities.mediaPlayback.commands.play.NAME,
+    capabilities.mediaPlayback.commands.pause.NAME,
+  }))
+
+  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
+    capabilities.mediaTrackControl.commands.nextTrack.NAME,
+    capabilities.mediaTrackControl.commands.previousTrack.NAME,
+  }))
 end
 
 local lan_driver = Driver("jbl",
