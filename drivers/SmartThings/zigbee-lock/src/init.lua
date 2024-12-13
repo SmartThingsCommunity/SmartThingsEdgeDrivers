@@ -302,6 +302,8 @@ end
 
 local function init(driver, device)
   lock_utils.populate_state_from_data(device)
+  -- temp fix before this can be changed to non-persistent
+  device:set_field(lock_utils.CODE_STATE, nil, { persist = true })
 end
 
 -- The following two functions are from the lock defaults. They are in the base driver temporarily
@@ -320,11 +322,11 @@ local lock_state_handler = function(driver, device, value, zb_rx)
   local delay = device:get_field(DELAY_LOCK_EVENT) or 100
   if (delay < MAX_DELAY) then
     device.thread:call_with_delay(delay+.5, function ()
-      device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+      device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value] or attr.unknown())
     end)
   else
     device:set_field(DELAY_LOCK_EVENT, socket.gettime())
-    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value] or attr.unknown())
   end
 end
 

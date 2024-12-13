@@ -108,9 +108,11 @@ jobs:
       - name: Install lua rocks
         run: |
           wget https://luarocks.org/manifests/hisham/luacov-0.15.0-1.rockspec
-          wget https://luarocks.org/manifests/ssharma/luacov-cobertura-0.2-1.rockspec
+          wget https://raw.githubusercontent.com/britzl/luacov-cobertura/refs/tags/1.1.0/rockspec -O luacov-cobertura-1.1.0-0.rockspec
+          sed -i 's/master/1\.1\.0/g' luacov-cobertura-1.1.0-0.rockspec
+          sed -i 's/1\.0-0/1\.1\.0-0/g' luacov-cobertura-1.1.0-0.rockspec
           sudo luarocks install luacov-0.15.0-1.rockspec
-          sudo luarocks install luacov-cobertura-0.2-1.rockspec
+          sudo luarocks install luacov-cobertura-1.1.0-0.rockspec
       - name: Set LUA_PATH
         id: lua_path
         env:
@@ -154,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upload event file artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: event-file
           path: ${{ github.event_path }}

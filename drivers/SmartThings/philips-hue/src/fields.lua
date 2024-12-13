@@ -26,11 +26,15 @@ local Fields = {
   IS_MULTI_SERVICE = "is_multi_service",
   MIN_DIMMING = "mindim",
   MIN_KELVIN = "mintemp",
+  MAX_KELVIN = "maxtemp",
   MODEL_ID = "modelid",
   PARENT_DEVICE_ID = "parent_device_id_local",
   RESOURCE_ID = "rid",
   RETRY_MIGRATION = "retry_migration",
-  WRAPPED_HUE = "_wrapped_hue"
+  WRAPPED_HUE = "_wrapped_hue",
+  COLOR_SATURATION = "color_saturation",
+  COLOR_HUE = "color_hue",
+  SWITCH_STATE = "switch_state_cache",
 }
 
 return Fields
