@@ -2,6 +2,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
+local preferences = require "preferences"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -32,13 +33,15 @@ local function do_refresh(self, device)
   device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
 end
 
-local function do_configure(self, device)
-  device:configure()
+local function device_added(driver, device, event)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1)) -- private
+end
 
-  device:send(Level.attributes.OnTransitionTime:write(device, 0))
-  device:send(Level.attributes.OffTransitionTime:write(device, 0))
+local function do_configure(self, device)
+  device:configure()
+
+  preferences.sync_preferences(self, device)
   device:send(ColorControl.commands.MoveToColorTemperature(device, 200, 0x0000))
 
   do_refresh(self, device)
@@ -54,6 +57,7 @@ end
 local aqara_light_handler = {
   NAME = "Aqara Light Handler",
   lifecycle_handlers = {
+    added = device_added,
     doConfigure = do_configure
   },
   capability_handlers = {

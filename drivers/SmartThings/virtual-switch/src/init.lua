@@ -1,26 +1,32 @@
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
-local additional_fields = {
-  state_change = true
-}
 
+local function force_state_change(device)
+  if device.preferences == nil or device.preferences["certifiedpreferences.forceStateChange"] == nil then
+    return {state_change = true}
+  elseif not device.preferences["certifiedpreferences.forceStateChange"] then
+    return nil
+  else
+    return {state_change = true}
+  end
+end
 
 local function handle_set_level(driver, device, command)
   if (command.args.level == 0) then
-    device:emit_event(capabilities.switch.switch.off(additional_fields))
+    device:emit_event(capabilities.switch.switch.off(force_state_change(device)))
   else
-    device:emit_event(capabilities.switchLevel.level(command.args.level, additional_fields))
+    device:emit_event(capabilities.switchLevel.level(command.args.level, force_state_change(device)))
     device:emit_event(capabilities.switch.switch.on())
   end
 
 end
 
 local function handle_on(driver, device, command)
-  device:emit_event(capabilities.switch.switch.on(additional_fields))
+  device:emit_event(capabilities.switch.switch.on(force_state_change(device)))
 end
 
 local function handle_off(driver, device, command)
-  device:emit_event(capabilities.switch.switch.off(additional_fields))
+  device:emit_event(capabilities.switch.switch.off(force_state_change(device)))
 end
 
 local virtual_driver = Driver("virtual-switch", {

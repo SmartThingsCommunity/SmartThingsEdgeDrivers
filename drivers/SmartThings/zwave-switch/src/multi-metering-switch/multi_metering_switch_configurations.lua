@@ -113,7 +113,29 @@ local devices = {
     CONFIGURATION = {
       child_switch_device_profile = "switch-binary"
     }
-  }
+  },
+  SHELLY_WAVE_2PM_AND_PRO = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_ids = {0x0081, 0x008D},
+      product_types = 0x0002,
+      children = 1
+    },
+    CONFIGURATION = {
+      child_switch_device_profile = "metering-switch"
+    }
+  },
+  SHELLY_WAVE_PRO_2 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_ids = 0x008C,
+      product_types = 0x0002,
+      children = 1
+    },
+    CONFIGURATION = {
+      child_switch_device_profile = "switch-binary"
+    }
+  },
 }
 
 local multi_metering_switch_configurations = {}

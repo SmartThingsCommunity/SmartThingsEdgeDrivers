@@ -251,6 +251,7 @@ test.register_coroutine_test(
       mock_parent_device.id,
       { capability = "switch", command = "off", component = "main", args = {} }
     })
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,

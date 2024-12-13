@@ -112,6 +112,14 @@ test.register_message_test(
         message = { mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 57, 0 } } }
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
+        }
+      },
+      {
         channel = "zigbee",
         direction = "send",
         message = { mock_device.id, Level.server.commands.MoveToLevelWithOnOff(mock_device,
@@ -340,6 +348,7 @@ test.register_coroutine_test(
     function()
       test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
       test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } } } })
+      mock_device:expect_native_cmd_handler_registration("colorControl", "setColor")
       test.socket.zigbee:__expect_send(
           {
             mock_device.id,
@@ -374,6 +383,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800}}})
+    mock_device:expect_native_cmd_handler_registration("colorTemperature", "setColorTemperature")
     test.socket.zigbee:__expect_send({mock_device.id, ColorControl.server.commands.MoveToColorTemperature(mock_device, 556, 0x0000)})
     test.socket.zigbee:__expect_send({mock_device.id, OnOff.server.commands.On(mock_device)})
     test.wait_for_events()

@@ -1,11 +1,49 @@
 matterManufacturer:
+#Aqara
+  - id: "4447/6145"
+    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    vendorId: 0x115F
+    productId: 0x1801
+    deviceProfileName: light-color-level
+  - id: "4447/6146"
+    deviceLabel: Aqara LED Bulb T2 CCT
+    vendorId: 0x115F
+    productId: 0x1802
+    deviceProfileName: light-level-colorTemperature-2700K-6500K  
+#Chengdu
+  - id: "5218/8197"
+    deviceLabel: Magic Cube DS001
+    vendorId: 0x1462
+    productId: 0x2005
+    deviceProfileName: light-level-colorTemperature
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-
+#ELEGRP
+  - id: "5158/3"
+    deviceLabel: ELEGRP Smart Mini Plug
+    vendorId: 0x1426
+    productId: 0x0003
+    deviceProfileName: plug-binary
+#Elko
+  - id: "5170/4096"
+    deviceLabel: RFSAI-62B-SL/MT
+    vendorId: 0x1432
+    productId: 0x1000
+    deviceProfileName: switch-binary
+  - id: "5170/4097"
+    deviceLabel: RFGB-40B(W)/MT
+    vendorId: 0x1432
+    productId: 0x1001
+    deviceProfileName: 4-button-battery
+  - id: "5170/4099"
+    deviceLabel: RFWB-40G/MT
+    vendorId: 0x1432
+    productId: 0x1003
+    deviceProfileName: 4-button-battery
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -47,7 +85,6 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x005D
     deviceProfileName: switch-binary
-
 #GE
   - id: "4921/177"
     deviceLabel: Cync Full Color 2 Inch Wafer
@@ -139,6 +176,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x007B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/109"
+    deviceLabel: Cync Reveal Full Color A21
+    vendorId: 0x1339
+    productId: 0x006D
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/111"
     deviceLabel: Cync Outdoor Plug
     vendorId: 0x1339
@@ -169,11 +211,88 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/125"
+    deviceLabel: Cync Paddle Dimmer
+    vendorId: 0x1339
+    productId: 0x007D
+    deviceProfileName: switch-level
+  - id: "4921/108"
+    deviceLabel: Cync Reveal Full Color BR30
+    vendorId: 0x1339
+    productId: 0x006C
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/64"
     deviceLabel: Cync Indoor Plug
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+#Ledvance
+  - id: "4489/843"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034B
+    deviceProfileName: light-color-level
+  - id: "4489/844"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034C
+    deviceProfileName: light-color-level
+  - id: "4489/845"
+    deviceLabel: Matter Filament RGBW
+    vendorId: 0x1189
+    productId: 0x034D
+    deviceProfileName: light-color-level
+  - id: "4489/828"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033C
+    deviceProfileName: light-color-level
+  - id: "4489/829"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033D
+    deviceProfileName: light-color-level
+  - id: "4489/831"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x033F
+    deviceProfileName: light-color-level
+  - id: "4489/832"
+    deviceLabel: Ledvance Matter Classic A RGBW
+    vendorId: 0x1189
+    productId: 0x0340
+    deviceProfileName: light-color-level
+  - id: "4489/833"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0341
+    deviceProfileName: light-color-level
+  - id: "4489/835"
+    deviceLabel: Ledvance Matter Classic B P RGBW
+    vendorId: 0x1189
+    productId: 0x0343
+    deviceProfileName: light-color-level
+  - id: "4489/1120"
+    deviceLabel: Ledvance Matter PAR16 RGBW
+    vendorId: 0x1189
+    productId: 0x0460
+    deviceProfileName: light-color-level
+  - id: "4489/1121"
+    deviceLabel: Ledvance Matter Classic G RGBW
+    vendorId: 0x1189
+    productId: 0x0461
+    deviceProfileName: light-color-level
+#Innovation Matters
+  - id: "4978/1"
+    deviceLabel: M2D Bridge
+    vendorId: 0x1372
+    productId: 0x0001
+    deviceProfileName: light-level-colorTemperature-2200K-6500K
+  - id: "4978/2"
+    deviceLabel: IM Pushbutton Module
+    vendorId: 0x1372
+    productId: 0x0002
+    deviceProfileName: switch-4
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -190,6 +309,32 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0007
     deviceProfileName: plug-binary
+  - id: "4129/5"
+    deviceLabel: Radiant Smart Switch
+    vendorId: 0x1021
+    productId: 0x0005
+    deviceProfileName: switch-binary
+#LeTianPai
+  - id: "5163/4097"
+    deviceLabel: LeTianPai Smart Light Bulb
+    vendorId: 0x142B
+    productId: 0x1001
+    deviceProfileName: light-color-level
+  - id: "5163/4100"
+    deviceLabel: LeTianPai Smart Switch 3 Way
+    vendorId: 0x142B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "5163/4099"
+    deviceLabel: LeTianPai Smart Switch 2 Way
+    vendorId: 0x142B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "5163/4098"
+    deviceLabel: LeTianPai Smart Switch 1 Way
+    vendorId: 0x142B
+    productId: 0x1002
+    deviceProfileName: switch-binary
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
@@ -272,6 +417,12 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x004B
     deviceProfileName: light-color-level-2700K-6500K
+#Neo
+  - id: "4991/635"
+    deviceLabel: Power Plug
+    vendorId: 0x137F
+    productId: 0x027B
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -382,6 +533,37 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x044E
     deviceProfileName: plug-binary
+  - id: "4456/1019"
+    deviceLabel: Matter Smart Filament  Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FB
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4456/1020"
+    deviceLabel: AiDot OREiN Matter Smart Filament Bulb ST58 CCT
+    vendorId: 0x1168
+    productId: 0x03FC
+    deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "5014/4096"
+    deviceLabel: Linkind LED Light Strip EL6
+    vendorId: 0x1396
+    productId: 0x1000
+    deviceProfileName: light-color-level-1800K-6500K
+#U-Tec
+  - id: "5247/3"
+    deviceLabel: U-tec Smart Matter Plug
+    vendorId: 0x147F
+    productId: 0x0003
+    deviceProfileName: plug-binary
+  - id: "5247/4"
+    deviceLabel: U-tec Smart Matter Switch
+    vendorId: 0x147F
+    productId: 0x0004
+    deviceProfileName: switch-binary
+  - id: "5247/2"
+    deviceLabel: UTEC Smart Matter Light Bulb
+    vendorId: 0x147F
+    productId: 0x0002
+    deviceProfileName: light-color-level-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -2199,6 +2381,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xD003
     deviceProfileName: light-color-level
+  - id: "5020/43784"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB08
+    deviceProfileName: switch-binary
   - id: "5020/43825"
     deviceLabel: Zemismart WiFi Smart Switch
     vendorId: 0x139C
@@ -2214,6 +2401,17 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB01
     deviceProfileName: switch-binary
+  - id: "5020/43843"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB43
+    deviceProfileName: switch-binary
+#TUO
+  - id: "5150/1"
+    deviceLabel: "TUO Smart Button"
+    vendorId: 0x141E
+    productId: 0x0001
+    deviceProfileName: "button-battery"
 
 
 #Bridge devices need manufacturer specific fingerprints until
@@ -2330,6 +2528,28 @@ matterGeneric:
     deviceTypes:
       - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
+  - id: "matter/on-off/plug/electrical-sensor"
+    deviceLabel: Matter OnOff Plug
+    deviceTypes:
+      - id: 0x010A # On Off Plug-in Unit
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "matter/water-valve"
+    deviceLabel: Matter Water Valve
+    deviceTypes:
+      - id: 0x0042 # Water Valve
+    deviceProfileName: water-valve
+  - id: "button"
+    deviceLabel: Matter Button
+    deviceTypes:
+      - id: 0x000F
+    deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
+  - id: "matter/dimmable/light/button"
+    deviceLabel: Matter Dimmable Light/Button
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x000F # Generic Switch
+    deviceProfileName: light-level-button
 
 matterThing:
   - id: SmartThings/MatterThing

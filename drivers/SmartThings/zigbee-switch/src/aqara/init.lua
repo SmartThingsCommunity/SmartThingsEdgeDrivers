@@ -37,7 +37,10 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
   { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
   { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.l2aeu1" }
+  { mfr = "LUMI", model = "lumi.switch.l2aeu1" },
+  { mfr = "LUMI", model = "lumi.switch.b1nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b2nacn01" },
+  { mfr = "LUMI", model = "lumi.switch.b3n01" }
 }
 
 local preference_map = {
@@ -163,6 +166,10 @@ local function wireless_switch_handler(driver, device, value, zb_rx)
 end
 
 local function energy_meter_power_consumption_report(driver, device, value, zb_rx)
+  -- ignore unexpected event when the device is private mode
+  local private_mode = device:get_field(PRIVATE_MODE) or 0
+  if private_mode == 1 then return end
+
   local raw_value = value.value
   -- energy meter
   local offset = device:get_field(constants.ENERGY_METER_OFFSET) or 0
@@ -193,6 +200,10 @@ local function energy_meter_power_consumption_report(driver, device, value, zb_r
 end
 
 local function power_meter_handler(driver, device, value, zb_rx)
+  -- ignore unexpected event when the device is private mode
+  local private_mode = device:get_field(PRIVATE_MODE) or 0
+  if private_mode == 1 then return end
+
   local raw_value = value.value -- '10W'
   raw_value = raw_value / 10
   device:emit_event(capabilities.powerMeter.power({ value = raw_value, unit = "W" }))
