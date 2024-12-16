@@ -69,6 +69,17 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # Neo
+  - id: "4991/1122"
+    deviceLabel: Door Sensor
+    vendorId: 0x137F
+    productId: 0x0462
+    deviceProfileName: contact-battery
+  - id: "4991/1123"
+    deviceLabel: Motion Sensor
+    vendorId: 0x137F
+    productId: 0x0463
+    deviceProfileName: motion-battery
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"

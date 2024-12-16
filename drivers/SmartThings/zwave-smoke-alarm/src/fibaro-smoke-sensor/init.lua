@@ -77,6 +77,7 @@ local fibaro_smoke_sensor = {
   },
   NAME = "fibaro smoke sensor",
   can_handle = can_handle_fibaro_smoke_sensor,
+  health_check = false,
 }
 
 return fibaro_smoke_sensor
