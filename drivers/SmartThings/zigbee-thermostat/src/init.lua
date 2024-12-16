@@ -376,6 +376,7 @@ local zigbee_thermostat_driver = {
     require("resideo_korea"),
     require("aqara")
   },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_thermostat_driver, zigbee_thermostat_driver.supported_capabilities)
