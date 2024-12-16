@@ -345,7 +345,9 @@ end
 
 local function test_init_water_valve()
   test.mock_device.add_test_device(mock_device_water_valve)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_water_valve.id, "doConfigure" })
   mock_device_water_valve:expect_metadata_update({ profile = "water-valve-level" })
+  mock_device_water_valve:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_parent_child_different_types()
@@ -393,6 +395,7 @@ local function test_init_parent_child_unsupported_device_type()
     parent_assigned_child_key = string.format("%d", 10)
   })
 end
+
 
 test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as server",

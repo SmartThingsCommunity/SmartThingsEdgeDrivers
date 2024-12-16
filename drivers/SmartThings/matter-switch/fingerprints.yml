@@ -442,6 +442,12 @@ matterManufacturer:
     vendorId: 0x115A
     productId: 0x004B
     deviceProfileName: light-color-level-2700K-6500K
+#Neo
+  - id: "4991/635"
+    deviceLabel: Power Plug
+    vendorId: 0x137F
+    productId: 0x027B
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -578,6 +584,11 @@ matterManufacturer:
     vendorId: 0x147F
     productId: 0x0004
     deviceProfileName: switch-binary
+  - id: "5247/2"
+    deviceLabel: UTEC Smart Matter Light Bulb
+    vendorId: 0x147F
+    productId: 0x0002
+    deviceProfileName: light-color-level-2700K-6500K
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
