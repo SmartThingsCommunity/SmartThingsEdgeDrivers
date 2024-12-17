@@ -40,21 +40,19 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function match_profile(device)
-  local profile_name = "window-covering"
   local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
   local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local profile_name = "window-covering"
   if #tilt_eps > 0 then
-    if #lift_eps > 0 then
-      profile_name = profile_name .. "-tilt"
-    else
-      profile_name = profile_name .. "-tilt-only"
+    profile_name = profile_name .. "-tilt"
+    if #lift_eps == 0 then
+      profile_name = profile_name .. "-only"
     end
   end
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
 
   if #battery_eps > 0 then
-    profile_name = "window-covering-battery"
+    profile_name = profile_name .. "-battery"
   end
   device:try_update_metadata({profile = profile_name})
   device:set_field(PROFILE_MATCHED, 1)
@@ -90,13 +88,24 @@ local function device_removed(driver, device) log.info("device removed") end
 -- capability handlers
 local function handle_preset(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_value = 100 - device.preferences.presetPosition
-  local hundredths_lift_percent = lift_value * 100
-  local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
-                device, endpoint_id, hundredths_lift_percent
-              )
-
-  device:send(req)
+  local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
+  local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
+  if #lift_eps > 0 then
+    local lift_value = 100 - device.preferences.presetPosition
+    local hundredths_lift_percent = lift_value * 100
+    local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
+      device, endpoint_id, hundredths_lift_percent
+    )
+    device:send(req)
+  end
+  if #tilt_eps > 0 then
+    local tilt_value = 100 - device.preferences.presetTiltPosition
+    local hundredths_tilt_percent = tilt_value * 100
+    local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
+      device, endpoint_id, hundredths_tilt_percent
+    )
+    device:send(req)
+  end
 end
 
 -- close covering
