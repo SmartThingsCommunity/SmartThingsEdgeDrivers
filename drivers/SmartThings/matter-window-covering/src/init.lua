@@ -15,10 +15,11 @@
 --Note: Currently only support for window shades with the PositionallyAware Feature
 --Note: No support for setting device into calibration mode, it must be done manually
 local capabilities = require "st.capabilities"
+local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local PROFILE_MATCHED = "__profile_matched"
+local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -41,22 +42,30 @@ end
 
 local function match_profile(device)
   local profile_name = "window-covering"
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-
-  if #battery_eps > 0 then
-    profile_name = "window-covering-battery"
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+      profile_name = profile_name .. "-battery"
+    else
+      profile_name = profile_name .. "-batteryLevel"
+    end
   end
   device:try_update_metadata({profile = profile_name})
-  device:set_field(PROFILE_MATCHED, 1)
 end
 
 local function device_init(driver, device)
-  if not device:get_field(PROFILE_MATCHED) then
-    match_profile(device)
-  end
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+end
+
+local function do_configure(driver, device)
+  match_profile(device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(attribute_list_read)
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -169,8 +178,36 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    if attr.value == 0x0C then
+      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
+      match_profile(device)
+      return
+    end
+  end
+  device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
+end
+
 local matter_driver_template = {
-  lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added, infoChanged = info_changed},
+  lifecycle_handlers = {
+    init = device_init,
+    removed = device_removed,
+    added = device_added,
+    infoChanged = info_changed,
+    doConfigure = do_configure,
+  },
   matter_handlers = {
     attr = {
       --TODO LevelControl may not be needed for certified devices since
@@ -184,6 +221,8 @@ local matter_driver_template = {
         [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler,
       },
       [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       }
     },
@@ -198,7 +237,10 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
-    }
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+    },
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
@@ -221,6 +263,7 @@ local matter_driver_template = {
     capabilities.windowShade,
     capabilities.windowShadePreset,
     capabilities.battery,
+    capabilities.batteryLevel,
   },
   sub_drivers = {
     -- for devices sending a position update while device is in motion
