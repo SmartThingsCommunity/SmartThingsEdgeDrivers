@@ -197,6 +197,7 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", component = "main", command = "setHue", args = { 50 } } })
 
+    mock_device:expect_native_cmd_handler_registration("colorControl", "setHue")
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device) })
 
     local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
@@ -221,6 +222,7 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", component = "main", command = "setSaturation", args = { 50 } } })
 
+    mock_device:expect_native_cmd_handler_registration("colorControl", "setSaturation")
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device) })
 
     local saturation = math.floor((50 * 0xFE) / 100.0 + 0.5)
@@ -245,6 +247,7 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } } } })
 
+    mock_device:expect_native_cmd_handler_registration("colorControl", "setColor")
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.server.commands.On(mock_device) })
 
     local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
