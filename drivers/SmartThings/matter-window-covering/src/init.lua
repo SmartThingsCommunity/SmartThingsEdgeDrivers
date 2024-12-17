@@ -19,6 +19,7 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local PROFILE_MATCHED = "__profile_matched"
+local REVERSE_POLARITY = "__reverse_polarity"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -68,12 +69,23 @@ local function info_changed(driver, device, event, args)
     -- try updating profile as needed
     match_profile(device)
   end
+  for id, value in pairs(device.preferences) do
+    if args.old_st_store.preferences[id] ~= value then
+      local reverse_preference = device.preferences[id]
+      if reverse_preference == "true" then
+        device:set_field(REVERSE_POLARITY, true, { persist = true })
+      else
+        device:set_field(REVERSE_POLARITY, false, { persist = true })
+      end
+    end
+  end
 end
 
 local function device_added(driver, device)
   device:emit_event(
     capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
   )
+  device:set_field(REVERSE_POLARITY, false, { persist = true })
 end
 
 local function device_removed(driver, device) log.info("device removed") end
@@ -81,7 +93,10 @@ local function device_removed(driver, device) log.info("device removed") end
 -- capability handlers
 local function handle_preset(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_value = 100 - device.preferences.presetPosition
+  local lift_value = device.preferences.presetPosition
+  if not device:get_field(REVERSE_POLARITY) then
+    lift_value = 100 - lift_value
+  end
   local hundredths_lift_percent = lift_value * 100
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
                 device, endpoint_id, hundredths_lift_percent
@@ -112,10 +127,13 @@ local function handle_pause(driver, device, cmd)
 end
 
 -- move to shade level
--- beteween 0-100
+-- between 0-100
 local function handle_shade_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_percentage_value = 100 - cmd.args.shadeLevel
+  local lift_percentage_value = cmd.args.shadeLevel
+  if not device:get_field(REVERSE_POLARITY) then
+    lift_percentage_value = 100 - lift_percentage_value
+  end
   local hundredths_lift_percentage = lift_percentage_value * 100
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
                 device, endpoint_id, hundredths_lift_percentage
@@ -129,12 +147,23 @@ local function current_pos_handler(driver, device, ib, response)
     return
   end
   local windowShade = capabilities.windowShade.windowShade
-  local position = 100 - math.floor((ib.data.value / 100))
+  local position = math.floor((ib.data.value / 100))
+  if not device:get_field(REVERSE_POLARITY) then
+    position = 100 - position
+  end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position))
-  if position == 0 then
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-  elseif position == 100 then
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+  if position == 0 then -- normal polarity: closed, reversed polarity: open
+    if device:get_field(REVERSE_POLARITY) then
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+    end
+  elseif position == 100 then -- normal polarity: open, reversed polarity: closed
+    if device:get_field(REVERSE_POLARITY) then
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+    end
   elseif position > 0 and position < 100 then
     device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
   else
@@ -170,7 +199,12 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
 end
 
 local matter_driver_template = {
-  lifecycle_handlers = {init = device_init, removed = device_removed, added = device_added, infoChanged = info_changed},
+  lifecycle_handlers = {
+    init = device_init,
+    removed = device_removed,
+    added = device_added,
+    infoChanged = info_changed
+  },
   matter_handlers = {
     attr = {
       --TODO LevelControl may not be needed for certified devices since
