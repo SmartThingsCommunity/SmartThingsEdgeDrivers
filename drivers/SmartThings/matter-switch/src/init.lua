@@ -161,8 +161,8 @@ local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
 local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
 local EXPORT_POLL_TIMER_SETTING_ATTEMPTED = "__export_poll_timer_setting_attempted"
 local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
-local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
-local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
+local TOTAL_EXPORTED_ENERGY = "__total_imported_energy"
+local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
 local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
@@ -192,17 +192,17 @@ local function delete_export_poll_schedule(device)
   end
 end
 
-local function send_export_poll_report(device, latest_total_exported_energy_wh)
+local function send_export_poll_report(device, latest_total_imported_energy_wh)
   local current_time = os.time()
   local last_time = device:get_field(LAST_EXPORTED_REPORT_TIMESTAMP) or 0
   device:set_field(LAST_EXPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
   -- Calculate the energy delta between reports
   local energy_delta_wh = 0.0
-  local previous_exported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_exported_report and previous_exported_report.energy then
-    energy_delta_wh = math.max(latest_total_exported_energy_wh - previous_exported_report.energy, 0.0)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -210,7 +210,7 @@ local function send_export_poll_report(device, latest_total_exported_energy_wh)
     start = iso8061Timestamp(last_time),
     ["end"] = iso8061Timestamp(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_exported_energy_wh
+    energy = latest_total_imported_energy_wh
   }))
 end
 
@@ -979,7 +979,7 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function cumul_energy_exported_handler(driver, device, ib, response)
+local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
@@ -987,7 +987,7 @@ local function cumul_energy_exported_handler(driver, device, ib, response)
   end
 end
 
-local function per_energy_exported_handler(driver, device, ib, response)
+local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
@@ -1003,9 +1003,9 @@ local function energy_report_handler_factory(is_cumulative_report)
       set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     if is_cumulative_report then
-      cumul_energy_exported_handler(driver, device, ib, response)
+      cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      per_energy_exported_handler(driver, device, ib, response)
+      per_energy_imported_handler(driver, device, ib, response)
     end
   end
 end
@@ -1174,8 +1174,8 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
@@ -1234,8 +1234,8 @@ local matter_driver_template = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.energyMeter.ID] = {
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower

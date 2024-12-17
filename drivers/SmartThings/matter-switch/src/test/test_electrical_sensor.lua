@@ -89,14 +89,14 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
 })
 
 local subscribed_attributes_periodic = {
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported,
-  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
-  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
 }
 
 local cumulative_report_val_19 = {
@@ -264,7 +264,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
       }
     },
     {
@@ -277,7 +277,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
       }
     },
     {
@@ -290,7 +290,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_29)
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_29)
       }
     },
     {
@@ -313,7 +313,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyExported:build_test_report_data(mock_device, 1, cumulative_report_val_39)
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_39)
       }
     },
     {
@@ -332,7 +332,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
       }
     },
     {
@@ -340,7 +340,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
       }
     },
   }
@@ -354,7 +354,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
       }
     },
     {
@@ -367,7 +367,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
       }
     },
     {
@@ -380,7 +380,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyExported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
       }
     },
     {
@@ -410,7 +410,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -421,7 +421,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -434,7 +434,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_29
         )
       }
@@ -465,7 +465,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -476,7 +476,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -489,7 +489,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_29
         )
       }
@@ -520,7 +520,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -531,7 +531,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_19
         )
       }
@@ -544,7 +544,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
           mock_device, 1, cumulative_report_val_29
         )
       }
@@ -582,7 +582,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
@@ -593,7 +593,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
@@ -606,7 +606,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
@@ -638,7 +638,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
@@ -649,7 +649,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
@@ -662,7 +662,7 @@ test.register_coroutine_test(
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported:build_test_report_data(
+        clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(
           mock_device_periodic, 1, periodic_report_val_23
         )
       }
