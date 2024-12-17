@@ -1,0 +1,21 @@
+id: samsungim.hueSyncMode
+version: 1
+status: proposed
+name: Hue Sync Mode
+ephemeral: false
+attributes:
+  mode:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          title: Hue Sync mode
+          enum:
+            - normal
+            - streaming
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}
