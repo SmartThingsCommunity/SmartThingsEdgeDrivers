@@ -451,11 +451,11 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
-    local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
-    local export_timer_length = mock_device:get_field("__export_report_timeout")
-    assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
-    assert(export_timer_length ~= nil, "export_timer_length should exist")
-    assert(export_timer_length == MINIMUM_ST_ENERGY_REPORT_INTERVAL, "export_timer should min_interval")
+    local report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
+    local import_timer_length = mock_device:get_field("__import_report_timeout")
+    assert(report_import_poll_timer ~= nil, "report_import_poll_timer should exist")
+    assert(import_timer_length ~= nil, "import_timer_length should exist")
+    assert(import_timer_length == MINIMUM_ST_ENERGY_REPORT_INTERVAL, "import_timer should min_interval")
   end
 )
 
@@ -506,11 +506,11 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
-    local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
-    local export_timer_length = mock_device:get_field("__export_report_timeout")
-    assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
-    assert(export_timer_length ~= nil, "export_timer_length should exist")
-    assert(export_timer_length == 2000, "export_timer should min_interval")
+    local report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
+    local import_timer_length = mock_device:get_field("__import_report_timeout")
+    assert(report_import_poll_timer ~= nil, "report_import_poll_timer should exist")
+    assert(import_timer_length ~= nil, "import_timer_length should exist")
+    assert(import_timer_length == 2000, "import_timer should min_interval")
   end
 )
 
@@ -561,24 +561,24 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
-    local report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
-    local export_timer_length = mock_device:get_field("__export_report_timeout")
-    assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
-    assert(export_timer_length ~= nil, "export_timer_length should exist")
-    assert(export_timer_length == 2000, "export_timer should min_interval")
+    local report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
+    local import_timer_length = mock_device:get_field("__import_report_timeout")
+    assert(report_import_poll_timer ~= nil, "report_import_poll_timer should exist")
+    assert(import_timer_length ~= nil, "import_timer_length should exist")
+    assert(import_timer_length == 2000, "import_timer should min_interval")
 
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
     test.wait_for_events()
-    report_export_poll_timer = mock_device:get_field("__recurring_export_report_poll_timer")
-    export_timer_length = mock_device:get_field("__export_report_timeout")
-    assert(report_export_poll_timer == nil, "report_export_poll_timer should exist")
-    assert(export_timer_length == nil, "export_timer_length should exist")
+    report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
+    import_timer_length = mock_device:get_field("__import_report_timeout")
+    assert(report_import_poll_timer == nil, "report_import_poll_timer should exist")
+    assert(import_timer_length == nil, "import_timer_length should exist")
   end
 )
 
 test.register_coroutine_test(
-  "Generated periodic export energy device poll timer (<15 minutes) gets correctly set", function()
+  "Generated periodic import energy device poll timer (<15 minutes) gets correctly set", function()
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
@@ -623,18 +623,18 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
-    local report_export_poll_timer = mock_device_periodic:get_field("__recurring_export_report_poll_timer")
-    local export_timer_length = mock_device_periodic:get_field("__export_report_timeout")
-    assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
-    assert(export_timer_length ~= nil, "export_timer_length should exist")
-    assert(export_timer_length == MINIMUM_ST_ENERGY_REPORT_INTERVAL, "export_timer should min_interval")
+    local report_import_poll_timer = mock_device_periodic:get_field("__recurring_import_report_poll_timer")
+    local import_timer_length = mock_device_periodic:get_field("__import_report_timeout")
+    assert(report_import_poll_timer ~= nil, "report_import_poll_timer should exist")
+    assert(import_timer_length ~= nil, "import_timer_length should exist")
+    assert(import_timer_length == MINIMUM_ST_ENERGY_REPORT_INTERVAL, "import_timer should min_interval")
   end,
   { test_init = test_init_periodic }
 )
 
 
 test.register_coroutine_test(
-  "Generated periodic export energy device poll timer (>15 minutes) gets correctly set", function()
+  "Generated periodic import energy device poll timer (>15 minutes) gets correctly set", function()
     test.socket["matter"]:__queue_receive(
       {
         mock_device_periodic.id,
@@ -679,11 +679,11 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
-    local report_export_poll_timer = mock_device_periodic:get_field("__recurring_export_report_poll_timer")
-    local export_timer_length = mock_device_periodic:get_field("__export_report_timeout")
-    assert(report_export_poll_timer ~= nil, "report_export_poll_timer should exist")
-    assert(export_timer_length ~= nil, "export_timer_length should exist")
-    assert(export_timer_length == 2000, "export_timer should min_interval")
+    local report_import_poll_timer = mock_device_periodic:get_field("__recurring_import_report_poll_timer")
+    local import_timer_length = mock_device_periodic:get_field("__import_report_timeout")
+    assert(report_import_poll_timer ~= nil, "report_import_poll_timer should exist")
+    assert(import_timer_length ~= nil, "import_timer_length should exist")
+    assert(import_timer_length == 2000, "import_timer should min_interval")
   end,
   { test_init = test_init_periodic }
 )
