@@ -1,6 +1,9 @@
 local log = require "log"
 local socket = require "cosock".socket
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local HueDeviceTypes = require "hue_device_types"
 

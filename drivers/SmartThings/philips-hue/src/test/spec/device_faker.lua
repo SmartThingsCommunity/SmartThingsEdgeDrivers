@@ -2,6 +2,9 @@ local utils = require "utils"
 local lazy_fakers = utils.lazy_handler_loader("fakers")
 
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local test_helpers = require "test_helpers"
 
