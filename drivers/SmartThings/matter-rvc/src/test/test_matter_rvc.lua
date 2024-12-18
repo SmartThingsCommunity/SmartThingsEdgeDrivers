@@ -287,8 +287,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "On changing the rvc run mode, appropriate RvcRunMode command must be sent to the device", function()
     supported_run_mode_init()
-    supported_clean_mode_init()
-    operating_state_init()
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mode", component = "runMode", command = "setMode", args = { "Idle Mode" } }
@@ -302,9 +301,8 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "On changing the rvc clean mode, appropriate RvcCleanMode command must be sent to the device", function()
-    supported_run_mode_init()
     supported_clean_mode_init()
-    operating_state_init()
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mode", component = "cleanMode", command = "setMode", args = { "Clean Mode 1" } }
