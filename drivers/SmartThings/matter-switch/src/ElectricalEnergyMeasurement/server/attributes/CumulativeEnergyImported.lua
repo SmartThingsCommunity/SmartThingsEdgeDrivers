@@ -2,44 +2,44 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-local PeriodicEnergyExported = {
-  ID = 0x0004,
-  NAME = "PeriodicEnergyExported",
-  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
+local CumulativeEnergyImported = {
+  ID = 0x0001,
+  NAME = "CumulativeEnergyImported",
+  base_type = require "st.matter.generated.zap_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
-function PeriodicEnergyExported:new_value(...)
+function CumulativeEnergyImported:new_value(...)
   local o = self.base_type(table.unpack({...}))
   self:augment_type(o)
   return o
 end
 
-function PeriodicEnergyExported:read(device, endpoint_id)
+function CumulativeEnergyImported:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil
+    nil --event_id
   )
 end
 
-function PeriodicEnergyExported:subscribe(device, endpoint_id)
+function CumulativeEnergyImported:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil
+    nil --event_id
   )
 end
 
-function PeriodicEnergyExported:set_parent_cluster(cluster)
+function CumulativeEnergyImported:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-function PeriodicEnergyExported:build_test_report_data(
+function CumulativeEnergyImported:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -57,12 +57,12 @@ function PeriodicEnergyExported:build_test_report_data(
   )
 end
 
-function PeriodicEnergyExported:deserialize(tlv_buf)
+function CumulativeEnergyImported:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
   self:augment_type(data)
   return data
 end
 
-setmetatable(PeriodicEnergyExported, {__call = PeriodicEnergyExported.new_value, __index = PeriodicEnergyExported.base_type})
-return PeriodicEnergyExported
+setmetatable(CumulativeEnergyImported, {__call = CumulativeEnergyImported.new_value, __index = CumulativeEnergyImported.base_type})
+return CumulativeEnergyImported
 
