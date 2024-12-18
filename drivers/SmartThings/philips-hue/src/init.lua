@@ -17,9 +17,13 @@
 --  Improvements to be made:
 --
 --  ===============================================================================================
-local Driver = require "st.driver"
+local logjam = require "logjam"
+logjam.enable_passthrough()
+logjam.inject_global()
 
 local log = require "log"
+
+local Driver = require "st.driver"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
