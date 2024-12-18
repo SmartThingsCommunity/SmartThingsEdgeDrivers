@@ -2,6 +2,9 @@ local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
