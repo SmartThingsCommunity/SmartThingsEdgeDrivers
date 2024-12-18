@@ -21,4 +21,3 @@ end
 setmetatable(RvcRunModeServerAttributes, attr_mt)
 
 return RvcRunModeServerAttributes
-

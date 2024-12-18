@@ -72,4 +72,3 @@ end
 
 setmetatable(SupportedModes, {__call = SupportedModes.new_value, __index = SupportedModes.base_type})
 return SupportedModes
-
