@@ -43,4 +43,3 @@ end
 setmetatable(ErrorStateEnum, new_mt)
 
 return ErrorStateEnum
-

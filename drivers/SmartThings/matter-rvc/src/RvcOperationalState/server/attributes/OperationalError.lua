@@ -65,4 +65,3 @@ end
 
 setmetatable(OperationalError, {__call = OperationalError.new_value, __index = OperationalError.base_type})
 return OperationalError
-
