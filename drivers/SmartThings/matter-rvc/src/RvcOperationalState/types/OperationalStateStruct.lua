@@ -75,4 +75,3 @@ end
 setmetatable(OperationalStateStruct, new_mt)
 
 return OperationalStateStruct
-
