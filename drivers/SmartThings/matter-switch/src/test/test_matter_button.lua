@@ -4,6 +4,9 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
+local utils = require "st.utils"
+local dkjson = require "dkjson"
+local uint32 = require "st.matter.data_types.Uint32"
 
 --mock the actual device
 local mock_device = test.mock_device.build_test_matter_device({
@@ -50,6 +53,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
+  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -57,7 +61,15 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  mock_device:expect_metadata_update({ profile = "button-batteryLevel" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "buttons-battery"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
 end
@@ -358,5 +370,54 @@ test.register_message_test(
     },
   }
 )
+
+test.register_coroutine_test(
+  "Test profile change to button-battery when battery percent remaining attribute (attribute ID 12) is available",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(12),
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
+      }
+    )
+    mock_device:expect_metadata_update({ profile = "button-battery" })
+  end
+)
+
+test.register_coroutine_test(
+  "Test profile does not change to button-battery when battery percent remaining attribute (attribute ID 12) is not available",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
+      }
+    )
+  end
+)
+
 -- run the tests
 test.run_registered_tests()
