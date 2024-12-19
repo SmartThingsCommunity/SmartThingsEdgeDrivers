@@ -48,6 +48,7 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- rather than COMPONENT_TO_ENDPOINT_MAP.
 local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+local IS_AQARA_SWITCH_DEVICE = "__is_aqara_switch_device"
 local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
@@ -65,6 +66,7 @@ local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local GENERIC_SWITCH_ID = 0x000F
+local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -147,12 +149,20 @@ local device_type_attribute_map = {
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
     clusters.Switch.events.MultiPressComplete
+  },
+  [ELECTRICAL_SENSOR_ID] = {
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
   }
 }
 
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+  { vendor_id = 0x115F, product_id = 0x1008,  child_profile = "light-power-energy-powerConsumption" }, -- 2 switch
+  { vendor_id = 0x115F, product_id = 0x1009,  child_profile = "light-power-energy-powerConsumption" }, -- 4 switch
 }
 
 local detect_matter_thing
@@ -256,6 +266,7 @@ local HELD_THRESHOLD = 1
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+local TEST_CONFIGURE = "__test_configure"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -270,6 +281,7 @@ local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitc
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
 local HUE_MANUFACTURER_ID = 0x100B
+local AQARA_MANUFACTURER_ID = 0x115F
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -405,7 +417,7 @@ local function find_default_endpoint(device)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function assign_child_profile(device, child_ep)
+local function assign_child_profile(device, child_ep, ep_sequence)
   local profile
 
   -- check if device has an overridden child profile that differs from the profile
@@ -413,7 +425,15 @@ local function assign_child_profile(device, child_ep)
   for _, fingerprint in ipairs(child_device_profile_overrides) do
     if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
        device.manufacturer_info.product_id == fingerprint.product_id then
-      return fingerprint.child_profile
+      if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
+        if ep_sequence == 1 then
+          -- To add Electrical Sensor only to the first EDGE_CHILD
+          device:set_field(IS_AQARA_SWITCH_DEVICE, true)
+          return fingerprint.child_profile
+        end
+      else
+        return fingerprint.child_profile
+      end
     end
   end
 
@@ -454,7 +474,7 @@ local function do_configure(driver, device)
     end
   end
 
-  if profile_name then
+  if not device:get_field(IS_AQARA_SWITCH_DEVICE) and profile_name then
     device:try_update_metadata({ profile = profile_name })
   end
 end
@@ -537,12 +557,14 @@ local function initialize_switch(driver, device)
     component_map_used = true
   end
 
+  local ep_sequence = 0
   for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        ep_sequence = ep_sequence + 1
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = assign_child_profile(device, ep)
+        local child_profile = assign_child_profile(device, ep, ep_sequence)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -680,7 +702,9 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+      if ep.endpoint_id ~= main_endpoint and
+         (device:get_field(IS_AQARA_SWITCH_DEVICE) or ep.endpoint_id ~= 0) then
+        -- insert energy management into InteractionRequest list when IS_AQARA_SWITCH_DEVICE
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -983,7 +1007,11 @@ local function cumul_energy_exported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
-    device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    if device:get_field(IS_AQARA_SWITCH_DEVICE) then
+      device:emit_event_for_endpoint(1, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    else
+      device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    end
   end
 end
 
@@ -1046,7 +1074,11 @@ end
 local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    if device:get_field(IS_AQARA_SWITCH_DEVICE) then
+      device:emit_event_for_endpoint(1, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    else
+      device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    end
   end
 end
 
@@ -1132,8 +1164,11 @@ local function device_added(driver, device)
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
   end
 
-  -- call device init in case init is not called after added due to device caching
-  device_init(driver, device)
+  -- when unit testing, call set_configure elsewhere
+  if not device:get_field(TEST_CONFIGURE) then
+    -- call device init in case init is not called after added due to device caching
+    device_init(driver, device)
+  end
 end
 
 local matter_driver_template = {
@@ -1174,6 +1209,7 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
         [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
       },
@@ -1234,6 +1270,7 @@ local matter_driver_template = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.energyMeter.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
       clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
       clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
     },
