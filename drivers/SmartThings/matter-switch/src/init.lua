@@ -66,6 +66,7 @@ local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local GENERIC_SWITCH_ID = 0x000F
+local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -148,6 +149,12 @@ local device_type_attribute_map = {
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
     clusters.Switch.events.MultiPressComplete
+  },
+  [ELECTRICAL_SENSOR_ID] = {
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
   }
 }
 
@@ -259,6 +266,7 @@ local HELD_THRESHOLD = 1
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+local TEST_CONFIGURE = "__test_configure"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -466,7 +474,7 @@ local function do_configure(driver, device)
     end
   end
 
-  if profile_name then
+  if not device:get_field(IS_AQARA_SWITCH_DEVICE) and profile_name then
     device:try_update_metadata({ profile = profile_name })
   end
 end
@@ -694,7 +702,9 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+      if ep.endpoint_id ~= main_endpoint and
+         (device:get_field(IS_AQARA_SWITCH_DEVICE) or ep.endpoint_id ~= 0) then
+        -- insert energy management into InteractionRequest list when IS_AQARA_SWITCH_DEVICE
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -1157,17 +1167,10 @@ local function device_added(driver, device)
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
   end
 
-  -- When device_init is performed in the aqara switch that has EDGE_CHILE,
-  -- a problem related to capability mapping occurs during configuration_buttons(), so this conditions are added.
-  if device.manufacturer_info.vendor_id ~= AQARA_MANUFACTURER_ID then
+  -- when unit testing, call set_configure elsewhere
+  if not device:get_field(TEST_CONFIGURE) then
     -- call device init in case init is not called after added due to device caching
     device_init(driver, device)
-  else
-    if device.manufacturer_info.product_id ~= 0x1008 and
-       device.manufacturer_info.product_id ~= 0x1009 then
-      -- call device init in case init is not called after added due to device caching
-      device_init(driver, device)
-    end
   end
 end
 
