@@ -126,6 +126,7 @@ local function do_configure(driver, device)
   local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.PIN_CREDENTIAL})
   local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
   local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
 
   local profile_name = "lock"
   if #user_eps > 0 then
@@ -136,6 +137,12 @@ local function do_configure(driver, device)
     if #week_schedule_eps + #year_schedule_eps > 0 then
       profile_name = profile_name .. "-schedule"
     end
+  end
+  if #unbolt_eps > 0 then
+    profile_name = profile_name .. "-unlatch"
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+  else
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
   end
   device.log.info(string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
@@ -185,6 +192,7 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
+    [LockState.UNLATCHED] = attr.unlatched()
   }
 
   -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
@@ -213,9 +221,14 @@ local function operating_modes_handler(driver, device, ib, response)
     [op_type.PASSAGE] = false,
   }
   local result = opMode_map[ib.data.value]
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
   if result == true then
     device:emit_event(status("true", {visibility = {displayed = true}}))
-    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    if #unbolt_eps > 0 then
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+    else
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    end
   elseif result == false then
     device:emit_event(status("false", {visibility = {displayed = true}}))
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
@@ -357,6 +370,30 @@ local function handle_lock(driver, device, command)
 end
 
 local function handle_unlock(driver, device, command)
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
+  local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  local ep = device:component_to_endpoint(command.component)
+
+  if #unbolt_eps > 0 then
+    if cota_cred then
+      device:send(
+        DoorLock.server.commands.UnboltDoor(device, ep, cota_cred)
+      )
+    else
+      device:send(DoorLock.server.commands.UnboltDoor(device, ep))
+    end
+  else
+    if cota_cred then
+      device:send(
+        DoorLock.server.commands.UnlockDoor(device, ep, cota_cred)
+      )
+    else
+      device:send(DoorLock.server.commands.UnlockDoor(device, ep))
+    end
+  end
+end
+
+local function handle_unlatch(driver, device, command)
   local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
   if cota_cred then
@@ -1568,7 +1605,7 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opType.value == Type.UNLOCK then
     opType = Lock.unlocked
   elseif opType.value == Type.UNLATCH then
-    opType = Lock.locked
+    opType = Lock.unlatched
   else
     return
   end
@@ -1660,6 +1697,7 @@ local new_matter_lock_handler = {
     [capabilities.lock.ID] = {
       [capabilities.lock.commands.lock.NAME] = handle_lock,
       [capabilities.lock.commands.unlock.NAME] = handle_unlock,
+      [capabilities.lock.commands.unlatch.NAME] = handle_unlatch
     },
     [capabilities.lockUsers.ID] = {
       [capabilities.lockUsers.commands.addUser.NAME] = handle_add_user,
