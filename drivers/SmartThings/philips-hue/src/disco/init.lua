@@ -4,6 +4,9 @@ local socket = require "cosock.socket"
 local mdns = require "st.mdns"
 local net_utils = require "st.net_utils"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Fields = require "fields"
 local HueApi = require "hue.api"

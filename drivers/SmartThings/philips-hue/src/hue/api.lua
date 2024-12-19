@@ -5,11 +5,14 @@ local json = require "st.json"
 local log = require "log"
 local RestClient = require "lunchbox.rest"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local HueDeviceTypes = require "hue_device_types"
 
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 local APPLICATION_KEY_HEADER = "hue-application-key"
@@ -82,6 +85,7 @@ end
 ---@return table? tbl the table representation of the JSON response, nil on error
 ---@return string? err the error message, nil on success
 ---@return string? partial the partial response if the response was not complete
+---@return ...
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
     log.error_with({ hub_logs = true },
@@ -208,6 +212,7 @@ end
 ---@param path string
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
+---@return ...
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -226,6 +231,7 @@ end
 ---@param payload string
 ---@return table|nil response REST response, nil if error
 ---@return nil|string error nil on success
+---@return ...
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
   reply_rx:settimeout(10)
@@ -244,6 +250,7 @@ end
 ---@return HueBridgeInfo|nil bridge_info nil on err
 ---@return nil|string error nil on success
 ---@return nil|string partial partial response if available, nil otherwise
+---@return ...
 function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   local tx, rx = channel.new()
   rx:settimeout(10)
@@ -266,6 +273,7 @@ end
 ---@return HueApiKeyResponse[]? api_key_response nil on err
 ---@return string? error nil on success
 ---@return string? partial partial response if available, nil otherwise
+---@return ...
 function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   local tx, rx = channel.new()
   rx:settimeout(10)

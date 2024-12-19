@@ -1,5 +1,8 @@
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
 local Fields = require "fields"
@@ -8,7 +11,7 @@ local HueColorUtils = require "utils.cie_utils"
 local utils = require "utils"
 
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 ---@class CommandHandlers

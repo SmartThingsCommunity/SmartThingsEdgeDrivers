@@ -1,6 +1,9 @@
 local cosock = require "cosock"
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -123,6 +126,7 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
         -- but only the first time we encounter a device type. We cache them since we're refreshing
         -- everything.
         if
+            device_type and
             type(device_type_refresh_handlers_map[device_type]) == "function" and
             statuses_by_device_type[device_type] == nil
         then
