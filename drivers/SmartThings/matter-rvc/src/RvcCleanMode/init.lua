@@ -101,4 +101,3 @@ setmetatable(RvcCleanMode.commands, command_helper_mt)
 setmetatable(RvcCleanMode, {__index = cluster_base})
 
 return RvcCleanMode
-
