@@ -111,7 +111,8 @@ local devices = {
   },
   BUTTON_PUSH_HELD_DOUBLE_4 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "MSM-300Z" }
+      { mfr = "ShinaSystem", model = "MSM-300Z" },
+      { mfr = "Linxura", model = "Smart Controller" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 4
