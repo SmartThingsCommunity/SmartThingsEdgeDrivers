@@ -700,6 +700,118 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Device reports mireds outside of supported range, set capability to min/max value in kelvin",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 160)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6000))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 370)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2800))
+    }
+  }
+)
+
+test.register_message_test(
+  "Capability sets color temp outside of supported range, value sent to device is limited to min/max value in mireds",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, 1, 165)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 365)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {6100} }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    }
+  }
+)
+
+test.register_message_test(
   "Min color temperature outside of range, capability not sent",
   {
     {
