@@ -2,6 +2,7 @@ local log = require "log"
 local json = require "st.json"
 local RestClient = require "lunchbox.rest"
 local utils = require "utils"
+local st_utils = require "st.utils"
 local cosock = require "cosock"
 
 local jbl_api = {}
@@ -68,7 +69,7 @@ function jbl_api.new_device_manager(bridge_ip, bridge_info, socket_builder)
 
   return setmetatable(
       {
-        headers = ADDITIONAL_HEADERS,
+        headers = st_utils.deep_copy(ADDITIONAL_HEADERS),
         client = RestClient.new(base_url, socket_builder),
         base_url = base_url,
       }, jbl_api
