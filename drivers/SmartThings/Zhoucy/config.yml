@@ -1,0 +1,6 @@
+name: 'Zhoucy'
+packageKey: 'Zhoucy'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee switch devices"
+vendorSupportInformation: "https://support.smartthings.com"

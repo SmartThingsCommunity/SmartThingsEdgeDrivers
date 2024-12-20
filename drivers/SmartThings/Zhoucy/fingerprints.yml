@@ -1,0 +1,7 @@
+zigbeeManufacturer:
+  #SMARTvill
+  - id: "REXENSE/HY0002"
+    deviceLabel: "Zhoucy switch "
+    manufacturer: REXENSE
+    model: HY0002
+    deviceProfileName: basic-switch
