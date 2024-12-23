@@ -1,0 +1,68 @@
+name: aeotec-smart-switch-7-eu
+components:
+  - id: main
+    label: "Switch"
+    capabilities:
+      - id: switch
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
+        version: 1
+      - id: colorControl
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+metadata:
+  deviceType: Switch
+  ocfDeviceType: oic.d.switch
+  deviceTypeId: Switch
+preferences:
+  - title: "91. Watt Threshold"
+    name: thresholdPower
+    description: "Determines how much change in Watt induces a report."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 2300
+      default: 0
+  - title: "92. kWh Threshold"
+    name: thresholdKwh
+    description: "Determines how much change in kWh induces a report."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 10000
+      default: 0
+  - title: "101. Group 1 Sensors"
+    name: group1Sensors
+    description: "Determines the value of change kWh should be reported, checked once every 10 seconds."
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 15
+      default: 3
+  - title: "111. Group 1 sensor report time"
+    name: group1Time
+    description: "Set timed report of Group 1 sensor in seconds"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 86400
+      default: 300
+  - title: "Association Group 1: Lifeline"
+    name: assocGroup1
+    description: "Enter a comma delimited list of hex IDs to be sent general notifications (5 node max)"
+    required: true
+    preferenceType: string
+    definition:
+      stringType: text
+      default: ''
