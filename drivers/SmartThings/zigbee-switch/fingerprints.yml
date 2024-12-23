@@ -1,4 +1,10 @@
 zigbeeManufacturer:
+  #Confio
+  - id: "Confio/CT2ADZB"
+    deviceLabel: Confio Dimmer 1
+    manufacturer: Confio
+    model: CT2ADZB
+    deviceProfileName: on-off-level
   #SMARTvill
   - id: "SMARTvill/SLA06"
     deviceLabel: "SMARTvill Switch 1"
