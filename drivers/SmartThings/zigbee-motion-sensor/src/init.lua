@@ -130,6 +130,7 @@ local zigbee_motion_driver = {
   additional_zcl_profiles = {
     [0xFC01] = true
   },
+  health_check = false,
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }
 
