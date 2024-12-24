@@ -376,20 +376,26 @@ end
 ---------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
   local support_battery_percentage = false
+  local support_battery_level = false
   for _, attr in ipairs(ib.data.elements) do
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
     if attr.value == 0x0C then
       support_battery_percentage = true
     end
+    if attr.value == 0x0E then
+      support_battery_level = true
+    end
   end
   local profile_name = device:get_field(PROFILE_BASE_NAME)
-  if support_battery_percentage then
-    profile_name = profile_name .. "-battery"
-  else
-    profile_name = profile_name .. "-batteryLevel"
+  if profile_name ~= nil then
+    if support_battery_percentage then
+      profile_name = profile_name .. "-battery"
+    elseif support_battery_level then
+      profile_name = profile_name .. "-batteryLevel"
+    end
+    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   end
-  device.log.info(string.format("Updating device profile to %s.", profile_name))
-  device:try_update_metadata({profile = profile_name})
 end
 
 -------------------------------
@@ -1790,7 +1796,6 @@ local new_matter_lock_handler = {
     capabilities.lockUsers,
     capabilities.lockCredentials,
     capabilities.lockSchedules,
-    capabilities.remoteControlStatus,
     capabilities.battery,
     capabilities.batteryLevel
   },
