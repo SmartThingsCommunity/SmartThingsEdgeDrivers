@@ -75,7 +75,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Test profile change when battery percent remaining attribute (attribute ID 12) is available",
+  "Test profile change when attributes related to BAT feature is not available.",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -94,7 +94,6 @@ test.register_coroutine_test(
             uint32(0),
             uint32(1),
             uint32(2),
-            uint32(12),
             uint32(31),
             uint32(65528),
             uint32(65529),
@@ -104,12 +103,12 @@ test.register_coroutine_test(
           })
       }
     )
-    mock_device:expect_metadata_update({ profile = "lock-user-pin-battery" })
+    mock_device:expect_metadata_update({ profile = "lock-user-pin" })
   end
 )
 
 test.register_coroutine_test(
-  "Test profile change when battery percent remaining attribute is not available",
+  "Test profile change when BatChargeLevel attribute is available",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -128,6 +127,7 @@ test.register_coroutine_test(
             uint32(0),
             uint32(1),
             uint32(2),
+            uint32(14), -- BatChargeLevel
             uint32(31),
             uint32(65528),
             uint32(65529),
@@ -138,6 +138,41 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "lock-user-pin-batteryLevel" })
+  end
+)
+
+test.register_coroutine_test(
+  "Test profile change when BatChargeLevel and BatPercentRemaining attributes are available",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:read()
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(12), -- BatPercentRemaining
+            uint32(14), -- BatChargeLevel
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
+      }
+    )
+    mock_device:expect_metadata_update({ profile = "lock-user-pin-battery" })
   end
 )
 
