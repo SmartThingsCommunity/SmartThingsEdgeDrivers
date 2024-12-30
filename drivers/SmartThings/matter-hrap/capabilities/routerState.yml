@@ -1,0 +1,20 @@
+id: routerState
+version: 1
+status: proposed
+name: Router State
+ephemeral: false
+attributes:
+  state:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - 'off'
+            - 'enabled'
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}

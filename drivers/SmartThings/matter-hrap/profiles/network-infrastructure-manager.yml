@@ -1,0 +1,18 @@
+name: network-infrastructure-manager
+components:
+- id: main
+  capabilities:
+  - id: routerName
+    version: 1
+  - id: threadVersion
+    version: 1
+  - id: wifiSsid
+    version: 1
+  - id: routerState
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Networking

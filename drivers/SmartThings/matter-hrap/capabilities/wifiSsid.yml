@@ -1,0 +1,17 @@
+id: wifiSsid
+version: 1
+status: proposed
+name: Wifi Ssid
+ephemeral: false
+attributes:
+  ssid:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}
