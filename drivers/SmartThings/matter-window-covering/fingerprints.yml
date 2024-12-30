@@ -47,3 +47,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0202 # Window Covering
     deviceProfileName: window-covering
+#WISTAR
+  - id: "5207/2"
+    deviceLabel: WISTAR WSERD30-B Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0002
+    deviceProfileName: window-covering-battery
