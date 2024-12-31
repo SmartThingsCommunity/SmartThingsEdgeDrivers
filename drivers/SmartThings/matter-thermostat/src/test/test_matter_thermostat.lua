@@ -53,6 +53,40 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_auto = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {
+          cluster_id = clusters.Thermostat.ID,
+          cluster_revision=5,
+          cluster_type="SERVER",
+          feature_map=35, -- Heat, Cool, and Auto features
+        },
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+      }
+    }
+  }
+})
+
 local function test_init()
   local cluster_subscribe_list = {
     clusters.Thermostat.attributes.LocalTemperature,
@@ -84,6 +118,38 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
+
+local function test_init_auto()
+  local cluster_subscribe_list = {
+    clusters.Thermostat.attributes.LocalTemperature,
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+    clusters.Thermostat.attributes.SystemMode,
+    clusters.Thermostat.attributes.ThermostatRunningState,
+    clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+    clusters.FanControl.attributes.FanMode,
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.PowerSource.attributes.BatPercentRemaining,
+  }
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_auto)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_auto))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_auto.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device_auto.id, clusters.Thermostat.attributes.MinSetpointDeadBand:read(mock_device_auto)})
+  test.mock_device.add_test_device(mock_device_auto)
+end
 
 test.register_message_test(
   "Relative humidity reports should generate correct messages",
@@ -295,7 +361,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat"}, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -308,7 +374,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "heat"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -321,9 +387,55 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
     },
   }
+)
+
+test.register_message_test(
+  "Thermostat control sequence reports should generate correct messages when auto feature is supported",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_auto.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device_auto, 1, ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_auto.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device_auto, 1, ControlSequenceOfOperation.HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_auto.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device_auto, 1, ControlSequenceOfOperation.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool"}, {visibility={displayed=false}}))
+    },
+  },
+  { test_init = test_init_auto }
 )
 
 test.register_message_test(
@@ -340,7 +452,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat"}, {visibility={displayed=false}}))
     },
 		{
       channel = "matter",
@@ -358,9 +470,47 @@ test.register_message_test(
 		{
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat", "emergency heat"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "emergency heat"}, {visibility={displayed=false}}))
     }
   }
+)
+
+test.register_message_test(
+  "Additional mode reports should extend the supported modes when auto is supported",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_auto.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_auto, 1, 5)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat"}, {visibility={displayed=false}}))
+    },
+		{
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_auto.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device_auto, 1, 5)
+      }
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device_auto:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "auto", "cool", "heat", "emergency heat"}, {visibility={displayed=false}}))
+    }
+  },
+  { test_init = test_init_auto }
 )
 
 local FanMode = clusters.FanControl.attributes.FanMode
