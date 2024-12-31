@@ -6,7 +6,7 @@ local st_utils = require "st.utils"
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
-local test_helpers = require "test_helpers"
+local bridge_helpers = require "test.helpers.hue_bridge"
 
 local fake_device_mt = {
   set_field = function(device, key, val, _opts) (device.fields or {})[key] = val end,
@@ -21,8 +21,8 @@ fake_device_mt.__index = fake_device_mt
 ---@return HueBridgeInfo bridge_info the bridge info used for this fake device
 local function device_faker(args, bridge_info)
   local faker = string.format("%s_faker", args.device_type)
-  bridge_info = bridge_info or test_helpers.random_bridge_info()
-  args.bridge_key = args.bridge_key or test_helpers.random_hue_bridge_key()
+  bridge_info = bridge_info or bridge_helpers.random_bridge_info()
+  args.bridge_key = args.bridge_key or bridge_helpers.random_hue_bridge_key()
 
   local faked_device = lazy_fakers[faker](args, bridge_info)
   assert(faked_device, string.format("No faking available for device type %s", args.device_type))
