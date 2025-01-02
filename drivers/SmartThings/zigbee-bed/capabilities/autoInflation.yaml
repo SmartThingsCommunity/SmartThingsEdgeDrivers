@@ -1,0 +1,32 @@
+id: stse.autoInflation
+version: 1
+status: proposed
+name: Auto Inflation
+ephemeral: false
+attributes:
+  inflationState:
+    schema:
+      type: object
+      properties:
+        value:
+          title: state
+          type: string
+          enum:
+            - "on"
+            - "off"
+      additionalProperties: false
+      required:
+        - value
+    setter: stateControl
+    enumCommands: []
+commands:
+  stateControl:
+    name: stateControl
+    arguments:
+      - name: stateControl
+        optional: false
+        schema:
+          type: string
+          enum:
+            - "on"
+            - "off"
