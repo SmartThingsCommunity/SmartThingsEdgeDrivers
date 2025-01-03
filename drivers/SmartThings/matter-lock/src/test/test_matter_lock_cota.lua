@@ -342,7 +342,7 @@ test.register_coroutine_test(
       )
     )
     mock_device:expect_metadata_update({
-      profile = "base-lock-batteryLevel",
+      profile = "base-lock",
       provisioning_state = "PROVISIONED"
     })
   end
@@ -439,7 +439,7 @@ test.register_coroutine_test(
       )
     )
     mock_device:expect_metadata_update({
-      profile = "base-lock-batteryLevel",
+      profile = "base-lock",
       provisioning_state = "PROVISIONED"
     })
   end
@@ -529,7 +529,7 @@ test.register_coroutine_test(
       )
     )
     mock_device:expect_metadata_update({
-      profile = "base-lock-batteryLevel",
+      profile = "base-lock",
       provisioning_state = "PROVISIONED"
     })
   end
