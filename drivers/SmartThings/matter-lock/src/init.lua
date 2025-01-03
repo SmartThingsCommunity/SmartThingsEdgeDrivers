@@ -22,10 +22,18 @@ local capabilities = require "st.capabilities"
 local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
 
+local PROFILE_BASE_NAME = "__profile_base_name"
+
 local INITIAL_COTA_INDEX = 1
 
--- add this defintions for locks to work on older lua libs
+-- add this definition for locks to work on older lua libs
 local UNLATCHED_STATE = 0x3
+
+local subscribed_attributes = {
+  [capabilities.lock.ID] = {DoorLock.attributes.LockState},
+  [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
+  [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
+}
 
 --- If a device needs a cota credential this function attempts to set the credential
 --- at the index provided. The set_credential_response_handler handles all failures
@@ -104,6 +112,32 @@ local function handle_battery_charge_level(driver, device, ib, response)
     device:emit_event(capabilities.batteryLevel.battery.warning())
   elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
     device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function handle_power_source_attribute_list(driver, device, ib, response)
+  local support_battery_percentage = false
+  local support_battery_level = false
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      support_battery_percentage = true
+    elseif attr.value == 0x0E then
+      support_battery_level = true
+    end
+  end
+  local profile_name = device:get_field(PROFILE_BASE_NAME)
+  if profile_name ~= nil then
+    if not support_battery_percentage then
+      if support_battery_level then
+        profile_name = profile_name .. "-batteryLevel"
+      else
+        profile_name = profile_name .. "-nobattery"
+      end
+    end
+    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   end
 end
 
@@ -197,14 +231,13 @@ local function set_credential_response_handler(driver, device, ib, response)
     if device:get_field(lock_utils.NONFUNCTIONAL) and cota_cred_index == credential_index then
       device.log.info("Successfully set COTA credential after being non-functional")
       device:set_field(lock_utils.NONFUNCTIONAL, false, {persist = true})
-      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
-      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
       local profile_name = "base-lock"
-      if #power_source_eps == 0 then
+      device:set_field(PROFILE_BASE_NAME, profile_name, {persist = true})
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      if #battery_feature_eps == 0 then
         profile_name = profile_name .. "-nobattery"
-      elseif #battery_feature_eps == 0 then
-        profile_name = profile_name .. "-batteryLevel"
       end
+      device.log.info(string.format("Updating device profile to %s.", profile_name))
       device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
@@ -218,6 +251,7 @@ local function set_credential_response_handler(driver, device, ib, response)
       --There are no credential indices available on the device
       device.log.error("Device requires COTA credential, but has no credential indexes available!")
       device.log.error("Lock and Unlock commands will no longer work!!")
+      device:set_field(PROFILE_BASE_NAME, "nonfunctional-lock", {persist = true})
       device:try_update_metadata({profile = "nonfunctional-lock", provisioning_state = "NONFUNCTIONAL"})
       device:set_field(lock_utils.NONFUNCTIONAL, true, {persist = true})
     elseif status == DoorLock.types.DlStatus.OCCUPIED and elements.next_credential_index.value == nil then
@@ -544,20 +578,19 @@ local function do_configure(driver, device)
     return
   end
 
-  -- if not fingerprinted, dynamically configure base-lock profile based on Power Source cluster checks
-  local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  -- if not fingerprinted, dynamically configure base-lock profile
   local profile_name = "base-lock"
-
-  -- check for battery type
-  if #power_source_eps == 0 then
+  device:set_field(PROFILE_BASE_NAME, profile_name, {persist = true})
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps == 0 then
     profile_name = profile_name .. "-nobattery"
-  elseif #battery_feature_eps == 0 then
-    profile_name = profile_name .. "-batteryLevel"
+    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  else
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(req)
   end
-
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-  device:try_update_metadata({profile = profile_name})
 end
 
 local function device_init(driver, device)
@@ -587,14 +620,13 @@ local function device_added(driver, device)
   if #eps == 0 then
     if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
       device.log.debug("Device does not support lockCodes. Switching profile.")
-      local power_source_eps = device:get_endpoints(clusters.PowerSource.ID)
-      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
       local profile_name = "lock-without-codes"
-      if #power_source_eps == 0 then
+      device:set_field(PROFILE_BASE_NAME, profile_name, {persist = true})
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      if #battery_feature_eps == 0 then
         profile_name = profile_name .. "-nobattery"
-      elseif #battery_feature_eps == 0 then
-        profile_name = profile_name .. "-batteryLevel"
       end
+      device.log.info(string.format("Updating device profile to %s.", profile_name))
       device:try_update_metadata({profile = profile_name})
     else
       device.log.debug("Device supports neither lock codes nor tamper. Unable to switch profile.")
@@ -634,6 +666,7 @@ local matter_lock_driver = {
         [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler,
       },
       [PowerSource.ID] = {
+        [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
         [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
         [PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
       },
@@ -653,11 +686,7 @@ local matter_lock_driver = {
       },
     },
   },
-  subscribed_attributes = {
-    [capabilities.lock.ID] = {DoorLock.attributes.LockState},
-    [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
-    [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
-  },
+  subscribed_attributes = subscribed_attributes,
   subscribed_events = {
     [capabilities.tamperAlert.ID] = {DoorLock.events.DoorLockAlarm, DoorLock.events.LockOperation},
     [capabilities.lockAlarm.ID] = {DoorLock.events.DoorLockAlarm},
