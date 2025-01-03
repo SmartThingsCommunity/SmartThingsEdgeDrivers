@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local CumulativeEnergyImported = {
   ID = 0x0001,
   NAME = "CumulativeEnergyImported",
-  base_type = require "st.matter.generated.zap_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
+  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
 function CumulativeEnergyImported:new_value(...)
@@ -20,7 +20,7 @@ function CumulativeEnergyImported:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -30,7 +30,7 @@ function CumulativeEnergyImported:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 

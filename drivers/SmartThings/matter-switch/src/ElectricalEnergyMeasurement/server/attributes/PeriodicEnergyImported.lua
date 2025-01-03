@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local PeriodicEnergyImported = {
   ID = 0x0003,
   NAME = "PeriodicEnergyImported",
-  base_type = require "st.matter.generated.zap_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
+  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
 function PeriodicEnergyImported:new_value(...)
@@ -20,7 +20,7 @@ function PeriodicEnergyImported:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -30,7 +30,7 @@ function PeriodicEnergyImported:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
