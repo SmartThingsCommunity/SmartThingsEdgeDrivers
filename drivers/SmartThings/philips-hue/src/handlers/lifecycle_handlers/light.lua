@@ -1,6 +1,10 @@
 local log = require "log"
+local capabilities = require "st.capabilities"
 local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
 local Discovery = require "disco"
@@ -137,13 +141,6 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
 
   ---@type HueLightInfo
   local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
-  local minimum_dimming = 2
-
-  if light_info.dimming and light_info.dimming.min_dim_level then
-    minimum_dimming = st_utils.round(st_utils.clamp_value(light_info.dimming.min_dim_level, 1, 100))
-  end
-
-  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
 
   -- Remembering that mirek are reciprocal to kelvin, note the following:
   --  ** Minimum Mirek -> _Maximum_ Kelvin
@@ -218,6 +215,8 @@ function LightLifecycleHandlers.init(driver, device)
     svc_rids_for_device[device_light_resource_id] = HueDeviceTypes.LIGHT
   end
   device:set_field(Fields._INIT, true, { persist = false })
+  device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
+
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
     refresh_handler(driver, device)
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
