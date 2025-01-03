@@ -37,6 +37,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1533, 0x0003}, -- eufy, Smart Lock C34
   {0x1421, 0x0041}, -- Kwikset
   {0x1531, 0x0010}, -- Solity
+  {0xFFF1, 0x8005}, -- Solity, Test device
   {0x147F, 0x0001}, -- U-tec
   {0x10E1, 0x2002} -- VDA
 }
