@@ -256,7 +256,7 @@ local function find_default_endpoint(device, cluster)
   local eps = embedded_cluster_utils.get_endpoints(device, cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
-    if v ~= 0 then --0 is the matter RootNode endpoint
+    if v ~= 0 and device:supports_server_cluster(cluster, v) then --0 is the matter RootNode endpoint
       return v
     end
   end
@@ -269,8 +269,6 @@ local function component_to_endpoint(device, component_name)
   -- supports a given cluster.
   if device:supports_capability(capabilities.airPurifierFanMode) then
     -- Fan Control is mandatory for the Air Purifier device type
-    return find_default_endpoint(device, clusters.FanControl.ID)
-  elseif device:supports_capability(capabilities.fanSpeedPercent) then
     return find_default_endpoint(device, clusters.FanControl.ID)
   else
     -- Thermostat is mandatory for Thermostat and Room AC device type
@@ -853,9 +851,11 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- or not the device supports emergency heat or fan only
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
 
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+
+  local autos = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
   if #auto > 0 then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
+    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
 
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
@@ -1299,8 +1299,9 @@ local function set_fan_mode(driver, device, cmd)
   else
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
+  local ep = find_default_endpoint(device, clusters.FanControl.ID)
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, ep, fan_mode_id))
   end
 end
 
@@ -1323,14 +1324,16 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
   else
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
+  local ep = find_default_endpoint(device, clusters.FanControl.ID)
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, ep, fan_mode_id))
   end
 end
 
 local function set_fan_speed_percent(driver, device, cmd)
+  local ep = find_default_endpoint(device, clusters.FanControl.ID)
   local speed = math.floor(cmd.args.percent)
-  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), speed))
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, ep, speed))
 end
 
 local function set_wind_mode(driver, device, cmd)
