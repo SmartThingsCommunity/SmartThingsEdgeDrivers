@@ -199,6 +199,7 @@ local function test_init()
   device_info_copy.profile.id = "4-button"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
