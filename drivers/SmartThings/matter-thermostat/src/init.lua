@@ -853,7 +853,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
 
   local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
   if #auto > 0 then
-    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
+    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
 
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
