@@ -70,7 +70,7 @@ local function test_init()
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
-  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-batteryLevel" })
+  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity" })
   mock_device_humidity_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
@@ -101,7 +101,32 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Test that profile does not change when battery percent remaining attribute is not available",
+  "Test profile change when battery level attribute (attribute ID 14) is available",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_humidity_battery.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_humidity_battery, 2,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(14),
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
+      }
+    )
+    mock_device_humidity_battery:expect_metadata_update({ profile = "humidity-batteryLevel" })
+  end
+)
+
+test.register_coroutine_test(
+  "Test that profile does not change when battery percent remaining and battery level attributes are not available",
   function()
     test.socket.matter:__queue_receive(
       {

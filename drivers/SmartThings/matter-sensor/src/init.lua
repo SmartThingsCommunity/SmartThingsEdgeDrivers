@@ -48,6 +48,7 @@ if version.api < 11 then
   clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 end
 
+local SUPPORT_BATTERY_LEVEL = "__support_battery_level"
 local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
@@ -273,13 +274,10 @@ local function match_profile(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-      profile_name = profile_name .. "-battery"
-    else
-      profile_name = profile_name .. "-batteryLevel"
-    end
+  if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+    profile_name = profile_name .. "-battery"
+  elseif device:get_field(SUPPORT_BATTERY_LEVEL) then
+    profile_name = profile_name .. "-batteryLevel"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -457,14 +455,18 @@ end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
+      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true)
+      match_profile(driver, device)
+      return
+    elseif attr.value == 0x0E then
+      device:set_field(SUPPORT_BATTERY_LEVEL, true)
       match_profile(driver, device)
       return
     end
   end
-  device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)

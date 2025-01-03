@@ -120,7 +120,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Test that profile changes to base-lock-batteryLevel when battery percent remaining attribute is not available",
+  "Test that profile changes to base-lock-batteryLevel when battery level attribute (attribute ID 14) is available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -130,6 +130,7 @@ test.register_coroutine_test(
             uint32(0),
             uint32(1),
             uint32(2),
+            uint32(14),
             uint32(31),
             uint32(65528),
             uint32(65529),

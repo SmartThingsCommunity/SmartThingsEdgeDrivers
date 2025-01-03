@@ -22,7 +22,6 @@ local capabilities = require "st.capabilities"
 local im = require "st.matter.interaction_model"
 local lock_utils = require "lock_utils"
 
-local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
 local PROFILE_BASE_NAME = "__profile_base_name"
 
 local INITIAL_COTA_INDEX = 1
@@ -118,19 +117,28 @@ end
 
 local function handle_power_source_attribute_list(driver, device, ib, response)
   local support_battery_percentage = false
+  local support_battery_level = false
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
       support_battery_percentage = true
+    elseif attr.value == 0x0E then
+      support_battery_level = true
     end
   end
-  device:set_field(SUPPORT_BATTERY_PERCENTAGE, support_battery_percentage, {persist = true})
   local profile_name = device:get_field(PROFILE_BASE_NAME)
-  if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-    profile_name = profile_name .. "-batteryLevel"
+  if profile_name ~= nil then
+    if not support_battery_percentage then
+      if support_battery_level then
+        profile_name = profile_name .. "-batteryLevel"
+      else
+        profile_name = profile_name .. "-nobattery"
+      end
+    end
+    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
   end
-  device.log.info(string.format("Updating device profile to %s.", profile_name))
-  device:try_update_metadata({profile = profile_name})
 end
 
 local function max_pin_code_len_handler(driver, device, ib, response)
@@ -228,8 +236,6 @@ local function set_credential_response_handler(driver, device, ib, response)
       local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
       if #battery_feature_eps == 0 then
         profile_name = profile_name .. "-nobattery"
-      elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-        profile_name = profile_name .. "-batteryLevel"
       end
       device.log.info(string.format("Updating device profile to %s.", profile_name))
       device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})

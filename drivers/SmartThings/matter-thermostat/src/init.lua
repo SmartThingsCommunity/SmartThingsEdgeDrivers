@@ -103,6 +103,7 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP"
 }
 
+local SUPPORT_BATTERY_LEVEL = "__support_battery_level"
 local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
 
 local subscribed_attributes = {
@@ -444,7 +445,6 @@ end
 local function match_profile(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -502,10 +502,12 @@ local function match_profile(driver, device)
 
       profile_name = profile_name .. "-nostate"
 
-      if #battery_feature_eps == 0 then
-        profile_name = profile_name .. "-nobattery"
-      elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-        profile_name = profile_name .. "-batteryLevel"
+      if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+        if device:get_field(SUPPORT_BATTERY_LEVEL) then
+          profile_name = profile_name .. "-batteryLevel"
+        else
+          profile_name = profile_name .. "-nobattery"
+        end
       end
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
@@ -535,10 +537,12 @@ local function match_profile(driver, device)
     -- Add nobattery profiles if updated
     profile_name = profile_name .. "-nostate"
 
-    if #battery_feature_eps == 0 then
-      profile_name = profile_name .. "-nobattery"
-    elseif not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-      profile_name = profile_name .. "-batteryLevel"
+    if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+      if device:get_field(SUPPORT_BATTERY_LEVEL) then
+        profile_name = profile_name .. "-batteryLevel"
+      else
+        profile_name = profile_name .. "-nobattery"
+      end
     end
   else
     device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
@@ -1353,14 +1357,18 @@ end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
+      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true)
+      match_profile(driver, device)
+      return
+    elseif attr.value == 0x0E then
+      device:set_field(SUPPORT_BATTERY_LEVEL, true)
       match_profile(driver, device)
       return
     end
   end
-  device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
 end
 
 local matter_driver_template = {
