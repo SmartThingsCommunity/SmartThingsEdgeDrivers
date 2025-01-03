@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: "MAILEKE/PMT1006S-SGM-ZTN"
+    deviceLabel: Maileke Air Quality Detector
+    manufacturer: MAILEKE
+    model: PMT1006S-SGM-ZTN
+    deviceProfileName: air-quality-detector-maileke
