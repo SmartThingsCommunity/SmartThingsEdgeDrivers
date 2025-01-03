@@ -266,7 +266,7 @@ local HELD_THRESHOLD = 1
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
-local TEST_CONFIGURE = "__test_configure"
+local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -427,8 +427,9 @@ local function assign_child_profile(device, child_ep, ep_sequence)
        device.manufacturer_info.product_id == fingerprint.product_id then
       if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
         if ep_sequence == 1 then
-          -- To add Electrical Sensor only to the first EDGE_CHILD
-          device:set_field(IS_AQARA_SWITCH_DEVICE, true)
+          -- To add Electrical Sensor only to the first EDGE_CHILD(light-power-energy-powerConsumption)
+          -- The profile of the second EDGE_CHILD is determined in the "for" loop below (e.g., light-binary)
+          device:set_field(IS_AQARA_SWITCH_DEVICE, true, {persist = true})
           return fingerprint.child_profile
         end
       else
@@ -456,6 +457,9 @@ local function assign_child_profile(device, child_ep, ep_sequence)
 end
 
 local function do_configure(driver, device)
+  if device:get_field(BUTTON_DEVICE_PROFILED) then
+    return
+  end
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
@@ -474,7 +478,7 @@ local function do_configure(driver, device)
     end
   end
 
-  if not device:get_field(IS_AQARA_SWITCH_DEVICE) and profile_name then
+  if profile_name then
     device:try_update_metadata({ profile = profile_name })
   end
 end
@@ -601,6 +605,7 @@ local function initialize_switch(driver, device)
     end
     device:try_update_metadata({profile = profile_name})
     device:set_field(DEFERRED_CONFIGURE, true)
+    device:set_field(BUTTON_DEVICE_PROFILED, true)
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
@@ -621,6 +626,7 @@ local function initialize_switch(driver, device)
     if profile_name then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
+      device:set_field(BUTTON_DEVICE_PROFILED, true)
     else
       configure_buttons(device)
     end
@@ -1167,11 +1173,8 @@ local function device_added(driver, device)
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
   end
 
-  -- when unit testing, call set_configure elsewhere
-  if not device:get_field(TEST_CONFIGURE) then
-    -- call device init in case init is not called after added due to device caching
-    device_init(driver, device)
-  end
+  -- call device init in case init is not called after added due to device caching
+  device_init(driver, device)
 end
 
 local matter_driver_template = {
