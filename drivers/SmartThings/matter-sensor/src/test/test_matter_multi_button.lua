@@ -20,8 +20,8 @@ local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
 -- Mock a 3-button device with temperature and humidity sensor
-local aqara_mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("temperature-humidity-3-button-battery.yml"),
+local button_mock_device = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("temperature-humidity-3button-battery.yml"),
   manufacturer_info = {vendor_id = 0x115F, product_id = 0x2004, product_name = "Aqara Climate Sensor W100"},
   label = "Climate Sensor W100",
   device_id = "00000000-1111-2222-3333-000000000001",
@@ -41,7 +41,7 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
       },
       device_types = {
-        {device_type_id = 0x0302, device_type_revision = 1},
+        {},
       }
     },
     {
@@ -50,7 +50,7 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "BOTH"},
       },
       device_types = {
-        {device_type_id = 0x0307, device_type_revision = 1},
+        {},
       }
     },
     {
@@ -95,12 +95,10 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 6,
       clusters = {
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER",
-         feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY
-        }
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        {device_type_id = 0x0011, device_type_revision = 1}
+        {}
       }
     }
   }
@@ -127,101 +125,25 @@ local function test_init()
   local read_request
   for i, cluster in ipairs(cluster_read_list) do
     for j = 1, 3, 1 do
-      read_request = cluster_read_list[1]:read(aqara_mock_device, ep)
-      read_request:merge(cluster:subscribe(aqara_mock_device))
-      test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
+      read_request = cluster_read_list[1]:read(button_mock_device, ep)
+      read_request:merge(cluster:subscribe(button_mock_device))
+      test.socket.matter:__expect_send({button_mock_device.id, read_request})
       ep = ep + 1
     end
   end
 
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(button_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request:merge(cluster:subscribe(aqara_mock_device))
+      subscribe_request:merge(cluster:subscribe(button_mock_device))
     end
   end
 
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(aqara_mock_device)
-  test.set_rpc_version(5)
+  test.socket.matter:__expect_send({button_mock_device.id, subscribe_request})
+  test.mock_device.add_test_device(button_mock_device)
 end
 
 test.set_test_init_function(test_init)
-
-test.register_coroutine_test(
-  "Temperature reports should generate correct messages",
-  function ()
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(aqara_mock_device, 1, 40*100)
-      }
-    )
-    test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Min and max temperature attributes set capability constraint",
-  function ()
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(aqara_mock_device, 1, 500)
-      }
-    )
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(aqara_mock_device, 1, 4000)
-      }
-    )
-    test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Relative humidity reports should generate correct messages",
-  function ()
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.RelativeHumidityMeasurement.server.attributes.MeasuredValue:build_test_report_data(aqara_mock_device, 2, 4049)
-      }
-    )
-    test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
-    )
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.RelativeHumidityMeasurement.server.attributes.MeasuredValue:build_test_report_data(aqara_mock_device, 2, 4050)
-      }
-    )
-    test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Battery percent reports should generate correct messages",
-  function ()
-    test.socket.matter:__queue_receive(
-      {
-        aqara_mock_device.id,
-        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(aqara_mock_device, 1, 150)
-      }
-    )
-    test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
-    )
-  end
-)
 
 test.register_coroutine_test(
   "Handle single press sequence for a long hold on long-release-capable button", -- only a long press event should generate a held event
@@ -229,16 +151,16 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 3, {new_position = 1})
       }
     )
     test.wait_for_events()
     test.mock_time.advance_time(2)
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.ShortRelease:build_test_event_report(button_mock_device, 3, {previous_position = 0})
       }
     )
   end
@@ -250,16 +172,16 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 3, {new_position = 1})
       }
     )
     test.wait_for_events()
     test.mock_time.advance_time(2)
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.ShortRelease:build_test_event_report(button_mock_device, 3, {previous_position = 0})
       }
     )
   end
@@ -270,35 +192,35 @@ test.register_coroutine_test(
     function()
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
+          button_mock_device.id,
+          clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 3, {new_position = 1})
         }
       )
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
+          button_mock_device.id,
+          clusters.Switch.events.ShortRelease:build_test_event_report(button_mock_device, 3, {previous_position = 0})
         }
       )
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 4, {new_position = 1})
+          button_mock_device.id,
+          clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 4, {new_position = 1})
         }
       )
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.events.MultiPressOngoing:build_test_event_report(aqara_mock_device, 4, {new_position = 1, current_number_of_presses_counted = 2})
+          button_mock_device.id,
+          clusters.Switch.events.MultiPressOngoing:build_test_event_report(button_mock_device, 4, {new_position = 1, current_number_of_presses_counted = 2})
         }
       )
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.events.MultiPressComplete:build_test_event_report(aqara_mock_device, 4, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1})
+          button_mock_device.id,
+          clusters.Switch.events.MultiPressComplete:build_test_event_report(button_mock_device, 4, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1})
         }
       )
-      test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.double({state_change = true})))
+      test.socket.capability:__expect_send(button_mock_device:generate_test_message("button2", button_attr.double({state_change = true})))
     end
 )
 
@@ -307,21 +229,21 @@ test.register_coroutine_test(
   function ()
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 3, {new_position = 1})
       }
     )
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.LongPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.LongPress:build_test_event_report(button_mock_device, 3, {new_position = 1})
       }
     )
-    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.held({state_change = true})))
+    test.socket.capability:__expect_send(button_mock_device:generate_test_message("button1", button_attr.held({state_change = true})))
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.LongRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.LongRelease:build_test_event_report(button_mock_device, 3, {previous_position = 0})
       }
     )
   end
@@ -332,21 +254,21 @@ test.register_coroutine_test(
   function ()
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 5, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 5, {new_position = 1})
       }
     )
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.LongPress:build_test_event_report(aqara_mock_device, 5, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.LongPress:build_test_event_report(button_mock_device, 5, {new_position = 1})
       }
     )
-    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.held({state_change = true})))
+    test.socket.capability:__expect_send(button_mock_device:generate_test_message("button3", button_attr.held({state_change = true})))
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.LongRelease:build_test_event_report(aqara_mock_device, 5, {previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.LongRelease:build_test_event_report(button_mock_device, 5, {previous_position = 0})
       }
     )
   end
@@ -357,12 +279,12 @@ test.register_coroutine_test(
   function()
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.MultiPressComplete:build_test_event_report(aqara_mock_device, 3, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.MultiPressComplete:build_test_event_report(button_mock_device, 3, {new_position = 1, total_number_of_presses_counted = 2, previous_position = 0})
       }
     )
     test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("button1", button_attr.double({state_change = true}))
+      button_mock_device:generate_test_message("button1", button_attr.double({state_change = true}))
     )
   end
 )
@@ -372,12 +294,12 @@ test.register_coroutine_test(
     function()
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_device.id,
-          clusters.Switch.attributes.MultiPressMax:build_test_report_data(aqara_mock_device, 3, 2)
+          button_mock_device.id,
+          clusters.Switch.attributes.MultiPressMax:build_test_report_data(button_mock_device, 3, 2)
         }
       )
       test.socket.capability:__expect_send(
-        aqara_mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}}))
+        button_mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}}))
       )
     end
 )
@@ -388,16 +310,16 @@ test.register_coroutine_test(
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(aqara_mock_device, 4, {new_position = 1})
+        button_mock_device.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(button_mock_device, 4, {new_position = 1})
       }
     )
     test.wait_for_events()
     test.mock_time.advance_time(2)
     test.socket.matter:__queue_receive(
       {
-        aqara_mock_device.id,
-        clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 4, {previous_position = 0})
+        button_mock_device.id,
+        clusters.Switch.events.ShortRelease:build_test_event_report(button_mock_device, 4, {previous_position = 0})
       }
     )
   end
@@ -409,16 +331,16 @@ test.register_message_test(
       channel = "matter",
       direction = "receive",
       message = {
-        aqara_mock_device.id,
+        button_mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          aqara_mock_device, 5, 3
+          button_mock_device, 5, 3
         )
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = aqara_mock_device:generate_test_message("button3",
+      message = button_mock_device:generate_test_message("button3",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
   }
@@ -430,16 +352,16 @@ test.register_message_test(
       channel = "matter",
       direction = "receive",
       message = {
-        aqara_mock_device.id,
+        button_mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
-          aqara_mock_device, 3, 7
+          button_mock_device, 3, 7
         )
       },
     },
     {
       channel = "capability",
       direction = "send",
-      message = aqara_mock_device:generate_test_message("button1",
+      message = button_mock_device:generate_test_message("button1",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
     },
   }

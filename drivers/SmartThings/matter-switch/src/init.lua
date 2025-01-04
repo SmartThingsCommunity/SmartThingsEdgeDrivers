@@ -280,10 +280,6 @@ local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) de
 local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
-local TEMP_BOUND_RECEIVED = "__temp_bound_received"
-local TEMP_MIN = "__temp_min"
-local TEMP_MAX = "__temp_max"
-
 local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
 
@@ -543,13 +539,7 @@ local function initialize_switch(driver, device)
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
-  local main_endpoint
-  if device:supports_capability(capabilities.temperatureMeasurement) then
-    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button1, 2, 3
-    main_endpoint = device.MATTER_DEFAULT_ENDPOINT
-  else
-    main_endpoint = find_default_endpoint(device)
-  end
+  local main_endpoint = find_default_endpoint(device)
 
   -- If a switch endpoint is present, it will be the main endpoint and therefore the
   -- main component. If button endpoints are present, they will be added as
@@ -623,10 +613,7 @@ local function initialize_switch(driver, device)
       battery_support = true
     end
     if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if device:supports_capability(capabilities.temperatureMeasurement) then
-        -- to call configure_buttons, keep the profile_name as nil.
-        device.log.debug("So far, it means Aqara Climate Sensor W100.")
-      elseif battery_support then
+      if battery_support then
         profile_name = string.format("%d-button-battery", #button_eps)
       else
         profile_name = string.format("%d-button", #button_eps)
@@ -1212,49 +1199,6 @@ local function device_added(driver, device)
   device_init(driver, device)
 end
 
-local function temperature_attr_handler(driver, device, ib, response)
-  local measured_value = ib.data.value
-  if measured_value ~= nil then
-    local temp = measured_value / 100.0
-    local unit = "C"
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
-  end
-end
-
-local temp_attr_handler_factory = function(minOrMax)
-  return function(driver, device, ib, response)
-    if ib.data.value == nil then
-      return
-    end
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
-    local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
-    if min ~= nil and max ~= nil then
-      if min < max then
-        -- Only emit the capability for RPC version >= 5 (unit conversion for
-        -- temperature range capability is only supported for RPC >= 5)
-        if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
-        end
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
-      else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
-      end
-    end
-  end
-end
-
-local function humidity_attr_handler(driver, device, ib, response)
-  local measured_value = ib.data.value
-  if measured_value ~= nil then
-    local humidity = utils.round(measured_value / 100.0)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
-  end
-end
-
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -1305,14 +1249,6 @@ local matter_driver_template = {
       },
       [clusters.Switch.ID] = {
         [clusters.Switch.attributes.MultiPressMax.ID] = max_press_handler
-      },
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
-      },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
       }
     },
     event = {
@@ -1366,14 +1302,6 @@ local matter_driver_template = {
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower
-    },
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     }
   },
   subscribed_events = {
@@ -1424,9 +1352,7 @@ local matter_driver_template = {
     capabilities.powerConsumptionReport,
     capabilities.valve,
     capabilities.button,
-    capabilities.battery,
-    capabilities.temperatureMeasurement,
-    capabilities.relativeHumidityMeasurement
+    capabilities.battery
   },
   sub_drivers = {
     require("eve-energy"),
