@@ -16,9 +16,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local lua_socket = require "socket"
 local utils = require "st.utils"
-local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
@@ -159,11 +157,6 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  if device:supports_capability(capabilities.button) then
-    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    profile_name = profile_name .. string.format("-%dbutton", #button_eps)
-  end
-
   if supports_battery_percentage_remaining(device) then
     profile_name = profile_name .. "-battery"
   end
@@ -182,127 +175,8 @@ local function do_configure(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-local START_BUTTON_PRESS = "__start_button_press"
-local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
-local HELD_THRESHOLD = 1
-
--- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
--- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
--- the "held" capability event is generated when the LongPress event is received. The IGNORE_NEXT_MPC flag is used
--- to tell the driver to ignore MultiPressComplete if it is received after a long press to avoid this extra event.
-local IGNORE_NEXT_MPC = "__ignore_next_mpc"
-
--- These are essentially storing the supported features of a given endpoint
--- TODO: add an is_feature_supported_for_endpoint function to matter.device that takes an endpoint
-local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side
-local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
-
---helper function to create list of multi press values
-local function create_multi_press_values_list(size, supportsHeld)
-  local list = {"pushed", "double"}
-  if supportsHeld then table.insert(list, "held") end
-  -- add multi press values of 3 or greater to the list
-  for i=3, size do
-    table.insert(list, string.format("pushed_%dx", i))
-  end
-  return list
-end
-
-local function tbl_contains(array, value)
-  for _, element in ipairs(array) do
-    if element == value then
-      return true
-    end
-  end
-  return false
-end
-
-local function emulate_held_event(device, ep)
-  local now = lua_socket.gettime()
-  local press_init = get_field_for_endpoint(device, START_BUTTON_PRESS, ep) or now -- if we don't have an init time, assume instant release
-  if (now - press_init) < TIMEOUT_THRESHOLD then
-    if (now - press_init) > HELD_THRESHOLD then
-      device:emit_event_for_endpoint(ep, capabilities.button.button.held({state_change = true}))
-    else
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = true}))
-    end
-  end
-  set_field_for_endpoint(device, START_BUTTON_PRESS, ep, nil, {persist = false})
-end
-
-local function max_press_handler(driver, device, ib, response)
-  local max = ib.data.value or 1 --get max number of presses
-  device.log.debug("Device supports "..max.." presses")
-  -- capability only supports up to 6 presses
-  if max > 6 then
-    log.info("Device supports more than 6 presses")
-    max = 6
-  end
-  local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
-  local supportsHeld = tbl_contains(MSL, ib.endpoint_id)
-  local values = create_multi_press_values_list(max, supportsHeld)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
-end
-
-local function configure_buttons(device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    local MSR = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
-    device.log.debug(#MSR.." momentary switch release endpoints")
-    local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
-    device.log.debug(#MSL.." momentary switch long press endpoints")
-    local MSM = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
-    device.log.debug(#MSM.." momentary switch multi press endpoints")
-    for _, ep in ipairs(MS) do
-      local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      -- this ordering is important, as MSL & MSM devices must also support MSR
-      if tbl_contains(MSM, ep) then
-        -- ask the device to tell us its max number of presses
-        device.log.debug("sending multi press max read")
-        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-        supportedButtonValues_event = nil -- deferred until max press handler
-      end
-
-      if supportedButtonValues_event then
-        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
-      end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
-    end
-  end
-end
-
-local function initialize_button(driver, device)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  table.sort(button_eps)
-
-  local component_map = {}
-  local current_component_number = 1
-  for _, ep in ipairs(button_eps) do
-    component_map[string.format("button%d", current_component_number)] = ep
-    current_component_number = current_component_number + 1
-  end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-  configure_buttons(device)
-end
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
-end
-
 local function device_init(driver, device)
   log.info("device init")
-  if device:supports_capability(capabilities.button) then
-    initialize_button(driver, device)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-  end
   device:subscribe()
 end
 
@@ -453,56 +327,6 @@ local function pressure_attr_handler(driver, device, ib, response)
   end
 end
 
-local function initial_press_event_handler(driver, device, ib, response)
-  if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
-    -- Receipt of an InitialPress event means we do not want to ignore the next MultiPressComplete event
-    -- or else we would potentially not create the expected button capability event
-    set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
-  end
-end
-
--- if the device distinguishes a long press event, it will always be a "held"
--- there's also a "long release" event, but this event is required to come first
-local function long_press_event_handler(driver, device, ib, response)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.held({state_change = true}))
-  if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
-    -- Ignore the next MultiPressComplete event if it is sent as part of this "long press" event sequence
-    set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, true)
-  end
-end
-
-local function short_release_event_handler(driver, device, ib, response)
-  if not get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
-    if get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
-      emulate_held_event(device, ib.endpoint_id)
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
-    end
-  end
-end
-
-local function multi_press_complete_event_handler(driver, device, ib, response)
-  -- in the case of multiple button presses
-  -- emit number of times, multiple presses have been completed
-  if ib.data and not get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
-    local press_value = ib.data.elements.total_number_of_presses_counted.value
-    --capability only supports up to 6 presses
-    if press_value < 7 then
-      local button_event = capabilities.button.button.pushed({state_change = true})
-      if press_value == 2 then
-        button_event = capabilities.button.button.double({state_change = true})
-      elseif press_value > 2 then
-        button_event = capabilities.button.button(string.format("pushed_%dx", press_value), {state_change = true})
-      end
-
-      device:emit_event_for_endpoint(ib.endpoint_id, button_event)
-    else
-      log.info(string.format("Number of presses (%d) not supported by capability", press_value))
-    end
-  end
-  set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
-end
-
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -539,18 +363,6 @@ local matter_driver_template = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
         [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
       },
-      [clusters.Switch.ID] = {
-        [clusters.Switch.attributes.MultiPressMax.ID] = max_press_handler
-      }
-    },
-    event = {
-      [clusters.Switch.ID] = {
-        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler,
-        [clusters.Switch.events.LongPress.ID] = long_press_event_handler,
-        [clusters.Switch.events.ShortRelease.ID] = short_release_event_handler,
-        [clusters.Switch.events.MultiPressComplete.ID] = multi_press_complete_event_handler
-      }
-    },
   },
   -- TODO Once capabilities all have default handlers move this info there, and
   -- use `supported_capabilities`
@@ -676,14 +488,6 @@ local matter_driver_template = {
     },
     [capabilities.rainSensor.ID] = {
         clusters.BooleanState.attributes.StateValue,
-    },
-  },
-  subscribed_events = {
-    [capabilities.button.ID] = {
-      clusters.Switch.events.InitialPress,
-      clusters.Switch.events.LongPress,
-      clusters.Switch.events.ShortRelease,
-      clusters.Switch.events.MultiPressComplete,
     },
   },
   capability_handlers = {
