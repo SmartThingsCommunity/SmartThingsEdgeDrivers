@@ -362,9 +362,9 @@ local matter_driver_template = {
       [clusters.BooleanStateConfiguration.ID] = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
         [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
-      },
-      }
     },
+    }
+  },
   -- TODO Once capabilities all have default handlers move this info there, and
   -- use `supported_capabilities`
   subscribed_attributes = {
