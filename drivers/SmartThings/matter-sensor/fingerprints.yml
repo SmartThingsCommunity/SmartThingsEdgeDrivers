@@ -10,11 +10,6 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
-  - id: "4447/8196"
-    deviceLabel: Aqara Climate Sensor W100
-    vendorId: 0x115F
-    productId: 0x2004
-    deviceProfileName: temperature-humidity-3button-battery
   #Elko
   - id: "5170/4098"
     deviceLabel: RFWD-100/MT
