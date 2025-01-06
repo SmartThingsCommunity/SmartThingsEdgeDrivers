@@ -54,132 +54,6 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
-local subscribed_attributes = {
-  [capabilities.relativeHumidityMeasurement.ID] = {
-    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-  },
-  [capabilities.temperatureMeasurement.ID] = {
-    clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
-  },
-  [capabilities.illuminanceMeasurement.ID] = {
-    clusters.IlluminanceMeasurement.attributes.MeasuredValue,
-  },
-  [capabilities.motionSensor.ID] = {
-    clusters.OccupancySensing.attributes.Occupancy,
-  },
-  [capabilities.contactSensor.ID] = {
-    clusters.BooleanState.attributes.StateValue,
-  },
-  [capabilities.battery.ID] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
-  },
-  [capabilities.batteryLevel.ID] = {
-    clusters.PowerSource.attributes.BatChargeLevel,
-    clusters.SmokeCoAlarm.attributes.BatteryAlert,
-  },
-  [capabilities.atmosphericPressureMeasurement.ID] = {
-    clusters.PressureMeasurement.attributes.MeasuredValue,
-  },
-  [capabilities.airQualityHealthConcern.ID] = {
-    clusters.AirQuality.attributes.AirQuality,
-  },
-  [capabilities.carbonMonoxideMeasurement.ID] = {
-    clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.carbonMonoxideHealthConcern.ID] = {
-    clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.carbonDioxideMeasurement.ID] = {
-    clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.carbonDioxideHealthConcern.ID] = {
-    clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.nitrogenDioxideMeasurement.ID] = {
-    clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.nitrogenDioxideHealthConcern.ID] = {
-    clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.ozoneMeasurement.ID] = {
-    clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.ozoneHealthConcern.ID] = {
-    clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.formaldehydeMeasurement.ID] = {
-    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.formaldehydeHealthConcern.ID] = {
-    clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.veryFineDustSensor.ID] = {
-    clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.veryFineDustHealthConcern.ID] = {
-    clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.fineDustHealthConcern.ID] = {
-    clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.fineDustSensor.ID] = {
-    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.dustSensor.ID] = {
-    clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
-    clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.dustHealthConcern.ID] = {
-    clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.radonMeasurement.ID] = {
-    clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.radonHealthConcern.ID] = {
-    clusters.RadonConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.tvocMeasurement.ID] = {
-    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
-  },
-  [capabilities.tvocHealthConcern.ID] = {
-    clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
-  },
-  [capabilities.smokeDetector.ID] = {
-    clusters.SmokeCoAlarm.attributes.SmokeState,
-    clusters.SmokeCoAlarm.attributes.TestInProgress,
-  },
-  [capabilities.carbonMonoxideDetector.ID] = {
-    clusters.SmokeCoAlarm.attributes.COState,
-    clusters.SmokeCoAlarm.attributes.TestInProgress,
-  },
-  [capabilities.hardwareFault.ID] = {
-    clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
-    clusters.BooleanStateConfiguration.attributes.SensorFault,
-  },
-  [capabilities.waterSensor.ID] = {
-    clusters.BooleanState.attributes.StateValue,
-  },
-  [capabilities.temperatureAlarm.ID] = {
-    clusters.BooleanState.attributes.StateValue,
-  },
-  [capabilities.rainSensor.ID] = {
-    clusters.BooleanState.attributes.StateValue,
-  }
-}
-
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
@@ -524,7 +398,131 @@ local matter_driver_template = {
   },
   -- TODO Once capabilities all have default handlers move this info there, and
   -- use `supported_capabilities`
-  subscribed_attributes = subscribed_attributes,
+  subscribed_attributes = {
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+    },
+    [capabilities.illuminanceMeasurement.ID] = {
+      clusters.IlluminanceMeasurement.attributes.MeasuredValue,
+    },
+    [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy,
+    },
+    [capabilities.contactSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining,
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
+    },
+    [capabilities.atmosphericPressureMeasurement.ID] = {
+      clusters.PressureMeasurement.attributes.MeasuredValue,
+    },
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality,
+    },
+    [capabilities.carbonMonoxideMeasurement.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.carbonDioxideMeasurement.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonDioxideHealthConcern.ID] = {
+      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.nitrogenDioxideMeasurement.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.nitrogenDioxideHealthConcern.ID] = {
+      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.ozoneMeasurement.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.ozoneHealthConcern.ID] = {
+      clusters.OzoneConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.formaldehydeMeasurement.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.formaldehydeHealthConcern.ID] = {
+      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.veryFineDustSensor.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.veryFineDustHealthConcern.ID] = {
+      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustHealthConcern.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.fineDustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustSensor.ID] = {
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.dustHealthConcern.ID] = {
+      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.radonMeasurement.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.radonHealthConcern.ID] = {
+      clusters.RadonConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.tvocHealthConcern.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
+    },
+    [capabilities.smokeDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.SmokeState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.carbonMonoxideDetector.ID] = {
+      clusters.SmokeCoAlarm.attributes.COState,
+      clusters.SmokeCoAlarm.attributes.TestInProgress,
+    },
+    [capabilities.hardwareFault.ID] = {
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.BooleanStateConfiguration.attributes.SensorFault,
+    },
+    [capabilities.waterSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.temperatureAlarm.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    },
+    [capabilities.rainSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue,
+    }
+  },
   capability_handlers = {
   },
   supported_capabilities = {
