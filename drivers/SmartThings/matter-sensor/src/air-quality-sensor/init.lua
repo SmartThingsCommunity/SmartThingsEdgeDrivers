@@ -309,7 +309,7 @@ local unit_default = {
   [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
-  [capabilities.tvocMeasurement.NAME] = units.PPM
+  [capabilities.tvocMeasurement.NAME] = units.PPB
 }
 
 -- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
@@ -325,7 +325,8 @@ local level_strings = {
 
 local conversion_tables = {
   [units.PPM] = {
-    [units.PPM] = function(value) return utils.round(value) end
+    [units.PPM] = function(value) return utils.round(value) end,
+    [units.PPB] = function(value) return utils.round(value * (10^3)) end
   },
   [units.PPB] = {
     [units.PPM] = function(value) return utils.round(value/(10^3)) end
@@ -473,7 +474,7 @@ local matter_air_quality_sensor_handler = {
         [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.radonHealthConcern.radonHealthConcern)
       },
       [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPM),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
       }
