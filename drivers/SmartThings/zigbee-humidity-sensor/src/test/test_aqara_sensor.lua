@@ -39,6 +39,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery.normal()))
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -186,6 +188,63 @@ test.register_coroutine_test(
       capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })))
     test.wait_for_events()
   end
+)
+
+test.register_message_test(
+  "BatteryVoltage report should be handled(normal)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 30)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal())
+    }
+  }
+)
+
+test.register_message_test(
+  "BatteryVoltage report should be handled(critical)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+    }
+  }
+)
+
+test.register_message_test(
+  "BatteryVoltage report should be handled(warning)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 20)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+    }
+  }
 )
 
 test.run_registered_tests()
