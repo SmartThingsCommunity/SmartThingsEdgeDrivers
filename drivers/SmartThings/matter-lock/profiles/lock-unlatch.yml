@@ -1,0 +1,93 @@
+name: lock-unlatch
+components:
+- label: Main
+  id: main
+  capabilities:
+  - id: lock
+    version: 1
+    config:
+      values:
+      - key: "lock.value"
+        enabledValues:
+        - locked
+        - unlocked
+        - unlatched
+        - not fully locked
+  - id: lockAlarm
+    version: 1
+  - id: remoteControlStatus
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmartLock
+deviceConfig:
+  dashboard:
+    states:
+    - component: main
+      capability: lock
+      version: 1
+    actions:
+    - component: main
+      capability: lock
+      version: 1
+  detailView:
+  - component: main
+    capability: lock
+    version: 1
+    values:
+    - key: lock.value
+      alternatives:
+      - key: locked
+        type: inactive
+        value: '{{i18n.attributes.lock.i18n.value.locked.label}}'
+      - key: unlocked
+        value: '{{i18n.attributes.lock.i18n.value.unlocked.label}}'
+      - key: unlatched
+        value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
+      - key: not fully locked
+        value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
+    patch:
+    - op: add
+      path: /1
+      value:
+        capability: lock
+        version: 1
+        component: main
+        label: '{{i18n.commands.unlatch.label}}'
+        displayType: pushButton
+        pushButton:
+          command: unlatch
+  automation:
+    conditions:
+    - component: main
+      capability: lock
+      version: 1
+      values:
+      - key: lock.value
+        alternatives:
+        - key: locked
+          type: inactive
+          value: '{{i18n.attributes.lock.i18n.value.locked.label}}'
+        - key: unlocked
+          value: '{{i18n.attributes.lock.i18n.value.unlocked.label}}'
+        - key: unlatched
+          value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
+        - key: not fully locked
+          value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
+    actions:
+    - component: main
+      capability: lock
+      version: 1
+      values:
+      - key: '{{enumCommands}}'
+        alternatives:
+        - key: lock
+          type: inactive
+          value: '{{i18n.commands.lock.label}}'
+        - key: unlock
+          value: '{{i18n.commands.unlock.label}}'
+        - key: unlatch
+          value: '{{i18n.commands.unlatch.label}}'
