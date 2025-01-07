@@ -329,7 +329,8 @@ local conversion_tables = {
     [units.PPB] = function(value) return utils.round(value * (10^3)) end
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return utils.round(value) end
   },
   [units.PPT] = {
     [units.PPM] = function(value) return utils.round(value/(10^6)) end

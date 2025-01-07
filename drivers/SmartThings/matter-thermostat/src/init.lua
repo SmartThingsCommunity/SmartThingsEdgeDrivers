@@ -625,7 +625,8 @@ local conversion_tables = {
     [units.MGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return utils.round(value) end,
   },
   [units.PPT] = {
     [units.PPM] = function(value) return utils.round(value/(10^6)) end
