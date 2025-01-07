@@ -217,7 +217,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 0)
+        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 10)
       }
     },
     {
@@ -236,7 +236,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 20)
+        PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 26)
       }
     },
     {

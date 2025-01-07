@@ -56,7 +56,7 @@ end
 local function battery_level_handler(driver, device, value, zb_rx)
   local voltage = value.value
   local batteryLevel = "normal"
-  if voltage == 0 then
+  if voltage <= 25 then
     batteryLevel = "critical"
   elseif voltage < 28 then
     batteryLevel = "warning"
