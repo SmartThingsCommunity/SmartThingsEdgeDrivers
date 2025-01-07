@@ -65,8 +65,6 @@ local function battery_level_handler(driver, device, value, zb_rx)
 end
 
 local function device_init(driver, device)
-  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
-
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
