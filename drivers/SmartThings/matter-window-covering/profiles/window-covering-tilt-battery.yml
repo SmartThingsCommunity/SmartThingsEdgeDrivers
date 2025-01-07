@@ -21,11 +21,3 @@ components:
 preferences:
   - preferenceId: presetPosition
     explicit: true
-  - name: "presetTiltPosition"
-    title: "Preset tilt position"
-    description: "Set the window shade preset tilt position"
-    preferenceType: integer
-    definition:
-      minimum: 0
-      maximum: 100
-      default: 50

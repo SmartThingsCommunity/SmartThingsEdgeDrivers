@@ -99,10 +99,9 @@ local function handle_preset(driver, device, cmd)
     device:send(req)
   end
   if #tilt_eps > 0 then
-    local tilt_value = 100 - device.preferences.presetTiltPosition
-    local hundredths_tilt_percent = tilt_value * 100
+    -- Use default preset tilt percentage to 50 until a canonical preference is created for preset tilt position
     local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
-      device, endpoint_id, hundredths_tilt_percent
+      device, endpoint_id, 50 * 100
     )
     device:send(req)
   end
