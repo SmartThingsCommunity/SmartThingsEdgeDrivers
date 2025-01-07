@@ -159,12 +159,12 @@ local child_device_profile_overrides = {
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
-local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
-local EXPORT_POLL_TIMER_SETTING_ATTEMPTED = "__export_poll_timer_setting_attempted"
-local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
-local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
-local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
-local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
+local FIRST_IMPORT_REPORT_TIMESTAMP = "__first_import_report_timestamp"
+local IMPORT_POLL_TIMER_SETTING_ATTEMPTED = "__import_poll_timer_setting_attempted"
+local IMPORT_REPORT_TIMEOUT = "__import_report_timeout"
+local TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
+local LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
+local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
@@ -184,26 +184,26 @@ local function iso8061Timestamp(time)
   return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
 
-local function delete_export_poll_schedule(device)
-  local export_poll_timer = device:get_field(RECURRING_EXPORT_REPORT_POLL_TIMER)
-  if export_poll_timer then
-    device.thread:cancel_timer(export_poll_timer)
-    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
+local function delete_import_poll_schedule(device)
+  local import_poll_timer = device:get_field(RECURRING_IMPORT_REPORT_POLL_TIMER)
+  if import_poll_timer then
+    device.thread:cancel_timer(import_poll_timer)
+    device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, nil)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
   end
 end
 
-local function send_export_poll_report(device, latest_total_exported_energy_wh)
+local function send_import_poll_report(device, latest_total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(LAST_EXPORTED_REPORT_TIMESTAMP) or 0
-  device:set_field(LAST_EXPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  local last_time = device:get_field(LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  device:set_field(LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
   -- Calculate the energy delta between reports
   local energy_delta_wh = 0.0
-  local previous_exported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_exported_report and previous_exported_report.energy then
-    energy_delta_wh = math.max(latest_total_exported_energy_wh - previous_exported_report.energy, 0.0)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -211,17 +211,17 @@ local function send_export_poll_report(device, latest_total_exported_energy_wh)
     start = iso8061Timestamp(last_time),
     ["end"] = iso8061Timestamp(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_exported_energy_wh
+    energy = latest_total_imported_energy_wh
   }))
 end
 
 local function create_poll_report_schedule(device)
-  local export_timer = device.thread:call_on_schedule(
-    device:get_field(EXPORT_REPORT_TIMEOUT),
-    send_export_poll_report(device, device:get_field(TOTAL_EXPORTED_ENERGY)),
-    "polling_export_report_schedule_timer"
+  local import_timer = device.thread:call_on_schedule(
+    device:get_field(IMPORT_REPORT_TIMEOUT),
+    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY)),
+    "polling_import_report_schedule_timer"
   )
-  device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
+  device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
 end
 
 local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
@@ -235,18 +235,18 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     return
   elseif not device:get_field(SUBSCRIPTION_REPORT_OCCURRED) then
     device:set_field(SUBSCRIPTION_REPORT_OCCURRED, true)
-  elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
-    device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
+  elseif not device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP) then
+    device:set_field(FIRST_IMPORT_REPORT_TIMESTAMP, os.time())
   else
-    local first_timestamp = device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP)
+    local first_timestamp = device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP)
     local second_timestamp = os.time()
     local report_interval_secs = second_timestamp - first_timestamp
-    device:set_field(EXPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
+    device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumption
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
 
@@ -707,7 +707,7 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
-  delete_export_poll_schedule(device)
+  delete_import_poll_schedule(device)
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -986,33 +986,33 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function cumul_energy_exported_handler(driver, device, ib, response)
+local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
     device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
   end
 end
 
-local function per_energy_exported_handler(driver, device, ib, response)
+local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
 
 local function energy_report_handler_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    if not device:get_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED) then
+    if not device:get_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED) then
       set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     if is_cumulative_report then
-      cumul_energy_exported_handler(driver, device, ib, response)
+      cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      per_energy_exported_handler(driver, device, ib, response)
+      per_energy_imported_handler(driver, device, ib, response)
     end
   end
 end
@@ -1206,8 +1206,8 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
@@ -1271,8 +1271,8 @@ local matter_driver_template = {
       clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.energyMeter.ID] = {
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower
