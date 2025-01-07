@@ -312,8 +312,8 @@ local unit_default = {
   [capabilities.tvocMeasurement.NAME] = units.PPB
 }
 
--- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
--- so CarbonMonoxideConcentratinMeasurement is used below but the same enum types exist
+-- All ConcentrationMeasurement clusters inherit from the same base cluster definitions,
+-- so CarbonMonoxideConcentrationMeasurement is used below but the same enum types exist
 -- in all ConcentrationMeasurement clusters
 local level_strings = {
   [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN] = "unknown",
