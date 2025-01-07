@@ -819,7 +819,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- or not the device supports emergency heat or fan only
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
 
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   if #auto > 0 then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
