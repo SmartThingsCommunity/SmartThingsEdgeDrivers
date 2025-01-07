@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
@@ -79,6 +80,9 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
     test.socket.matter:__expect_send(
       {
         mock_device.id,
@@ -112,6 +116,9 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
     test.socket.matter:__expect_send(
       {
         mock_device.id,
@@ -146,6 +153,9 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
     test.socket.matter:__expect_send(
       {
         mock_device.id,
