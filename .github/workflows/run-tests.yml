@@ -139,14 +139,14 @@ jobs:
           LUA_PATH: ${{ steps.lua_path.outputs.lua_path }}
       - name: Upload test artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tests
           path: |
             tools/test_output/*.xml
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: |
@@ -156,13 +156,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upload event file artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: event-file
           path: ${{ github.event_path }}
       - run: echo ${{ github.event.number }} > pr_number.txt
       - name: Upload pr number artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: |
