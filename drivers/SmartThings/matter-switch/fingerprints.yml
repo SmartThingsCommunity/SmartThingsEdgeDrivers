@@ -56,7 +56,7 @@ matterManufacturer:
     vendorId: 0x1168
     productId: 0x03F3
     deviceProfileName: light-color-level-1800K-6500K
- - id: "4456/1012"
+  - id: "4456/1012"
     deviceLabel: Aidot Linkind Matter Smart Light Bulb BR30 RGBTW 1200lm
     vendorId: 0x1168
     productId: 0x03F4
