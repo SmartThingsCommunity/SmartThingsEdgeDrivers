@@ -19,6 +19,8 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 local PROFILE_MATCHED = "__profile_matched"
+local CURRENT_LIFT = "__current_lift"
+local CURRENT_TILT = "__current_tilt"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -159,14 +161,34 @@ local current_pos_handler = function(attribute)
     local windowShade = capabilities.windowShade.windowShade
     local position = 100 - math.floor((ib.data.value / 100))
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
-    if position == 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-    elseif position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
-    elseif position > 0 and position < 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+    if attribute == capabilities.windowShadeLevel.shadeLevel then
+      device:set_field(CURRENT_LIFT, position)
+      local tilt_position = device:get_field(CURRENT_TILT)
+      if position == 0 and (tilt_position == nil or tilt_position == 0) then
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+      elseif position < 100 then
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+      elseif position == 100 then
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+      end
     else
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+      device:set_field(CURRENT_TILT, position)
+      local lift_position = device:get_field(CURRENT_LIFT)
+      if lift_position == nil then
+        if position == 0 then
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+        elseif position == 100 then
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+        elseif position > 0 and position < 100 then
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+        else
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+        end
+      elseif position == 0 and lift_position == 0 then
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+      end
     end
   end
 end
