@@ -92,8 +92,11 @@ local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSe
 
 local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  local read_attribute_list_req = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device.id, read_attribute_list_req})
+
   test.wait_for_events()
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
