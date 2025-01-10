@@ -19,7 +19,12 @@ local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
-local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -40,15 +45,12 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.WindowCovering.ID)
 end
 
-local function match_profile(device)
+local function match_profile(device, battery_supported)
   local profile_name = "window-covering"
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
       profile_name = profile_name .. "-battery"
-    else
-      profile_name = profile_name .. "-batteryLevel"
-    end
+  elseif battery_supported == battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
   end
   device:try_update_metadata({profile = profile_name})
 end
@@ -59,12 +61,13 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  match_profile(device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
     local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(attribute_list_read)
+  else
+    match_profile(device, battery_support.NO_BATTERY)
   end
 end
 
@@ -192,12 +195,13 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
     if attr.value == 0x0C then
-      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true, {persist = true})
-      match_profile(device)
+      match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(device, battery_support.BATTERY_LEVEL)
       return
     end
   end
-  device:set_field(SUPPORT_BATTERY_PERCENTAGE, false, {persist = true})
 end
 
 local matter_driver_template = {

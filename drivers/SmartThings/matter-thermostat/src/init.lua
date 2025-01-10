@@ -103,8 +103,11 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP"
 }
 
-local SUPPORT_BATTERY_LEVEL = "__support_battery_level"
-local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
 
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
@@ -442,7 +445,7 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function match_profile(driver, device)
+local function match_profile(driver, device, battery_supported)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local device_type = get_device_type(driver, device)
@@ -502,12 +505,10 @@ local function match_profile(driver, device)
 
       profile_name = profile_name .. "-nostate"
 
-      if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-        if device:get_field(SUPPORT_BATTERY_LEVEL) then
-          profile_name = profile_name .. "-batteryLevel"
-        else
-          profile_name = profile_name .. "-nobattery"
-        end
+      if battery_supported == battery_support.BATTERY_LEVEL then
+        profile_name = profile_name .. "-batteryLevel"
+      elseif battery_supported == battery_support.NO_BATTERY then
+        profile_name = profile_name .. "-nobattery"
       end
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
@@ -537,12 +538,10 @@ local function match_profile(driver, device)
     -- Add nobattery profiles if updated
     profile_name = profile_name .. "-nostate"
 
-    if not device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
-      if device:get_field(SUPPORT_BATTERY_LEVEL) then
-        profile_name = profile_name .. "-batteryLevel"
-      else
-        profile_name = profile_name .. "-nobattery"
-      end
+    if battery_supported == battery_support.BATTERY_LEVEL then
+      profile_name = profile_name .. "-batteryLevel"
+    elseif battery_supported == battery_support.NO_BATTERY then
+      profile_name = profile_name .. "-nobattery"
     end
   else
     device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
@@ -556,16 +555,22 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
-  match_profile(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(req)
+  else
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
+end
+
+local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    req:merge(clusters.PowerSource.attributes.AttributeList:read())
-  end
   device:send(req)
 end
 
@@ -1360,12 +1365,10 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
     -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true)
-      match_profile(driver, device)
+      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
       return
     elseif attr.value == 0x0E then
-      device:set_field(SUPPORT_BATTERY_LEVEL, true)
-      match_profile(driver, device)
+      match_profile(driver, device, battery_support.BATTERY_LEVEL)
       return
     end
   end
@@ -1374,6 +1377,7 @@ end
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed,
   },

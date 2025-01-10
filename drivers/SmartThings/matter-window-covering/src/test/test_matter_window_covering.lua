@@ -136,7 +136,6 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "window-covering-batteryLevel" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
@@ -150,7 +149,6 @@ local function test_init_switch_to_battery()
   test.socket.matter:__expect_send({mock_device_switch_to_battery.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_switch_to_battery)
   test.socket.device_lifecycle:__queue_receive({ mock_device_switch_to_battery.id, "doConfigure" })
-  mock_device_switch_to_battery:expect_metadata_update({ profile = "window-covering-batteryLevel" })
   mock_device_switch_to_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_switch_to_battery.id, read_attribute_list})
@@ -605,19 +603,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device_switch_to_battery.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_switch_to_battery, 10,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(12),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_switch_to_battery, 10, {uint32(12)})
       }
     )
     mock_device_switch_to_battery:expect_metadata_update({ profile = "window-covering-battery" })
@@ -631,18 +617,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device_switch_to_battery.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_switch_to_battery, 10,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_switch_to_battery, 10, {uint32(10)})
       }
     )
   end,
@@ -661,7 +636,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
     mock_device:expect_metadata_update({
-      profile = "window-covering-batteryLevel",
+      profile = "window-covering",
     })
   end
 )

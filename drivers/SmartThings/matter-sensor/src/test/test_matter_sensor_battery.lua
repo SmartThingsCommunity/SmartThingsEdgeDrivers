@@ -70,7 +70,6 @@ local function test_init()
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
-  mock_device_humidity_battery:expect_metadata_update({ profile = "humidity" })
   mock_device_humidity_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)

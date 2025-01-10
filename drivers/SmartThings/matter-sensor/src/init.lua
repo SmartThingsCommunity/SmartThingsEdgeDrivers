@@ -48,11 +48,15 @@ if version.api < 11 then
   clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 end
 
-local SUPPORT_BATTERY_LEVEL = "__support_battery_level"
-local SUPPORT_BATTERY_PERCENTAGE = "__support_battery_percentage"
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
 
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
@@ -109,7 +113,7 @@ local function device_added(driver, device)
   set_boolean_device_type_per_endpoint(driver, device)
 end
 
-local function match_profile(driver, device)
+local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
@@ -148,9 +152,9 @@ local function match_profile(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  if device:get_field(SUPPORT_BATTERY_PERCENTAGE) then
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
     profile_name = profile_name .. "-battery"
-  elseif device:get_field(SUPPORT_BATTERY_LEVEL) then
+  elseif battery_supported == battery_support.BATTERY_LEVEL then
     profile_name = profile_name .. "-batteryLevel"
   end
 
@@ -169,12 +173,13 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
-  match_profile(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
     local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(attribute_list_read)
+  else
+    match_profile(driver, device, battery_support.NO_BATTERY)
   end
 end
 
@@ -332,12 +337,10 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
     -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      device:set_field(SUPPORT_BATTERY_PERCENTAGE, true)
-      match_profile(driver, device)
+      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
       return
     elseif attr.value == 0x0E then
-      device:set_field(SUPPORT_BATTERY_LEVEL, true)
-      match_profile(driver, device)
+      match_profile(driver, device, battery_support.BATTERY_LEVEL)
       return
     end
   end

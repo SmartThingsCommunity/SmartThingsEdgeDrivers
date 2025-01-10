@@ -588,24 +588,18 @@ local function initialize_switch(driver, device)
     end
     if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
       if battery_support then
-        profile_name = "button-batteryLevel"
-      else
-        profile_name = "button"
-      end
-
-      if #button_eps > 1 then
-        profile_name = string.format("%d-", #button_eps) .. profile_name
-      end
-    end
-
-    if profile_name then
-      device:try_update_metadata({profile = profile_name})
-      device:set_field(DEFERRED_CONFIGURE, true)
-      if battery_support then
         local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
         attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
         device:send(attribute_list_read)
+      else
+        if #button_eps == 1 then
+          profile_name = "button"
+        elseif #button_eps > 1 then
+          profile_name = string.format("%d-button", #button_eps)
+        end
+        device:try_update_metadata({profile = profile_name})
       end
+      device:set_field(DEFERRED_CONFIGURE, true)
     else
       configure_buttons(device)
     end
@@ -1110,17 +1104,24 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
+  local profile_name = nil
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-      local profile_name = "button-battery"
-      if #button_eps > 1 then
-        profile_name = string.format("%d-", #button_eps) .. profile_name
-      end
-      device:try_update_metadata({ profile = profile_name })
-      return
+      profile_name = "button-battery"
+      break
+    elseif attr.value == 0x0E then
+      profile_name = "button-batteryLevel"
+      break
     end
+  end
+  if profile_name then
+    if #button_eps > 1 then
+      profile_name = string.format("%d-", #button_eps) .. profile_name
+    end
+    device:try_update_metadata({ profile = profile_name })
   end
 end
 
