@@ -52,6 +52,8 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
+local HUE_MANUFACTURER_ID = 0x100B
+
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
