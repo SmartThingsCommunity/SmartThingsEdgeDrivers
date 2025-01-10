@@ -1,0 +1,6 @@
+name: 'Zigbee Air Quality Detector'
+packageKey: 'zigbee-air-quality-detector'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee air quality detector"
+vendorSupportInformation: "https://support.smartthings.com"
