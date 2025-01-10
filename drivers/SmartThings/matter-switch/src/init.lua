@@ -19,6 +19,7 @@ local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
+local im = require "st.matter.interaction_model"
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -619,28 +620,33 @@ local function initialize_switch(driver, device)
     device:set_field(DEFERRED_CONFIGURE, true)
     device:set_field(BUTTON_DEVICE_PROFILED, true)
   elseif #button_eps > 0 then
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
     local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and #battery_feature_eps > 0 then
       battery_support = true
     end
-    if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if #temperature_eps > 0 and #humidity_eps > 0 then
-        -- for now, this logic only applies to the Aqara Climate Sensor W100.
-        profile_name = "-temperature-humidity"
-      end
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps) .. profile_name
-      else
-        profile_name = string.format("%d-button", #button_eps) .. profile_name
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote
-      profile_name = "button"
-    end
 
-    if profile_name ~= "" then
-      device:try_update_metadata({profile = profile_name})
+    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if battery_support then
+        local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+        attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+        device:send(attribute_list_read)
+      else
+        if #temperature_eps > 0 and #humidity_eps > 0 then
+          -- for now, this logic only applies to the Aqara Climate Sensor W100.
+          profile_name = "-temperature-humidity"
+        end
+
+        if #button_eps == 1 then
+          profile_name = "button" .. profile_name
+        elseif #button_eps > 1 then
+          profile_name = string.format("%d-button", #button_eps) .. profile_name
+        end
+
+        if profile_name ~= "" then
+          device:try_update_metadata({profile = profile_name})
+        end
+      end
       device:set_field(DEFERRED_CONFIGURE, true)
       device:set_field(BUTTON_DEVICE_PROFILED, true)
     else
@@ -1171,6 +1177,46 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  local profile_name = ""
+
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      profile_name = "button-battery"
+      break
+    elseif attr.value == 0x0E then
+      profile_name = "button-batteryLevel"
+      break
+    end
+  end
+  if profile_name ~= "" then
+    if #button_eps > 1 then
+      profile_name = string.format("%d-", #button_eps) .. profile_name
+    end
+
+    local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+    local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+    if #temperature_eps > 0 and #humidity_eps > 0 then
+      -- for now, this logic only applies to the Aqara Climate Sensor W100.
+      profile_name = profile_name .. "-temperature-humidity"
+    end
+    device:try_update_metadata({ profile = profile_name })
+  end
+end
+
 local function max_press_handler(driver, device, ib, response)
   local max = ib.data.value or 1 --get max number of presses
   device.log.debug("Device supports "..max.." presses")
@@ -1304,6 +1350,8 @@ local matter_driver_template = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = valve_level_attr_handler
       },
       [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.Switch.ID] = {
@@ -1362,6 +1410,9 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.energyMeter.ID] = {
       clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
@@ -1428,6 +1479,7 @@ local matter_driver_template = {
     capabilities.valve,
     capabilities.button,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement
   },
