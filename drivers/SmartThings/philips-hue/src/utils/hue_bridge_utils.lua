@@ -2,6 +2,9 @@ local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
@@ -234,7 +237,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
   end
   bridge_device:set_field(Fields._INIT, true, { persist = false })
   local ids_to_remove = {}
-  for id, device in ipairs(driver._devices_pending_refresh) do
+  for id, device in pairs(driver._devices_pending_refresh) do
     local parent_bridge = utils.get_hue_bridge_for_device(driver, device)
     local bridge_id = parent_bridge and parent_bridge.id
     if bridge_id == bridge_device.id then
