@@ -64,6 +64,8 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local MOUNTED_ON_OFF_CONTROL_ID = 0x010F
+local MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
 local GENERIC_SWITCH_ID = 0x000F
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
@@ -75,6 +77,8 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
+  [MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
   [GENERIC_SWITCH_ID] = "button"
 }
 
@@ -617,7 +621,8 @@ local function initialize_switch(driver, device)
         if main_endpoint == ep.endpoint_id then
           for _, dt in ipairs(ep.device_types) do
             -- no device type that is not in the switch subset should be considered.
-            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) or
+              dt.device_type_id == MOUNTED_ON_OFF_CONTROL_ID or dt.device_type_id == MOUNTED_DIMMABLE_LOAD_CONTROL_ID then
               id = math.max(id, dt.device_type_id)
             end
           end
