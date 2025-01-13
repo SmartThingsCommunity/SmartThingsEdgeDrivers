@@ -634,6 +634,21 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.dustSensor.dustLevel({value = 18, unit = "μg/m^3"}))
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+        mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.MeasurementUnitEnum.PPM
+      )
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+        mock_device, 1, SinglePrecisionFloat(0, -1, .5) -- 0.750 ppm
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.tvocMeasurement.tvocLevel({value = 750, unit = "ppb"}))
+    )
   end
 )
 
