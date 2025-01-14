@@ -44,9 +44,9 @@ preferences:
     definition:
       options:
         "0": "On/Off + Single (default)"
-        "1": "On/OFf + Dumb"
+        "1": "On/Off + Dumb"
         "2": "On/Off + Aux"
-        "3": "On/OFf + Full Wave"
+        "3": "On/Off + Full Wave"
         "4": "Dimmer + Single"
         "5": "Dimmer + Dumb"
         "6": "Dimmer + Aux"
