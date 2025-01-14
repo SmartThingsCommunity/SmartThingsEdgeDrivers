@@ -1,4 +1,10 @@
 matterManufacturer:
+  #Yale
+  - id: "Yale Linus Smart Lock L2"
+    deviceLabel: Yale Linus Smart Lock L2
+    vendorId: 0x144F
+    productId: 0x4002
+    deviceProfileName: lock-unlatch-batteryLevel
   #Aqara
   - id: "4447/10242"
     deviceLabel: Aqara Smart Lock U200
@@ -29,13 +35,13 @@ matterManufacturer:
     deviceProfileName: lock-nocodes-notamper
   - id: "Nuki Smart Lock"
     deviceLabel: Nuki Smart Lock
-    vendorId: 0x135d
-    productId: 0xb0
+    vendorId: 0x135D
+    productId: 0x00B0
     deviceProfileName: lock-nocodes-notamper
   - id: "Nuki Smart Lock Pro"
     deviceLabel: Nuki Smart Lock Pro
-    vendorId: 0x135d
-    productId: 0xb1
+    vendorId: 0x135D
+    productId: 0x00B1
     deviceProfileName: lock-nocodes-notamper
   - id: "4957/178"
     deviceLabel: Nuki Smart Lock Pro
@@ -46,7 +52,52 @@ matterManufacturer:
     deviceLabel: Nuki Smart Lock Go
     vendorId: 0x135D
     productId: 0x00C1
-    deviceProfileName: lock-nocodes-notamper   
+    deviceProfileName: lock-nocodes-notamper
+  #eufy
+  - id: "Smart Lock E31"
+    deviceLabel: Smart Lock E31
+    vendorId: 0x1533
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "Smart Lock E30"
+    deviceLabel: Smart Lock E30
+    vendorId: 0x1533
+    productId: 0x0002
+    deviceProfileName: lock-user-pin-battery
+  - id: "Smart Lock C34"
+    deviceLabel: Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
+    deviceProfileName: lock-user-pin-battery
+# Kwikset
+  - id: "Kwikset"
+    deviceLabel: Kwikset
+    vendorId: 0x1421
+    productId: 0x0041
+    deviceProfileName: lock-user-pin-battery
+# Solity
+  - id: "Solity"
+    deviceLabel: Solity
+    vendorId: 0x1531
+    productId: 0x0010
+    deviceProfileName: lock-user-pin
+# U-tec
+  - id: "U-tec"
+    deviceLabel: U-tec
+    vendorId: 0x147F
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-batteryLevel
+#Level
+  - id: "4767/1"
+    deviceLabel: Level Lock Plus (Matter)
+    vendorId: 0x129F
+    productId: 0x0001
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
+  - id: "4767/3"
+    deviceLabel: Level Bolt (Matter)
+    vendorId: 0x129F
+    productId: 0x0003
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

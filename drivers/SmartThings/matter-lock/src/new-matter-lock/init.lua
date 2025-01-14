@@ -36,6 +36,10 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1533, 0x0001}, -- eufy, E31
   {0x1533, 0x0002}, -- eufy, E30
   {0x1533, 0x0003}, -- eufy, C34
+  {0x1421, 0x0041}, -- Kwikset
+  {0x1531, 0x0010}, -- Solity
+  {0xFFF1, 0x8005}, -- Solity, Test device
+  {0x144F, 0x4002}, -- Yale, Yale Linus Smart Lock L2
   {0x10E1, 0x2002}  -- VDA
 }
 
