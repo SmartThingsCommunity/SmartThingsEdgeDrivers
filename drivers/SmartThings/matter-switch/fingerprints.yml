@@ -539,7 +539,7 @@ matterManufacturer:
     deviceLabel: Smart Wall Switch
     vendorId: 0x156B
     productId: 0x1000
-    deviceProfileName: switch-level 
+    deviceProfileName: switch-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
