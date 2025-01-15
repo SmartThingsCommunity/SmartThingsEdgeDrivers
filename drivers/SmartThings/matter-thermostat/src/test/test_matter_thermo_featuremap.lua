@@ -216,15 +216,15 @@ test.register_coroutine_test(
     --TODO why does provisiong state get added in the do configure event handle, but not the refres?
     local read_req = clusters.PowerSource.attributes.AttributeList:read()
     test.socket.matter:__expect_send({mock_device.id, read_req})
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(12)})
       }
     )
-    test.wait_for_events()
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 )
 
@@ -249,6 +249,8 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
     local read_req = clusters.PowerSource.attributes.AttributeList:read()
     test.socket.matter:__expect_send({mock_device_simple.id, read_req})
+    mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device_simple.id,
@@ -256,7 +258,6 @@ test.register_coroutine_test(
       }
     )
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
-    mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 )
 
