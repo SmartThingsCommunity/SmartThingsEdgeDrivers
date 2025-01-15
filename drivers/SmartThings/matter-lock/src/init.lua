@@ -236,9 +236,13 @@ local function set_credential_response_handler(driver, device, ib, response)
       local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
       if #battery_feature_eps == 0 then
         profile_name = profile_name .. "-nobattery"
+        device.log.info(string.format("Updating device profile to %s.", profile_name))
+        device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
+      else
+        local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+        req:merge(clusters.PowerSource.attributes.AttributeList:read())
+        device:send(req)
       end
-      device.log.info(string.format("Updating device profile to %s.", profile_name))
-      device:try_update_metadata({profile = profile_name, provisioning_state = "PROVISIONED"})
     end
   elseif device:get_field(lock_utils.COTA_CRED) and credential_index == device:get_field(lock_utils.COTA_CRED_INDEX) then
     -- Handle failure to set a COTA credential
