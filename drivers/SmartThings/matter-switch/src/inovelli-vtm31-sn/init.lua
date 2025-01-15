@@ -19,6 +19,12 @@ local log = require "log"
 
 local configure_buttons = require "configure-buttons"
 
+-- Include driver-side definitions when lua libs api version is < 10
+local version = require "version"
+if version.api < 10 then
+  clusters.ModeSelect = require "ModeSelect"
+end
+
 local INOVELLI_VTM31_SN_FINGERPRINT = { vendor_id = 0x1361, product_id = 0x0001 }
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
