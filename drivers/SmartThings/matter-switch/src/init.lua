@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -19,6 +19,17 @@ local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
+
+local configure_buttons = require "configure-buttons"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+
+-- Include driver-side definitions when lua libs api version is < 11
+local version = require "version"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
+end
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -155,10 +166,6 @@ local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
 
-local fingerprint_profile_overrides = {
-  { vendor_id = 0x1361, product_id = 0x0001 }, -- Inovelli VTM31-SN
-}
-
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
@@ -171,16 +178,6 @@ local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-local embedded_cluster_utils = require "embedded-cluster-utils"
-
--- Include driver-side definitions when lua libs api version is < 11
-local version = require "version"
-if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
-end
 
 -- Return an ISO-8061 timestamp in UTC
 local function iso8061Timestamp(time)
@@ -463,55 +460,8 @@ local function do_configure(driver, device)
   end
 end
 
-local function configure_buttons(device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    local MSR = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
-    device.log.debug(#MSR.." momentary switch release endpoints")
-    local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
-    device.log.debug(#MSL.." momentary switch long press endpoints")
-    local MSM = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
-    device.log.debug(#MSM.." momentary switch multi press endpoints")
-    for _, ep in ipairs(MS) do
-      local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      -- this ordering is important, as MSL & MSM devices must also support MSR
-      if tbl_contains(MSM, ep) then
-        -- ask the device to tell us its max number of presses
-        device.log.debug("sending multi press max read")
-        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-        supportedButtonValues_event = nil -- deferred until max press handler
-      elseif tbl_contains(MSL, ep) then
-        device.log.debug("configuring for long press device")
-      elseif tbl_contains(MSR, ep) then
-        device.log.debug("configuring for emulated held")
-        set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
-      else -- device only supports momentary switch, no release events
-        device.log.debug("configuring for press event only")
-        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-        set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
-      end
-
-      if supportedButtonValues_event then
-        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
-      end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
-    end
-  end
-end
-
 local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
-end
-
-local function check_fingerprint_profile_overrides(device)
-  for _, fingerprint in ipairs(fingerprint_profile_overrides) do
-    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-      device.manufacturer_info.product_id == fingerprint.product_id then
-      return true
-    end
-  end
-  return false
 end
 
 local function initialize_switch(driver, device)
@@ -585,15 +535,6 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  -- If there is a custom static profile for the device, configure buttons if needed and
-  -- then return to prevent profile from being updated.
-  if check_fingerprint_profile_overrides(device) then
-    if #button_eps > 0 then
-      configure_buttons(device)
-    end
-    return
-  end
-
   if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
     if #button_eps == 1 then
       profile_name = "light-level-button"
@@ -623,7 +564,7 @@ local function initialize_switch(driver, device)
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
     else
-      configure_buttons(device)
+      configure_buttons.configure_buttons(device)
     end
   elseif num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
@@ -1134,7 +1075,7 @@ local function info_changed(driver, device, event, args)
     device:subscribe()
     if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       -- profile has changed, and we deferred setting up our buttons, so do that now
-      configure_buttons(device)
+      configure_buttons.configure_buttons(device)
       device:set_field(DEFERRED_CONFIGURE, nil)
     end
   end
