@@ -256,6 +256,7 @@ function device_manager.is_valid_connection(driver, device, conn_info)
       device.device_network_id))
     return false
   end
+
   local _, err, status = conn_info:get_attr()
   if err or status ~= 200 then
     log.warn(string.format(

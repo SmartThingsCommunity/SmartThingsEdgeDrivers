@@ -590,7 +590,7 @@ local unit_default = {
   [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
-  [capabilities.tvocMeasurement.NAME] = units.PPM
+  [capabilities.tvocMeasurement.NAME] = units.PPB  -- TVOC is typically within the range of 0-5500 ppb, with good to moderate values being < 660 ppb
 }
 
 -- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
@@ -620,11 +620,13 @@ local molecular_weights = {
 local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end,
+    [units.PPB] = function(value) return utils.round(value * (10^3)) end,
     [units.UGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
     [units.MGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return utils.round(value) end,
   },
   [units.PPT] = {
     [units.PPM] = function(value) return utils.round(value/(10^6)) end
@@ -720,8 +722,35 @@ end
 
 local function temp_event_handler(attribute)
   return function(driver, device, ib, response)
-    local temp = ib.data.value / 100.0
+    if ib.data.value == nil then
+      return
+    end
     local unit = "C"
+
+    -- Only emit the capability for RPC version >= 5, since unit conversion for
+    -- range capabilities is only supported in that case.
+    if version.rpc >= 5 then
+      local event
+      if attribute == capabilities.thermostatCoolingSetpoint.coolingSetpoint then
+        local range = {
+          minimum = device:get_field(setpoint_limit_device_field.MIN_COOL) or THERMOSTAT_MIN_TEMP_IN_C,
+          maximum = device:get_field(setpoint_limit_device_field.MAX_COOL) or THERMOSTAT_MAX_TEMP_IN_C,
+          step = 0.1
+        }
+        event = capabilities.thermostatCoolingSetpoint.coolingSetpointRange({value = range, unit = unit})
+        device:emit_event_for_endpoint(ib.endpoint_id, event)
+      elseif attribute == capabilities.thermostatHeatingSetpoint.heatingSetpoint then
+        local range = {
+          minimum = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C,
+          maximum = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C,
+          step = 0.1
+        }
+        event = capabilities.thermostatHeatingSetpoint.heatingSetpointRange({value = range, unit = unit})
+        device:emit_event_for_endpoint(ib.endpoint_id, event)
+      end
+    end
+
+    local temp = ib.data.value / 100.0
     device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = temp, unit = unit}))
   end
 end
@@ -792,7 +821,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- or not the device supports emergency heat or fan only
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
 
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   if #auto > 0 then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
@@ -1122,7 +1151,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value > (cached_cooling_val - deadband) then
@@ -1130,7 +1159,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s)",
           value, cooling_setpoint, deadband
         ))
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
     else
@@ -1141,7 +1170,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value < (cached_heating_val + deadband) then
@@ -1149,7 +1178,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s)",
           value, heating_setpoint, deadband
         ))
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
     end
@@ -1172,7 +1201,7 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- heating setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min heating setpoint %d that is not lower than the reported max %d", min, max))
@@ -1196,7 +1225,7 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
         -- Only emit the capability for RPC version >= 5 (unit conversion for
         -- cooling setpoint range capability is only supported for RPC >= 5)
         if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max }, unit = "C" }))
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = min, maximum = max, step = 0.1 }, unit = "C" }))
         end
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min cooling setpoint %d that is not lower than the reported max %d", min, max))
@@ -1402,7 +1431,7 @@ local matter_driver_template = {
         [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.radonHealthConcern.radonHealthConcern)
       },
       [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPM),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
       }

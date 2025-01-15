@@ -25,3 +25,7 @@ components:
 preferences:
   - preferenceId: certifiedpreferences.smokeSensorSensitivity
     explicit: true
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true

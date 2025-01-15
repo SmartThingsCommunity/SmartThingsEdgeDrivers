@@ -140,22 +140,30 @@ local device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY
+  },
+  [GENERIC_SWITCH_ID] = {
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
   }
 }
 
 local child_device_profile_overrides = {
+  { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
 
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
-local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
-local EXPORT_POLL_TIMER_SETTING_ATTEMPTED = "__export_poll_timer_setting_attempted"
-local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
-local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
-local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
-local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
+local FIRST_IMPORT_REPORT_TIMESTAMP = "__first_import_report_timestamp"
+local IMPORT_POLL_TIMER_SETTING_ATTEMPTED = "__import_poll_timer_setting_attempted"
+local IMPORT_REPORT_TIMEOUT = "__import_report_timeout"
+local TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
+local LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
+local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
@@ -175,26 +183,26 @@ local function iso8061Timestamp(time)
   return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
 
-local function delete_export_poll_schedule(device)
-  local export_poll_timer = device:get_field(RECURRING_EXPORT_REPORT_POLL_TIMER)
-  if export_poll_timer then
-    device.thread:cancel_timer(export_poll_timer)
-    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
+local function delete_import_poll_schedule(device)
+  local import_poll_timer = device:get_field(RECURRING_IMPORT_REPORT_POLL_TIMER)
+  if import_poll_timer then
+    device.thread:cancel_timer(import_poll_timer)
+    device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, nil)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
   end
 end
 
-local function send_export_poll_report(device, latest_total_exported_energy_wh)
+local function send_import_poll_report(device, latest_total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(LAST_EXPORTED_REPORT_TIMESTAMP) or 0
-  device:set_field(LAST_EXPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  local last_time = device:get_field(LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  device:set_field(LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
   -- Calculate the energy delta between reports
   local energy_delta_wh = 0.0
-  local previous_exported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_exported_report and previous_exported_report.energy then
-    energy_delta_wh = math.max(latest_total_exported_energy_wh - previous_exported_report.energy, 0.0)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -202,17 +210,17 @@ local function send_export_poll_report(device, latest_total_exported_energy_wh)
     start = iso8061Timestamp(last_time),
     ["end"] = iso8061Timestamp(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_exported_energy_wh
+    energy = latest_total_imported_energy_wh
   }))
 end
 
 local function create_poll_report_schedule(device)
-  local export_timer = device.thread:call_on_schedule(
-    device:get_field(EXPORT_REPORT_TIMEOUT),
-    send_export_poll_report(device, device:get_field(TOTAL_EXPORTED_ENERGY)),
-    "polling_export_report_schedule_timer"
+  local import_timer = device.thread:call_on_schedule(
+    device:get_field(IMPORT_REPORT_TIMEOUT),
+    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY)),
+    "polling_import_report_schedule_timer"
   )
-  device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
+  device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
 end
 
 local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
@@ -226,18 +234,18 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     return
   elseif not device:get_field(SUBSCRIPTION_REPORT_OCCURRED) then
     device:set_field(SUBSCRIPTION_REPORT_OCCURRED, true)
-  elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
-    device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
+  elseif not device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP) then
+    device:set_field(FIRST_IMPORT_REPORT_TIMESTAMP, os.time())
   else
-    local first_timestamp = device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP)
+    local first_timestamp = device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP)
     local second_timestamp = os.time()
     local report_interval_secs = second_timestamp - first_timestamp
-    device:set_field(EXPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
+    device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumption
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
 
@@ -245,7 +253,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {2, 3, 4, 5, 6, 7, 8}
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 
@@ -334,29 +342,65 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
+--- is_supported_combination_button_switch_device_type helper function used to check
+--- whether the device type for an endpoint is currently supported by a profile for
+--- combination button/switch devices.
+local function is_supported_combination_button_switch_device_type(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then
+      for _, dt in ipairs(ep.device_types) do
+        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+local function get_first_non_zero_endpoint(endpoints)
+  for _,ep in ipairs(endpoints) do
+    if ep ~= 0 then -- 0 is the matter RootNode endpoint
+      return ep
+    end
+  end
+  return nil
+end
+
 --- find_default_endpoint helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 --- In this case the function returns the lowest endpoint value that isn't 0
 --- and supports the OnOff or Switch cluster. This is done to bypass the
 --- BRIDGED_NODE_DEVICE_TYPE on bridged devices.
-local function find_default_endpoint(device, component)
+local function find_default_endpoint(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local all_eps = {}
+  table.sort(switch_eps)
+  table.sort(button_eps)
 
-  for _,ep in ipairs(switch_eps) do
-    table.insert(all_eps, ep)
+  -- Return the first switch endpoint as the default endpoint if no button endpoints are available
+  if #button_eps == 0 and #switch_eps > 0 then
+    return get_first_non_zero_endpoint(switch_eps)
   end
-  for _,ep in ipairs(button_eps) do
-    table.insert(all_eps, ep)
-  end
-  table.sort(all_eps)
 
-  for _, ep in ipairs(all_eps) do
-    if ep ~= 0 then --0 is the matter RootNode endpoint
-      return ep
+  -- Return the first button endpoint as the default endpoint if no switch endpoints are available
+  if #switch_eps == 0 and #button_eps > 0 then
+    return get_first_non_zero_endpoint(button_eps)
+  end
+
+  -- If both switch and button endpoints are present, check the device type on the main switch
+  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- default endpoint.
+  if #switch_eps > 0 and #button_eps > 0 then
+    local main_endpoint = get_first_non_zero_endpoint(switch_eps)
+    if is_supported_combination_button_switch_device_type(device, main_endpoint) then
+      return main_endpoint
+    else
+      device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
+      return get_first_non_zero_endpoint(button_eps)
     end
   end
+
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return device.MATTER_DEFAULT_ENDPOINT
 end
@@ -465,51 +509,51 @@ local function initialize_switch(driver, device)
   local profile_name = nil
 
   local component_map = {}
-  local current_component_number = 2
   local component_map_used = false
+  local current_component_number = 1
   local parent_child_device = false
-
-  if #switch_eps == 0 and #button_eps == 0 then
-    return
-  end
 
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint = find_default_endpoint(device)
-  if #switch_eps > 0 then
-    for _, ep in ipairs(switch_eps) do
-      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-        num_switch_server_eps = num_switch_server_eps + 1
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-          local child_profile = assign_child_profile(device, ep)
-          driver:try_create_device(
-            {
-              type = "EDGE_CHILD",
-              label = name,
-              profile = child_profile,
-              parent_device_id = device.id,
-              parent_assigned_child_key = string.format("%d", ep),
-              vendor_provided_label = name
-            }
-          )
-          parent_child_device = true
+
+  -- If a switch endpoint is present, it will be the main endpoint and therefore the
+  -- main component. If button endpoints are present, they will be added as
+  -- additional components in a MCD profile.
+  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+    component_map["main"] = main_endpoint
+    for _, ep in ipairs(button_eps) do
+      if ep ~= main_endpoint then
+        if #button_eps == 1 then
+          component_map[string.format("button", current_component_number)] = ep
+        else
+          component_map[string.format("button%d", current_component_number)] = ep
         end
       end
+      current_component_number = current_component_number + 1
     end
-  elseif #button_eps > 0 then
-    for _, ep in ipairs(button_eps) do
-      -- Configure MCD for button endpoints
-      if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-        if ep ~= main_endpoint then
-          component_map[string.format("button%d", current_component_number)] = ep
-          current_component_number = current_component_number + 1
-        else
-          component_map["main"] = ep
-        end
-        component_map_used = true
+    component_map_used = true
+  end
+
+  for _, ep in ipairs(switch_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      num_switch_server_eps = num_switch_server_eps + 1
+      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+        local name = string.format("%s %d", device.label, num_switch_server_eps)
+        local child_profile = assign_child_profile(device, ep)
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = child_profile,
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep),
+            vendor_provided_label = name
+          }
+        )
+        parent_child_device = true
       end
     end
   end
@@ -527,7 +571,38 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if num_switch_server_eps > 0 then
+  if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
+    if #button_eps == 1 then
+      profile_name = "light-level-button"
+    else
+      profile_name = "light-level" .. string.format("-%d-button", #button_eps)
+    end
+    device:try_update_metadata({profile = profile_name})
+    device:set_field(DEFERRED_CONFIGURE, true)
+  elseif #button_eps > 0 then
+    local battery_support = false
+    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+      battery_support = true
+    end
+    if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if battery_support then
+        profile_name = string.format("%d-button-battery", #button_eps)
+      else
+        profile_name = string.format("%d-button", #button_eps)
+      end
+    elseif not battery_support then
+      -- a battery-less button/remote
+      profile_name = "button"
+    end
+
+    if profile_name then
+      device:try_update_metadata({profile = profile_name})
+      device:set_field(DEFERRED_CONFIGURE, true)
+    else
+      configure_buttons(device)
+    end
+  elseif num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
     -- Light Switch device type but implement the On Off cluster as server (which is against the spec
     -- for this device type). By default, we do not support Light Switch device types because by spec these
@@ -554,29 +629,6 @@ local function initialize_switch(driver, device)
         device:try_update_metadata({profile = device_type_profile_map[id]})
       end
     end
-  elseif #button_eps > 0 then
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-      battery_support = true
-    end
-    if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
-      else
-        profile_name = string.format("%d-button", #button_eps)
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote (either single or will use parent/child)
-      profile_name = "button"
-    end
-
-    if profile_name then
-      device:try_update_metadata({profile = profile_name})
-      device:set_field(DEFERRED_CONFIGURE, true)
-    else
-      configure_buttons(device)
-    end
   end
 end
 
@@ -585,7 +637,7 @@ local function component_to_endpoint(device, component)
   if map[component] then
     return map[component]
   end
-  return find_default_endpoint(device, component)
+  return find_default_endpoint(device)
 end
 
 local function endpoint_to_component(device, ep)
@@ -634,7 +686,11 @@ local function device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
-          device:add_subscribed_attribute(attr)
+          if id == GENERIC_SWITCH_ID and attr ~= clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_event(attr)
+          else
+            device:add_subscribed_attribute(attr)
+          end
         end
       end
     end
@@ -644,7 +700,7 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
-  delete_export_poll_schedule(device)
+  delete_import_poll_schedule(device)
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -923,33 +979,33 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function cumul_energy_exported_handler(driver, device, ib, response)
+local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
     device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
   end
 end
 
-local function per_energy_exported_handler(driver, device, ib, response)
+local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
 
 local function energy_report_handler_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    if not device:get_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED) then
+    if not device:get_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED) then
       set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     if is_cumulative_report then
-      cumul_energy_exported_handler(driver, device, ib, response)
+      cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      per_energy_exported_handler(driver, device, ib, response)
+      per_energy_imported_handler(driver, device, ib, response)
     end
   end
 end
@@ -1118,8 +1174,8 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
@@ -1178,8 +1234,8 @@ local matter_driver_template = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.energyMeter.ID] = {
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower

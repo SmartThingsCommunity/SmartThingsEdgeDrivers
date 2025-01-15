@@ -2,7 +2,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
@@ -42,15 +42,7 @@ local function _emit_light_events_inner(light_device, light_repr)
     end
 
     if light_repr.dimming then
-      local min_dim = light_device:get_field(Fields.MIN_DIMMING)
-      local api_min_dim = st_utils.round(st_utils.clamp_value(light_repr.dimming.min_dim_level or Consts.DEFAULT_MIN_DIMMING, 1, 100))
-      if min_dim ~= api_min_dim then
-        min_dim = api_min_dim
-        light_device:set_field(Fields.MIN_DIMMING, min_dim, { persist = true })
-        log.info("EMITTING DIMMING CAP RANGE")
-        light_device:emit_event(capabilities.switchLevel.levelRange({ minimum = min_dim, maximum = 100 }))
-      end
-      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, min_dim, 100))
+      local adjusted_level = st_utils.round(st_utils.clamp_value(light_repr.dimming.brightness, 1, 100))
       if utils.is_nan(adjusted_level) then
         light_device.log.warn(
           string.format(
