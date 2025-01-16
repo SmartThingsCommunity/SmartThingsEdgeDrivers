@@ -88,13 +88,9 @@ local preference_map_inovelli_vtm31sn = {
   ledIndicatorColor = {parameter_number = 6, size = data_types.Uint8},
 }
 
-local is_inovelli_vtm31_sn = function(device)
-  device.log.warn_with({hub_logs = true}, string.format("is_inovelli_vtm31_sn"))
-  device.log.warn_with({hub_logs = true}, string.format("Vendor ID: %d, fingerprint vid: %d", device.manufacturer_info.vendor_id, INOVELLI_VTM31_SN_FINGERPRINT.vendor_id))
-  device.log.warn_with({hub_logs = true}, string.format("Product ID: %d, fingerprint pid: %d", device.manufacturer_info.product_id, INOVELLI_VTM31_SN_FINGERPRINT.product_id))
+local function is_inovelli_vtm31_sn(opts, driver, device)
   if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
     device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
-    device.log.warn_with({hub_logs = true}, string.format("Using subdriver"))
     log.info("Using sub driver")
     return true
   end
@@ -288,7 +284,7 @@ local function device_init(driver, device)
   end
 end
 
-local function info_changed(device, args)
+local function info_changed(driver, device, event, args)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     return
   end
@@ -317,6 +313,8 @@ local inovelli_vtm31_sn_handler = {
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed
+  },
+  matter_handlers = {
   },
   can_handle = is_inovelli_vtm31_sn
 }
