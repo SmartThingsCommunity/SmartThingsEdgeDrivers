@@ -288,7 +288,6 @@ local function info_changed(driver, device, event, args)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     return
   end
-  device.log.warn_with({hub_logs = true}, string.format("HERE1"))
   local time_diff = 3
   local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
   if last_clock_set_time ~= nil then
@@ -302,10 +301,8 @@ local function info_changed(driver, device, event, args)
       if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
         local new_parameter_value
         if preferences[id].parameter_number == 4 then
-          device.log.warn_with({hub_logs = true}, string.format("HERE2"))
           new_parameter_value = math.tointeger(preferences_to_numeric_value(device.preferences[id]))
         else
-          device.log.warn_with({hub_logs = true}, string.format("HERE3"))
           new_parameter_value = preferences_to_numeric_value(device.preferences[id])
         end
         local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number,
