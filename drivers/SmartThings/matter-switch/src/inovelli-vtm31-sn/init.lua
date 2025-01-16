@@ -88,7 +88,7 @@ local preference_map_inovelli_vtm31sn = {
   ledIndicatorColor = {parameter_number = 6, size = data_types.Uint8},
 }
 
-local is_inovelli_vtm31_sn = function(device)
+local function is_inovelli_vtm31_sn(opts, driver, device)
   if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
     device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
     log.info("Using sub driver")
@@ -283,7 +283,7 @@ local function device_init(driver, device)
   end
 end
 
-local function info_changed(device, args)
+local function info_changed(driver, device, event, args)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     return
   end
@@ -298,7 +298,12 @@ local function info_changed(device, args)
     local preferences = preference_map_inovelli_vtm31sn
     for id, value in pairs(device.preferences) do
       if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-        local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+        local new_parameter_value
+        if preferences[id].parameter_number == 4 then
+          new_parameter_value = math.tointeger(preferences_to_numeric_value(device.preferences[id]))
+        else
+          new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+        end
         local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number,
           new_parameter_value)
         device:send(req)
@@ -308,10 +313,12 @@ local function info_changed(device, args)
 end
 
 local inovelli_vtm31_sn_handler = {
-  NAME = "inovelli vzm31-sn handler",
+  NAME = "inovelli vtm31-sn handler",
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed
+  },
+  matter_handlers = {
   },
   can_handle = is_inovelli_vtm31_sn
 }
