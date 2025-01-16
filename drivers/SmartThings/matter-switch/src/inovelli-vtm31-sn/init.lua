@@ -91,7 +91,6 @@ local preference_map_inovelli_vtm31sn = {
 local function is_inovelli_vtm31_sn(opts, driver, device)
   if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
     device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
-    device.log.warn_with({hub_logs = true}, string.format("Using subdriver"))
     log.info("Using sub driver")
     return true
   end
