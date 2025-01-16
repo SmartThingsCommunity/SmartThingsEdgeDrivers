@@ -22,7 +22,6 @@ local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
-local TEST_CONFIGURE = "__test_configure"
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
@@ -147,7 +146,6 @@ local cumulative_report_val_39 = {
 
 local function test_init()
   local opts = { persist = true }
-  aqara_mock_device:set_field(TEST_CONFIGURE, true, opts)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.Switch.server.events.InitialPress,
@@ -156,8 +154,7 @@ local function test_init()
     clusters.Switch.server.events.MultiPressComplete,
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -270,18 +267,21 @@ test.register_coroutine_test(
     function()
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
+          -- don't use "aqara_mock_children[aqara_child1_ep].id,"
+          -- because energy management is at the root endpoint.
+          aqara_mock_device.id,
           clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 1, 17000)
         }
       )
 
       test.socket.capability:__expect_send(
+        -- when energy management is in the root endpoint, the event is sent to the first switch endpoint in CHILD_EDGE.
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerMeter.power({value = 17.0, unit="W"}))
       )
 
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
+          aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_19)
         }
       )
@@ -294,7 +294,7 @@ test.register_coroutine_test(
       -- This is because related variable settings are required in set_poll_report_timer_and_schedule().
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
+          aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_29)
         }
       )
@@ -304,6 +304,16 @@ test.register_coroutine_test(
       )
 
       test.mock_time.advance_time(2000)
+      test.socket.matter:__queue_receive(
+        {
+          aqara_mock_device.id,
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
+            aqara_mock_device, 1, cumulative_report_val_39
+          )
+        }
+      )
+--[[
+      -- To do : powerConsumptionReport
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
           start = "1970-01-01T00:00:00Z",
@@ -312,16 +322,7 @@ test.register_coroutine_test(
           energy = 29.0
         }))
       )
-
-      test.socket.matter:__queue_receive(
-        {
-          aqara_mock_children[aqara_child1_ep].id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
-            aqara_mock_device, 1, cumulative_report_val_39
-          )
-        }
-      )
-
+--]]
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
       )

@@ -47,8 +47,8 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- containing both button endpoints and switch endpoints will use this field
 -- rather than COMPONENT_TO_ENDPOINT_MAP.
 local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
+local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-local IS_AQARA_SWITCH_DEVICE = "__is_aqara_switch_device"
 local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
@@ -153,8 +153,7 @@ local device_type_attribute_map = {
   [ELECTRICAL_SENSOR_ID] = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
   }
 }
 
@@ -417,7 +416,7 @@ local function find_default_endpoint(device)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function assign_child_profile(device, child_ep, ep_sequence)
+local function assign_child_profile(device, child_ep)
   local profile
 
   -- check if device has an overridden child profile that differs from the profile
@@ -426,15 +425,13 @@ local function assign_child_profile(device, child_ep, ep_sequence)
     if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
        device.manufacturer_info.product_id == fingerprint.product_id then
       if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
-        if ep_sequence == 1 then
+        if child_ep ~= 1 then
           -- To add Electrical Sensor only to the first EDGE_CHILD(light-power-energy-powerConsumption)
           -- The profile of the second EDGE_CHILD is determined in the "for" loop below (e.g., light-binary)
-          device:set_field(IS_AQARA_SWITCH_DEVICE, true, {persist = true})
-          return fingerprint.child_profile
+          break
         end
-      else
-        return fingerprint.child_profile
       end
+      return fingerprint.child_profile
     end
   end
 
@@ -561,14 +558,16 @@ local function initialize_switch(driver, device)
     component_map_used = true
   end
 
-  local ep_sequence = 0
   for _, ep in ipairs(switch_eps) do
+    if _ == 1 then
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+    end
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        ep_sequence = ep_sequence + 1
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = assign_child_profile(device, ep, ep_sequence)
+        local child_profile = assign_child_profile(device, ep)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -708,9 +707,7 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint and
-         (device:get_field(IS_AQARA_SWITCH_DEVICE) or ep.endpoint_id ~= 0) then
-        -- insert energy management into InteractionRequest list when IS_AQARA_SWITCH_DEVICE
+      if ep.endpoint_id ~= main_endpoint then
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -1083,10 +1080,13 @@ end
 local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    if device:get_field(IS_AQARA_SWITCH_DEVICE) then
-      device:emit_event_for_endpoint(1, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
     else
-      device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      -- In other words, define the capability related to energy management in the first switch endpoint and process it.
+      -- ENERGY_MANAGEMENT_ENDPOINT = first switch endpoint
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
     end
   end
 end
