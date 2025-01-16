@@ -299,7 +299,12 @@ local function info_changed(driver, device, event, args)
     local preferences = preference_map_inovelli_vtm31sn
     for id, value in pairs(device.preferences) do
       if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-        local new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+        local new_parameter_value
+        if preferences[id].parameter_number == 4 then
+          new_parameter_value = math.tointeger(preferences_to_numeric_value(device.preferences[id]))
+        else
+          new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+        end
         local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number,
           new_parameter_value)
         device:send(req)
