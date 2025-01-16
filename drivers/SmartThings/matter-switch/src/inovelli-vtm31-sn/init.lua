@@ -89,11 +89,16 @@ local preference_map_inovelli_vtm31sn = {
 }
 
 local is_inovelli_vtm31_sn = function(device)
+  device.log.warn_with({hub_logs = true}, string.format("is_inovelli_vtm31_sn"))
+  device.log.warn_with({hub_logs = true}, string.format("Vendor ID: %d, fingerprint vid: %d", device.manufacturer_info.vendor_id, INOVELLI_VTM31_SN_FINGERPRINT.vendor_id))
+  device.log.warn_with({hub_logs = true}, string.format("Product ID: %d, fingerprint pid: %d", device.manufacturer_info.product_id, INOVELLI_VTM31_SN_FINGERPRINT.product_id))
   if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
     device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
+    device.log.warn_with({hub_logs = true}, string.format("Using subdriver"))
     log.info("Using sub driver")
     return true
   end
+  device.log.warn_with({hub_logs = true}, string.format("Using main driver"))
   return false
 end
 
@@ -308,7 +313,7 @@ local function info_changed(device, args)
 end
 
 local inovelli_vtm31_sn_handler = {
-  NAME = "inovelli vzm31-sn handler",
+  NAME = "inovelli vtm31-sn handler",
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed
