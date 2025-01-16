@@ -75,25 +75,11 @@ preferences:
     title: "4. Dimming Speed"
     description: "This changes the speed that the light dims. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Default=25 (2500ms or 2.5s)"
     required: false
-    preferenceType: enumeration
+    preferenceType: number
     definition:
-      options:
-        "0": "Instant"
-        "1": "500ms"
-        "2": "800ms"
-        "3": "1s"
-        "4": "1.5s"
-        "5": "2s"
-        "6": "2.5s (default)"
-        "7": "3s"
-        "8": "3.5s"
-        "9": "4s"
-        "10": "5s"
-        "11": "6s"
-        "12": "7s"
-        "13": "8s"
-        "14": "10s"
-      default: 6
+      minimum: 0
+      maximum: 126
+      default: 25
   - name: "relayClick"
     title: "5. Relay Click"
     description: "Audible Click in On/Off mode"
