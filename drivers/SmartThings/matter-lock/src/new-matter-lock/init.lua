@@ -43,6 +43,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1531, 0x0010}, -- Solity
   {0xFFF1, 0x8005}, -- Solity, Test device
   {0x144F, 0x4002}, -- Yale, Yale Linus Smart Lock L2
+  {0x135D, 0x00B1}, -- Nuki
   {0x10E1, 0x2002}  -- VDA
 }
 
