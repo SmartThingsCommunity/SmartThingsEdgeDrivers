@@ -1014,8 +1014,6 @@ local function cumul_energy_imported_handler(driver, device, ib, response)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     else
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      -- In other words, define the capability related to energy management in the first switch endpoint and process it.
-      -- ENERGY_MANAGEMENT_ENDPOINT = first switch endpoint
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     end
   end
@@ -1084,8 +1082,6 @@ local function active_power_handler(driver, device, ib, response)
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
     else
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      -- In other words, define the capability related to energy management in the first switch endpoint and process it.
-      -- ENERGY_MANAGEMENT_ENDPOINT = first switch endpoint
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
     end
   end
