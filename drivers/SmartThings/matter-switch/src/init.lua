@@ -155,6 +155,10 @@ local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
 }
 
+local supported_combination_button_switch_profiles = {
+  { vendor_id = 0x1339, product_id = 0x007C,  profile = "light-level-2-button" }, -- Cync Keypad Dimmer
+}
+
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
@@ -342,20 +346,17 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
---- is_supported_combination_button_switch_device_type helper function used to check
---- whether the device type for an endpoint is currently supported by a profile for
---- combination button/switch devices.
-local function is_supported_combination_button_switch_device_type(device, endpoint_id)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-          return true
-        end
-      end
+--- check_supported_combination_button_switch_device_type helper function used
+--- to check whether the device type for an endpoint is currently supported by a
+--- profile for combination button/switch devices.
+local function check_supported_combination_button_switch_device_type(device)
+  for _, fingerprint in ipairs(supported_combination_button_switch_profiles) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+      device.manufacturer_info.product_id == fingerprint.product_id then
+      return fingerprint.profile
     end
   end
-  return false
+  return nil
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -393,7 +394,7 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if is_supported_combination_button_switch_device_type(device, main_endpoint) then
+    if check_supported_combination_button_switch_device_type(device) then
       return main_endpoint
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
@@ -571,36 +572,34 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
-    if #button_eps == 1 then
-      profile_name = "light-level-button"
-    else
-      profile_name = "light-level" .. string.format("-%d-button", #button_eps)
-    end
-    device:try_update_metadata({profile = profile_name})
-    device:set_field(DEFERRED_CONFIGURE, true)
-  elseif #button_eps > 0 then
-    local battery_support = false
-    if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
-      #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-      battery_support = true
-    end
-    if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
-      else
-        profile_name = string.format("%d-button", #button_eps)
-      end
-    elseif not battery_support then
-      -- a battery-less button/remote
-      profile_name = "button"
-    end
-
+  if #button_eps > 0 then
+    profile_name = check_supported_combination_button_switch_device_type(device)
     if profile_name then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
     else
-      configure_buttons(device)
+      local battery_support = false
+      if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
+        #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+        battery_support = true
+      end
+      if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+        if battery_support then
+          profile_name = string.format("%d-button-battery", #button_eps)
+        else
+          profile_name = string.format("%d-button", #button_eps)
+        end
+      elseif not battery_support then
+        -- a battery-less button/remote
+        profile_name = "button"
+      end
+
+      if profile_name then
+        device:try_update_metadata({profile = profile_name})
+        device:set_field(DEFERRED_CONFIGURE, true)
+      else
+        configure_buttons(device)
+      end
     end
   elseif num_switch_server_eps > 0 then
     -- The case where num_switch_server_eps > 0 is a workaround for devices that have a
