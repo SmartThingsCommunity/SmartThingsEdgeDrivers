@@ -38,7 +38,8 @@ local lock_utils = {
   SCHEDULE_START_HOUR = "scheduleStartHour",
   SCHEDULE_START_MINUTE = "scheduleStartMinute",
   SCHEDULE_END_HOUR = "scheduleEndHour",
-  SCHEDULE_END_MINUTE = "scheduleEndMinute"
+  SCHEDULE_END_MINUTE = "scheduleEndMinute",
+  NON_EVICTABLE_ENDPOINT_KEY = "nonEvictableEndpointKey"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
