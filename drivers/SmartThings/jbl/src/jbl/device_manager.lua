@@ -28,7 +28,6 @@ end
 local jbl_playback_state_to_smartthings_playback_status_table = {
   paused = "paused",
   playing = "playing",
-  stopped = "stopped",
 }
 
 function device_manager.handle_status(driver, device, status)
