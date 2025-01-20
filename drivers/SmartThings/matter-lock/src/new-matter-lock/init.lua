@@ -2290,7 +2290,7 @@ local function handle_set_reader_key(driver, device, command)
       commandName = cmdName,
       statusCode = "busy"
     }
-    local event = capabilities.lockSchedules.commandResult(
+    local event = aliroSetting.commandResult(
       result,
       {
         state_change = true,
@@ -2315,6 +2315,14 @@ local function handle_set_reader_key(driver, device, command)
   device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
   device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
   device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
+end
+
+local function handle_set_card_ref_id(driver, device, command)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_card_ref_id !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! cardRefId: %s !!!!!!!!", command.args.cardRefId))
+  if command.args.cardRefId ~= nil then
+    device:emit_event(aliroSetting.cardRefId(command.args.cardRefId))
+  end
 end
 
 local function handle_set_aliro_credential(driver, device, command)
@@ -2544,6 +2552,7 @@ local new_matter_lock_handler = {
     },
     [aliroSettingId] = {
       [aliroSetting.commands.setReaderKey.NAME] = handle_set_reader_key,
+      [aliroSetting.commands.setCardRefId.NAME] = handle_set_card_ref_id,
       [aliroSetting.commands.setAliroCredential.NAME] = handle_set_aliro_credential,
       [aliroSetting.commands.clearAliroCredential.NAME] = handle_clear_aliro_credential,
     },
