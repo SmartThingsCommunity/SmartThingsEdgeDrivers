@@ -76,14 +76,9 @@ local function do_configure(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  for cap_id, attributes in pairs(subscribed_attributes) do
-    if device:supports_capability_by_id(cap_id) then
-      for _, attr in ipairs(attributes) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
+  if device.profile.id ~= args.old_st_store.profile.id then
+    device:subscribe()
   end
-  device:subscribe()
 end
 
 -- Helper functions --
@@ -96,12 +91,10 @@ local function update_supported_arguments(device, current_run_mode, operating_st
   -- Error state
   if operating_state == "Error" then
     -- Set runMode to empty
-    local component = device.profile.components["runMode"]
     local event = capabilities.mode.supportedArguments({}, {visibility = {displayed = false}})
-    device:emit_component_event(component, event)
+    device:emit_component_event(device.profile.components["runMode"], event)
     -- Set cleanMode to empty
-    component = device.profile.components["cleanMode"]
-    device:emit_component_event(component, event)
+    device:emit_component_event(device.profile.components["cleanMode"], event)
     return
   end
 
@@ -115,22 +108,23 @@ local function update_supported_arguments(device, current_run_mode, operating_st
     end
   end
   if current_tag == 0xFFFF then
+    device.log.error(string.format("Unsupported mode: %s", current_run_mode))
     return
   end
 
   -- Check whether non-idle mode can be selected or not
   local op_state = capabilities.robotCleanerOperatingState.operatingState
-  local can_be_selected_as_non_idle = 0
+  local can_be_non_idle = 0
   if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE and
     (operating_state == op_state.stopped.NAME or operating_state == op_state.paused.NAME or
      operating_state == op_state.docked.NAME or operating_state == op_state.charging.NAME) then
-      can_be_selected_as_non_idle = 1
+      can_be_non_idle = 1
   end
 
   -- Set supported run arguments
   local supported_arguments = {} -- For generic plugin
   for i, mode in ipairs(supported_run_modes) do
-    if mode[2] == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_selected_as_non_idle == 1 then
+    if mode[2] == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_non_idle == 1 then
       table.insert(supported_arguments, mode[1])
     end
   end
@@ -174,8 +168,10 @@ local function run_mode_supported_mode_handler(driver, device, ib, response)
         break
       end
     end
-    table.insert(supported_modes, mode.elements.label.value)
-    table.insert(supported_modes_with_tag, {mode.elements.label.value, tag})
+    if tag ~= 0xFFFF then
+      table.insert(supported_modes, mode.elements.label.value)
+      table.insert(supported_modes_with_tag, {mode.elements.label.value, tag})
+    end
   end
   device:set_field(RUN_MODE_SUPPORTED_MODES, supported_modes_with_tag, { persist = true })
 
@@ -345,13 +341,6 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   end
 end
 
-local function handle_refresh(driver, device, command)
-  local req = clusters.RvcRunMode.attributes.CurrentMode:read(device)
-  req:merge(clusters.RvcCleanMode.attributes.CurrentMode:read(device))
-  req:merge(clusters.RvcOperationalState.attributes.OperationalState:read(device))
-  device:send(req)
-end
-
 local matter_rvc_driver = {
   lifecycle_handlers = {
     init = device_init,
@@ -379,9 +368,6 @@ local matter_rvc_driver = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_robot_cleaner_mode,
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = handle_refresh
     },
   },
 }
