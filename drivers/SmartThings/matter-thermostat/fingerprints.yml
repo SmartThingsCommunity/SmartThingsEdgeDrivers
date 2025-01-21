@@ -16,6 +16,12 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x004F
     deviceProfileName: thermostat-heating-only-nostate
+#Habi
+  - id: "5415/1"
+    deviceLabel: habi Matter Wireless Room Thermsotat
+    vendorId: 0x1527
+    productId: 0x0001
+    deviceProfileName: thermostat-heating-only   
 
 
 matterGeneric:
