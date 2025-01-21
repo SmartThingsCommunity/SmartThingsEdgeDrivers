@@ -534,6 +534,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Shin Dong-A ES
+  - id: "5483/4096"
+    deviceLabel: Smart Wall Switch
+    vendorId: 0x156B
+    productId: 0x1000
+    deviceProfileName: switch-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit

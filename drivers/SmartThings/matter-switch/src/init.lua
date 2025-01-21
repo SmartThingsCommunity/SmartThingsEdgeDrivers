@@ -154,6 +154,7 @@ local device_type_attribute_map = {
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+  { vendor_id = 0x156B, product_id = 0x1000,  child_profile = "switch-binary" }, -- Shin Dong-A ES Smart Switch
 }
 
 local detect_matter_thing
