@@ -162,48 +162,53 @@ local current_pos_handler = function(attribute)
     local position = 100 - math.floor((ib.data.value / 100))
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
-    if attribute == capabilities.windowShadeLevel.shadeLevel then
-      device:set_field(CURRENT_LIFT, position)
-    else
-      device:set_field(CURRENT_TILT, position)
-    end
+    local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
+    local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
 
-    local lift_position = device:get_field(CURRENT_LIFT)
-    local tilt_position = device:get_field(CURRENT_TILT)
-
-    -- Update the window shade status according to the lift and tilt positions.
-    --   LIFT     TILT      Window Shade
-    --   100      any       Open
-    --   1-99     any       Partially Open
-    --   0        1-100     Partially Open
-    --   0        nil       Closed
-    --   0        0         Closed
-    --   nil      100       Open
-    --   nil      1-99      Partially Open
-    --   nil      0         Closed
-    -- Note that lift or tilt may be nil if either the window shade does not
-    -- support them or if they haven't been received from a device report yet.
-
-    if lift_position == nil then
-      if tilt_position == nil or tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-      elseif tilt_position == 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+    if #lift_eps > 0 and #tilt_eps > 0 then
+      -- Update the window shade status according to the lift and tilt positions.
+      --   LIFT     TILT      Window Shade
+      --   100      any       Open
+      --   1-99     any       Partially Open
+      --   0        1-100     Partially Open
+      --   0        0         Closed
+      if attribute == capabilities.windowShadeLevel.shadeLevel then
+        device:set_field(CURRENT_LIFT, position)
       else
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+        device:set_field(CURRENT_TILT, position)
       end
 
-    elseif lift_position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+      local lift_position = device:get_field(CURRENT_LIFT)
+      local tilt_position = device:get_field(CURRENT_TILT)
 
-    elseif lift_position > 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-
-    elseif lift_position == 0 then
-      if tilt_position == nil or tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-      elseif tilt_position > 0 then
+      if lift_position ~= nil and tilt_position ~= nil then
+        if lift_position == 100 then
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+        elseif lift_position > 0 then
+          device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+        else -- lift_position = 0
+          if tilt_position > 0 then
+            device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+          else -- tilt_position = 0
+            device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+          end
+        end
+        device:set_field(device, CURRENT_LIFT, ib.endpoint_id, nil)
+        device:set_field(device, CURRENT_TILT, ib.endpoint_id, nil)
+      end
+    else
+      -- If only one of lift or tilt are supported, update the window shade
+      -- status according to the lift or tilt position.
+      --   LIFT/TILT     Window Shade
+      --   100           Open
+      --   1-99          Partially Open
+      --   0             Closed
+      if position == 100 then
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+      elseif position > 0 then
         device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
+      else -- position = 0
+        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
       end
     end
   end
