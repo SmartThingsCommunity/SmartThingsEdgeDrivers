@@ -534,6 +534,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Shelly
+  - id: "5264/1"
+    deviceLabel: Shelly Plug S MTR Gen3
+    vendorId: 0x1490
+    productId: 0x0001
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
