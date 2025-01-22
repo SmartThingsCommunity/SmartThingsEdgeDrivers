@@ -47,8 +47,10 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- containing both button endpoints and switch endpoints will use this field
 -- rather than COMPONENT_TO_ENDPOINT_MAP.
 local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
+local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
+local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
+local COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
@@ -65,6 +67,7 @@ local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local GENERIC_SWITCH_ID = 0x000F
+local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -147,12 +150,19 @@ local device_type_attribute_map = {
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
     clusters.Switch.events.MultiPressComplete
+  },
+  [ELECTRICAL_SENSOR_ID] = {
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
   }
 }
 
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+  { vendor_id = 0x115F, product_id = 0x1008,  child_profile = "light-power-energy-powerConsumption" }, -- 2 switch
+  { vendor_id = 0x115F, product_id = 0x1009,  child_profile = "light-power-energy-powerConsumption" }, -- 4 switch
 }
 
 local detect_matter_thing
@@ -256,6 +266,7 @@ local HELD_THRESHOLD = 1
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -270,6 +281,7 @@ local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitc
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
 local HUE_MANUFACTURER_ID = 0x100B
+local AQARA_MANUFACTURER_ID = 0x115F
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -413,6 +425,13 @@ local function assign_child_profile(device, child_ep)
   for _, fingerprint in ipairs(child_device_profile_overrides) do
     if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
        device.manufacturer_info.product_id == fingerprint.product_id then
+      if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
+        if child_ep ~= 1 then
+          -- To add Electrical Sensor only to the first EDGE_CHILD(light-power-energy-powerConsumption)
+          -- The profile of the second EDGE_CHILD is determined in the "for" loop below (e.g., light-binary)
+          break
+        end
+      end
       return fingerprint.child_profile
     end
   end
@@ -436,6 +455,9 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function do_configure(driver, device)
+  if device:get_field(BUTTON_DEVICE_PROFILED) then
+    return
+  end
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
@@ -538,6 +560,10 @@ local function initialize_switch(driver, device)
   end
 
   for _, ep in ipairs(switch_eps) do
+    if _ == 1 then
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+    end
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -579,6 +605,7 @@ local function initialize_switch(driver, device)
     end
     device:try_update_metadata({profile = profile_name})
     device:set_field(DEFERRED_CONFIGURE, true)
+    device:set_field(BUTTON_DEVICE_PROFILED, true)
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
@@ -599,6 +626,7 @@ local function initialize_switch(driver, device)
     if profile_name then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
+      device:set_field(BUTTON_DEVICE_PROFILED, true)
     else
       configure_buttons(device)
     end
@@ -680,7 +708,7 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+      if ep.endpoint_id ~= main_endpoint then
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -780,7 +808,16 @@ end
 
 local function handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/cmd.args.temperature)
+  local temp_in_kelvin = cmd.args.temperature
+  local min_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, endpoint_id)
+  local max_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, endpoint_id)
+
+  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_kelvin)
+  if min_temp_kelvin ~= nil and temp_in_kelvin <= min_temp_kelvin then
+    temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, endpoint_id)
+  elseif max_temp_kelvin ~= nil and temp_in_kelvin >= max_temp_kelvin then
+    temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
+  end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
@@ -852,48 +889,64 @@ local function sat_attr_handler(driver, device, ib, response)
 end
 
 local function temp_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
-      return
-    end
-    local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = device
-    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
-      temp_device = find_child(device, ib.endpoint_id) or device
-    end
-    local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
-    -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
-    if most_recent_temp ~= nil and
-      most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value + 1)) then
-        temp = most_recent_temp
-    end
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
+  local temp_in_mired = ib.data.value
+  if temp_in_mired == nil then
+    return
   end
+  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+    return
+  end
+  local min_temp_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, ib.endpoint_id)
+  local max_temp_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, ib.endpoint_id)
+
+  local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_mired)
+  if min_temp_mired ~= nil and temp_in_mired <= min_temp_mired then
+    temp = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, ib.endpoint_id)
+  elseif max_temp_mired ~= nil and temp_in_mired >= max_temp_mired then
+    temp = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, ib.endpoint_id)
+  end
+
+  local temp_device = device
+  if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+    temp_device = find_child(device, ib.endpoint_id) or device
+  end
+  local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
+  -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
+  if most_recent_temp ~= nil and
+    most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
+    most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
+      temp = most_recent_temp
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
 end
 
 local mired_bounds_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
+    local temp_in_mired = ib.data.value
+    if temp_in_mired == nil then
       return
     end
-    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+    if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp_in_kelvin = mired_to_kelvin(ib.data.value, minOrMax)
-    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
-    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
+    local temp_in_kelvin = mired_to_kelvin(temp_in_mired, minOrMax)
+    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..minOrMax, ib.endpoint_id, temp_in_kelvin)
+    -- the minimum color temp in kelvin corresponds to the maximum temp in mireds
+    if minOrMax == COLOR_TEMP_MIN then
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, ib.endpoint_id, temp_in_mired)
+    else
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, ib.endpoint_id, temp_in_mired)
+    end
+    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
       end
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id, nil)
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id, nil)
     end
   end
 end
@@ -983,7 +1036,12 @@ local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
-    device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    end
   end
 end
 
@@ -1046,7 +1104,12 @@ end
 local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    end
   end
 end
 
