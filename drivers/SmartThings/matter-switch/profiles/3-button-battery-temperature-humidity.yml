@@ -1,4 +1,4 @@
-name: temperature-humidity-3-button-battery
+name: 3-button-battery-temperature-humidity
 components:
 - id: main
   capabilities:

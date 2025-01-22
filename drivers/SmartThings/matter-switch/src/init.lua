@@ -532,7 +532,7 @@ local function initialize_switch(driver, device)
   table.sort(switch_eps)
   table.sort(button_eps)
 
-  local profile_name = nil
+  local profile_name = ""
 
   local component_map = {}
   local component_map_used = false
@@ -544,8 +544,10 @@ local function initialize_switch(driver, device)
   -- support for bindings.
   local num_switch_server_eps = 0
   local main_endpoint
-  if device:supports_capability(capabilities.temperatureMeasurement) then
-    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button1, 2, 3
+  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  if #temperature_eps > 0 and #humidity_eps > 0 then
+    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     main_endpoint = device.MATTER_DEFAULT_ENDPOINT
   else
     main_endpoint = find_default_endpoint(device)
@@ -623,20 +625,21 @@ local function initialize_switch(driver, device)
       battery_support = true
     end
     if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-      if device:supports_capability(capabilities.temperatureMeasurement) then
-        -- to call configure_buttons, keep the profile_name as nil.
+      if #temperature_eps > 0 and #humidity_eps > 0 then
         device.log.debug("So far, it means Aqara Climate Sensor W100.")
-      elseif battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
+        profile_name = "-temperature-humidity"
+      end
+      if battery_support then
+        profile_name = string.format("%d-button-battery", #button_eps) .. profile_name
       else
-        profile_name = string.format("%d-button", #button_eps)
+        profile_name = string.format("%d-button", #button_eps) .. profile_name
       end
     elseif not battery_support then
       -- a battery-less button/remote
       profile_name = "button"
     end
 
-    if profile_name then
+    if profile_name ~= "" then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
       device:set_field(BUTTON_DEVICE_PROFILED, true)

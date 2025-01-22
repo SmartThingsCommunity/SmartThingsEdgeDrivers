@@ -15,13 +15,17 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
+local utils = require "st.utils"
+local dkjson = require "dkjson"
 
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
+local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+
 -- Mock a 3-button device with temperature and humidity sensor
 local aqara_mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("temperature-humidity-3-button-battery.yml"),
+  profile = t_utils.get_profile_definition("3-button-battery-temperature-humidity.yml"),
   manufacturer_info = {vendor_id = 0x115F, product_id = 0x2004, product_name = "Aqara Climate Sensor W100"},
   label = "Climate Sensor W100",
   device_id = "00000000-1111-2222-3333-000000000001",
@@ -107,6 +111,7 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  local opts = { persist = true }
   local cluster_subscribe_list = {
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
@@ -122,17 +127,7 @@ local function test_init()
   local cluster_read_list = {
     clusters.Switch.attributes.MultiPressMax
   }
-
-  local ep = 3
   local read_request
-  for i, cluster in ipairs(cluster_read_list) do
-    for j = 1, 3, 1 do
-      read_request = cluster_read_list[1]:read(aqara_mock_device, ep)
-      read_request:merge(cluster:subscribe(aqara_mock_device))
-      test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
-      ep = ep + 1
-    end
-  end
 
   local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -142,8 +137,36 @@ local function test_init()
   end
 
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_device.add_test_device(aqara_mock_device)
   test.set_rpc_version(5)
+
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
+  test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
+  test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="3-button-battery-temperature-humidity"}
+
+  aqara_mock_device:set_field(DEFERRED_CONFIGURE, true, opts)
+  local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
+  device_info_copy.profile.id = "3-button-battery-temperature-humidity"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+
+  read_request = cluster_read_list[1]:read(aqara_mock_device, 3)
+  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
+
+  read_request = cluster_read_list[1]:read(aqara_mock_device, 4)
+  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+
+  read_request = cluster_read_list[1]:read(aqara_mock_device, 5)
+  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 end
 
 test.set_test_init_function(test_init)
