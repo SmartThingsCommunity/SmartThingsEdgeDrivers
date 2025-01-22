@@ -1,0 +1,42 @@
+{
+  "errors": [],
+  "data": [
+    {
+      "id": "{{uuid}}",
+      "id_v1": "{{id_v1}}",
+      "product_data": {
+        "model_id": "LWV002",
+        "manufacturer_name": "Signify Netherlands B.V.",
+        "product_name": "Hue filament bulb",
+        "product_archetype": "vintage_bulb",
+        "certified": true,
+        "software_version": "1.116.3",
+        "hardware_platform_type": "100b-112"
+      },
+      "metadata": {
+        "name": "{{name}}",
+        "archetype": "vintage_bulb"
+      },
+      "identify": {},
+      "services": [
+        {
+          "rid": "{{uuid}}",
+          "rtype": "zigbee_connectivity"
+        },
+        {
+          "rid": "{{uuid}}",
+          "rtype": "light"
+        },
+        {
+          "rid": "{{uuid}}",
+          "rtype": "taurus_7455"
+        },
+        {
+          "rid": "{{uuid}}",
+          "rtype": "device_software_update"
+        }
+      ],
+      "type": "device"
+    }
+  ]
+}

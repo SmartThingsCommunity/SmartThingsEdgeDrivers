@@ -1,0 +1,16 @@
+{
+  "errors": [],
+  "data": [
+    {
+      "id": "{{uuid}}",
+      "id_v1": "{{id_v1}}",
+      "owner": {
+        "rid": "{{uuid}}",
+        "rtype": "device"
+      },
+      "status": "connected",
+      "mac_address": "00:17:88:01:08:17:b9:17",
+      "type": "zigbee_connectivity"
+    }
+  ]
+}

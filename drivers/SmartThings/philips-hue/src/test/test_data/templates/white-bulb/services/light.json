@@ -1,0 +1,67 @@
+{
+  "errors": [],
+  "data": [
+    {
+      "id": "{{uuid}}",
+      "id_v1": "{{id_v1}}",
+      "owner": {
+        "rid": "{{uuid}}",
+        "rtype": "device"
+      },
+      "metadata": {
+        "name": "{{name}}",
+        "archetype": "vintage_bulb",
+        "fixed_mired": 476,
+        "function": "mixed"
+      },
+      "product_data": {
+        "function": "mixed"
+      },
+      "identify": {},
+      "service_id": 0,
+      "on": {
+        "on": true
+      },
+      "dimming": {
+        "brightness": 100,
+        "min_dim_level": 2
+      },
+      "dimming_delta": {},
+      "dynamics": {
+        "status": "none",
+        "status_values": ["none"],
+        "speed": 0,
+        "speed_valid": false
+      },
+      "alert": {
+        "action_values": ["breathe"]
+      },
+      "signaling": {
+        "signal_values": ["no_signal", "on_off"]
+      },
+      "mode": "normal",
+      "effects": {
+        "status_values": ["no_effect", "candle"],
+        "status": "no_effect",
+        "effect_values": ["no_effect", "candle"]
+      },
+      "powerup": {
+        "preset": "safety",
+        "configured": true,
+        "on": {
+          "mode": "on",
+          "on": {
+            "on": true
+          }
+        },
+        "dimming": {
+          "mode": "dimming",
+          "dimming": {
+            "brightness": 100
+          }
+        }
+      },
+      "type": "light"
+    }
+  ]
+}

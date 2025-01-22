@@ -1,4 +1,5 @@
 local log = require "log"
+local st_utils = require "st.utils"
 
 local Consts = require "consts"
 local Fields = require "fields"
@@ -47,7 +48,7 @@ function utils.safe_wrap_handler(handler)
     local success, result = pcall(handler, driver, device, ...)
     if not success then
       log.error_with({ hub_logs = true },
-        string.format("Failed to invoke capability command handler. Reason: %s", result))
+        string.format("Failed to invoke command handler for args %s. Reason: %s", st_utils.stringify_table(table.pack(...)), result))
     end
     return result
   end

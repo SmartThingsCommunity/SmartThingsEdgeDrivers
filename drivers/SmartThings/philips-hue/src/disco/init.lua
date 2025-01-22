@@ -227,7 +227,7 @@ function HueDiscovery.search_bridge_for_supported_devices(driver, bridge_network
   if type(log_prefix) == "string" and #log_prefix > 0 then prefix = log_prefix .. " " end
 
   local devices, err, _ = api_instance:get_devices()
-  if err ~= nil or not devices then
+  if type(err) == "string" or not devices then
     log.error_with({ hub_logs = true },
       prefix .. "Error querying bridge for devices: " .. (err or "unexpected nil in error position"))
     return
@@ -362,7 +362,7 @@ function HueDiscovery.do_mdns_scan(driver)
   local bridge_netinfo = driver.datastore.bridge_netinfo
   local mdns_responses, err = mdns.discover(HueDiscovery.ServiceType, HueDiscovery.Domain)
 
-  if err ~= nil then
+  if not mdns_responses and err ~= nil then
     log.error_with({ hub_logs = true }, "Error during service discovery: ", err)
     return
   end

@@ -157,7 +157,7 @@ local function handle_simple_light(
     device_service_info, bridge_network_id, cache, st_metadata_callback
 )
   local light_resource, err, _ = api_instance:get_light_by_id(resource_id)
-  if err ~= nil or not light_resource then
+  if type(err) == "string" or not light_resource then
     log.error_with({ hub_logs = true },
       string.format("Error getting light info for %s: %s", device_service_info.product_data.product_name,
         (err or "unexpected nil in error position")))
