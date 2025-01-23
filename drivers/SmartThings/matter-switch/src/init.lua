@@ -665,8 +665,7 @@ local function initialize_switch(driver, device)
         if main_endpoint == ep.endpoint_id then
           for _, dt in ipairs(ep.device_types) do
             -- no device type that is not in the switch subset should be considered.
-            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) or
-              dt.device_type_id == MOUNTED_ON_OFF_CONTROL_ID or dt.device_type_id == MOUNTED_DIMMABLE_LOAD_CONTROL_ID then
+            if (ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID) then
               id = math.max(id, dt.device_type_id)
             end
           end
