@@ -53,7 +53,7 @@ local function border_router_name_attribute_handler(driver, device, ib)
 end
 
 -- Spec uses TLV encoding of Thread Version, which should be mapped to a more user-friendly name
-VERSION_TLV_MAP = {
+local VERSION_TLV_MAP = {
   [1] = "1.0.0",
   [2] = "1.1.0",
   [3] = "1.2.0",
