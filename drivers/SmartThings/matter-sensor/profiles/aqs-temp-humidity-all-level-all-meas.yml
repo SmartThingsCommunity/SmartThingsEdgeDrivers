@@ -52,3 +52,8 @@ components:
         version: 1
     categories:
     - name: AirQualityDetector
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true
