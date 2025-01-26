@@ -590,7 +590,7 @@ local unit_default = {
   [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
-  [capabilities.tvocMeasurement.NAME] = units.PPM
+  [capabilities.tvocMeasurement.NAME] = units.PPB  -- TVOC is typically within the range of 0-5500 ppb, with good to moderate values being < 660 ppb
 }
 
 -- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
@@ -620,11 +620,13 @@ local molecular_weights = {
 local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end,
+    [units.PPB] = function(value) return utils.round(value * (10^3)) end,
     [units.UGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
     [units.MGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return utils.round(value) end,
   },
   [units.PPT] = {
     [units.PPM] = function(value) return utils.round(value/(10^6)) end
@@ -720,6 +722,9 @@ end
 
 local function temp_event_handler(attribute)
   return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
     local unit = "C"
 
     -- Only emit the capability for RPC version >= 5, since unit conversion for
@@ -816,7 +821,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- or not the device supports emergency heat or fan only
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
 
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.auto})
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   if #auto > 0 then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
   end
@@ -1426,7 +1431,7 @@ local matter_driver_template = {
         [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.radonHealthConcern.radonHealthConcern)
       },
       [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPM),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
       }

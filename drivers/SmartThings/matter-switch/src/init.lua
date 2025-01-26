@@ -47,8 +47,10 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- containing both button endpoints and switch endpoints will use this field
 -- rather than COMPONENT_TO_ENDPOINT_MAP.
 local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
+local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-local COLOR_TEMP_BOUND_RECEIVED = "__colorTemp_bound_received"
+local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
+local COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 local COLOR_TEMP_MIN = "__color_temp_min"
 local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
@@ -65,6 +67,7 @@ local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
 local GENERIC_SWITCH_ID = 0x000F
+local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -147,23 +150,30 @@ local device_type_attribute_map = {
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
     clusters.Switch.events.MultiPressComplete
+  },
+  [ELECTRICAL_SENSOR_ID] = {
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
   }
 }
 
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
   { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
+  { vendor_id = 0x115F, product_id = 0x1008,  child_profile = "light-power-energy-powerConsumption" }, -- 2 switch
+  { vendor_id = 0x115F, product_id = 0x1009,  child_profile = "light-power-energy-powerConsumption" }, -- 4 switch
 }
 
 local detect_matter_thing
 
 local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
-local FIRST_EXPORT_REPORT_TIMESTAMP = "__first_export_report_timestamp"
-local EXPORT_POLL_TIMER_SETTING_ATTEMPTED = "__export_poll_timer_setting_attempted"
-local EXPORT_REPORT_TIMEOUT = "__export_report_timeout"
-local TOTAL_EXPORTED_ENERGY = "__total_exported_energy"
-local LAST_EXPORTED_REPORT_TIMESTAMP = "__last_exported_report_timestamp"
-local RECURRING_EXPORT_REPORT_POLL_TIMER = "__recurring_export_report_poll_timer"
+local FIRST_IMPORT_REPORT_TIMESTAMP = "__first_import_report_timestamp"
+local IMPORT_POLL_TIMER_SETTING_ATTEMPTED = "__import_poll_timer_setting_attempted"
+local IMPORT_REPORT_TIMEOUT = "__import_report_timeout"
+local TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
+local LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
+local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer"
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
@@ -183,26 +193,26 @@ local function iso8061Timestamp(time)
   return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
 
-local function delete_export_poll_schedule(device)
-  local export_poll_timer = device:get_field(RECURRING_EXPORT_REPORT_POLL_TIMER)
-  if export_poll_timer then
-    device.thread:cancel_timer(export_poll_timer)
-    device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, nil)
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
+local function delete_import_poll_schedule(device)
+  local import_poll_timer = device:get_field(RECURRING_IMPORT_REPORT_POLL_TIMER)
+  if import_poll_timer then
+    device.thread:cancel_timer(import_poll_timer)
+    device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, nil)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, nil)
   end
 end
 
-local function send_export_poll_report(device, latest_total_exported_energy_wh)
+local function send_import_poll_report(device, latest_total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(LAST_EXPORTED_REPORT_TIMESTAMP) or 0
-  device:set_field(LAST_EXPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  local last_time = device:get_field(LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  device:set_field(LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
   -- Calculate the energy delta between reports
   local energy_delta_wh = 0.0
-  local previous_exported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_exported_report and previous_exported_report.energy then
-    energy_delta_wh = math.max(latest_total_exported_energy_wh - previous_exported_report.energy, 0.0)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -210,17 +220,17 @@ local function send_export_poll_report(device, latest_total_exported_energy_wh)
     start = iso8061Timestamp(last_time),
     ["end"] = iso8061Timestamp(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_exported_energy_wh
+    energy = latest_total_imported_energy_wh
   }))
 end
 
 local function create_poll_report_schedule(device)
-  local export_timer = device.thread:call_on_schedule(
-    device:get_field(EXPORT_REPORT_TIMEOUT),
-    send_export_poll_report(device, device:get_field(TOTAL_EXPORTED_ENERGY)),
-    "polling_export_report_schedule_timer"
+  local import_timer = device.thread:call_on_schedule(
+    device:get_field(IMPORT_REPORT_TIMEOUT),
+    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY)),
+    "polling_import_report_schedule_timer"
   )
-  device:set_field(RECURRING_EXPORT_REPORT_POLL_TIMER, export_timer)
+  device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
 end
 
 local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
@@ -234,18 +244,18 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     return
   elseif not device:get_field(SUBSCRIPTION_REPORT_OCCURRED) then
     device:set_field(SUBSCRIPTION_REPORT_OCCURRED, true)
-  elseif not device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP) then
-    device:set_field(FIRST_EXPORT_REPORT_TIMESTAMP, os.time())
+  elseif not device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP) then
+    device:set_field(FIRST_IMPORT_REPORT_TIMESTAMP, os.time())
   else
-    local first_timestamp = device:get_field(FIRST_EXPORT_REPORT_TIMESTAMP)
+    local first_timestamp = device:get_field(FIRST_IMPORT_REPORT_TIMESTAMP)
     local second_timestamp = os.time()
     local report_interval_secs = second_timestamp - first_timestamp
-    device:set_field(EXPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
+    device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumption
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
-    device:set_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
 
@@ -256,6 +266,7 @@ local HELD_THRESHOLD = 1
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -269,7 +280,12 @@ local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) de
 local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
+local TEMP_BOUND_RECEIVED = "__temp_bound_received"
+local TEMP_MIN = "__temp_min"
+local TEMP_MAX = "__temp_max"
+
 local HUE_MANUFACTURER_ID = 0x100B
+local AQARA_MANUFACTURER_ID = 0x115F
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -413,6 +429,13 @@ local function assign_child_profile(device, child_ep)
   for _, fingerprint in ipairs(child_device_profile_overrides) do
     if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
        device.manufacturer_info.product_id == fingerprint.product_id then
+      if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
+        if child_ep ~= 1 then
+          -- To add Electrical Sensor only to the first EDGE_CHILD(light-power-energy-powerConsumption)
+          -- The profile of the second EDGE_CHILD is determined in the "for" loop below (e.g., light-binary)
+          break
+        end
+      end
       return fingerprint.child_profile
     end
   end
@@ -436,6 +459,9 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function do_configure(driver, device)
+  if device:get_field(BUTTON_DEVICE_PROFILED) then
+    return
+  end
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
@@ -506,7 +532,7 @@ local function initialize_switch(driver, device)
   table.sort(switch_eps)
   table.sort(button_eps)
 
-  local profile_name = nil
+  local profile_name = ""
 
   local component_map = {}
   local component_map_used = false
@@ -517,7 +543,15 @@ local function initialize_switch(driver, device)
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
-  local main_endpoint = find_default_endpoint(device)
+  local main_endpoint
+  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  if #temperature_eps > 0 and #humidity_eps > 0 then
+    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
+    main_endpoint = device.MATTER_DEFAULT_ENDPOINT
+  else
+    main_endpoint = find_default_endpoint(device)
+  end
 
   -- If a switch endpoint is present, it will be the main endpoint and therefore the
   -- main component. If button endpoints are present, they will be added as
@@ -538,6 +572,10 @@ local function initialize_switch(driver, device)
   end
 
   for _, ep in ipairs(switch_eps) do
+    if _ == 1 then
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+    end
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -579,6 +617,7 @@ local function initialize_switch(driver, device)
     end
     device:try_update_metadata({profile = profile_name})
     device:set_field(DEFERRED_CONFIGURE, true)
+    device:set_field(BUTTON_DEVICE_PROFILED, true)
   elseif #button_eps > 0 then
     local battery_support = false
     if device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID and
@@ -586,19 +625,24 @@ local function initialize_switch(driver, device)
       battery_support = true
     end
     if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+      if #temperature_eps > 0 and #humidity_eps > 0 then
+        device.log.debug("So far, it means Aqara Climate Sensor W100.")
+        profile_name = "-temperature-humidity"
+      end
       if battery_support then
-        profile_name = string.format("%d-button-battery", #button_eps)
+        profile_name = string.format("%d-button-battery", #button_eps) .. profile_name
       else
-        profile_name = string.format("%d-button", #button_eps)
+        profile_name = string.format("%d-button", #button_eps) .. profile_name
       end
     elseif not battery_support then
       -- a battery-less button/remote
       profile_name = "button"
     end
 
-    if profile_name then
+    if profile_name ~= "" then
       device:try_update_metadata({profile = profile_name})
       device:set_field(DEFERRED_CONFIGURE, true)
+      device:set_field(BUTTON_DEVICE_PROFILED, true)
     else
       configure_buttons(device)
     end
@@ -680,7 +724,7 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint and ep.endpoint_id ~= 0 then
+      if ep.endpoint_id ~= main_endpoint then
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -700,7 +744,7 @@ end
 
 local function device_removed(driver, device)
   log.info("device removed")
-  delete_export_poll_schedule(device)
+  delete_import_poll_schedule(device)
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -780,7 +824,16 @@ end
 
 local function handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/cmd.args.temperature)
+  local temp_in_kelvin = cmd.args.temperature
+  local min_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, endpoint_id)
+  local max_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, endpoint_id)
+
+  local temp_in_mired = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_kelvin)
+  if min_temp_kelvin ~= nil and temp_in_kelvin <= min_temp_kelvin then
+    temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, endpoint_id)
+  elseif max_temp_kelvin ~= nil and temp_in_kelvin >= max_temp_kelvin then
+    temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
+  end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
   device:send(req)
@@ -852,48 +905,64 @@ local function sat_attr_handler(driver, device, ib, response)
 end
 
 local function temp_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
-      return
-    end
-    local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/ib.data.value)
-    local temp_device = device
-    if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
-      temp_device = find_child(device, ib.endpoint_id) or device
-    end
-    local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
-    -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
-    if most_recent_temp ~= nil and
-      most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value - 1)) and
-      most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(ib.data.value + 1)) then
-        temp = most_recent_temp
-    end
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
+  local temp_in_mired = ib.data.value
+  if temp_in_mired == nil then
+    return
   end
+  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+    return
+  end
+  local min_temp_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, ib.endpoint_id)
+  local max_temp_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, ib.endpoint_id)
+
+  local temp = utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_mired)
+  if min_temp_mired ~= nil and temp_in_mired <= min_temp_mired then
+    temp = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, ib.endpoint_id)
+  elseif max_temp_mired ~= nil and temp_in_mired >= max_temp_mired then
+    temp = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, ib.endpoint_id)
+  end
+
+  local temp_device = device
+  if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
+    temp_device = find_child(device, ib.endpoint_id) or device
+  end
+  local most_recent_temp = temp_device:get_field(MOST_RECENT_TEMP)
+  -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
+  if most_recent_temp ~= nil and
+    most_recent_temp <= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
+    most_recent_temp >= utils.round(MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
+      temp = most_recent_temp
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
 end
 
 local mired_bounds_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
+    local temp_in_mired = ib.data.value
+    if temp_in_mired == nil then
       return
     end
-    if (ib.data.value < COLOR_TEMPERATURE_MIRED_MIN or ib.data.value > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", ib.data.value, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+    if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
-    local temp_in_kelvin = mired_to_kelvin(ib.data.value, minOrMax)
-    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp_in_kelvin)
-    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id)
+    local temp_in_kelvin = mired_to_kelvin(temp_in_mired, minOrMax)
+    set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..minOrMax, ib.endpoint_id, temp_in_kelvin)
+    -- the minimum color temp in kelvin corresponds to the maximum temp in mireds
+    if minOrMax == COLOR_TEMP_MIN then
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MAX, ib.endpoint_id, temp_in_mired)
+    else
+      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, ib.endpoint_id, temp_in_mired)
+    end
+    local min = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", min, max))
       end
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MAX, ib.endpoint_id, nil)
-      set_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED..COLOR_TEMP_MIN, ib.endpoint_id, nil)
     end
   end
 end
@@ -979,33 +1048,38 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function cumul_energy_exported_handler(driver, device, ib, response)
+local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_EXPORTED_ENERGY, watt_hour_value)
-    device:emit_event(capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    end
   end
 end
 
-local function per_energy_exported_handler(driver, device, ib, response)
+local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(TOTAL_EXPORTED_ENERGY) or 0
+    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_EXPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
 
 local function energy_report_handler_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    if not device:get_field(EXPORT_POLL_TIMER_SETTING_ATTEMPTED) then
+    if not device:get_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED) then
       set_poll_report_timer_and_schedule(device, is_cumulative_report)
     end
     if is_cumulative_report then
-      cumul_energy_exported_handler(driver, device, ib, response)
+      cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      per_energy_exported_handler(driver, device, ib, response)
+      per_energy_imported_handler(driver, device, ib, response)
     end
   end
 end
@@ -1046,7 +1120,12 @@ end
 local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:emit_event(capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    end
   end
 end
 
@@ -1136,6 +1215,49 @@ local function device_added(driver, device)
   device_init(driver, device)
 end
 
+local function temperature_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local temp = measured_value / 100.0
+    local unit = "C"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+  end
+end
+
+local temp_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local temp = ib.data.value / 100.0
+    local unit = "C"
+    set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
+    local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        -- Only emit the capability for RPC version >= 5 (unit conversion for
+        -- temperature range capability is only supported for RPC >= 5)
+        if version.rpc >= 5 then
+          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        end
+        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
+
+local function humidity_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local humidity = utils.round(measured_value / 100.0)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -1174,8 +1296,8 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = energy_report_handler_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = energy_report_handler_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
@@ -1186,6 +1308,14 @@ local matter_driver_template = {
       },
       [clusters.Switch.ID] = {
         [clusters.Switch.attributes.MultiPressMax.ID] = max_press_handler
+      },
+      [clusters.RelativeHumidityMeasurement.ID] = {
+        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
       }
     },
     event = {
@@ -1234,11 +1364,19 @@ local matter_driver_template = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.energyMeter.ID] = {
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported,
-      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     }
   },
   subscribed_events = {
@@ -1289,7 +1427,9 @@ local matter_driver_template = {
     capabilities.powerConsumptionReport,
     capabilities.valve,
     capabilities.button,
-    capabilities.battery
+    capabilities.battery,
+    capabilities.temperatureMeasurement,
+    capabilities.relativeHumidityMeasurement
   },
   sub_drivers = {
     require("eve-energy"),
