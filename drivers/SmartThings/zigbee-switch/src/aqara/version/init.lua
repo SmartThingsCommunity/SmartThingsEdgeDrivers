@@ -11,6 +11,23 @@ local ENERGY_METER_ENDPOINT = 0x1F
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local PRIVATE_MODE = "PRIVATE_MODE"
 
+local FINGERPRINTS = {
+  { mfr = "Aqara", model = "lumi.switch.acn048"},       -- 3-1
+  { mfr = "Aqara", model = "lumi.switch.acn049"},       -- 3-2
+  { mfr = "Aqara", model = "lumi.switch.acn054"},       -- 3-3
+  { mfr = "Aqara", model = "lumi.switch.acn055"},       -- 3-4
+  { mfr = "LUMI",  model = "lumi.switch.n3acn3"},       -- 1-3
+}
+
+local function is_aqara_products(opts, driver, device)
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
+  end
+  return false
+end
+
 local function on_off_handler(driver, device, value, zb_rx)
   device:emit_event_for_endpoint(
     zb_rx.address_header.src_endpoint.value,
@@ -104,8 +121,9 @@ local aqara_switch_version_handler = {
   },
   can_handle = function (opts, driver, device)
     local private_mode = device:get_field(PRIVATE_MODE) or 0
-    return private_mode == 1
+    return private_mode == 1 or is_aqara_products
   end
+  -- can_handle = is_aqara_products
 }
 
 return aqara_switch_version_handler

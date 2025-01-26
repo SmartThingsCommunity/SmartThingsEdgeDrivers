@@ -199,6 +199,12 @@ zigbeeManufacturer:
     manufacturer: sengled
     model: E1M-G7H
     deviceProfileName: motion-battery
+  # test 0124
+  - id: "_TYZB01_vwqnz1sn/TS0202"
+    deviceLabel: test motion
+    manufacturer: _TYZB01_vwqnz1sn
+    model: TS0202
+    deviceProfileName: motion-illuminance-battery
 zigbeeGeneric:
   - id: kickstarter/motion/1
     deviceLabel: SmartThings Motion Sensor

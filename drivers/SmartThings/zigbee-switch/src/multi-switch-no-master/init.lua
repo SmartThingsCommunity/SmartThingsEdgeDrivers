@@ -54,7 +54,11 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
   { model = "E220-KR5N0Z0-HA", children = 4 },
-  { model = "E220-KR6N0Z0-HA", children = 5 }
+  { model = "E220-KR6N0Z0-HA", children = 5 },
+  { mfr = "LUMI", model = "lumi.switch.acn040", children = 2},   -- 2-3
+  { mfr = "_TZ3000_aqmn87lk", model = "TS0002", children = 1},   -- 6-2
+  { mfr = "_TZ3000_mitrd7qm", model = "TS0003", children = 2},   -- 6-3
+  { mfr = "_TZ3000_5mohkasf", model = "TS0004", children = 3}    -- 6-4
 }
 
 local function is_multi_switch_no_master(opts, driver, device)

@@ -90,7 +90,8 @@ local zigbee_motion_driver = {
     capabilities.relativeHumidityMeasurement,
     capabilities.battery,
     capabilities.presenceSensor,
-    capabilities.contactSensor
+    capabilities.contactSensor,
+    capabilities.illuminanceMeasurement
   },
   zigbee_handlers = {
     attr = {

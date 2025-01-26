@@ -2303,12 +2303,57 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
-  # Inovelli
-  - id: "Inovelli/VZM31-SN"
-    deviceLabel: "Inovelli 2-in-1 Blue Series"
-    manufacturer: Inovelli
-    model: VZM31-SN
-    deviceProfileName: inovelli-vzm31-sn
+  # test 0124 
+  - id: "LUMI/lumi.switch.acn040"    # 2-3
+    deviceLabel: test-switch
+    manufacturer: LUMI
+    model: lumi.switch.acn040
+    deviceProfileName: basic-switch
+  - id: "_TZ3000_aqmn87lk/TS0002"    # 6-2
+    deviceLabel: test-switch
+    manufacturer: _TZ3000_aqmn87lk
+    model: TS0002
+    deviceProfileName: basic-switch
+  - id: "_TZ3000_mitrd7qm/TS0003"    # 6-3
+    deviceLabel: test-switch
+    manufacturer: _TZ3000_mitrd7qm
+    model: TS0003
+    deviceProfileName: basic-switch
+  - id: "_TZ3000_5mohkasf/TS0004"     # 6-4
+    deviceLabel: test-switch
+    manufacturer: _TZ3000_5mohkasf
+    model: TS0004
+    deviceProfileName: basic-switch
+  - id: "Aqara/lumi.switch.acn048"      # 3-1
+    deviceLabel: test-switch
+    manufacturer: Aqara
+    model: lumi.switch.acn048
+    deviceProfileName: switch-power-energy
+  - id: "Aqara/lumi.switch.acn049"      # 3-2
+    deviceLabel: test-switch
+    manufacturer: Aqara
+    model: lumi.switch.acn049
+    deviceProfileName: switch-power-energy
+  - id: "Aqara/lumi.switch.acn054"      # 3-3
+    deviceLabel: test-switch
+    manufacturer: Aqara
+    model: lumi.switch.acn054
+    deviceProfileName: switch-power-energy
+  - id: "Aqara/lumi.switch.acn055"      # 3-4
+    deviceLabel: test-switch
+    manufacturer: Aqara
+    model: lumi.switch.acn055
+    deviceProfileName: switch-power-energy
+  - id: "LUMI/lumi.switch.n3acn3"       # 1-3
+    deviceLabel: test-switch
+    manufacturer: LUMI
+    model: lumi.switch.n3acn3
+    deviceProfileName: switch-power-energy
+  - id: "_TZ3000_ysiog9xi/TS0001"        # 9
+    deviceLabel: test-switch
+    manufacturer: _TZ3000_ysiog9xi
+    model: TS0001
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
