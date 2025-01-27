@@ -128,6 +128,12 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+  - id: "5127/4744"
+    deviceLabel: Smart Bridge MZ1
+    vendorId: 0x1407
+    productId: 0x1288
+    deviceProfileName: matter-bridge 
+    
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
