@@ -626,7 +626,7 @@ local function initialize_switch(driver, device)
     end
     if #button_eps > 1 and tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
       if #temperature_eps > 0 and #humidity_eps > 0 then
-        device.log.debug("So far, it means Aqara Climate Sensor W100.")
+        -- for now, this logic only applies to the Aqara Climate Sensor W100.
         profile_name = "-temperature-humidity"
       end
       if battery_support then
