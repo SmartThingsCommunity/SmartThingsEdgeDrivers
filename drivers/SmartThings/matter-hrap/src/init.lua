@@ -43,7 +43,7 @@ local function ssid_attribute_handler(driver, device, ib)
   if valid_utf8 then
     device:emit_event_for_endpoint(ib.endpoint, wifiSsid.ssid({ value = ib.data.value }))
   else
-    device.log.info("UTF8 validation of Ssid failed: Error: '"..utf8_err.."'. Raw Ssid data: "..ib.data.value)
+    device.log.info("UTF8 validation of Ssid failed: Error: '"..utf8_err.."'.")
   end
 end
 
