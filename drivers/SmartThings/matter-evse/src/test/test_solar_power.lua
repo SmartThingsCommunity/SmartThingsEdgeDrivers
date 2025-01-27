@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@ local test = require "integration_test"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local version = require "version"
 
-local EVSE_EP = 10
-local ELECTRICAL_SENSOR_EP_ONE = 20
-local ELECTRICAL_SENSOR_EP_TWO = 30
+local SOLAR_POWER_EP_ONE = 20
+local SOLAR_POWER_EP_TWO = 30
 
-clusters.EnergyEvse = require "EnergyEvse"
-clusters.EnergyEvseMode = require "EnergyEvseMode"
+local SOLAR_POWER_DEVICE_TYPE_ID = 0x0017
+local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
+
+if version.api < 11 then
 clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
 clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("evse-energy-meas.yml"),
+  profile = t_utils.get_profile_definition("solar-power.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -44,50 +46,35 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = EVSE_EP,
+      endpoint_id = SOLAR_POWER_EP_ONE,
       clusters = {
-        { cluster_id = clusters.EnergyEvse.ID,     cluster_type = "SERVER" },
-        { cluster_id = clusters.EnergyEvseMode.ID, cluster_type = "SERVER" },
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER" , feature_map = 6}, --CUME & PERE
+        { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        { device_type_id = 0x050C, device_type_revision = 1 } -- EVSE
+        { device_type_id = SOLAR_POWER_DEVICE_TYPE_ID, device_type_revision = 1 }, -- SOLAR POWER
+        { device_type_id = ELECTRICAL_SENSOR_DEVICE_TYPE_ID, device_type_revision = 1 } -- ELECTRICAL_SENSOR
       }
     },
     {
-      endpoint_id = ELECTRICAL_SENSOR_EP_ONE,
+      endpoint_id = SOLAR_POWER_EP_TWO,
       clusters = {
-        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 5 }, --CUME & IMPE
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER" , feature_map = 6}, --CUME & PERE
+        { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER" },
       },
       device_types = {
-        { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
+        { device_type_id = SOLAR_POWER_DEVICE_TYPE_ID, device_type_revision = 1 }, -- SOLAR POWER
+        { device_type_id = ELECTRICAL_SENSOR_DEVICE_TYPE_ID, device_type_revision = 1 } -- ELECTRICAL_SENSOR
       }
-    },
-    {
-      endpoint_id = ELECTRICAL_SENSOR_EP_TWO,
-      clusters = {
-        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 5 }, --CUME & IMPE
-      },
-      device_types = {
-        { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
-      }
-    },
+    }
   }
 })
 
 local function test_init()
   local cluster_subscribe_list = {
-    clusters.EnergyEvse.attributes.State,
-    clusters.EnergyEvse.attributes.SupplyState,
-    clusters.EnergyEvse.attributes.FaultState,
-    clusters.EnergyEvse.attributes.ChargingEnabledUntil,
-    clusters.EnergyEvse.attributes.MinimumChargeCurrent,
-    clusters.EnergyEvse.attributes.MaximumChargeCurrent,
-    clusters.EnergyEvse.attributes.SessionDuration,
-    clusters.EnergyEvse.attributes.SessionEnergyCharged,
-    clusters.EnergyEvseMode.attributes.SupportedModes,
-    clusters.EnergyEvseMode.attributes.CurrentMode,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -99,41 +86,62 @@ local function test_init()
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-
   test.socket.matter:__expect_send({
     mock_device.id,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
   })
 
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-  capabilities.evseChargingSession.targetEndTime("1970-01-01T00:00:00Z")))
+  local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_ONE)
+  read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_TWO))
+
+  test.socket.matter:__expect_send({
+    mock_device.id,
+    read_req
+  })
 end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Assert profile applied over doConfigure",
+  "Appropriate powerMeter capability events must be sent in 'W' on receiving ActivePower events",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "evse-energy-meas" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(mock_device,
+        SOLAR_POWER_EP_ONE,
+          15000)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.powerMeter.power({ value = 15.0, unit = "W" })))
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(mock_device,
+        SOLAR_POWER_EP_TWO,
+          16000)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.powerMeter.power({ value = 31.0, unit = "W" })))
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(mock_device,
+        SOLAR_POWER_EP_TWO,
+          20000)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.powerMeter.power({ value = 35.0, unit = "W" })))
   end
 )
 
 test.register_coroutine_test(
-  "Ensure timers are created for the device",
+  "Ensure timers are created for the device and terminated on removed",
   function()
+    test.socket.matter:__set_channel_ordering("relaxed")
     local poll_timer = mock_device:get_field("__recurring_poll_timer")
-    assert(poll_timer ~= nil, "poll_timer should exist")
+    assert(poll_timer ~= nil, "poll_timer should not exist")
 
     local report_poll_timer = mock_device:get_field("__recurring_report_poll_timer")
     assert(report_poll_timer ~= nil, "report_poll_timer should exist")
-  end
-)
-
-test.register_coroutine_test(
-  "Ensure timers are created for the device",
-  function()
-    test.socket.matter:__set_channel_ordering("relaxed")
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
     test.wait_for_events()
@@ -147,10 +155,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Ensure that every 60 seconds the driver reads the CumulativeEnergyImported attribute for both endpoints",
+  "Ensure that every 60 seconds the driver reads the CumulativeEnergyExported attribute for both endpoints",
   function()
     test.mock_time.advance_time(60)
     test.socket.matter:__set_channel_ordering("relaxed")
+    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_ONE)
+    read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_TWO))
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      read_req
+    })
     test.socket.matter:__expect_send({
       mock_device.id,
       clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
@@ -166,7 +180,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Ensure the total accumulated powerConsumption for both endpoints is reported every 15 minutes",
+  "Ensure the total cumulative energy exported powerConsumption for both endpoints is reported every 15 minutes",
   function()
     test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
@@ -176,21 +190,41 @@ test.register_coroutine_test(
       clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
     })
 
+    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_ONE)
+    read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_TWO))
+
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      read_req
+    })
+
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
-        .CumulativeEnergyImported:build_test_report_data(mock_device,
-      ELECTRICAL_SENSOR_EP_ONE,
+        .CumulativeEnergyExported:build_test_report_data(mock_device,
+      SOLAR_POWER_EP_ONE,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --100Wh
 
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main",
+        capabilities.energyMeter.energy({
+          value = 100, unit = "Wh"
+        }))
+      )
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
-        .CumulativeEnergyImported:build_test_report_data(mock_device,
-      ELECTRICAL_SENSOR_EP_TWO,
+        .CumulativeEnergyExported:build_test_report_data(mock_device,
+      SOLAR_POWER_EP_TWO,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 150000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --150Wh
 
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main",
+        capabilities.energyMeter.energy({
+          value = 250, unit = "Wh"
+        }))
+      )
     test.wait_for_events()
     test.mock_time.advance_time(60 * 15)
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
+      mock_device:generate_test_message("exportedEnergy",
         capabilities.powerConsumptionReport.powerConsumption({
           energy = 250,
           deltaEnergy = 250,

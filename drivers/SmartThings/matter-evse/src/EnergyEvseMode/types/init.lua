@@ -14,4 +14,3 @@ local EnergyEvseModeTypes = {}
 setmetatable(EnergyEvseModeTypes, types_mt)
 
 return EnergyEvseModeTypes
-

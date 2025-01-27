@@ -21,4 +21,3 @@ end
 setmetatable(EnergyEvseEvents, event_mt)
 
 return EnergyEvseEvents
-

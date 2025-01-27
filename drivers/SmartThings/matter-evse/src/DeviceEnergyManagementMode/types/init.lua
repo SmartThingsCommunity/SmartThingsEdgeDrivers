@@ -14,4 +14,3 @@ local DeviceEnergyManagementModeTypes = {}
 setmetatable(DeviceEnergyManagementModeTypes, types_mt)
 
 return DeviceEnergyManagementModeTypes
-

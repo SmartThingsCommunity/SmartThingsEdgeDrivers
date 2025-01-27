@@ -16,7 +16,6 @@ local test = require "integration_test"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local log = require "log"
 
 local EVSE_EP = 1
 local ELECTRICAL_SENSOR_EP = 2
@@ -91,7 +90,6 @@ local function test_init()
     clusters.DeviceEnergyManagementMode.attributes.CurrentMode,
     clusters.DeviceEnergyManagementMode.attributes.SupportedModes,
   }
-  log.info("In test init", os.time())
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -505,7 +503,5 @@ test.register_message_test(
     }
   }
 )
-
---TODO: Include tests for evseChargingSession capability commands. This is anyhow tested with EVSE virtual device app.
 
 test.run_registered_tests()
