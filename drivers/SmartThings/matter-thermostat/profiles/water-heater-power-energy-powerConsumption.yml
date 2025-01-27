@@ -1,28 +1,24 @@
-name: room-air-conditioner-humidity-fan-heating-cooling
+name: water-heater-power-energy-powerConsumption
 components:
 - id: main
   capabilities:
-  - id: switch
-    version: 1
   - id: temperatureMeasurement
-    version: 1
-  - id: relativeHumidityMeasurement
     version: 1
   - id: thermostatMode
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
-  - id: thermostatCoolingSetpoint
+  - id: mode
     version: 1
-  - id: thermostatOperatingState
+  - id: energyMeter
     version: 1
-  - id: airConditionerFanMode
+  - id: powerMeter
     version: 1
-  - id: fanSpeedPercent
+  - id: powerConsumptionReport
     version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: AirConditioner
+  - name: WaterHeater
