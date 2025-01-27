@@ -20,10 +20,5 @@ end
 
 setmetatable(WiFiNetworkManagementServerAttributes, attr_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.WiFiNetworkManagement.server.attributes")
-if has_aliases then
-  aliases:add_to_class(WiFiNetworkManagementServerAttributes)
-end
-
 return WiFiNetworkManagementServerAttributes
 

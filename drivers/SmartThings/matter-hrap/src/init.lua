@@ -36,20 +36,23 @@ end
 
 local function ssid_attribute_handler(driver, device, ib)
   if ib.data.value == string.char(0x014) then -- TLV-encoded NULL
-    log.info("Ssid is null. Per the spec, no primary Wi-Fi network is available at the moment.")
+    device.log.info("Ssid is null. Per the spec, no primary Wi-Fi network is available at the moment.")
     return
   end
   local valid_utf8, utf8_err = utils.validate_utf8(ib.data.value)
   if valid_utf8 then
     device:emit_event_for_endpoint(ib.endpoint, wifiSsid.ssid({ value = ib.data.value }))
   else
-    log.info("UTF8 validation of Ssid failed: Error: '"..utf8_err.."'. Raw Ssid data: "..ib.data.value)
+    device.log.info("UTF8 validation of Ssid failed: Error: '"..utf8_err.."'. Raw Ssid data: "..ib.data.value)
   end
 end
 
 local function border_router_name_attribute_handler(driver, device, ib)
-  local router_name = ib.data.value
-  device:emit_event_for_endpoint(ib.endpoint, routerName.name({ value = router_name }))
+  -- per the spec, the recommended attribute format is <VendorName> <ProductName>._meshcop._udp. This logic removes the meschop suffix IFF it is present
+  local meshCop_name = ib.data.value
+  local terminal_display_char = (string.find(meshCop_name, "._mescop._udp") or 64) - 1 -- where 64-1=63, the maximum allowed length for BorderRouterName
+  local display_name = string.sub(meshCop_name, 1, terminal_display_char)
+  device:emit_event_for_endpoint(ib.endpoint, routerName.name({ value = display_name }))
 end
 
 -- Spec uses TLV encoding of Thread Version, which should be mapped to a more user-friendly name

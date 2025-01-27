@@ -11,10 +11,5 @@ local ThreadBorderRouterManagementTypes = {}
 
 setmetatable(ThreadBorderRouterManagementTypes, types_mt)
 
-local status, aliases = pcall(require, "st.matter.clusters.aliases.ThreadBorderRouterManagement.types")
-if status then
-  aliases:add_to_class(ThreadBorderRouterManagementTypes)
-end
-
 return ThreadBorderRouterManagementTypes
 

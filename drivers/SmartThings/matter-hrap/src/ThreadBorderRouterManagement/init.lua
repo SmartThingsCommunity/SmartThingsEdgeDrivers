@@ -1,7 +1,5 @@
 local cluster_base = require "st.matter.cluster_base"
 local ThreadBorderRouterManagementServerAttributes = require "ThreadBorderRouterManagement.server.attributes"
-local ThreadBorderRouterManagementServerCommands = require "ThreadBorderRouterManagement.server.commands"
-local ThreadBorderRouterManagementClientCommands = require "ThreadBorderRouterManagement.client.commands"
 local ThreadBorderRouterManagementTypes = require "ThreadBorderRouterManagement.types"
 
 local ThreadBorderRouterManagement = {}
@@ -11,8 +9,6 @@ ThreadBorderRouterManagement.NAME = "ThreadBorderRouterManagement"
 ThreadBorderRouterManagement.server = {}
 ThreadBorderRouterManagement.client = {}
 ThreadBorderRouterManagement.server.attributes = ThreadBorderRouterManagementServerAttributes:set_parent_cluster(ThreadBorderRouterManagement)
-ThreadBorderRouterManagement.server.commands = ThreadBorderRouterManagementServerCommands:set_parent_cluster(ThreadBorderRouterManagement)
-ThreadBorderRouterManagement.client.commands = ThreadBorderRouterManagementClientCommands:set_parent_cluster(ThreadBorderRouterManagement)
 ThreadBorderRouterManagement.types = ThreadBorderRouterManagementTypes
 
 function ThreadBorderRouterManagement:get_attribute_by_id(attr_id)

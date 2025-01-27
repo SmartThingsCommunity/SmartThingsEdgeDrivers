@@ -20,10 +20,5 @@ end
 
 setmetatable(ThreadBorderRouterManagementServerAttributes, attr_mt)
 
-local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.ThreadBorderRouterManagement.server.attributes")
-if has_aliases then
-  aliases:add_to_class(ThreadBorderRouterManagementServerAttributes)
-end
-
 return ThreadBorderRouterManagementServerAttributes
 

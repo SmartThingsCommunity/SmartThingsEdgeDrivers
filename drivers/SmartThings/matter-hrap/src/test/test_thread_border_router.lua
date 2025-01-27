@@ -153,7 +153,7 @@ test.register_message_test(
         direction = "receive",
         message = {
             mock_device.id,
-            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "john foo")
+            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "john foo._mescop._udp")
         }
     },
     {
@@ -166,13 +166,26 @@ test.register_message_test(
         direction = "receive",
         message = {
             mock_device.id,
-            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "jane bar")
+            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "jane bar._mescop._udp")
         }
     },
     {
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.routerName.name({ value = "jane bar"}))
+    },
+    {
+        channel = "matter",
+        direction = "receive",
+        message = {
+            mock_device.id,
+            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "john foo no suffix")
+        }
+    },
+    {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.routerName.name({ value = "john foo no suffix"}))
     },
   }
 )
