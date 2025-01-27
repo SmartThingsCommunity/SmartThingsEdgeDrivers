@@ -5,26 +5,9 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local PowerMode = {
   ID = 0x0000,
   NAME = "PowerMode",
-  base_type = data_types.Uint8,
-}
-PowerMode.UNKNOWN = 0x00
-PowerMode.DC = 0x01
-PowerMode.AC = 0x02
-
-PowerMode.enum_fields = {
-  [PowerMode.UNKNOWN] = "UNKNOWN",
-  [PowerMode.DC] = "DC",
-  [PowerMode.AC] = "AC",
+  base_type = require "ElectricalPowerMeasurement.types.PowerModeEnum",
 }
 
-function PowerMode:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function PowerMode.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, PowerMode.enum_fields[value_obj.value])
-end
 
 function PowerMode:new_value(...)
   local o = self.base_type(table.unpack({...}))
@@ -81,6 +64,5 @@ function PowerMode:deserialize(tlv_buf)
   return data
 end
 
-setmetatable(PowerMode, {__call = PowerMode.new_value})
+setmetatable(PowerMode, {__call = PowerMode.new_value, __index = PowerMode.base_type})
 return PowerMode
-

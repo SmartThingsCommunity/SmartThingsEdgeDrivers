@@ -77,4 +77,3 @@ end
 
 setmetatable(MaximumDischargeCurrent, {__call = MaximumDischargeCurrent.new_value})
 return MaximumDischargeCurrent
-

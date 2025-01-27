@@ -21,4 +21,3 @@ end
 setmetatable(EnergyEvseModeServerAttributes, attr_mt)
 
 return EnergyEvseModeServerAttributes
-

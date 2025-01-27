@@ -135,4 +135,3 @@ end
 setmetatable(Feature, new_mt)
 
 return Feature
-

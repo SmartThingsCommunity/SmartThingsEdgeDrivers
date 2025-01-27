@@ -77,4 +77,3 @@ end
 
 setmetatable(CircuitCapacity, {__call = CircuitCapacity.new_value})
 return CircuitCapacity
-

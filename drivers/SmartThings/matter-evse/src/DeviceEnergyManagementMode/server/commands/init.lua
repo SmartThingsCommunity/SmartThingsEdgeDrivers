@@ -20,4 +20,3 @@ end
 setmetatable(DeviceEnergyManagementModeServerCommands, command_mt)
 
 return DeviceEnergyManagementModeServerCommands
-

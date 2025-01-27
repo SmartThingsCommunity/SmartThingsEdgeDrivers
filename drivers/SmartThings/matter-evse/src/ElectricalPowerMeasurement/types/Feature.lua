@@ -98,12 +98,11 @@ end
 
 function Feature.bits_are_valid(feature)
   local max =
-      Feature.DIRECT_CURRENT |
-      Feature.ALTERNATING_CURRENT |
-      Feature.POLYPHASE_POWER |
-      Feature.HARMONICS |
-      Feature.POWER_QUALITY
-
+    Feature.DIRECT_CURRENT |
+    Feature.ALTERNATING_CURRENT |
+    Feature.POLYPHASE_POWER |
+    Feature.HARMONICS |
+    Feature.POWER_QUALITY
   if (feature <= max) and (feature >= 1) then
     return true
   else

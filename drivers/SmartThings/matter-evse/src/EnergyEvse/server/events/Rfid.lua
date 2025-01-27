@@ -95,4 +95,3 @@ function Rfid:set_parent_cluster(cluster)
 end
 
 return Rfid
-
