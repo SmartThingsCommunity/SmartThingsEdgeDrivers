@@ -142,11 +142,11 @@ local function test_init()
   end
 
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_device.add_test_device(aqara_mock_device)
   test.set_rpc_version(5)
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="3-button-battery-temperature-humidity"}

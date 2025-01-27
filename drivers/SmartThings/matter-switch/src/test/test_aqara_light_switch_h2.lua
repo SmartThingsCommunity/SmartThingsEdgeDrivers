@@ -186,9 +186,9 @@ local function test_init()
     parent_device_id = aqara_mock_device.id,
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
