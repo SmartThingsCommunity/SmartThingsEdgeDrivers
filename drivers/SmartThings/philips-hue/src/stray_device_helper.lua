@@ -1,6 +1,9 @@
 local cosock = require "cosock"
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local Fields = require "fields"
@@ -249,7 +252,7 @@ function StrayDeviceHelper.spawn()
                 maybe_bridge:get_field(Fields.BRIDGE_API) --[[@as PhilipsHueApi]]
                 or Discovery.disco_api_instances[maybe_bridge.device_network_id]
 
-            if not api_instance then
+            if not api_instance and bridge_ip then
               api_instance = HueApi.new_bridge_manager(
                 "https://" .. bridge_ip,
                 maybe_bridge:get_field(HueApi.APPLICATION_KEY_HEADER),
@@ -258,7 +261,9 @@ function StrayDeviceHelper.spawn()
               Discovery.disco_api_instances[maybe_bridge.device_network_id] = api_instance
             end
 
-            StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, maybe_bridge.id)
+            if api_instance then
+              StrayDeviceHelper.process_strays(thread_local_driver, stray_devices, maybe_bridge.id)
+            end
           end
         end
       end

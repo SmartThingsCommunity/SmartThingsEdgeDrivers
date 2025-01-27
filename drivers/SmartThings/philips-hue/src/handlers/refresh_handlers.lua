@@ -1,6 +1,9 @@
 local cosock = require "cosock"
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -118,11 +121,12 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
 
       local statuses_by_device_type = {}
       for _, device in ipairs(child_devices) do
-        local device_type = device:get_field(Fields.DEVICE_TYPE)
+        local device_type = utils.determine_device_type(device)
         -- Query for the states of all devices for a device type for a given child device,
         -- but only the first time we encounter a device type. We cache them since we're refreshing
         -- everything.
         if
+            device_type and
             type(device_type_refresh_handlers_map[device_type]) == "function" and
             statuses_by_device_type[device_type] == nil
         then
@@ -359,7 +363,7 @@ end
 
 local function noop_refresh_handler(driver, device, ...)
   local label = (device and device.label) or "Unknown Device Name"
-  local device_type = (device and device:get_field(Fields.DEVICE_TYPE)) or "Unknown Device Type"
+  local device_type = (device and utils.determine_device_type(device)) or "Unknown Device Type"
   log.warn(string.format("Received Refresh capability for unknown device [%s] type [%s], ignoring", label, device_type))
 end
 

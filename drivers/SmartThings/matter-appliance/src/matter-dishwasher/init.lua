@@ -15,9 +15,12 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
+local log = require "log"
+local utils = require "st.utils"
+local version = require "version"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
-local version = require "version"
+
 if version.api < 10 then
   clusters.DishwasherAlarm = require "DishwasherAlarm"
   clusters.DishwasherMode = require "DishwasherMode"
@@ -32,14 +35,41 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 
-local function device_init(driver, device)
-  device:subscribe()
+-- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
+-- So to handle this we assume the following ranges considering usual dishwasher temperatures:
+--   1. if the received setpoint command value is in range 33 ~ 90, it is inferred as *C
+--   2. if the received setpoint command value is in range 91.4 ~ 194, it is inferred as *F
+local DISHWASHER_MAX_TEMP_IN_C = 90.0
+local DISHWASHER_MIN_TEMP_IN_C = 33.0
+
+local setpoint_limit_device_field = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP",
+}
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "main"
 end
 
--- Matter Handlers --
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 local function is_matter_dishwasher(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
@@ -51,6 +81,14 @@ local function is_matter_dishwasher(opts, driver, device)
   return false
 end
 
+-- Lifecycle Handlers --
+local function device_init(driver, device)
+  device:subscribe()
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+end
+
+-- Matter Handlers --
 local function selected_temperature_level_attr_handler(driver, device, ib, response)
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
   if #tl_eps == 0 then
@@ -84,7 +122,58 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
   device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels))
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+  if #tn_eps == 0 then
+    device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
+  device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
+
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+  local min = device:get_field(min_field) or DISHWASHER_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or DISHWASHER_MAX_TEMP_IN_C
+  local temp = ib.data.value / 100.0
+  local unit = "C"
+  local range = {
+    minimum = min,
+    maximum = max,
+    step = 0.1
+  }
+
+  -- Only emit the capability for RPC version >= 5, since unit conversion for
+  -- range capabilities is only supported in that case.
+  if version.rpc >= 5 then
+    device:emit_event_for_endpoint(ib.endpoint_id,
+      capabilities.temperatureSetpoint.temperatureSetpointRange({value = range, unit = unit}, {visibility = {displayed = false}}))
+  end
+
+  device:emit_event_for_endpoint(ib.endpoint_id,
+    capabilities.temperatureSetpoint.temperatureSetpoint({value = temp, unit = unit}))
+end
+
+local function setpoint_limit_handler(limit_field)
+  return function(driver, device, ib, response)
+    local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+      { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+    if #tn_eps == 0 then
+      device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+      return
+    end
+    local field = string.format("%s-%d", limit_field, ib.endpoint_id)
+    local val = ib.data.value / 100.0
+
+    val = utils.clamp_value(val, DISHWASHER_MIN_TEMP_IN_C, DISHWASHER_MAX_TEMP_IN_C)
+
+    log.info("Setting " .. field .. " to " .. string.format("%s", val))
+    device:set_field(field, val, { persist = true })
+  end
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -96,7 +185,10 @@ local function dishwasher_supported_modes_attr_handler(driver, device, ib, respo
     table.insert(supportedDishwasherModes, mode.elements.label.value)
   end
   device:set_field(SUPPORTED_DISHWASHER_MODES, supportedDishwasherModes, { persist = true })
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.supportedModes(supportedDishwasherModes))
+  local event = capabilities.mode.supportedModes(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
@@ -174,7 +266,8 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.supportedCommands(accepted_command_list))
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
@@ -236,6 +329,43 @@ local function handle_temperature_level(driver, device, cmd)
   end
 end
 
+local function handle_temperature_setpoint(driver, device, cmd)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
+    { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
+  if #tn_eps == 0 then
+    device.log.warn(string.format("Device does not support TEMPERATURE_NUMBER feature"))
+    return
+  end
+  device.log.info(string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
+
+  local value = cmd.args.setpoint
+  local _, temp_setpoint = device:get_latest_state(
+    cmd.component, capabilities.temperatureSetpoint.ID,
+    capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
+    0, { value = 0, unit = "C" }
+  )
+  local ep = component_to_endpoint(device, cmd.component)
+  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
+  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
+  local min = device:get_field(min_field) or DISHWASHER_MIN_TEMP_IN_C
+  local max = device:get_field(max_field) or DISHWASHER_MAX_TEMP_IN_C
+
+  if value > DISHWASHER_MAX_TEMP_IN_C then
+    value = utils.f_to_c(value)
+  end
+  if value < min or value > max then
+    log.warn(string.format(
+      "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
+      value, min, max
+    ))
+    device:emit_event_for_endpoint(ep, capabilities.temperatureSetpoint.temperatureSetpoint(temp_setpoint))
+    return
+  end
+
+  ep = component_to_endpoint(device, cmd.component)
+  device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
+end
+
 local function handle_operational_state_start(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   device:send(clusters.OperationalState.server.commands.Start(device, endpoint_id))
@@ -274,6 +404,9 @@ local matter_dishwasher_handler = {
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
         [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_TEMP),
       },
       [clusters.DishwasherMode.ID] = {
         [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
@@ -295,6 +428,9 @@ local matter_dishwasher_handler = {
     },
     [capabilities.temperatureLevel.ID] = {
       [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
+    },
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
     },
     [capabilities.operationalState.ID] = {
       [capabilities.operationalState.commands.start.NAME] = handle_operational_state_start,

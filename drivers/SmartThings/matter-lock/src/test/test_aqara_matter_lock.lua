@@ -19,7 +19,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("lock-lockalarm-nobattery.yml"),
+  profile = t_utils.get_profile_definition("lock-user-pin.yml"),
   manufacturer_info = {
     vendor_id = 0x115f,
     product_id = 0x2802,
@@ -53,7 +53,15 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local function test_init()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
+  subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.NumberOfPINUsersSupported:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+  subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 end
@@ -99,24 +107,61 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
-  "Handle received Lock State from Matter device.", {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Handle received LockState.LOCKED from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.DoorLock.attributes.LockState:build_test_report_data(
           mock_device, 1, clusters.DoorLock.attributes.LockState.LOCKED
         ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
-    },
-  }
+      }
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.lock.locked())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received LockState.UNLOCKED from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 1, clusters.DoorLock.attributes.LockState.UNLOCKED
+        ),
+      }
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received LockState.NOT_FULLY_LOCKED from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 1, clusters.DoorLock.attributes.LockState.NOT_FULLY_LOCKED
+        ),
+      }
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked())
+    )
+  end
 )
 
 local function refresh_commands(dev)
@@ -158,7 +203,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.unableToLockTheDoor()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.unableToLockTheDoor({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -173,7 +221,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.lockFactoryReset()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.lockFactoryReset({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -188,7 +239,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.attemptsExceeded()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.attemptsExceeded({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -203,7 +257,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.damaged()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.damaged({state_change = true})
+      ),
     },
     {
       channel = "matter",
@@ -218,7 +275,10 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.forcedOpeningAttempt()),
+      message = mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true})
+      ),
     },
   }
 )
@@ -229,7 +289,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear())
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAlarm.alarm.clear({state_change = true})
+      )
     )
 end
 )

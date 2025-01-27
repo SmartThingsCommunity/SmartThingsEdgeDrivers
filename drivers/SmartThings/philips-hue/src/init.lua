@@ -17,12 +17,16 @@
 --  Improvements to be made:
 --
 --  ===============================================================================================
-local Driver = require "st.driver"
+local logjam = require "logjam"
+logjam.enable_passthrough()
+logjam.inject_global()
 
 local log = require "log"
+
+local Driver = require "st.driver"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
@@ -54,6 +58,14 @@ Discovery.api_keys = setmetatable({}, {
     )
     hue.datastore.api_keys[k] = v
     hue.datastore:save()
+    if hue.datastore.commit then
+      -- Because we never actually store keys on the metatable target itself,
+      -- __newindex is invoked for ever mutation; values for a new key, updating
+      -- the value for an existing key, and setting an existing key to `nil` will
+      -- all hit this path.
+      local commit_result = table.pack(hue.datastore:commit())
+      log.trace(st_utils.stringify_table(commit_result, "[DataStoreCommit] commit result", true))
+    end
   end,
   __index = function(self, k)
     return hue.datastore.api_keys[k]

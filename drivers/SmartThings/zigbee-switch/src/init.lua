@@ -117,7 +117,8 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("ge-link-bulb"),
     lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
-    lazy_load_if_possible("wallhero")
+    lazy_load_if_possible("wallhero"),
+    lazy_load_if_possible("inovelli-vzm31-sn")
   },
   lifecycle_handlers = {
     init = device_init,
@@ -127,6 +128,6 @@ local zigbee_switch_driver_template = {
 }
 
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
-  zigbee_switch_driver_template.supported_capabilities)
+  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
 zigbee_switch:run()

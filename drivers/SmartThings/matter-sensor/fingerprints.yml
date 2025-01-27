@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  #Elko
+  - id: "5170/4098"
+    deviceLabel: RFWD-100/MT
+    vendorId: 0x1432
+    productId: 0x1002
+    deviceProfileName: contact-battery
   #Eve
   - id: "Eve Motion"
     deviceLabel: Eve Motion
@@ -31,18 +37,49 @@ matterManufacturer:
     deviceLabel: Heiman Motion Sensor
     vendorId: 0x120B
     productId: 0x1001
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "4619/4145"
     deviceLabel: Heiman Door and Window D1-M
     vendorId: 0x120B
     productId: 0x1031
     deviceProfileName: contact-battery
+  - id: "4619/4102"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1006
+    deviceProfileName: smoke
+  - id: "4619/4098"
+    deviceLabel: Heiman CO Sensor
+    vendorId: 0x120B
+    productId: 0x1002
+    deviceProfileName: co-comeas
+  - id: "4619/4099"
+    deviceLabel: Heiman Smoke Sensor
+    vendorId: 0x120B
+    productId: 0x1003
+    deviceProfileName: smoke
+  - id: "4619/4103"
+    deviceLabel: Smart co sensor
+    vendorId: 0x120B
+    productId: 0x1007
+    deviceProfileName: co  
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # Neo
+  - id: "4991/1122"
+    deviceLabel: Door Sensor
+    vendorId: 0x137F
+    productId: 0x0462
+    deviceProfileName: contact-battery
+  - id: "4991/1123"
+    deviceLabel: Motion Sensor
+    vendorId: 0x137F
+    productId: 0x0463
+    deviceProfileName: motion-battery
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
@@ -54,6 +91,12 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0002
     deviceProfileName: contact-battery
+  # LeTianpai
+  - id: "LeTianPai/Motion"
+    deviceLabel: LeTianPai Presence Sensor Box
+    vendorId: 0x142B
+    productId: 0x0002
+    deviceProfileName: motion-illuminance-temperature-humidity
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -127,3 +170,18 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076
     deviceProfileName: smoke-co
+  - id: "matter/rain/sensor"
+    deviceLabel: Matter Rain Sensor
+    deviceTypes:
+      - id: 0x0044
+    deviceProfileName: rain-battery
+  - id: "matter/freeze/detector"
+    deviceLabel: Matter Water Freeze Detector
+    deviceTypes:
+      - id: 0x0041
+    deviceProfileName: freeze-battery
+  - id: "matter/leak/detector"
+    deviceLabel: Matter Water Leak Detector
+    deviceTypes:
+      - id: 0x0043
+    deviceProfileName: leak-battery
