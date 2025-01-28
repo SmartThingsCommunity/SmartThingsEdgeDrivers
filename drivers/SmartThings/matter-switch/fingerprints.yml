@@ -452,6 +452,17 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x1002
     deviceProfileName: switch-binary
+#LG
+  - id: "4142/8784"
+    deviceLabel: LG Smart Button (1 Button)
+    vendorId: 0x102E
+    productId: 0x2250
+    deviceProfileName: button-battery
+  - id: "4142/8785"
+    deviceLabel: LG Smart Button (2 Button)
+    vendorId: 0x102E
+    productId: 0x2251
+    deviceProfileName: 2-button-battery  
 #Lifx
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
