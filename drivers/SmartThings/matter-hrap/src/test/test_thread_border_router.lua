@@ -16,8 +16,11 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 
 local capabilities = require "st.capabilities"
+local routerState = capabilities["smilevirtual57983.routerState"]
 test.add_package_capability("routerState.yml")
+local routerName = capabilities["smilevirtual57983.routerName"]
 test.add_package_capability("routerName.yml")
+local threadVersion = capabilities["smilevirtual57983.threadVersion"]
 test.add_package_capability("threadVersion.yml")
 
 local clusters = require "st.matter.clusters"
@@ -81,9 +84,8 @@ test.register_coroutine_test(
             )
         })
         test.socket.capability:__expect_send(
-            mock_device:generate_test_message("main", capabilities.threadVersion.version({ value = "1.2.0" }))
+            mock_device:generate_test_message("main", threadVersion.threadVersion({ value = "1.2.0" }))
         )
-
         test.socket.matter:__queue_receive({
             mock_device.id,
             clusters.ThreadBorderRouterManagement.attributes.ThreadVersion:build_test_report_data(
@@ -91,9 +93,8 @@ test.register_coroutine_test(
             )
         })
         test.socket.capability:__expect_send(
-            mock_device:generate_test_message("main", capabilities.threadVersion.version({ value = "1.3.0" }))
+            mock_device:generate_test_message("main", threadVersion.threadVersion({ value = "1.3.0" }))
         )
-
         test.socket.matter:__queue_receive({
             mock_device.id,
             clusters.ThreadBorderRouterManagement.attributes.ThreadVersion:build_test_report_data(
@@ -101,9 +102,8 @@ test.register_coroutine_test(
             )
         })
         test.socket.capability:__expect_send(
-            mock_device:generate_test_message("main", capabilities.threadVersion.version({ value = "1.4.0" }))
+            mock_device:generate_test_message("main", threadVersion.threadVersion({ value = "1.4.0" }))
         )
-
         test.socket.matter:__queue_receive({
             mock_device.id,
             clusters.ThreadBorderRouterManagement.attributes.ThreadVersion:build_test_report_data(
@@ -127,7 +127,7 @@ test.register_message_test(
     {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.routerState.state.enabled())
+        message = mock_device:generate_test_message("main", routerState.state.enabled())
     },
     {
         channel = "matter",
@@ -140,11 +140,11 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.routerState.state.off())
+        message = mock_device:generate_test_message("main", routerState.state.off())
       }
   }
 )
-
+--
 test.register_message_test(
   "RouterName should correctly display the given name",
   {
@@ -159,7 +159,7 @@ test.register_message_test(
     {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.routerName.name({ value = "john foo"}))
+        message = mock_device:generate_test_message("main", routerName.name({ value = "john foo"}))
     },
     {
         channel = "matter",
@@ -172,7 +172,7 @@ test.register_message_test(
     {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.routerName.name({ value = "jane bar"}))
+        message = mock_device:generate_test_message("main", routerName.name({ value = "jane bar"}))
     },
     {
         channel = "matter",
@@ -185,7 +185,7 @@ test.register_message_test(
     {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.routerName.name({ value = "john foo no suffix"}))
+        message = mock_device:generate_test_message("main", routerName.name({ value = "john foo no suffix"}))
     },
   }
 )

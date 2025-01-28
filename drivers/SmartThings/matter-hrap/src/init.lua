@@ -19,10 +19,10 @@ local utils = require "lustre.utils"
 local log = require "log"
 
 local capabilities = require "st.capabilities"
-local threadVersion = capabilities["threadVersion"]
-local routerState = capabilities["routerState"]
-local routerName = capabilities["routerName"]
-local wifiSsid = capabilities["wifiSsid"]
+local threadVersion = capabilities["smilevirtual57983.threadVersion"]
+local routerState = capabilities["smilevirtual57983.routerState"]
+local routerName = capabilities["smilevirtual57983.routerName"]
+local wifiSsid = capabilities["smilevirtual57983.wifiSsid"]
 
 -- Include driver-side definitions when lua libs api version is <13
 local version = require "version"
@@ -67,7 +67,7 @@ local VERSION_TLV_MAP = {
 local function thread_version_attribute_handler(driver, device, ib)
   local version_name = VERSION_TLV_MAP[ib.data.value]
   if version_name then
-    device:emit_event_for_endpoint(ib.endpoint, threadVersion.version({ value = version_name }))
+    device:emit_event_for_endpoint(ib.endpoint, threadVersion.threadVersion({ value = version_name }))
   end
 end
 

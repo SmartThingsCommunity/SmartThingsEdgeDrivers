@@ -1,10 +1,10 @@
-id: threadVersion
+id: smilevirtual57983.threadVersion
 version: 1
 status: proposed
 name: Thread Version
 ephemeral: false
 attributes:
-  version:
+  threadVersion:
     schema:
       type: object
       properties:

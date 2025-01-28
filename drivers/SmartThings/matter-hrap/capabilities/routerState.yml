@@ -1,4 +1,4 @@
-id: routerState
+id: smilevirtual57983.routerState
 version: 1
 status: proposed
 name: Router State
@@ -13,6 +13,7 @@ attributes:
           enum:
             - 'off'
             - 'enabled'
+          default: 'off'
       additionalProperties: false
       required:
         - value

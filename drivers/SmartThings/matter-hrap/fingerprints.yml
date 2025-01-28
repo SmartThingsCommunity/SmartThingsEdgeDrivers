@@ -1,5 +1,5 @@
 matterGeneric:
-  - id: "matter/network-infrastructure-manager"
+  - id: "matter/network-manager"
     deviceLabel: Matter Network Infrastructure Manager
     deviceTypes:
       - id: 0x0090 # NIM
