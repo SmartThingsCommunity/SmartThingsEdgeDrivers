@@ -141,8 +141,10 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
-          log.error_with({ hub_logs = true, },
-            "Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
+          log.error_with(
+            { hub_logs = true, },
+            string.format("Couldn't decode JSON in SSE callback: %s", (events or "unexpected nil from pcall catch"))
+          )
           return
         end
 
