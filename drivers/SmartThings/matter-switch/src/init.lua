@@ -234,7 +234,7 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
 end
 
 local function create_poll_report_schedule(device)
-  -- add (function() ~ end) so that timer callback function does not become nil
+  -- add "function() ~ end" so that timer callback function does not become nil
   local import_timer = device.thread:call_on_schedule(
     device:get_field(IMPORT_REPORT_TIMEOUT), function()
     send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY))
