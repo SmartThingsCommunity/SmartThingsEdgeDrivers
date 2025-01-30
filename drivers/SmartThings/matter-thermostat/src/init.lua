@@ -256,7 +256,7 @@ local function find_default_endpoint(device, cluster)
   local eps = embedded_cluster_utils.get_endpoints(device, cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
-    if v ~= 0 then --0 is the matter RootNode endpoint
+    if v ~= 0 and device:supports_server_cluster(cluster, v) then --0 is the matter RootNode endpoint
       return v
     end
   end
@@ -440,6 +440,7 @@ local function do_configure(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local fan_speed_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -467,9 +468,36 @@ local function do_configure(driver, device)
     end
 
   elseif device_type == FAN_DEVICE_TYPE_ID then
-    profile_name = create_fan_profile(device)
+    if #thermostat_eps > 0 then
+      profile_name = "thermostat"
+
+      if #humidity_eps > 0 then
+        profile_name = profile_name .. "-humidity"
+      end
+
+      profile_name = profile_name .. "-fan"
+
+      if #fan_speed_eps > 0 then
+        profile_name = profile_name .. "-speed"
+      end
+
+      local thermostat_modes = create_thermostat_modes_profile(device)
+      if thermostat_modes == "No Heating nor Cooling Support" then
+        return
+      else
+        profile_name = profile_name .. thermostat_modes
+      end
+
+      profile_name = profile_name .. "-nostate"
+
+      if #battery_eps == 0 then
+        profile_name = profile_name .. "-nobattery"
+      end
+    else
+      profile_name = create_fan_profile(device)
+      profile_name = string.sub(profile_name, 2)
+    end
     -- remove leading "-"
-    profile_name = string.sub(profile_name, 2)
     if profile_name == "fan" then
       profile_name = "fan-generic"
     end
@@ -514,6 +542,10 @@ local function do_configure(driver, device)
     local fan_name = create_fan_profile(device)
     if fan_name ~= "" then
       profile_name = profile_name .. "-fan"
+    end
+    
+    if #fan_speed_eps > 0 then
+      profile_name = profile_name .. "-speed"
     end
 
     local thermostat_modes = create_thermostat_modes_profile(device)
@@ -1241,8 +1273,9 @@ local function set_thermostat_fan_mode(driver, device, cmd)
   elseif cmd.args.mode == capabilities.thermostatFanMode.thermostatFanMode.on.NAME then
     fan_mode_id = clusters.FanControl.attributes.FanMode.ON
   end
+  local fan_ep = find_default_endpoint(device, clusters.FanControl.ID)
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, fan_ep, fan_mode_id))
   end
 end
 
@@ -1267,8 +1300,9 @@ local function set_fan_mode(driver, device, cmd)
   else
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
+  local fan_ep = find_default_endpoint(device, clusters.FanControl.ID)
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, fan_ep, fan_mode_id))
   end
 end
 
@@ -1291,14 +1325,16 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
   else
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
+  local fan_ep = find_default_endpoint(device, clusters.FanControl.ID)
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, fan_ep, fan_mode_id))
   end
 end
 
 local function set_fan_speed_percent(driver, device, cmd)
+  local fan_ep = find_default_endpoint(device, clusters.FanControl.ID)
   local speed = math.floor(cmd.args.percent)
-  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), speed))
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
 end
 
 local function set_wind_mode(driver, device, cmd)
@@ -1312,6 +1348,7 @@ local function set_wind_mode(driver, device, cmd)
 end
 
 local function set_rock_mode(driver, device, cmd)
+  local fan_ep = find_default_endpoint(device, clusters.FanControl.ID)
   local rock_mode = 0
   if cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.horizontal.NAME then
     rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_LEFT_RIGHT
@@ -1320,7 +1357,7 @@ local function set_rock_mode(driver, device, cmd)
   elseif cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.swing.NAME then
     rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_ROUND
   end
-  device:send(clusters.FanControl.attributes.RockSetting:write(device, device:component_to_endpoint(cmd.component), rock_mode))
+  device:send(clusters.FanControl.attributes.RockSetting:write(device, fan_ep, rock_mode))
 end
 
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
