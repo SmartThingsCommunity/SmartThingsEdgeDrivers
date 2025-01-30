@@ -70,7 +70,7 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
     button_remote_description.power_state = battery.data[1].power_state
   end
 
-  if type(cache) == "table" then
+  if type(cache) == "table" and button_remote_description and button_remote_description.id then
     cache[button_remote_description.id] = button_remote_description
     if device_service_info.id_v1 then
       cache[device_service_info.id_v1] = button_remote_description

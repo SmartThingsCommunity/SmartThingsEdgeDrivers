@@ -44,8 +44,11 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
       end
     end
 
-    if zigbee_resource_id ~= nil then
-      rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
+    if not zigbee_resource_id then
+      log.error_with({ hub_logs = true }, string.format("could not find zigbee_resource_id for device %s", (device and (device.label or device.id)) or "unknown device"))
+      return
+    end
+    rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
       if rest_err ~= nil then
         log.error_with({ hub_logs = true }, rest_err)
         return
@@ -66,10 +69,9 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
           end
         end
       end
-    end
   end
 
-  if zigbee_status.status == "connected" then
+  if zigbee_status and zigbee_status.status == "connected" then
     device.log.debug(string.format("Zigbee Status for %s is connected", device.label))
     device:online()
     device:set_field(Fields.IS_ONLINE, true)
