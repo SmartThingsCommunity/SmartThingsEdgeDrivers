@@ -14,6 +14,7 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
 
@@ -213,8 +214,17 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     --TODO why does provisiong state get added in the do configure event handle, but not the refres?
-    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
+    local read_req = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_req})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(12)})
+      }
+    )
+    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
 end
 )
 
@@ -237,8 +247,17 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
-    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
+    local read_req = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device_simple.id, read_req})
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_simple.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {uint32(12)})
+      }
+    )
+    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
 end
 )
 

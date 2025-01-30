@@ -2488,6 +2488,11 @@ matterManufacturer:
     vendorId: 0x138A
     productId: 0x1392
     deviceProfileName: matter-bridge
+  - id: "4932/1054"
+    deviceLabel: Eltako Matter Bridge
+    vendorId: 0x1344
+    productId: 0x041E
+    deviceProfileName: matter-bridge
 
 
 matterGeneric:

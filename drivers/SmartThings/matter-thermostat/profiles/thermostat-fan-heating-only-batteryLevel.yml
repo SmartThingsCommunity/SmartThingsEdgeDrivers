@@ -1,0 +1,22 @@
+name: thermostat-fan-heating-only-batteryLevel
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatFanMode
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: batteryLevel
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat

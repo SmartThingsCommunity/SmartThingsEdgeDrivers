@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
@@ -53,6 +54,12 @@ local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
 
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
+
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
@@ -88,16 +95,6 @@ local function set_boolean_device_type_per_endpoint(driver, device)
   end
 end
 
-local function supports_battery_percentage_remaining(device)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
-    return true
-  end
-  return false
-end
-
 local function supports_sensitivity_preferences(device)
   local preference_names = ""
   local sensitivity_eps = embedded_cluster_utils.get_endpoints(device, clusters.BooleanStateConfiguration.ID,
@@ -118,7 +115,7 @@ local function device_added(driver, device)
   set_boolean_device_type_per_endpoint(driver, device)
 end
 
-local function do_configure(driver, device)
+local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
@@ -157,8 +154,10 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  if supports_battery_percentage_remaining(device) then
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
     profile_name = profile_name .. "-battery"
+  elseif battery_supported == battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -173,6 +172,18 @@ local function do_configure(driver, device)
 
   device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
+end
+
+local function do_configure(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
+  if #battery_feature_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(attribute_list_read)
+  else
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
 end
 
 local function device_init(driver, device)
@@ -314,6 +325,30 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(driver, device, battery_support.BATTERY_LEVEL)
+      return
+    end
+  end
+end
+
 local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
@@ -351,6 +386,8 @@ local matter_driver_template = {
         [clusters.BooleanState.attributes.StateValue.ID] = boolean_attr_handler
       },
       [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
@@ -387,6 +424,10 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
     [capabilities.atmosphericPressureMeasurement.ID] = {
       clusters.PressureMeasurement.attributes.MeasuredValue
@@ -478,17 +519,14 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
       clusters.BooleanStateConfiguration.attributes.SensorFault,
     },
-    [capabilities.batteryLevel.ID] = {
-      clusters.SmokeCoAlarm.attributes.BatteryAlert,
-    },
     [capabilities.waterSensor.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.temperatureAlarm.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.rainSensor.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
   },
   capability_handlers = {
@@ -498,6 +536,7 @@ local matter_driver_template = {
     capabilities.contactSensor,
     capabilities.motionSensor,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
