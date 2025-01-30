@@ -111,4 +111,3 @@ end
 
 setmetatable(FaultState, {__call = FaultState.new_value})
 return FaultState
-

@@ -1,0 +1,16 @@
+name: thread-border-router
+components:
+- id: main
+  capabilities:
+  - id: smilevirtual57983.routerName
+    version: 1
+  - id: smilevirtual57983.threadVersion
+    version: 1
+  - id: smilevirtual57983.routerState
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Networking

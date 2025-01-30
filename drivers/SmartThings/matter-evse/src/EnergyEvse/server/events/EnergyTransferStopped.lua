@@ -121,4 +121,3 @@ function EnergyTransferStopped:set_parent_cluster(cluster)
 end
 
 return EnergyTransferStopped
-

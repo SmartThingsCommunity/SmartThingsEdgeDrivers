@@ -1,7 +1,6 @@
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
-
 local PowerModeEnum = {}
 local new_mt = UintABC.new_mt({NAME = "PowerModeEnum", ID = data_types.name_to_id_map["Uint8"]}, 1)
 new_mt.__index.pretty_print = function(self)
@@ -17,6 +16,10 @@ new_mt.__tostring = new_mt.__index.pretty_print
 new_mt.__index.UNKNOWN  = 0x00
 new_mt.__index.DC  = 0x01
 new_mt.__index.AC  = 0x02
+
+PowerModeEnum.UNKNOWN  = 0x00
+PowerModeEnum.DC  = 0x01
+PowerModeEnum.AC  = 0x02
 
 PowerModeEnum.augment_type = function(cls, val)
   setmetatable(val, new_mt)

@@ -20,4 +20,3 @@ end
 setmetatable(EnergyEvseServerCommands, command_mt)
 
 return EnergyEvseServerCommands
-

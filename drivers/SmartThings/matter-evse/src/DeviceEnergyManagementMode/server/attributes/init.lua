@@ -21,4 +21,3 @@ end
 setmetatable(DeviceEnergyManagementModeServerAttributes, attr_mt)
 
 return DeviceEnergyManagementModeServerAttributes
-

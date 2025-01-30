@@ -62,4 +62,3 @@ end
 
 setmetatable(SessionID, {__call = SessionID.new_value})
 return SessionID
-

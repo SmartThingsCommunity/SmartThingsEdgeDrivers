@@ -168,4 +168,3 @@ end
 setmetatable(TargetDayOfWeekBitmap, new_mt)
 
 return TargetDayOfWeekBitmap
-

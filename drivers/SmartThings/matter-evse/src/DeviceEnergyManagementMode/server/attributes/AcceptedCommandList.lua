@@ -78,4 +78,3 @@ end
 
 setmetatable(AcceptedCommandList, {__call = AcceptedCommandList.new_value})
 return AcceptedCommandList
-

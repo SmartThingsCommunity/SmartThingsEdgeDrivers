@@ -77,4 +77,3 @@ end
 
 setmetatable(MinimumChargeCurrent, {__call = MinimumChargeCurrent.new_value})
 return MinimumChargeCurrent
-

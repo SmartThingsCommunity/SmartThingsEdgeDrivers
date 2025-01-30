@@ -5,19 +5,8 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local PeriodicEnergyImported = {
   ID = 0x0003,
   NAME = "PeriodicEnergyImported",
-  base_type = data_types.Structure,
+  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
-
-PeriodicEnergyImported.enum_fields = {}
-
-function PeriodicEnergyImported:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function PeriodicEnergyImported.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, PeriodicEnergyImported.enum_fields[value_obj.value])
-end
 
 function PeriodicEnergyImported:new_value(...)
   local o = self.base_type(table.unpack({...}))
@@ -31,7 +20,7 @@ function PeriodicEnergyImported:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -41,7 +30,7 @@ function PeriodicEnergyImported:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -74,5 +63,5 @@ function PeriodicEnergyImported:deserialize(tlv_buf)
   return data
 end
 
-setmetatable(PeriodicEnergyImported, {__call = PeriodicEnergyImported.new_value})
+setmetatable(PeriodicEnergyImported, {__call = PeriodicEnergyImported.new_value, __index = PeriodicEnergyImported.base_type})
 return PeriodicEnergyImported

@@ -2,28 +2,15 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-
 local ActivePower = {
   ID = 0x0008,
   NAME = "ActivePower",
-  base_type = data_types.Int64,
+  base_type = require "st.matter.data_types.Int64",
 }
-
-ActivePower.enum_fields = {
-}
-
-function ActivePower:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function ActivePower.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, ActivePower.enum_fields[value_obj.value])
-end
 
 function ActivePower:new_value(...)
   local o = self.base_type(table.unpack({...}))
-  self:augment_type(o)
+
   return o
 end
 
@@ -33,7 +20,7 @@ function ActivePower:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -43,7 +30,7 @@ function ActivePower:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -59,7 +46,7 @@ function ActivePower:build_test_report_data(
   status
 )
   local data = data_types.validate_or_build_type(value, self.base_type)
-  self:augment_type(data)
+
   return cluster_base.build_test_report_data(
     device,
     endpoint_id,
@@ -72,9 +59,9 @@ end
 
 function ActivePower:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
-  self:augment_type(data)
+
   return data
 end
 
-setmetatable(ActivePower, {__call = ActivePower.new_value})
+setmetatable(ActivePower, {__call = ActivePower.new_value, __index = ActivePower.base_type})
 return ActivePower

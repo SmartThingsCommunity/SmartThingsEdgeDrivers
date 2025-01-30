@@ -5,19 +5,9 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local CumulativeEnergyImported = {
   ID = 0x0001,
   NAME = "CumulativeEnergyImported",
-  base_type = data_types.Structure,
+  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
-CumulativeEnergyImported.enum_fields = {}
-
-function CumulativeEnergyImported:augment_type(base_type_obj)
-  base_type_obj.field_name = self.NAME
-  base_type_obj.pretty_print = self.pretty_print
-end
-
-function CumulativeEnergyImported.pretty_print(value_obj)
-  return string.format("%s.%s", value_obj.field_name or value_obj.NAME, CumulativeEnergyImported.enum_fields[value_obj.value])
-end
 function CumulativeEnergyImported:new_value(...)
   local o = self.base_type(table.unpack({...}))
   self:augment_type(o)
@@ -30,7 +20,7 @@ function CumulativeEnergyImported:read(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -40,7 +30,7 @@ function CumulativeEnergyImported:subscribe(device, endpoint_id)
     endpoint_id,
     self._cluster.ID,
     self.ID,
-    nil --event_id
+    nil
   )
 end
 
@@ -73,6 +63,5 @@ function CumulativeEnergyImported:deserialize(tlv_buf)
   return data
 end
 
-setmetatable(CumulativeEnergyImported, {__call = CumulativeEnergyImported.new_value})
+setmetatable(CumulativeEnergyImported, {__call = CumulativeEnergyImported.new_value, __index = CumulativeEnergyImported.base_type})
 return CumulativeEnergyImported
-

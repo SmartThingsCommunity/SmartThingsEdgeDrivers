@@ -77,4 +77,3 @@ end
 
 setmetatable(MaximumChargeCurrent, {__call = MaximumChargeCurrent.new_value})
 return MaximumChargeCurrent
-

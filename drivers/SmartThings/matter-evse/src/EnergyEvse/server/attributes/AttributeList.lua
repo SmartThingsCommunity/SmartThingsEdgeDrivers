@@ -78,4 +78,3 @@ end
 
 setmetatable(AttributeList, {__call = AttributeList.new_value})
 return AttributeList
-

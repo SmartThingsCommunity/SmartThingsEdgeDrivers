@@ -19,6 +19,15 @@ if version.api < 10 then
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
+
+if version.api < 13 then
+  clusters.WaterHeaterMode = require "WaterHeaterMode"
+end
+
 local embedded_cluster_utils = {}
 
 local embedded_clusters = {
@@ -35,6 +44,9 @@ local embedded_clusters = {
   [clusters.Pm25ConcentrationMeasurement.ID] = clusters.Pm25ConcentrationMeasurement,
   [clusters.RadonConcentrationMeasurement.ID] = clusters.RadonConcentrationMeasurement,
   [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement,
+  [clusters.ElectricalEnergyMeasurement.ID] = clusters.ElectricalEnergyMeasurement,
+  [clusters.ElectricalPowerMeasurement.ID] = clusters.ElectricalPowerMeasurement,
+  [clusters.WaterHeaterMode.ID] = clusters.WaterHeaterMode
 }
 
 function embedded_cluster_utils.get_endpoints(device, cluster_id, opts)

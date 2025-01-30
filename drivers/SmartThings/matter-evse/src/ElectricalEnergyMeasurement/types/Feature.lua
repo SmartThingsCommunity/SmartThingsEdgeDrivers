@@ -1,6 +1,5 @@
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
-
 local Feature = {}
 local new_mt = UintABC.new_mt({NAME = "Feature", ID = data_types.name_to_id_map["Uint32"]}, 4)
 
@@ -29,10 +28,10 @@ Feature.set_imported_energy = function(self)
     self.value = self.IMPORTED_ENERGY
   end
 end
+
 Feature.unset_imported_energy = function(self)
   self.value = self.value & (~self.IMPORTED_ENERGY & self.BASE_MASK)
 end
-
 Feature.is_exported_energy_set = function(self)
   return (self.value & self.EXPORTED_ENERGY) ~= 0
 end
@@ -44,10 +43,10 @@ Feature.set_exported_energy = function(self)
     self.value = self.EXPORTED_ENERGY
   end
 end
+
 Feature.unset_exported_energy = function(self)
   self.value = self.value & (~self.EXPORTED_ENERGY & self.BASE_MASK)
 end
-
 Feature.is_cumulative_energy_set = function(self)
   return (self.value & self.CUMULATIVE_ENERGY) ~= 0
 end
@@ -63,7 +62,6 @@ end
 Feature.unset_cumulative_energy = function(self)
   self.value = self.value & (~self.CUMULATIVE_ENERGY & self.BASE_MASK)
 end
-
 Feature.is_periodic_energy_set = function(self)
   return (self.value & self.PERIODIC_ENERGY) ~= 0
 end
@@ -75,8 +73,22 @@ Feature.set_periodic_energy = function(self)
     self.value = self.PERIODIC_ENERGY
   end
 end
+
 Feature.unset_periodic_energy = function(self)
   self.value = self.value & (~self.PERIODIC_ENERGY & self.BASE_MASK)
+end
+
+function Feature.bits_are_valid(feature)
+  local max =
+    Feature.IMPORTED_ENERGY |
+    Feature.EXPORTED_ENERGY |
+    Feature.CUMULATIVE_ENERGY |
+    Feature.PERIODIC_ENERGY
+  if (feature <= max) and (feature >= 1) then
+    return true
+  else
+    return false
+  end
 end
 
 Feature.mask_methods = {

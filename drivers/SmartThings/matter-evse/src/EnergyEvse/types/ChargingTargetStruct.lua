@@ -76,4 +76,3 @@ end
 setmetatable(ChargingTargetStruct, new_mt)
 
 return ChargingTargetStruct
-

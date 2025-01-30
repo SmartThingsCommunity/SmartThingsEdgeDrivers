@@ -21,4 +21,3 @@ end
 setmetatable(ElectricalEnergyMeasurementServerAttributes, attr_mt)
 
 return ElectricalEnergyMeasurementServerAttributes
-
