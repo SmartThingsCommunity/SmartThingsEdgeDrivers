@@ -212,6 +212,13 @@ end
 ---@return string? resource_id the Hue RID, or nil on error
 ---@return string? err
 function utils.get_hue_rid(device)
+  if
+    device == nil
+    or (device and (device.id == nil or device.get_field == nil or device.device_network_id == nil))
+  then
+    return nil, string.format("nil or incomplete device record passed to get_hue_rid, device has likely been deleted")
+  end
+
   local resource_id = device:get_field(Fields.RESOURCE_ID)
   if resource_id then
     return resource_id

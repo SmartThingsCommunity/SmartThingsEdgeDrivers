@@ -146,6 +146,18 @@ local function _emit_light_events_inner(light_device, light_repr)
 end
 
 function AttributeEmitters.connectivity_update(child_device, zigbee_status)
+  if child_device == nil or (child_device and child_device.id == nil) then
+    log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if zigbee_status == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil zigbee_status sent to connectivity_update for %s",
+        (child_device and (child_device.label or child_device.id)) or "unknown device"))
+    return
+  end
+
   if zigbee_status.status == "connected" then
     child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device online")
     child_device:online()
@@ -160,6 +172,13 @@ end
 function AttributeEmitters.emit_button_attribute_events(button_device, button_info)
   if button_device == nil or (button_device and button_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if button_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil button info sent to emit_button_attribute_events for %s",
+        (button_device and (button_device.label or button_device.id)) or "unknown device"))
     return
   end
 
@@ -218,6 +237,13 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
     return
   end
 
+  if sensor_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil sensor_info sent to emit_contact_sensor_attribute_events for %s",
+        (sensor_device and (sensor_device.label or sensor_device.id)) or "unknown device"))
+    return
+  end
+
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
     log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
@@ -253,6 +279,13 @@ end
 function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, sensor_info)
   if sensor_device == nil or (sensor_device and sensor_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if sensor_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil sensor_info sent to emit_motion_sensor_attribute_events for %s",
+        (sensor_device and (sensor_device.label or sensor_device.id)) or "unknown device"))
     return
   end
 
@@ -293,6 +326,13 @@ end
 function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
     log.warn("Tried to emit light status event for device that has been deleted")
+    return
+  end
+
+  if light_repr == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil light_repr sent to emit_light_attribute_events for %s",
+        (light_device and (light_device.label or light_device.id)) or "unknown device"))
     return
   end
   local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)
