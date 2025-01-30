@@ -14,6 +14,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
 
@@ -98,6 +99,9 @@ local function configure(device)
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list_req})
 
   test.wait_for_events()
+
+  test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x0C)})})
+  mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
   test.socket.matter:__queue_receive({
