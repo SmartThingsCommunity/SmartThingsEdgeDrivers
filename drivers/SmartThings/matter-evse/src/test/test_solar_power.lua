@@ -203,12 +203,13 @@ test.register_coroutine_test(
       SOLAR_POWER_EP_ONE,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --100Wh
 
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main",
-        capabilities.energyMeter.energy({
-          value = 100, unit = "Wh"
-        }))
-      )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.energyMeter.energy({
+        value = 100, unit = "Wh"
+      }))
+    )
+
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
         .CumulativeEnergyExported:build_test_report_data(mock_device,
       SOLAR_POWER_EP_TWO,
@@ -242,6 +243,28 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
+)
+
+test.register_coroutine_test(
+  "Ensure energyMeter is not reported incase we recieve CumulativeEnergyImported events for Solar Power device",
+  function()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
+      .CumulativeEnergyExported:build_test_report_data(mock_device,
+      SOLAR_POWER_EP_ONE,
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --100Wh
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.energyMeter.energy({
+        value = 100, unit = "Wh"
+      }))
+    )
+
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
+      .CumulativeEnergyImported:build_test_report_data(mock_device,
+      SOLAR_POWER_EP_ONE,
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --100Wh
+  end
 )
 
 test.run_registered_tests()

@@ -94,6 +94,7 @@ local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
 local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
 local DEFAULT_REPORT_TIME_INTERVAL = 15 * 60 -- Report cumulative energy every 15 minutes
+local MAX_REPORT_TIMEOUT = 30 * 60
 local POLL_INTERVAL = 60 -- To read CumulativeEnergyImported every 60 seconds.
 
 local RECURRING_POLL_TIMER = "__recurring_poll_timer"
@@ -319,6 +320,7 @@ local function schedule_energy_report_timer(device)
 
   -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
   local pcr_interval = device:get_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL) or DEFAULT_REPORT_TIME_INTERVAL
+  pcr_interval = utils.clamp_value(pcr_interval, DEFAULT_REPORT_TIME_INTERVAL, MAX_REPORT_TIMEOUT)
   local timer = device.thread:call_on_schedule(pcr_interval, function()
     local last_time = device:get_field(LAST_REPORTED_TIME) or 0
     local current_time = os.time()
@@ -358,8 +360,8 @@ local function remove_timers(device)
   delete_reporting_timer(device)
   local poll_timer = device:get_field(RECURRING_POLL_TIMER)
   if poll_timer ~= nil then
-    device.thread:cancel_timer(RECURRING_POLL_TIMER, nil)
-    device:set_field()
+    device.thread:cancel_timer(poll_timer)
+    device:set_field(RECURRING_POLL_TIMER, nil)
   end
 end
 

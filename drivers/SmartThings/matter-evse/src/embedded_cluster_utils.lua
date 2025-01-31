@@ -9,8 +9,9 @@ if version.api < 11 then
   clusters.EnergyEvseMode = require "EnergyEvseMode"
 end
 
---this cluster is not supported in any releases of the lua libs
-clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
+if version.api < 12 then
+  clusters.DeviceEnergyManagementMode = require "DeviceEnergyManagementMode"
+end
 
 local embedded_cluster_utils = {}
 

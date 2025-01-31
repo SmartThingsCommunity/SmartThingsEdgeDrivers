@@ -16,6 +16,7 @@ local test = require "integration_test"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local log = require "log"
 
 local EVSE_EP = 1
 local ELECTRICAL_SENSOR_EP = 2
@@ -334,7 +335,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "EnergyEvseMode SupportedModes must be registered.\n2.CurrentMode must trigger approriate mode capability event.\n3.Command to setMode should trigger appropriate changeToMode matter command",
+  "EnergyEvseMode SupportedModes must be registered. CurrentMode must trigger approriate mode capability event. Command to setMode should trigger appropriate changeToMode matter command",
   {
     {
       channel = "matter",
@@ -405,7 +406,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "DeviceEnergyManagementMode SupportedModes must be registered.\n2.CurrentMode must trigger approriate mode capability event.\n3.Command to setMode should trigger appropriate changeToMode matter command",
+  "DeviceEnergyManagementMode SupportedModes must be registered. CurrentMode must trigger approriate mode capability event. Command to setMode should trigger appropriate changeToMode matter command",
   {
     {
       channel = "matter",
