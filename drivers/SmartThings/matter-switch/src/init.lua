@@ -216,19 +216,28 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-    start = iso8061Timestamp(last_time),
-    ["end"] = iso8061Timestamp(current_time - 1),
-    deltaEnergy = energy_delta_wh,
-    energy = latest_total_imported_energy_wh
-  }))
+  if not device:get_field(ENERGY_MANAGEMENT_ENDPOINT) then
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+      start = iso8061Timestamp(last_time),
+      ["end"] = iso8061Timestamp(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
+  else
+    device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
+      start = iso8061Timestamp(last_time),
+      ["end"] = iso8061Timestamp(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
+  end
 end
 
 local function create_poll_report_schedule(device)
   local import_timer = device.thread:call_on_schedule(
-    device:get_field(IMPORT_REPORT_TIMEOUT),
-    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY)),
-    "polling_import_report_schedule_timer"
+    device:get_field(IMPORT_REPORT_TIMEOUT), function()
+    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY))
+    end, "polling_import_report_schedule_timer"
   )
   device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
 end
@@ -252,7 +261,9 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     local report_interval_secs = second_timestamp - first_timestamp
     device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumption
-    if device:supports_capability(capabilities.powerConsumptionReport) then
+    -- and enable powerConsumption when energy management is defined in root endpoint(0).
+    if device:supports_capability(capabilities.powerConsumptionReport) or
+       device:get_field(ENERGY_MANAGEMENT_ENDPOINT) then
       create_poll_report_schedule(device)
     end
     device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
@@ -572,10 +583,6 @@ local function initialize_switch(driver, device)
   end
 
   for _, ep in ipairs(switch_eps) do
-    if _ == 1 then
-      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
-    end
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -592,6 +599,10 @@ local function initialize_switch(driver, device)
           }
         )
         parent_child_device = true
+        if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
+          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+        end
       end
     end
   end
