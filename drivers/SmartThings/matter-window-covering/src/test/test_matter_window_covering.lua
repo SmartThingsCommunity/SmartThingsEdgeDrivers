@@ -135,10 +135,6 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
 end
 
 local function test_init_switch_to_battery()
@@ -635,119 +631,121 @@ test.register_coroutine_test(
   "InfoChanged event checks for new profile match if device has changed (i.e. through reinterview or SW update)",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
-    mock_device:expect_metadata_update({
-      profile = "window-covering",
-    })
+    local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 10, {uint32(0x0C)})})
+    mock_device:expect_metadata_update({ profile = "window-covering-battery" })
   end
 )
 
 test.register_coroutine_test(
-    "WindowCovering shade level adjusted by greater than 2%; status reflects Closing followed by Partially Open", function()
-      test.socket.capability:__set_channel_ordering("relaxed")
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
-          }
+  "WindowCovering shade level adjusted by greater than 2%; status reflects Closing followed by Partially Open", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 25) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(25)
       )
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-                mock_device, 10, ((100 - 25) *100)
-            ),
-          }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
       )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShadeLevel.shadeLevel(25)
-          )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 19 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8100)}
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 10),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.closing()
       )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShade.windowShade.partially_open()
-          )
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 23) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(23)
       )
-      test.wait_for_events()
-      test.socket.capability:__queue_receive(
-          {
-            mock_device.id,
-            {capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 19 }},
-          }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
       )
-      test.socket.matter:__expect_send(
-          {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8100)}
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 21) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(21)
       )
-      test.wait_for_events()
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 10),
-          }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
       )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShade.windowShade.closing()
-          )
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 19) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+          "main", capabilities.windowShadeLevel.shadeLevel(19)
       )
-      test.wait_for_events()
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-                mock_device, 10, ((100 - 23) *100)
-            ),
-          }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
       )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShadeLevel.shadeLevel(23)
-          )
-      )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShade.windowShade.partially_open()
-          )
-      )
-      test.wait_for_events()
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-                mock_device, 10, ((100 - 21) *100)
-            ),
-          }
-      )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShadeLevel.shadeLevel(21)
-          )
-      )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShade.windowShade.partially_open()
-          )
-      )
-      test.wait_for_events()
-      test.socket.matter:__queue_receive(
-          {
-            mock_device.id,
-            WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
-                mock_device, 10, ((100 - 19) *100)
-            ),
-          }
-      )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShadeLevel.shadeLevel(19)
-          )
-      )
-      test.socket.capability:__expect_send(
-          mock_device:generate_test_message(
-              "main", capabilities.windowShade.windowShade.partially_open()
-          )
-      )
-    end
+    )
+  end
 )
 
 test.register_coroutine_test(

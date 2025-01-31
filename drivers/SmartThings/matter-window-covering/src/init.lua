@@ -48,7 +48,7 @@ end
 local function match_profile(device, battery_supported)
   local profile_name = "window-covering"
   if battery_supported == battery_support.BATTERY_PERCENTAGE then
-      profile_name = profile_name .. "-battery"
+    profile_name = profile_name .. "-battery"
   elseif battery_supported == battery_support.BATTERY_LEVEL then
     profile_name = profile_name .. "-batteryLevel"
   end
@@ -78,7 +78,14 @@ local function info_changed(driver, device, event, args)
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
-    match_profile(device)
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
+    else
+      match_profile(device, battery_support.NO_BATTERY)
+    end
   end
 end
 
