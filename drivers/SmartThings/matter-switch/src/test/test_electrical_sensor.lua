@@ -160,7 +160,6 @@ end
 
 test.register_coroutine_test(
   "Check the power and energy meter when the device is added", function()
-    test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
     for i, cluster in ipairs(subscribed_attributes) do
@@ -168,7 +167,6 @@ test.register_coroutine_test(
             subscribe_request:merge(cluster:subscribe(mock_device))
         end
     end
-    test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     )
@@ -176,7 +174,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.wait_for_events()
   end
 )
