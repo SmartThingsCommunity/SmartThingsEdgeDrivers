@@ -127,6 +127,14 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
                                          SimpleMetering.attributes.Multiplier:read(mock_device)
                                        })
       test.socket.zigbee:__expect_send({

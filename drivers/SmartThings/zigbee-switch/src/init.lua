@@ -18,7 +18,6 @@ local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 
 local function lazy_load_if_possible(sub_driver_name)
@@ -45,9 +44,6 @@ local do_configure = function(self, device)
   -- Additional one time configuration
   if device:supports_capability(capabilities.energyMeter) or device:supports_capability(capabilities.powerMeter) then
     -- Divisor and multipler for EnergyMeter
-    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-    -- Divisor and multipler for PowerMeter
     device:send(SimpleMetering.attributes.Divisor:read(device))
     device:send(SimpleMetering.attributes.Multiplier:read(device))
   end
