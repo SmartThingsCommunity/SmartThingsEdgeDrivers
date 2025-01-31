@@ -374,16 +374,20 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 local function is_supported_combination_button_switch_device_type(device, endpoint_id)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-          return true
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if #switch_eps > 0 and #button_eps > 0 then
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id == endpoint_id then
+        for _, dt in ipairs(ep.device_types) do
+          if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID or dt.device_type_id == ON_OFF_PLUG_DEVICE_TYPE_ID then
+            return true, dt.device_type_id
+          end
         end
       end
     end
   end
-  return false
+  return false, nil
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -421,7 +425,8 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if is_supported_combination_button_switch_device_type(device, main_endpoint) then
+    local is_supported_device_type, _ = is_supported_combination_button_switch_device_type(device, main_endpoint)
+    if is_supported_device_type then
       return main_endpoint
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
@@ -621,11 +626,17 @@ local function initialize_switch(driver, device)
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
 
-  if #button_eps > 0 and is_supported_combination_button_switch_device_type(device, main_endpoint) then
-    if #button_eps == 1 then
-      profile_name = "light-level-button"
+  local is_supported_button_switch_device, device_type_id = is_supported_combination_button_switch_device_type(device, main_endpoint)
+  if is_supported_button_switch_device then
+    if device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+      profile_name = "light-level"
     else
-      profile_name = "light-level" .. string.format("-%d-button", #button_eps)
+      profile_name = "plug"
+    end
+    if #button_eps == 1 then
+      profile_name = profile_name .. "-button"
+    else
+      profile_name = profile_name .. string.format("-%d-button", #button_eps)
     end
     device:try_update_metadata({profile = profile_name})
     device:set_field(DEFERRED_CONFIGURE, true)
