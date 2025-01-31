@@ -79,7 +79,6 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
-  [GENERIC_SWITCH_ID] = "button"
 }
 
 local device_type_attribute_map = {
@@ -436,22 +435,6 @@ end
 local function assign_child_profile(device, child_ep)
   local profile
 
-  -- check if device has an overridden child profile that differs from the profile
-  -- that would match the child's device type
-  for _, fingerprint in ipairs(child_device_profile_overrides) do
-    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-       device.manufacturer_info.product_id == fingerprint.product_id then
-      if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID then
-        if child_ep ~= 1 then
-          -- To add Electrical Sensor only to the first EDGE_CHILD(light-power-energy-powerConsumption)
-          -- The profile of the second EDGE_CHILD is determined in the "for" loop below (e.g., light-binary)
-          break
-        end
-      end
-      return fingerprint.child_profile
-    end
-  end
-
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of
@@ -464,8 +447,26 @@ local function assign_child_profile(device, child_ep)
         id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
+      break
     end
   end
+
+  -- Check if device has an overridden child profile that differs from the profile that would match
+  -- the child's device type for the following two cases:
+  --   1. The selected profile for the child device is plug-binary, or
+  --   2. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
+  --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
+  --      determined in the "for" loop above (e.g., light-binary)
+  if profile == "plug-binary" or (device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) then
+    for _, fingerprint in ipairs(child_device_profile_overrides) do
+      if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+        device.manufacturer_info.product_id == fingerprint.product_id then
+        profile = fingerprint.child_profile
+        break
+      end
+    end
+  end
+
   -- default to "switch-binary" if no profile is found
   return profile or "switch-binary"
 end
