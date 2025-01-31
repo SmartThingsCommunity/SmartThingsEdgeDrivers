@@ -6,6 +6,7 @@ local version = require "version"
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ModeSelect = require "ModeSelect"
   clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
 end
 
@@ -14,6 +15,7 @@ local embedded_cluster_utils = {}
 local embedded_clusters = {
   [clusters.ElectricalEnergyMeasurement.ID] = clusters.ElectricalEnergyMeasurement,
   [clusters.ElectricalPowerMeasurement.ID] = clusters.ElectricalPowerMeasurement,
+  [clusters.ModeSelect.ID] = clusters.ModeSelect,
   [clusters.ValveConfigurationAndControl.ID] = clusters.ValveConfigurationAndControl
 }
 
