@@ -512,15 +512,16 @@ local function configure_buttons(device)
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
   for _, ep in ipairs(ms_eps) do
-    local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-    -- this ordering is important, since MSM devices must also support MSR
+    local supportedButtonValues_event
+    -- this ordering is important, since MSM & MSL devices must also support MSR
     if tbl_contains(msm_eps, ep) then
       supportedButtonValues_event = nil -- deferred to the max press handler
       device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
       set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
     elseif tbl_contains(msl_eps, ep) then
-      -- no specific handling is needed here. However, this ensures the else catch-all is not hit
+      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
     elseif tbl_contains(msr_eps, ep) then
+      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
       set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
     else -- this switch endpoint only supports momentary switch, no release events
       supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
@@ -560,7 +561,7 @@ local function try_build_button_component_map(device, main_endpoint, button_eps)
 end
 
 local function build_button_profile(device, main_endpoint, num_button_eps)
-  local profile_name = ""
+  local profile_name
   local battery_supported
   if device_type_supports_button_switch_combination(device, main_endpoint) then
     profile_name = "light-level-" .. num_button_eps .. "-button"
