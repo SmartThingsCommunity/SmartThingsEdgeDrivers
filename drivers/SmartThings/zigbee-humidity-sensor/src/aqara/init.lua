@@ -1,4 +1,3 @@
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -53,14 +52,29 @@ local is_aqara_products = function(opts, driver, device)
   return false
 end
 
-local function device_init(driver, device)
-  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
+local function battery_level_handler(driver, device, value, zb_rx)
+  local voltage = value.value
+  local batteryLevel = "normal"
+  if voltage <= 25 then
+    batteryLevel = "critical"
+  elseif voltage < 28 then
+    batteryLevel = "warning"
+  end
+  device:emit_event(capabilities.batteryLevel.battery(batteryLevel))
+end
 
+local function device_init(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
       device:add_monitored_attribute(attribute)
     end
+  end
+
+  local batt_level = device:get_latest_state("main", capabilities.batteryLevel.ID, capabilities.batteryLevel.battery
+  .NAME) or nil
+  if batt_level == nil then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
   end
 end
 
@@ -69,11 +83,18 @@ local function added_handler(self, device)
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
   device:emit_event(capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" }))
   device:emit_event(capabilities.relativeHumidityMeasurement.humidity(0))
-  device:emit_event(capabilities.battery.battery(100))
+  device:emit_event(capabilities.batteryLevel.battery("normal"))
 end
 
 local aqara_humidity_handler = {
   NAME = "Aqara Humidity Handler",
+  zigbee_handlers = {
+    attr = {
+      [PowerConfiguration.ID] = {
+        [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_level_handler
+      }
+    }
+  },
   lifecycle_handlers = {
     init = device_init,
     added = added_handler
