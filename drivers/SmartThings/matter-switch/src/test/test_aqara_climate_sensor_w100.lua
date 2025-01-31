@@ -17,6 +17,7 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
@@ -128,6 +129,10 @@ local function test_init()
     clusters.Switch.attributes.MultiPressMax
   }
   local read_request
+
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
+  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
 
   local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
