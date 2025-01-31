@@ -502,7 +502,6 @@ local function do_configure(driver, device)
 end
 
 local function configure_buttons(device)
-  print("??")
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     return
   end
