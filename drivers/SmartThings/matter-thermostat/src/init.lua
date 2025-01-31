@@ -811,21 +811,13 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
-  if THERMOSTAT_MODE_MAP[ib.data.value] then
-    device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
-    local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
-    -- TODO: remove -- this has been fixed upstream
-    local sm = utils.deep_copy(supported_modes)
-    -- if we get a mode report from the thermostat that isn't in the supported modes, then we need to update the supported modes
-    for _, mode in ipairs(supported_modes) do
-      if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-        return
-      end
+  local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
+  -- check that the given mode was in the supported modes list
+  for _, mode in ipairs(supported_modes) do
+    if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
+      device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
+      return
     end
-    -- if we get here, then the reported mode was not in our mode map
-    table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
-    local event = capabilities.thermostatMode.supportedThermostatModes(sm, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
 end
 
