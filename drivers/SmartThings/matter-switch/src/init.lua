@@ -159,10 +159,10 @@ local device_type_attribute_map = {
 }
 
 local child_device_profile_overrides = {
-  { vendor_id = 0x1321, product_id = 0x000C,  child_profile = "switch-binary" },
-  { vendor_id = 0x1321, product_id = 0x000D,  child_profile = "switch-binary" },
-  { vendor_id = 0x115F, product_id = 0x1008,  child_profile = "light-power-energy-powerConsumption" }, -- 2 switch
-  { vendor_id = 0x115F, product_id = 0x1009,  child_profile = "light-power-energy-powerConsumption" }, -- 4 switch
+  { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 switch
+  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 switch
 }
 
 local detect_matter_thing
@@ -453,17 +453,17 @@ local function assign_child_profile(device, child_ep)
 
   -- Check if device has an overridden child profile that differs from the profile that would match
   -- the child's device type for the following two cases:
-  --   1. The selected profile for the child device is plug-binary, or
-  --   2. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
+  --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
   --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
   --      determined in the "for" loop above (e.g., light-binary)
-  if profile == "plug-binary" or (device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) then
-    for _, fingerprint in ipairs(child_device_profile_overrides) do
-      if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-        device.manufacturer_info.product_id == fingerprint.product_id then
-        profile = fingerprint.child_profile
-        break
-      end
+  --   2. The selected profile for the child device matches the initial profile defined in
+  --      child_device_profile_overrides
+  for _, fingerprint in ipairs(child_device_profile_overrides) do
+    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
+       device.manufacturer_info.product_id == fingerprint.product_id and
+       ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
+      profile = fingerprint.target_profile
+      break
     end
   end
 
