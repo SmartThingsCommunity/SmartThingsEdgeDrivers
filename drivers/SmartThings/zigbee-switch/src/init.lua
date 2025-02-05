@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 
+local log = require "log"
+
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"
-
   -- version 9 will include the lazy loading functions
   if version.api >= 9 then
     return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
@@ -67,7 +68,22 @@ local function endpoint_to_component(device, ep)
   end
 end
 
-local device_init = function(self, device)
+local ep_supports_server_cluster = function(ep)
+  if not ep then return false end
+  for _, cluster in ipairs(ep.server_clusters) do
+    if cluster == clusters.OnOff.ID then
+      return true
+    end
+  end
+  return false
+end
+
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+end
+
+local function device_init(driver, device)
+  log.info("1***************************************************************")
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
 
@@ -83,7 +99,37 @@ local device_init = function(self, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+
+  device:set_find_child(find_child)
+  
+  local num_switch_server_eps = 0
+  local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
+
+  for _, ep in ipairs(device.zigbee_endpoints) do
+   
+    num_switch_server_eps = num_switch_server_eps + 1
+    if ep.id ~= main_endpoint then 
+      if device:supports_server_cluster(clusters.OnOff.ID, ep.id) then
+        if find_child(device, num_switch_server_eps) == nil then
+          local name = string.format("%s %d", device.label, num_switch_server_eps)
+          local child_profile = "basic-switch"
+          driver:try_create_device(
+            {
+              type = "EDGE_CHILD",
+              label = name,
+              profile = child_profile,
+              parent_device_id = device.id,
+              parent_assigned_child_key = string.format("%02X", num_switch_server_eps),
+              vendor_provided_label = name
+            }
+          )
+        end
+      end
+    end
+  end
 end
+
+
 
 local zigbee_switch_driver_template = {
   supported_capabilities = {
@@ -127,6 +173,6 @@ local zigbee_switch_driver_template = {
 }
 
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
-  zigbee_switch_driver_template.supported_capabilities)
+  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
 zigbee_switch:run()
