@@ -72,11 +72,11 @@ local function thread_version_attribute_handler(driver, device, ib)
 end
 
 local function thread_interface_enabled_attribute_handler(driver, device, ib)
-    if ib.data.value then
-      device:emit_event_for_endpoint(ib.endpoint, routerState.state.enabled())
-    else
-      device:emit_event_for_endpoint(ib.endpoint, routerState.state.off())
-    end
+  if ib.data.value then
+    device:emit_event_for_endpoint(ib.endpoint, routerState.state.enabled())
+  else
+    device:emit_event_for_endpoint(ib.endpoint, routerState.state.off())
+  end
 end
 
 

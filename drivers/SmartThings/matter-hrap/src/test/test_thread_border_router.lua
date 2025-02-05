@@ -37,20 +37,20 @@ local mock_device = test.mock_device.build_test_matter_device({
       {
         endpoint_id = 0,
         clusters = {
-          {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+            {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
         },
         device_types = {
-          {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
+            {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
         }
       },
       {
         endpoint_id = 1,
         clusters = {
-          {cluster_id = clusters.ThreadBorderRouterManagement.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.WifiNetworkMangement.ID, cluster_type = "SERVER", feature_map = 0},
+            {cluster_id = clusters.ThreadBorderRouterManagement.ID, cluster_type = "SERVER", feature_map = 0},
+            {cluster_id = clusters.WifiNetworkMangement.ID, cluster_type = "SERVER", feature_map = 0},
         },
         device_types = {
-          {device_type_id = 0x0090, device_type_revision = 1,} -- Network Infrastructure Manager
+            {device_type_id = 0x0090, device_type_revision = 1,} -- Network Infrastructure Manager
         }
       }
     }
@@ -144,7 +144,7 @@ test.register_message_test(
       }
   }
 )
---
+
 test.register_message_test(
   "RouterName should correctly display the given name",
   {
