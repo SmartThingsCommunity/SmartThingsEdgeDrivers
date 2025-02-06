@@ -535,7 +535,7 @@ local function do_configure(driver, device)
   end
 
   if profile_name then
-    log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
 end
