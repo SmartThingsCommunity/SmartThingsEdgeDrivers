@@ -83,7 +83,7 @@ local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
-local NUM_SUPPORTED_WIND_MODES = "__num_supported_wind_modes"
+local WIND_MODE_COUNT = "__WIND_MODE_COUNT"
 
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
@@ -401,8 +401,8 @@ local function create_fan_profile(device)
   if #rock_eps > 0 then
     profile_name = profile_name .. "-rock"
   end
-  local supports_wind_modes = device:get_field(NUM_SUPPORTED_WIND_MODES) > 1 -- >1 to ignore the "off" mode
-  if #wind_eps > 0 and supports_wind_modes then
+  local wind_mode_count = device:get_field(WIND_MODE_COUNT) or 0
+  if #wind_eps > 0 and wind_mode_count > 1 then -- >1 to ignore the "off" mode
     profile_name = profile_name .. "-wind"
   end
   return profile_name
@@ -455,14 +455,12 @@ local function match_profile(driver, device, battery_supported)
 
   -- read WindSupport before profiling if the FanControl Wind Feature Flag is supported
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
-  if #wind_eps > 0 and device:get_field(NUM_SUPPORTED_WIND_MODES) == nil then
+  if #wind_eps > 0 and device:get_field(WIND_MODE_COUNT) == nil then
     device:set_field(BATTERY_SUPPORT, battery_supported) -- save value for after WindSupport read
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(clusters.FanControl.attributes.WindSupport:read())
     device:send(req)
     return
-  elseif #wind_eps == 0 then
-    device:set_field(NUM_SUPPORTED_WIND_MODES, 0)
   end
 
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
@@ -1051,7 +1049,7 @@ local function wind_support_handler(driver, device, ib, response)
     end
   end
   -- save the number of supported wind modes for use in match_profile.
-  device:set_field(NUM_SUPPORTED_WIND_MODES, #supported_wind_modes, {persist = true})
+  device:set_field(WIND_MODE_COUNT, #supported_wind_modes, {persist = true})
 
   if #supported_wind_modes > 1 then
     local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
