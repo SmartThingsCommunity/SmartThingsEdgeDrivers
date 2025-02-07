@@ -452,7 +452,6 @@ local function match_profile(driver, device, battery_supported)
   if battery_supported == nil then
     return
   end
-
   -- read WindSupport before profiling if the FanControl Wind Feature Flag is supported
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
   if #wind_eps > 0 and device:get_field(WIND_MODE_COUNT) == nil then
@@ -1048,14 +1047,12 @@ local function wind_support_handler(driver, device, ib, response)
       table.insert(supported_wind_modes, wind_mode.NAME)
     end
   end
+  local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+
   -- save the number of supported wind modes for use in match_profile.
   device:set_field(WIND_MODE_COUNT, #supported_wind_modes, {persist = true})
-
-  if #supported_wind_modes > 1 then
-    local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
-    match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
-  end
+  match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
 end
 
 local function wind_setting_handler(driver, device, ib, response)

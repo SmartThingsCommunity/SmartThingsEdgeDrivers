@@ -809,14 +809,18 @@ test.register_message_test(
 test.register_coroutine_test(
   "Test re-profiling without wind mode when feature map is incorrect",
   function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_wind.id, "doConfigure" })
+    test.socket.matter:__expect_send({ mock_device_wind.id, clusters.FanControl.attributes.WindSupport:read(mock_device_wind)})
+    mock_device_wind:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device_wind.id,
       clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device_wind, 1, 0x00) -- Nothing is supported
     })
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_wind.id, "doConfigure" })
+    test.socket.capability:__expect_send(
+      mock_device_wind:generate_test_message("main", capabilities.windMode.supportedWindModes({ value = {capabilities.windMode.windMode.noWind.NAME}}, {visibility = {displayed = false}}))
+    )
     mock_device_wind:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock" })
-    mock_device_wind:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_wind}
 )
