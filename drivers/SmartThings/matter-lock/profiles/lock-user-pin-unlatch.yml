@@ -37,6 +37,14 @@ deviceConfig:
     - component: main
       capability: lock
       version: 1
+      visibleCondition: {
+        "capability": "lock",
+        "version": 1,
+        "component": "main",
+        "value": "lock.value",
+        "operator": "DOES_NOT_EQUAL",
+        "operand": "unlatched"
+      }
   detailView:
   - component: main
     capability: lock
