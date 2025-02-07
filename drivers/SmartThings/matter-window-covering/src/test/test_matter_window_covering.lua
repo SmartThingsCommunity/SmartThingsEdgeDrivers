@@ -21,7 +21,7 @@ local WindowCovering = clusters.WindowCovering
 
 local mock_device = test.mock_device.build_test_matter_device(
   {
-    profile = t_utils.get_profile_definition("window-covering-battery.yml"),
+    profile = t_utils.get_profile_definition("window-covering-tilt-battery.yml"),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     preferences = { presetPosition = 30 },
     endpoints = {
@@ -41,7 +41,7 @@ local mock_device = test.mock_device.build_test_matter_device(
             cluster_id = clusters.WindowCovering.ID,
             cluster_type = "SERVER",
             cluster_revision = 1,
-            feature_map = 0,
+            feature_map = 3,
           },
           {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002}
@@ -73,7 +73,7 @@ local mock_device_switch_to_battery = test.mock_device.build_test_matter_device(
             cluster_id = clusters.WindowCovering.ID,
             cluster_type = "SERVER",
             cluster_revision = 1,
-            feature_map = 0,
+            feature_map = 1,
           },
           {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002}
@@ -105,7 +105,7 @@ local mock_device_mains_powered = test.mock_device.build_test_matter_device(
             cluster_id = clusters.WindowCovering.ID,
             cluster_type = "SERVER",
             cluster_revision = 1,
-            feature_map = 0,
+            feature_map = 1,
           },
           {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0001}
@@ -118,6 +118,7 @@ local mock_device_mains_powered = test.mock_device.build_test_matter_device(
 local CLUSTER_SUBSCRIBE_LIST = {
   clusters.LevelControl.server.attributes.CurrentLevel,
   WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
+  WindowCovering.server.attributes.CurrentPositionTiltPercent100ths,
   WindowCovering.server.attributes.OperationalStatus,
   clusters.PowerSource.server.attributes.BatPercentRemaining
 }
@@ -165,7 +166,7 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state closed", function()
+  "WindowCovering OperationalStatus state closed following lift position update", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -195,7 +196,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state closed before position 0", function()
+  "WindowCovering OperationalStatus state closed following tilt position update", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, 10000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(0)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.closed()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus state closed before lift position 0", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -225,7 +256,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state open", function()
+  "WindowCovering OperationalStatus state closed before tilt position 0", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, 10000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(0)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.closed()
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus state open following lift position update", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -255,7 +316,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus state open before position event", function()
+  "WindowCovering OperationalStatus state open following tilt position update", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, 0
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(100)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.open()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus state open before lift position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -285,7 +376,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus partially open", function()
+  "WindowCovering OperationalStatus state open before tilt position event", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(100)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.open()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, 0
+        ),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus partially open following lift position update", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -315,7 +436,37 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "WindowCovering OperationalStatus partially open before position event", function()
+  "WindowCovering OperationalStatus partially open following tilt position update", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 15) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(15)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus partially open before lift position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
@@ -334,6 +485,36 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShadeLevel.shadeLevel(25)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "WindowCovering OperationalStatus partially open before tilt position event", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 65) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(65)
       )
     )
     test.socket.capability:__expect_send(
@@ -529,6 +710,18 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
   )
 end)
 
+test.register_coroutine_test("WindowShade setShadeTiltLevel cmd handler", function()
+  test.socket.capability:__queue_receive(
+    {
+      mock_device.id,
+      {capability = "windowShadeTiltLevel", component = "main", command = "setShadeTiltLevel", args = { 60 }},
+    }
+  )
+  test.socket.matter:__expect_send(
+    {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 4000)}
+  )
+end)
+
 test.register_coroutine_test("LevelControl CurrentLevel handler", function()
   test.socket.matter:__queue_receive(
     {
@@ -591,6 +784,9 @@ test.register_coroutine_test("Handle windowcoveringPreset", function()
   test.socket.matter:__expect_send(
     {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 7000)}
   )
+  test.socket.matter:__expect_send(
+    {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 5000)}
+  )
 end)
 
 test.register_coroutine_test(
@@ -635,7 +831,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
     test.wait_for_events()
     test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 10, {uint32(0x0C)})})
-    mock_device:expect_metadata_update({ profile = "window-covering-battery" })
+    mock_device:expect_metadata_update({profile = "window-covering-tilt-battery"})
   end
 )
 
