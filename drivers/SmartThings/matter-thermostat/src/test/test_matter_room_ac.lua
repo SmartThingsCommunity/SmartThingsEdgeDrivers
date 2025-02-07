@@ -199,9 +199,14 @@ test.register_coroutine_test(
   "Test profile change on init for Room AC device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_configure.id, "doConfigure" })
-    mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner" })
+    test.socket.matter:__expect_send({ mock_device_configure.id, clusters.FanControl.attributes.WindSupport:read(mock_device_configure)})
     mock_device_configure:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device_configure.id, clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device_configure, 1, 0x03)})
+    test.socket.capability:__expect_send(
+      mock_device_configure:generate_test_message("main", capabilities.windMode.supportedWindModes({ value = {capabilities.windMode.windMode.noWind.NAME, capabilities.windMode.windMode.sleepWind.NAME, capabilities.windMode.windMode.naturalWind.NAME}}, {visibility = {displayed = false}}))
+    )
+    mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner" })
   end,
   { test_init = test_init_configure }
 )
