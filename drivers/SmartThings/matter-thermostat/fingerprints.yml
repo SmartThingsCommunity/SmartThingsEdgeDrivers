@@ -82,3 +82,17 @@ matterGeneric:
     deviceTypes:
       - id: 0x002D # Air Purifier
     deviceProfileName: air-purifier-hepa-ac-wind
+  - id: "matter/air-purifier/quality-sensor"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+    deviceProfileName: air-purifier-aqs
+  - id: "matter/ap/aqs/thermostat/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-thermostat-humidity-aqs
