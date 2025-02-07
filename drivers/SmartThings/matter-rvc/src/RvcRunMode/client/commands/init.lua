@@ -20,4 +20,3 @@ end
 setmetatable(RvcRunModeClientCommands, command_mt)
 
 return RvcRunModeClientCommands
-
