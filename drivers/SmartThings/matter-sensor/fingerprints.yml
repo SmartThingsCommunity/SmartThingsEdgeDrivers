@@ -97,6 +97,12 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  # Tuya
+  - id: "4701/49"
+    deviceLabel: Tuya Gas Sensor
+    vendorId: 0x125D
+    productId: 0x0031
+    deviceProfileName: tuya-gas
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
