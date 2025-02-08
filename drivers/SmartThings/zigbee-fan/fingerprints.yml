@@ -5,3 +5,9 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-003
     deviceProfileName: fan-light
+  # KICHLER FAN LIGHT
+  - id: "Kichler/KICHLER-FANLIGHT-Z-301"
+    deviceLabel: Fan light
+    manufacturer: KICHLER
+    model: KICHLER-FANLIGHT-Z-301
+    deviceProfileName: kichler-fan-light
