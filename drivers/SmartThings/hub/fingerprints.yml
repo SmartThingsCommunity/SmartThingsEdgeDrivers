@@ -11,6 +11,14 @@ hub:
     deviceLabel: SmartThings Hub
     hardwareType: SAMSUNG_DA_REFRIGERATOR_HUB
     deviceProfileName: refrigerator-hub
+  - id: "washer-dryer-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType:  
+    deviceProfileName: washer-dryer-hub
+  - id: "cooktop-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType:  
+    deviceProfileName: cooktop-hub  
 hubThing:
   - id: "hub-thing"
     deviceLabel: SmartThings Hub
