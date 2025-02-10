@@ -449,13 +449,10 @@ local function create_thermostat_modes_profile(device)
 end
 
 local function match_profile(driver, device, battery_supported)
-  if battery_supported == nil then
-    return
-  end
   -- read WindSupport before profiling if the FanControl Wind Feature Flag is supported
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
   if #wind_eps > 0 and device:get_field(WIND_MODE_COUNT) == nil then
-    device:set_field(BATTERY_SUPPORT, battery_supported) -- save value for after WindSupport read
+    device:set_field(BATTERY_SUPPORT, battery_supported, {persist = true}) -- save value for after WindSupport read
     local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(clusters.FanControl.attributes.WindSupport:read())
     device:send(req)
@@ -1052,7 +1049,12 @@ local function wind_support_handler(driver, device, ib, response)
 
   -- save the number of supported wind modes for use in match_profile.
   device:set_field(WIND_MODE_COUNT, #supported_wind_modes, {persist = true})
-  match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
+  if device:get_field(BATTERY_SUPPORT) then
+    match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
+  else -- this should never be hit, since the above should always be true.
+    device.log.debug_with({hub_logs=true}, "BATTERY_SUPPORT field not set in WindSupport handler, match_profile call defaulting to NO_BATTERY")
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
 end
 
 local function wind_setting_handler(driver, device, ib, response)
