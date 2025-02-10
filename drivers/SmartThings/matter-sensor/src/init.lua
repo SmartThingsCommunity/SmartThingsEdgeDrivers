@@ -87,7 +87,7 @@ local function set_boolean_device_type_per_endpoint(driver, device)
       for _, dt in ipairs(ep.device_types) do
           for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
               if dt.device_type_id == info.id then
-                  device:set_field(dt_name, ep.endpoint_id)
+                  device:set_field(dt_name, ep.endpoint_id, { persist = true })
                   device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
               end
           end
@@ -188,13 +188,14 @@ end
 
 local function device_init(driver, device)
   log.info("device init")
+  set_boolean_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
     set_boolean_device_type_per_endpoint(driver, device)
+    device:subscribe()
   end
   if not device.preferences then
     return
