@@ -111,10 +111,6 @@ local function supports_sensitivity_preferences(device)
   return preference_names
 end
 
-local function device_added(driver, device)
-  set_boolean_device_type_per_endpoint(driver, device)
-end
-
 local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
@@ -368,7 +364,6 @@ local matter_driver_template = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure,
-    added = device_added,
   },
   matter_handlers = {
     attr = {
