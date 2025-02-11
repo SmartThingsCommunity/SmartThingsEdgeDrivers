@@ -62,6 +62,12 @@ deviceConfig:
         displayType: pushButton
         pushButton:
           command: unlatch
+  - component: main
+    capability: remoteControlStatus
+    version: 1
+  - component: main
+    capability: battery
+    version: 1
   automation:
     conditions:
     - component: main
