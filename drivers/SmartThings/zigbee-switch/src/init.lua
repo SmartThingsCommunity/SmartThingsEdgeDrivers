@@ -67,7 +67,11 @@ local function endpoint_to_component(device, ep)
   end
 end
 
-local device_init = function(self, device)
+local function find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
+end
+
+local device_init = function(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
 
@@ -83,6 +87,40 @@ local device_init = function(self, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+end
+
+local function device_added(driver, device, event)
+  device:set_find_child(find_child)
+  local num_switch_server_eps = 0
+  local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
+  local updated_flag = false
+  for _, ep in ipairs(device.zigbee_endpoints) do
+    num_switch_server_eps = num_switch_server_eps + 1
+    if ep.id ~= main_endpoint then 
+      if device:supports_server_cluster(clusters.OnOff.ID, ep.id) and updated_flag == false then
+        device:try_update_metadata({profile="basic-switch"})
+        updated_flag = true
+      end
+      if device:supports_server_cluster(clusters.OnOff.ID, ep.id) then
+        if find_child(device, num_switch_server_eps) == nil then
+          local name = string.format("%s %d", device.label, num_switch_server_eps)
+          local child_profile = "basic-switch"
+          driver:try_create_device(
+            {
+              type = "EDGE_CHILD",
+              label = name,
+              profile = child_profile,
+              parent_device_id = device.id,
+              parent_assigned_child_key = string.format("%02X", num_switch_server_eps),
+              vendor_provided_label = name
+            }
+          )
+        end
+      end
+    end
+  end
+  
+  device:refresh()
 end
 
 local zigbee_switch_driver_template = {
@@ -118,15 +156,16 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
-    lazy_load_if_possible("inovelli-vzm31-sn")
+    lazy_load_if_possible("inovelli-vzm31-sn"),
+    lazy_load_if_possible("tuya-multi")
   },
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure
   }
 }
-
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
   zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
