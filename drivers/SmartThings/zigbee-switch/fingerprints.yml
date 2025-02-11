@@ -2341,13 +2341,13 @@ zigbeeGeneric:
     deviceIdentifiers:
       - 0x0220
     deviceProfileName: color-temp-bulb-2700K-6500K
-  - id: "genericMeteredSwitch"
+  - id: "genericMeteredSwitch/2"
     deviceLabel: Zigbee Switch
     clusters:
       server:
         - 0x0006 #OnOff
-        - 0x0702 #Simple Metering
-    deviceProfileName: switch-power-energy
+        - 0x0B04 #Electrical Measurment
+    deviceProfileName: switch-power
   - id: "genericMeteredDimmer"
     deviceLabel: Zigbee Dimmer
     clusters:
@@ -2356,13 +2356,13 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0702 #Simple Metering
     deviceProfileName: switch-dimmer-power-energy
-  - id: "genericMeteredSwitch/2"
+  - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
     clusters:
       server:
         - 0x0006 #OnOff
-        - 0x0B04 #Electrical Measurment
-    deviceProfileName: switch-power
+        - 0x0702 #Simple Metering
+    deviceProfileName: switch-power-energy
   - id: "genericMeteredDimmer/2"
     deviceLabel: Zigbee Dimmer
     clusters:
