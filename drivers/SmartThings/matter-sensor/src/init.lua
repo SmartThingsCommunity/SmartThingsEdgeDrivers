@@ -303,7 +303,7 @@ local function supported_sensitivities_handler(driver, device, ib, response)
 
   for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
     if device:get_field(dt_name) == ib.endpoint_id then
-      device:set_field(info.sensitivity_max, ib.data.value)
+      device:set_field(info.sensitivity_max, ib.data.value, {persist = true})
     end
   end
 end
