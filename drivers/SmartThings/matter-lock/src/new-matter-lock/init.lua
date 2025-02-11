@@ -43,7 +43,11 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1531, 0x0010}, -- Solity
   {0xFFF1, 0x8005}, -- Solity, Test device
   {0x144F, 0x4002}, -- Yale, Yale Linus Smart Lock L2
-  {0x135D, 0x00B1}, -- Nuki
+  {0x135D, 0x00A1}, -- Nuki, Nuki Smart Lock ULTRA
+  {0x135D, 0x00B0}, -- Nuki, Nuki Smart Lock
+  {0x135D, 0x00B1}, -- Nuki, Nuki Smart Lock Pro
+  {0x135D, 0x00B2}, -- Nuki, Nuki Smart Lock Pro
+  {0x135D, 0x00C1}, -- Nuki, Nuki Smart Lock Go
   {0x1037, 0xA221}, -- NXP
   {0x10E1, 0x2002}  -- VDA
 }
