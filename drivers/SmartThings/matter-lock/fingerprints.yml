@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2801
     deviceProfileName: lock-user-pin
+  #Eufy
+  - id: "5427/3"
+    deviceLabel: eufy Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
+    deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
