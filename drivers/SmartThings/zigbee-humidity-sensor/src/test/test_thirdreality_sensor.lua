@@ -80,4 +80,43 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Humidity report should be handled",
+  {
+     {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          RelativeHumidity.attributes.MeasuredValue:build_test_attr_report(mock_device, 7900)
+        }
+     },
+     {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 79 }))
+     }
+  }
+)
+
+test.register_message_test(
+  "Temperature report should be handled (C)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_device, 2500)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
+    }
+  }
+)
+
 test.run_registered_tests()
