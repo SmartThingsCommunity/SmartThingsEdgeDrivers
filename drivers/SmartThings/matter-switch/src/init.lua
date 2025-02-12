@@ -20,6 +20,14 @@ local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
 local im = require "st.matter.interaction_model"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+-- Include driver-side definitions when lua libs api version is < 11
+local version = require "version"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
+end
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -177,16 +185,6 @@ local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-local embedded_cluster_utils = require "embedded-cluster-utils"
-
--- Include driver-side definitions when lua libs api version is < 11
-local version = require "version"
-if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
-end
 
 -- Return an ISO-8061 timestamp in UTC
 local function iso8061Timestamp(time)
