@@ -189,6 +189,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x69
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/121"
+    deviceLabel: Eve Dimmer Switch
+    vendorId: 0x130A
+    productId: 0x0079
+    deviceProfileName: light-level
   - id: "4874/106"
     deviceLabel: Eve Energy Switzerland
     vendorId: 0x130A
