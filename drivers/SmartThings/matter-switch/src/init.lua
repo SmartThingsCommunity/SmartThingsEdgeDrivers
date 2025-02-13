@@ -245,7 +245,7 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     clusters.ElectricalEnergyMeasurement.ID,
     {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
   if #cumul_eps == 0 then
-    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true)
+    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = true})
   end
   if #cumul_eps > 0 and not is_cumulative_report then
     return
@@ -598,7 +598,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
         parent_child_device = true
         if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
       end
     end
@@ -610,7 +610,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  device:set_field(SWITCH_INITIALIZED, true)
+  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
 
   -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
@@ -823,7 +823,7 @@ local function handle_set_color_temperature(driver, device, cmd)
     temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
   end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
+  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
   device:send(req)
 end
 
@@ -1039,7 +1039,7 @@ end
 local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     else
@@ -1054,7 +1054,7 @@ local function per_energy_imported_handler(driver, device, ib, response)
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
