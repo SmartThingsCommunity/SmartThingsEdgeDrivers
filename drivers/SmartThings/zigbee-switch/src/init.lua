@@ -90,7 +90,6 @@ local device_init = function(driver, device)
 end
 
 local function device_added(driver, device, event)
-  device:set_find_child(find_child)
   local num_switch_server_eps = 0
   local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
   local updated_flag = false
@@ -100,6 +99,7 @@ local function device_added(driver, device, event)
       if device:supports_server_cluster(clusters.OnOff.ID, ep.id) and updated_flag == false then
         device:try_update_metadata({profile="basic-switch"})
         updated_flag = true
+        device:set_find_child(find_child)
       end
       if device:supports_server_cluster(clusters.OnOff.ID, ep.id) then
         if find_child(device, num_switch_server_eps) == nil then
