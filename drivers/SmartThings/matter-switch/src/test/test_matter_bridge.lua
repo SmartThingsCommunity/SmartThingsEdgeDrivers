@@ -75,7 +75,6 @@ local cluster_subscribe_list = {
 }
 
 local function test_init_mock_bridge()
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_bridge)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
