@@ -1,0 +1,8 @@
+name: generic-sensor
+components:
+- id: main
+  capabilities:
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
