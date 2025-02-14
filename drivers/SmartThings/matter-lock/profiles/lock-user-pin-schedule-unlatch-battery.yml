@@ -1,4 +1,4 @@
-name: lock-unlatch
+name: lock-user-pin-schedule-unlatch-battery
 components:
 - label: Main
   id: main
@@ -16,6 +16,12 @@ components:
   - id: lockAlarm
     version: 1
   - id: remoteControlStatus
+    version: 1
+  - id: lockUsers
+    version: 1
+  - id: lockCredentials
+    version: 1
+  - id: lockSchedules
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -62,6 +68,9 @@ deviceConfig:
           command: unlatch
   - component: main
     capability: remoteControlStatus
+    version: 1
+  - component: main
+    capability: battery
     version: 1
   automation:
     conditions:

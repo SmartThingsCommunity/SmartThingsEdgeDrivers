@@ -1,6 +1,7 @@
-name: lock-lockalarm
+name: lock-batteryLevel
 components:
-- id: main
+- label: Main
+  id: main
   capabilities:
   - id: lock
     version: 1
@@ -13,7 +14,9 @@ components:
         - not fully locked
   - id: lockAlarm
     version: 1
-  - id: battery
+  - id: remoteControlStatus
+    version: 1
+  - id: batteryLevel
     version: 1
   - id: firmwareUpdate
     version: 1

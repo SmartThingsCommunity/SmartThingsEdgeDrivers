@@ -1,6 +1,7 @@
-name: lock-lockalarm
+name: lock-battery
 components:
-- id: main
+- label: Main
+  id: main
   capabilities:
   - id: lock
     version: 1
@@ -12,6 +13,8 @@ components:
         - unlocked
         - not fully locked
   - id: lockAlarm
+    version: 1
+  - id: remoteControlStatus
     version: 1
   - id: battery
     version: 1

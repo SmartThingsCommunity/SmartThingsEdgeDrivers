@@ -1,4 +1,4 @@
-name: lock-unlatch
+name: lock-unlatch-batteryLevel
 components:
 - label: Main
   id: main
@@ -16,6 +16,8 @@ components:
   - id: lockAlarm
     version: 1
   - id: remoteControlStatus
+    version: 1
+  - id: batteryLevel
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -62,6 +64,9 @@ deviceConfig:
           command: unlatch
   - component: main
     capability: remoteControlStatus
+    version: 1
+  - component: main
+    capability: batteryLevel
     version: 1
   automation:
     conditions:
