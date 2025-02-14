@@ -6,12 +6,12 @@ matterManufacturer:
     productId: 0x55
     deviceProfileName: window-covering-battery
 #Wistar
-  - id: 5207/2
+  - id: "5207/2"
     deviceLabel: WISTAR Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0002
     deviceProfileName: window-covering-battery
-  - id: 5207/18
+  - id: "5207/18"
     deviceLabel: WISTAR Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0012
