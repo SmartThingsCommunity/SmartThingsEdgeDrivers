@@ -13,7 +13,7 @@ deviceConfig:
   icons:
   - group: main
     badge:
-    - iconUrl: 'badge://washerdryer'
+    - iconUrl: 'badge://washer_dryer'
   dashboard:
     states:
     - component: main
