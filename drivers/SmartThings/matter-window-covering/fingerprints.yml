@@ -5,6 +5,17 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x55
     deviceProfileName: window-covering-battery
+#Wistar
+  - id: 5207/2
+    deviceLabel: WISTAR Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0002
+    deviceProfileName: window-covering-battery
+  - id: 5207/18
+    deviceLabel: WISTAR Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0012
+    deviceProfileName: window-covering
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
