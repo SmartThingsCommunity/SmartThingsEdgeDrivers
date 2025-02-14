@@ -51,9 +51,12 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
         endpoint_id = 1,
         clusters = {
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
+          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+          {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+          {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+        },
+        device_types = {
+          {device_type_id = 0x002D, device_type_revision = 1} -- AP
         }
       }
   }
@@ -270,6 +273,36 @@ local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matt
   }
 })
 
+local mock_device_wind = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+      },
+      device_types = {
+        {device_type_id = 0x002D, device_type_revision = 1} -- AP
+      }
+    },
+  }
+})
+
 local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
@@ -394,6 +427,17 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+local function test_init_wind()
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_wind)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_wind))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_wind.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_wind)
+end
+
 local function test_init_ap_aqs()
   local subscribe_request_ap_aqs = cluster_subscribe_list[1]:subscribe(mock_device_ap_aqs)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -445,9 +489,14 @@ test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
-    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
+    test.socket.matter:__expect_send({ mock_device_ap_thermo_aqs.id, clusters.FanControl.attributes.WindSupport:read(mock_device_ap_thermo_aqs)})
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    print(mock_device_ap_thermo_aqs.profile)
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device_ap_thermo_aqs.id, clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device_ap_thermo_aqs, 1, 0x03)})
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs:generate_test_message("main", capabilities.windMode.supportedWindModes({ value = {capabilities.windMode.windMode.noWind.NAME, capabilities.windMode.windMode.sleepWind.NAME, capabilities.windMode.windMode.naturalWind.NAME}}, {visibility = {displayed = false}}))
+    )
+    mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
   end,
   { test_init = test_init_ap_thermo_aqs }
 )
@@ -712,52 +761,45 @@ local supportedFanWind = {
   capabilities.windMode.windMode.sleepWind.NAME,
   capabilities.windMode.windMode.naturalWind.NAME
 }
-test.register_message_test(
+
+test.register_coroutine_test(
   "Test wind mode",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03) -- NoWind,  SleepWind (0x0001), and NaturalWind (0x0002)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility={displayed=false}}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "windMode", component = "main", command = "setWindMode", args = { "naturalWind" } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
-      }
-    }
-  }
+  function ()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03)})
+    mock_device:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility = {displayed = false}}))
+    )
+
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
+    )
+
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windMode.windMode.naturalWind())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Test re-profiling without wind mode when feature map is incorrect",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_wind.id, "doConfigure" })
+    test.socket.matter:__expect_send({ mock_device_wind.id, clusters.FanControl.attributes.WindSupport:read(mock_device_wind)})
+    mock_device_wind:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_wind.id,
+      clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device_wind, 1, 0x00) -- Nothing is supported
+    })
+    test.socket.capability:__expect_send(
+      mock_device_wind:generate_test_message("main", capabilities.windMode.supportedWindModes({ value = {capabilities.windMode.windMode.noWind.NAME}}, {visibility = {displayed = false}}))
+    )
+    mock_device_wind:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock" })
+  end,
+  { test_init = test_init_wind}
 )
 
 test.register_message_test(
