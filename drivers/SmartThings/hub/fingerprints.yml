@@ -13,11 +13,11 @@ hub:
     deviceProfileName: refrigerator-hub
   - id: "washer-dryer-hub"
     deviceLabel: SmartThings Hub
-    hardwareType:  
+    hardwareType: SAMSUNG_WASHER_DRYER_TIZEN_OPEN
     deviceProfileName: washer-dryer-hub
   - id: "cooktop-hub"
     deviceLabel: SmartThings Hub
-    hardwareType:  
+    hardwareType: SAMSUNG_COOKTOP_TIZEN_OPEN 
     deviceProfileName: cooktop-hub  
 hubThing:
   - id: "hub-thing"
