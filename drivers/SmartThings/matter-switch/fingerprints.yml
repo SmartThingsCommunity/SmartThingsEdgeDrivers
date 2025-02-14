@@ -330,6 +330,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/124"
+    deviceLabel: Cync Keypad Dimmer
+    vendorId: 0x1339
+    productId: 0x007C
+    deviceProfileName: light-level-2-button
   - id: "4921/125"
     deviceLabel: Cync Paddle Dimmer
     vendorId: 0x1339
