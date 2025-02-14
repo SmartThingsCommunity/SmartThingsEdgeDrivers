@@ -1,3 +1,4 @@
+local capabilities = require "st.capabilities"
 local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
@@ -107,6 +108,11 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     child_device.log.info_with({ hub_logs = true }, "Marking Online after SSE Reconnect")
                     child_device:online()
                     child_device:set_field(Fields.IS_ONLINE, true)
+                    driver:inject_capability_command(child_device, {
+                      capability = capabilities.refresh.ID,
+                      command = capabilities.refresh.commands.refresh.NAME,
+                      args = {}
+                    })
                   elseif status.status == "connectivity_issue" then
                     child_device.log.info_with({ hub_logs = true }, "Marking Offline after SSE Reconnect")
                     child_device:set_field(Fields.IS_ONLINE, false)
@@ -141,8 +147,10 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
-          log.error_with({ hub_logs = true, },
-            "Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
+          log.error_with(
+            { hub_logs = true, },
+            string.format("Couldn't decode JSON in SSE callback: %s", (events or "unexpected nil from pcall catch"))
+          )
           return
         end
 
@@ -242,6 +250,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
     local bridge_id = parent_bridge and parent_bridge.id
     if bridge_id == bridge_device.id then
       table.insert(ids_to_remove, id)
+      -- we call the handler directly here because we want to use the return value
       local refresh_info = command_handlers.refresh_handler(driver, device)
       if refresh_info and device:get_field(Fields.IS_MULTI_SERVICE) then
         local hue_device_type = utils.determine_device_type(device)
