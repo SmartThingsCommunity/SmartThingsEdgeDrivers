@@ -78,11 +78,6 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RTHS24BZ
     deviceProfileName: humidity-temp-battery
-  - id: "Third Reality/3RSM0147Z"
-    deviceLabel: ThirdReality Smart Soil Moisture Sensor
-    manufacturer: Third Reality, Inc
-    model: 3RSM0147Z
-    deviceProfileName: humidity-temp-battery
 zigbeeGeneric:
   - id: "HumidityTempGeneric"
     deviceLabel: Multipurpose Sensor
