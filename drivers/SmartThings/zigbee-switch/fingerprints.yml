@@ -1120,6 +1120,16 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SQM300Z3
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -2293,6 +2303,12 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  # Inovelli
+  - id: "Inovelli/VZM31-SN"
+    deviceLabel: "Inovelli 2-in-1 Blue Series"
+    manufacturer: Inovelli
+    model: VZM31-SN
+    deviceProfileName: inovelli-vzm31-sn
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

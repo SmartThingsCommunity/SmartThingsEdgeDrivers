@@ -5,6 +5,11 @@ local ssl = require "cosock.ssl"
 ---@type fun(sock: table, config: table?): table?, string?
 ssl.wrap = ssl.wrap
 
+local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
+
 local log = require "log"
 local util = require "lunchbox.util"
 local Request = require "luncheon.request"
@@ -474,7 +479,6 @@ function EventSource.new(url, extra_headers, sock_builder)
   }, EventSource)
 
   cosock.spawn(function()
-    local st_utils = require "st.utils"
     while true do
       if source.ready_state == EventSource.ReadyStates.CLOSED and
           not source._reconnect

@@ -161,7 +161,9 @@ local supported_profiles =
   "aqs-temp-humidity-all-level",
   "aqs-temp-humidity-all-meas",
   "aqs-temp-humidity-co2-pm25-tvoc-meas",
+  "aqs-temp-humidity-co2-pm1-pm25-pm10-meas",
   "aqs-temp-humidity-tvoc-level-pm25-meas",
+  "aqs-temp-humidity-tvoc-meas",
 }
 
 local AIR_QUALITY_MAP = {
@@ -308,11 +310,11 @@ local unit_default = {
   [capabilities.fineDustSensor.NAME] = units.UGM3,
   [capabilities.dustSensor.NAME] = units.UGM3,
   [capabilities.radonMeasurement.NAME] = units.BQM3,
-  [capabilities.tvocMeasurement.NAME] = units.PPM
+  [capabilities.tvocMeasurement.NAME] = units.PPB  -- TVOC is typically within the range of 0-5500 ppb, with good to moderate values being < 660 ppb
 }
 
--- All ConcentrationMesurement clusters inherit from the same base cluster definitions,
--- so CarbonMonoxideConcentratinMeasurement is used below but the same enum types exist
+-- All ConcentrationMeasurement clusters inherit from the same base cluster definitions,
+-- so CarbonMonoxideConcentrationMeasurement is used below but the same enum types exist
 -- in all ConcentrationMeasurement clusters
 local level_strings = {
   [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN] = "unknown",
@@ -324,10 +326,12 @@ local level_strings = {
 
 local conversion_tables = {
   [units.PPM] = {
-    [units.PPM] = function(value) return utils.round(value) end
+    [units.PPM] = function(value) return utils.round(value) end,
+    [units.PPB] = function(value) return utils.round(value * (10^3)) end
   },
   [units.PPB] = {
-    [units.PPM] = function(value) return utils.round(value/(10^3)) end
+    [units.PPM] = function(value) return utils.round(value/(10^3)) end,
+    [units.PPB] = function(value) return utils.round(value) end
   },
   [units.PPT] = {
     [units.PPM] = function(value) return utils.round(value/(10^6)) end
@@ -472,7 +476,7 @@ local matter_air_quality_sensor_handler = {
         [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.radonHealthConcern.radonHealthConcern)
       },
       [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPM),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
       }

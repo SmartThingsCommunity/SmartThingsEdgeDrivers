@@ -1,4 +1,7 @@
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local function make_migrated_device(faker_args, bridge_info)
   local device_network_id = faker_args.dni or st_utils.generate_uuid_v4()
