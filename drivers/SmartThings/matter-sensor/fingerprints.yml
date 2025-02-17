@@ -185,3 +185,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak-battery
+  # Siterwell
+  - id: "4736/32788"
+    deviceLabel: Siterwell Smart Smoke Alarm
+    vendorId: 0x1280
+    productId: 0x8014
+    deviceProfileName: smoke
