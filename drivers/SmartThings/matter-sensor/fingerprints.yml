@@ -185,3 +185,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak-battery
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
