@@ -185,3 +185,9 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak-battery
+  # Siterwell
+  - id: "4736/848"
+    deviceLabel: Siterwell Motion Sensor
+    vendorId: 0x1280
+    productId: 0x0350
+    deviceProfileName: motion-battery
