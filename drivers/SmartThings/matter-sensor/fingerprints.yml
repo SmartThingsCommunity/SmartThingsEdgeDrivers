@@ -97,6 +97,12 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -185,9 +191,3 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak-battery
-  # Siterwell
-  - id: "4736/847"
-    deviceLabel: Siterwell Door Window Sensor
-    vendorId: 0x1280
-    productId: 0x034F
-    deviceProfileName: contact-battery
