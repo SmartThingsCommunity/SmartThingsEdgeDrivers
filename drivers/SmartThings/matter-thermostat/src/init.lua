@@ -42,16 +42,18 @@ if version.api < 10 then
   clusters.Thermostat.types.ThermostatSystemMode.SLEEP = 0x9
 end
 
+local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
+
 local THERMOSTAT_MODE_MAP = {
-  [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
-  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
-  [clusters.Thermostat.types.ThermostatSystemMode.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
-  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
+  [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
+  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]              = capabilities.thermostatMode.thermostatMode.auto,
+  [clusters.Thermostat.types.ThermostatSystemMode.COOL]              = capabilities.thermostatMode.thermostatMode.cool,
+  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]              = capabilities.thermostatMode.thermostatMode.heat,
   [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING] = capabilities.thermostatMode.thermostatMode.emergency_heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
-  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
-  [clusters.Thermostat.types.ThermostatSystemMode.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
-  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
+  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]        = capabilities.thermostatMode.thermostatMode.precooling,
+  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]          = capabilities.thermostatMode.thermostatMode.fanonly,
+  [clusters.Thermostat.types.ThermostatSystemMode.DRY]               = capabilities.thermostatMode.thermostatMode.dryair,
+  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]             = capabilities.thermostatMode.thermostatMode.asleep,
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
@@ -811,22 +813,27 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
-  if THERMOSTAT_MODE_MAP[ib.data.value] then
-    device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
-    local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
-    -- TODO: remove -- this has been fixed upstream
-    local sm = utils.deep_copy(supported_modes)
-    -- if we get a mode report from the thermostat that isn't in the supported modes, then we need to update the supported modes
-    for _, mode in ipairs(supported_modes) do
-      if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-        return
-      end
+  local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
+  -- check that the given mode was in the supported modes list
+  for _, mode in ipairs(supported_modes) do
+    if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
+      device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
+      return
     end
-    -- if we get here, then the reported mode was not in our mode map
-    table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
-    local event = capabilities.thermostatMode.supportedThermostatModes(sm, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
+  -- if the value is not found in the supported modes list, check if it's disallowed
+  local disallowed_thermostat_modes = device:get_field(DISALLOWED_THERMOSTAT_MODES) or {}
+  for _, mode in pairs(disallowed_thermostat_modes) do
+    if mode == ib.data.value then
+      return
+    end
+  end
+  -- if we get here, then the reported mode is allowed and not in our mode map
+  local sm_copy = utils.deep_copy(supported_modes)
+  table.insert(sm_copy, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
+  local supported_modes_event = capabilities.thermostatMode.supportedThermostatModes(sm_copy, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, supported_modes_event)
+  device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
 end
 
 local function running_state_handler(driver, device, ib, response)
@@ -840,25 +847,34 @@ local function running_state_handler(driver, device, ib, response)
 end
 
 local function sequence_of_operation_handler(driver, device, ib, response)
-  -- the values reported here are kind of limited in terms of our mapping, i.e. there's no way to know about whether
-  -- or not the device supports emergency heat or fan only
+  -- The ControlSequenceofOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
+  -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
+  -- We also assert that Off is supported, though per spec this is optional.
+  local disallowed_mode_operations = {}
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
-
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-  if #auto > 0 then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
-  end
 
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
-    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.precooling.NAME)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.HEAT)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
-    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.emergencyheat.NAME)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.COOL)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
   end
+
+  -- check whether the Auto Mode should be supported in SystemMode, though this is unrelated to ControlSequenceofOperation
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+  if #auto > 0 then
+    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
+  else
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.AUTO)
+  end
+
+  device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations, {persist = true})
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
