@@ -182,6 +182,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x69
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/121"
+    deviceLabel: Eve Dimmer Switch
+    vendorId: 0x130A
+    productId: 0x0079
+    deviceProfileName: light-level
   - id: "4874/106"
     deviceLabel: Eve Energy Switzerland
     vendorId: 0x130A
@@ -323,6 +328,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/124"
+    deviceLabel: Cync Keypad Dimmer
+    vendorId: 0x1339
+    productId: 0x007C
+    deviceProfileName: light-level-2-button
   - id: "4921/125"
     deviceLabel: Cync Paddle Dimmer
     vendorId: 0x1339
