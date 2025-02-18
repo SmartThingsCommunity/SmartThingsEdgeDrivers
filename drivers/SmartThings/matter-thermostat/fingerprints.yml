@@ -18,7 +18,7 @@ matterManufacturer:
     deviceProfileName: thermostat-heating-only-nostate
 #Siterwell
   - id: "4736/769"
-    deviceLabel: Siterwell Radiator Thermostats
+    deviceLabel: Siterwell Radiator Thermostat 
     vendorId: 0x1280
     productId: 0x0301
     deviceProfileName: thermostat-heating-only-nostate-nobattery
