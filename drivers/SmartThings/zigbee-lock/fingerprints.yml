@@ -190,6 +190,12 @@ zigbeeManufacturer:
     manufacturer: TOTEM
     model: W31V
     deviceProfileName: lock-battery
+  # NIMLY
+  - id: Onesti Products AS/NimlyCode
+    deviceLabel: Nimly
+    manufacturer: Onesti Products AS
+    model: NimlyCode
+    deviceProfileName: base-lock  
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock
