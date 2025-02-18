@@ -108,8 +108,6 @@ matterManufacturer:
     vendorId: 0x1280
     productId: 0x8015
     deviceProfileName: co 
-
-
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
