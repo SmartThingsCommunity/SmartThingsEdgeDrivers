@@ -319,12 +319,12 @@ test.register_message_test(
     message = {
       mock_device.id,
       clusters.Switch.events.InitialPress:build_test_event_report(
-        mock_device, 1, {new_position = 1}
+        mock_device, 1, {new_position = 1, total_number_of_presses_counted = 1, previous_position = 0}
       )
     }
   },
   { -- again, on a device that reports that it supports double press, this event
-    -- will not be generated. See a multi-button test file for that case
+    -- will not be generated. See the multi-button test file for that case
     channel = "capability",
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
