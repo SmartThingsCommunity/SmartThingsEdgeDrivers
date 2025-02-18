@@ -43,6 +43,7 @@ if version.api < 10 then
 end
 
 local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
+local ALLOWED_OPTIONAL_THERMOSTAT_MODES = "__ALLOWED_OPTIONAL_THERMOSTAT_MODES"
 
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
@@ -288,6 +289,9 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
+  if device:get_field(ALLOWED_OPTIONAL_THERMOSTAT_MODES) == nil then
+    device:set_field(ALLOWED_OPTIONAL_THERMOSTAT_MODES, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
+  end
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
@@ -829,6 +833,10 @@ local function system_mode_handler(driver, device, ib, response)
     end
   end
   -- if we get here, then the reported mode is allowed and not in our mode map
+  -- add the mode to the ALLOWED_OPTIONAL_THERMOSTAT_MODES and supportedThermostatModes tables
+  local allowed_optional_modes = utils.deep_copy(device:get_field(ALLOWED_OPTIONAL_THERMOSTAT_MODES)) or {}
+  table.insert(allowed_optional_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
+  device:set_field(ALLOWED_OPTIONAL_THERMOSTAT_MODES, allowed_optional_modes, {persist=true})
   local sm_copy = utils.deep_copy(supported_modes)
   table.insert(sm_copy, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
   local supported_modes_event = capabilities.thermostatMode.supportedThermostatModes(sm_copy, {visibility = {displayed = false}})
@@ -851,13 +859,25 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
   -- We also assert that Off is supported, though per spec this is optional.
   local disallowed_mode_operations = {}
-  local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
+  local supported_modes = utils.deep_copy(device:get_field(ALLOWED_OPTIONAL_THERMOSTAT_MODES)) or {capabilities.thermostatMode.thermostatMode.off.NAME}
 
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
+    for index, mode in pairs(supported_modes) do
+      if mode == capabilities.thermostatMode.thermostatMode.precooling.NAME then
+        table.remove(supported_modes, index) -- if seen before, remove now
+        break
+      end
+    end
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.HEAT)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
+    for index, mode in pairs(supported_modes) do
+      if mode == capabilities.thermostatMode.thermostatMode.emergency_heat.NAME then
+        table.remove(supported_modes, index) -- if seen before, remove now
+        break
+      end
+    end
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.COOL)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING)
@@ -874,7 +894,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.AUTO)
   end
 
-  device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations, {persist = true})
+  device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations)
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
