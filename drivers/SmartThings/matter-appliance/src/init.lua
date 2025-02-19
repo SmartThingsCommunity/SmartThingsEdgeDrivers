@@ -190,8 +190,11 @@ local function do_configure(driver, device)
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
     end
-    if #light_eps > 0 then
-      profile_name = profile_name .. "-light"
+    for _, ep in ipairs(light_eps) do
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+        profile_name = profile_name .. "-light"
+        break
+      end
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})

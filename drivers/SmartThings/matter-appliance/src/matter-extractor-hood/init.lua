@@ -74,12 +74,17 @@ end
 
 local function device_added(driver, device)
   local extractor_hood_endpoint = get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
-  local light_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1] or get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
   local componentToEndpointMap = {
     ["main"] = extractor_hood_endpoint
   }
-  if light_endpoint then
-    componentToEndpointMap["light"] = light_endpoint
+  local on_off_light_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
+  local on_off_light_switch_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
+  if on_off_light_device_type_endpoint and
+    device:supports_server_cluster(clusters.OnOff.ID, on_off_light_device_type_endpoint) then
+    componentToEndpointMap["light"] = on_off_light_device_type_endpoint
+  elseif on_off_light_switch_device_type_endpoint and
+    device:supports_server_cluster(clusters.OnOff.ID, on_off_light_switch_device_type_endpoint) then
+    componentToEndpointMap["light"] = on_off_light_switch_device_type_endpoint
   end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
 end
