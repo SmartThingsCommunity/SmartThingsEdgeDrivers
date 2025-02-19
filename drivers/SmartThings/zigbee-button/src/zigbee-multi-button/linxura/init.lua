@@ -86,7 +86,6 @@ local function present_value_attr_handler(driver, device, zone_status, zb_rx)
 
     if status.value == BUTTON1_HELD or status.value == BUTTON1_PUSHED or status.value == BUTTON1_DOUBLE then
         device:emit_component_event(device.profile.components[BUTTON1], event)
-        --device:emit_event(device.profile.components[BUTTON1],event)
         device:emit_event(event)
     elseif status.value == BUTTON2_HELD or status.value == BUTTON2_PUSHED or status.value == BUTTON2_DOUBLE then
         device:emit_component_event(device.profile.components[BUTTON2], event)
@@ -104,8 +103,6 @@ end
 local function device_init(driver, device)
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-
-
       device:add_monitored_attribute(attribute)
     end
   end
