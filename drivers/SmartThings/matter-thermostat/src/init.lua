@@ -860,12 +860,15 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
   -- We also assert that Off is supported, though per spec this is optional.
   local disallowed_mode_operations = {}
-  local supported_modes = utils.deep_copy(device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME)) or {capabilities.thermostatMode.thermostatMode.off.NAME}
+  local supported_modes = utils.deep_copy(device:get_latest_state(
+    device:endpoint_to_component(ib.endpoint_id),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  )) or {capabilities.thermostatMode.thermostatMode.off.NAME}
 
+  local modes_for_inclusion = {}
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
-    if not tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME) then
-      table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME) -- do not add twice
-    end
+    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.HEAT)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING)
     for index, mode in pairs(supported_modes) do
@@ -875,9 +878,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
       end
     end
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
-    if not tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME) then
-      table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME) -- do not add twice
-    end
+    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.heat.NAME)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.COOL)
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING)
     for index, mode in pairs(supported_modes) do
@@ -887,25 +888,26 @@ local function sequence_of_operation_handler(driver, device, ib, response)
       end
     end
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT then
-    if not tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME) then
-      table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME) -- do not add twice
-    end
-    if not tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME) then
-      table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME) -- do not add twice
-    end
+    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.cool.NAME)
+    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.heat.NAME)
   end
 
   -- check whether the Auto Mode should be supported in SystemMode, though this is unrelated to ControlSequenceofOperation
   local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   if #auto > 0 then
-    if not tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME) then
-      table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME) -- do not add twice
-    end
+    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.auto.NAME)
   else
     table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.AUTO)
   end
 
   device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations)
+
+  -- do not include any values twice
+  for _, mode in pairs(modes_for_inclusion) do
+    if not tbl_contains(supported_modes, mode) then
+      table.insert(supported_modes, mode)
+    end
+  end
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
