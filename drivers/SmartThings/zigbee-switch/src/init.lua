@@ -20,10 +20,7 @@ local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
-local MCD_fingerprint = {
-  { mfr = "ubisys", model = "D1 (5503)" },
-  { mfr = "ubisys", model = "S2 (5502)" }
-}
+local device_lib = require "st.device"
 
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
@@ -94,19 +91,25 @@ local device_init = function(driver, device)
 end
 
 local function is_mcd_device(device)
-  for _, fingerprint in ipairs(MCD_fingerprint) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+  local components = device.profile.components
+  if type(components) == "table" then
+    local component_count = 0
+    for _, component in pairs(components) do
+        component_count = component_count + 1
+    end
+    if component_count >= 2 then
       return true
+    else
+      return false
     end
   end
-  return false
 end
 
 local function device_added(driver, device, event)
   local num_switch_server_eps = 0
   local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
   local updated_flag = false
-  if is_mcd_device(device) == false then
+  if is_mcd_device(device) == false and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
     for _, ep in ipairs(device.zigbee_endpoints) do
       num_switch_server_eps = num_switch_server_eps + 1
       if ep.id ~= main_endpoint then
