@@ -2,6 +2,7 @@ local log = require "log"
 local json = require "st.json"
 local RestClient = require "lunchbox.rest"
 local utils = require "utils"
+local st_utils = require "st.utils"
 
 local fp2_api = {}
 fp2_api.__index = fp2_api
@@ -48,7 +49,7 @@ function fp2_api.new_device_manager(device_ip, bridge_info, socket_builder)
 
   return setmetatable(
     {
-      headers = ADDITIONAL_HEADERS,
+      headers = st_utils.deep_copy(ADDITIONAL_HEADERS),
       socket_builder = socket_builder,
       base_url = base_url,
     }, fp2_api

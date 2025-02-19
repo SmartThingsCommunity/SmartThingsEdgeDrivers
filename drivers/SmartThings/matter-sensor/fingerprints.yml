@@ -69,6 +69,17 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # Neo
+  - id: "4991/1122"
+    deviceLabel: Door Sensor
+    vendorId: 0x137F
+    productId: 0x0462
+    deviceProfileName: contact-battery
+  - id: "4991/1123"
+    deviceLabel: Motion Sensor
+    vendorId: 0x137F
+    productId: 0x0463
+    deviceProfileName: motion-battery
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
@@ -86,6 +97,18 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
+  - id: "4736/32789"
+    deviceLabel: Siterwell Smart Carbon Monoxide Alarm
+    vendorId: 0x1280
+    productId: 0x8015
+    deviceProfileName: co 
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
