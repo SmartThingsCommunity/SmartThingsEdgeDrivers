@@ -139,6 +139,8 @@ local function test_init()
       end
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
   test.mock_device.add_test_device(mock_device)
   -- to test powerConsumptionReport
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
@@ -153,6 +155,8 @@ local function test_init_periodic()
     end
   end
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_periodic.id, read_color_mode})
   test.mock_device.add_test_device(mock_device_periodic)
   -- to test powerConsumptionReport
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
@@ -167,6 +171,9 @@ test.register_coroutine_test(
             subscribe_request:merge(cluster:subscribe(mock_device))
         end
     end
+    test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
+    local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+    test.socket.matter:__expect_send({mock_device.id, read_color_mode})
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     )

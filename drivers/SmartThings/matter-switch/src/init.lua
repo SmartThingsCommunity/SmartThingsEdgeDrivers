@@ -1233,6 +1233,7 @@ end
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
+    device:send(clusters.ColorControl.attributes.ColorMode:read(device))
     if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       -- profile has changed, and we deferred setting up our buttons, so do that now
       configure_buttons(device)

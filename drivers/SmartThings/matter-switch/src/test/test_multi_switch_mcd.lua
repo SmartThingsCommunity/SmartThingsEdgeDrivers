@@ -157,6 +157,8 @@ local function test_init_mock_3switch()
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch)
   test.socket.matter:__expect_send({mock_3switch.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_3switch.id, read_color_mode})
   test.mock_device.add_test_device(mock_3switch)
 end
 
@@ -169,6 +171,8 @@ local function test_init_mock_2switch()
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_2switch)
   test.socket.matter:__expect_send({mock_2switch.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_2switch.id, read_color_mode})
   test.mock_device.add_test_device(mock_2switch)
 end
 
@@ -181,6 +185,8 @@ local function test_init_mock_3switch_non_sequential()
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch_non_sequential)
   test.socket.matter:__expect_send({mock_3switch_non_sequential.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_3switch_non_sequential.id, read_color_mode})
   test.mock_device.add_test_device(mock_3switch_non_sequential)
 end
 

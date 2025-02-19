@@ -187,6 +187,8 @@ local function test_init()
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
   mock_device:expect_device_create({
@@ -198,12 +200,14 @@ local function test_init()
   })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "3-button"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
@@ -239,6 +243,8 @@ local function test_init_mcd_unsupported_switch_device_type()
   })
   test.mock_device.add_test_device(mock_device_mcd_unsupported_switch_device_type)
   test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, read_color_mode})
 end
 
 test.set_test_init_function(test_init)

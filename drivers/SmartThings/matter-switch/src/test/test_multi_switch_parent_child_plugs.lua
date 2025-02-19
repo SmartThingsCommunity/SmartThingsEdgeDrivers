@@ -137,7 +137,8 @@ local function test_init()
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
@@ -178,7 +179,8 @@ local function test_init_child_profile_override()
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
-
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_child_profile_override.id, read_color_mode})
   test.mock_device.add_test_device(mock_device_child_profile_override)
   for _, child in pairs(mock_children_child_profile_override) do
     test.mock_device.add_test_device(child)

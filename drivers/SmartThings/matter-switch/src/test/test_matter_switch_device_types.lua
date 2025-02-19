@@ -305,6 +305,8 @@ local mock_device_parent_child_unsupported_device_type = test.mock_device.build_
 local function test_init_parent_child_switch_types()
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_child_switch_types)
   test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, read_color_mode})
   test.mock_device.add_test_device(mock_device_parent_child_switch_types)
   mock_device_parent_child_switch_types:expect_metadata_update({ profile = "switch-level" })
 
@@ -319,33 +321,45 @@ end
 
 local function test_init_onoff()
   test.mock_device.add_test_device(mock_device_onoff)
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_onoff.id, read_color_mode})
   mock_device_onoff:expect_metadata_update({ profile = "switch-binary" })
 end
 
 local function test_init_onoff_client()
   test.mock_device.add_test_device(mock_device_onoff_client)
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_onoff_client.id, read_color_mode})
 end
 
 local function test_init_parent_client_child_server()
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_client_child_server)
   test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, read_color_mode})
   test.mock_device.add_test_device(mock_device_parent_client_child_server)
   mock_device_parent_client_child_server:expect_metadata_update({ profile = "switch-binary" })
 end
 
 local function test_init_dimmer()
   test.mock_device.add_test_device(mock_device_dimmer)
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_dimmer.id, read_color_mode})
   mock_device_dimmer:expect_metadata_update({ profile = "switch-level" })
 end
 
 local function test_init_color_dimmer()
   test.mock_device.add_test_device(mock_device_color_dimmer)
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_color_dimmer.id, read_color_mode})
   mock_device_color_dimmer:expect_metadata_update({ profile = "switch-color-level" })
 end
 
 local function test_init_water_valve()
   test.mock_device.add_test_device(mock_device_water_valve)
   test.socket.device_lifecycle:__queue_receive({ mock_device_water_valve.id, "doConfigure" })
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_water_valve.id, read_color_mode})
   mock_device_water_valve:expect_metadata_update({ profile = "water-valve-level" })
   mock_device_water_valve:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -372,6 +386,9 @@ local function test_init_parent_child_different_types()
   end
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, read_color_mode})
+
   test.mock_device.add_test_device(mock_device_parent_child_different_types)
 
   mock_device_parent_child_different_types:expect_device_create({
@@ -386,6 +403,9 @@ end
 local function test_init_parent_child_unsupported_device_type()
   test.mock_device.add_test_device(mock_device_parent_child_unsupported_device_type)
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ profile = "switch-binary" })
+
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device_parent_child_unsupported_device_type.id, read_color_mode})
 
   mock_device_parent_child_unsupported_device_type:expect_device_create({
     type = "EDGE_CHILD",
