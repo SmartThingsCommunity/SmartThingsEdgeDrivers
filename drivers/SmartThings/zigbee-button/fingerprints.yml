@@ -188,7 +188,7 @@ zigbeeManufacturer:
     deviceLabel: Linxura Smart Controller
     manufacturer: Linxura
     model: Smart Controller
-    deviceProfileName: four-buttons
+    deviceProfileName: four-buttons-without-main-button
     isJoinable: true
   # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
