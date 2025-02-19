@@ -1022,21 +1022,17 @@ local function y_attr_handler(driver, device, ib, response)
 end
 
 local function color_mode_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil then
-    return
-  end
-  local color_mode = ib.data.value
   local read_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if color_mode == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     read_req:merge(clusters.ColorControl.attributes.CurrentHue:read(device))
     read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read(device))
-    device:send(read_req)
-  elseif color_mode == clusters.ColorControl.types.ColorMode.CURRENT_X_AND_CURRENT_Y then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_X_AND_CURRENT_Y then
     read_req:merge(clusters.ColorControl.attributes.CurrentX:read(device))
     read_req:merge(clusters.ColorControl.attributes.CurrentY:read(device))
-    device:send(read_req)
-  else -- color_mode = clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE then
     read_req:merge(clusters.ColorControl.attributes.ColorTemperatureMireds:read(device))
+  end
+  if #read_req.info_blocks ~= 0 then
     device:send(read_req)
   end
 end
