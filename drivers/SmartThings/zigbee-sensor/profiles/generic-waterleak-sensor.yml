@@ -2,9 +2,9 @@ name: generic-waterleak-sensor
 components:
 - id: main
   capabilities:
-  - id: batteryLevel
-    version: 1
   - id: waterSensor
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1

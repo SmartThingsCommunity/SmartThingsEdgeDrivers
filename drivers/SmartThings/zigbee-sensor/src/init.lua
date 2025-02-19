@@ -20,7 +20,11 @@ local capabilities = require "st.capabilities"
 local ZONETYPE = "ZoneType"
 local constants = require "st.zigbee.constants"
 local PowerConfiguration = clusters.PowerConfiguration
-local device_management = require "st.zigbee.device_management"
+local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local utils = require "st.utils"
+local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
+battery_config.reportable_change = 0x10
+battery_config.data_type = clusters.PowerConfiguration.attributes.BatteryVoltage.base_type
 
 local CONTACT_SWITCH = 0x0015
 local MOTION_SENSOR = 0x000D
@@ -31,15 +35,17 @@ local ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE = "generic-contact-sensor"
 local ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE = "generic-motion-sensor"
 local ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE = "generic-waterleak-sensor"
 
+local device_init = function(self, device)
+  device:add_configured_attribute(battery_config)
+  device:add_monitored_attribute(battery_config)
+end
+
 -- ask device to upload its zone type
 local ias_device_added = function(driver, device)
   device:send(IASZone.attributes.ZoneType:read(device))
-end
-
--- ask device to upload its zone status, then the status of capabilities can be synchronized
-local ias_info_changed = function(driver, device)
   device:send(IASZone.attributes.ZoneStatus:read(device))
 end
+
 
 -- update profile with different zone type
 local function update_profile(device, zone_type)
@@ -68,11 +74,15 @@ local generate_event_from_zone_status = function(driver, device, zone_status, zb
   if type == CONTACT_SWITCH then
     if zone_status:is_alarm1_set() then
       event = capabilities.contactSensor.contact.open()
+    elseif zone_status:is_alarm2_set() then
+      event = capabilities.contactSensor.contact.open()
     else
       event = capabilities.contactSensor.contact.closed()
     end
   elseif type == MOTION_SENSOR then
     if zone_status:is_alarm1_set() then
+      event = capabilities.motionSensor.motion.active()
+    elseif zone_status:is_alarm2_set() then
       event = capabilities.motionSensor.motion.active()
     else
       event = capabilities.motionSensor.motion.inactive()
@@ -102,40 +112,17 @@ local ias_zone_status_change_handler = function(driver, device, zb_rx)
   generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
-local battery_level_handler = function(driver, device, value, zb_rx)
-  local voltage = value.value
-  if voltage <= 25 then
-    device:emit_event(capabilities.batteryLevel.battery.critical())
-  elseif voltage < 28 then
-    device:emit_event(capabilities.batteryLevel.battery.warning())
-  else
-    device:emit_event(capabilities.batteryLevel.battery.normal())
-  end
-end
-
-local configure_handler = function(self, device)
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-end
-
 local zigbee_generic_sensor_template = {
   supported_capabilities = {
-    capabilities.batteryLevel,
+    capabilities.battery,
     capabilities.firmwareUpdate,
     capabilities.refresh
-    -- capabilities.motionSensor,
-    -- capabilities.contactSensor,
-    -- capabilities.waterSensor
   },
   zigbee_handlers = {
     attr = {
       [IASZone.ID] = {
         [IASZone.attributes.ZoneType.ID] = ias_zone_type_attr_handler,
         [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
-      },
-      [PowerConfiguration.ID] = {
-        [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_level_handler
       }
     },
     cluster = {
@@ -145,9 +132,8 @@ local zigbee_generic_sensor_template = {
     }
   },
   lifecycle_handlers = {
-    added = ias_device_added,
-    doConfigure = configure_handler,
-    infoChanged = ias_info_changed
+    init = device_init,
+    added = ias_device_added
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }
