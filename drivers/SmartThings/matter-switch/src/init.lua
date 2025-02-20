@@ -1026,7 +1026,7 @@ local function color_mode_attr_handler(driver, device, ib, response)
   if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     read_req:merge(clusters.ColorControl.attributes.CurrentHue:read(device))
     read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read(device))
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_X_AND_CURRENT_Y then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     read_req:merge(clusters.ColorControl.attributes.CurrentX:read(device))
     read_req:merge(clusters.ColorControl.attributes.CurrentY:read(device))
   elseif ib.data.value == clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE then

@@ -181,7 +181,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.wait_for_events()
   end
 )
