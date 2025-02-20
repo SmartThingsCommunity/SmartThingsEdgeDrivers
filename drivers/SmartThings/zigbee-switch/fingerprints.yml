@@ -2309,6 +2309,11 @@ zigbeeManufacturer:
     manufacturer: Inovelli
     model: VZM31-SN
     deviceProfileName: inovelli-vzm31-sn
+  - id: "LAISIAO/BATH"
+    deviceLabel: Laisiao Bathroom Heater
+    manufacturer: LAISIAO
+    model: yuba
+    deviceProfileName: switch-smart-bath-heater-laisiao
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

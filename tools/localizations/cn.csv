@@ -89,12 +89,16 @@ Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
 "Heiman Smoke Sensor",海曼智能烟雾传感器
 "Heiman CO Sensor",海曼智能一氧化碳传感器
 "Smart co sensor",海曼智能一氧化碳传感器
+"Laisiao Bathroom Heater",Laisiao智能浴霸
 "Siterwell Door Window Sensor",赛特威尔门窗检测传感器
 "Siterwell Smart Carbon Monoxide Alarm",赛特威尔智能CO报警器
 "Zemismart M6 Hub",Zemismart M6 网关
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 =======
 "Siterwell Smart Smoke Alarm",赛特威尔智能烟雾报警器
 "Siterwell Motion Sensor",赛特威尔人体检测传感器
 >>>>>>> d649f757 (New Device (Matter Sensor) Siterwell Smoke Alarm CN and Motion Sensor (#1958))
+=======
+>>>>>>> 3c923c75 (add laisiao bathroom heater (#1753))
