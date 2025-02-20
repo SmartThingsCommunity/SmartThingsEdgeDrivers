@@ -1,6 +1,5 @@
 local log = require "log"
 local capabilities = require "st.capabilities"
-local refresh_handler = require("handlers.commands").refresh_handler
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
@@ -193,7 +192,11 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   driver.hue_identifier_to_device_record[device_light_resource_id] = device
 
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
-  refresh_handler(driver, device)
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
 end
 
 ---@param driver HueDriver
@@ -218,7 +221,11 @@ function LightLifecycleHandlers.init(driver, device)
   device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
 
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
-    refresh_handler(driver, device)
+    driver:inject_capability_command(device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
   driver:check_waiting_grandchildren_for_device(device)
