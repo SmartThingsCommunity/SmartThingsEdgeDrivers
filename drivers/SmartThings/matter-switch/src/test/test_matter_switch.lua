@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
