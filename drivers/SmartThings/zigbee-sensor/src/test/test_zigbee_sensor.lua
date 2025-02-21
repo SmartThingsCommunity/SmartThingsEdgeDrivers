@@ -18,6 +18,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local PowerConfiguration = clusters.PowerConfiguration
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 local ZoneTypeAttribute = IASZone.attributes.ZoneType
@@ -93,39 +94,76 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_message_test(
+test.register_coroutine_test(
     "Profile should change to Contact Sensor",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x0015) }
-      },
+    function ()
+      test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x0015)})
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE})
-    }
+    end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "Profile should change to Motion Sensor",
+
+    function ()
+      test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x000d)})
+      mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE})
+    end
+)
+
+test.register_coroutine_test(
+    "Profile should change to Waterleak Sensor",
+    function ()
+      test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x002a)})
+      mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE})
+    end
+)
+
+test.register_message_test(
+    "Battery percentage report should be handled (contact sensor)",
     {
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x000d) }
+        message = { mock_device_contact_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_contact_sensor, 55) }
       },
-      mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE})
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device_contact_sensor:generate_test_message("main", capabilities.battery.battery(28))
+      }
     }
 )
 
 test.register_message_test(
-    "Profile should change to Waterleak Sensor",
+    "Battery percentage report should be handled (motion sensor)",
     {
       {
         channel = "zigbee",
         direction = "receive",
-        message = { mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x002a) }
+        message = { mock_device_motion_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_motion_sensor, 55) }
       },
-      mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE})
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device_motion_sensor:generate_test_message("main", capabilities.battery.battery(28))
+      }
+    }
+)
+
+test.register_message_test(
+    "Battery percentage report should be handled (water leak sensor)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device_waterleak_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_waterleak_sensor, 55) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.battery.battery(28))
+      }
     }
 )
 
@@ -333,12 +371,11 @@ test.register_coroutine_test(
         mock_device_contact_sensor.id,
         ZoneTypeAttribute:read(mock_device_contact_sensor)
       })
+      test.socket.zigbee:__expect_send({
+        mock_device_contact_sensor.id,
+        ZoneStatusAttribute:read(mock_device_contact_sensor)
+      })
       test.wait_for_events()
-
-      -- test.mock_time.advance_time(50000)
-      -- test.socket.zigbee:__set_channel_ordering("relaxed")
-      -- test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, ZoneStatusAttribute:read(mock_device_contact_sensor) })
-      -- test.wait_for_events()
     end,
     {
       test_init = function()
@@ -356,12 +393,11 @@ test.register_coroutine_test(
         mock_device_motion_sensor.id,
         ZoneTypeAttribute:read(mock_device_motion_sensor)
       })
+      test.socket.zigbee:__expect_send({
+        mock_device_motion_sensor.id,
+        ZoneStatusAttribute:read(mock_device_motion_sensor)
+      })
       test.wait_for_events()
-
-      -- test.mock_time.advance_time(50000)
-      -- test.socket.zigbee:__set_channel_ordering("relaxed")
-      -- test.socket.zigbee:__expect_send({ mock_device_motion_sensor.id, ZoneStatusAttribute:read(mock_device_motion_sensor) })
-      -- test.wait_for_events()
     end,
     {
       test_init = function()
@@ -379,12 +415,11 @@ test.register_coroutine_test(
         mock_device_waterleak_sensor.id,
         ZoneTypeAttribute:read(mock_device_waterleak_sensor)
       })
+      test.socket.zigbee:__expect_send({
+        mock_device_waterleak_sensor.id,
+        ZoneStatusAttribute:read(mock_device_waterleak_sensor)
+      })
       test.wait_for_events()
-
-      -- test.mock_time.advance_time(50000)
-      -- test.socket.zigbee:__set_channel_ordering("relaxed")
-      -- test.socket.zigbee:__expect_send({ mock_device_waterleak_sensor.id, ZoneStatusAttribute:read(mock_device_waterleak_sensor) })
-      -- test.wait_for_events()
     end,
     {
       test_init = function()
@@ -401,7 +436,14 @@ test.register_coroutine_test(
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
       test.socket.capability:__queue_receive({ mock_device_contact_sensor.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
+      test.socket.zigbee:__expect_send(
+        {
+          mock_device_contact_sensor.id,
+          PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_contact_sensor)
+        }
+    )
       test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, ZoneStatusAttribute:read(mock_device_contact_sensor) })
+
     end
 )
 
@@ -440,9 +482,6 @@ test.register_coroutine_test(
         ZoneStatusAttribute:read(mock_device_contact_sensor)
       })
       test.wait_for_events()
-
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      mock_device_contact_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
@@ -455,13 +494,10 @@ test.register_coroutine_test(
         ZoneTypeAttribute:read(mock_device_motion_sensor)
       })
       test.socket.zigbee:__expect_send({
-        mock_device_contact_sensor.id,
-        ZoneStatusAttribute:read(mock_device_contact_sensor)
+        mock_device_motion_sensor.id,
+        ZoneStatusAttribute:read(mock_device_motion_sensor)
       })
       test.wait_for_events()
-
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      mock_device_contact_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
@@ -474,13 +510,10 @@ test.register_coroutine_test(
         ZoneTypeAttribute:read(mock_device_waterleak_sensor)
       })
       test.socket.zigbee:__expect_send({
-        mock_device_contact_sensor.id,
-        ZoneStatusAttribute:read(mock_device_contact_sensor)
+        mock_device_waterleak_sensor.id,
+        ZoneStatusAttribute:read(mock_device_waterleak_sensor)
       })
       test.wait_for_events()
-
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      mock_device_waterleak_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 

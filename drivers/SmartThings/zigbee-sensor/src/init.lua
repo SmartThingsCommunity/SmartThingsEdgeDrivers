@@ -19,7 +19,6 @@ local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local ZONETYPE = "ZoneType"
 local constants = require "st.zigbee.constants"
-local PowerConfiguration = clusters.PowerConfiguration
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local utils = require "st.utils"
 local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
@@ -72,17 +71,13 @@ local generate_event_from_zone_status = function(driver, device, zone_status, zb
   local type = device:get_field(ZONETYPE)
   local event
   if type == CONTACT_SWITCH then
-    if zone_status:is_alarm1_set() then
-      event = capabilities.contactSensor.contact.open()
-    elseif zone_status:is_alarm2_set() then
+    if zone_status:is_alarm1_set() or zone_status:is_alarm2_set() then
       event = capabilities.contactSensor.contact.open()
     else
       event = capabilities.contactSensor.contact.closed()
     end
   elseif type == MOTION_SENSOR then
-    if zone_status:is_alarm1_set() then
-      event = capabilities.motionSensor.motion.active()
-    elseif zone_status:is_alarm2_set() then
+    if zone_status:is_alarm1_set() or zone_status:is_alarm2_set() then
       event = capabilities.motionSensor.motion.active()
     else
       event = capabilities.motionSensor.motion.inactive()
