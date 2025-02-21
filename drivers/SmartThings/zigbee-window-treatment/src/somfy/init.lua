@@ -64,6 +64,7 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
     elseif current_level ~= level then
       event = current_level < level and windowShade.opening() or windowShade.closing()
       local timer = device.thread:call_with_delay(2, function(d)
+        device:set_field(FINAL_STATE_POLL_TIMER, nil)
         local current_level = device:get_latest_state(device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
           capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
         if current_level > 0 and current_level < 100 then

@@ -90,6 +90,7 @@ end
 
 local huesat_timer_callback = function(driver, device, cmd)
   return function()
+    device:set_field(HUESAT_TIMER, nil)
     local hue = device:get_field(TARGET_HUE)
     local sat = device:get_field(TARGET_SAT)
     hue = hue ~= nil and hue or device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME)

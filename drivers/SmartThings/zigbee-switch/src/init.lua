@@ -118,7 +118,8 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
-    lazy_load_if_possible("inovelli-vzm31-sn")
+    lazy_load_if_possible("inovelli-vzm31-sn"),
+	lazy_load_if_possible("laisiao")
   },
   lifecycle_handlers = {
     init = device_init,
