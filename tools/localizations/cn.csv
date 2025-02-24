@@ -92,4 +92,9 @@ Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
 "Siterwell Door Window Sensor",赛特威尔门窗检测传感器
 "Siterwell Smart Carbon Monoxide Alarm",赛特威尔智能CO报警器
 "Zemismart M6 Hub",Zemismart M6 网关
+<<<<<<< HEAD
 
+=======
+"Siterwell Smart Smoke Alarm",赛特威尔智能烟雾报警器
+"Siterwell Motion Sensor",赛特威尔人体检测传感器
+>>>>>>> d649f757 (New Device (Matter Sensor) Siterwell Smoke Alarm CN and Motion Sensor (#1958))
