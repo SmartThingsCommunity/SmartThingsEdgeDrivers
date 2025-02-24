@@ -73,7 +73,7 @@ local function get_endpoints_for_dt(device, device_type)
 end
 
 local find_default_endpoint = function(device)
-  local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID)
+  local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID) or {}
   local solar_power_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID)
   if #evse_eps > 0 then
     return evse_eps[1]
@@ -209,7 +209,7 @@ local function read_cumulative_energy(device)
     local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, eps_to_read[1])
     for i, ep in ipairs(eps_to_read) do
       if i > 1 then
-      read_req:merge( clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, eps_to_read[i]))
+        read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, eps_to_read[i]))
       end
     end
     device:send(read_req)
@@ -236,8 +236,7 @@ local report_energy_to_app = function(device, comp, energy_map, startTime, endTi
   local total_cumulative_energy = get_total(energy_map) or 0
 
   -- Calculate the energy consumed between the start and the end time
-  local previousTotalConsumptionWh = device:get_latest_state(comp, capabilities.powerConsumptionReport
-  .ID,
+  local previousTotalConsumptionWh = device:get_latest_state(comp, capabilities.powerConsumptionReport.ID,
   capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
 
   local deltaEnergyWh = math.max(total_cumulative_energy - previousTotalConsumptionWh.energy, 0.0)
@@ -270,7 +269,7 @@ local function create_poll_report_schedule(device)
     local endTime = epoch_to_iso8601(current_time - 1)
 
     if cumulative_energy_imported ~= nil then
-      local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID)
+      local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID) or {}
       local comp_id = "importedEnergy"
       if #evse_eps > 0 then
         comp_id = "main"
@@ -325,7 +324,7 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-  local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID)
+  local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID) or {}
   if #evse_eps > 0 then
     local electrical_sensor_eps = get_endpoints_for_dt(device, ELECTRICAL_SENSOR_DEVICE_TYPE_ID) or {}
     local device_energy_mgmt_eps = get_endpoints_for_dt(device, DEVICE_ENERGY_MANAGEMENT_DEVICE_TYPE_ID) or {}
@@ -745,7 +744,7 @@ local function handle_set_mode_command(driver, device, cmd)
 end
 
 matter_driver_template = {
-  NAME = "matter-evse",
+  NAME = "matter-energy",
   lifecycle_handlers = {
     init = device_init,
     added = device_added,
@@ -783,7 +782,7 @@ matter_driver_template = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = cumulative_energy_handler(TOTAL_CUMULATIVE_ENERGY_IMPORTED),
         [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = periodic_energy_handler(TOTAL_CUMULATIVE_ENERGY_IMPORTED),
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported.ID] = cumulative_energy_handler(TOTAL_CUMULATIVE_ENERGY_EXPORTED),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = periodic_energy_handler(TOTAL_CUMULATIVE_ENERGY_EXPORTED),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyExported.ID] = periodic_energy_handler(TOTAL_CUMULATIVE_ENERGY_EXPORTED),
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
@@ -855,6 +854,6 @@ matter_driver_template = {
   },
 }
 
-local matter_driver = MatterDriver("matter-evse", matter_driver_template)
+local matter_driver = MatterDriver("matter-energy", matter_driver_template)
 log.info(string.format("Starting %s driver, with dispatcher: %s", matter_driver.NAME, matter_driver.matter_dispatcher))
 matter_driver:run()
