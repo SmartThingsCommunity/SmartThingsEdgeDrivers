@@ -19,11 +19,24 @@ local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local ZONETYPE = "ZoneType"
 local constants = require "st.zigbee.constants"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local utils = require "st.utils"
-local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
-battery_config.reportable_change = 0x10
-battery_config.data_type = clusters.PowerConfiguration.attributes.BatteryVoltage.base_type
+
+local configurations = {
+  {
+    cluster = clusters.IASZone.ID,
+    attribute = clusters.IASZone.attributes.ZoneStatus.ID,
+    minimum_interval = 30,
+    maximum_interval = 300,
+    data_type = clusters.IASZone.attributes.ZoneStatus.base_type
+  },
+  {
+    cluster = clusters.PowerConfiguration.ID,
+    attribute = clusters.PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+    minimum_interval = 30,
+    maximum_interval = 21600,
+    data_type = clusters.PowerConfiguration.attributes.BatteryVoltage.base_type,
+    reportable_change = 16
+  }
+}
 
 local CONTACT_SWITCH = 0x0015
 local MOTION_SENSOR = 0x000D
@@ -35,8 +48,10 @@ local ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE = "generic-motion-sensor"
 local ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE = "generic-waterleak-sensor"
 
 local device_init = function(self, device)
-  device:add_configured_attribute(battery_config)
-  device:add_monitored_attribute(battery_config)
+  for _, attribute in ipairs(configurations) do
+    device:add_configured_attribute(attribute)
+    device:add_monitored_attribute(attribute)
+  end
 end
 
 -- ask device to upload its zone type
