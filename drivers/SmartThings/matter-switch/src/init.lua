@@ -245,7 +245,7 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     clusters.ElectricalEnergyMeasurement.ID,
     {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
   if #cumul_eps == 0 then
-    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true)
+    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = true})
   end
   if #cumul_eps > 0 and not is_cumulative_report then
     return
@@ -295,6 +295,7 @@ local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
+local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -395,9 +396,8 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 local function find_default_endpoint(device)
-  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  if #temperature_eps > 0 and #humidity_eps > 0 then
+  if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -598,7 +598,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
         parent_child_device = true
         if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
       end
     end
@@ -610,7 +610,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  device:set_field(SWITCH_INITIALIZED, true)
+  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
 
   -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
@@ -823,7 +823,7 @@ local function handle_set_color_temperature(driver, device, cmd)
     temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
   end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
+  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
   device:send(req)
 end
 
@@ -1039,7 +1039,7 @@ end
 local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     else
@@ -1054,7 +1054,7 @@ local function per_energy_imported_handler(driver, device, ib, response)
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
@@ -1189,10 +1189,8 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
 
-    local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-    local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-    if #temperature_eps > 0 and #humidity_eps > 0 then
-      -- for now, this logic only applies to the Aqara Climate Sensor W100.
+    if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+       device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
       profile_name = profile_name .. "-temperature-humidity"
     end
     device:try_update_metadata({ profile = profile_name })

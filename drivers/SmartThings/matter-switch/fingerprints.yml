@@ -156,12 +156,6 @@ matterManufacturer:
     vendorId: 0x1432
     productId: 0x1003
     deviceProfileName: 4-button-battery
-    deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
-  - id: "5127/4744"
-    deviceLabel: Smart Bridge MZ1
-    vendorId: 0x1407
-    productId: 0x1288
-    deviceProfileName: matter-bridge
 
 #Eve
   - id: "Eve/Energy/US"
@@ -509,6 +503,11 @@ matterManufacturer:
     deviceLabel: LIFX Ceiling 13x26
     vendorId: 0x1423
     productId: 0x00C9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/219"
+    deviceLabel: LIFX Luna
+    vendorId: 0x1423
+    productId: 0x00DB
     deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/213"
     deviceLabel: LIFX Permanent Outdoor
