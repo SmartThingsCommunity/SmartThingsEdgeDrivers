@@ -51,16 +51,18 @@ if version.api < 13 then
   clusters.WaterHeaterMode = require "WaterHeaterMode"
 end
 
+local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
+
 local THERMOSTAT_MODE_MAP = {
-  [clusters.Thermostat.types.ThermostatSystemMode.OFF]            = capabilities.thermostatMode.thermostatMode.off,
-  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]           = capabilities.thermostatMode.thermostatMode.auto,
-  [clusters.Thermostat.types.ThermostatSystemMode.COOL]           = capabilities.thermostatMode.thermostatMode.cool,
-  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]           = capabilities.thermostatMode.thermostatMode.heat,
+  [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
+  [clusters.Thermostat.types.ThermostatSystemMode.AUTO]              = capabilities.thermostatMode.thermostatMode.auto,
+  [clusters.Thermostat.types.ThermostatSystemMode.COOL]              = capabilities.thermostatMode.thermostatMode.cool,
+  [clusters.Thermostat.types.ThermostatSystemMode.HEAT]              = capabilities.thermostatMode.thermostatMode.heat,
   [clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING] = capabilities.thermostatMode.thermostatMode.emergency_heat,
-  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]     = capabilities.thermostatMode.thermostatMode.precooling,
-  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]       = capabilities.thermostatMode.thermostatMode.fanonly,
-  [clusters.Thermostat.types.ThermostatSystemMode.DRY]            = capabilities.thermostatMode.thermostatMode.dryair,
-  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]          = capabilities.thermostatMode.thermostatMode.asleep
+  [clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING]        = capabilities.thermostatMode.thermostatMode.precooling,
+  [clusters.Thermostat.types.ThermostatSystemMode.FAN_ONLY]          = capabilities.thermostatMode.thermostatMode.fanonly,
+  [clusters.Thermostat.types.ThermostatSystemMode.DRY]               = capabilities.thermostatMode.thermostatMode.dryair,
+  [clusters.Thermostat.types.ThermostatSystemMode.SLEEP]             = capabilities.thermostatMode.thermostatMode.asleep,
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
@@ -133,6 +135,12 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP"
 }
 
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
+
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff
@@ -187,6 +195,9 @@ local subscribed_attributes = {
   },
   [capabilities.battery.ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining
+  },
+  [capabilities.batteryLevel.ID] = {
+    clusters.PowerSource.attributes.BatChargeLevel
   },
   [capabilities.filterState.ID] = {
     clusters.HepaFilterMonitoring.attributes.Condition,
@@ -629,10 +640,9 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function do_configure(driver, device)
+local function match_profile(driver, device, battery_supported)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   local device_type = get_device_type(driver, device)
   local profile_name
   if device_type == RAC_DEVICE_TYPE_ID then
@@ -690,7 +700,9 @@ local function do_configure(driver, device)
 
       profile_name = profile_name .. "-nostate"
 
-      if #battery_eps == 0 then
+      if battery_supported == battery_support.BATTERY_LEVEL then
+        profile_name = profile_name .. "-batteryLevel"
+      elseif battery_supported == battery_support.NO_BATTERY then
         profile_name = profile_name .. "-nobattery"
       end
     end
@@ -729,7 +741,9 @@ local function do_configure(driver, device)
     -- Add nobattery profiles if updated
     profile_name = profile_name .. "-nostate"
 
-    if #battery_eps == 0 then
+    if battery_supported == battery_support.BATTERY_LEVEL then
+      profile_name = profile_name .. "-batteryLevel"
+    elseif battery_supported == battery_support.NO_BATTERY then
       profile_name = profile_name .. "-nobattery"
     end
   else
@@ -743,6 +757,7 @@ local function do_configure(driver, device)
   end
 end
 
+
 local function get_endpoints_for_dt(device, device_type)
   local endpoints = {}
   for _, ep in ipairs(device.endpoints) do
@@ -755,6 +770,16 @@ local function get_endpoints_for_dt(device, device_type)
   end
   table.sort(endpoints)
   return endpoints
+
+local function do_configure(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(req)
+  else
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
 end
 
 local function device_added(driver, device)
@@ -1020,22 +1045,27 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
-  if THERMOSTAT_MODE_MAP[ib.data.value] then
-    device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
-    local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
-    -- TODO: remove -- this has been fixed upstream
-    local sm = utils.deep_copy(supported_modes)
-    -- if we get a mode report from the thermostat that isn't in the supported modes, then we need to update the supported modes
-    for _, mode in ipairs(supported_modes) do
-      if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-        return
-      end
+  local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
+  -- check that the given mode was in the supported modes list
+  for _, mode in ipairs(supported_modes) do
+    if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
+      device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
+      return
     end
-    -- if we get here, then the reported mode was not in our mode map
-    table.insert(sm, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
-    local event = capabilities.thermostatMode.supportedThermostatModes(sm, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
+  -- if the value is not found in the supported modes list, check if it's disallowed
+  local disallowed_thermostat_modes = device:get_field(DISALLOWED_THERMOSTAT_MODES) or {}
+  for _, mode in pairs(disallowed_thermostat_modes) do
+    if mode == ib.data.value then
+      return
+    end
+  end
+  -- if we get here, then the reported mode is allowed and not in our mode map
+  local sm_copy = utils.deep_copy(supported_modes)
+  table.insert(sm_copy, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
+  local supported_modes_event = capabilities.thermostatMode.supportedThermostatModes(sm_copy, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, supported_modes_event)
+  device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
 end
 
 local function running_state_handler(driver, device, ib, response)
@@ -1049,25 +1079,34 @@ local function running_state_handler(driver, device, ib, response)
 end
 
 local function sequence_of_operation_handler(driver, device, ib, response)
-  -- the values reported here are kind of limited in terms of our mapping, i.e. there's no way to know about whether
-  -- or not the device supports emergency heat or fan only
+  -- The ControlSequenceofOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
+  -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
+  -- We also assert that Off is supported, though per spec this is optional.
+  local disallowed_mode_operations = {}
   local supported_modes = {capabilities.thermostatMode.thermostatMode.off.NAME}
-
-  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
-  if #auto > 0 then
-    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
-  end
 
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
-    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.precooling.NAME)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.HEAT)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.EMERGENCY_HEATING)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
-    -- table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.emergencyheat.NAME)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.COOL)
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.PRECOOLING)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT then
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
   end
+
+  -- check whether the Auto Mode should be supported in SystemMode, though this is unrelated to ControlSequenceofOperation
+  local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
+  if #auto > 0 then
+    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.auto.NAME)
+  else
+    table.insert(disallowed_mode_operations, clusters.Thermostat.types.ThermostatSystemMode.AUTO)
+  end
+
+  device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations, {persist = true})
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
@@ -1676,6 +1715,27 @@ local function water_heater_mode_handler(driver, device, ib, response)
     if i - 1 == currentMode then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       break
+
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(driver, device, battery_support.BATTERY_LEVEL)
+      return
     end
   end
 end
@@ -1724,7 +1784,9 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
@@ -1856,6 +1918,7 @@ local matter_driver_template = {
     capabilities.windMode,
     capabilities.fanOscillationMode,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.filterState,
     capabilities.filterStatus,
     capabilities.airQualityHealthConcern,

@@ -17,6 +17,7 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
@@ -129,6 +130,10 @@ local function test_init()
   }
   local read_request
 
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
+  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
+
   local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -137,11 +142,11 @@ local function test_init()
   end
 
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_device.add_test_device(aqara_mock_device)
   test.set_rpc_version(5)
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="3-button-battery-temperature-humidity"}

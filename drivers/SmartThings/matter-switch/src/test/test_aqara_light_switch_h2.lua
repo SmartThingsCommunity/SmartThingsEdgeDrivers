@@ -164,6 +164,8 @@ local function test_init()
   end
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_device.add_test_device(aqara_mock_device)
+  -- to test powerConsumptionReport
+  test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 
   for _, child in pairs(aqara_mock_children) do
     test.mock_device.add_test_device(child)
@@ -184,9 +186,9 @@ local function test_init()
     parent_device_id = aqara_mock_device.id,
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
@@ -303,7 +305,6 @@ test.register_coroutine_test(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
       )
 
-      test.mock_time.advance_time(2000)
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -312,19 +313,20 @@ test.register_coroutine_test(
           )
         }
       )
---[[
-      -- To do : powerConsumptionReport
+
+      test.socket.capability:__expect_send(
+        aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
+      )
+
+      -- to test powerConsumptionReport
+      test.mock_time.advance_time(2000)
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
           start = "1970-01-01T00:00:00Z",
           ["end"] = "1970-01-01T00:33:19Z",
           deltaEnergy = 0.0,
-          energy = 29.0
+          energy = 39.0
         }))
-      )
---]]
-      test.socket.capability:__expect_send(
-        aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
       )
     end
 )
