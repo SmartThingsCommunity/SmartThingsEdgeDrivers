@@ -16,7 +16,6 @@ local test = require "integration_test"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local log = require "log"
 
 local EVSE_EP = 1
 local ELECTRICAL_SENSOR_EP = 2
