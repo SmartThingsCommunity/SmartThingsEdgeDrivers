@@ -425,7 +425,7 @@ local function read_cumulative_energy_imported(device)
     { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
   if cumul_eps and #cumul_eps > 0 then
     local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device,
-    cumul_eps[1])
+      cumul_eps[1])
     for i, ep in ipairs(cumul_eps) do
       if i > 1 then
         read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, ep))
@@ -441,13 +441,6 @@ local function create_poll_schedule(device)
     return
   end
 
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-  if #cumul_eps == 0 then
-    return
-  end
-
   read_cumulative_energy_imported(device)
   -- Setup a timer to read cumulative energy imported attribute every minute.
   local timer = device.thread:call_on_schedule(POLL_INTERVAL, function()
@@ -458,7 +451,10 @@ local function create_poll_schedule(device)
 end
 
 local function schedule_polls_for_cumulative_energy_imported(device)
-  if not device:supports_capability(capabilities.powerConsumptionReport) then
+  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID,
+    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+  if #cumul_eps == 0 then
     return
   end
   create_poll_schedule(device)
@@ -1609,7 +1605,7 @@ local function periodic_energy_imported_handler(driver, device, ib, response)
 
   if ib.data then
     if version.api < 11 then
-      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:augment_type(ib.data)
+      clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:augment_type(ib.data)
     end
 
     local start_timestamp = ib.data.elements.start_timestamp.value or 0
