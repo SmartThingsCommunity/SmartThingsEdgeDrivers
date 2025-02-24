@@ -114,7 +114,7 @@ matterManufacturer:
     productId: 0x8015
     deviceProfileName: co
   - id: 4736/848
-    deviceLabel: Motion Sensor
+    deviceLabel: Siterwell Motion Sensor
     vendorId: 0x1280
     productId: 0x0350
     deviceProfileName: motion-battery
