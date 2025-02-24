@@ -10,9 +10,9 @@ components:
     version: 1
   - id: mode
     version: 1
-  - id: energyMeter
-    version: 1
   - id: powerMeter
+    version: 1
+  - id: energyMeter
     version: 1
   - id: powerConsumptionReport
     version: 1

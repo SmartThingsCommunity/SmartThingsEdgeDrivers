@@ -328,8 +328,7 @@ local function schedule_energy_report_timer(device)
     device:set_field(LAST_REPORTED_TIME, current_time, { persist = true })
 
     -- Calculate the energy consumed between the start and the end time
-    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport
-      .ID,
+    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
       capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
 
     local deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
@@ -703,7 +702,9 @@ local function do_configure(driver, device)
     if #electrical_sensor_eps > 0 then
       profile_name = "water-heater-power-energy-powerConsumption"
     end
-  elseif #thermostat_eps > 0 and device_type ~= HEAT_PUMP_DEVICE_TYPE_ID then
+  elseif device_type == HEAT_PUMP_DEVICE_TYPE_ID then
+    profile_name = "heat-pump-2-thermostat-humidity"
+  elseif #thermostat_eps > 0 then
     profile_name = "thermostat"
 
     if #humidity_eps > 0 then
@@ -764,8 +765,8 @@ local function device_added(driver, device)
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
   device:send(req)
   local heat_pump_eps = get_endpoints_for_dt(device, HEAT_PUMP_DEVICE_TYPE_ID)
-  local thermostat_eps = get_endpoints_for_dt(device, THERMOSTAT_DEVICE_TYPE_ID)
   if #heat_pump_eps > 0 then
+    local thermostat_eps = get_endpoints_for_dt(device, THERMOSTAT_DEVICE_TYPE_ID)
     local component_to_endpoint_map = {
       ["thermostatOne"] = thermostat_eps[1],
       ["thermostatTwo"] = thermostat_eps[2],
@@ -1602,6 +1603,11 @@ local function periodic_energy_imported_handler(driver, device, ib, response)
   local cumul_eps = embedded_cluster_utils.get_endpoints(device,
     clusters.ElectricalEnergyMeasurement.ID,
     { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+  if tbl_contains(cumul_eps, endpoint_id) then
+    -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
+    -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
+    return
+  end
 
   if ib.data then
     if version.api < 11 then
@@ -1620,15 +1626,8 @@ local function periodic_energy_imported_handler(driver, device, ib, response)
       schedule_energy_report_timer(device)
     end
 
-    if tbl_contains(cumul_eps, endpoint_id) then
-      -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
-      -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
-      return
-    end
-
-    local energy_imported_mWh = ib.data.elements.energy.value
     endpoint_id = string.format(ib.endpoint_id)
-    local energy_imported_Wh = utils.round(energy_imported_mWh / 1000)
+    local energy_imported_Wh = utils.round( ib.data.elements.energy.value / 1000) -- convert mWh to Wh
     local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] + energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
@@ -1644,8 +1643,7 @@ local function cumulative_energy_imported_handler(driver, device, ib, response)
     end
     local endpoint_id = string.format(ib.endpoint_id)
     local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
-    local cumulative_energy_imported_mWh = ib.data.elements.energy.value
-    local cumulative_energy_imported_Wh = utils.round(cumulative_energy_imported_mWh / 1000)
+    local cumulative_energy_imported_Wh = utils.round( ib.data.elements.energy.value / 1000) -- convert mWh to Wh
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
     local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)

@@ -32,7 +32,7 @@ if version.api < 11 then
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("heat-pump.yml"),
+  profile = t_utils.get_profile_definition("heat-pump-2-thermostat-humidity.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -83,7 +83,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_with_auto = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("heat-pump.yml"),
+  profile = t_utils.get_profile_definition("heat-pump-2-thermostat-humidity.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -203,7 +203,7 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "Heating setpoint reports from child thermostat devices should emit correct events to the corret endpoint",
+  "Heating setpoint reports from component thermostat devices should emit correct events to the correct endpoint",
   {
     {
       channel = "matter",
@@ -235,7 +235,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Cooling setpoint reports reports from child thermostat devices should emit correct events to the corret endpoint",
+  "Cooling setpoint reports reports from component thermostat devices should emit correct events to the corret endpoint",
   {
     {
       channel = "matter",
@@ -344,7 +344,7 @@ test.register_message_test(
 
 
 test.register_message_test(
-  "Thermostat mode reports from the child endpoints should generate correct messages to the right component",
+  "Thermostat mode reports from the component endpoints should generate correct messages to the right component",
   {
     {
       channel = "matter",
@@ -387,7 +387,7 @@ test.register_message_test(
 
 local ControlSequenceOfOperation = clusters.Thermostat.attributes.ControlSequenceOfOperation
 test.register_message_test(
-  "Thermostat control sequence reports form child thermostats should generate correct messages to the right component",
+  "Thermostat control sequence reports form component thermostats should generate correct messages to the right component",
   {
     {
       channel = "matter",
@@ -471,7 +471,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Additional mode reports from child thermostat endpoints should extend the supported modes for the correct component",
+  "Additional mode reports from component thermostat endpoints should extend the supported modes for the correct component",
   {
     {
       channel = "matter",
@@ -539,7 +539,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Additional mode reports from child thermostat endpoints should extend the supported modes for their corresponding components when auto is supported",
+  "Additional mode reports from component thermostat endpoints should extend the supported modes for their corresponding components when auto is supported",
   {
     {
       channel = "matter",
