@@ -770,6 +770,7 @@ local function get_endpoints_for_dt(device, device_type)
   end
   table.sort(endpoints)
   return endpoints
+end
 
 local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
@@ -1715,6 +1716,9 @@ local function water_heater_mode_handler(driver, device, ib, response)
     if i - 1 == currentMode then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
       break
+    end
+  end
+end
 
 local function battery_charge_level_attr_handler(driver, device, ib, response)
   if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
