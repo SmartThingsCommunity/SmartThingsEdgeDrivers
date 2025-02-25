@@ -97,30 +97,19 @@ local function is_mcd_device(device)
     for _, component in pairs(components) do
         component_count = component_count + 1
     end
-    if component_count >= 2 then
-      return true
-    else
-      return false
-    end
+    return component_count >= 2
   end
 end
 
 local function device_added(driver, device, event)
-  local num_switch_server_eps = 0
   local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
-  local updated_flag = false
-  if is_mcd_device(device) == false and device.network_type == device_lib.NetWORK_TYPE_ZIGBEE then
+  if is_mcd_device(device) == false and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
     for _, ep in ipairs(device.zigbee_endpoints) do
-      num_switch_server_eps = num_switch_server_eps + 1
       if ep.id ~= main_endpoint then
-        if device:supports_server_cluster(clusters.OnOff.ID, ep.id) and updated_flag == false then
-          device:try_update_metadata({profile="basic-switch"})
-          updated_flag = true
-          device:set_find_child(find_child)
-        end
         if device:supports_server_cluster(clusters.OnOff.ID, ep.id) then
-          if find_child(device, num_switch_server_eps) == nil then
-            local name = string.format("%s %d", device.label, num_switch_server_eps)
+          device:set_find_child(find_child)
+          if find_child(device, ep.id) == nil then
+            local name = string.format("%s %d", device.label, ep.id)
             local child_profile = "basic-switch"
             driver:try_create_device(
               {
@@ -128,7 +117,7 @@ local function device_added(driver, device, event)
                 label = name,
                 profile = child_profile,
                 parent_device_id = device.id,
-                parent_assigned_child_key = string.format("%02X", num_switch_server_eps),
+                parent_assigned_child_key = string.format("%02X", ep.id),
                 vendor_provided_label = name
               }
             )
