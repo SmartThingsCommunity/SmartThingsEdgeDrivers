@@ -904,4 +904,118 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "colorControl capability sent based on CurrentHue and CurrentSaturation due to ColorMode",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
+      }
+    )
+    local read_hue_sat = clusters.ColorControl.attributes.CurrentHue:read()
+    read_hue_sat:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        read_hue_sat
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, 0xFE),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(100)
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, 0xFE),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(100)
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "colorControl capability sent based on CurrentX and CurrentY due to ColorMode",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
+      }
+    )
+    local read_x_y = clusters.ColorControl.attributes.CurrentX:read()
+    read_x_y:merge(clusters.ColorControl.attributes.CurrentY:read())
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        read_x_y
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "colorControl capability sent based on Color Temperature due to ColorMode",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE)
+      }
+    )
+    local read_color_temp = clusters.ColorControl.attributes.ColorTemperatureMireds:read()
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        read_color_temp
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 305)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.colorTemperature.colorTemperature(3279)
+      )
+    )
+  end
+)
+
 test.run_registered_tests()
