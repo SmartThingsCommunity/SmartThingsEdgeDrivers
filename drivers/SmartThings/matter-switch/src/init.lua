@@ -169,8 +169,11 @@ local device_type_attribute_map = {
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
   { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 switch
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 switch
+  { vendor_id = 0x115F, product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 2 Channels
+  { vendor_id = 0x115F, product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 3 Channels
+  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 2 Channels
 }
 
 local detect_matter_thing
