@@ -21,4 +21,3 @@ end
 setmetatable(RvcCleanModeServerAttributes, attr_mt)
 
 return RvcCleanModeServerAttributes
-
