@@ -82,8 +82,6 @@ local function test_init_mock_bridge()
     end
   end
   test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
-  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
-  test.socket.matter:__expect_send({mock_bridge.id, read_color_mode})
   test.mock_device.add_test_device(mock_bridge)
 end
 

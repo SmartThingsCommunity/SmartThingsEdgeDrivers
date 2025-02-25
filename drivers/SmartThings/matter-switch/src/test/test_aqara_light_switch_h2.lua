@@ -163,8 +163,6 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_color_mode})
   test.mock_device.add_test_device(aqara_mock_device)
   -- to test powerConsumptionReport
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
@@ -191,7 +189,6 @@ local function test_init()
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_color_mode})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
@@ -202,7 +199,6 @@ local function test_init()
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_color_mode})
 
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))

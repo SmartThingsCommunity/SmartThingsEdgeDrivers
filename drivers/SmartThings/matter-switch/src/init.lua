@@ -42,6 +42,12 @@ local COLOR_TEMPERATURE_MIRED_MIN = MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPE
 local SWITCH_LEVEL_LIGHTING_MIN = 1
 local CURRENT_HUESAT_ATTR_MIN = 0
 local CURRENT_HUESAT_ATTR_MAX = 254
+local INIT_HUE = "__init_hue"
+local INIT_SAT = "__init_sat"
+local INIT_X = "__init_x"
+local INIT_Y = "__init_y"
+local INIT_TEMP = "__init_temp"
+local COLOR_MODE = "__color_mode"
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 -- COMPONENT_TO_ENDPOINT_MAP is here only to preserve the endpoint mapping for
@@ -366,6 +372,31 @@ local function mired_to_kelvin(value, minOrMax)
   else
     log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
   end
+end
+
+--- set_color_mode helper function used to set the current color mode from the
+--- attribute handlers for hue, saturation, x, y, and color temp.
+---
+--- If the init_type field is set, this is the first time the caller has ran
+--- since init. In this case we set this field to nil and then check if the
+--- COLOR_MODE field has been set. If it has, and different attribute is
+--- currently controlling the color of the device, return false to alert the
+--- caller to do an early return.
+---
+--- If the init_type field is not set, that means this is at least the second
+--- time that the caller has ran since the driver started. In that case, we
+--- set the COLOR_MODE field because we know that the handler is running
+--- following a device report rather than the initial subscription report.
+local function set_color_mode(device, init_type, current_color_mode)
+  if device:get_field(init_type) then
+    device:set_field(init_type, nil)
+    if device:get_field(COLOR_MODE) ~= nil and device:get_field(COLOR_MODE) ~= current_color_mode then
+      return false
+    end
+  else
+    device:set_field(COLOR_MODE, current_color_mode, {persist = true})
+  end
+  return true
 end
 
 --- device_type_supports_button_switch_combination helper function used to check
@@ -727,8 +758,12 @@ local function device_init(driver, device)
       end
     end
   end
+  device:set_field(INIT_HUE, true)
+  device:set_field(INIT_SAT, true)
+  device:set_field(INIT_X, true)
+  device:set_field(INIT_Y, true)
+  device:set_field(INIT_TEMP, true)
   device:subscribe()
-  device:send(clusters.ColorControl.attributes.ColorMode:read(device))
 end
 
 local function device_removed(driver, device)
@@ -880,22 +915,24 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if ib.data.value == nil or not set_color_mode(device, INIT_HUE, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION) then
+    return
   end
+  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if ib.data.value == nil or not set_color_mode(device, INIT_SAT, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION) then
+    return
   end
+  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
 end
 
 local function temp_attr_handler(driver, device, ib, response)
   local temp_in_mired = ib.data.value
-  if temp_in_mired == nil then
+  if temp_in_mired == nil or not set_color_mode(device, INIT_TEMP, clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE) then
     return
   end
   if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
@@ -992,6 +1029,9 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
+  if not set_color_mode(device, INIT_X, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+    return
+  end
   local y = device:get_field(RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
   -- if they are we can avoid setting fields on the device.
@@ -1007,6 +1047,9 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
+  if not set_color_mode(device, INIT_Y, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+    return
+  end
   local x = device:get_field(RECEIVED_X)
   if x == nil then
     device:set_field(RECEIVED_Y, ib.data.value)
@@ -1016,22 +1059,6 @@ local function y_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_X, nil)
-  end
-end
-
-local function color_mode_attr_handler(driver, device, ib, response)
-  local read_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
-    read_req:merge(clusters.ColorControl.attributes.CurrentHue:read(device))
-    read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read(device))
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
-    read_req:merge(clusters.ColorControl.attributes.CurrentX:read(device))
-    read_req:merge(clusters.ColorControl.attributes.CurrentY:read(device))
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE then
-    read_req:merge(clusters.ColorControl.attributes.ColorTemperatureMireds:read(device))
-  end
-  if #read_req.info_blocks ~= 0 then
-    device:send(read_req)
   end
 end
 
@@ -1230,8 +1257,12 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
+    device:set_field(INIT_HUE, true)
+    device:set_field(INIT_SAT, true)
+    device:set_field(INIT_X, true)
+    device:set_field(INIT_Y, true)
+    device:set_field(INIT_TEMP, true)
     device:subscribe()
-    device:send(clusters.ColorControl.attributes.ColorMode:read(device))
     if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       -- profile has changed, and we deferred setting up our buttons, so do that now
       configure_buttons(device)
@@ -1326,7 +1357,6 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.ColorTemperatureMireds.ID] = temp_attr_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
-        [clusters.ColorControl.attributes.ColorMode.ID] = color_mode_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
         [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MIN), -- max mireds = min kelvin
         [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MAX), -- min mireds = max kelvin
