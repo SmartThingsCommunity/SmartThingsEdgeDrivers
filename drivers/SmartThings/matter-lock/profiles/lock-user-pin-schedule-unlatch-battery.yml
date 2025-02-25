@@ -1,4 +1,4 @@
-name: lock-user-pin-schedule-unlatch
+name: lock-user-pin-schedule-unlatch-battery
 components:
 - label: Main
   id: main
@@ -22,6 +22,8 @@ components:
   - id: lockCredentials
     version: 1
   - id: lockSchedules
+    version: 1
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
