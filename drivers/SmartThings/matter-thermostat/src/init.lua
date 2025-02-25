@@ -85,6 +85,7 @@ local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
 
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
+local WIND_MODE_COUNT = "__WIND_MODE_COUNT"
 
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
@@ -110,6 +111,7 @@ local battery_support = {
   BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
+local BATTERY_SUPPORT = "__BATTERY_SUPPORT"
 
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
@@ -401,7 +403,8 @@ local function create_fan_profile(device)
   if #rock_eps > 0 then
     profile_name = profile_name .. "-rock"
   end
-  if #wind_eps > 0 then
+  local wind_mode_count = device:get_field(WIND_MODE_COUNT) or 0
+  if #wind_eps > 0 and wind_mode_count > 1 then -- >1 to ignore the "off" mode
     profile_name = profile_name .. "-wind"
   end
   return profile_name
@@ -448,6 +451,16 @@ local function create_thermostat_modes_profile(device)
 end
 
 local function match_profile(driver, device, battery_supported)
+  -- read WindSupport before profiling if the FanControl Wind Feature Flag is supported
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
+  if #wind_eps > 0 and device:get_field(WIND_MODE_COUNT) == nil then
+    device:set_field(BATTERY_SUPPORT, battery_supported, {persist = true}) -- save value for after WindSupport read
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.FanControl.attributes.WindSupport:read())
+    device:send(req)
+    return
+  end
+
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local device_type = get_device_type(driver, device)
@@ -571,7 +584,6 @@ local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
-  req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
   device:send(req)
 end
@@ -1050,6 +1062,15 @@ local function wind_support_handler(driver, device, ib, response)
   end
   local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+
+  -- save the number of supported wind modes for use in match_profile.
+  device:set_field(WIND_MODE_COUNT, #supported_wind_modes, {persist = true})
+  if device:get_field(BATTERY_SUPPORT) then
+    match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
+  else -- this should never be hit, since the above should always be true.
+    device.log.debug_with({hub_logs=true}, "BATTERY_SUPPORT field not set in WindSupport handler, match_profile call defaulting to NO_BATTERY")
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
 end
 
 local function wind_setting_handler(driver, device, ib, response)
