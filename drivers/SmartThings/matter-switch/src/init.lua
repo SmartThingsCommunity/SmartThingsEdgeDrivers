@@ -890,7 +890,7 @@ end
 
 local function hue_attr_handler(driver, device, ib, response)
   local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ib.data.value == nil or ignore_initial_color_attrs & IGNORE_INITIAL_HUE == 0 then
+  if ib.data.value == nil or (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_HUE == 0) then
     device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_HUE)
     return
   end
@@ -900,7 +900,7 @@ end
 
 local function sat_attr_handler(driver, device, ib, response)
   local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ib.data.value == nil or ignore_initial_color_attrs & IGNORE_INITIAL_SAT == 0 then
+  if ib.data.value == nil or (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_SAT == 0) then
     device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_SAT)
     return
   end
@@ -1008,7 +1008,7 @@ local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
   local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ignore_initial_color_attrs & IGNORE_INITIAL_X == 0 then
+  if (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_X == 0) then
     device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_X)
     return
   end
@@ -1028,7 +1028,7 @@ end
 
 local function y_attr_handler(driver, device, ib, response)
   local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ignore_initial_color_attrs & IGNORE_INITIAL_Y == 0 then
+  if (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_Y == 0) then
     device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_Y)
     return
   end
@@ -1045,15 +1045,15 @@ local function y_attr_handler(driver, device, ib, response)
 end
 
 local function color_mode_attr_handler(driver, device, ib, response)
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   if ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
-    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-    device:send(req)
   elseif ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENTX_AND_CURRENTY then
-    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
+  end
+  if #req.info_blocks ~= 0 then
     device:send(req)
   end
 end
