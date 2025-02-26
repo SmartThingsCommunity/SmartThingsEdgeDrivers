@@ -65,6 +65,12 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
+local IGNORE_INITIAL_COLOR_ATTRS = "__ignore_initial_color_attrs"
+local IGNORE_INITIAL_HUE = 0x0001
+local IGNORE_INITIAL_SAT = 0x0002
+local IGNORE_INITIAL_X = 0x0004
+local IGNORE_INITIAL_Y = 0x0008
+
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -163,54 +169,6 @@ local device_type_attribute_map = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
-  }
-}
-
-local subscribed_attributes = {
-  [capabilities.switch.ID] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [capabilities.switchLevel.ID] = {
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-  },
-  [capabilities.colorTemperature.ID] = {
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-  },
-  [capabilities.illuminanceMeasurement.ID] = {
-    clusters.IlluminanceMeasurement.attributes.MeasuredValue
-  },
-  [capabilities.motionSensor.ID] = {
-    clusters.OccupancySensing.attributes.Occupancy
-  },
-  [capabilities.valve.ID] = {
-    clusters.ValveConfigurationAndControl.attributes.CurrentState
-  },
-  [capabilities.level.ID] = {
-    clusters.ValveConfigurationAndControl.attributes.CurrentLevel
-  },
-  [capabilities.battery.ID] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
-  },
-  [capabilities.batteryLevel.ID] = {
-    clusters.PowerSource.attributes.BatChargeLevel,
-  },
-  [capabilities.energyMeter.ID] = {
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
-  },
-  [capabilities.powerMeter.ID] = {
-    clusters.ElectricalPowerMeasurement.attributes.ActivePower
-  },
-  [capabilities.relativeHumidityMeasurement.ID] = {
-    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-  },
-  [capabilities.temperatureMeasurement.ID] = {
-    clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
   }
 }
 
@@ -775,11 +733,12 @@ local function device_init(driver, device)
       end
     end
   end
+
   if device:supports_capability(capabilities.colorControl) then
+    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, IGNORE_INITIAL_HUE | IGNORE_INITIAL_SAT | IGNORE_INITIAL_X | IGNORE_INITIAL_Y)
     device:send(clusters.ColorControl.attributes.ColorMode:read())
-  else
-    device:subscribe()
   end
+  device:subscribe()
 end
 
 local function device_removed(driver, device)
@@ -805,7 +764,6 @@ local function handle_switch_off(driver, device, cmd)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
-
 
 local function handle_set_switch_level(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
@@ -931,24 +889,30 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
+  if ib.data.value == nil or ignore_initial_color_attrs & IGNORE_INITIAL_HUE == 0 then
+    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_HUE)
+    return
   end
+  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
+  if ib.data.value == nil or ignore_initial_color_attrs & IGNORE_INITIAL_SAT == 0 then
+    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_SAT)
+    return
   end
+  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
 end
 
 local function temp_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil then
+  local temp_in_mired = ib.data.value
+  if temp_in_mired == nil then
     return
   end
-  local temp_in_mired = ib.data.value
   if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
     device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
     return
@@ -1043,6 +1007,11 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
+  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
+  if ignore_initial_color_attrs & IGNORE_INITIAL_X == 0 then
+    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_X)
+    return
+  end
   local y = device:get_field(RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
   -- if they are we can avoid setting fields on the device.
@@ -1058,6 +1027,11 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
+  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
+  if ignore_initial_color_attrs & IGNORE_INITIAL_Y == 0 then
+    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_Y)
+    return
+  end
   local x = device:get_field(RECEIVED_X)
   if x == nil then
     device:set_field(RECEIVED_Y, ib.data.value)
@@ -1071,33 +1045,17 @@ local function y_attr_handler(driver, device, ib, response)
 end
 
 local function color_mode_attr_handler(driver, device, ib, response)
-  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
-    subscribed_attributes[capabilities.colorControl.ID] = {
-      clusters.ColorControl.attributes.CurrentHue,
-      clusters.ColorControl.attributes.CurrentSaturation
-    }
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
-    subscribed_attributes[capabilities.colorControl.ID] = {
-      clusters.ColorControl.attributes.CurrentX,
-      clusters.ColorControl.attributes.CurrentY
-    }
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE then
-    subscribed_attributes[capabilities.colorTemperature.ID] = {
-      clusters.ColorControl.attributes.ColorTemperatureMireds
-    }
-  else
-    device.log.debug_with({hub_logs=true}, "Invalid color mode received from device.")
-    subscribed_attributes[capabilities.colorControl.ID] = {
-      clusters.ColorControl.attributes.CurrentHue,
-      clusters.ColorControl.attributes.CurrentSaturation,
-      clusters.ColorControl.attributes.CurrentX,
-      clusters.ColorControl.attributes.CurrentY
-    }
-    subscribed_attributes[capabilities.colorTemperature.ID] = {
-      clusters.ColorControl.attributes.ColorTemperatureMireds
-    }
+  if ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.ColorControl.attributes.CurrentHue:read())
+    req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
+    device:send(req)
+  elseif ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENTX_AND_CURRENTY then
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.ColorControl.attributes.CurrentX:read())
+    req:merge(clusters.ColorControl.attributes.CurrentY:read())
+    device:send(req)
   end
-  device:subscribe()
 end
 
 --TODO setup configure handler to read this attribute.
@@ -1296,10 +1254,10 @@ end
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     if device:supports_capability(capabilities.colorControl) then
+      device:set_field(IGNORE_INITIAL_COLOR_ATTRS, IGNORE_INITIAL_HUE | IGNORE_INITIAL_SAT | IGNORE_INITIAL_X | IGNORE_INITIAL_Y)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
-    else
-      device:subscribe()
     end
+    device:subscribe()
     if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       -- profile has changed, and we deferred setting up our buttons, so do that now
       configure_buttons(device)
@@ -1443,7 +1401,60 @@ local matter_driver_template = {
     },
     fallback = matter_handler,
   },
-  subscribed_attributes = subscribed_attributes,
+  subscribed_attributes = {
+    [capabilities.switch.ID] = {
+      clusters.OnOff.attributes.OnOff
+    },
+    [capabilities.switchLevel.ID] = {
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
+    },
+    [capabilities.colorControl.ID] = {
+      clusters.ColorControl.attributes.CurrentHue,
+      clusters.ColorControl.attributes.CurrentSaturation,
+      clusters.ColorControl.attributes.CurrentX,
+      clusters.ColorControl.attributes.CurrentY,
+    },
+    [capabilities.colorTemperature.ID] = {
+      clusters.ColorControl.attributes.ColorTemperatureMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    },
+    [capabilities.illuminanceMeasurement.ID] = {
+      clusters.IlluminanceMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.valve.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentState
+    },
+    [capabilities.level.ID] = {
+      clusters.ValveConfigurationAndControl.attributes.CurrentLevel
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining,
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+    },
+    [capabilities.energyMeter.ID] = {
+      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+      clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+    },
+    [capabilities.powerMeter.ID] = {
+      clusters.ElectricalPowerMeasurement.attributes.ActivePower
+    },
+    [capabilities.relativeHumidityMeasurement.ID] = {
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    }
+  },
   subscribed_events = {
     [capabilities.button.ID] = {
       clusters.Switch.events.InitialPress,
