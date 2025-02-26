@@ -11,15 +11,20 @@ matterManufacturer:
     productId: 0x2801
     deviceProfileName: lock-user-pin
   #Eufy
-  - id: "5427/3"
-    deviceLabel: eufy Smart Lock C34
-    vendorId: 0x1533
-    productId: 0x0003
-    deviceProfileName: lock-user-pin-battery
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
     vendorId: 0x1533
     productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/2"
+    deviceLabel: eufy Smart Lock E30
+    vendorId: 0x1533
+    productId: 0x0002
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/3"
+    deviceLabel: eufy Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
     deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"
