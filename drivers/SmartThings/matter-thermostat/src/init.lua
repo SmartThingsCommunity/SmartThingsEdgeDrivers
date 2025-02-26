@@ -403,6 +403,7 @@ local function create_fan_profile(device)
   end
   if #wind_eps > 0 and device:get_field(WIND_SUPPORT_ATTR_POPULATED) then
     profile_name = profile_name .. "-wind"
+    device:set_field(WIND_SUPPORT_ATTR_POPULATED, nil) -- clear after use
   end
   return profile_name
 end
@@ -447,14 +448,33 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function match_profile(driver, device, battery_supported)
-  -- read WindSupport before profiling if the FanControl Wind Feature Flag is supported
+local function device_reads_still_required_or_proceed(driver, device)
+  -- read PowerSource AttributeList before profiling if the BATTERY feature flag is supported, or set BATTERY_SUPPORT to "no_battery"
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 and device:get_field(BATTERY_SUPPORT) == nil then
+    device:send(clusters.PowerSource.attributes.AttributeList:read())
+    return true
+  elseif #battery_feature_eps == 0 then
+    device:set_field(BATTERY_SUPPORT, battery_support.NO_BATTERY)
+  end
+
+  -- read WindSupport before profiling if the FanControl WIND Feature Flag is supported
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
   if #wind_eps > 0 and device:get_field(WIND_SUPPORT_ATTR_POPULATED) == nil then
-    device:set_field(BATTERY_SUPPORT, battery_supported) -- save value for the match_profile call in WindSupport
     device:send(clusters.FanControl.attributes.WindSupport:read())
-    return
+    return true
   end
+
+  return false
+end
+
+
+local function do_configure(driver, device)
+  local device_reads_still_required = device_reads_still_required_or_proceed(driver, device)
+  if device_reads_still_required then return end
+
+  local battery_supported = device:get_field(BATTERY_SUPPORT)
+  device:set_field(BATTERY_SUPPORT, nil) -- clear after use
 
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
@@ -564,14 +584,15 @@ local function match_profile(driver, device, battery_supported)
   end
 end
 
-local function do_configure(driver, device)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    device:send(clusters.PowerSource.attributes.AttributeList:read())
-  else
-    match_profile(driver, device, battery_support.NO_BATTERY)
-  end
-end
+-- local function do_configure(driver, device)
+--   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+--   if #battery_feature_eps > 0 then
+--     device:send(clusters.PowerSource.attributes.AttributeList:read())
+--   else
+--     device:set_field(BATTERY_SUPPORT, battery_support.NO_BATTERY)
+--     match_profile(driver, device)
+--   end
+-- end
 
 local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -1042,10 +1063,9 @@ local function wind_support_handler(driver, device, ib, response)
   local event = capabilities.windMode.supportedWindModes(supported_wind_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 
-  if device:get_field(BATTERY_SUPPORT) then
+  if device:get_field(BATTERY_SUPPORT) then -- this will be set here iif profiling is incomplete
     device:set_field(WIND_SUPPORT_ATTR_POPULATED, #supported_wind_modes > 1) -- >1 to ignore the "off" mode which is added by default
-    match_profile(driver, device, device:get_field(BATTERY_SUPPORT))
-    device:set_field(BATTERY_SUPPORT, nil) -- clear after use
+    do_configure(driver, device)
   end
 end
 
@@ -1380,13 +1400,14 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
     -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
-      return
+      device:set_field(BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE)
+      break
     elseif attr.value == 0x0E then
-      match_profile(driver, device, battery_support.BATTERY_LEVEL)
-      return
+      device:set_field(BATTERY_SUPPORT, battery_support.BATTERY_LEVEL)
+      break
     end
   end
+  do_configure(driver, device)
 end
 
 local matter_driver_template = {

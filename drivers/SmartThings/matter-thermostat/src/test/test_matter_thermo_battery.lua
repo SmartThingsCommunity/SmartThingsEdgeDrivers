@@ -127,6 +127,12 @@ test.register_coroutine_test(
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(10)})
       }
     )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:read(mock_device)
+      }
+    )
   end
 )
 
