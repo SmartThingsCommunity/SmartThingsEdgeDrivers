@@ -93,6 +93,16 @@ local cluster_subscribe_list = {
 
 local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
+
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
+  test.socket.matter:__expect_send({mock_device.id, read_color_mode})
+
+  test.socket.matter:__queue_receive({
+    mock_device.id,
+    clusters.ColorControl.attributes.ColorMode:build_test_report_data(
+      mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
+  })
+
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -101,6 +111,8 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+
+  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, read_color_mode})
 
   subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
   for i, cluster in ipairs(cluster_subscribe_list) do
