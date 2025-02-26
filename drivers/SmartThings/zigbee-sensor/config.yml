@@ -1,0 +1,6 @@
+name: 'Zigbee Sensor'
+packageKey: 'zigbee-sensor'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"
