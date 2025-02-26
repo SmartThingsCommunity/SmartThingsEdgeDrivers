@@ -98,4 +98,4 @@ matterGeneric:
       - id: 0x0309 # Heat Pump
       - id: 0x0510 # Electrical Sensor
       - id: 0x0301 # Thermostat
-    deviceProfileName: heat-pump
+    deviceProfileName: heat-pump-2-thermostat-humidity
