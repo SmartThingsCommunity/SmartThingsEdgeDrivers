@@ -762,25 +762,52 @@ local supportedFanWind = {
   capabilities.windMode.windMode.naturalWind.NAME
 }
 
-test.register_coroutine_test(
+test.register_message_test(
   "Test wind mode",
-  function ()
-    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03)})
-    mock_device:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind" })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility = {displayed = false}}))
-    )
-
-    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)})
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
-    )
-
-    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)})
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windMode.windMode.naturalWind())
-    )
-  end
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03) -- NoWind,  SleepWind (0x0001), and NaturalWind (0x0002)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes(supportedFanWind, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "windMode", component = "main", command = "setWindMode", args = { "naturalWind" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
+      }
+    }
+  }
 )
 
 test.register_coroutine_test(
