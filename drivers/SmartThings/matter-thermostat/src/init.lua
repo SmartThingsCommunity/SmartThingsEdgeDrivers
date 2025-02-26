@@ -448,29 +448,19 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function device_reads_still_required_or_proceed(driver, device)
-  -- read PowerSource AttributeList before profiling if the BATTERY feature flag is supported, or set BATTERY_SUPPORT to "no_battery"
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 and device:get_field(BATTERY_SUPPORT) == nil then
-    device:send(clusters.PowerSource.attributes.AttributeList:read())
-    return true
-  elseif #battery_feature_eps == 0 then
-    device:set_field(BATTERY_SUPPORT, battery_support.NO_BATTERY)
-  end
-
-  -- read WindSupport before profiling if the FanControl WIND Feature Flag is supported
-  local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
-  if #wind_eps > 0 and device:get_field(WIND_SUPPORT_ATTR_POPULATED) == nil then
-    device:send(clusters.FanControl.attributes.WindSupport:read())
+local function device_fields_still_required_or_proceed(driver, device)
+  if device:get_field(BATTERY_SUPPORT) == nil then
     return true
   end
-
+  if device:get_field(WIND_SUPPORT_ATTR_POPULATED) == nil then
+    return true
+  end
   return false
 end
 
 
-local function do_configure(driver, device)
-  local device_reads_still_required = device_reads_still_required_or_proceed(driver, device)
+local function match_profile(driver, device)
+  local device_reads_still_required = device_fields_still_required_or_proceed(driver, device)
   if device_reads_still_required then return end
 
   local battery_supported = device:get_field(BATTERY_SUPPORT)
@@ -584,21 +574,31 @@ local function do_configure(driver, device)
   end
 end
 
--- local function do_configure(driver, device)
---   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
---   if #battery_feature_eps > 0 then
---     device:send(clusters.PowerSource.attributes.AttributeList:read())
---   else
---     device:set_field(BATTERY_SUPPORT, battery_support.NO_BATTERY)
---     match_profile(driver, device)
---   end
--- end
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
 
 local function device_added(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, { feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND })
+
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
-  req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
-  req:merge(clusters.FanControl.attributes.RockSupport:read(device))
+  if #battery_feature_eps > 0 then
+    req:merge(clusters.PowerSource.attributes.AttributeList:read(device))
+  else
+    device:set_field(BATTERY_SUPPORT, battery_support.NO_BATTERY)
+  end
+  if #wind_eps > 0 then
+    req:merge(clusters.FanControl.attributes.WindSupport:read(device))
+  else
+    device:set_field(WIND_SUPPORT_ATTR_POPULATED, false)
+  end
+  if #rock_eps > 0 then
+    req:merge(clusters.FanControl.attributes.RockSupport:read(device))
+  end
+  req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device)) -- mandatory
+  req:merge(clusters.FanControl.attributes.FanModeSequence:read(device)) -- mandatory
   device:send(req)
 end
 
@@ -1065,7 +1065,7 @@ local function wind_support_handler(driver, device, ib, response)
 
   if device:get_field(BATTERY_SUPPORT) then -- this will be set here iif profiling is incomplete
     device:set_field(WIND_SUPPORT_ATTR_POPULATED, #supported_wind_modes > 1) -- >1 to ignore the "off" mode which is added by default
-    do_configure(driver, device)
+    match_profile(driver, device)
   end
 end
 
@@ -1407,7 +1407,7 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
       break
     end
   end
-  do_configure(driver, device)
+  match_profile(driver, device)
 end
 
 local matter_driver_template = {
