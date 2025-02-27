@@ -92,8 +92,6 @@ local cluster_subscribe_list = {
 }
 
 local function test_init()
-  test.socket.matter:__set_channel_ordering("relaxed")
-
   local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
   test.socket.matter:__expect_send({mock_device.id, read_color_mode})
 
@@ -105,6 +103,10 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.matter:__queue_receive({mock_device.id, clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, 0)})
+  test.socket.matter:__queue_receive({mock_device.id, clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, 0)})
+  test.socket.matter:__queue_receive({mock_device.id, clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 0)})
+  test.socket.matter:__queue_receive({mock_device.id, clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 0)})
   test.socket.matter:__queue_receive({
     mock_device.id,
     clusters.ColorControl.attributes.ColorMode:build_test_report_data(
@@ -113,9 +115,13 @@ local function test_init()
   local read_req = clusters.ColorControl.attributes.CurrentHue:read()
   read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
   test.socket.matter:__expect_send({mock_device.id, read_req})
+end
+test.set_test_init_function(test_init)
 
+local function test_init_no_hue_sat()
+  local read_color_mode = clusters.ColorControl.attributes.ColorMode:read()
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, read_color_mode})
-  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_no_hue_sat)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device_no_hue_sat))
@@ -123,17 +129,17 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
-
+  test.socket.matter:__queue_receive({mock_device_no_hue_sat.id, clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device_no_hue_sat, 1, 0)})
+  test.socket.matter:__queue_receive({mock_device_no_hue_sat.id, clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device_no_hue_sat, 1, 0)})
   test.socket.matter:__queue_receive({
     mock_device_no_hue_sat.id,
     clusters.ColorControl.attributes.ColorMode:build_test_report_data(
       mock_device_no_hue_sat, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
   })
-  read_req = clusters.ColorControl.attributes.CurrentX:read()
+  local read_req = clusters.ColorControl.attributes.CurrentX:read()
   read_req:merge(clusters.ColorControl.attributes.CurrentY:read())
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, read_req})
 end
-test.set_test_init_function(test_init)
 
 test.register_message_test(
   "On command should send the appropriate commands",
@@ -278,60 +284,50 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
-  "Set color command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Set color command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device_no_hue_sat.id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } }},
       }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    test.socket.matter:__expect_send(
+      {
         mock_device_no_hue_sat.id,
         clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device_no_hue_sat.id,
         clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device_no_hue_sat, 1)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, 1, 15091)
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device_no_hue_sat, 1, 15091)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device_no_hue_sat.id,
-        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, 1, 21547)
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device_no_hue_sat, 1, 21547)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_no_hue_sat:generate_test_message("main", capabilities.colorControl.saturation(72))
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_no_hue_sat:generate_test_message(
+        "main", capabilities.colorControl.hue(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device_no_hue_sat:generate_test_message(
+        "main", capabilities.colorControl.saturation(72)
+      )
+    )
+  end,
+  { test_init = test_init_no_hue_sat }
 )
 
 local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
