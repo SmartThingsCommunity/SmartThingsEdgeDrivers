@@ -16,7 +16,7 @@ local W_INTERVAL = "watering-interval"
 
 local function device_added(driver, device)
     device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
-    device:emit_component_event(device.profile.components[W_TIME], capabilities.fanSpeed.fanSpeed(0))
+    device:emit_component_event(device.profile.components[W_TIME], capabilities.fanSpeed.fanSpeed(10))
     device:emit_component_event(device.profile.components[W_INTERVAL], capabilities.fanSpeed.fanSpeed(0))
 end
 
