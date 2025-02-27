@@ -65,11 +65,11 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
-local IGNORE_INITIAL_COLOR_ATTRS = "__ignore_initial_color_attrs"
-local IGNORE_INITIAL_HUE = 0x0001
-local IGNORE_INITIAL_SAT = 0x0002
-local IGNORE_INITIAL_X = 0x0004
-local IGNORE_INITIAL_Y = 0x0008
+local COLOR_MODE_ATTRS_BITMAP = "__color_mode_attrs_bitmap"
+local HUE_ATTR_BIT = 0x01
+local SAT_ATTR_BIT = 0x02
+local X_ATTR_BIT = 0x04
+local Y_ATTR_BIT = 0x08
 
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -372,6 +372,15 @@ local function mired_to_kelvin(value, minOrMax)
   else
     log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
   end
+end
+
+local function ignore_initial_color_read(device, attr_bit)
+  local color_attr_bitmap = device:get_field(COLOR_MODE_ATTRS_BITMAP)
+  if color_attr_bitmap ~= nil and color_attr_bitmap & attr_bit > 0 then
+    device:set_field(COLOR_MODE_ATTRS_BITMAP, color_attr_bitmap & ~attr_bit)
+    return true
+  end
+  return false
 end
 
 --- device_type_supports_button_switch_combination helper function used to check
@@ -735,7 +744,7 @@ local function device_init(driver, device)
   end
 
   if device:supports_capability(capabilities.colorControl) then
-    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, IGNORE_INITIAL_HUE | IGNORE_INITIAL_SAT | IGNORE_INITIAL_X | IGNORE_INITIAL_Y)
+    device:set_field(COLOR_MODE_ATTRS_BITMAP, HUE_ATTR_BIT | SAT_ATTR_BIT | X_ATTR_BIT | Y_ATTR_BIT)
     device:send(clusters.ColorControl.attributes.ColorMode:read())
   end
   device:subscribe()
@@ -889,9 +898,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ib.data.value == nil or (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_HUE == 0) then
-    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_HUE)
+  if ib.data.value == nil or ignore_initial_color_read(device, HUE_ATTR_BIT) then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -899,9 +906,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if ib.data.value == nil or (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_SAT == 0) then
-    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_SAT)
+  if ib.data.value == nil or ignore_initial_color_read(device, SAT_ATTR_BIT) then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -1007,9 +1012,7 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
-  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_X == 0) then
-    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_X)
+  if ignore_initial_color_read(device, X_ATTR_BIT) then
     return
   end
   local y = device:get_field(RECEIVED_Y)
@@ -1027,9 +1030,7 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
-  local ignore_initial_color_attrs = device:get_field(IGNORE_INITIAL_COLOR_ATTRS)
-  if (ignore_initial_color_attrs ~= nil and ignore_initial_color_attrs & IGNORE_INITIAL_Y == 0) then
-    device:set_field(IGNORE_INITIAL_COLOR_ATTRS, ignore_initial_color_attrs & ~IGNORE_INITIAL_Y)
+  if ignore_initial_color_read(device, Y_ATTR_BIT) then
     return
   end
   local x = device:get_field(RECEIVED_X)
@@ -1053,7 +1054,7 @@ local function color_mode_attr_handler(driver, device, ib, response)
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
-  if #req.info_blocks ~= 0 then
+  if #req.info_blocks > 0 then
     device:send(req)
   end
 end
@@ -1254,7 +1255,7 @@ end
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     if device:supports_capability(capabilities.colorControl) then
-      device:set_field(IGNORE_INITIAL_COLOR_ATTRS, IGNORE_INITIAL_HUE | IGNORE_INITIAL_SAT | IGNORE_INITIAL_X | IGNORE_INITIAL_Y)
+      device:set_field(COLOR_MODE_ATTRS_BITMAP, HUE_ATTR_BIT | SAT_ATTR_BIT | X_ATTR_BIT | Y_ATTR_BIT)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
     end
     device:subscribe()
