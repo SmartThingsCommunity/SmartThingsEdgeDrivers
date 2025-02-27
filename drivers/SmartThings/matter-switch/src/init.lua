@@ -169,8 +169,11 @@ local device_type_attribute_map = {
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
   { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 switch
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 switch
+  { vendor_id = 0x115F, product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 2 Channels
+  { vendor_id = 0x115F, product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 3 Channels
+  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 2 Channels
 }
 
 local detect_matter_thing
@@ -295,6 +298,7 @@ local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
+local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -395,9 +399,8 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 local function find_default_endpoint(device)
-  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  if #temperature_eps > 0 and #humidity_eps > 0 then
+  if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -1189,10 +1192,8 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
 
-    local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-    local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-    if #temperature_eps > 0 and #humidity_eps > 0 then
-      -- for now, this logic only applies to the Aqara Climate Sensor W100.
+    if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+       device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
       profile_name = profile_name .. "-temperature-humidity"
     end
     device:try_update_metadata({ profile = profile_name })
