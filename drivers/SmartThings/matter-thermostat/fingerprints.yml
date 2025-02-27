@@ -97,5 +97,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0309 # Heat Pump
       - id: 0x0510 # Electrical Sensor
+    deviceProfileName: heat-pump
+  - id: "matter/heat-pump/thermostat"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
       - id: 0x0301 # Thermostat
-    deviceProfileName: heat-pump-2-thermostat-humidity
+    deviceProfileName: heat-pump-thermostat

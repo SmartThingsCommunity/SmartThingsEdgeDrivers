@@ -74,7 +74,7 @@ end
 
 local find_default_endpoint = function(device)
   local evse_eps = get_endpoints_for_dt(device, EVSE_DEVICE_TYPE_ID) or {}
-  local solar_power_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID)
+  local solar_power_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID) or {}
   if #evse_eps > 0 then
     return evse_eps[1]
   elseif #solar_power_eps > 0 then
@@ -135,12 +135,16 @@ local function tbl_contains(array, value)
 end
 
 local get_total = function(map)
-  if map ~= nil and type(map) == "table" then
+  if type(map) == "table" then
     local total_value = 0
     for _, value in pairs(map) do
-      total_value = total_value + value
+      if type(value) == "number" then
+        total_value = total_value + value
+      end
     end
     return total_value
+  else
+    log.debug("get_total: 'map' should be of type table")
   end
 end
 
@@ -191,10 +195,11 @@ local BATTERY_CHARGING_STATE_MAP = {
 
 -- Matter Handlers
 local function read_cumulative_energy(device)
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-  if cumul_eps and #cumul_eps > 0 then
+  local cumul_imp_eps = embedded_cluster_utils.get_endpoints(
+    device, clusters.ElectricalEnergyMeasurement.ID,
+    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.IMPORTED_ENERGY }
+  )
+  if cumul_imp_eps and #cumul_imp_eps > 0 then
     local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device)
     device:send(read_req)
   end
@@ -209,7 +214,7 @@ local function read_cumulative_energy(device)
     local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, eps_to_read[1])
     for i, ep in ipairs(eps_to_read) do
       if i > 1 then
-        read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, eps_to_read[i]))
+        read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(device, ep))
       end
     end
     device:send(read_req)
@@ -222,8 +227,14 @@ local function create_poll_schedule(device)
     return
   end
 
+  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
+    clusters.ElectricalEnergyMeasurement.ID,
+    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY }) or {}
+  if #cumul_eps == 0 then
+    return
+  end
   read_cumulative_energy(device)
-  -- Read cumulative energy exported every minute
+  -- Read cumulative energy imported/exported attributes every minute
   local timer = device.thread:call_on_schedule(TIMER_REPEAT, function()
     read_cumulative_energy(device)
   end, "polling_schedule_timer")
@@ -236,9 +247,9 @@ local report_energy_to_app = function(device, comp, energy_map, startTime, endTi
   local total_cumulative_energy = get_total(energy_map) or 0
 
   -- Calculate the energy consumed between the start and the end time
-  local previousTotalConsumptionWh = device:get_latest_state(comp, capabilities.powerConsumptionReport.ID,
-  capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
-
+  local previousTotalConsumptionWh = device:get_latest_state(
+    comp, capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME
+  ) or { energy = 0 }
   local deltaEnergyWh = math.max(total_cumulative_energy - previousTotalConsumptionWh.energy, 0.0)
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -556,8 +567,8 @@ end
 
 local function report_energy_meter(device, energy_map_id)
   --report energyMeter for Solar Power and Battery Storage devices only.
-  local battery_storage_eps = get_endpoints_for_dt(device, BATTERY_STORAGE_DEVICE_TYPE_ID)
-  local solar_power_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID)
+  local battery_storage_eps = get_endpoints_for_dt(device, BATTERY_STORAGE_DEVICE_TYPE_ID) or {}
+  local solar_power_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID) or {}
   local energy_map = device:get_field(energy_map_id) or {}
   local total_energy = get_total(energy_map) or 0
 
@@ -581,9 +592,8 @@ local function cumulative_energy_handler(energy_map_id)
       if version.api < 11 then
         clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
       end
-      local cumulative_energy_mWh = ib.data.elements.energy.value
       local endpoint_id = string.format(ib.endpoint_id)
-      local cumulative_energy_Wh = utils.round(cumulative_energy_mWh / 1000)
+      local cumulative_energy_Wh = utils.round(ib.data.elements.energy.value / 1000) -- convert mWh to Wh
       local total_cumulative_energy = device:get_field(energy_map_id) or {}
 
       -- in case there are multiple electrical sensors store them in a table.
@@ -600,7 +610,7 @@ local function periodic_energy_handler(energy_map_id)
     local endpoint_id = ib.endpoint_id
     local cumul_eps = embedded_cluster_utils.get_endpoints(device,
       clusters.ElectricalEnergyMeasurement.ID,
-      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+      { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
 
     if ib.data then
       if version.api < 11 then
@@ -626,9 +636,8 @@ local function periodic_energy_handler(energy_map_id)
         return
       end
 
-      local energy = ib.data.elements.energy.value
       endpoint_id = string.format(ib.endpoint_id)
-      local energy_Wh = utils.round(energy / 1000)
+      local energy_Wh = utils.round(ib.data.elements.energy.value / 1000) -- convert mWh to Wh
       local total_cumulative_energy = device:get_field(energy_map_id) or {}
 
       -- in case there are multiple electrical sensors store them in a table.
@@ -641,9 +650,9 @@ local function periodic_energy_handler(energy_map_id)
 end
 
 local function active_power_handler(driver, device, ib, response)
+  local battery_storage_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID) or {}
+  local solar_power_eps = get_endpoints_for_dt(device, BATTERY_STORAGE_DEVICE_TYPE_ID) or {}
   -- Consider only Solar Power / Battery Storage devices and sum up in case there are multiple endpoints.
-  local battery_storage_eps = get_endpoints_for_dt(device, SOLAR_POWER_DEVICE_TYPE_ID)
-  local solar_power_eps = get_endpoints_for_dt(device, BATTERY_STORAGE_DEVICE_TYPE_ID)
   if (tbl_contains(solar_power_eps, ib.endpoint_id) or tbl_contains(battery_storage_eps, ib.endpoint_id)) and ib.data.value then
     local endpoint_id = string.format(ib.endpoint_id)
     local active_power_map = device:get_field(TOTAL_ACTIVE_POWER) or {}

@@ -86,11 +86,6 @@ local function test_init()
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({
-    mock_device.id,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-  })
-
   local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_ONE)
   read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_TWO))
 
@@ -165,10 +160,6 @@ test.register_coroutine_test(
       mock_device.id,
       read_req
     })
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
     test.wait_for_events()
   end,
   {
@@ -184,11 +175,6 @@ test.register_coroutine_test(
   function()
     test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
-
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
 
     local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_ONE)
     read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyExported:read(mock_device, SOLAR_POWER_EP_TWO))

@@ -66,18 +66,18 @@ local THERMOSTAT_MODE_MAP = {
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
-  [0]		= capabilities.thermostatOperatingState.thermostatOperatingState.heating,
-  [1]		= capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
-  [2]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
-  [3]		= capabilities.thermostatOperatingState.thermostatOperatingState.heating,
-  [4]		= capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
-  [5]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
-  [6]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [0] = capabilities.thermostatOperatingState.thermostatOperatingState.heating,
+  [1] = capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
+  [2] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [3] = capabilities.thermostatOperatingState.thermostatOperatingState.heating,
+  [4] = capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
+  [5] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [6] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
 }
 
 local WIND_MODE_MAP = {
-  [0]		= capabilities.windMode.windMode.sleepWind,
-  [1]		= capabilities.windMode.windMode.naturalWind
+  [0] = capabilities.windMode.windMode.sleepWind,
+  [1] = capabilities.windMode.windMode.naturalWind
 }
 
 local ROCK_MODE_MAP = {
@@ -92,6 +92,7 @@ local FAN_DEVICE_TYPE_ID = 0x002B
 local WATER_HEATER_DEVICE_TYPE_ID = 0x050F
 local HEAT_PUMP_DEVICE_TYPE_ID = 0x0309
 local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
+local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
 
 local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
@@ -339,9 +340,9 @@ local function schedule_energy_report_timer(device)
     device:set_field(LAST_REPORTED_TIME, current_time, { persist = true })
 
     -- Calculate the energy consumed between the start and the end time
-    local previousTotalConsumptionWh = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-      capabilities.powerConsumptionReport.powerConsumption.NAME) or { energy = 0 }
-
+    local previousTotalConsumptionWh = device:get_latest_state(
+      "main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME
+    ) or { energy = 0 }
     local deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
     local startTime = epoch_to_iso8601(last_time)
     local endTime = epoch_to_iso8601(current_time - 1)
@@ -366,17 +367,13 @@ local function delete_reporting_timer(device)
   end
 end
 
-local function remove_timers(device)
+local function device_removed(driver, device)
   delete_reporting_timer(device)
   local poll_timer = device:get_field(RECURRING_POLL_TIMER)
   if poll_timer ~= nil then
     device.thread:cancel_timer(poll_timer)
     device:set_field(RECURRING_POLL_TIMER, nil)
   end
-end
-
-local function device_removed(driver, device)
-  remove_timers(device)
 end
 
 local function get_field_for_endpoint(device, field, endpoint)
@@ -412,8 +409,7 @@ local function component_to_endpoint(device, component_name)
     return find_default_endpoint(device, clusters.FanControl.ID)
   else
     -- Thermostat is mandatory for Thermostat and Room AC device type
-    local val = find_default_endpoint(device, clusters.Thermostat.ID)
-    return val
+    return find_default_endpoint(device, clusters.Thermostat.ID)
   end
 end
 
@@ -429,42 +425,34 @@ local endpoint_to_component = function (device, endpoint_id)
   return "main"
 end
 
-local function read_cumulative_energy_imported(device)
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-  if cumul_eps and #cumul_eps > 0 then
-    local read_req = clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device,
-      cumul_eps[1])
-    for i, ep in ipairs(cumul_eps) do
-      if i > 1 then
-        read_req:merge(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device, ep))
-      end
-    end
-    device:send(read_req)
-  end
-end
-
 local function create_poll_schedule(device)
   local poll_timer = device:get_field(RECURRING_POLL_TIMER)
   if poll_timer ~= nil then
     return
   end
 
-  read_cumulative_energy_imported(device)
+  local cumul_imp_eps = embedded_cluster_utils.get_endpoints(
+    device, clusters.ElectricalEnergyMeasurement.ID,
+    {
+      feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY |
+      clusters.ElectricalEnergyMeasurement.types.Feature.IMPORTED_ENERGY
+    }
+  ) or {}
+  if #cumul_imp_eps == 0 then
+    return
+  end
+
+  device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
   -- Setup a timer to read cumulative energy imported attribute every minute.
   local timer = device.thread:call_on_schedule(POLL_INTERVAL, function()
-    read_cumulative_energy_imported(device)
+    device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
   end, "polling_schedule_timer")
 
   device:set_field(RECURRING_POLL_TIMER, timer)
 end
 
 local function schedule_polls_for_cumulative_energy_imported(device)
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-  if #cumul_eps == 0 then
+  if not device:supports_capability(capabilities.powerConsumptionReport) then
     return
   end
   create_poll_schedule(device)
@@ -488,7 +476,7 @@ local function device_init(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  --Note this is needed because device:subscribe() does not recalculate
+  -- Note this is needed because device:subscribe() does not recalculate
   -- the subscribed attributes each time it is run, that only happens at init.
   -- This will change in the 0.48.x release of the lua libs.
   for cap_id, attributes in pairs(subscribed_attributes) do
@@ -500,6 +488,20 @@ local function info_changed(driver, device, event, args)
   end
   device:subscribe()
   schedule_polls_for_cumulative_energy_imported(device)
+end
+
+local function get_endpoints_for_dt(device, device_type)
+  local endpoints = {}
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == device_type then
+        table.insert(endpoints, ep.endpoint_id)
+        break
+      end
+    end
+  end
+  table.sort(endpoints)
+  return endpoints
 end
 
 local function get_device_type(driver, device)
@@ -710,12 +712,19 @@ local function match_profile(driver, device, battery_supported)
   elseif device_type == WATER_HEATER_DEVICE_TYPE_ID then
     -- If a Water Heater is composed of Electrical Sensor device type, it must support both ElectricalEnergyMeasurement and
     -- ElectricalPowerMeasurement clusters.
-    local electrical_sensor_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
+    local electrical_sensor_eps = get_endpoints_for_dt(device, ELECTRICAL_SENSOR_DEVICE_TYPE_ID) or {}
     if #electrical_sensor_eps > 0 then
       profile_name = "water-heater-power-energy-powerConsumption"
     end
   elseif device_type == HEAT_PUMP_DEVICE_TYPE_ID then
-    profile_name = "heat-pump-2-thermostat-humidity"
+    profile_name = "heat-pump"
+    local MAX_HEAT_PUMP_THERMOSTAT_COMPONENTS = 2
+    for i = 1, math.min(MAX_HEAT_PUMP_THERMOSTAT_COMPONENTS, #thermostat_eps) do
+        profile_name = profile_name .. "-thermostat"
+        if tbl_contains(humidity_eps, thermostat_eps[i]) then
+          profile_name = profile_name .. "-humidity"
+        end
+    end
   elseif #thermostat_eps > 0 then
     profile_name = "thermostat"
 
@@ -757,21 +766,6 @@ local function match_profile(driver, device, battery_supported)
   end
 end
 
-
-local function get_endpoints_for_dt(device, device_type)
-  local endpoints = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type then
-        table.insert(endpoints, ep.endpoint_id)
-        break
-      end
-    end
-  end
-  table.sort(endpoints)
-  return endpoints
-end
-
 local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
@@ -790,9 +784,9 @@ local function device_added(driver, device)
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
   device:send(req)
-  local heat_pump_eps = get_endpoints_for_dt(device, HEAT_PUMP_DEVICE_TYPE_ID)
+  local heat_pump_eps = get_endpoints_for_dt(device, HEAT_PUMP_DEVICE_TYPE_ID) or {}
   if #heat_pump_eps > 0 then
-    local thermostat_eps = get_endpoints_for_dt(device, THERMOSTAT_DEVICE_TYPE_ID)
+    local thermostat_eps = get_endpoints_for_dt(device, THERMOSTAT_DEVICE_TYPE_ID) or {}
     local component_to_endpoint_map = {
       ["thermostatOne"] = thermostat_eps[1],
       ["thermostatTwo"] = thermostat_eps[2],
@@ -1643,11 +1637,6 @@ local function periodic_energy_imported_handler(driver, device, ib, response)
   local cumul_eps = embedded_cluster_utils.get_endpoints(device,
     clusters.ElectricalEnergyMeasurement.ID,
     { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-  if tbl_contains(cumul_eps, endpoint_id) then
-    -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
-    -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
-    return
-  end
 
   if ib.data then
     if version.api < 11 then
@@ -1662,13 +1651,20 @@ local function periodic_energy_imported_handler(driver, device, ib, response)
       -- This is a one time setup in order to consider a larger time interval if the interval the device chooses to report is greater than 15 minutes.
       device:set_field(DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED, true, { persist = true })
       device:set_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL, device_reporting_time_interval, { persist = true })
-      delete_reporting_timer()
+      delete_reporting_timer(device)
       schedule_energy_report_timer(device)
     end
 
+    if tbl_contains(cumul_eps, endpoint_id) then
+      -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
+      -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
+      return
+    end
+
     endpoint_id = string.format(ib.endpoint_id)
-    local energy_imported_Wh = utils.round( ib.data.elements.energy.value / 1000) -- convert mWh to Wh
+    local energy_imported_Wh = utils.round(ib.data.elements.energy.value / 1000) --convert mWh to Wh
     local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
+    cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] or 0
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] + energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
     local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)
