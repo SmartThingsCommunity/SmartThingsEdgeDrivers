@@ -379,6 +379,12 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
+--- ignore_initial_color_read helper function used to ensure that we do not
+--- process the CurrentHue, CurrentSaturation, CurrentX, and CurrentY attributes
+--- from the initial subscription report, but instead wait until the current
+--- ColorMode is known. Otherwise, attributes that are not currently controlling
+--- the color of the device can override the colorControl capability with the
+--- wrong hue and saturation values when subscribe is called during init.
 local function ignore_initial_color_read(device, attr_bit)
   local color_attr_bitmap = device:get_field(COLOR_MODE_ATTRS_BITMAP)
   if color_attr_bitmap ~= nil and color_attr_bitmap & attr_bit > 0 then
