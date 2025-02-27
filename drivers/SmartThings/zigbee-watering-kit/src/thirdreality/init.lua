@@ -113,7 +113,7 @@ local thirdreality_device_handler = {
     },
     capability_handlers = {
         [capabilities.fanSpeed.ID] = {
-          [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
+            [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
         },
         [capabilities.refresh.ID] = {
             [capabilities.refresh.commands.refresh.NAME] = do_refresh,
