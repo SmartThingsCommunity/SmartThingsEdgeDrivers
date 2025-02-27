@@ -3,6 +3,7 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
+local data_types = require "st.zigbee.data_types"
 
 local IASZone = clusters.IASZone
 local OnOff = clusters.OnOff
@@ -15,7 +16,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "Third Reality, Inc",
         model = "3RWK0148Z",
-        server_clusters = {0x0006, 0x0500}
+        server_clusters = {0x0006, 0x0500, 0xFFF2}
       }
     }
   }
@@ -90,6 +91,34 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     }
   }
+)
+
+test.register_coroutine_test(
+  "Reported fanspeed should be handled: 2",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Int16.ID, 2}
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFFF2, attr_report_data, 0x1407)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("watering-time", capabilities.fanSpeed.fanSpeed(2)))
+  end
+)
+
+test.register_coroutine_test(
+  "Reported fanspeed should be handled: 4",
+  function()
+    local attr_report_data = {
+      { 0x0001, data_types.Int16.ID, 4}
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFFF2, attr_report_data, 0x1407)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("watering-interval", capabilities.fanSpeed.fanSpeed(4)))
+  end
 )
 
 test.run_registered_tests()
