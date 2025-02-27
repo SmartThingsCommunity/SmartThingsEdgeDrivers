@@ -66,10 +66,12 @@ local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE_ATTRS_BITMAP = "__color_mode_attrs_bitmap"
-local HUE_ATTR_BIT = 0x01
-local SAT_ATTR_BIT = 0x02
-local X_ATTR_BIT = 0x04
-local Y_ATTR_BIT = 0x08
+local color_mode_attr_bits = {
+  HUE = 0x01, -- CurrentHue
+  SAT = 0x02, -- CurrentSaturation
+  X   = 0x04, -- CurrentX
+  Y   = 0x08  -- CurrentY
+}
 
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -744,7 +746,7 @@ local function device_init(driver, device)
   end
 
   if device:supports_capability(capabilities.colorControl) then
-    device:set_field(COLOR_MODE_ATTRS_BITMAP, HUE_ATTR_BIT | SAT_ATTR_BIT | X_ATTR_BIT | Y_ATTR_BIT)
+    device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
     device:send(clusters.ColorControl.attributes.ColorMode:read())
   end
   device:subscribe()
@@ -898,7 +900,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil or ignore_initial_color_read(device, HUE_ATTR_BIT) then
+  if ib.data.value == nil or ignore_initial_color_read(device, color_mode_attr_bits.HUE) then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -906,7 +908,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil or ignore_initial_color_read(device, SAT_ATTR_BIT) then
+  if ib.data.value == nil or ignore_initial_color_read(device, color_mode_attr_bits.SAT) then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -1012,7 +1014,7 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, X_ATTR_BIT) then
+  if ignore_initial_color_read(device, color_mode_attr_bits.X) then
     return
   end
   local y = device:get_field(RECEIVED_Y)
@@ -1030,7 +1032,7 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, Y_ATTR_BIT) then
+  if ignore_initial_color_read(device, color_mode_attr_bits.Y) then
     return
   end
   local x = device:get_field(RECEIVED_X)
@@ -1255,7 +1257,7 @@ end
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     if device:supports_capability(capabilities.colorControl) then
-      device:set_field(COLOR_MODE_ATTRS_BITMAP, HUE_ATTR_BIT | SAT_ATTR_BIT | X_ATTR_BIT | Y_ATTR_BIT)
+      device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
     end
     device:subscribe()
