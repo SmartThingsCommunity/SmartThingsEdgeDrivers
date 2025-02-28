@@ -40,7 +40,7 @@ local device_init = function(self, device)
 end
 
 -- ask device to upload its zone type
-local ias_device_added = function(self, device)
+local device_added = function(self, device)
   device:send(IASZone.attributes.ZoneType:read(device))
 end
 
@@ -135,7 +135,7 @@ local zigbee_generic_sensor_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = ias_device_added,
+    added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed
   },
