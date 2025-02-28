@@ -1,6 +1,0 @@
-name: 'Matter Evse'
-packageKey: 'matter-evse'
-permissions:
-  matter: {}
-description: "SmartThings driver for Matter EVSE devices"
-vendorSupportInformation: "https://support.smartthings.com"
