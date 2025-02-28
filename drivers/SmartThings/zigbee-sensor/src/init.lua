@@ -15,14 +15,9 @@
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
-local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
-local ZONETYPE = "ZoneType"
 local constants = require "st.zigbee.constants"
 local IasZoneType = require "st.zigbee.generated.types.IasZoneType"
-local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local utils = require "st.utils"
-local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
 local device_management = require "st.zigbee.device_management"
 
 local CONTACT_SWITCH = IasZoneType.CONTACT_SWITCH
@@ -34,18 +29,17 @@ local ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE = "generic-contact-sensor"
 local ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE = "generic-motion-sensor"
 local ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE = "generic-waterleak-sensor"
 
-local device_init = function(self, device)
-  device:add_configured_attribute(battery_config)
-  device:add_monitored_attribute(battery_config)
-end
+local ZONETYPE = "ZoneType"
+local IASZone = clusters.IASZone
 
 -- ask device to upload its zone type
-local ias_device_added = function(self, device)
+local device_added = function(self, device)
   device:send(IASZone.attributes.ZoneType:read(device))
 end
 
 -- configure reporting for IASZone cluster
 local do_configure = function(self, device)
+  device:configure()
   device:send(device_management.build_bind_request(device, IASZone.ID, self.environment_info.hub_zigbee_eui))
   device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 30, 300, 1))
 end
@@ -95,7 +89,7 @@ local generate_event_from_zone_status = function(driver, device, zone_status, zb
   elseif type == WATER_SENSOR then
     if zone_status:is_alarm1_set() then
       event = capabilities.waterSensor.water.wet()
-    else 
+    else
       event = capabilities.waterSensor.water.dry()
     end
   end
@@ -134,8 +128,7 @@ local zigbee_generic_sensor_template = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
-    added = ias_device_added,
+    added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed
   },
