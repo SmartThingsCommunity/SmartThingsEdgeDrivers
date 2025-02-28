@@ -15,14 +15,12 @@
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
-local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local ZONETYPE = "ZoneType"
 local constants = require "st.zigbee.constants"
 local IasZoneType = require "st.zigbee.generated.types.IasZoneType"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local utils = require "st.utils"
-local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
 local device_management = require "st.zigbee.device_management"
 
 local CONTACT_SWITCH = IasZoneType.CONTACT_SWITCH
@@ -34,13 +32,16 @@ local ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE = "generic-contact-sensor"
 local ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE = "generic-motion-sensor"
 local ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE = "generic-waterleak-sensor"
 
+local IASZone = clusters.IASZone
+local battery_config = utils.deep_copy(battery_defaults.default_percentage_configuration)
+
 local device_init = function(self, device)
   device:add_configured_attribute(battery_config)
   device:add_monitored_attribute(battery_config)
 end
 
 -- ask device to upload its zone type
-local ias_device_added = function(self, device)
+local device_added = function(self, device)
   device:send(IASZone.attributes.ZoneType:read(device))
 end
 
@@ -135,7 +136,7 @@ local zigbee_generic_sensor_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = ias_device_added,
+    added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed
   },
