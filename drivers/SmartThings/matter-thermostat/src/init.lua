@@ -106,7 +106,7 @@ local DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL = "__pcr_time_interval"
 local DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED = "__timer_interval_considered"
 local TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP = "__total_cumulative_energy_imported_map"
 local LAST_REPORTED_TIME = "__last_reported_time"
-local SUPPORTED_WATER_HEATER_MODES = "__supported_water_heater_modes"
+local SUPPORTED_WATER_HEATER_MODES_WITH_IDX = "__supported_water_heater_modes_with_idx"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
@@ -1605,19 +1605,16 @@ local function set_rock_mode(driver, device, cmd)
 end
 
 local function set_water_heater_mode(driver, device, cmd)
-  device.log.info_with({ hub_logs = true },
-    string.format("set_water_heater_mode mode: %s", cmd.args.mode))
-
+  device.log.info(string.format("set_water_heater_mode mode: %s", cmd.args.mode))
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local supportedWaterHeaterModes = device:get_field(SUPPORTED_WATER_HEATER_MODES)
-  for i, mode in ipairs(supportedWaterHeaterModes) do
-    if cmd.args.mode == mode then
-      device:send(clusters.WaterHeaterMode.commands.ChangeToMode(device, endpoint_id, i - 1))
+  local supportedWaterHeaterModesWithIdx = device:get_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX) or {}
+  for i, mode in ipairs(supportedWaterHeaterModesWithIdx) do
+    if cmd.args.mode == mode[2] then
+      device:send(clusters.WaterHeaterMode.commands.ChangeToMode(device, endpoint_id, mode[1]))
       return
     end
   end
 end
-
 
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
@@ -1689,13 +1686,15 @@ end
 
 local function water_heater_supported_modes_attr_handler(driver, device, ib, response)
   local supportWaterHeaterModes = {}
+  local supportWaterHeaterModesWithIdx = {}
   for _, mode in ipairs(ib.data.elements) do
     if version.api < 13 then
       clusters.WaterHeaterMode.types.ModeOptionStruct:augment_type(mode)
     end
     table.insert(supportWaterHeaterModes, mode.elements.label.value)
+    table.insert(supportWaterHeaterModesWithIdx, {mode.elements.mode.value, mode.elements.label.value})
   end
-  device:set_field(SUPPORTED_WATER_HEATER_MODES, supportWaterHeaterModes, { persist = true })
+  device:set_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX, supportWaterHeaterModesWithIdx, { persist = true })
   local event = capabilities.mode.supportedModes(supportWaterHeaterModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
   event = capabilities.mode.supportedArguments(supportWaterHeaterModes, { visibility = { displayed = false } })
@@ -1703,14 +1702,12 @@ local function water_heater_supported_modes_attr_handler(driver, device, ib, res
 end
 
 local function water_heater_mode_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("water_heater_mode_handler mode: %s", ib.data.value))
-
-  local supportWaterHeaterModes = device:get_field(SUPPORTED_WATER_HEATER_MODES)
+  device.log.info(string.format("water_heater_mode_handler mode: %s", ib.data.value))
+  local supportWaterHeaterModesWithIdx = device:get_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX) or {}
   local currentMode = ib.data.value
-  for i, mode in ipairs(supportWaterHeaterModes) do
-    if i - 1 == currentMode then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
+  for i, mode in ipairs(supportWaterHeaterModesWithIdx) do
+    if mode[1] == currentMode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode[2]))
       break
     end
   end
