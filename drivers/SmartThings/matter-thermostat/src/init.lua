@@ -650,7 +650,6 @@ end
 
 local function profiling_data_still_required(device)
   for _, field in pairs(profiling_data) do
-    print("field:", field)
     if device:get_field(field) == nil then
       return true -- data still required if a field is nil
     end
@@ -659,9 +658,7 @@ local function profiling_data_still_required(device)
 end
 
 local function match_profile(driver, device)
-  print("ADADF")
   if profiling_data_still_required(device) then return end
-  print("ADADF")
 
   local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
   local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
@@ -789,7 +786,7 @@ local function match_profile(driver, device)
     device:try_update_metadata({profile = profile_name})
   end
   -- clear all profiling data fields after profiling is complete.
-  for field in pairs(profiling_data) do
+  for _, field in pairs(profiling_data) do
     device:set_field(field, nil)
   end
 end
