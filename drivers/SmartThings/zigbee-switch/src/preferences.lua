@@ -54,7 +54,19 @@ preferences.update_preferences = function(driver, device, args)
   local prefs = preferences.get_device_parameters(device)
   if prefs ~= nil then
     for id, value in pairs(device.preferences) do
-      if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
+      if not (args and args.old_st_store and args.old_st_store.preferences) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
+        local message = prefs[id](device, value)
+        device:send(message)
+      end
+    end
+  end
+end
+
+preferences.sync_preferences = function(driver, device)
+  local prefs = preferences.get_device_parameters(device)
+  if prefs ~= nil then
+    for id, value in pairs(device.preferences) do
+      if prefs and prefs[id] then
         local message = prefs[id](device, value)
         device:send(message)
       end

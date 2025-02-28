@@ -1,6 +1,9 @@
 local cosock = require "cosock"
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -41,8 +44,11 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
       end
     end
 
-    if zigbee_resource_id ~= nil then
-      rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
+    if not zigbee_resource_id then
+      log.error_with({ hub_logs = true }, string.format("could not find zigbee_resource_id for device %s", (device and (device.label or device.id)) or "unknown device"))
+      return
+    end
+    rest_resp, rest_err = hue_api:get_zigbee_connectivity_by_id(zigbee_resource_id)
       if rest_err ~= nil then
         log.error_with({ hub_logs = true }, rest_err)
         return
@@ -63,10 +69,9 @@ local function _refresh_zigbee(device, hue_api, zigbee_status)
           end
         end
       end
-    end
   end
 
-  if zigbee_status.status == "connected" then
+  if zigbee_status and zigbee_status.status == "connected" then
     device.log.debug(string.format("Zigbee Status for %s is connected", device.label))
     device:online()
     device:set_field(Fields.IS_ONLINE, true)
@@ -123,6 +128,7 @@ function RefreshHandlers.do_refresh_all_for_bridge(driver, bridge_device)
         -- but only the first time we encounter a device type. We cache them since we're refreshing
         -- everything.
         if
+            device_type and
             type(device_type_refresh_handlers_map[device_type]) == "function" and
             statuses_by_device_type[device_type] == nil
         then

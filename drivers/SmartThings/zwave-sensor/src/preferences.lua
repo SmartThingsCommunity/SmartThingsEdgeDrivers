@@ -156,7 +156,7 @@ preferences.update_preferences = function(driver, device, args)
   local prefs = preferences.get_device_parameters(device)
   if prefs ~= nil then
     for id, value in pairs(device.preferences) do
-      if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
+      if not (args and args.old_st_store and args.old_st_store.preferences) or (args.old_st_store.preferences[id] ~= value and prefs and prefs[id]) then
         local new_parameter_value = preferences.to_numeric_value(device.preferences[id])
         device:send(Configuration:Set({parameter_number = prefs[id].parameter_number, size = prefs[id].size, configuration_value = new_parameter_value}))
       end
