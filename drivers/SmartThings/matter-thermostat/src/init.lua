@@ -43,6 +43,7 @@ if version.api < 10 then
 end
 
 local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
+local OPTIONAL_THERMOSTAT_MODES_SEEN = "__OPTIONAL_THERMOSTAT_MODES_SEEN"
 
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
@@ -255,12 +256,12 @@ local subscribed_attributes = {
 }
 
 local function tbl_contains(array, value)
-  for _, element in ipairs(array) do
+  for idx, element in ipairs(array) do
     if element == value then
-      return true
+      return true, idx
     end
   end
-  return false
+  return false, nil
 end
 
 local function get_field_for_endpoint(device, field, endpoint)
@@ -824,20 +825,20 @@ end
 local function system_mode_handler(driver, device, ib, response)
   local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
   -- check that the given mode was in the supported modes list
-  for _, mode in ipairs(supported_modes) do
-    if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-      device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
-      return
-    end
+  if tbl_contains(supported_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
+    device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
+    return
   end
-  -- if the value is not found in the supported modes list, check if it's disallowed
+  -- if the value is not found in the supported modes list, check if it's disallowed and early return if so.
   local disallowed_thermostat_modes = device:get_field(DISALLOWED_THERMOSTAT_MODES) or {}
-  for _, mode in pairs(disallowed_thermostat_modes) do
-    if mode == THERMOSTAT_MODE_MAP[ib.data.value].NAME then
-      return
-    end
+  if tbl_contains(disallowed_thermostat_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
+    return
   end
   -- if we get here, then the reported mode is allowed and not in our mode map
+  -- add the mode to the OPTIONAL_THERMOSTAT_MODES_SEEN and supportedThermostatModes tables
+  local optional_modes_seen = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN)) or {}
+  table.insert(optional_modes_seen, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
+  device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, optional_modes_seen, {persist=true})
   local sm_copy = utils.deep_copy(supported_modes)
   table.insert(sm_copy, THERMOSTAT_MODE_MAP[ib.data.value].NAME)
   local supported_modes_event = capabilities.thermostatMode.supportedThermostatModes(sm_copy, {visibility = {displayed = false}})
@@ -859,18 +860,27 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   -- The ControlSequenceofOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
   -- We also assert that Off is supported, though per spec this is optional.
+  if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
+    device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
+  end
+  local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN))
   local disallowed_mode_operations = {}
-  local supported_modes = utils.deep_copy(device:get_latest_state(
-    device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME
-    )) or {capabilities.thermostatMode.thermostatMode.off.NAME}
 
   local modes_for_inclusion = {}
   if ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_WITH_REHEAT then
-    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.cool.NAME)
+    local _, found_idx = tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.emergency_heat.NAME)
+    if found_idx then
+      table.remove(supported_modes, found_idx) -- if seen before, remove now
+    end
+    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(disallowed_mode_operations, capabilities.thermostatMode.thermostatMode.heat.NAME)
     table.insert(disallowed_mode_operations, capabilities.thermostatMode.thermostatMode.emergency_heat.NAME)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.HEATING_WITH_REHEAT then
-    table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.heat.NAME)
+    local _, found_idx = tbl_contains(supported_modes, capabilities.thermostatMode.thermostatMode.precooling.NAME)
+    if found_idx then
+      table.remove(supported_modes, found_idx) -- if seen before, remove now
+    end
+    table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
     table.insert(disallowed_mode_operations, capabilities.thermostatMode.thermostatMode.cool.NAME)
     table.insert(disallowed_mode_operations, capabilities.thermostatMode.thermostatMode.precooling.NAME)
   elseif ib.data.value <= clusters.Thermostat.attributes.ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT then
