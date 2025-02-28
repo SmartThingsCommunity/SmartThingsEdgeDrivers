@@ -66,4 +66,3 @@ end
 
 setmetatable(CurrentMode, {__call = CurrentMode.new_value, __index = CurrentMode.base_type})
 return CurrentMode
-
