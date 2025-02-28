@@ -42,6 +42,9 @@ configuration = {
     "EnergyEvseMode",
     "BooleanStateConfiguration",
     "ValveConfigurationAndControl",
+    "ThreadBorderRouterManagement",
+    "WaterHeaterMode",
+    "WiFiNetworkManagement",
   },
   cobertura = {
     filenameparser = function(filename)
