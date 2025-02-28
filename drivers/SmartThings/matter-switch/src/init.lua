@@ -909,7 +909,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil or ignore_initial_color_read(device, color_mode_attr_bits.HUE) then
+  if ignore_initial_color_read(device, color_mode_attr_bits.HUE) or ib.data.value == nil then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -917,7 +917,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil or ignore_initial_color_read(device, color_mode_attr_bits.SAT) then
+  if ignore_initial_color_read(device, color_mode_attr_bits.SAT) or ib.data.value == nil then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
