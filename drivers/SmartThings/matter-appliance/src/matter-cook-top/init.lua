@@ -139,10 +139,11 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
 
   local temperatureLevel = ib.data.value
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id] or {}
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[tostring(ib.endpoint_id)] or {}
   if supportedTemperatureLevels[temperatureLevel+1] then
     local tempLevel = supportedTemperatureLevels[temperatureLevel+1]
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
+    return
   end
   log.warn("Received unsupported temperature level for endpoint "..(ib.endpoint_id))
 end
@@ -161,7 +162,7 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     log.info(string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
-  supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
+  supportedTemperatureLevelsMap[tostring(ib.endpoint_id)] = supportedTemperatureLevels
   device:set_field(SUPPORTED_TEMPERATURE_LEVELS_MAP, supportedTemperatureLevelsMap, { persist = true })
   local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels,
     { visibility = { displayed = false } })
@@ -187,7 +188,7 @@ local function handle_temperature_level(driver, device, cmd)
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[endpoint_id] or {}
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[tostring(endpoint_id)] or {}
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if cmd.args.temperatureLevel == tempLevel then
       device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
