@@ -1058,10 +1058,10 @@ end
 
 local function color_mode_attr_handler(driver, device, ib, response)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == clusters.ColorControl.attributes.ColorMode.CURRENTX_AND_CURRENTY then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
