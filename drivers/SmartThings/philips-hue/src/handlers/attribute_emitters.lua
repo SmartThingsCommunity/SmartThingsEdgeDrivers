@@ -101,8 +101,17 @@ local function _emit_light_events_inner(light_device, light_repr)
           )
         )
       else
+        local last_kelvin_setpoint = light_device:get_field(Fields.COLOR_TEMP_SETPOINT)
+        if
+          last_kelvin_setpoint ~= nil and
+          last_kelvin_setpoint >= utils.mirek_to_kelvin(mirek + 1) and
+          last_kelvin_setpoint <= utils.mirek_to_kelvin(mirek - 1)
+        then
+          kelvin = last_kelvin_setpoint;
+        end
         light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
       end
+      light_device:set_field(Fields.COLOR_TEMP_SETPOINT, nil);
     end
 
     if light_repr.color then

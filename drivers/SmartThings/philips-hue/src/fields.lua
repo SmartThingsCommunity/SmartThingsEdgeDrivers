@@ -33,6 +33,7 @@ local Fields = {
   COLOR_SATURATION = "color_saturation",
   COLOR_HUE = "color_hue",
   SWITCH_STATE = "switch_state_cache",
+  COLOR_TEMP_SETPOINT = "ct_setpoint"
 }
 
 return Fields
