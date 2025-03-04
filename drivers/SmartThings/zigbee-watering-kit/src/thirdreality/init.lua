@@ -15,7 +15,7 @@ local WATERING_INTERVAL = 0x0001
 local function device_added(driver, device)
     device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
     device:emit_event(capabilities.fanSpeed.fanSpeed(10))
-    device:emit_event(capabilities.mode.mode(0))
+    device:emit_event(capabilities.mode.mode("0"))
 end
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
@@ -77,7 +77,7 @@ end
 
 local function watering_interval_handler(driver, device, value, zb_rx)
     local interval_value = value.value
-    device:emit_event(capabilities.mode.mode(interval_value))
+    device:emit_event(capabilities.mode.mode(tostring(interval_value)))
 end
 
 local function do_refresh(driver, device)
