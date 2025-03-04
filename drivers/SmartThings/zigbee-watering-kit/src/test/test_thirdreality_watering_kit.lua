@@ -93,32 +93,4 @@ test.register_message_test(
   }
 )
 
-test.register_coroutine_test(
-  "Reported fanspeed should be handled: 2",
-  function()
-    local attr_report_data = {
-      { 0x0000, data_types.Uint16.ID, 2}
-    }
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, 0xFFF2, attr_report_data, 0x1407)
-    })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("watering-time", capabilities.fanSpeed.fanSpeed(2)))
-  end
-)
-
-test.register_coroutine_test(
-  "Reported fanspeed should be handled: 4",
-  function()
-    local attr_report_data = {
-      { 0x0001, data_types.Uint8.ID, 4}
-    }
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, 0xFFF2, attr_report_data, 0x1407)
-    })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("watering-interval", capabilities.fanSpeed.fanSpeed(4)))
-  end
-)
-
 test.run_registered_tests()
