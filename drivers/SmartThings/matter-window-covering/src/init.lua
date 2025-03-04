@@ -87,6 +87,12 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     -- Profile has changed, resubscribe
     device:subscribe()
+  elseif args.old_st_store.preferences.reverse ~= device.preferences.reverse then
+    if device.preferences.reverse then
+      device:set_field(REVERSE_POLARITY, true, { persist = true })
+    else
+      device:set_field(REVERSE_POLARITY, false, { persist = true })
+    end
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
@@ -97,14 +103,6 @@ local function info_changed(driver, device, event, args)
       device:send(attribute_list_read)
     else
       match_profile(device, battery_support.NO_BATTERY)
-    end
-  end
-  local reverse_preference = device.preferences["reverse"]
-  if args.old_st_store.preferences["reverse"] ~= reverse_preference then
-    if reverse_preference == "true" then
-      device:set_field(REVERSE_POLARITY, true, { persist = true })
-    else
-      device:set_field(REVERSE_POLARITY, false, { persist = true })
     end
   end
 end
