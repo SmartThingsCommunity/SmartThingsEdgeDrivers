@@ -69,9 +69,9 @@ local function current_pos_handler(driver, device, ib, response)
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
-    if position == 0 then -- normal polarity: closed, reversed polarity: open
+    if position == 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
-    elseif position == 100 then -- normal polarity: open, reversed polarity: closed
+    elseif position == 100 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
     elseif position > 0 and position < 100 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.partially_open())
