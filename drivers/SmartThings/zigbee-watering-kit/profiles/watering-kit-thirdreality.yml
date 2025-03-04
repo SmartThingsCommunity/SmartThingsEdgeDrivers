@@ -1,14 +1,13 @@
 name: watering-kit-thirdreality
 components:
-  - id: main
+  - label: "电源"
+    id: main
     capabilities:
       - id: switch
         version: 1
       - id: battery
         version: 1
-      - id: fanSpeed
-        version: 1 
-      - id: mode
+      - id: hardwareFault
         version: 1
       - id: firmwareUpdate
         version: 1
@@ -16,6 +15,16 @@ components:
         version: 1
     categories:
       - name: Irrigation
+  - label: "浇水时间(秒)"
+    id: watering-time
+    capabilities:
+      - id: fanSpeed
+        version: 1
+  - label: "浇水间隔(天)"
+    id: watering-interval
+    capabilities:
+      - id: fanSpeed
+        version: 1
 metadata:
   mnmn: SolutionsEngineering
   vid: SmartThings-smartthings-ThirdReality_watering_Kit
