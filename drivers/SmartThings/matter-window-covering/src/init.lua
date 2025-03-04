@@ -199,13 +199,11 @@ local current_pos_handler = function(attribute)
       return
     end
     local windowShade = capabilities.windowShade.windowShade
-    local position = 100 - math.floor((ib.data.value / 100))
-    local reverse = device:get_field(REVERSE_POLARITY)
-    if reverse then
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute(100 - position))
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
+    local position = math.floor((ib.data.value / 100))
+    if not device:get_field(REVERSE_POLARITY) then
+      position = 100 - position
     end
+    device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
     if attribute == capabilities.windowShadeLevel.shadeLevel then
       device:set_field(CURRENT_LIFT, position)
