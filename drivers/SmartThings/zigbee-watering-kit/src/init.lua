@@ -7,7 +7,8 @@ local zigbee_water_driver_template = {
     capabilities.switch,
     capabilities.battery,
     capabilities.hardwareFault,
-    capabilities.fanSpeed
+    capabilities.fanSpeed,
+    capabilities.mode
   },
   sub_drivers = {
     require("thirdreality")
