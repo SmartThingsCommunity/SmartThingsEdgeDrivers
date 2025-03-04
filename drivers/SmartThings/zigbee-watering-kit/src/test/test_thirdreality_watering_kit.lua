@@ -97,7 +97,7 @@ test.register_coroutine_test(
   "Reported fanspeed should be handled: 10",
   function()
     local attr_report_data = {
-      { 0x0000, data_types.Uint16.ID, 2}
+      { 0x0000, data_types.Uint16.ID, 10}
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
