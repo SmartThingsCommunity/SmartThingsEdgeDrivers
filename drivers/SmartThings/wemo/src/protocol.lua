@@ -107,7 +107,7 @@ function protocol.subscribe(device, listen_ip, listen_port)
     return
   end
 
-  local device_facing_local_ip = find_interface_ip_for_remote(ip)
+  local device_facing_local_ip = find_interface_ip_for_remote(ip) or device.driver.environment_info.hub_ipv4
 
   local response_body = {}
   local resp, code_or_err, headers, status_line = http.request {

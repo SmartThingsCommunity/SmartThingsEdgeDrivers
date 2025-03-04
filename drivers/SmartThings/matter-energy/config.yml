@@ -1,0 +1,6 @@
+name: 'Matter Energy'
+packageKey: 'matter-energy'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter Energy devices"
+vendorSupportInformation: "https://support.smartthings.com"
