@@ -123,7 +123,8 @@ local thirdreality_device_handler = {
         }
     },
     lifecycle_handlers = {
-        added = device_added
+        added = device_added,
+        doConfigure = do_configure
     },
     can_handle = function(opts, driver, device, ...)
       return device:get_manufacturer() == "Third Reality, Inc" and device:get_model() == "3RWK0148Z"
