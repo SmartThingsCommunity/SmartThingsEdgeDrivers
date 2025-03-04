@@ -67,9 +67,10 @@ local function _emit_light_events_inner(light_device, light_repr)
 
       -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
       -- if the below is not intuitive.
-      local min_kelvin = light_device:get_field(Fields.MIN_KELVIN)
+      local color_temp_range = light_device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME);
+      local min_kelvin = (color_temp_range and color_temp_range.minimum)
       local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
-      local max_kelvin = light_device:get_field(Fields.MAX_KELVIN)
+      local max_kelvin = (color_temp_range and color_temp_range.maximum)
       local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum) or Consts.MAX_TEMP_KELVIN)
 
       local update_range = false
@@ -86,7 +87,10 @@ local function _emit_light_events_inner(light_device, light_repr)
       end
 
       if update_range then
+        light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
         light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+      else
+        light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
       end
 
       -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
