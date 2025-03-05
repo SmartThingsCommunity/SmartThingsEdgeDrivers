@@ -1015,4 +1015,114 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Check that preference updates to reverse polarity after being set to true and that the shade lift operates as expected when opening and closing", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { reverse = "true" } }))
+    test.wait_for_events()
+    local reverse_preference_set = mock_device:get_field("__reverse_polarity")
+    assert(reverse_preference_set == true, "reverse_preference_set is True")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 25) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(75)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 40) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(60)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 85 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8500)}
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Check that preference updates to reverse polarity after being set to true and that the shade tilt operates as expected when opening and closing", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { reverse = "true" } }))
+    test.wait_for_events()
+    local reverse_preference_set = mock_device:get_field("__reverse_polarity")
+    assert(reverse_preference_set == true, "reverse_preference_set is True")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 30) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(70)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionTiltPercent100ths:build_test_report_data(
+          mock_device, 10, ((100 - 65) *100)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(35)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "windowShadeTiltLevel", component = "main", command = "setShadeTiltLevel", args = { 15 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 1500)}
+    )
+  end
+)
+
 test.run_registered_tests()
