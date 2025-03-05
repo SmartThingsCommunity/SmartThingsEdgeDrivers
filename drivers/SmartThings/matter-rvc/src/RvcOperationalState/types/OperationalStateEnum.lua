@@ -28,4 +28,3 @@ end
 setmetatable(OperationalStateEnum, new_mt)
 
 return OperationalStateEnum
-

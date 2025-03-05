@@ -83,4 +83,3 @@ end
 setmetatable(ModeOptionStruct, new_mt)
 
 return ModeOptionStruct
-
