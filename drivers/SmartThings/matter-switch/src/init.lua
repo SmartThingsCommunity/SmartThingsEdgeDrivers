@@ -475,19 +475,12 @@ local function assign_child_profile(device, child_ep)
   --      determined in the "for" loop above (e.g., light-binary)
   --   2. The selected profile for the child device matches the initial profile defined in
   --      child_device_profile_overrides
-  local is_break = false
   for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
     for _, fingerprint in ipairs(vendor) do
       if device.manufacturer_info.product_id == fingerprint.product_id and
          ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-        profile = fingerprint.target_profile
-        is_break = true
-        break
+        return fingerprint.target_profile
       end
-    end
-
-    if is_break == true then
-      break
     end
   end
 
