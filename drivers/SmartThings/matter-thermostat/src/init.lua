@@ -1784,10 +1784,10 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
     -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
     if attr.value == 0x0C then
       device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE)
-      match_profile(driver, device)
+      return match_profile(driver, device)
     elseif attr.value == 0x0E then
       device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL)
-      match_profile(driver, device)
+      return match_profile(driver, device)
     end
   end
 end
@@ -1797,8 +1797,7 @@ local function thermostat_attribute_list_handler(driver, device, ib, response)
     -- mark whether the optional attribute ThermostatRunningState (0x029) and try profiling
     if attr.value == 0x029 then
       device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, true)
-      match_profile(driver, device)
-      return
+      return match_profile(driver, device)
     end
   end
   device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, false)

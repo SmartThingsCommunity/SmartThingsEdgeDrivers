@@ -70,7 +70,6 @@ local function test_init()
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
     clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   }
-  -- test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
