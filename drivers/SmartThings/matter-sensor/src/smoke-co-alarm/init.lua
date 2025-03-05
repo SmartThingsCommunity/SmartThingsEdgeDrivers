@@ -281,7 +281,7 @@ local matter_smoke_co_alarm_handler = {
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
-    [capabilities.batteryLevel.ID] = {
+    [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     }
   },
