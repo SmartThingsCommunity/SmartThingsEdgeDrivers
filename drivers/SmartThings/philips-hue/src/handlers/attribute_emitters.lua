@@ -69,9 +69,9 @@ local function _emit_light_events_inner(light_device, light_repr)
       -- if the below is not intuitive.
       local color_temp_range = light_device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME);
       local min_kelvin = (color_temp_range and color_temp_range.minimum)
-      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
       local max_kelvin = (color_temp_range and color_temp_range.maximum)
-      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum) or Consts.MAX_TEMP_KELVIN)
+      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
 
       local update_range = false
       if min_kelvin ~= api_min_kelvin then
