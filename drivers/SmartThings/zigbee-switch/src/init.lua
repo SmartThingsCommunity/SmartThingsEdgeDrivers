@@ -85,6 +85,27 @@ local device_init = function(self, device)
   end
 end
 
+local function do_refresh(_, device, cmd)
+ device:refresh()
+ device.thread:call_with_delay(5, function(d)
+  device:send(clusters.Level.attributes.OnOffTransitionTime:read(device))
+  device:send(clusters.Level.attributes.OnTransitionTime:read(device))
+  device:send(clusters.Level.attributes.OffTransitionTime:read(device))
+  end)
+
+  device.thread:call_with_delay(10, function(d)
+    device:send(clusters.Level.attributes.OnOffTransitionTime:write(device, 5))
+    device:send(clusters.Level.attributes.OnTransitionTime:write(device, 5))
+    device:send(clusters.Level.attributes.OffTransitionTime:write(device, 5))
+  end)
+
+  device.thread:call_with_delay(15, function(d)
+    device:send(clusters.Level.attributes.OnOffTransitionTime:read(device))
+    device:send(clusters.Level.attributes.OnTransitionTime:read(device))
+    device:send(clusters.Level.attributes.OffTransitionTime:read(device))
+    end)
+end
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -125,6 +146,11 @@ local zigbee_switch_driver_template = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure
+  },
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+    }
   }
 }
 
