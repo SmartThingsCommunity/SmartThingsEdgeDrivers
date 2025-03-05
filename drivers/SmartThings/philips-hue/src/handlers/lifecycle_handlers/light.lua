@@ -158,10 +158,10 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     if caps.colorTemperature then
       local min_ct_kelvin, max_ct_kelvin = nil, nil
       if type(light_info.color_temperature.mirek_schema.mirek_maximum) == "number" then
-        min_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_maximum))
+        min_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE))
       end
       if type(light_info.color_temperature.mirek_schema.mirek_minimum) == "number" then
-        max_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_minimum))
+        max_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE))
       end
       if not min_ct_kelvin then
         if caps.colorControl then
