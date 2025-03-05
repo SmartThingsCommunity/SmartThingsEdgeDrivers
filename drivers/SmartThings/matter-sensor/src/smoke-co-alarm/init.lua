@@ -20,6 +20,13 @@ local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
 local PROFILE_MATCHED = "__profile_matched"
 
+local HUE_MANUFACTURER_ID = 0x100B
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
+
 local version = require "version"
 if version.api < 10 then
   clusters.SmokeCoAlarm = require "SmokeCoAlarm"
@@ -49,13 +56,18 @@ end
 local supported_profiles =
 {
   "co",
+  "co-battery",
   "co-comeas",
+  "co-comeas-battery",
   "smoke",
+  "smoke-battey",
   "smoke-co-comeas",
-  "smoke-co-temp-humidity-comeas"
+  "smoke-co-comeas-battery",
+  "smoke-co-temp-humidity-comeas",
+  "smoke-co-temp-humidity-comeas-battery"
 }
 
-local function match_profile(device)
+local function match_profile(device, battery_supported)
   local smoke_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
   local co_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
@@ -84,6 +96,9 @@ local function match_profile(device)
   if #co_level_eps > 0 then
     profile_name = profile_name .. "-colevel"
   end
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
+    profile_name = profile_name .. "-battery"
+  end
 
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
@@ -108,7 +123,13 @@ end
 
 local function device_init(driver, device)
   if not device:get_field(PROFILE_MATCHED) then
-    match_profile(device)
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+    -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
+    if #battery_feature_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+      device:send(clusters.PowerSource.attributes.AttributeList:read())
+    else
+      match_profile(device, battery_support.NO_BATTERY)
+    end
   end
   device:subscribe()
 end
@@ -201,6 +222,16 @@ local function battery_alert_attr_handler(driver, device, ib, response)
   end
 end
 
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is available
+    if attr.value == 0x0C then
+      match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      return
+    end
+  end
+end
+
 local matter_smoke_co_alarm_handler = {
   NAME = "matter-smoke-co-alarm",
   lifecycle_handlers = {
@@ -219,7 +250,10 @@ local matter_smoke_co_alarm_handler = {
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
-      }
+      },
+      [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+      },
     },
   },
   subscribed_attributes = {
@@ -246,6 +280,9 @@ local matter_smoke_co_alarm_handler = {
     },
     [capabilities.batteryLevel.ID] = {
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining,
     }
   },
   can_handle = is_matter_smoke_co_alarm
