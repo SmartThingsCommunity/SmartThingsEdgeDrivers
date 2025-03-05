@@ -15,6 +15,7 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
+local capabilities = require "st.capabilities"
 
 local mock_device = test.mock_device.build_test_matter_device({
     profile = t_utils.get_profile_definition("fan-rock-wind.yml"),
@@ -113,8 +114,14 @@ test.register_coroutine_test(
   "Test profile change on fan with rock and wind",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "fan-rock-wind" })
+    test.socket.matter:__expect_send({ mock_device.id, clusters.FanControl.attributes.WindSupport:read(mock_device)})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x03)})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windMode.supportedWindModes({ value = {capabilities.windMode.windMode.noWind.NAME, capabilities.windMode.windMode.sleepWind.NAME, capabilities.windMode.windMode.naturalWind.NAME}}, {visibility = {displayed = false}}))
+    )
+    mock_device:expect_metadata_update({ profile = "fan-rock-wind" })
   end,
   { test_init = test_init }
 )
