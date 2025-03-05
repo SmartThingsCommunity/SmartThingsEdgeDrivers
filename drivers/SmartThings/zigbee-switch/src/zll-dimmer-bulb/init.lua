@@ -18,6 +18,7 @@ local colorTemperature_defaults = require "st.zigbee.defaults.colorTemperature_d
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
+local Color = clusters.ColorControl
 
 local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["AduroSmart Eria"] = {
@@ -156,7 +157,8 @@ local function handle_switch_on(driver, device, cmd)
   device:send(OnOff.commands.On(device))
 
   device.thread:call_with_delay(2, function(d)
-    device:refresh()
+    --device:refresh()
+    device:send(OnOff.attributes.OnOff:read(device))
   end)
 end
 
@@ -164,7 +166,8 @@ local function handle_switch_off(driver, device, cmd)
   device:send(OnOff.commands.Off(device))
 
   device.thread:call_with_delay(2, function(d)
-    device:refresh()
+    --device:refresh()
+    device:send(OnOff.attributes.OnOff:read(device))
   end)
 end
 
@@ -173,17 +176,18 @@ local function handle_set_level(driver, device, cmd)
   device:send(Level.commands.MoveToLevelWithOnOff(device, level, cmd.args.rate or 0xFFFF))
 
   device.thread:call_with_delay(2, function(d)
-    device:refresh()
+    --device:refresh()
+    device:send(Level.attributes.CurrentLevel:read(device))
   end)
 end
 
 local function handle_set_color_temperature(driver, device, cmd)
   colorTemperature_defaults.set_color_temperature(driver, device, cmd)
 
-  local function query_device()
-    device:refresh()
-  end
-  device.thread:call_with_delay(2, query_device)
+  device.thread:call_with_delay(2, function(d)
+    --device:refresh()
+    device:send(Color.attributes.ColorTemperatureMireds:read(device))
+  end)
 end
 
 local zll_dimmer_bulb = {
