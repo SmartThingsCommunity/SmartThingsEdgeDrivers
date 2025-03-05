@@ -67,3 +67,9 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productId: 0x0026
     deviceProfileName: button-generic
+  - id: 1120/9/130
+    deviceLabel: Wave i4 DC
+    manufacturerId: 0x0460
+    productId: 0x0082
+    productType: 0x0009
+    deviceProfileName: multi-button-4-no-battery
