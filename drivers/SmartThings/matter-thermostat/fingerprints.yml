@@ -33,12 +33,6 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0002
     deviceProfileName: thermostat-humidity-heating-only-nostate
-  - id: "4942/3"
-    deviceLabel: Wireless Temperature Sensor X
-    vendorId: 0x134E
-    productId: 0x0003
-    deviceProfileName: temperature-humidity
-
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
