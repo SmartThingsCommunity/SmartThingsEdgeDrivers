@@ -387,8 +387,7 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
         if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
           for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
             if device.manufacturer_info.product_id == fingerprint.product_id then
-              -- For Aqara Dimmer Switch with Button.
-              return false
+              return false -- For Aqara Dimmer Switch with Button.
             end
           end
           return true
@@ -479,7 +478,7 @@ local function assign_child_profile(device, child_ep)
     for _, fingerprint in ipairs(vendor) do
       if device.manufacturer_info.product_id == fingerprint.product_id and
          ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-        return fingerprint.target_profile
+         return fingerprint.target_profile
       end
     end
   end
@@ -611,8 +610,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
           }
         )
         parent_child_device = true
-        if _ == 1 and
-           (child_profile == "light-power-energy-powerConsumption" or child_profile == "light-level-power-energy-powerConsumption") then
+        if _ == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
