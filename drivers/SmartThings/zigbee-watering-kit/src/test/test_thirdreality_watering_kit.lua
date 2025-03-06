@@ -39,7 +39,7 @@ test.register_coroutine_test(
   "lifecycle - added test",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())) 
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(10)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("0")))
   end
