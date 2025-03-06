@@ -17,6 +17,8 @@ local capabilities = require "st.capabilities"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 
 local preferencesMap = require "preferences"
 
