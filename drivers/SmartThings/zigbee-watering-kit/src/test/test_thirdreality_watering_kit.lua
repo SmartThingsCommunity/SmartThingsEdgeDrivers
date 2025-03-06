@@ -187,16 +187,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "mode should be handled: 3",
+  "mode should be handled: 4",
   function()
     local attr_report_data = {
-      { WATERING_INTERVAL_ATTR, data_types.OctetString.ID, "3"}
+      { WATERING_INTERVAL_ATTR, data_types.OctetString.ID, "4"}
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("3")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("4")))
   end
 )
 
