@@ -1,3 +1,4 @@
+local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=6 })
