@@ -190,8 +190,8 @@ zigbeeManufacturer:
     manufacturer: TOTEM
     model: W31V
     deviceProfileName: lock-battery
-  # zhenchen
-  - id: Zhenchen/SG20
+  # Greentown
+  - id: Greentown/SG20
     deviceLabel: Greentown Door Lock
     manufacturer: Zhenchen
     model: SG20
