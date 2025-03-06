@@ -21,7 +21,7 @@ matterManufacturer:
     deviceLabel: habi Matter Wireless Room Thermostat
     vendorId: 0x1527
     productId: 0x0001
-    deviceProfileName: thermostat-heating-only
+    deviceProfileName: thermostat-heating-only-batteryLevel
   #Siterwell
   - id: "4736/769"
     deviceLabel: Siterwell Radiator Thermostat
