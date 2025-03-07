@@ -14,7 +14,7 @@ matterManufacturer:
     deviceLabel: Aqara LED Bulb T2 RGB CCT
     vendorId: 0x115F
     productId: 0x1805
-    deviceProfileName: light-color-level  
+    deviceProfileName: light-color-level
   - id: "4447/6150"
     deviceLabel: Aqara LED Bulb T2 CCT
     vendorId: 0x115F
@@ -65,7 +65,7 @@ matterManufacturer:
     deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
     vendorId: 0x1168
     productId: 0x03F5
-    deviceProfileName: light-color-level-1800K-6500K  
+    deviceProfileName: light-color-level-1800K-6500K
   - id: "AiDot/Smart/Light/Bulb/A19/RGBTW"
     deviceLabel: AiDot Smart Light Bulb A19 RGBT
     vendorId: 0x1168
@@ -80,7 +80,7 @@ matterManufacturer:
     deviceLabel: Smart Plug
     vendorId: 0x1168
     productId: 0x0400
-    deviceProfileName: plug-binary  
+    deviceProfileName: plug-binary
   - id: "4456/1007"
     deviceLabel: Matter Smart Light Bulb A21 RGBTW 1600lm
     vendorId: 0x1168
@@ -115,7 +115,7 @@ matterManufacturer:
     deviceLabel: Linkind LED Light Strip EL6
     vendorId: 0x1396
     productId: 0x1000
-    deviceProfileName: light-color-level-1800K-6500K 
+    deviceProfileName: light-color-level-1800K-6500K
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -128,6 +128,12 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+  - id: "5127/4744"
+    deviceLabel: Smart Bridge MZ1
+    vendorId: 0x1407
+    productId: 0x1288
+    deviceProfileName: matter-bridge 
+    
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
@@ -150,6 +156,7 @@ matterManufacturer:
     vendorId: 0x1432
     productId: 0x1003
     deviceProfileName: 4-button-battery
+
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
@@ -176,6 +183,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x69
     deviceProfileName: power-energy-powerConsumption
+  - id: "4874/121"
+    deviceLabel: Eve Dimmer Switch
+    vendorId: 0x130A
+    productId: 0x0079
+    deviceProfileName: light-level
   - id: "4874/106"
     deviceLabel: Eve Energy Switzerland
     vendorId: 0x130A
@@ -317,6 +329,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x006B
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/124"
+    deviceLabel: Cync Keypad Dimmer
+    vendorId: 0x1339
+    productId: 0x007C
+    deviceProfileName: light-level-2-button
   - id: "4921/125"
     deviceLabel: Cync Paddle Dimmer
     vendorId: 0x1339
@@ -447,6 +464,11 @@ matterManufacturer:
     productId: 0x1002
     deviceProfileName: switch-binary
 #Lifx
+  - id: "5155/161"
+    deviceLabel: LIFX Neon Outdoor
+    vendorId: 0x1423
+    productId: 0x00A1
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
     vendorId: 0x1423
@@ -476,6 +498,31 @@ matterManufacturer:
     deviceLabel: LIFX Ceiling
     vendorId: 0x1423
     productId: 0x00B0
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/201"
+    deviceLabel: LIFX Ceiling 13x26
+    vendorId: 0x1423
+    productId: 0x00C9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/219"
+    deviceLabel: LIFX Luna
+    vendorId: 0x1423
+    productId: 0x00DB
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/213"
+    deviceLabel: LIFX Permanent Outdoor
+    vendorId: 0x1423
+    productId: 0x00D5
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/215"
+    deviceLabel: LIFX Candle (B10)
+    vendorId: 0x1423
+    productId: 0x00D7
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/217"
+    deviceLabel: LIFX Tube
+    vendorId: 0x1423
+    productId: 0x00D9
     deviceProfileName: light-level-colorTemperature-1500k-9000k
 #Nanoleaf
   - id: "Nanoleaf NL53"
@@ -2431,6 +2478,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB43
     deviceProfileName: switch-binary
+  - id: "5020/904"
+    deviceLabel: Zemismart M6 Hub
+    vendorId: 0x139C
+    productId: 0x0388
+    deviceProfileName: matter-bridge
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
@@ -2481,6 +2533,11 @@ matterManufacturer:
     deviceLabel: Matter Bridge
     vendorId: 0x138A
     productId: 0x1392
+    deviceProfileName: matter-bridge
+  - id: "4932/1054"
+    deviceLabel: Eltako Matter Bridge
+    vendorId: 0x1344
+    productId: 0x041E
     deviceProfileName: matter-bridge
 
 
@@ -2559,6 +2616,16 @@ matterGeneric:
       - id: 0x010A # On Off Plug-in Unit
       - id: 0x0510 # Electrical Sensor
     deviceProfileName: plug-power-energy-powerConsumption
+  - id: "matter/mounted/on-off/control"
+    deviceLabel: Matter Mounted OnOff Control
+    deviceTypes:
+      - id: 0x010F # Mounted On/Off Control
+    deviceProfileName: switch-binary
+  - id: "matter/mounted/dimmable/load/control"
+    deviceLabel: Matter Mounted Dimmable Load Control
+    deviceTypes:
+      - id: 0x0110 # Mounted Dimmable Load Control
+    deviceProfileName: switch-level
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:

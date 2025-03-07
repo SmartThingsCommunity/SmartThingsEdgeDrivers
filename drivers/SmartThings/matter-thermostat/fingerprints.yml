@@ -22,6 +22,12 @@ matterManufacturer:
     vendorId: 0x1527
     productId: 0x0001
     deviceProfileName: thermostat-heating-only-batteryLevel  
+#Siterwell
+  - id: "4736/769"
+    deviceLabel: Siterwell Radiator Thermostat 
+    vendorId: 0x1280
+    productId: 0x0301
+    deviceProfileName: thermostat-heating-only-nostate-nobattery
 
 matterGeneric:
   - id: "matter/hvac/heatcool"
@@ -87,3 +93,21 @@ matterGeneric:
     deviceTypes:
       - id: 0x002D # Air Purifier
     deviceProfileName: air-purifier-hepa-ac-wind
+  - id: "matter/water-heater"
+    deviceLabel: Matter Water Heater
+    deviceTypes:
+      - id: 0x050F # Water Heater
+    deviceProfileName: water-heater
+  - id: "matter/heat-pump"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: heat-pump
+  - id: "matter/heat-pump/thermostat"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+      - id: 0x0301 # Thermostat
+    deviceProfileName: heat-pump-thermostat
