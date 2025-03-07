@@ -5,7 +5,6 @@ local ZONE_STATUS_ATTR = IASZone.attributes.ZoneStatus
 
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local device_management = require "st.zigbee.device_management"
 
 local THIRDREALITY_WATERING_CLUSTER = 0xFFF2
@@ -38,28 +37,14 @@ local ias_zone_status_change_handler = function(driver, device, zb_rx)
     generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
-local function custom_write_attribute(device, cluster, attribute, data_type, value, mfg_code)
-    local data = data_types.validate_or_build_type(value, data_type)
-    local message = cluster_base.write_attribute(device, data_types.ClusterId(cluster), attribute, data)
-    if mfg_code ~= nil then
-      message.body.zcl_header.frame_ctrl:set_mfg_specific()
-      message.body.zcl_header.mfg_code = data_types.validate_or_build_type(mfg_code, data_types.Uint16, "mfg_code")
-    else
-      message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
-    end
-    return message
-end
-
 local function set_watering_time(device, speed)
     local watering_time = speed
-    device:send(custom_write_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_TIME,
-          data_types.Uint16, watering_time, nil))
+    device:send(cluster_base.write_manufacturer_specific_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_TIME, 0x1407, data_types.Uint16, watering_time))
 end
 
 local function set_watering_interval(device, speed)
     local watering_interval = speed
-    device:send(custom_write_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL,
-          data_types.Uint8, watering_interval, nil))
+    device:send(cluster_base.write_manufacturer_specific_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL, 0x1407, data_types.Uint8, watering_interval))
 end
 
 local function fan_speed_handler(driver, device, command)
