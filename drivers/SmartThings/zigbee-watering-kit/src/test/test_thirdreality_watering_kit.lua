@@ -4,6 +4,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
+local cluster_base = require "st.zigbee.cluster_base"
 
 local IASZone = clusters.IASZone
 local OnOff = clusters.OnOff
@@ -158,7 +159,7 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "fanspeed should be handled: 10",
+  "fanspeed reported should be handled: 10",
   function()
     local attr_report_data = {
       { WATERING_TIME_ATTR, data_types.Uint16.ID, 10}
@@ -172,7 +173,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "fanspeed should be handled: 30",
+  "fanspeed reported should be handled: 30",
   function()
     local attr_report_data = {
       { WATERING_TIME_ATTR, data_types.Uint16.ID, 30}
@@ -186,7 +187,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "mode should be handled: 4",
+  "mode reported should be handled: 4",
   function()
     local attr_report_data = {
       { WATERING_INTERVAL_ATTR, data_types.OctetString.ID, "4"}
@@ -196,6 +197,15 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("4")))
+  end
+)
+
+test.register_coroutine_test(
+  "setFanSpeed: 20",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "fanSpeed", component = "main", command = "setFanSpeed", args = { 20 } } })
+    test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
+    THIRDREALITY_WATERING_CLUSTER, WATERING_TIME_ATTR, 0x1407, data_types.Uint16, 20) })
   end
 )
 
