@@ -22,4 +22,3 @@ end
 setmetatable(StatusCode, new_mt)
 
 return StatusCode
-

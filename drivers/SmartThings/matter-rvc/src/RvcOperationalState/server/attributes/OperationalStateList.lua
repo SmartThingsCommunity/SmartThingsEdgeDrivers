@@ -72,4 +72,3 @@ end
 
 setmetatable(OperationalStateList, {__call = OperationalStateList.new_value, __index = OperationalStateList.base_type})
 return OperationalStateList
-
