@@ -49,6 +49,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x135D, 0x00B2}, -- Nuki, Nuki Smart Lock Pro
   {0x135D, 0x00C1}, -- Nuki, Nuki Smart Lock Go
   {0x1037, 0xA221}, -- NXP
+  {0x1236, 0xA538}, -- Allegion
   {0x10E1, 0x2002}  -- VDA
 }
 
