@@ -234,6 +234,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x00B5
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/182"
+    deviceLabel: Cync Full Color A19 Clear Spiral
+    vendorId: 0x1339
+    productId: 0x00B6
+    deviceProfileName: light-color-level-2000K-7000K 
   - id: "4921/41"
     deviceLabel: Cync Full Color Undercabinet 12 Inch
     vendorId: 0x1339
