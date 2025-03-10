@@ -43,7 +43,7 @@ local function set_watering_time(device, speed)
 end
 
 local function set_watering_interval(device, speed)
-    local watering_interval = speed
+    local watering_interval = math.tointeger(speed)
     device:send(cluster_base.write_manufacturer_specific_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL, 0x1407, data_types.Uint8, watering_interval))
 end
 
@@ -52,7 +52,8 @@ local function fan_speed_handler(driver, device, command)
 end
 
 local function mode_handler(driver, device, command)
-    set_watering_interval(device, command.args.mode)
+    local mode_value = tonumber(command.args.mode)
+    set_watering_interval(device, mode_value)
 end
 
 local function watering_time_handler(driver, device, value, zb_rx)
