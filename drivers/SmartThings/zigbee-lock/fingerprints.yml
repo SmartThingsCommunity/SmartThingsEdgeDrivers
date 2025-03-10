@@ -192,7 +192,7 @@ zigbeeManufacturer:
     deviceProfileName: lock-battery
   # Greentown
   - id: Greentown/SG20
-    deviceLabel: Greentown Door Lock
+    deviceLabel: Greentown Lock(SG20)
     manufacturer: Zhenchen
     model: SG20
     deviceProfileName: lock-battery
