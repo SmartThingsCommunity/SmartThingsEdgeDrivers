@@ -27,6 +27,7 @@ local battery_support = {
   BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
+local REVERSE_POLARITY = "__reverse_polarity"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -45,6 +46,13 @@ local function component_to_endpoint(device, component_name)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
   return find_default_endpoint(device, clusters.WindowCovering.ID)
+end
+
+local function reverse_polarity_if_needed(device, value)
+  if device:get_field(REVERSE_POLARITY) then
+    return value
+  end
+  return 100 - value
 end
 
 local function match_profile(device, battery_supported)
@@ -86,6 +94,12 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     -- Profile has changed, resubscribe
     device:subscribe()
+  elseif args.old_st_store.preferences.reverse ~= device.preferences.reverse then
+    if device.preferences.reverse then
+      device:set_field(REVERSE_POLARITY, true, { persist = true })
+    else
+      device:set_field(REVERSE_POLARITY, false, { persist = true })
+    end
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
@@ -104,6 +118,7 @@ local function device_added(driver, device)
   device:emit_event(
     capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
   )
+  device:set_field(REVERSE_POLARITY, false, { persist = true })
 end
 
 local function device_removed(driver, device) log.info("device removed") end
@@ -114,7 +129,7 @@ local function handle_preset(driver, device, cmd)
   local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
   local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
   if #lift_eps > 0 then
-    local lift_value = 100 - device.preferences.presetPosition
+    local lift_value = reverse_polarity_if_needed(device, device.preferences.presetPosition)
     local hundredths_lift_percent = lift_value * 100
     local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
       device, endpoint_id, hundredths_lift_percent
@@ -154,7 +169,7 @@ end
 -- move to shade level between 0-100
 local function handle_shade_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_percentage_value = 100 - cmd.args.shadeLevel
+  local lift_percentage_value = reverse_polarity_if_needed(device, cmd.args.shadeLevel)
   local hundredths_lift_percentage = lift_percentage_value * 100
   local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
                 device, endpoint_id, hundredths_lift_percentage
@@ -165,7 +180,7 @@ end
 -- move to shade tilt level between 0-100
 local function handle_shade_tilt_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local tilt_percentage_value = 100 - cmd.args.level
+  local tilt_percentage_value = reverse_polarity_if_needed(device, cmd.args.level)
   local hundredths_tilt_percentage = tilt_percentage_value * 100
   local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
     device, endpoint_id, hundredths_tilt_percentage
@@ -180,7 +195,7 @@ local current_pos_handler = function(attribute)
       return
     end
     local windowShade = capabilities.windowShade.windowShade
-    local position = 100 - math.floor((ib.data.value / 100))
+    local position = reverse_polarity_if_needed(device, math.floor((ib.data.value / 100)))
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
     if attribute == capabilities.windowShadeLevel.shadeLevel then
@@ -286,7 +301,7 @@ local matter_driver_template = {
     removed = device_removed,
     added = device_added,
     infoChanged = info_changed,
-    doConfigure = do_configure,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
