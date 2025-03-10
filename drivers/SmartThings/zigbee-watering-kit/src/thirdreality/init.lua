@@ -52,7 +52,7 @@ local function fan_speed_handler(driver, device, command)
 end
 
 local function mode_handler(driver, device, command)
-    set_watering_interval(device, command.args.speed)
+    set_watering_interval(device, command.args.mode)
 end
 
 local function watering_time_handler(driver, device, value, zb_rx)
