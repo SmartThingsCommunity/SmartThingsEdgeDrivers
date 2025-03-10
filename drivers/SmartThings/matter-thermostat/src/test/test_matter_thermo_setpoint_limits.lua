@@ -70,7 +70,6 @@ local function test_init()
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
     clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -84,6 +83,16 @@ local function test_init()
 
   test.mock_device.add_test_device(mock_device)
 
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+  read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+  read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
+  read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
+  test.socket.matter:__expect_send({mock_device.id, read_req})
+
   test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
@@ -95,13 +104,11 @@ local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  local read_attribute_list_req = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list_req})
-
   test.wait_for_events()
 
   test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x0C)})})
-  mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
+  test.socket.matter:__queue_receive({mock_device.id, clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x29)})})
+  mock_device:expect_metadata_update({ profile = "thermostat" })
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
   test.socket.matter:__queue_receive({
