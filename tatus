@@ -1,0 +1,36 @@
+[33mcommit a7ccf68e870ddb62e18b88475937fe06af6f8d6b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32madd_support_for_generic_zigbee_sensor[m[33m, [m[1;31morigin/add_support_for_generic_zigbee_sensor[m[33m)[m
+Author: frank-huang <frank.huang@samsung.com>
+Date:   Fri Feb 28 20:53:54 2025 +0800
+
+    Fix some bug
+    
+    Signed-off-by: frank-huang <frank.huang@samsung.com>
+
+[33mcommit 1dd4216b64fd19e920082419cae1f821c1ddc9e9[m
+Merge: 15986901 f4cc05a7
+Author: hong-ye <hong.ye@samsung.com>
+Date:   Wed Feb 26 01:24:59 2025 +0800
+
+    Add IasZoneType from lua.api
+
+[33mcommit f4cc05a7b5f142ac1011070d25190a71c43a1455[m
+Author: frank-huang <frank.huang@samsung.com>
+Date:   Mon Feb 24 15:43:31 2025 +0800
+
+    add configurations and related test cases
+    
+    Signed-off-by: frank-huang <frank.huang@samsung.com>
+
+[33mcommit fb68377ffde82c615c0e15eaa58b70a6857b467e[m
+Author: zhongpei-ge <zhongpei.ge@samsung.com>
+Date:   Fri Feb 21 19:37:18 2025 +0800
+
+    improve code and add TC
+
+[33mcommit fa1311cc8922e2418150ec69a2d6cb85813cdfd9[m
+Author: frank-huang <frank.huang@samsung.com>
+Date:   Fri Feb 21 15:54:01 2025 +0800
+
+    Add test cases for added, receiving zonetype and profile changing
+    
+    Signed-off-by: frank-huang <frank.huang@samsung.com>
