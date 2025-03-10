@@ -2,10 +2,12 @@ local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 
 local function force_state_change(device)
-  if device.preferences["certifiedpreferences.forceStateChange"] then
+  if device.preferences == nil or device.preferences["certifiedpreferences.forceStateChange"] == nil then
     return {state_change = true}
-  else
+  elseif not device.preferences["certifiedpreferences.forceStateChange"] then
     return nil
+  else
+    return {state_change = true}
   end
 end
 

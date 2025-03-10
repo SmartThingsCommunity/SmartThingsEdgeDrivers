@@ -2,6 +2,7 @@ local log = require "log"
 local json = require "st.json"
 local RestClient = require "lunchbox.rest"
 local utils = require "utils"
+local st_utils = require "st.utils"
 
 local fp2_api = {}
 fp2_api.__index = fp2_api
@@ -39,16 +40,8 @@ local function process_rest_response(response, err, partial)
   end
 end
 
-local function retry_fn(retry_attempts)
-  local count = 0
-  return function()
-    count = count + 1
-    return count < retry_attempts
-  end
-end
-
 local function do_get(api_instance, path)
-  return process_rest_response(api_instance.client:get(path, api_instance.headers, retry_fn(5)))
+  return process_rest_response(RestClient.one_shot_get(api_instance.base_url .. path, api_instance.headers, api_instance.socket_builder))
 end
 
 function fp2_api.new_device_manager(device_ip, bridge_info, socket_builder)
@@ -56,8 +49,8 @@ function fp2_api.new_device_manager(device_ip, bridge_info, socket_builder)
 
   return setmetatable(
     {
-      headers = ADDITIONAL_HEADERS,
-      client = RestClient.new(base_url, socket_builder),
+      headers = st_utils.deep_copy(ADDITIONAL_HEADERS),
+      socket_builder = socket_builder,
       base_url = base_url,
     }, fp2_api
   )

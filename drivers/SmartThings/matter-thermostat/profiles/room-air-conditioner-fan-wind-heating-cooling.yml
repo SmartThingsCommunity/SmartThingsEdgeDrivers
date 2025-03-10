@@ -26,3 +26,6 @@ components:
     version: 1
   categories:
   - name: AirConditioner
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

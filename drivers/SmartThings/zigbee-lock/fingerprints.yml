@@ -145,6 +145,16 @@ zigbeeManufacturer:
     manufacturer: TOTEM
     model: P30
     deviceProfileName: lock-battery
+  - id: TOTEM/P70
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: P70
+    deviceProfileName: lock-battery
+  - id: TOTEM/P90
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: P90
+    deviceProfileName: lock-battery
   - id: TOTEM/Q30
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
@@ -165,15 +175,26 @@ zigbeeManufacturer:
     manufacturer: TOTEM
     model: R71
     deviceProfileName: lock-battery
-  - id: TOTEM/P70
+  - id: TOTEM/S50V
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
-    model: P70
+    model: S50V
     deviceProfileName: lock-battery
-  - id: TOTEM/P90
+  - id: TOTEM/S93
     deviceLabel: TOTEM Door Lock
     manufacturer: TOTEM
-    model: P90
+    model: S93
+    deviceProfileName: lock-battery
+  - id: TOTEM/W31V
+    deviceLabel: TOTEM Door Lock
+    manufacturer: TOTEM
+    model: W31V
+    deviceProfileName: lock-battery
+  # Greentown
+  - id: Greentown/SG20
+    deviceLabel: Greentown Lock(SG20)
+    manufacturer: Zhenchen
+    model: SG20
     deviceProfileName: lock-battery
 zigbeeGeneric:
   - id: "genericLock"
