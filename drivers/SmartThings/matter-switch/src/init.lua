@@ -75,6 +75,8 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local MOUNTED_ON_OFF_CONTROL_ID = 0x010F
+local MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
 local GENERIC_SWITCH_ID = 0x000F
 local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
@@ -87,6 +89,8 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
+  [MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
 }
 
 local device_type_attribute_map = {
@@ -169,8 +173,11 @@ local device_type_attribute_map = {
 local child_device_profile_overrides = {
   { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
   { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 switch
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 switch
+  { vendor_id = 0x115F, product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 2 Channels
+  { vendor_id = 0x115F, product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 3 Channels
+  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
+  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 2 Channels
 }
 
 local detect_matter_thing
