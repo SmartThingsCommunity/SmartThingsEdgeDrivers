@@ -15,11 +15,11 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
-local im = require "st.matter.interaction_model"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 -- Include driver-side definitions when lua libs api version is < 11
 local version = require "version"
@@ -65,6 +65,14 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
+local COLOR_MODE_ATTRS_BITMAP = "__color_mode_attrs_bitmap"
+local color_mode_attr_bits = {
+  HUE = 0x01, -- CurrentHue
+  SAT = 0x02, -- CurrentSaturation
+  X   = 0x04, -- CurrentX
+  Y   = 0x08  -- CurrentY
+}
+
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
@@ -170,14 +178,20 @@ local device_type_attribute_map = {
   }
 }
 
-local child_device_profile_overrides = {
-  { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
-  { vendor_id = 0x115F, product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 2 Channels
-  { vendor_id = 0x115F, product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 3 Channels
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 2 Channels
+local child_device_profile_overrides_per_vendor_id = {
+  [0x1321] = {
+    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
+    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  },
+  [0x115F] = {
+    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+  }
 }
 
 local detect_matter_thing
@@ -375,6 +389,21 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
+--- ignore_initial_color_read helper function used to ensure that we do not
+--- process the CurrentHue, CurrentSaturation, CurrentX, and CurrentY attributes
+--- from the initial subscription report, but instead wait until the current
+--- ColorMode is known. Otherwise, attributes that are not currently controlling
+--- the color of the device can override the colorControl capability with the
+--- wrong hue and saturation values when subscribe is called during init.
+local function ignore_initial_color_read(device, attr_bit)
+  local color_attr_bitmap = device:get_field(COLOR_MODE_ATTRS_BITMAP)
+  if color_attr_bitmap ~= nil and color_attr_bitmap & attr_bit > 0 then
+    device:set_field(COLOR_MODE_ATTRS_BITMAP, color_attr_bitmap & ~attr_bit)
+    return true
+  end
+  return false
+end
+
 --- device_type_supports_button_switch_combination helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
@@ -383,6 +412,11 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
+            if device.manufacturer_info.product_id == fingerprint.product_id then
+              return false -- For Aqara Dimmer Switch with Button.
+            end
+          end
           return true
         end
       end
@@ -467,12 +501,12 @@ local function assign_child_profile(device, child_ep)
   --      determined in the "for" loop above (e.g., light-binary)
   --   2. The selected profile for the child device matches the initial profile defined in
   --      child_device_profile_overrides
-  for _, fingerprint in ipairs(child_device_profile_overrides) do
-    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-       device.manufacturer_info.product_id == fingerprint.product_id and
-       ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-      profile = fingerprint.target_profile
-      break
+  for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
+    for _, fingerprint in ipairs(vendor) do
+      if device.manufacturer_info.product_id == fingerprint.product_id and
+         ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
+         return fingerprint.target_profile
+      end
     end
   end
 
@@ -603,7 +637,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
           }
         )
         parent_child_device = true
-        if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
+        if _ == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
@@ -734,6 +768,11 @@ local function device_init(driver, device)
       end
     end
   end
+
+  if device:supports_capability(capabilities.colorControl) then
+    device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
+    device:send(clusters.ColorControl.attributes.ColorMode:read())
+  end
   device:subscribe()
 end
 
@@ -760,7 +799,6 @@ local function handle_switch_off(driver, device, cmd)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
-
 
 local function handle_set_switch_level(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
@@ -886,17 +924,19 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if ignore_initial_color_read(device, color_mode_attr_bits.HUE) or ib.data.value == nil then
+    return
   end
+  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if ignore_initial_color_read(device, color_mode_attr_bits.SAT) or ib.data.value == nil then
+    return
   end
+  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
 end
 
 local function temp_attr_handler(driver, device, ib, response)
@@ -998,6 +1038,9 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
+  if ignore_initial_color_read(device, color_mode_attr_bits.X) then
+    return
+  end
   local y = device:get_field(RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
   -- if they are we can avoid setting fields on the device.
@@ -1013,6 +1056,9 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
+  if ignore_initial_color_read(device, color_mode_attr_bits.Y) then
+    return
+  end
   local x = device:get_field(RECEIVED_X)
   if x == nil then
     device:set_field(RECEIVED_Y, ib.data.value)
@@ -1022,6 +1068,20 @@ local function y_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(RECEIVED_X, nil)
+  end
+end
+
+local function color_mode_attr_handler(driver, device, ib, response)
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+    req:merge(clusters.ColorControl.attributes.CurrentHue:read())
+    req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
+    req:merge(clusters.ColorControl.attributes.CurrentX:read())
+    req:merge(clusters.ColorControl.attributes.CurrentY:read())
+  end
+  if #req.info_blocks > 0 then
+    device:send(req)
   end
 end
 
@@ -1220,6 +1280,10 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
+    if device:supports_capability(capabilities.colorControl) then
+      device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
+      device:send(clusters.ColorControl.attributes.ColorMode:read())
+    end
     device:subscribe()
     if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       -- profile has changed, and we deferred setting up our buttons, so do that now
@@ -1315,6 +1379,7 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.ColorTemperatureMireds.ID] = temp_attr_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = x_attr_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = y_attr_handler,
+        [clusters.ColorControl.attributes.ColorMode.ID] = color_mode_attr_handler,
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = color_cap_attr_handler,
         [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MIN), -- max mireds = min kelvin
         [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = mired_bounds_handler_factory(COLOR_TEMP_MAX), -- min mireds = max kelvin
