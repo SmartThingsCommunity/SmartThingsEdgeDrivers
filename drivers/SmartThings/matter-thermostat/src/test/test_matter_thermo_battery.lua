@@ -83,7 +83,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
   read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
-  read_req:merge(clusters.FanControl.attributes.WindSupport:read())
   read_req:merge(clusters.FanControl.attributes.RockSupport:read())
   test.socket.matter:__expect_send({mock_device.id, read_req})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -126,6 +125,12 @@ test.register_coroutine_test(
       {
         mock_device.id,
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(10)})
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:read(mock_device)
       }
     )
   end
