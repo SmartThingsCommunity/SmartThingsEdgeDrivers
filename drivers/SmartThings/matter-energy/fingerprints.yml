@@ -1,0 +1,17 @@
+matterGeneric:
+  - id: "matter/evse"
+    deviceLabel: Matter EVSE
+    deviceTypes:
+      - id: 0x0510
+      - id: 0x050C
+    deviceProfileName: evse
+  - id: "matter/solar-power"
+    deviceLabel: Matter Solar Power
+    deviceTypes:
+      - id: 0x0017 #Solar Power
+    deviceProfileName: solar-power
+  - id: "matter/battery-storage"
+    deviceLabel: Matter Battery Storage
+    deviceTypes:
+      - id: 0x0018 #Battery Storage
+    deviceProfileName: battery-storage

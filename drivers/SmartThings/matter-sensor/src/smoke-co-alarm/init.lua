@@ -103,7 +103,7 @@ local function match_profile(device)
     device.log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
   end
   device:try_update_metadata({profile = profile_name})
-  device:set_field(PROFILE_MATCHED, 1)
+  device:set_field(PROFILE_MATCHED, 1 , {persist = true})
 end
 
 local function device_init(driver, device)

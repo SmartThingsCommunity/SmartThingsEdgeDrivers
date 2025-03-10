@@ -20,6 +20,14 @@ local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
 local im = require "st.matter.interaction_model"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+-- Include driver-side definitions when lua libs api version is < 11
+local version = require "version"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
+end
 
 local MOST_RECENT_TEMP = "mostRecentTemp"
 local RECEIVED_X = "receivedX"
@@ -67,6 +75,8 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local MOUNTED_ON_OFF_CONTROL_ID = 0x010F
+local MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
 local GENERIC_SWITCH_ID = 0x000F
 local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
@@ -79,6 +89,8 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
+  [MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
 }
 
 local device_type_attribute_map = {
@@ -158,11 +170,20 @@ local device_type_attribute_map = {
   }
 }
 
-local child_device_profile_overrides = {
-  { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 switch
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 switch
+local child_device_profile_overrides_per_vendor_id = {
+  [0x1321] = {
+    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
+    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  },
+  [0x115F] = {
+    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+  }
 }
 
 local detect_matter_thing
@@ -177,16 +198,6 @@ local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-local embedded_cluster_utils = require "embedded-cluster-utils"
-
--- Include driver-side definitions when lua libs api version is < 11
-local version = require "version"
-if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
-end
 
 -- Return an ISO-8061 timestamp in UTC
 local function iso8061Timestamp(time)
@@ -247,7 +258,7 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     clusters.ElectricalEnergyMeasurement.ID,
     {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
   if #cumul_eps == 0 then
-    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true)
+    device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = true})
   end
   if #cumul_eps > 0 and not is_cumulative_report then
     return
@@ -297,6 +308,7 @@ local TEMP_MAX = "__temp_max"
 
 local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
+local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
@@ -377,6 +389,11 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
+            if device.manufacturer_info.product_id == fingerprint.product_id then
+              return false -- For Aqara Dimmer Switch with Button.
+            end
+          end
           return true
         end
       end
@@ -397,9 +414,8 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 local function find_default_endpoint(device)
-  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  if #temperature_eps > 0 and #humidity_eps > 0 then
+  if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -462,12 +478,12 @@ local function assign_child_profile(device, child_ep)
   --      determined in the "for" loop above (e.g., light-binary)
   --   2. The selected profile for the child device matches the initial profile defined in
   --      child_device_profile_overrides
-  for _, fingerprint in ipairs(child_device_profile_overrides) do
-    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-       device.manufacturer_info.product_id == fingerprint.product_id and
-       ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-      profile = fingerprint.target_profile
-      break
+  for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
+    for _, fingerprint in ipairs(vendor) do
+      if device.manufacturer_info.product_id == fingerprint.product_id and
+         ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
+         return fingerprint.target_profile
+      end
     end
   end
 
@@ -598,9 +614,9 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
           }
         )
         parent_child_device = true
-        if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
+        if _ == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep)
+          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
       end
     end
@@ -612,7 +628,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  device:set_field(SWITCH_INITIALIZED, true)
+  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
 
   -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
@@ -825,7 +841,7 @@ local function handle_set_color_temperature(driver, device, cmd)
     temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
   end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature)
+  device:set_field(MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
   device:send(req)
 end
 
@@ -1041,7 +1057,7 @@ end
 local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value)
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     else
@@ -1056,7 +1072,7 @@ local function per_energy_imported_handler(driver, device, ib, response)
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report)
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
@@ -1191,10 +1207,8 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
 
-    local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-    local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-    if #temperature_eps > 0 and #humidity_eps > 0 then
-      -- for now, this logic only applies to the Aqara Climate Sensor W100.
+    if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+       device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
       profile_name = profile_name .. "-temperature-humidity"
     end
     device:try_update_metadata({ profile = profile_name })
