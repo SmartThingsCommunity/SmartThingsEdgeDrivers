@@ -97,6 +97,28 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
+  - id: "4736/32788"
+    deviceLabel: Siterwell Smart Smoke Alarm
+    vendorId: 0x1280
+    productId: 0x8014
+    deviceProfileName: smoke 
+  - id: "4736/32789"
+    deviceLabel: Siterwell Smart Carbon Monoxide Alarm
+    vendorId: 0x1280
+    productId: 0x8015
+    deviceProfileName: co
+  - id: "4736/848"
+    deviceLabel: Siterwell Motion Sensor
+    vendorId: 0x1280
+    productId: 0x0350
+    deviceProfileName: motion-battery
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor

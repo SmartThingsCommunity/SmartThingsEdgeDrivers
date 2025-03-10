@@ -87,7 +87,7 @@ local function set_boolean_device_type_per_endpoint(driver, device)
       for _, dt in ipairs(ep.device_types) do
           for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
               if dt.device_type_id == info.id then
-                  device:set_field(dt_name, ep.endpoint_id)
+                  device:set_field(dt_name, ep.endpoint_id, { persist = true })
                   device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
               end
           end
@@ -109,10 +109,6 @@ local function supports_sensitivity_preferences(device)
     end
   end
   return preference_names
-end
-
-local function device_added(driver, device)
-  set_boolean_device_type_per_endpoint(driver, device)
 end
 
 local function match_profile(driver, device, battery_supported)
@@ -188,13 +184,14 @@ end
 
 local function device_init(driver, device)
   log.info("device init")
+  set_boolean_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
     set_boolean_device_type_per_endpoint(driver, device)
+    device:subscribe()
   end
   if not device.preferences then
     return
@@ -306,7 +303,7 @@ local function supported_sensitivities_handler(driver, device, ib, response)
 
   for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
     if device:get_field(dt_name) == ib.endpoint_id then
-      device:set_field(info.sensitivity_max, ib.data.value)
+      device:set_field(info.sensitivity_max, ib.data.value, {persist = true})
     end
   end
 end
@@ -367,7 +364,6 @@ local matter_driver_template = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure,
-    added = device_added,
   },
   matter_handlers = {
     attr = {

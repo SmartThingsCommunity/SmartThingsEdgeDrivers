@@ -163,6 +163,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
     lazy_load_if_possible("inovelli-vzm31-sn"),
+	  lazy_load_if_possible("laisiao"),
     lazy_load_if_possible("tuya-multi")
   },
   lifecycle_handlers = {

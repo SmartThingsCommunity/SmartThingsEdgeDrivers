@@ -16,6 +16,3 @@ components:
     version: 1
   categories:
   - name: SmokeDetector
-preferences:
-  - preferenceId: certifiedpreferences.smokeSensorSensitivity
-    explicit: true

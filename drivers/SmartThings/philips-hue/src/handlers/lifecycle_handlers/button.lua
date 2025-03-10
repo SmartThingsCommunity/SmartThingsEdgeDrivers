@@ -5,8 +5,6 @@ local st_utils = require "st.utils"
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
-local refresh_handler = require("handlers.commands").refresh_handler
-
 local Discovery = require "disco"
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -160,7 +158,11 @@ function ButtonLifecycleHandlers.init(driver, device)
   end
   device:set_field(Fields._INIT, true, { persist = false })
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
-    refresh_handler(driver, device)
+    driver:inject_capability_command(device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
 end
