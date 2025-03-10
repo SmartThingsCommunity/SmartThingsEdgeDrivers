@@ -75,6 +75,8 @@ local DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
 local ON_OFF_SWITCH_ID = 0x0103
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+local MOUNTED_ON_OFF_CONTROL_ID = 0x010F
+local MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
 local GENERIC_SWITCH_ID = 0x000F
 local ELECTRICAL_SENSOR_ID = 0x0510
 local device_type_profile_map = {
@@ -87,6 +89,8 @@ local device_type_profile_map = {
   [ON_OFF_SWITCH_ID] = "switch-binary",
   [ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
   [ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
+  [MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
 }
 
 local device_type_attribute_map = {
@@ -166,14 +170,20 @@ local device_type_attribute_map = {
   }
 }
 
-local child_device_profile_overrides = {
-  { vendor_id = 0x1321, product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x1321, product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  { vendor_id = 0x115F, product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
-  { vendor_id = 0x115F, product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 2 Channels
-  { vendor_id = 0x115F, product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 3 Channels
-  { vendor_id = 0x115F, product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" }, -- 2 Buttons, 1 Channel
-  { vendor_id = 0x115F, product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" }, -- 4 Buttons, 2 Channels
+local child_device_profile_overrides_per_vendor_id = {
+  [0x1321] = {
+    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
+    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  },
+  [0x115F] = {
+    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+  }
 }
 
 local detect_matter_thing
@@ -379,6 +389,11 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
+            if device.manufacturer_info.product_id == fingerprint.product_id then
+              return false -- For Aqara Dimmer Switch with Button.
+            end
+          end
           return true
         end
       end
@@ -463,12 +478,12 @@ local function assign_child_profile(device, child_ep)
   --      determined in the "for" loop above (e.g., light-binary)
   --   2. The selected profile for the child device matches the initial profile defined in
   --      child_device_profile_overrides
-  for _, fingerprint in ipairs(child_device_profile_overrides) do
-    if device.manufacturer_info.vendor_id == fingerprint.vendor_id and
-       device.manufacturer_info.product_id == fingerprint.product_id and
-       ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-      profile = fingerprint.target_profile
-      break
+  for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
+    for _, fingerprint in ipairs(vendor) do
+      if device.manufacturer_info.product_id == fingerprint.product_id and
+         ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
+         return fingerprint.target_profile
+      end
     end
   end
 
@@ -599,7 +614,7 @@ local function try_build_child_switch_profiles(driver, device, switch_eps, main_
           }
         )
         parent_child_device = true
-        if _ == 1 and child_profile == "light-power-energy-powerConsumption" then
+        if _ == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
