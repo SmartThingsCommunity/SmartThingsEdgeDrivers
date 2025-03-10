@@ -209,4 +209,13 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "setMode: 2",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "mode", component = "main", command = "setMode", args = { "2" } } })
+    test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
+    THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL_ATTR, 0x1407, data_types.Uint8, 2) })
+  end
+)
+
 test.run_registered_tests()
