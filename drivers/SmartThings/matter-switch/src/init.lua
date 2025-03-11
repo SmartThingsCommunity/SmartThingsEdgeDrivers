@@ -552,7 +552,7 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_component_map(device, main_endpoint, button_eps, fan_eps)
+local function build_component_map(device, main_endpoint, button_eps, light_eps)
   local eps
   local component_name
   local component_field
@@ -561,9 +561,9 @@ local function build_component_map(device, main_endpoint, button_eps, fan_eps)
     eps = button_eps
     component_name = "button"
     component_field = COMPONENT_TO_ENDPOINT_MAP_BUTTON
-  elseif fan_eps ~= nil then
-    eps = fan_eps
-    component_name = "fan"
+  elseif light_eps ~= nil then
+    eps = light_eps
+    component_name = "light"
     component_field = COMPONENT_TO_ENDPOINT_MAP_FAN
   end
   if eps == nil then return end
@@ -572,7 +572,10 @@ local function build_component_map(device, main_endpoint, button_eps, fan_eps)
   component_map["main"] = main_endpoint
   for component_num, ep in ipairs(eps) do
     if ep ~= main_endpoint then
-      local component = component_name .. component_num
+      local component = component_name
+      if #eps > 2 then
+        component = component .. component_num
+      end
       component_map[component] = ep
     end
   end
@@ -691,13 +694,15 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     end
   end
 
-  -- Any button or fan endpoints found will be added as additional components in the profile containing the
-  -- main endpoint. The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
+  -- Any button endpoints found will be added as additional components in the profile containing the
+  -- main endpoint. An fan endpoint will be considered the main endpoint and other additional switch
+  -- endpoints will be added as additional components. The resulting endpoint to component map is
+  -- saved in the corresponding component to endpoint map field.
   if #button_eps > 0 then
     build_component_map(device, main_endpoint, button_eps)
     build_button_profile(device, main_endpoint, #button_eps)
   elseif #fan_eps > 0 then
-    build_component_map(device, main_endpoint, fan_eps)
+    build_component_map(device, main_endpoint, switch_eps)
     build_fan_profile(device, main_endpoint, #fan_eps)
   end
 
