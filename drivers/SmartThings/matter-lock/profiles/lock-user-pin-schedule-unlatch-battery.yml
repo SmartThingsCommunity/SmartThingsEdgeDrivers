@@ -42,7 +42,7 @@ deviceConfig:
       version: 1
       visibleCondition: {
         "capability": "lock",
-        "version": 1,
+        "version": "1",
         "component": "main",
         "value": "lock.value",
         "operator": "DOES_NOT_EQUAL",
