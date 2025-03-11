@@ -2694,6 +2694,12 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x000F # Generic Switch
     deviceProfileName: light-level-button
+  - id: "matter/color/light/fan"
+    deviceLabel: Matter Color Light/Fan
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+      - id: 0x002B # Fan
+    deviceProfileName: light-color-level-fan
 
 matterThing:
   - id: SmartThings/MatterThing
