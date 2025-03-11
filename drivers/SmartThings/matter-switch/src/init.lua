@@ -606,10 +606,10 @@ end
 local function build_fan_profile(device, main_endpoint, num_fan_eps)
   if device_type_supports_multicomponent_configuration(device, main_endpoint, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID) and #num_fan_eps == 1 then
     device:try_update_metadata({profile = "fan-light-color-level"})
+    device:set_field(FAN_DEVICE_PROFILED, true)
   else
     device.log.warn_with({hub_logs = true}, "Fan device uses unsupported configuration for a multicomponent profile")
   end
-  device:set_field(FAN_DEVICE_PROFILED, true)
 end
 
 local function build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
@@ -646,8 +646,6 @@ local function build_child_switch_profiles(driver, device, switch_eps, main_endp
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
-
   -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
 end
@@ -680,28 +678,30 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   table.sort(button_eps)
   table.sort(fan_eps)
 
-  -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
-  -- while building switch child profiles
-  local num_switch_server_eps = build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
+  if #switch_eps > 0 then
+    -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
+    -- while building switch child profiles
+    local num_switch_server_eps = build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
+
+    -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
+    -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
+    -- Note: since their device type isn't supported, these devices join as a matter-thing.
+    if num_switch_server_eps > 0 and detect_matter_thing(device) then
+      handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
+    end
+  end
 
   -- Any button or fan endpoints found will be added as additional components in the profile containing the
   -- main endpoint. The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
   if #button_eps > 0 then
     build_component_map(device, main_endpoint, button_eps)
     build_button_profile(device, main_endpoint, #button_eps)
-    return
   elseif #fan_eps > 0 then
     build_component_map(device, main_endpoint, fan_eps)
     build_fan_profile(device, main_endpoint, #fan_eps)
-    return
   end
 
-  -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
-  -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
-  -- Note: since their device type isn't supported, these devices join as a matter-thing.
-  if num_switch_server_eps > 0 and detect_matter_thing(device) then
-    handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
-  end
+  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
 end
 
 local function component_to_endpoint(device, component)
