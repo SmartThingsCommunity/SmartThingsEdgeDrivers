@@ -224,8 +224,8 @@ end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is available
-    if attr.value == 0x0C then
+    -- Re-profile the device if BatPercentRemaining is available
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       match_profile(device, battery_support.BATTERY_PERCENTAGE)
       return
     end
