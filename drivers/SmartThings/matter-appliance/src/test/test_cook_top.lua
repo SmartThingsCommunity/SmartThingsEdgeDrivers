@@ -17,9 +17,9 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 
-local COOK_TOP_ENDPOINT = 1
-local COOK_SURFACE_ONE_ENDPOINT = 2
-local COOK_SURFACE_TWO_ENDPOINT = 3
+local COOK_TOP_ENDPOINT = 80
+local COOK_SURFACE_ONE_ENDPOINT = 83
+local COOK_SURFACE_TWO_ENDPOINT = 90
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("cook-surface-one-tl-cook-surface-two-tl.yml"), --on an actual device we would switch to this over doConfigure.
@@ -102,8 +102,8 @@ test.register_coroutine_test(
     "Assert component to endpoint map",
     function()
       local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
-      assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT, "Cook Surface One Endpoint must be 2")
-      assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be 3")
+      assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT, "Cook Surface One Endpoint must be "..tostring(COOK_SURFACE_ONE_ENDPOINT))
+      assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be "..tostring(COOK_SURFACE_TWO_ENDPOINT))
     end
 )
 
@@ -175,7 +175,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 2, 40*100)
+        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, COOK_SURFACE_ONE_ENDPOINT, 40*100)
       }
     },
     {
@@ -188,7 +188,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 3, 20*100)
+        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, COOK_SURFACE_TWO_ENDPOINT, 20*100)
       }
     },
     {

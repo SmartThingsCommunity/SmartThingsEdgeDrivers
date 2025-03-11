@@ -17,7 +17,7 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 
-local APPLICATION_ENDPOINT = 1
+local APPLICATION_ENDPOINT = 100
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("laundry-dryer-tn-tl.yml"),
@@ -36,7 +36,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = APPLICATION_ENDPOINT,
       clusters = {
         {
           cluster_id = clusters.OnOff.ID,
@@ -71,7 +71,7 @@ local mock_device_washer = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = APPLICATION_ENDPOINT,
       clusters = {
         {
           cluster_id = clusters.OnOff.ID,

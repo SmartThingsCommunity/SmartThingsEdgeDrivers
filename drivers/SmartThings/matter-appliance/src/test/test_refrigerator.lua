@@ -17,8 +17,8 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 
-local refrigerator_ep = 1
-local freezer_ep = 2
+local refrigerator_ep = 100
+local freezer_ep = 101
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("refrigerator-freezer-tn.yml"),
@@ -128,7 +128,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.RefrigeratorAndTemperatureControlledCabinetMode.server.commands.ChangeToMode(mock_device, refrigerator_ep, 0) --0 is the index where Quick is stored.
+        clusters.RefrigeratorAndTemperatureControlledCabinetMode.server.commands.ChangeToMode(mock_device, refrigerator_ep, 0) --0 is the index where Normal is stored.
       }
     },
     {
@@ -144,7 +144,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.RefrigeratorAndTemperatureControlledCabinetMode.server.commands.ChangeToMode(mock_device, refrigerator_ep, 1) --1 is the index where Super Dry is stored.
+        clusters.RefrigeratorAndTemperatureControlledCabinetMode.server.commands.ChangeToMode(mock_device, refrigerator_ep, 1) --1 is the index where Energy Save is stored.
       }
     }
   }

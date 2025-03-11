@@ -42,7 +42,6 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local LAUNDRY_DEVICE_TYPE_ID= "__laundry_device_type_id"
 local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
@@ -68,22 +67,19 @@ local setpoint_limit_device_field = {
   MAX_TEMP = "MAX_TEMP",
 }
 
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
+local find_default_endpoint = function(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == LAUNDRY_WASHER_DEVICE_TYPE_ID or dt.device_type_id == LAUNDRY_DRYER_DEVICE_TYPE_ID then
+        return ep.endpoint_id
+      end
     end
   end
-  return "main"
+  return device.MATTER_DEFAULT_ENDPOINT
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
+  return find_default_endpoint(device)
 end
 
 local function is_matter_laundry_device(opts, driver, device)
@@ -101,7 +97,6 @@ end
 -- Lifecycle Handlers --
 local function device_init(driver, device)
   device:subscribe()
-  device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
