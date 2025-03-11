@@ -6,8 +6,6 @@ components:
     version: 1
   - id: carbonMonoxideMeasurement
     version: 1
-  - id: batteryLevel
-    version: 1
   - id: battery
     version: 1
   - id: hardwareFault
