@@ -56,6 +56,7 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 -- containing both button endpoints and switch endpoints will use this field
 -- rather than COMPONENT_TO_ENDPOINT_MAP.
 local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
+local COMPONENT_TO_ENDPOINT_MAP_FAN = "__component_to_endpoint_map_fan"
 local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
@@ -283,6 +284,7 @@ local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
+local FAN_DEVICE_PROFILED = "__fan_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -375,14 +377,14 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
---- device_type_supports_button_switch_combination helper function used to check
+--- device_type_supports_multicomponent_configuration helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
---- combination button/switch devices.
-local function device_type_supports_button_switch_combination(device, endpoint_id)
+--- multicomponent devices.
+local function device_type_supports_multicomponent_configuration(device, endpoint_id, device_type_id)
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+        if dt.device_type_id == device_type_id then
           return true
         end
       end
@@ -409,10 +411,16 @@ local function find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  table.sort(fan_eps)
   table.sort(switch_eps)
   table.sort(button_eps)
+
+  if #fan_eps > 0 then
+    return get_first_non_zero_endpoint(fan_eps)
+  end
 
   -- Return the first switch endpoint as the default endpoint if no button endpoints are present
   if #button_eps == 0 and #switch_eps > 0 then
@@ -429,7 +437,7 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if device_type_supports_button_switch_combination(device, main_endpoint) then
+    if device_type_supports_multicomponent_configuration(device, main_endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
       return main_endpoint
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
@@ -481,7 +489,7 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function do_configure(driver, device)
-  if device:get_field(BUTTON_DEVICE_PROFILED) then
+  if device:get_field(BUTTON_DEVICE_PROFILED) or device:get_field(FAN_DEVICE_PROFILED) then
     return
   end
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
@@ -544,25 +552,37 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function try_build_button_component_map(device, main_endpoint, button_eps)
+local function build_component_map(device, main_endpoint, button_eps, fan_eps)
+  local eps
+  local component_name
+  local component_field
   -- create component mapping on the main profile button endpoints
-  if STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
-    local component_map = {}
-    component_map["main"] = main_endpoint
-    for component_num, ep in ipairs(button_eps) do
-      if ep ~= main_endpoint then
-        local button_component = "button" .. component_num
-        component_map[button_component] = ep
-      end
-    end
-    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  if button_eps ~= nil and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
+    eps = button_eps
+    component_name = "button"
+    component_field = COMPONENT_TO_ENDPOINT_MAP_BUTTON
+  elseif fan_eps ~= nil then
+    eps = fan_eps
+    component_name = "fan"
+    component_field = COMPONENT_TO_ENDPOINT_MAP_FAN
   end
+  if eps == nil then return end
+
+  local component_map = {}
+  component_map["main"] = main_endpoint
+  for component_num, ep in ipairs(eps) do
+    if ep ~= main_endpoint then
+      local component = component_name .. component_num
+      component_map[component] = ep
+    end
+  end
+  device:set_field(component_field, component_map, {persist = true})
 end
 
 local function build_button_profile(device, main_endpoint, num_button_eps)
   local profile_name
   local battery_supported
-  if device_type_supports_button_switch_combination(device, main_endpoint) then
+  if device_type_supports_multicomponent_configuration(device, main_endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
     profile_name = "light-level-" .. num_button_eps .. "-button"
   else
     profile_name = num_button_eps .. "-button"
@@ -583,7 +603,16 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
-local function try_build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
+local function build_fan_profile(device, main_endpoint, num_fan_eps)
+  if device_type_supports_multicomponent_configuration(device, main_endpoint, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID) and #num_fan_eps == 1 then
+    device:try_update_metadata({profile = "fan-light-color-level"})
+  else
+    device.log.warn_with({hub_logs = true}, "Fan device uses unsupported configuration for a multicomponent profile")
+  end
+  device:set_field(FAN_DEVICE_PROFILED, true)
+end
+
+local function build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
   local num_switch_server_eps = 0
   local parent_child_device = false
   for _, ep in ipairs(switch_eps) do
@@ -646,19 +675,24 @@ end
 local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   table.sort(switch_eps)
   table.sort(button_eps)
-
-  -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
-  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
-  try_build_button_component_map(device, main_endpoint, button_eps)
+  table.sort(fan_eps)
 
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
-  local num_switch_server_eps = try_build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
+  local num_switch_server_eps = build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
 
+  -- Any button or fan endpoints found will be added as additional components in the profile containing the
+  -- main endpoint. The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
   if #button_eps > 0 then
+    build_component_map(device, main_endpoint, button_eps)
     build_button_profile(device, main_endpoint, #button_eps)
+    return
+  elseif #fan_eps > 0 then
+    build_component_map(device, main_endpoint, fan_eps)
+    build_fan_profile(device, main_endpoint, #fan_eps)
     return
   end
 
@@ -857,6 +891,29 @@ local function handle_set_level(driver, device, cmd)
   else
     device:send(commands.Open(device, endpoint_id, nil, level))
   end
+end
+
+local function set_fan_mode(driver, device, cmd)
+  local fan_mode_id
+  if cmd.args.fanMode == capabilities.fanMode.fanMode.low.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.medium.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.MEDIUM
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.high.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.HIGH
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.auto.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
+  else
+    fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
+  end
+  if fan_mode_id then
+    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+  end
+end
+
+local function set_fan_speed_percent(driver, device, cmd)
+  local speed = math.floor(cmd.args.percent)
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), speed))
 end
 
 local function handle_refresh(driver, device, cmd)
@@ -1291,6 +1348,73 @@ local function humidity_attr_handler(driver, device, ib, response)
   end
 end
 
+local function fan_mode_handler(driver, device, ib, response)
+  if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanMode.fanMode("off"))
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanMode.fanMode("low"))
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanMode.fanMode("medium"))
+  elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanMode.fanMode("high"))
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanMode.fanMode("auto"))
+  end
+end
+
+local function fan_mode_sequence_handler(driver, device, ib, response)
+  local supportedFanModes
+  if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.low.NAME,
+      capabilities.fanMode.fanMode.medium.NAME,
+      capabilities.fanMode.fanMode.high.NAME
+    }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.low.NAME,
+      capabilities.fanMode.fanMode.high.NAME
+    }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.low.NAME,
+      capabilities.fanMode.fanMode.medium.NAME,
+      capabilities.fanMode.fanMode.high.NAME,
+      capabilities.fanMode.fanMode.auto.NAME
+    }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.low.NAME,
+      capabilities.fanMode.fanMode.high.NAME,
+      capabilities.fanMode.fanMode.auto.NAME
+    }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.high.NAME,
+      capabilities.fanMode.fanMode.auto.NAME
+    }
+  else
+    supportedFanModes = {
+      capabilities.fanMode.fanMode.off.NAME,
+      capabilities.fanMode.fanMode.high.NAME
+    }
+  end
+  local event = capabilities.airPurifierFanMode.supportedFanModes(supportedFanModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+local function fan_speed_percent_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil or ib.data.value < 0 or ib.data.value > 100 then
+    return
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -1351,6 +1475,11 @@ local matter_driver_template = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temperature_attr_handler,
         [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MIN),
         [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temp_attr_handler_factory(TEMP_MAX),
+      },
+      [clusters.FanControl.ID] = {
+        [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
+        [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
+        [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler
       }
     },
     event = {
@@ -1415,6 +1544,13 @@ local matter_driver_template = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue,
       clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
       clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.fanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      clusters.FanControl.attributes.PercentCurrent
     }
   },
   subscribed_events = {
@@ -1450,6 +1586,12 @@ local matter_driver_template = {
     },
     [capabilities.level.ID] = {
       [capabilities.level.commands.setLevel.NAME] = handle_set_level
+    },
+    [capabilities.fanMode.ID] = {
+      [capabilities.fanMode.commands.setFanMode.NAME] = set_fan_mode
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent,
     }
   },
   supported_capabilities = {
@@ -1468,7 +1610,9 @@ local matter_driver_template = {
     capabilities.battery,
     capabilities.batteryLevel,
     capabilities.temperatureMeasurement,
-    capabilities.relativeHumidityMeasurement
+    capabilities.relativeHumidityMeasurement,
+    capabilities.fanMode,
+    capabilities.fanSpeedPercent
   },
   sub_drivers = {
     require("eve-energy"),
