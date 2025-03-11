@@ -418,6 +418,7 @@ local function find_default_endpoint(device)
   table.sort(switch_eps)
   table.sort(button_eps)
 
+  -- Return the first fan endpoint as the default endpoint if one is present
   if #fan_eps > 0 then
     return get_first_non_zero_endpoint(fan_eps)
   end
@@ -553,10 +554,7 @@ local function find_child(parent, ep_id)
 end
 
 local function build_component_map(device, main_endpoint, button_eps, light_eps)
-  local eps
-  local component_name
-  local component_field
-  -- create component mapping on the main profile button endpoints
+  local eps, component_name, component_field
   if button_eps ~= nil and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
     eps = button_eps
     component_name = "button"
@@ -695,7 +693,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   end
 
   -- Any button endpoints found will be added as additional components in the profile containing the
-  -- main endpoint. An fan endpoint will be considered the main endpoint and other additional switch
+  -- main endpoint. A fan endpoint will be considered the main endpoint and other additional switch
   -- endpoints will be added as additional components. The resulting endpoint to component map is
   -- saved in the corresponding component to endpoint map field.
   if #button_eps > 0 then
