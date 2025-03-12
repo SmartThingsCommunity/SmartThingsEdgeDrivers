@@ -84,7 +84,7 @@ matterManufacturer:
   - id: "4942/3"
     deviceLabel: Wireless Temperature Sensor X
     vendorId: 0x134E
-    productId: 0x0003
+    productId: 0x0006
     deviceProfileName: temperature-humidity
   #Tuo
   - id: "5150/3"
