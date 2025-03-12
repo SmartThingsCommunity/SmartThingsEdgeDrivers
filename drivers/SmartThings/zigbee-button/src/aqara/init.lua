@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,20 +17,22 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
-
+local supported_values = require "zigbee-multi-button.supported_values"
 
 local PowerConfiguration = clusters.PowerConfiguration
-local PRIVATE_CLUSTER_ID = 0xFCC0
-local PRIVATE_ATTRIBUTE_ID_T1 = 0x0009
-local PRIVATE_ATTRIBUTE_ID_E1 = 0x0125
-local MFG_CODE = 0x115F
 
+local PRIVATE_CLUSTER_ID = 0xFCC0
+local PRIVATE_ATTRIBUTE_ID = 0x0009
+local MULTISTATE_INPUT_ATTRIBUTE_ID = 0x0125
 local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
+local MFG_CODE = 0x115F
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.remote.b1acn02" },
-  { mfr = "LUMI", model = "lumi.remote.acn003" }
+  { mfr = "LUMI", model = "lumi.remote.acn003" },
+  { mfr = "LUMI", model = "lumi.remote.b18ac1" },
+  { mfr = "LUMI", model = "lumi.remote.b28ac1" }
 }
 
 local configuration = {
@@ -53,72 +55,80 @@ local configuration = {
 }
 
 local function present_value_attr_handler(driver, device, value, zb_rx)
-    if value.value == 1 then
-        device:emit_event(capabilities.button.button.pushed({state_change = true}))
-    elseif value.value == 2 then
-        device:emit_event(capabilities.button.button.double({state_change = true}))
-    elseif value.value == 0 then
-        device:emit_event(capabilities.button.button.held({state_change = true}))
-    end
+  local src_endpoint = zb_rx.address_header.src_endpoint.value
+  local event_map = { [1] = "pushed", [2] = "double", [0] = "held" }
+  local event_value = event_map[value.value]
+  if not event_value then return end
+  device:emit_component_event(device.profile.components.main, capabilities.button.button[event_value]({ state_change = true }))
+  if device:get_model() == "lumi.remote.b28ac1" and src_endpoint == 1 then
+    device:emit_component_event(device.profile.components.button1, capabilities.button.button[event_value]({ state_change = true }))
+  elseif src_endpoint == 2 then
+    device:emit_component_event(device.profile.components.button2, capabilities.button.button[event_value]({ state_change = true }))
+  end
 end
 
 local is_aqara_products = function(opts, driver, device)
-    for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-        return true
-      end
+  for _, fingerprint in ipairs(FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
     end
-    return false
+  end
+  return false
 end
 
 local function device_init(driver, device)
-    battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
-    if configuration ~= nil then
-      for _, attribute in ipairs(configuration) do
-        device:add_configured_attribute(attribute)
-        device:add_monitored_attribute(attribute)
-      end
+  battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
+  if configuration ~= nil then
+    for _, attribute in ipairs(configuration) do
+      device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
     end
+  end
 end
 
 local function added_handler(self, device)
-    device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
-    device:emit_event(capabilities.button.numberOfButtons({value = 1}))
-    device:emit_event(capabilities.button.button.pushed({state_change = false}))
-    device:emit_event(capabilities.battery.battery(100))
+  local config = supported_values.get_device_parameters(device)
+  for _, component in pairs(device.profile.components) do
+    local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
+    if config ~= nil then
+      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES), {visibility = { displayed = false }})
+    else
+      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held", "double"}, {visibility = { displayed = false }}))
+    end
+    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
+  end
+  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.battery.battery(100))
 end
 
 local function do_configure(driver, device)
   device:configure()
-  if device:get_model() == "lumi.remote.b1acn02" then
+  if device:get_model() == "lumi.remote.acn003" then
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE, data_types.Uint8, 1))
-  elseif device:get_model() == "lumi.remote.acn003" then
+      PRIVATE_CLUSTER_ID, MULTISTATE_INPUT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 2))
+  else
     device:send(cluster_base.write_manufacturer_specific_attribute(device,
-    PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1, MFG_CODE, data_types.Uint8, 2))
+      PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
+    device:send(cluster_base.write_manufacturer_specific_attribute(device,
+      PRIVATE_CLUSTER_ID, MULTISTATE_INPUT_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 2))
   end
-  -- when the wireless switch T1 accesses the network, the gateway sends
-  -- private attribute 0009 to make the device no longer distinguish
-  -- between the standard gateway and the aqara gateway.
-  -- When wireless switch E1 is connected to the network, the gateway sends
-  -- private attribute 0125 to enable the device to send double-click and long-press packets.
 end
 
 local aqara_wireless_switch_handler = {
-    NAME = "Aqara Wireless Switch Handler",
-    lifecycle_handlers = {
-      init = device_init,
-      added = added_handler,
-      doConfigure = do_configure
-    },
-    zigbee_handlers = {
-      attr = {
-        [MULTISTATE_INPUT_CLUSTER_ID] = {
-          [PRESENT_ATTRIBUTE_ID] = present_value_attr_handler
-        }
+  NAME = "Aqara Wireless Switch Handler",
+  lifecycle_handlers = {
+    init = device_init,
+    added = added_handler,
+    doConfigure = do_configure
+  },
+  zigbee_handlers = {
+    attr = {
+      [MULTISTATE_INPUT_CLUSTER_ID] = {
+        [PRESENT_ATTRIBUTE_ID] = present_value_attr_handler
       }
-    },
-    can_handle = is_aqara_products
+    }
+  },
+  can_handle = is_aqara_products
 }
 
 return aqara_wireless_switch_handler
