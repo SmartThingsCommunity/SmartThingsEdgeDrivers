@@ -21,4 +21,5 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: Speaker 
+  - name: Speaker
+  - name: NetworkAudio
