@@ -571,7 +571,7 @@ local function build_component_map(device, main_endpoint, button_eps, light_eps)
   for component_num, ep in ipairs(eps) do
     if ep ~= main_endpoint then
       local component = component_name
-      if #eps > 2 then
+      if #eps > 1 then
         component = component .. component_num
       end
       component_map[component] = ep
@@ -580,10 +580,10 @@ local function build_component_map(device, main_endpoint, button_eps, light_eps)
   device:set_field(component_field, component_map, {persist = true})
 end
 
-local function build_button_profile(device, main_endpoint, num_button_eps)
+local function build_button_profile(device, endpoint, num_button_eps)
   local profile_name
   local battery_supported
-  if device_type_supports_multicomponent_configuration(device, main_endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
+  if device_type_supports_multicomponent_configuration(device, endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
     profile_name = "light-level-" .. num_button_eps .. "-button"
   else
     profile_name = num_button_eps .. "-button"
@@ -604,8 +604,8 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
-local function build_fan_profile(device, main_endpoint, num_fan_eps)
-  if device_type_supports_multicomponent_configuration(device, main_endpoint, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID) and #num_fan_eps == 1 then
+local function build_fan_profile(device, endpoint, num_fan_eps)
+  if device_type_supports_multicomponent_configuration(device, endpoint, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID) and num_fan_eps == 1 then
     device:try_update_metadata({profile = "fan-light-color-level"})
     device:set_field(FAN_DEVICE_PROFILED, true)
   else
@@ -679,6 +679,20 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   table.sort(button_eps)
   table.sort(fan_eps)
 
+  -- Any button endpoints found will be added as additional components in the profile containing the
+  -- main endpoint. A fan endpoint will be considered the main endpoint and other additional switch
+  -- endpoints will be added as additional components. The resulting endpoint to component map is
+  -- saved in the corresponding component to endpoint map field.
+  if #button_eps > 0 then
+    build_component_map(device, main_endpoint, button_eps, nil)
+    build_button_profile(device, main_endpoint, #button_eps)
+  elseif #fan_eps > 0 then
+    build_component_map(device, main_endpoint, nil, switch_eps)
+    build_fan_profile(device, switch_eps[1], #fan_eps)
+    device:set_field(SWITCH_INITIALIZED, true, {persist = true})
+    return
+  end
+
   if #switch_eps > 0 then
     -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
     -- while building switch child profiles
@@ -692,23 +706,12 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     end
   end
 
-  -- Any button endpoints found will be added as additional components in the profile containing the
-  -- main endpoint. A fan endpoint will be considered the main endpoint and other additional switch
-  -- endpoints will be added as additional components. The resulting endpoint to component map is
-  -- saved in the corresponding component to endpoint map field.
-  if #button_eps > 0 then
-    build_component_map(device, main_endpoint, button_eps)
-    build_button_profile(device, main_endpoint, #button_eps)
-  elseif #fan_eps > 0 then
-    build_component_map(device, main_endpoint, switch_eps)
-    build_fan_profile(device, main_endpoint, #fan_eps)
-  end
-
   device:set_field(SWITCH_INITIALIZED, true, {persist = true})
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP_FAN) or
+    device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
@@ -716,7 +719,8 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP_FAN) or
+    device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
@@ -1407,7 +1411,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
       capabilities.fanMode.fanMode.high.NAME
     }
   end
-  local event = capabilities.airPurifierFanMode.supportedFanModes(supportedFanModes, {visibility = {displayed = false}})
+  local event = capabilities.fanMode.supportedFanModes(supportedFanModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
