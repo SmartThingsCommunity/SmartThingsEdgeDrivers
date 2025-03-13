@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "Vimar/xx591-remote-control"
+    deviceLabel: Vimar Remote Control
+    manufacturer: Vimar
+    model: "RemoteControl_v1.0"
+    deviceProfileName: two-buttons-no-fw-update
   - id: "LUMI/lumi.remote.b1acn02"
     deviceLabel: Aqara Wireless Mini Switch T1
     manufacturer: LUMI
