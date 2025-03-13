@@ -94,7 +94,10 @@ local function update_supported_arguments(device, current_run_mode, operating_st
     local event = capabilities.mode.supportedArguments({}, {visibility = {displayed = false}})
     device:emit_component_event(device.profile.components["runMode"], event)
     -- Set cleanMode to empty
-    device:emit_component_event(device.profile.components["cleanMode"], event)
+    local component = device.profile.components["cleanMode"]
+    if component ~= nil then
+      device:emit_component_event(component, event)
+    end
     return
   end
 
@@ -114,17 +117,17 @@ local function update_supported_arguments(device, current_run_mode, operating_st
 
   -- Check whether non-idle mode can be selected or not
   local op_state = capabilities.robotCleanerOperatingState.operatingState
-  local can_be_non_idle = 0
+  local can_be_non_idle = false
   if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE and
     (operating_state == op_state.stopped.NAME or operating_state == op_state.paused.NAME or
      operating_state == op_state.docked.NAME or operating_state == op_state.charging.NAME) then
-      can_be_non_idle = 1
+      can_be_non_idle = true
   end
 
   -- Set supported run arguments
   local supported_arguments = {} -- For generic plugin
   for i, mode in ipairs(supported_run_modes) do
-    if mode[2] == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_non_idle == 1 then
+    if mode[2] == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_non_idle == true then
       table.insert(supported_arguments, mode[1])
     end
   end
@@ -143,8 +146,10 @@ local function update_supported_arguments(device, current_run_mode, operating_st
 
   -- Send event to set supported clean modes
   local component = device.profile.components["cleanMode"]
-  local event = capabilities.mode.supportedArguments(supported_arguments, {visibility = {displayed = false}})
-  device:emit_component_event(component, event)
+  if component ~= nil then
+    local event = capabilities.mode.supportedArguments(supported_arguments, {visibility = {displayed = false}})
+    device:emit_component_event(component, event)
+  end
 end
 
 -- Matter Handlers --
