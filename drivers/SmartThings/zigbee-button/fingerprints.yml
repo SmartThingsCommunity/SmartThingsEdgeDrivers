@@ -15,12 +15,12 @@ zigbeeManufacturer:
     model: lumi.remote.acn003
     deviceProfileName: one-button-battery
   - id: "LUMI/lumi.remote.b18ac1"
-    deviceLabel: Aqara Wireless Switch H1 (Single Rocker)
+    deviceLabel: Aqara Wireless Remote Switch H1 (Single Rocker)
     manufacturer: LUMI
     model: lumi.remote.b18ac1
     deviceProfileName: one-button-battery
   - id: "LUMI/lumi.remote.b28ac1"
-    deviceLabel: Aqara Wireless Switch H1 (Double Rocker)
+    deviceLabel: Aqara Wireless Remote Switch H1 (Double Rocker)
     manufacturer: LUMI
     model: lumi.remote.b28ac1
     deviceProfileName: two-buttons-battery
