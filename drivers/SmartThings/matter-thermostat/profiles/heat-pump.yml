@@ -1,0 +1,16 @@
+name: heat-pump
+components:
+- id: main
+  capabilities:
+  - id: energyMeter
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: HeatPump
