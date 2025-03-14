@@ -2376,11 +2376,3 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0B04 #Electrical Measurment
     deviceProfileName: switch-level-power
-  - id: "genericMeteredSwitch/3"
-    deviceLabel: Zigbee Switch
-    clusters:
-      server:
-        - 0x0006 #OnOff
-        - 0x0702 #Simple Metering
-        - 0x0B04 #Electrical Measurment
-    deviceProfileName: switch-power

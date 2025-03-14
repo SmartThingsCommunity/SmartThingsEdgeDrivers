@@ -45,15 +45,6 @@ end
 local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
 local OPTIONAL_THERMOSTAT_MODES_SEEN = "__OPTIONAL_THERMOSTAT_MODES_SEEN"
 
-if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-end
-
-if version.api < 13 then
-  clusters.WaterHeaterMode = require "WaterHeaterMode"
-end
-
 local THERMOSTAT_MODE_MAP = {
   [clusters.Thermostat.types.ThermostatSystemMode.OFF]               = capabilities.thermostatMode.thermostatMode.off,
   [clusters.Thermostat.types.ThermostatSystemMode.AUTO]              = capabilities.thermostatMode.thermostatMode.auto,
@@ -67,18 +58,18 @@ local THERMOSTAT_MODE_MAP = {
 }
 
 local THERMOSTAT_OPERATING_MODE_MAP = {
-  [0] = capabilities.thermostatOperatingState.thermostatOperatingState.heating,
-  [1] = capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
-  [2] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
-  [3] = capabilities.thermostatOperatingState.thermostatOperatingState.heating,
-  [4] = capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
-  [5] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
-  [6] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [0]		= capabilities.thermostatOperatingState.thermostatOperatingState.heating,
+  [1]		= capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
+  [2]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [3]		= capabilities.thermostatOperatingState.thermostatOperatingState.heating,
+  [4]		= capabilities.thermostatOperatingState.thermostatOperatingState.cooling,
+  [5]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
+  [6]		= capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
 }
 
 local WIND_MODE_MAP = {
-  [0] = capabilities.windMode.windMode.sleepWind,
-  [1] = capabilities.windMode.windMode.naturalWind
+  [0]		= capabilities.windMode.windMode.sleepWind,
+  [1]		= capabilities.windMode.windMode.naturalWind
 }
 
 local ROCK_MODE_MAP = {
@@ -90,41 +81,19 @@ local ROCK_MODE_MAP = {
 local RAC_DEVICE_TYPE_ID = 0x0072
 local AP_DEVICE_TYPE_ID = 0x002D
 local FAN_DEVICE_TYPE_ID = 0x002B
-local WATER_HEATER_DEVICE_TYPE_ID = 0x050F
-local HEAT_PUMP_DEVICE_TYPE_ID = 0x0309
-local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
-local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
 
 local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
-local DEFAULT_REPORT_TIME_INTERVAL = 15 * 60 -- Report cumulative energy every 15 minutes
-local MAX_REPORT_TIMEOUT = 30 * 60
-local POLL_INTERVAL = 60 -- To read CumulativeEnergyImported every 60 seconds.
 
-local RECURRING_POLL_TIMER = "__recurring_poll_timer"
-local RECURRING_REPORT_TIMER = "__recurring_report_poll_timer"
-local DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL = "__pcr_time_interval"
-local DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED = "__timer_interval_considered"
-local TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP = "__total_cumulative_energy_imported_map"
-local LAST_REPORTED_TIME = "__last_reported_time"
-local SUPPORTED_WATER_HEATER_MODES_WITH_IDX = "__supported_water_heater_modes_with_idx"
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
 -- This is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
--- So to handle this we assume the following ranges considering usual thermostat/water-heater temperatures:
--- Thermostat:
+-- So to handle this we assume the following ranges considering usual laundry temperatures:
 --   1. if the received setpoint command value is in range 5 ~ 40, it is inferred as *C
 --   2. if the received setpoint command value is in range 41 ~ 104, it is inferred as *F
 local THERMOSTAT_MAX_TEMP_IN_C = 40.0
 local THERMOSTAT_MIN_TEMP_IN_C = 5.0
-
--- Water Heater:
---   1. if the received setpoint command value is in range 30 ~ 80, it is inferred as *C
---   2. if the received setpoint command value is in range 86 ~ 176, it is inferred as *F
-local WATER_HEATER_MAX_TEMP_IN_C = 80.0
-local WATER_HEATER_MIN_TEMP_IN_C = 30.0
 
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
@@ -283,90 +252,8 @@ local subscribed_attributes = {
   },
   [capabilities.tvocHealthConcern.ID] = {
     clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
-  },
-  [capabilities.powerMeter.ID] = {
-    clusters.ElectricalPowerMeasurement.attributes.ActivePower
-  },
-  [capabilities.mode.ID] = {
-    clusters.WaterHeaterMode.attributes.CurrentMode,
-    clusters.WaterHeaterMode.attributes.SupportedModes
-  },
-  [capabilities.powerConsumptionReport.ID] = {
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
-  },
-  [capabilities.energyMeter.ID] = {
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
-  },
+  }
 }
-
-local function epoch_to_iso8601(time)
-  return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
-end
-
-local get_total_cumulative_energy_imported = function(device)
-  local total_cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
-  local total_energy = 0
-  for _, energyWh in pairs(total_cumulative_energy_imported) do
-    total_energy = total_energy + energyWh
-  end
-  return total_energy
-end
-
-local function schedule_energy_report_timer(device)
-  if not device:supports_capability(capabilities.powerConsumptionReport) then
-    return
-  end
-
-  local polling_schedule_timer = device:get_field(RECURRING_REPORT_TIMER)
-  if polling_schedule_timer ~= nil then
-    return
-  end
-
-  -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
-  local pcr_interval = device:get_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL) or DEFAULT_REPORT_TIME_INTERVAL
-  pcr_interval = utils.clamp_value(pcr_interval, DEFAULT_REPORT_TIME_INTERVAL, MAX_REPORT_TIMEOUT)
-  local timer = device.thread:call_on_schedule(pcr_interval, function()
-    local last_time = device:get_field(LAST_REPORTED_TIME) or 0
-    local current_time = os.time()
-    local total_energy = get_total_cumulative_energy_imported(device)
-    device:set_field(LAST_REPORTED_TIME, current_time, { persist = true })
-
-    -- Calculate the energy consumed between the start and the end time
-    local previousTotalConsumptionWh = device:get_latest_state(
-      "main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME
-    ) or { energy = 0 }
-    local deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
-    local startTime = epoch_to_iso8601(last_time)
-    local endTime = epoch_to_iso8601(current_time - 1)
-
-    -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-      start = startTime,
-      ["end"] = endTime,
-      deltaEnergy = deltaEnergyWh,
-      energy = total_energy
-    }))
-  end, "polling_report_schedule_timer")
-
-  device:set_field(RECURRING_REPORT_TIMER, timer)
-end
-
-local function delete_reporting_timer(device)
-  local reporting_poll_timer = device:get_field(RECURRING_REPORT_TIMER)
-  if reporting_poll_timer ~= nil then
-    device.thread:cancel_timer(reporting_poll_timer)
-    device:set_field(RECURRING_REPORT_TIMER, nil)
-  end
-end
-
-local function device_removed(driver, device)
-  delete_reporting_timer(device)
-  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
-  if poll_timer ~= nil then
-    device.thread:cancel_timer(poll_timer)
-    device:set_field(RECURRING_POLL_TIMER, nil)
-  end
-end
 
 local function tbl_contains(array, value)
   for idx, element in ipairs(array) do
@@ -401,10 +288,6 @@ end
 local function component_to_endpoint(device, component_name)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
-  local component_to_endpoint_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
-  if component_to_endpoint_map ~= nil and component_to_endpoint_map[component_name] ~= nil then
-    return component_to_endpoint_map[component_name]
-  end
   if device:supports_capability(capabilities.airPurifierFanMode) then
     -- Fan Control is mandatory for the Air Purifier device type
     return find_default_endpoint(device, clusters.FanControl.ID)
@@ -414,56 +297,9 @@ local function component_to_endpoint(device, component_name)
   end
 end
 
-local endpoint_to_component = function (device, endpoint_id)
-  local component_to_endpoint_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
-  if component_to_endpoint_map ~= nil then
-    for comp, ep in pairs(component_to_endpoint_map) do
-      if ep == endpoint_id then
-        return comp
-      end
-    end
-  end
-  return "main"
-end
-
-local function create_poll_schedule(device)
-  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
-  if poll_timer ~= nil then
-    return
-  end
-
-  local cumul_imp_eps = embedded_cluster_utils.get_endpoints(
-    device, clusters.ElectricalEnergyMeasurement.ID,
-    {
-      feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY |
-      clusters.ElectricalEnergyMeasurement.types.Feature.IMPORTED_ENERGY
-    }
-  ) or {}
-  if #cumul_imp_eps == 0 then
-    return
-  end
-
-  device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
-  -- Setup a timer to read cumulative energy imported attribute every minute.
-  local timer = device.thread:call_on_schedule(POLL_INTERVAL, function()
-    device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
-  end, "polling_schedule_timer")
-
-  device:set_field(RECURRING_POLL_TIMER, timer)
-end
-
-local function schedule_polls_for_cumulative_energy_imported(device)
-  if not device:supports_capability(capabilities.powerConsumptionReport) then
-    return
-  end
-  create_poll_schedule(device)
-  schedule_energy_report_timer(device)
-end
-
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
   if not device:get_field(setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
     --Query min setpoint deadband if needed
@@ -473,11 +309,10 @@ local function device_init(driver, device)
       device:send(deadband_read)
     end
   end
-  schedule_polls_for_cumulative_energy_imported(device)
 end
 
 local function info_changed(driver, device, event, args)
-  -- Note this is needed because device:subscribe() does not recalculate
+  --Note this is needed because device:subscribe() does not recalculate
   -- the subscribed attributes each time it is run, that only happens at init.
   -- This will change in the 0.48.x release of the lua libs.
   for cap_id, attributes in pairs(subscribed_attributes) do
@@ -488,38 +323,17 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
-  schedule_polls_for_cumulative_energy_imported(device)
-end
-
-local function get_endpoints_for_dt(device, device_type)
-  local endpoints = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type then
-        table.insert(endpoints, ep.endpoint_id)
-        break
-      end
-    end
-  end
-  table.sort(endpoints)
-  return endpoints
 end
 
 local function get_device_type(driver, device)
   for _, ep in ipairs(device.endpoints) do
-    if ep.device_types ~= nil then
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == RAC_DEVICE_TYPE_ID then
-          return RAC_DEVICE_TYPE_ID
-        elseif dt.device_type_id == AP_DEVICE_TYPE_ID then
-          return AP_DEVICE_TYPE_ID
-        elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
-          return FAN_DEVICE_TYPE_ID
-        elseif dt.device_type_id == WATER_HEATER_DEVICE_TYPE_ID then
-          return WATER_HEATER_DEVICE_TYPE_ID
-        elseif dt.device_type_id == HEAT_PUMP_DEVICE_TYPE_ID then
-          return HEAT_PUMP_DEVICE_TYPE_ID
-        end
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == RAC_DEVICE_TYPE_ID then
+        return RAC_DEVICE_TYPE_ID
+      elseif dt.device_type_id == AP_DEVICE_TYPE_ID then
+        return AP_DEVICE_TYPE_ID
+      elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
+        return FAN_DEVICE_TYPE_ID
       end
     end
   end
@@ -710,22 +524,7 @@ local function match_profile(driver, device, battery_supported)
       end
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
-  elseif device_type == WATER_HEATER_DEVICE_TYPE_ID then
-    -- If a Water Heater is composed of Electrical Sensor device type, it must support both ElectricalEnergyMeasurement and
-    -- ElectricalPowerMeasurement clusters.
-    local electrical_sensor_eps = get_endpoints_for_dt(device, ELECTRICAL_SENSOR_DEVICE_TYPE_ID) or {}
-    if #electrical_sensor_eps > 0 then
-      profile_name = "water-heater-power-energy-powerConsumption"
-    end
-  elseif device_type == HEAT_PUMP_DEVICE_TYPE_ID then
-    profile_name = "heat-pump"
-    local MAX_HEAT_PUMP_THERMOSTAT_COMPONENTS = 2
-    for i = 1, math.min(MAX_HEAT_PUMP_THERMOSTAT_COMPONENTS, #thermostat_eps) do
-        profile_name = profile_name .. "-thermostat"
-        if tbl_contains(humidity_eps, thermostat_eps[i]) then
-          profile_name = profile_name .. "-humidity"
-        end
-    end
+
   elseif #thermostat_eps > 0 then
     profile_name = "thermostat"
 
@@ -785,15 +584,6 @@ local function device_added(driver, device)
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
   device:send(req)
-  local heat_pump_eps = get_endpoints_for_dt(device, HEAT_PUMP_DEVICE_TYPE_ID) or {}
-  if #heat_pump_eps > 0 then
-    local thermostat_eps = get_endpoints_for_dt(device, THERMOSTAT_DEVICE_TYPE_ID) or {}
-    local component_to_endpoint_map = {
-      ["thermostatOne"] = thermostat_eps[1],
-      ["thermostatTwo"] = thermostat_eps[2],
-    }
-    device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, {persist = true})
-  end
 end
 
 local function store_unit_factory(capability_name)
@@ -985,17 +775,9 @@ local function temp_event_handler(attribute)
         event = capabilities.thermostatCoolingSetpoint.coolingSetpointRange({value = range, unit = unit})
         device:emit_event_for_endpoint(ib.endpoint_id, event)
       elseif attribute == capabilities.thermostatHeatingSetpoint.heatingSetpoint then
-        local MAX_TEMP_IN_C = THERMOSTAT_MAX_TEMP_IN_C
-        local MIN_TEMP_IN_C = THERMOSTAT_MIN_TEMP_IN_C
-        local is_water_heater_device = get_device_type(driver, device) == WATER_HEATER_DEVICE_TYPE_ID
-        if is_water_heater_device then
-          MAX_TEMP_IN_C = WATER_HEATER_MAX_TEMP_IN_C
-          MIN_TEMP_IN_C = WATER_HEATER_MIN_TEMP_IN_C
-        end
-
         local range = {
-          minimum = device:get_field(setpoint_limit_device_field.MIN_HEAT) or MIN_TEMP_IN_C,
-          maximum = device:get_field(setpoint_limit_device_field.MAX_HEAT) or MAX_TEMP_IN_C,
+          minimum = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C,
+          maximum = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C,
           step = 0.1
         }
         event = capabilities.thermostatHeatingSetpoint.heatingSetpointRange({value = range, unit = unit})
@@ -1402,16 +1184,8 @@ end
 
 local function set_setpoint(setpoint)
   return function(driver, device, cmd)
-    local endpoint_id = device:component_to_endpoint(cmd.component)
-    local MAX_TEMP_IN_C = THERMOSTAT_MAX_TEMP_IN_C
-    local MIN_TEMP_IN_C = THERMOSTAT_MIN_TEMP_IN_C
-    local is_water_heater_device = get_device_type(driver, device) == WATER_HEATER_DEVICE_TYPE_ID
-    if is_water_heater_device then
-      MAX_TEMP_IN_C = WATER_HEATER_MAX_TEMP_IN_C
-      MIN_TEMP_IN_C = WATER_HEATER_MIN_TEMP_IN_C
-    end
     local value = cmd.args.setpoint
-    if (value > MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
+    if (value > THERMOSTAT_MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
       value = utils.f_to_c(value)
     end
 
@@ -1421,7 +1195,7 @@ local function set_setpoint(setpoint)
     local cached_cooling_val, cooling_setpoint = device:get_latest_state(
       cmd.component, capabilities.thermostatCoolingSetpoint.ID,
       capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME,
-      MAX_TEMP_IN_C, { value = MAX_TEMP_IN_C, unit = "C" }
+      THERMOSTAT_MAX_TEMP_IN_C, { value = THERMOSTAT_MAX_TEMP_IN_C, unit = "C" }
     )
     if cooling_setpoint and cooling_setpoint.unit == "F" then
       cached_cooling_val = utils.f_to_c(cached_cooling_val)
@@ -1429,7 +1203,7 @@ local function set_setpoint(setpoint)
     local cached_heating_val, heating_setpoint = device:get_latest_state(
       cmd.component, capabilities.thermostatHeatingSetpoint.ID,
       capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME,
-      MIN_TEMP_IN_C, { value = MIN_TEMP_IN_C, unit = "C" }
+      THERMOSTAT_MIN_TEMP_IN_C, { value = THERMOSTAT_MIN_TEMP_IN_C, unit = "C" }
     )
     if heating_setpoint and heating_setpoint.unit == "F" then
       cached_heating_val = utils.f_to_c(cached_heating_val)
@@ -1443,14 +1217,14 @@ local function set_setpoint(setpoint)
     local setpoint_type = string.match(setpoint.NAME, "Heat") or "Cool"
     local deadband = device:get_field(setpoint_limit_device_field.MIN_DEADBAND) or 2.5 --spec default
     if setpoint_type == "Heat" then
-      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or MIN_TEMP_IN_C
-      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or MAX_TEMP_IN_C
+      local min = device:get_field(setpoint_limit_device_field.MIN_HEAT) or THERMOSTAT_MIN_TEMP_IN_C
+      local max = device:get_field(setpoint_limit_device_field.MAX_HEAT) or THERMOSTAT_MAX_TEMP_IN_C
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value > (cached_cooling_val - deadband) then
@@ -1458,18 +1232,18 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is greater than the cooling setpoint (%s) with the deadband (%s)",
           value, cooling_setpoint, deadband
         ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
+        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(heating_setpoint, {state_change = true}))
         return
       end
     else
-      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or MIN_TEMP_IN_C
-      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or MAX_TEMP_IN_C
+      local min = device:get_field(setpoint_limit_device_field.MIN_COOL) or THERMOSTAT_MIN_TEMP_IN_C
+      local max = device:get_field(setpoint_limit_device_field.MAX_COOL) or THERMOSTAT_MAX_TEMP_IN_C
       if value < min or value > max then
         log.warn(string.format(
           "Invalid setpoint (%s) outside the min (%s) and the max (%s)",
           value, min, max
         ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
       if is_auto_capable and value < (cached_heating_val + deadband) then
@@ -1477,7 +1251,7 @@ local function set_setpoint(setpoint)
           "Invalid setpoint (%s) is less than the heating setpoint (%s) with the deadband (%s)",
           value, heating_setpoint, deadband
         ))
-        device:emit_event_for_endpoint(endpoint_id, capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
+        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint(cooling_setpoint, {state_change = true}))
         return
       end
     end
@@ -1490,15 +1264,8 @@ local heating_setpoint_limit_handler_factory = function(minOrMax)
     if ib.data.value == nil then
       return
     end
-    local MAX_TEMP_IN_C = THERMOSTAT_MAX_TEMP_IN_C
-    local MIN_TEMP_IN_C = THERMOSTAT_MIN_TEMP_IN_C
-    local is_water_heater_device = (get_device_type(driver, device) == WATER_HEATER_DEVICE_TYPE_ID)
-    if is_water_heater_device then
-      MAX_TEMP_IN_C = WATER_HEATER_MAX_TEMP_IN_C
-      MIN_TEMP_IN_C = WATER_HEATER_MIN_TEMP_IN_C
-    end
     local val = ib.data.value / 100.0
-    val = utils.clamp_value(val, MIN_TEMP_IN_C, MAX_TEMP_IN_C)
+    val = utils.clamp_value(val, THERMOSTAT_MIN_TEMP_IN_C, THERMOSTAT_MAX_TEMP_IN_C)
     device:set_field(minOrMax, val)
     local min = device:get_field(setpoint_limit_device_field.MIN_HEAT)
     local max = device:get_field(setpoint_limit_device_field.MAX_HEAT)
@@ -1629,112 +1396,9 @@ local function set_rock_mode(driver, device, cmd)
   device:send(clusters.FanControl.attributes.RockSetting:write(device, device:component_to_endpoint(cmd.component), rock_mode))
 end
 
-local function set_water_heater_mode(driver, device, cmd)
-  device.log.info(string.format("set_water_heater_mode mode: %s", cmd.args.mode))
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  local supportedWaterHeaterModesWithIdx = device:get_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX) or {}
-  for i, mode in ipairs(supportedWaterHeaterModesWithIdx) do
-    if cmd.args.mode == mode[2] then
-      device:send(clusters.WaterHeaterMode.commands.ChangeToMode(device, endpoint_id, mode[1]))
-      return
-    end
-  end
-end
-
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
-  end
-end
-
-local function active_power_handler(driver, device, ib, response)
-  if ib.data.value then
-    local watt_value = ib.data.value / 1000
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W" }))
-  end
-end
-
-local function periodic_energy_imported_handler(driver, device, ib, response)
-  local endpoint_id = ib.endpoint_id
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-
-  if ib.data then
-    if version.api < 11 then
-      clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:augment_type(ib.data)
-    end
-
-    local start_timestamp = ib.data.elements.start_timestamp.value or 0
-    local end_timestamp = ib.data.elements.end_timestamp.value or 0
-
-    local device_reporting_time_interval = end_timestamp - start_timestamp
-    if not device:get_field(DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED) and device_reporting_time_interval > DEFAULT_REPORT_TIME_INTERVAL then
-      -- This is a one time setup in order to consider a larger time interval if the interval the device chooses to report is greater than 15 minutes.
-      device:set_field(DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED, true, { persist = true })
-      device:set_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL, device_reporting_time_interval, { persist = true })
-      delete_reporting_timer(device)
-      schedule_energy_report_timer(device)
-    end
-
-    if tbl_contains(cumul_eps, endpoint_id) then
-      -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
-      -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
-      return
-    end
-
-    endpoint_id = string.format(ib.endpoint_id)
-    local energy_imported_Wh = utils.round(ib.data.elements.energy.value / 1000) --convert mWh to Wh
-    local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
-    cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] or 0
-    cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] + energy_imported_Wh
-    device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
-    local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({value = total_cumulative_energy_imported, unit = "Wh"}))
-  end
-end
-
-local function cumulative_energy_imported_handler(driver, device, ib, response)
-  if ib.data then
-    if version.api < 11 then
-      clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:augment_type(ib.data)
-    end
-    local endpoint_id = string.format(ib.endpoint_id)
-    local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
-    local cumulative_energy_imported_Wh = utils.round( ib.data.elements.energy.value / 1000) -- convert mWh to Wh
-    cumulative_energy_imported[endpoint_id] = cumulative_energy_imported_Wh
-    device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
-    local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)
-    device:emit_event(capabilities.energyMeter.energy({ value = total_cumulative_energy_imported, unit = "Wh" }))
-  end
-end
-
-local function water_heater_supported_modes_attr_handler(driver, device, ib, response)
-  local supportWaterHeaterModes = {}
-  local supportWaterHeaterModesWithIdx = {}
-  for _, mode in ipairs(ib.data.elements) do
-    if version.api < 13 then
-      clusters.WaterHeaterMode.types.ModeOptionStruct:augment_type(mode)
-    end
-    table.insert(supportWaterHeaterModes, mode.elements.label.value)
-    table.insert(supportWaterHeaterModesWithIdx, {mode.elements.mode.value, mode.elements.label.value})
-  end
-  device:set_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX, supportWaterHeaterModesWithIdx, { persist = true })
-  local event = capabilities.mode.supportedModes(supportWaterHeaterModes, { visibility = { displayed = false } })
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
-  event = capabilities.mode.supportedArguments(supportWaterHeaterModes, { visibility = { displayed = false } })
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
-end
-
-local function water_heater_mode_handler(driver, device, ib, response)
-  device.log.info(string.format("water_heater_mode_handler mode: %s", ib.data.value))
-  local supportWaterHeaterModesWithIdx = device:get_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX) or {}
-  local currentMode = ib.data.value
-  for i, mode in ipairs(supportWaterHeaterModesWithIdx) do
-    if mode[1] == currentMode then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode[2]))
-      break
-    end
   end
 end
 
@@ -1768,7 +1432,6 @@ local matter_driver_template = {
     added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed,
-    removed = device_removed
   },
   matter_handlers = {
     attr = {
@@ -1870,19 +1533,8 @@ local matter_driver_template = {
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
-      },
-      [clusters.ElectricalPowerMeasurement.ID] = {
-        [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler
-      },
-      [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = cumulative_energy_imported_handler,
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = periodic_energy_imported_handler
-      },
-      [clusters.WaterHeaterMode.ID] = {
-        [clusters.WaterHeaterMode.attributes.CurrentMode.ID] = water_heater_mode_handler,
-        [clusters.WaterHeaterMode.attributes.SupportedModes.ID] = water_heater_supported_modes_attr_handler
-      },
-    },
+      }
+    }
   },
   subscribed_attributes = subscribed_attributes,
   capability_handlers = {
@@ -1923,9 +1575,6 @@ local matter_driver_template = {
     },
     [capabilities.fanOscillationMode.ID] = {
       [capabilities.fanOscillationMode.commands.setFanOscillationMode.NAME] = set_rock_mode,
-    },
-    [capabilities.mode.ID] = {
-      [capabilities.mode.commands.setMode.NAME] = set_water_heater_mode,
     }
   },
   supported_capabilities = {
@@ -1963,11 +1612,7 @@ local matter_driver_template = {
     capabilities.radonHealthConcern,
     capabilities.radonMeasurement,
     capabilities.tvocHealthConcern,
-    capabilities.tvocMeasurement,
-    capabilities.powerMeter,
-    capabilities.energyMeter,
-    capabilities.powerConsumptionReport,
-    capabilities.mode
+    capabilities.tvocMeasurement
   },
 }
 

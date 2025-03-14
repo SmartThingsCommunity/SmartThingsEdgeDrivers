@@ -249,7 +249,6 @@ local function do_color_temp_action(driver, device, args)
       end
     end
   end
-  device:set_field(Fields.COLOR_TEMP_SETPOINT, clamped_kelvin);
 end
 
 ---@param driver HueDriver

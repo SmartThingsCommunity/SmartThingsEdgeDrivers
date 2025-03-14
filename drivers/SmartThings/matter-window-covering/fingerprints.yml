@@ -41,11 +41,6 @@ matterManufacturer:
     vendorId:  0x139C
     productId: 0xFA31
     deviceProfileName: window-covering
-  - id: "5020/64023"
-    deviceLabel: Zemismart ZM24A Smart Curtain
-    vendorId: 0x139C
-    productId: 0xFA17
-    deviceProfileName: window-covering  
 #WISTAR
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor

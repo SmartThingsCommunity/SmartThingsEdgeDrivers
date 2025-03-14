@@ -1,30 +1,14 @@
 describe("utility functions", function()
-  local Consts
   local Fields
   local HueDeviceTypes
   local st_utils
   local utils
 
   setup(function()
-    Consts = require "consts"
     Fields = require "fields"
     HueDeviceTypes = require "hue_device_types"
     utils = require "utils"
     st_utils = require "st.utils"
-  end)
-
-  describe("that perform mirek to kelvin conversions behave properly:", function()
-    it("Common minimum mirek of 153 results in 6500 Kelvin", function()
-      local expected_kelvin = 6500
-      local computed_kelvin = utils.mirek_to_kelvin(Consts.DEFAULT_MIN_MIREK, Consts.KELVIN_STEP_SIZE)
-      assert.are.equal(expected_kelvin, computed_kelvin, string.format("Expected value of %s, got %s", expected_kelvin, computed_kelvin))
-    end)
-
-    it("Common maximum mirek of 500 results in 2000 Kelvin", function()
-      local expected_kelvin = 2000
-      local computed_kelvin = utils.mirek_to_kelvin(Consts.DEFAULT_MAX_MIREK, Consts.KELVIN_STEP_SIZE)
-      assert.are.equal(expected_kelvin, computed_kelvin, string.format("Expected value of %s, got %s", expected_kelvin, computed_kelvin))
-    end)
   end)
 
   describe("that handle raw data will handle their input correctly:", function()

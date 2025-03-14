@@ -73,11 +73,6 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-02P
     deviceProfileName: humidity-temp-battery
-  - id: "Third Reality/3RTHS24BZ"
-    deviceLabel: ThirdReality Temperature and Humidity Sensor
-    manufacturer: Third Reality, Inc
-    model: 3RTHS24BZ
-    deviceProfileName: humidity-temp-battery
   - id: "Third Reality/3RSM0147Z"
     deviceLabel: ThirdReality Smart Soil Moisture Sensor
     manufacturer: Third Reality, Inc

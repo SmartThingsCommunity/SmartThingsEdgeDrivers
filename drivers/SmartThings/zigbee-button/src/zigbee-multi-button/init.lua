@@ -41,8 +41,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
   { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
   { mfr = "WALL HERO", model = "ACL-401SCA4" },
-  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
-  { mfr = "Vimar", model = "RemoteControl_v1.0" }
+  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -89,8 +88,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.shinasystems"),
     require("zigbee-multi-button.robb"),
     require("zigbee-multi-button.wallhero"),
-    require("zigbee-multi-button.SLED"),
-    require("zigbee-multi-button.vimar")
+    require("zigbee-multi-button.SLED")
   }
 }
 

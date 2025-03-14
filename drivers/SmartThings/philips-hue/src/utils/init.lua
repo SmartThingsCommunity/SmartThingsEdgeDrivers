@@ -1,6 +1,6 @@
 local log = require "log"
-local st_utils = require "st.utils"
 
+local Consts = require "consts"
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
 
@@ -72,14 +72,9 @@ end
 
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
-function utils.mirek_to_kelvin(mirek, with_step_size)
+function utils.mirek_to_kelvin(mirek)
   local raw_kelvin = 1000000 / mirek
-
-  if type(with_step_size) == "number" then
-    return with_step_size * math.floor(raw_kelvin / with_step_size)
-  end
-
-  return st_utils.round(raw_kelvin)
+  return Consts.KELVIN_STEP_SIZE * math.floor(raw_kelvin / Consts.KELVIN_STEP_SIZE)
 end
 
 function utils.str_starts_with(str, start)

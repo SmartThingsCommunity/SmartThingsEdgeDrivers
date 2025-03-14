@@ -2616,16 +2616,6 @@ matterGeneric:
       - id: 0x010A # On Off Plug-in Unit
       - id: 0x0510 # Electrical Sensor
     deviceProfileName: plug-power-energy-powerConsumption
-  - id: "matter/mounted/on-off/control"
-    deviceLabel: Matter Mounted OnOff Control
-    deviceTypes:
-      - id: 0x010F # Mounted On/Off Control
-    deviceProfileName: switch-binary
-  - id: "matter/mounted/dimmable/load/control"
-    deviceLabel: Matter Mounted Dimmable Load Control
-    deviceTypes:
-      - id: 0x0110 # Mounted Dimmable Load Control
-    deviceProfileName: switch-level
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:

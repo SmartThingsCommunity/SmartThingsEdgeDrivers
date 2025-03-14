@@ -62,7 +62,7 @@ test.register_coroutine_test(
           ThermostatSetpoint:Set({
             setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
             scale = 1,
-            value = 84
+            value = 84.2
           })
       )
     )

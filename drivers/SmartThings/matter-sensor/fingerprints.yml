@@ -81,7 +81,7 @@ matterManufacturer:
     productId: 0x0463
     deviceProfileName: motion-battery
   #Tado
-  - id: "4942/6"
+  - id: "4942/3"
     deviceLabel: Wireless Temperature Sensor X
     vendorId: 0x134E
     productId: 0x0006
