@@ -453,11 +453,6 @@ matterManufacturer:
     productId: 0x1002
     deviceProfileName: switch-binary
 #LG
-  - id: "4142/8784"
-    deviceLabel: LG Smart Button (1 Button)
-    vendorId: 0x102E
-    productId: 0x2250
-    deviceProfileName: button-battery
   - id: "4142/8785"
     deviceLabel: LG Smart Button (2 Button)
     vendorId: 0x102E
