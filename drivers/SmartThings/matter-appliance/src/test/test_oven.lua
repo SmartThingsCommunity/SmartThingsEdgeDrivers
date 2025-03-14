@@ -17,12 +17,12 @@ local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
-local OVEN_ENDPOINT = 1
-local OVEN_TCC_ONE_ENDPOINT = 2
-local OVEN_TCC_TWO_ENDPOINT = 3
-local COOK_TOP_ENDPOINT = 4
-local COOK_SURFACE_ONE_ENDPOINT = 5
-local COOK_SURFACE_TWO_ENDPOINT = 6
+local OVEN_ENDPOINT = 10
+local OVEN_TCC_ONE_ENDPOINT = 16
+local OVEN_TCC_TWO_ENDPOINT = 17
+local COOK_TOP_ENDPOINT = 20
+local COOK_SURFACE_ONE_ENDPOINT = 32
+local COOK_SURFACE_TWO_ENDPOINT = 100
 
 clusters.OvenMode = require "OvenMode"
 clusters.TemperatureControl = require "TemperatureControl"
@@ -134,13 +134,13 @@ test.register_coroutine_test(
   "Assert component to endpoint map",
   function()
     local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
-    assert(component_to_endpoint_map["tccOne"] == OVEN_TCC_ONE_ENDPOINT, "Oven TCC One Endpoint must be 2")
-    assert(component_to_endpoint_map["tccTwo"] == OVEN_TCC_TWO_ENDPOINT, "Oven TCC Two Endpoint must be 3")
-    assert(component_to_endpoint_map["cookTop"] == COOK_TOP_ENDPOINT, "Cook Top Endpoint must be 4")
+    assert(component_to_endpoint_map["tccOne"] == OVEN_TCC_ONE_ENDPOINT, "Oven TCC One Endpoint must be "..tostring(OVEN_TCC_ONE_ENDPOINT))
+    assert(component_to_endpoint_map["tccTwo"] == OVEN_TCC_TWO_ENDPOINT, "Oven TCC Two Endpoint must be "..tostring(OVEN_TCC_TWO_ENDPOINT))
+    assert(component_to_endpoint_map["cookTop"] == COOK_TOP_ENDPOINT, "Cook Top Endpoint must be "..tostring(COOK_TOP_ENDPOINT))
     assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT,
-      "Cook Surface One Endpoint must be 5")
+      "Cook Surface One Endpoint must be "..tostring(COOK_SURFACE_ONE_ENDPOINT))
     assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT,
-      "Cook Surface Two Endpoint must be 6")
+      "Cook Surface Two Endpoint must be "..tostring(COOK_SURFACE_TWO_ENDPOINT))
   end
 )
 
