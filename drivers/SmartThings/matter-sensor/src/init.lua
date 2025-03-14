@@ -395,7 +395,10 @@ local matter_driver_template = {
       [clusters.BooleanStateConfiguration.ID] = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
         [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
-    },
+      },
+      [clusters.Thermostat.ID] = {
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = temperature_attr_handler
+      }
     }
   },
   -- TODO Once capabilities all have default handlers move this info there, and
@@ -405,6 +408,7 @@ local matter_driver_template = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.temperatureMeasurement.ID] = {
+      clusters.Thermostat.attributes.LocalTemperature,
       clusters.TemperatureMeasurement.attributes.MeasuredValue,
       clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
       clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
