@@ -27,12 +27,12 @@ matterManufacturer:
     deviceLabel: Smart Radiator Thermostat X
     vendorId: 0x134E
     productId: 0x0001
-    deviceProfileName: thermostat-cooling-only-nostate-nobattery
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
  - id: "4942/2"
     deviceLabel: Smart Thermostat X
     vendorId: 0x134E
     productId: 0x0002
-    deviceProfileName: thermostat-cooling-only-nostate-nobattery
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
