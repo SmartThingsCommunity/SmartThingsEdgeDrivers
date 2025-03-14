@@ -69,7 +69,7 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
-  # LG
+# LG
   - id: "4142/8240"
     deviceLabel: LG Motion Sensor
     vendorId: 0x102E
