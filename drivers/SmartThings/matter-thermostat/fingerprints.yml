@@ -22,7 +22,17 @@ matterManufacturer:
     vendorId: 0x1280
     productId: 0x0301
     deviceProfileName: thermostat-heating-only-nostate-nobattery
-
+#Tado
+  - id: "4942/1"
+    deviceLabel: Smart Radiator Thermostat X
+    vendorId: 0x134E
+    productId: 0x0001
+    deviceProfileName: thermostat-cooling-only-nostate-nobattery
+ - id: "4942/2"
+    deviceLabel: Smart Thermostat X
+    vendorId: 0x134E
+    productId: 0x0002
+    deviceProfileName: thermostat-cooling-only-nostate-nobattery
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat

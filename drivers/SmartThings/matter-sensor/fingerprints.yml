@@ -80,6 +80,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x0463
     deviceProfileName: motion-battery
+  #Tado
+  - id: "4942/3"
+    deviceLabel: Wireless Temperature Sensor X
+    vendorId: 0x134E
+    productId: 0x0006
+    deviceProfileName: temperature-humidity
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
