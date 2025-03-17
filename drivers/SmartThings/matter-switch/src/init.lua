@@ -518,16 +518,20 @@ local function do_configure(driver, device)
   if device:get_field(BUTTON_DEVICE_PROFILED) then
     return
   end
+  local level_eps = embedded_cluster_utils.get_endpoints(device, clusters.LevelControl.ID)
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
-  local profile_name = nil
+  local profile_name = "plug"
+  if #level_eps > 0 then
+    profile_name = profile_name .. "-level"
+  end
   if #energy_eps > 0 and #power_eps > 0 then
-    profile_name = "plug-power-energy-powerConsumption"
+    profile_name = profile_name .. "-power-energy-powerConsumption"
   elseif #energy_eps > 0 then
-    profile_name = "plug-energy-powerConsumption"
+    profile_name = profile_name .. "-energy-powerConsumption"
   elseif #power_eps > 0 then
-    profile_name = "plug-power"
+    profile_name = profile_name .. "-power"
   elseif #valve_eps > 0 then
     profile_name = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
