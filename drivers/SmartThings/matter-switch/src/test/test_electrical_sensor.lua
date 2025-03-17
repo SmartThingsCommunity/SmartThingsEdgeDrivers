@@ -22,7 +22,7 @@ clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
 clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("plug-power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -51,6 +51,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = 2,
       clusters = {
         { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
         { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
@@ -94,6 +95,9 @@ local subscribed_attributes_periodic = {
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
@@ -661,7 +665,7 @@ test.register_coroutine_test(
   "Test profile change on init for Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "plug-power-energy-powerConsumption" })
+    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }
@@ -675,6 +679,70 @@ test.register_coroutine_test(
     mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_periodic }
+)
+
+test.register_message_test(
+  "Set level command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 2, math.floor(20/100.0 * 254), 20, 0 ,0)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 2)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 2, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 2, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    }
+  }
 )
 
 test.run_registered_tests()

@@ -1,10 +1,14 @@
-name: heat-pump
+name: plug-level-power-energy-powerConsumption
 components:
 - id: main
   capabilities:
-  - id: energyMeter
+  - id: switch
+    version: 1
+  - id: switchLevel
     version: 1
   - id: powerMeter
+    version: 1
+  - id: energyMeter
     version: 1
   - id: powerConsumptionReport
     version: 1
@@ -13,4 +17,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: HeatPump
+  - name: SmartPlug
