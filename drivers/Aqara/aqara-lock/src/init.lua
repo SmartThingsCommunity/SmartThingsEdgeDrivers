@@ -18,12 +18,13 @@ local PRI_CLU = 0xFCC0
 local PRI_ATTR = 0xFFF3
 local MFG_CODE = 0x115F
 
-local serial_num = 0
-local seq_num = 0
-
 local SHARED_KEY = "__shared_key"
 local CLOUD_PUBLIC_KEY = "__cloud_public_key"
-local SUPPORTED_ALARM_VALUES = { "damaged", "forcedOpeningAttempt", "unableToLockTheDoor", "notClosedForALongTime", "highTemperature", "attemptsExceeded" }
+local SUPPORTED_ALARM_VALUES = { "damaged", "forcedOpeningAttempt", "unableToLockTheDoor", "notClosedForALongTime",
+  "highTemperature", "attemptsExceeded" }
+local SERIAL_NUM_TX = "serial_num_tx"
+local SERIAL_NUM_RX = "serial_num_rx"
+local SEQ_NUM = "seq_num"
 
 local function my_secret_data_handler(driver, device, secret_info)
   if secret_info.secret_kind ~= "aqara" then return end
@@ -54,21 +55,25 @@ end
 
 local function comp_supported_alarm_values(last_alarm_values)
   if not last_alarm_values then return false end
-  if #last_alarm_values~=#SUPPORTED_ALARM_VALUES then return false end
+  if #last_alarm_values ~= #SUPPORTED_ALARM_VALUES then return false end
   for k, v in pairs(last_alarm_values) do
-    if SUPPORTED_ALARM_VALUES[k]~=v then return false end
+    if SUPPORTED_ALARM_VALUES[k] ~= v then return false end
   end
   return true
 end
 
 local function device_init(self, device)
+  device:set_field(SERIAL_NUM_RX, 0)
+  device:set_field(SERIAL_NUM_TX, 1)
+  device:set_field(SEQ_NUM, 0)
   local last_alarm_values = device:get_latest_state("main", LockAlarm.ID, LockAlarm.supportedAlarmValues.NAME) or {}
   if not comp_supported_alarm_values(last_alarm_values) then
     device:emit_event(
       LockAlarm.supportedAlarmValues(SUPPORTED_ALARM_VALUES, { visibility = { displayed = false } })
     )
   end
-  device:emit_event(capabilities.lock.supportedUnlockDirections({"fromInside", "fromOutside"}, {visibility = {displayed = false}}))
+  device:emit_event(capabilities.lock.supportedUnlockDirections({ "fromInside", "fromOutside" },
+    { visibility = { displayed = false } }))
   device:emit_event(capabilities.battery.type("AA"))
   device:emit_event(capabilities.battery.quantity(8))
 end
@@ -77,7 +82,7 @@ local function device_added(self, device)
   remoteControlShow(device)
   device:emit_event(Battery.battery(100))
   device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
-  device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = {displayed = false}}))
+  device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = { displayed = false } }))
   device:emit_event(Lock.lock.locked())
   credential_utils.save_data(self)
 end
@@ -105,7 +110,7 @@ local METHOD = {
 local function event_lock_handler(driver, device, evt_name, evt_value)
   if evt_value == 0x1 then
     device:emit_event(Lock.lock(evt_name))
-    device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+    device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
     remoteControlShow(device)
   end
 end
@@ -113,32 +118,32 @@ end
 local function event_unlock_indoor_handler(driver, device, evt_name, evt_value)
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = nil, codeName = nil, unlockDirection = "fromInside" } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
 end
 
 local function event_unlock_outdoor_handler(driver, device, evt_name, evt_value)
   local id, label = credential_utils.find_userLabel(driver, device, evt_value)
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = id, codeName = label, unlockDirection = "fromOutside" } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
 end
 
 local function event_unlock_rf447_handler(driver, device, evt_name, evt_value)
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = nil, codeName = nil, unlockDirection = nil } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
 end
 
 local function event_unlock_remote_handler(driver, device, evt_name, evt_value)
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = nil, codeName = nil, unlockDirection = nil } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
 end
 
 local function event_unlock_otp_handler(driver, device, evt_name, evt_value)
   device:emit_event(Lock.lock.unlocked({ data = { method = evt_name, codeId = "OTP_STANDALONE", codeName = nil, unlockDirection = "fromOutside" } }))
   device:emit_event(remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } }))
-  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false }}))
+  device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
 end
 
 local function event_door_handler(driver, device, evt_name, evt_value)
@@ -157,7 +162,7 @@ local function event_abnormal_status_handler(driver, device, evt_name, evt_value
   if evt_value == 0xC0DE1006 then
     device:emit_event(LockAlarm.alarm.highTemperature())
   elseif evt_value == 0xC0DE000A then
-    device:emit_event(LockAlarm.alarm.attemptsExceeded({state_change = true}))
+    device:emit_event(LockAlarm.alarm.attemptsExceeded({ state_change = true }))
   end
 end
 
@@ -213,6 +218,8 @@ local function lock_state_handler(driver, device, value, zb_rx)
     if res then
       print(res)
     end
+    device:set_field(SERIAL_NUM_RX, 0)
+    device:set_field(SERIAL_NUM_TX, 1)
   elseif shared_key == nil then
     request_generate_shared_key(device)
   elseif command == "\x93" then
@@ -223,17 +230,17 @@ local function lock_state_handler(driver, device, value, zb_rx)
     local text = string.sub(msg, 5, string.len(msg))
     local payload = string.sub(text, 4, string.len(text))
     local func_id = toValue(payload, 1, 1) .. "." .. toValue(payload, 2, 1) .. "." .. toValue(payload, 3, 2)
-    serial_num = toValue(msg, 3, 2)
-    seq_num = string.byte(text, 3)
+    local serial_num = toValue(msg, 3, 2)
+    local last_serial_num = device:get_field(SERIAL_NUM_RX) or 0
 
-    if resource_id[func_id] then
-      resource_id[func_id].event_handler(driver, device, resource_id[func_id].event_name,
-        toValue(payload, 6, string.byte(payload, 5)))
-    end
-
-    if serial_num >= 0xFFFF then
-      device:send(cluster_base.write_manufacturer_specific_attribute(device,
-        PRI_CLU, PRI_ATTR, MFG_CODE, data_types.OctetString, "\x2B"))
+    if serial_num > last_serial_num then
+      device:set_field(SERIAL_NUM_RX, serial_num)
+      if resource_id[func_id] then
+        resource_id[func_id].event_handler(driver, device, resource_id[func_id].event_name,
+          toValue(payload, 6, string.byte(payload, 5)))
+      end
+    else
+      request_generate_shared_key(device)
     end
   end
 end
@@ -243,23 +250,35 @@ local function send_msg(device, funcA, funcB, funcC, op_code, length, value)
   if shared_key == nil then
     request_generate_shared_key(device)
   else
+    local seq_num = device:get_field(SEQ_NUM) or 0
+    local serial_num = device:get_field(SERIAL_NUM_TX) or 1
+
     local payload = toHex(funcA, 1) .. toHex(funcB, 1) .. toHex(funcC, 2) .. toHex(length, 1) .. toHex(value, length)
-    local text = "\x00" .. toHex(op_code, 1) .. toHex(seq_num+1, 1) .. payload
-    local raw_data = "\x5B" .. toHex(string.len(text), 1) .. toHex(serial_num+1, 2) .. text
+    local text = "\x00" .. toHex(op_code, 1) .. toHex(seq_num, 1) .. payload
+    local raw_data = "\x5B" .. toHex(string.len(text), 1) .. toHex(serial_num, 2) .. text
     for i = 1, 4 - (string.len(raw_data) % 4) do
       raw_data = raw_data .. "\x00"
     end
 
     local opts = { cipher = "aes256-ecb", padding = false }
     local raw_key = base64.decode(shared_key)
+
     if raw_key ~= nil then
       local result = security.encrypt_bytes(raw_data, raw_key, opts)
       if result ~= nil then
         local msg = "\x93" .. result
         device:send(cluster_base.write_manufacturer_specific_attribute(device,
           PRI_CLU, PRI_ATTR, MFG_CODE, data_types.OctetString, msg))
-        seq_num = seq_num + 1
-        serial_num = serial_num + 1
+        if seq_num == 0xFF then
+          device:set_field(SEQ_NUM, 0)
+        else
+          device:set_field(SEQ_NUM, seq_num + 1)
+        end
+        if serial_num == 0xFFFF then
+          request_generate_shared_key(device)
+        else
+          device:set_field(SERIAL_NUM_TX, serial_num + 1)
+        end
       end
     end
   end
