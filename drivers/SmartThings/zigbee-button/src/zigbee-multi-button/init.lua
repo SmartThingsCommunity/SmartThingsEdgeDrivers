@@ -42,7 +42,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
   { mfr = "WALL HERO", model = "ACL-401SCA4" },
   { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
-  { mfr = "Linxura", model = "Smart Controller" }
+  { mfr = "Linxura", model = "Smart Controller" },
+  { mfr = "Aura", model = "Smart Button" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -91,6 +92,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.wallhero"),
     require("zigbee-multi-button.SLED"),
     require("zigbee-multi-button.linxura")
+    
   }
 }
 
