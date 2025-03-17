@@ -71,6 +71,9 @@ local function set_setpoint_factory(setpoint_type)
         size = 2
       })
     else
+      -- There have been issues with some thermostats failing to handle non-integer values
+      -- correctly. This rounding is intended to be removed.
+      value = utils.round(value)
       set = ThermostatSetpoint:Set({
         setpoint_type = setpoint_type,
         scale = scale,

@@ -1,0 +1,8 @@
+zigbeeGeneric:
+  - id: "generic-sensor"
+    deviceLabel: "Zigbee Generic Sensor"
+    clusters:
+      server:
+        - 0x0500
+    deviceProfileName: generic-sensor
+
