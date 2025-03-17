@@ -122,6 +122,12 @@ matterManufacturer:
     vendorId: 0x1462
     productId: 0x2005
     deviceProfileName: light-level-colorTemperature
+#Cilo
+  - id: "5273/32774"
+    deviceLabel: CLIO Smart Plug/Outlet
+    vendorId: 0x1499
+    productId: 0x8006
+    deviceProfileName: plug-energy-powerConsumption
 #ThirdReality
   - id: "ThirdReality/WiFi"
     deviceLabel: THIRDREALITY Night Light
