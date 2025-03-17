@@ -4,9 +4,9 @@ components:
   capabilities:
   - id: smokeDetector
     version: 1
-  - id: hardwareFault
-    version: 1
   - id: battery
+    version: 1
+  - id: hardwareFault
     version: 1
   - id: firmwareUpdate
     version: 1
