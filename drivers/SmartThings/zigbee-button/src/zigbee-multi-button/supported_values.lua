@@ -113,7 +113,7 @@ local devices = {
     MATCHING_MATRIX = {
       { mfr = "ShinaSystem", model = "MSM-300Z" },
       { mfr = "Linxura", model = "Smart Controller" },
-      { mfr = "Aura", model = "Smart Button" }
+      { mfr = "Linxura", model = "Aura Smart Button" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 4

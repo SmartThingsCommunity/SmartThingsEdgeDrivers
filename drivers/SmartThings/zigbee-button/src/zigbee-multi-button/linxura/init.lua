@@ -42,7 +42,8 @@ local BUTTON4 = "button4"
 
 
 local LINXURA_BUTTON_FINGERPRINTS = {
-    { mfr = "Linxura", model = "Smart Controller" }
+    { mfr = "Linxura", model = "Smart Controller" },
+    { mfr = "Linxura", model = "Aura Smart Button" }
 }
 
 local configuration = {

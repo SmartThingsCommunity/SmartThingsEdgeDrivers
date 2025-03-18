@@ -195,6 +195,12 @@ zigbeeManufacturer:
     model: Smart Controller
     deviceProfileName: four-buttons-without-main-button
     isJoinable: true
+  - id: "Aura Smart button"
+    deviceLabel: Aura Smart Button
+    manufacturer: Linxura
+    model: Smart Button
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
   # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: WallHero Remote Control (4-Inch)
