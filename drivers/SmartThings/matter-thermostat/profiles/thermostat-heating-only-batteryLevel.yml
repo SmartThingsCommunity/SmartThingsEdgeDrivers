@@ -20,7 +20,7 @@ components:
     version: 1
     config:
       values:
-        - key: "thermostatOperatingState.value"
+        - key: "batteryLevel.value"
           enabledValues:
             - normal
             - warning
