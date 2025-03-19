@@ -4,6 +4,17 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1025
     deviceProfileName: rvc
+#Eufy
+  - id: "5427/7"
+    deviceLabel: eufy Robot Vacuum Omni S1
+    vendorId: 0x1533
+    productId: 0x0007
+    deviceProfileName: rvc
+  - id: "5427/10"
+    deviceLabel: eufy Robotic Vacuum
+    vendorId: 0x1533
+    productId: 0x000A
+    deviceProfileName: rvc
 
 matterGeneric:
   - id: "matter/rvc"
