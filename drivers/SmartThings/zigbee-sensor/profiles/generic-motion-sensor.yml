@@ -1,16 +1,14 @@
-name: heat-pump
+name: generic-motion-sensor
 components:
 - id: main
   capabilities:
-  - id: energyMeter
+  - id: motionSensor
     version: 1
-  - id: powerMeter
-    version: 1
-  - id: powerConsumptionReport
+  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: HeatPump
+  - name: MotionSensor
