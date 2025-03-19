@@ -214,6 +214,23 @@ test.register_coroutine_test(
   { test_init = test_init_configure }
 )
 
+test.register_coroutine_test(
+  "Test profile change to profile without thermostatOperatingState on init for Room AC device type",
+  function()
+    mock_device_configure:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
+    test.socket.device_lifecycle:__queue_receive({ mock_device_configure.id, "doConfigure" })
+    mock_device_configure:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_configure.id,
+        clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_configure, 1, {uint32(0)})
+      }
+    )
+    mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner-nostate" })
+  end,
+  { test_init = test_init_configure }
+)
 
 test.register_message_test(
   "Test fan speed commands",
