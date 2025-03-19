@@ -88,6 +88,7 @@ local MOUNTED_ON_OFF_CONTROL_ID = 0x010F
 local MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
 local GENERIC_SWITCH_ID = 0x000F
 local ELECTRICAL_SENSOR_ID = 0x0510
+local FAN_DEVICE_TYPE_ID = 0x002B
 local device_type_profile_map = {
   [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
@@ -406,25 +407,64 @@ local function ignore_initial_color_read(device, attr_bit)
   return false
 end
 
+local supported_mcd_configs_per_main_endpoint_device_type = {
+  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+    [GENERIC_SWITCH_ID] = { 1, 2, 3, 4, 5, 6, 7, 8 }
+  },
+  [FAN_DEVICE_TYPE_ID] = {
+    [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = { 1 }
+  }
+}
+
 --- device_type_supports_multicomponent_configuration helper function used to check
---- whether the device type for an endpoint is currently supported by a profile for
---- multicomponent devices.
-local function device_type_supports_multicomponent_configuration(device, endpoint_id, device_type_id)
+--- whether the device is currently supported by a profile for a multicomponent configuration.
+local function device_type_supports_multicomponent_configuration(device, main_endpoint, secondary_endpoints)
+  local main_device_type = nil
+  local secondary_device_types_count = {}
+
   for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == endpoint_id then
+    if ep.endpoint_id == main_endpoint then
       for _, dt in ipairs(ep.device_types) do
         for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
           if device.manufacturer_info.product_id == fingerprint.product_id then
             return false -- For Aqara Dimmer Switch with Button.
           end
         end
-        if dt.device_type_id == device_type_id then
-          return true
+        if supported_mcd_configs_per_main_endpoint_device_type[dt.device_type_id] then
+          main_device_type = dt.device_type_id
+          break
         end
       end
     end
   end
-  return false
+
+  if not main_device_type then
+    return false
+  end
+
+  for _, ep in ipairs(device.endpoints) do
+    if secondary_endpoints[ep.endpoint_id] and ep.endpoint_id ~= main_endpoint then
+      for _, dt in ipairs(ep.device_types) do
+        if supported_mcd_configs_per_main_endpoint_device_type[main_device_type][dt.device_type_id] then
+          secondary_device_types_count[dt.device_type_id] = (secondary_device_types_count[dt.device_type_id] or 0) + 1
+        else
+          return false
+        end
+      end
+    end
+  end
+
+  for secondary_device_type, count in pairs(secondary_device_types_count) do
+    local allowed_counts = supported_mcd_configs_per_main_endpoint_device_type[main_device_type][secondary_device_type]
+
+    for _, allowed_count in ipairs(allowed_counts) do
+      if count == allowed_count then
+        return true
+      end
+    end
+
+    return false
+  end
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -472,7 +512,7 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if device_type_supports_multicomponent_configuration(device, main_endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
+    if device_type_supports_multicomponent_configuration(device, main_endpoint, button_eps) then
       return main_endpoint
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
@@ -592,25 +632,25 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_component_map(device, main_endpoint, button_eps, light_eps)
-  local eps, component_name, component_field
-  if button_eps ~= nil and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
-    eps = button_eps
-    component_name = "button"
+local function build_component_map(device, main_endpoint, secondary_endpoints, secondary_device_type)
+  local secondary_component_name, component_field
+  if secondary_device_type == GENERIC_SWITCH_ID then
+    secondary_component_name = "button"
     component_field = COMPONENT_TO_ENDPOINT_MAP_BUTTON
-  elseif light_eps ~= nil then
-    eps = light_eps
-    component_name = "light"
+  elseif secondary_device_type == EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID then
+    secondary_component_name = "light"
     component_field = COMPONENT_TO_ENDPOINT_MAP_FAN
+  else
+    device.log.warn_with({hub_logs = true}, "Device uses unsupported configuration for a multicomponent profile")
+    return
   end
-  if eps == nil then return end
 
   local component_map = {}
   component_map["main"] = main_endpoint
-  for component_num, ep in ipairs(eps) do
+  for component_num, ep in ipairs(secondary_endpoints) do
     if ep ~= main_endpoint then
-      local component = component_name
-      if #eps > 1 then
+      local component = secondary_component_name
+      if #secondary_endpoints > 1 then
         component = component .. component_num
       end
       component_map[component] = ep
@@ -619,13 +659,13 @@ local function build_component_map(device, main_endpoint, button_eps, light_eps)
   device:set_field(component_field, component_map, {persist = true})
 end
 
-local function build_button_profile(device, endpoint, num_button_eps)
+local function build_button_profile(device, main_endpoint, secondary_endpoints)
   local profile_name
   local battery_supported
-  if device_type_supports_multicomponent_configuration(device, endpoint, DIMMABLE_LIGHT_DEVICE_TYPE_ID) then
-    profile_name = "light-level-" .. num_button_eps .. "-button"
+  if device_type_supports_multicomponent_configuration(device, main_endpoint, secondary_endpoints) then
+    profile_name = "light-level-" .. #secondary_endpoints .. "-button"
   else
-    profile_name = num_button_eps .. "-button"
+    profile_name = #secondary_endpoints .. "-button"
     battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
     if device.manufacturer_info.vendor_id == HUE_MANUFACTURER_ID then battery_supported = false end -- no battery support in Hue case
     if battery_supported then
@@ -643,8 +683,8 @@ local function build_button_profile(device, endpoint, num_button_eps)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
-local function build_fan_profile(device, endpoint, num_fan_eps)
-  if device_type_supports_multicomponent_configuration(device, endpoint, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID) and num_fan_eps == 1 then
+local function build_fan_profile(device, main_endpoint, secondary_endpoints)
+  if device_type_supports_multicomponent_configuration(device, main_endpoint, secondary_endpoints) then
     device:try_update_metadata({profile = "fan-light-color-level"})
     device:set_field(FAN_DEVICE_PROFILED, true)
   else
@@ -719,15 +759,15 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   table.sort(fan_eps)
 
   -- Any button endpoints found will be added as additional components in the profile containing the
-  -- main endpoint. A fan endpoint will be considered the main endpoint and other additional switch
-  -- endpoints will be added as additional components. The resulting endpoint to component map is
+  -- main endpoint. A fan endpoint will be considered the main endpoint and the additional switch
+  -- endpoint will be added as an additional component. The resulting endpoint to component map is
   -- saved in the corresponding component to endpoint map field.
   if #button_eps > 0 then
-    build_component_map(device, main_endpoint, button_eps, nil)
-    build_button_profile(device, main_endpoint, #button_eps)
+    build_component_map(device, main_endpoint, button_eps, GENERIC_SWITCH_ID)
+    build_button_profile(device, main_endpoint, button_eps)
   elseif #fan_eps > 0 then
-    build_component_map(device, main_endpoint, nil, switch_eps)
-    build_fan_profile(device, switch_eps[1], #fan_eps)
+    build_component_map(device, main_endpoint, switch_eps, EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID)
+    build_fan_profile(device, main_endpoint, switch_eps)
     device:set_field(SWITCH_INITIALIZED, true, {persist = true})
     return
   end
