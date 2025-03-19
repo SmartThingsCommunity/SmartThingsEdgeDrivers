@@ -198,7 +198,7 @@ zigbeeManufacturer:
   - id: "Aura Smart button"
     deviceLabel: Aura Smart Button
     manufacturer: Linxura
-    model: Smart Button
+    model: Aura Smart Button
     deviceProfileName: four-buttons-without-main-button
     isJoinable: true
   # Wall Hero
