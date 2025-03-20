@@ -284,7 +284,7 @@ local refresh = function(driver, device, cmd)
 end
 
 local function resetEnergyMeter(self, device)
-  device:send(zcl_clusters.OnOff.server.commands.On(device))
+  device:send(clusters.OnOff.server.commands.On(device))
 end
 local function do_configure(driver, device)
   device:configure()
