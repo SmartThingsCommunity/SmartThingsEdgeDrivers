@@ -691,6 +691,10 @@ local function match_profile(driver, device)
       profile_name = "room-air-conditioner"
     end
 
+    if not running_state_supported then
+      profile_name = profile_name .. "-nostate"
+    end
+
   elseif device_type == FAN_DEVICE_TYPE_ID then
     profile_name = create_fan_profile(device)
     -- remove leading "-"
