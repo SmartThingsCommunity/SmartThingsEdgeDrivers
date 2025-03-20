@@ -39,7 +39,12 @@ local lock_utils = {
   SCHEDULE_START_MINUTE = "scheduleStartMinute",
   SCHEDULE_END_HOUR = "scheduleEndHour",
   SCHEDULE_END_MINUTE = "scheduleEndMinute",
-  NON_EVICTABLE_ENDPOINT_KEY = "nonEvictableEndpointKey"
+  SET_ALIRO_OP_TYPE = "setAliroOpType",
+  ISSUER_KEY = "issuerKey",
+  ISSUER_KEY_INDEX = "issuerKeyIndex",
+  NON_EVICTABLE_ENDPOINT_KEY = "nonEvictableEndpointKey",
+  NON_EVICTABLE_ENDPOINT_KEY_INDEX = "nonEvictableEndpointKeyIndex",
+  DEVICE_KEY_ID = "deviceKeyId"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
