@@ -573,23 +573,23 @@ local function configure_buttons(device)
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
   for _, ep in ipairs(ms_eps) do
-    local supportedButtonValues_event
-    -- this ordering is important, since MSM & MSL devices must also support MSR
-    if tbl_contains(msm_eps, ep) then
-      supportedButtonValues_event = nil -- deferred to the max press handler
-      device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-      set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-    elseif tbl_contains(msl_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-    elseif tbl_contains(msr_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
-    else -- this switch endpoint only supports momentary switch, no release events
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
-    end
-
     if device.profile.components[endpoint_to_component(device, ep)] then
+      local supportedButtonValues_event
+      -- this ordering is important, since MSM & MSL devices must also support MSR
+      if tbl_contains(msm_eps, ep) then
+        supportedButtonValues_event = nil -- deferred to the max press handler
+        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
+        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
+      elseif tbl_contains(msl_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+      elseif tbl_contains(msr_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
+      else -- this switch endpoint only supports momentary switch, no release events
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
+      end
+
       if supportedButtonValues_event then
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
@@ -744,6 +744,9 @@ local function device_init(driver, device)
     return
   end
 
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+
   local main_endpoint = find_default_endpoint(device)
   if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
      not device:get_field(SWITCH_INITIALIZED) and
@@ -751,8 +754,6 @@ local function device_init(driver, device)
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
     initialize_buttons_and_switches(driver, device, main_endpoint)
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(find_child)
   end
@@ -1281,9 +1282,7 @@ local function max_press_handler(driver, device, ib, response)
   local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local supportsHeld = tbl_contains(MSL, ib.endpoint_id)
   local values = create_multi_press_values_list(max, supportsHeld)
-  if device.profile.components[endpoint_to_component(device, ib.endpoint_id)] then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
-  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
 end
 
 local function info_changed(driver, device, event, args)

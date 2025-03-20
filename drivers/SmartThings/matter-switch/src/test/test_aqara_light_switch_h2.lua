@@ -144,6 +144,20 @@ local cumulative_report_val_39 = {
   end_systime = 0,
 }
 
+local function configure_buttons()
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
+end
+
 local function test_init()
   local opts = { persist = true }
   local cluster_subscribe_list = {
@@ -188,6 +202,7 @@ local function test_init()
   })
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
@@ -199,18 +214,7 @@ local function test_init()
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
+  configure_buttons()
 end
 
 test.set_test_init_function(test_init)
