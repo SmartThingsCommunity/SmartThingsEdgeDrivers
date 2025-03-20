@@ -295,7 +295,6 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
@@ -475,6 +474,24 @@ local function find_default_endpoint(device)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device)
+end
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "main"
+end
+
 local function assign_child_profile(device, child_ep)
   local profile
 
@@ -572,10 +589,12 @@ local function configure_buttons(device)
       set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
     end
 
-    if supportedButtonValues_event then
-      device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+    if device.profile.components[endpoint_to_component(device, ep)] then
+      if supportedButtonValues_event then
+        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      end
+      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     end
-    device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
   end
 end
 
@@ -618,7 +637,6 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
     profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(DEFERRED_CONFIGURE, true)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
@@ -698,6 +716,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
 
   if #button_eps > 0 then
     build_button_profile(device, main_endpoint, #button_eps)
+    configure_buttons(device)
     return
   end
 
@@ -707,24 +726,6 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
   end
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return find_default_endpoint(device)
-end
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
 end
 
 local function detect_bridge(device)
@@ -1280,7 +1281,9 @@ local function max_press_handler(driver, device, ib, response)
   local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local supportsHeld = tbl_contains(MSL, ib.endpoint_id)
   local values = create_multi_press_values_list(max, supportsHeld)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
+  if device.profile.components[endpoint_to_component(device, ib.endpoint_id)] then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -1290,10 +1293,9 @@ local function info_changed(driver, device, event, args)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
     end
     device:subscribe()
-    if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      -- profile has changed, and we deferred setting up our buttons, so do that now
+    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       configure_buttons(device)
-      device:set_field(DEFERRED_CONFIGURE, nil)
     end
   end
 end
