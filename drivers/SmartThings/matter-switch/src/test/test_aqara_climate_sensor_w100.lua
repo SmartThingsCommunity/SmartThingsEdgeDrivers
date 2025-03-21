@@ -159,8 +159,8 @@ local function test_init()
   device_info_copy.profile.id = "3-button-battery-temperature-humidity"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   configure_buttons()
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)
