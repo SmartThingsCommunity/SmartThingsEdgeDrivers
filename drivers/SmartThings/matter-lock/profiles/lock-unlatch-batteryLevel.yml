@@ -1,4 +1,4 @@
-name: lock-user-schedule-unlatch
+name: lock-unlatch-batteryLevel
 components:
 - id: main
   capabilities:
@@ -16,9 +16,7 @@ components:
     version: 1
   - id: remoteControlStatus
     version: 1
-  - id: lockUsers
-    version: 1
-  - id: lockSchedules
+  - id: batteryLevel
     version: 1
   - id: firmwareUpdate
     version: 1
@@ -71,6 +69,15 @@ deviceConfig:
         displayType: pushButton
         pushButton:
           command: unlatch
+  - component: main
+    capability: lockAlarm
+    version: 1
+  - component: main
+    capability: remoteControlStatus
+    version: 1
+  - component: main
+    capability: batteryLevel
+    version: 1
   automation:
     conditions:
     - component: main
@@ -88,6 +95,15 @@ deviceConfig:
           value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
         - key: not fully locked
           value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
+    - component: main
+      capability: lockAlarm
+      version: 1
+    - component: main
+      capability: remoteControlStatus
+      version: 1
+    - component: main
+      capability: batteryLevel
+      version: 1
     actions:
     - component: main
       capability: lock

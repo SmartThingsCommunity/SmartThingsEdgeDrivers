@@ -1,7 +1,6 @@
 name: lock-user-pin-unlatch
 components:
-- label: Main
-  id: main
+- id: main
   capabilities:
   - id: lock
     version: 1
@@ -37,6 +36,14 @@ deviceConfig:
     - component: main
       capability: lock
       version: 1
+      visibleCondition: {
+        "capability": "lock",
+        "version": "1",
+        "component": "main",
+        "value": "lock.value",
+        "operator": "DOES_NOT_EQUAL",
+        "operand": "unlatched"
+      }
   detailView:
   - component: main
     capability: lock
@@ -64,6 +71,12 @@ deviceConfig:
         displayType: pushButton
         pushButton:
           command: unlatch
+  - component: main
+    capability: lockAlarm
+    version: 1
+  - component: main
+    capability: remoteControlStatus
+    version: 1
   automation:
     conditions:
     - component: main
@@ -81,6 +94,12 @@ deviceConfig:
           value: '{{i18n.attributes.lock.i18n.value.unlatched.label}}'
         - key: not fully locked
           value: '{{i18n.attributes.lock.i18n.value.not fully locked.label}}'
+    - component: main
+      capability: lockAlarm
+      version: 1
+    - component: main
+      capability: remoteControlStatus
+      version: 1
     actions:
     - component: main
       capability: lock
