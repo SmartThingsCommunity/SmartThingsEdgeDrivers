@@ -29,7 +29,7 @@ clusters.OvenMode = require "OvenMode"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_OVEN_MODES_MAP = "__supported_oven_modes_map_key_"
 
-local OVEN_DEVICE_ID = 0x007B
+local OVEN_DEVICE_TYPE_ID = 0x007B
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local TCC_DEVICE_TYPE_ID = 0x0071
@@ -61,6 +61,14 @@ local function get_endpoints_for_dt(device, device_type)
   return endpoints
 end
 
+local find_default_endpoint = function(device)
+  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_TYPE_ID)
+  if #oven_eps > 0 then
+    return oven_eps[1]
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
@@ -76,11 +84,11 @@ local function component_to_endpoint(device, component)
   if map[component] then
     return map[component]
   end
-  return device.MATTER_DEFAULT_ENDPOINT
+  return find_default_endpoint(device)
 end
 
 local function is_oven_device(opts, driver, device)
-  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
+  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_TYPE_ID)
   if #oven_eps > 0 then
     return true
   end
