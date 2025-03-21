@@ -75,4 +75,3 @@ end
 setmetatable(ModeTagStruct, new_mt)
 
 return ModeTagStruct
-
