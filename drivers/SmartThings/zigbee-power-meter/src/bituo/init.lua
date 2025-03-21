@@ -135,7 +135,7 @@ local is_bituo_power_meter = function(opts, driver, device)
   return false
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
+local function energy_handler(driver, device, value, zb_rx)
   local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
   local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 100
   local raw_value = value.value
