@@ -52,6 +52,11 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.MultiPressComplete,
 }
 
+local function configure_buttons()
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+end
+
 local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
@@ -63,16 +68,14 @@ local function test_init()
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "buttons-battery"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+  configure_buttons()
 end
 
 test.set_test_init_function(test_init)
