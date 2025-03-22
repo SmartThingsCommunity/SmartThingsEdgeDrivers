@@ -15,7 +15,7 @@ matterManufacturer:
     deviceLabel: Zemismart MT25B Roller Motor
     vendorId: 0x139C
     productId: 0xFF60
-    deviceProfileName: window-covering 
+    deviceProfileName: window-covering
   - id: "5020/65296"
     deviceLabel: Zemismart MT82 Smart Curtain
     vendorId: 0x139C
@@ -30,12 +30,38 @@ matterManufacturer:
     deviceLabel: Zemismart ZM02 Smart Curtain
     vendorId: 0x139C
     productId: 0xFA32
-    deviceProfileName: window-covering 
+    deviceProfileName: window-covering
   - id: "5020/64017"
     deviceLabel: Zemismart ZM25C Smart Curtain
     vendorId: 0x139C
     productId: 0xFA11
     deviceProfileName: window-covering
+  - id: "5020/64049"
+    deviceLabel: Zemismart ZM01 Smart Curtain
+    vendorId:  0x139C
+    productId: 0xFA31
+    deviceProfileName: window-covering
+  - id: "5020/64023"
+    deviceLabel: Zemismart ZM24A Smart Curtain
+    vendorId: 0x139C
+    productId: 0xFA17
+    deviceProfileName: window-covering  
+#WISTAR
+  - id: "5207/17"
+    deviceLabel: WISTAR WSER40 Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0011
+    deviceProfileName: window-covering
+  - id: "5207/18"
+    deviceLabel: WISTAR WSER50 Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0012
+    deviceProfileName: window-covering
+  - id: "5207/2"
+    deviceLabel: WISTAR WSERD30-B Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0002
+    deviceProfileName: window-covering-battery
 matterGeneric:
   - id: "windowcovering"
     deviceLabel: Matter Window Covering

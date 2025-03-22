@@ -117,6 +117,13 @@ local devices = {
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 4
+  },
+  BUTTON_PUSH_DOWN_HOLD_UP_VIMAR_2 = {
+    MATCHING_MATRIX = {
+      { mfr = "Vimar", model = "RemoteControl_v1.0" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "down_hold", "up" },
+    NUMBER_OF_BUTTONS = 2
   }
 }
 
