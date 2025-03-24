@@ -58,6 +58,9 @@ end
 
 local function watering_time_handler(driver, device, value, zb_rx)
     local fan_speed_value = value.value
+    if fan_speed_value >= 1000 then
+        fan_speed_value = 0
+    end   
     device:emit_event(capabilities.fanSpeed.fanSpeed(fan_speed_value))
 end
 
@@ -65,19 +68,6 @@ local function watering_interval_handler(driver, device, value, zb_rx)
     local interval_value = value.value
     device:emit_event(capabilities.mode.mode(tostring(interval_value)))
 end
-
-local function do_refresh(driver, device)
-    device:refresh()
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_TIME, 0x1407))
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL, 0x1407))
-end
-
-local function do_configure(driver, device)
-    device:configure()
-    device:send(device_management.build_bind_request(device, THIRDREALITY_WATERING_CLUSTER, driver.environment_info.hub_zigbee_eui), 1)
-    do_refresh(driver, device)
-end
-
 
 local thirdreality_device_handler = {
     NAME = "ThirdReality Smart Watering Kit",
@@ -103,14 +93,10 @@ local thirdreality_device_handler = {
         },
         [capabilities.mode.ID] = {
             [capabilities.mode.commands.setMode.NAME] = mode_handler
-        },
-        [capabilities.refresh.ID] = {
-            [capabilities.refresh.commands.refresh.NAME] = do_refresh,
         }
     },
     lifecycle_handlers = {
-        added = device_added,
-        doConfigure = do_configure
+        added = device_added
     },
     can_handle = function(opts, driver, device, ...)
       return device:get_manufacturer() == "Third Reality, Inc" and device:get_model() == "3RWK0148Z"
