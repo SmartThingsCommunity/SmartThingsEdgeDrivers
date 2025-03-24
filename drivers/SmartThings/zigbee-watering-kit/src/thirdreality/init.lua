@@ -5,7 +5,6 @@ local ZONE_STATUS_ATTR = IASZone.attributes.ZoneStatus
 
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 
 local THIRDREALITY_WATERING_CLUSTER = 0xFFF2
 local WATERING_TIME = 0x0000
@@ -60,7 +59,7 @@ local function watering_time_handler(driver, device, value, zb_rx)
     local fan_speed_value = value.value
     if fan_speed_value >= 1000 then
         fan_speed_value = 0
-    end   
+    end
     device:emit_event(capabilities.fanSpeed.fanSpeed(fan_speed_value))
 end
 
