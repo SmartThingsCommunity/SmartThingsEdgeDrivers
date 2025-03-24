@@ -380,10 +380,18 @@ Types.SonosState = SonosState
 
 --- @alias DiscoCallback fun(dni: string, ssdp_group_info: SonosSSDPInfo, player_info: SonosDiscoveryInfo, group_info: SonosGroupsResponseBody)
 
+---@class SonosFieldCacheTable
+---@field public swGen number
+---@field public household_id string
+---@field public player_id string
+---@field public wss_url string
+
+
 --- Sonos Edge Driver extensions
 --- @class SonosDriver : Driver
 --- @field public sonos SonosState Local state related to the sonos systems
---- @field private _player_id_to_device table<string,SonosDevice>
+--- @field public _player_id_to_device table<string,SonosDevice>
+--- @field public _field_cache table<string,SonosFieldCacheTable>
 --- @field public update_group_state fun(self: SonosDriver, header: SonosResponseHeader, body: SonosGroupsResponseBody)
 --- @field public handle_ssdp_discovery fun(self: SonosDriver, ssdp_group_info: SonosSSDPInfo, callback?: DiscoCallback)
 --- @field public is_same_mac_address fun(dni: string, other: string): boolean
