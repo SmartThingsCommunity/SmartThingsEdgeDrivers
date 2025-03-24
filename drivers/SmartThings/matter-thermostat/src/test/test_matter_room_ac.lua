@@ -79,6 +79,37 @@ local mock_device_configure = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_nostate = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("room-air-conditioner-fan-heating-cooling-nostate.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
+      }
+    }
+  }
+})
+
 local function test_init()
   local subscribed_attributes = {
     [capabilities.switch.ID] = {
@@ -196,6 +227,56 @@ local function test_init_configure()
   test.mock_device.add_test_device(mock_device_configure)
 end
 
+local function test_init_nostate()
+  local subscribed_attributes = {
+    [capabilities.switch.ID] = {
+      clusters.OnOff.attributes.OnOff
+    },
+    [capabilities.temperatureMeasurement.ID] = {
+      clusters.Thermostat.attributes.LocalTemperature,
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+    },
+    [capabilities.thermostatMode.ID] = {
+      clusters.Thermostat.attributes.SystemMode,
+      clusters.Thermostat.attributes.ControlSequenceOfOperation
+    },
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit
+    },
+    [capabilities.thermostatHeatingSetpoint.ID] = {
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
+    },
+    [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanMode
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      clusters.FanControl.attributes.PercentCurrent
+    },
+  }
+  local subscribe_request = nil
+  for _, attributes in pairs(subscribed_attributes) do
+    for _, attribute in ipairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_nostate)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_nostate))
+      end
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_nostate.id, subscribe_request})
+
+  local read_setpoint_deadband = clusters.Thermostat.attributes.MinSetpointDeadBand:read()
+  test.socket.matter:__expect_send({mock_device_nostate.id, read_setpoint_deadband})
+
+  test.mock_device.add_test_device(mock_device_nostate)
+end
+
 test.register_coroutine_test(
   "Test profile change on init for Room AC device type",
   function()
@@ -214,6 +295,23 @@ test.register_coroutine_test(
   { test_init = test_init_configure }
 )
 
+test.register_coroutine_test(
+  "Test profile change to profile without thermostatOperatingState on init for Room AC device type",
+  function()
+    mock_device_nostate:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
+    test.socket.device_lifecycle:__queue_receive({ mock_device_nostate.id, "doConfigure" })
+    mock_device_nostate:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_nostate.id,
+        clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_nostate, 1, {uint32(0)})
+      }
+    )
+    mock_device_nostate:expect_metadata_update({ profile = "room-air-conditioner-fan-heating-cooling-nostate" })
+  end,
+  { test_init = test_init_nostate }
+)
 
 test.register_message_test(
   "Test fan speed commands",
