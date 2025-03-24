@@ -12,6 +12,8 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: HeatPump
 - id: thermostatOne
   label: Thermostat 1
   capabilities:
@@ -25,6 +27,8 @@ components:
     version: 1
   - id: thermostatCoolingSetpoint
     version: 1
+  categories:
+  - name: HeatPump
 - id: thermostatTwo
   label: Thermostat 2
   capabilities:
@@ -38,3 +42,5 @@ components:
     version: 1
   - id: thermostatCoolingSetpoint
     version: 1
+  categories:
+  - name: HeatPump

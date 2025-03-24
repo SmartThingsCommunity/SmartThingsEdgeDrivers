@@ -114,6 +114,7 @@ local test_init_common = function(device)
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.WindSupport,
     clusters.FanControl.attributes.RockSupport,
+    clusters.Thermostat.attributes.AttributeList,
   }
   local read_request = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   for _, clus in ipairs(read_request_on_added) do
