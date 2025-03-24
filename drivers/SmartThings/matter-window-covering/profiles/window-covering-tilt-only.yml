@@ -12,3 +12,6 @@ components:
     version: 1
   categories:
   - name: Blind
+preferences:
+  - preferenceId: reverse
+    explicit: true
