@@ -469,6 +469,16 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00A1
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/162"
+    deviceLabel: LIFX Neon Outdoor
+    vendorId: 0x1423
+    productId: 0x00A2
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/168"
+    deviceLabel: LIFX Downlight (Retrofit 6)
+    vendorId: 0x1423
+    productId: 0x00A8
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/169"
     deviceLabel: LIFX Color (A21)
     vendorId: 0x1423
@@ -499,6 +509,26 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00B0
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/178"
+    deviceLabel: LIFX Downlight (Canless 6)
+    vendorId: 0x1423
+    productId: 0x00B2
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/179"
+    deviceLabel: LIFX Downlight (Retrofit 4)
+    vendorId: 0x1423
+    productId: 0x00B3
+    deviceProfileName: light-level-colorTemperature-1500k-9000k   
+  - id: "5155/180"
+    deviceLabel: LIFX Downlight (Canless 4)
+    vendorId: 0x1423
+    productId: 0x00B4
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/185"
+    deviceLabel: LIFX Candle
+    vendorId: 0x1423
+    productId: 0x00B9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/201"
     deviceLabel: LIFX Ceiling 13x26
     vendorId: 0x1423
@@ -508,6 +538,11 @@ matterManufacturer:
     deviceLabel: LIFX Luna
     vendorId: 0x1423
     productId: 0x00DB
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/220"
+    deviceLabel: LIFX Luna
+    vendorId: 0x1423
+    productId: 0x00DC
     deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/213"
     deviceLabel: LIFX Permanent Outdoor
@@ -523,6 +558,11 @@ matterManufacturer:
     deviceLabel: LIFX Tube
     vendorId: 0x1423
     productId: 0x00D9
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/119"
+    deviceLabel: LIFX Beam
+    vendorId: 0x1423
+    productId: 0x0077
     deviceProfileName: light-level-colorTemperature-1500k-9000k
 #LG
   - id: "4142/8784"
@@ -586,6 +626,12 @@ matterManufacturer:
     deviceLabel: Power Plug
     vendorId: 0x137F
     productId: 0x027B
+    deviceProfileName: plug-binary
+#Shelly
+  - id: "5264/1"
+    deviceLabel: Shelly Plug S MTR Gen3
+    vendorId: 0x1490
+    productId: 0x0001
     deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
