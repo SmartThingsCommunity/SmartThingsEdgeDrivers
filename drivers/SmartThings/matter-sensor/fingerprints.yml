@@ -69,6 +69,23 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # Neo
+  - id: "4991/1122"
+    deviceLabel: Door Sensor
+    vendorId: 0x137F
+    productId: 0x0462
+    deviceProfileName: contact-battery
+  - id: "4991/1123"
+    deviceLabel: Motion Sensor
+    vendorId: 0x137F
+    productId: 0x0463
+    deviceProfileName: motion-battery
+  #Tado
+  - id: "4942/6"
+    deviceLabel: Wireless Temperature Sensor X
+    vendorId: 0x134E
+    productId: 0x0006
+    deviceProfileName: temperature-humidity
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
@@ -86,6 +103,39 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  #LG
+  - id: "4142/8192"
+    deviceLabel: LG Temp and Humidity Sensor
+    vendorId: 0x102E
+    productId: 0x2000
+    deviceProfileName: temperature-humidity-battery
+  - id: "4142/8224"
+    deviceLabel: LG Door and Window Sensor
+    vendorId: 0x102E
+    productId: 0x2020
+    deviceProfileName: contact-battery  
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
+  - id: "4736/32788"
+    deviceLabel: Siterwell Smart Smoke Alarm
+    vendorId: 0x1280
+    productId: 0x8014
+    deviceProfileName: smoke 
+  - id: "4736/32789"
+    deviceLabel: Siterwell Smart Carbon Monoxide Alarm
+    vendorId: 0x1280
+    productId: 0x8015
+    deviceProfileName: co
+  - id: "4736/848"
+    deviceLabel: Siterwell Motion Sensor
+    vendorId: 0x1280
+    productId: 0x0350
+    deviceProfileName: motion-battery
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor

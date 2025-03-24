@@ -8,7 +8,7 @@ matterManufacturer:
   - id: "Leedarson AiDot Air Purifier"
     deviceLabel: AiDot Air Purifier
     vendorId: 0x1396
-    productId: 0x0043A
+    productId: 0x043A
     deviceProfileName: air-purifier-hepa
 #Eve
   - id: "4874/79"
@@ -16,8 +16,29 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x004F
     deviceProfileName: thermostat-heating-only-nostate
-
-
+#Habi
+  - id: "5415/1"
+    deviceLabel: habi Matter Wireless Room Thermostat
+    vendorId: 0x1527
+    productId: 0x0001
+    deviceProfileName: thermostat-heating-only-batteryLevel  
+#Siterwell
+  - id: "4736/769"
+    deviceLabel: Siterwell Radiator Thermostat 
+    vendorId: 0x1280
+    productId: 0x0301
+    deviceProfileName: thermostat-heating-only-nostate-nobattery
+#Tado
+  - id: "4942/1"
+    deviceLabel: Smart Radiator Thermostat X
+    vendorId: 0x134E
+    productId: 0x0001
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  - id: "4942/2"
+    deviceLabel: Smart Thermostat X
+    vendorId: 0x134E
+    productId: 0x0002
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
@@ -35,7 +56,7 @@ matterGeneric:
       - id: 0x0300 # HVAC Heating/Cooling Unit
       - id: 0x0307 # Humidity Sensor
     deviceProfileName: thermostat-humidity
-  - id: "matter/hvac/themostat/humidity"
+  - id: "matter/hvac/thermostat/humidity"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
@@ -60,7 +81,7 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
     deviceProfileName: thermostat-humidity-fan
-  - id: "matter/hvac/themostat/humidity/fan"
+  - id: "matter/hvac/thermostat/humidity/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
@@ -82,3 +103,21 @@ matterGeneric:
     deviceTypes:
       - id: 0x002D # Air Purifier
     deviceProfileName: air-purifier-hepa-ac-wind
+  - id: "matter/water-heater"
+    deviceLabel: Matter Water Heater
+    deviceTypes:
+      - id: 0x050F # Water Heater
+    deviceProfileName: water-heater
+  - id: "matter/heat-pump"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: heat-pump
+  - id: "matter/heat-pump/thermostat"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+      - id: 0x0301 # Thermostat
+    deviceProfileName: heat-pump-thermostat
