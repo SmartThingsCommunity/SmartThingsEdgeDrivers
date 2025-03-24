@@ -143,6 +143,11 @@ local battery_support = {
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
 
+local profiling_data = {
+  BATTERY_SUPPORT = "__BATTERY_SUPPORT",
+  THERMOSTAT_RUNNING_STATE_SUPPORT = "__THERMOSTAT_RUNNING_STATE_SUPPORT"
+}
+
 local subscribed_attributes = {
   [capabilities.switch.ID] = {
     clusters.OnOff.attributes.OnOff
@@ -643,7 +648,21 @@ local function create_thermostat_modes_profile(device)
   return thermostat_modes
 end
 
-local function match_profile(driver, device, battery_supported)
+local function profiling_data_still_required(device)
+  for _, field in pairs(profiling_data) do
+    if device:get_field(field) == nil then
+      return true -- data still required if a field is nil
+    end
+  end
+  return false
+end
+
+local function match_profile(driver, device)
+  if profiling_data_still_required(device) then return end
+
+  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
+  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
+
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local device_type = get_device_type(driver, device)
@@ -670,6 +689,10 @@ local function match_profile(driver, device, battery_supported)
 
     if profile_name == "room-air-conditioner-humidity-fan-wind-heating-cooling" then
       profile_name = "room-air-conditioner"
+    end
+
+    if not running_state_supported and profile_name == "room-air-conditioner-fan-heating-cooling" then
+      profile_name = profile_name .. "-nostate"
     end
 
   elseif device_type == FAN_DEVICE_TYPE_ID then
@@ -701,7 +724,9 @@ local function match_profile(driver, device, battery_supported)
         profile_name = profile_name .. thermostat_modes
       end
 
-      profile_name = profile_name .. "-nostate"
+      if not running_state_supported then
+        profile_name = profile_name .. "-nostate"
+      end
 
       if battery_supported == battery_support.BATTERY_LEVEL then
         profile_name = profile_name .. "-batteryLevel"
@@ -746,10 +771,9 @@ local function match_profile(driver, device, battery_supported)
       profile_name = profile_name .. thermostat_modes
     end
 
-    -- TODO remove this in favor of reading Thermostat clusters AttributeList attribute
-    -- to determine support for ThermostatRunningState
-    -- Add nobattery profiles if updated
-    profile_name = profile_name .. "-nostate"
+    if not running_state_supported then
+      profile_name = profile_name .. "-nostate"
+    end
 
     if battery_supported == battery_support.BATTERY_LEVEL then
       profile_name = profile_name .. "-batteryLevel"
@@ -765,17 +789,14 @@ local function match_profile(driver, device, battery_supported)
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
+  -- clear all profiling data fields after profiling is complete.
+  for _, field in pairs(profiling_data) do
+    device:set_field(field, nil)
+  end
 end
 
 local function do_configure(driver, device)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    req:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(req)
-  else
-    match_profile(driver, device, battery_support.NO_BATTERY)
-  end
+  match_profile(driver, device)
 end
 
 local function device_added(driver, device)
@@ -784,6 +805,19 @@ local function device_added(driver, device)
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
+
+  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
+  if #thermostat_eps > 0 then
+    req:merge(clusters.Thermostat.attributes.AttributeList:read(device))
+  else
+    device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, false)
+  end
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    req:merge(clusters.PowerSource.attributes.AttributeList:read(device))
+  else
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY)
+  end
   device:send(req)
   local heat_pump_eps = get_endpoints_for_dt(device, HEAT_PUMP_DEVICE_TYPE_ID) or {}
   if #heat_pump_eps > 0 then
@@ -1750,16 +1784,31 @@ end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
     if attr.value == 0x0C then
-      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE)
+      match_profile(driver, device)
       return
     elseif attr.value == 0x0E then
-      match_profile(driver, device, battery_support.BATTERY_LEVEL)
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL)
+      match_profile(driver, device)
       return
     end
   end
+end
+
+local function thermostat_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- mark whether the optional attribute ThermostatRunningState (0x029) is present and try profiling
+    if attr.value == 0x029 then
+      device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, true)
+      match_profile(driver, device)
+      return
+    end
+  end
+  device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, false)
+  match_profile(driver, device)
 end
 
 local matter_driver_template = {
@@ -1787,6 +1836,7 @@ local matter_driver_template = {
         [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = cooling_setpoint_limit_handler_factory(setpoint_limit_device_field.MIN_COOL),
         [clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit.ID] = cooling_setpoint_limit_handler_factory(setpoint_limit_device_field.MAX_COOL),
         [clusters.Thermostat.attributes.MinSetpointDeadBand.ID] = min_deadband_limit_handler,
+        [clusters.Thermostat.attributes.AttributeList.ID] = thermostat_attribute_list_handler,
       },
       [clusters.FanControl.ID] = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,

@@ -12,3 +12,5 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: HeatPump
