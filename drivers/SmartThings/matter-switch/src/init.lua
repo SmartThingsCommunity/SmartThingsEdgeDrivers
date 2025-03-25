@@ -574,6 +574,7 @@ local function configure_buttons(device)
 
   for _, ep in ipairs(ms_eps) do
     if device.profile.components[endpoint_to_component(device, ep)] then
+      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
       -- this ordering is important, since MSM & MSL devices must also support MSR
       if tbl_contains(msm_eps, ep) then
@@ -594,6 +595,8 @@ local function configure_buttons(device)
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
       device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    else
+      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
   end
 end
@@ -1291,11 +1294,11 @@ local function info_changed(driver, device, event, args)
       device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
     end
+    device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       configure_buttons(device)
     end
-    device:subscribe()
   end
 end
 
