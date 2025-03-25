@@ -47,6 +47,8 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
   end
 )
