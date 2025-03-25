@@ -18,6 +18,7 @@ local device_lib = require "st.device"
 
 local DEFAULT_LEVEL = 0
 local STATE_MACHINE = "__state_machine"
+local REVERSE_POLARITY = "__reverse_polarity"
 
 local StateMachineEnum = {
   STATE_IDLE = 0x00,
@@ -43,6 +44,13 @@ local function is_matter_window_covering_position_updates_while_moving(opts, dri
   return false
 end
 
+local function reverse_polarity_if_needed(device, value)
+  if device:get_field(REVERSE_POLARITY) then
+    return value
+  end
+  return 100 - value
+end
+
 local function device_init(driver, device)
   device:subscribe()
 end
@@ -51,7 +59,7 @@ end
 local function current_pos_handler(driver, device, ib, response)
   local position = 0
   if ib.data.value ~= nil then
-    position = 100 - math.floor((ib.data.value / 100))
+    position = reverse_polarity_if_needed(device, math.floor((ib.data.value / 100)))
     device:emit_event_for_endpoint(
       ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
     )
@@ -81,12 +89,13 @@ local function current_status_handler(driver, device, ib, response)
                      "main", capabilities.windowShadeLevel.ID,
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
+  position = reverse_polarity_if_needed(device, position)
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID and
        rb.info_block.data ~= nil and
        rb.info_block.data.value ~= nil then
-      position = 100 - math.floor((rb.info_block.data.value / 100))
+      position = reverse_polarity_if_needed(device, math.floor((rb.info_block.data.value / 100)))
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
@@ -113,9 +122,9 @@ local function current_status_handler(driver, device, ib, response)
     end
   elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
     if state == 0 then -- not moving
-      if position == 100 then -- open
+      if position == 100 then
         device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
-      elseif position == 0 then -- closed
+      elseif position == 0 then
         device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
       else
         device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
