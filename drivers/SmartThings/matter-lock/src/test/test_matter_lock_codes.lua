@@ -354,6 +354,7 @@ test.register_message_test(
           nil, -- creator_fabric_index
           nil, -- last_modified_fabric_index
           20, -- next_credential_index
+          nil, -- credential_data
           im.InteractionResponse.Status.FAILURE
         ),
       },

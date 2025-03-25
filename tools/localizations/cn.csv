@@ -69,9 +69,8 @@ Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
 "Aqara Smart Wall Switch T1 (With Neutral, Double Rocker)",Aqara智能墙壁开关T1 (零火线双键版)
 "Aqara Smart Wall Switch T1 (With Neutral, Triple Rocker)",Aqara智能墙壁开关T1 (零火线三键版)
 "LeTianPai Smart Switch 1 Way",乐天派智能开关（零火版）单开
-"LeTianPai Smart Switch 2 Way",乐天派智能开关（零火版）双开
-"LeTianPai Smart Switch 3 Way",乐天派智能开关（零火版）三开
 "LeTianPai Smart Light Bulb",乐天派智能灯泡
+"Heiman Door and Window D1-M",智能门磁传感器
 "WallHero Switch (1 Way)",一位智能开关面板
 "WallHero Switch (2 Way)",二位智能开关面板
 "WallHero Switch (3 Way)",三位智能开关面板
@@ -79,9 +78,24 @@ Aqara Wireless Mini Switch T1,Aqara 无线开关 T1
 "WallHero Switch (8 Way)",八位智能开关/场景面板
 "WallHero Outlet",智能墙面五孔插座
 "WallHero Remote Control (4-Inch)",语音场景(4寸）面板
+"Siterwell Radiator Thermostat",赛特威尔智能温控阀
 "Zemismart ZM02 Smart Curtain",Zemismart ZM02 智能窗帘
 "Zemismart ZM25C Smart Curtain",Zemismart ZM25C 智能窗帘
 "Zemismart ZM01 Smart Curtain", Zemismart ZM01 智能窗帘
 "WISTAR WSERD30-B Smart Tubular Motor",威仕达智能管状电机 WSERD30-B
 "WISTAR WSER40 Smart Tubular Motor",威仕达智能管状电机 WSER40
 "WISTAR WSER50 Smart Tubular Motor",威仕达智能管状电机 WSER50
+"Heiman Smoke Sensor",海曼智能烟雾传感器
+"Heiman CO Sensor",海曼智能一氧化碳传感器
+"Smart co sensor",海曼智能一氧化碳传感器
+"ThirdReality Smart Soil Moisture Sensor",树实智能土壤湿度计
+"ThirdReality Temperature and Humidity Sensor",树实智能温湿度计
+"Laisiao Bathroom Heater",Laisiao智能浴霸
+"Siterwell Door Window Sensor",赛特威尔门窗检测传感器
+"Siterwell Smart Carbon Monoxide Alarm",赛特威尔智能CO报警器
+"Zemismart M6 Hub",Zemismart M6 网关
+"Siterwell Smart Smoke Alarm",赛特威尔智能烟雾报警器
+"Siterwell Motion Sensor",赛特威尔人体检测传感器
+"Zemismart ZM24A Smart Curtain", Zemismart ZM24A 智能窗帘
+"Greentown Lock(SG20)",绿城门锁(SG20)
+

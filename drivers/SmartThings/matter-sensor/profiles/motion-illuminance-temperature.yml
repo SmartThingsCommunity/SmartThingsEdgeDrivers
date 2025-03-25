@@ -14,3 +14,6 @@ components:
     version: 1
   categories:
   - name: MotionSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
