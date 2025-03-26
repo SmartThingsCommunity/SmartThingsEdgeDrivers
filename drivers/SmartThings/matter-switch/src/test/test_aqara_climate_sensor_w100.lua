@@ -22,8 +22,6 @@ local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
-
 -- Mock a 3-button device with temperature and humidity sensor
 local aqara_mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("3-button-battery-temperature-humidity.yml"),
@@ -111,8 +109,18 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local function configure_buttons()
+  test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 3)})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
+
+  test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 4)})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+
+  test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 5)})
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+end
+
 local function test_init()
-  local opts = { persist = true }
   local cluster_subscribe_list = {
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
@@ -125,11 +133,6 @@ local function test_init()
     clusters.Switch.server.events.MultiPressComplete,
   }
 
-  local cluster_read_list = {
-    clusters.Switch.attributes.MultiPressMax
-  }
-  local read_request
-
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
   test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
@@ -141,6 +144,7 @@ local function test_init()
     end
   end
 
+  configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.mock_device.add_test_device(aqara_mock_device)
   test.set_rpc_version(5)
@@ -151,27 +155,12 @@ local function test_init()
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="3-button-battery-temperature-humidity"}
 
-  aqara_mock_device:set_field(DEFERRED_CONFIGURE, true, opts)
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "3-button-battery-temperature-humidity"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-
-  read_request = cluster_read_list[1]:read(aqara_mock_device, 3)
-  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
-
-  read_request = cluster_read_list[1]:read(aqara_mock_device, 4)
-  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
-  read_request = cluster_read_list[1]:read(aqara_mock_device, 5)
-  read_request:merge(cluster_read_list[1]:subscribe(aqara_mock_device))
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_request})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+  configure_buttons()
 end
 
 test.set_test_init_function(test_init)
