@@ -91,9 +91,7 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.shinasystems"),
     require("zigbee-multi-button.robb"),
     require("zigbee-multi-button.wallhero"),
-    require("zigbee-multi-button.SLED"),
-    require("zigbee-multi-button.vimar"),
-    require("zigbee-multi-button.linxura")
+    require("zigbee-multi-button.SLED")
   }
 }
 
