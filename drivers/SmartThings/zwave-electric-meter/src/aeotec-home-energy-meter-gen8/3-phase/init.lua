@@ -1,15 +1,28 @@
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=4 })
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
-local zw = require "st.zwave"
 local utils = require "st.utils"
 
 local AEOTEC_HOME_ENERGY_METER_GEN8_FINGERPRINTS = {
-    { mfr = 0x0371, prod = 0x0003, model = 0x0034 }, -- HEM Gen8 3 Phase EU
-    { mfr = 0x0371, prod = 0x0102, model = 0x0034 }  -- HEM Gen8 3 Phase AU
+  { mfr = 0x0371, prod = 0x0003, model = 0x0034 }, -- HEM Gen8 3 Phase EU
+  { mfr = 0x0371, prod = 0x0102, model = 0x0034 }  -- HEM Gen8 3 Phase AU
 }
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
@@ -45,83 +58,64 @@ local function find_hem8_child_device_key_by_endpoint(endpoint)
 end
 
 local function emit_power_consumption_report_event(device, value, channel)
-    -- powerConsumptionReport report interval
-    local current_time = os.time()
-    local last_time = device:get_field(LAST_REPORT_TIME) or 0
-    local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
-    if current_time < next_time then
-        return
-    end
-    device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
-    local raw_value = value.value * 1000 -- 'Wh'
+  -- powerConsumptionReport report interval
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_REPORT_TIME) or 0
+  local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
+  if current_time < next_time then
+      return
+  end
+  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
+  local raw_value = value.value * 1000 -- 'Wh'
 
-    local delta_energy = 0.0
-    local current_power_consumption = device:get_latest_state('main', capabilities.powerConsumptionReport.ID,
-        capabilities.powerConsumptionReport.powerConsumption.NAME)
-    if current_power_consumption ~= nil then
-        delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
-    end
-    device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
-        energy = raw_value,
-        deltaEnergy = delta_energy
-    }))
+  local delta_energy = 0.0
+  local current_power_consumption = device:get_latest_state('main', capabilities.powerConsumptionReport.ID,
+      capabilities.powerConsumptionReport.powerConsumption.NAME)
+  if current_power_consumption ~= nil then
+      delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
+  end
+  device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
+      energy = raw_value,
+      deltaEnergy = delta_energy
+  }))
 end
 
 local function meter_report_handler(driver, device, cmd, zb_rx)
-    local endpoint = cmd.src_channel
-    local child_device_key = find_hem8_child_device_key_by_endpoint(endpoint);
-    local child_device = device:get_child_by_parent_assigned_key(child_device_key)
+  local endpoint = cmd.src_channel
+  local device_to_emit_with = device
+  local child_device_key = find_hem8_child_device_key_by_endpoint(endpoint);
+  local child_device = device:get_child_by_parent_assigned_key(child_device_key)
 
-    if child_device then
-      if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
-          local event_arguments = {
-          value = cmd.args.meter_value,
-          unit = ENERGY_UNIT_KWH
-          }
-          -- energyMeter
-          child_device:emit_event_for_endpoint(
-              cmd.src_channel,
-              capabilities.energyMeter.energy(event_arguments)
-          )
+  if(child_device) then
+    device_to_emit_with = child_device
+  end
 
-          if endpoint == 9 then
-              -- powerConsumptionReport
-              emit_power_consumption_report_event(child_device, { value = event_arguments.value }, endpoint)
-          end
-      elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
-          local event_arguments = {
-              value = cmd.args.meter_value,
-              unit = POWER_UNIT_WATT
-          }
-          -- powerMeter
-          child_device:emit_event_for_endpoint(
-              cmd.src_channel,
-              capabilities.powerMeter.power(event_arguments)
-          )
-      end
-    else
-        if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
-            local event_arguments = {
-                value = cmd.args.meter_value,
-                unit = ENERGY_UNIT_KWH
-            }
-            -- energyMeter
-            device:emit_event_for_endpoint(
-                cmd.src_channel,
-                capabilities.energyMeter.energy(event_arguments)
-            )
-        elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
-            local event_arguments = {
-                value = cmd.args.meter_value,
-                unit = POWER_UNIT_WATT
-            }
-            -- powerMeter
-            device:emit_event_for_endpoint(
-                cmd.src_channel,
-                capabilities.powerMeter.power(event_arguments)
-            )
-        end
+  if cmd.args.scale == Meter.scale.electric_meter.KILOWATT_HOURS then
+    local event_arguments = {
+      value = cmd.args.meter_value,
+      unit = ENERGY_UNIT_KWH
+    }
+    -- energyMeter
+    device_to_emit_with:emit_event_for_endpoint(
+      cmd.src_channel,
+      capabilities.energyMeter.energy(event_arguments)
+    )
+
+    if endpoint == 9 then
+      -- powerConsumptionReport
+      emit_power_consumption_report_event(device, { value = event_arguments.value }, endpoint)
     end
+  elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
+    local event_arguments = {
+      value = cmd.args.meter_value,
+      unit = POWER_UNIT_WATT
+    }
+    -- powerMeter
+    device_to_emit_with:emit_event_for_endpoint(
+      cmd.src_channel,
+      capabilities.powerMeter.power(event_arguments)
+    )
+  end
 end
 
 local function do_refresh(self, device)
@@ -169,7 +163,7 @@ local function device_added(driver, device)
       end
     end
   end
-  do_refresh(self, device)
+  do_refresh(driver, device)
 end
 
 local aeotec_home_energy_meter_gen8_3_phase = {
@@ -179,7 +173,7 @@ local aeotec_home_energy_meter_gen8_3_phase = {
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
-        [capabilities.refresh.commands.refresh.NAME] = do_refresh
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   zwave_handlers = {

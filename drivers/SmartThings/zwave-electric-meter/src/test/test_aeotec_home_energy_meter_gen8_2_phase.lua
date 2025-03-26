@@ -12,17 +12,18 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local st_utils = require "st.utils"
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
+local Meter = (require "st.zwave.CommandClass.Meter")({version=4})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local t_utils = require "integration_test.utils"
 
 local AEOTEC_MFR_ID = 0x0371
-local AEOTEC_METER_PROD_TYPE = 0x0003
-local AEOTEC_METER_PROD_ID = 0x0033
+local AEOTEC_METER_PROD_TYPE = 0x0103
+local AEOTEC_METER_PROD_ID = 0x002E
 
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 
@@ -34,14 +35,34 @@ local aeotec_meter_endpoints = {
   }
 }
 
-local HEM8_CHILDS = {
-    { profile = 'aeotec-home-energy-meter-gen8-1-phase-pro', name = 'Aeotec Home Energy Meter 8 Production', child_key = 'pro', endpoints = { 2, 4, 6 } },
-    { profile = 'aeotec-home-energy-meter-gen8-sald-con', name = 'Aeotec Home Energy Meter 8 Settled Consumption', child_key = 'sald-con', endpoints = { 7 } },
-    { profile = 'aeotec-home-energy-meter-gen8-sald-pro', name = 'Aeotec Home Energy Meter 8 Settled Production', child_key = 'sald-pro', endpoints = { 8 } }
+local HEM8_DEVICES = {
+  {
+    profile = 'aeotec-home-energy-meter-gen8-2-phase-con',
+    name = 'Aeotec Home Energy Meter 8 Consumption',
+    endpoints = { 1, 3, 5 }
+  },
+  {
+    profile = 'aeotec-home-energy-meter-gen8-2-phase-pro',
+    name = 'Aeotec Home Energy Meter 8 Production',
+    child_key = 'pro',
+    endpoints = { 2, 4, 6 }
+  },
+  {
+    profile = 'aeotec-home-energy-meter-gen8-sald-con',
+    name = 'Aeotec Home Energy Meter 8 Settled Consumption',
+    child_key = 'sald-con',
+    endpoints = { 7 }
+  },
+  {
+    profile = 'aeotec-home-energy-meter-gen8-sald-pro',
+    name = 'Aeotec Home Energy Meter 8 Settled Production',
+    child_key = 'sald-pro',
+    endpoints = { 8 }
+  }
 }
 
 local mock_parent = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("aeotec-home-energy-meter-gen8-1-phase-con.yml"),
+  profile = t_utils.get_profile_definition(HEM8_DEVICES[1].profile .. '.yml'),
   zwave_endpoints = aeotec_meter_endpoints,
   zwave_manufacturer_id = AEOTEC_MFR_ID,
   zwave_product_type = AEOTEC_METER_PROD_TYPE,
@@ -49,23 +70,22 @@ local mock_parent = test.mock_device.build_test_zwave_device({
 })
 
 local mock_child_prod = test.mock_device.build_test_child_device({
-    profile = t_utils.get_profile_definition(HEM8_CHILDS[1].profile .. '.yml'),
+    profile = t_utils.get_profile_definition(HEM8_DEVICES[2].profile .. '.yml'),
     parent_device_id = mock_parent.id,
-    parent_assigned_child_key = HEM8_CHILDS[1].child_key
+    parent_assigned_child_key = HEM8_DEVICES[2].child_key
 })
 
 local mock_child_sald_con = test.mock_device.build_test_child_device({
-    profile = t_utils.get_profile_definition(HEM8_CHILDS[2].profile .. '.yml'),
+    profile = t_utils.get_profile_definition(HEM8_DEVICES[3].profile .. '.yml'),
     parent_device_id = mock_parent.id,
-    parent_assigned_child_key = HEM8_CHILDS[2].child_key
+    parent_assigned_child_key = HEM8_DEVICES[3].child_key
 })
 
 local mock_child_sald_prod = test.mock_device.build_test_child_device({
-    profile = t_utils.get_profile_definition(HEM8_CHILDS[3].profile .. '.yml'),
+    profile = t_utils.get_profile_definition(HEM8_DEVICES[4].profile .. '.yml'),
     parent_device_id = mock_parent.id,
-    parent_assigned_child_key = HEM8_CHILDS[3].child_key
+    parent_assigned_child_key = HEM8_DEVICES[4].child_key
 })
-
 
 local function test_init()
   test.mock_device.add_test_device(mock_parent)
@@ -76,120 +96,173 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-    "Power meter report should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
-          scale = Meter.scale.electric_meter.WATTS,
-          meter_value = 27})
-        )}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("main", capabilities.powerMeter.power({ value = 27, unit = "W" }))
-      }
-    }
+test.register_coroutine_test(
+  "Added lifecycle event should create children for parent device",
+  function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_parent.id, "added" })
+
+    for _, child in ipairs(HEM8_DEVICES) do
+        if(child["child_key"]) then
+          mock_parent:expect_device_create(
+            {
+                type = "EDGE_CHILD",
+                label = child.name,
+                profile = child.profile,
+                parent_device_id = mock_parent.id,
+                parent_assigned_child_key = child.child_key
+            }
+          )
+        end
+    end
+    -- Refresh
+    for _, device in ipairs(HEM8_DEVICES) do
+      for _, endpoint in ipairs(device.endpoints) do
+        test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            Meter:Get({scale = Meter.scale.electric_meter.WATTS}, {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { endpoint }
+            })
+          )
+        )
+        test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}, {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { endpoint }
+            })
+          )
+        )
+      end
+    end
+  end
 )
 
-test.register_message_test(
-    "Energy meter report should be handled",
-    {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_parent.id, zw_test_utils.zwave_test_build_receive_command(Meter:Report({
-          scale = Meter.scale.electric_meter.KILOWATT_HOURS,
-          meter_value = 5})
-        )}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_parent:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
-      }
-    }
+test.register_coroutine_test(
+  "Power meter report should be handled",
+  function()
+    for _, device in ipairs(HEM8_DEVICES) do
+      for _, endpoint in ipairs(device.endpoints) do
+        local component = "main"
+        if endpoint ~= 5 and endpoint ~= 6 and endpoint ~= 7 and endpoint ~= 8 then
+        component = string.format("clamp%d", endpoint)
+        end
+        test.socket.zwave:__queue_receive({
+          mock_parent.id,
+          Meter:Report({
+            scale = Meter.scale.electric_meter.WATTS,
+            meter_value = 27
+          }, {
+            encap = zw.ENCAP.AUTO,
+            src_channel = endpoint,
+            dst_channels = {0}
+          })
+        })
+        if(device["child_key"]) then
+          if(device["child_key"] == "pro") then
+            test.socket.capability:__expect_send(
+                mock_child_prod:generate_test_message(component, capabilities.powerMeter.power({ value = 27, unit = "W" }))
+            )
+          elseif (device["child_key"] == "sald-pro") then
+            test.socket.capability:__expect_send(
+                mock_child_sald_prod:generate_test_message(component, capabilities.powerMeter.power({ value = 27, unit = "W" }))
+            )
+          elseif (device["child_key"] == "sald-con") then
+            test.socket.capability:__expect_send(
+                mock_child_sald_con:generate_test_message(component, capabilities.powerMeter.power({ value = 27, unit = "W" }))
+            )
+          end
+        else
+          test.socket.capability:__expect_send(
+            mock_parent:generate_test_message(component, capabilities.powerMeter.power({ value = 27, unit = "W" }))
+          )
+        end
+      end
+    end
+  end
 )
 
-test.register_message_test(
-    "Device should be polled at inclusion",
-    {
-      {
-        channel = "device_lifecycle",
-        direction = "receive",
-        message = { mock_parent.id, "added" },
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-          mock_parent,
-          Meter:Get({scale = Meter.scale.electric_meter.WATTS})
-        )
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
-          mock_parent,
-          Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
-        )
-      },
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
+test.register_coroutine_test(
+  "Energy meter report should be handled",
+  function()
+    for _, device in ipairs(HEM8_DEVICES) do
+      for _, endpoint in ipairs(device.endpoints) do
+        local component = "main"
+        if endpoint ~= 5 and endpoint ~= 6 and endpoint ~= 7 and endpoint ~= 8 then
+              component = string.format("clamp%d", endpoint)
+        end
+        test.socket.zwave:__queue_receive({
+          mock_parent.id,
+          Meter:Report({
+            scale = Meter.scale.electric_meter.KILOWATT_HOURS,
+            meter_value = 5
+          }, {
+            encap = zw.ENCAP.AUTO,
+            src_channel = endpoint,
+            dst_channels = {0}
+          })
+        })
+        if(device["child_key"]) then
+          if(device["child_key"] == "pro") then
+            test.socket.capability:__expect_send(
+                mock_child_prod:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+            )
+          elseif (device["child_key"] == "sald-pro") then
+            test.socket.capability:__expect_send(
+                mock_child_sald_prod:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+            )
+          elseif (device["child_key"] == "sald-con") then
+            test.socket.capability:__expect_send(
+                mock_child_sald_con:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+            )
+          end
+        else
+          test.socket.capability:__expect_send(
+            mock_parent:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+          )
+        end
+      end
+    end
+  end
 )
 
 test.register_coroutine_test(
   "Report consumption and power consumption report after 15 minutes", function()
     -- set time to trigger power consumption report
     local current_time = os.time() - 60 * 20
-    mock_parent:set_field(LAST_REPORT_TIME, current_time)
+    mock_child_sald_con:set_field(LAST_REPORT_TIME, current_time)
 
     test.socket.zwave:__queue_receive(
       {
-        mock_parent.id,
+        mock_child_sald_con.id,
         zw_test_utils.zwave_test_build_receive_command(Meter:Report(
-        {
-          scale = Meter.scale.electric_meter.KILOWATT_HOURS,
-          meter_value = 5
-        }))
+          {
+            scale = Meter.scale.electric_meter.KILOWATT_HOURS,
+            meter_value = 5
+          },
+          {
+            encap = zw.ENCAP.AUTO,
+            src_channel = 7,
+            dst_channels = {0}
+          }
+        ))
       }
     )
 
     test.socket.capability:__expect_send(
-      mock_parent:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
+      mock_child_sald_con:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     )
 
     test.socket.capability:__expect_send(
-      mock_parent:generate_test_message("main",
+      mock_child_sald_con:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
     )
   end
-)
-
-test.register_coroutine_test(
-    "Added lifecycle event should create children for parent device",
-    function()
-        test.socket.zwave:__set_channel_ordering("relaxed")
-        test.socket.device_lifecycle:__queue_receive({ mock_parent.id, "added" })
-
-        for _, child in ipairs(HEM8_CHILDS) do
-            mock_parent:expect_device_create(
-              {
-                  type = "EDGE_CHILD",
-                  label = child.name,
-                  profile = child.profile,
-                  parent_device_id = mock_parent.id,
-                  parent_assigned_child_key = child.child_key
-              }
-            )
-        end
-    end
 )
 
 test.register_coroutine_test(
@@ -289,30 +362,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle preference: imWThresholdPhaseC (parameter 7) in infoChanged",
-  function()
-    test.socket.device_lifecycle:__queue_receive(
-        mock_parent:generate_info_changed({
-        preferences = {
-            imWThresholdPhaseC = 3500
-        }
-      })
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent,
-        Configuration:Set({
-          parameter_number = 7,
-          configuration_value = 3500,
-          size = 2
-        })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
   "Handle preference: exWThresholdTotal (parameter 8) in infoChanged",
   function()
     test.socket.device_lifecycle:__queue_receive(
@@ -376,30 +425,6 @@ test.register_coroutine_test(
         mock_parent,
         Configuration:Set({
           parameter_number = 10,
-          configuration_value = 3500,
-          size = 2
-        })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Handle preference: exWThresholdPhaseC (parameter 11) in infoChanged",
-  function()
-    test.socket.device_lifecycle:__queue_receive(
-        mock_parent:generate_info_changed({
-        preferences = {
-            exWThresholdPhaseC = 3500
-        }
-      })
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent,
-        Configuration:Set({
-          parameter_number = 11,
           configuration_value = 3500,
           size = 2
         })
@@ -481,30 +506,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle preference: imWPctThresholdPhaseC (parameter 15) in infoChanged",
-  function()
-    test.socket.device_lifecycle:__queue_receive(
-        mock_parent:generate_info_changed({
-        preferences = {
-            imWPctThresholdPhaseC = 50
-        }
-      })
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent,
-        Configuration:Set({
-          parameter_number = 15,
-          configuration_value = 50,
-          size = 1
-        })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
   "Handle preference: exWPctThresholdTotal (parameter 16) in infoChanged",
   function()
     test.socket.device_lifecycle:__queue_receive(
@@ -577,30 +578,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle preference: thresholdCheck (exWPctThresholdPhaseC 19) in infoChanged",
-  function()
-    test.socket.device_lifecycle:__queue_receive(
-        mock_parent:generate_info_changed({
-        preferences = {
-            exWPctThresholdPhaseC = 50
-        }
-      })
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent,
-        Configuration:Set({
-          parameter_number = 19,
-          configuration_value = 50,
-          size = 1
-        })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
   "Handle preference: autoRootDeviceReport (parameter 32) in infoChanged",
   function()
     test.socket.device_lifecycle:__queue_receive(
@@ -621,6 +598,45 @@ test.register_coroutine_test(
         })
       )
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Refresh sends commands to all components including base device",
+  function()
+    -- refresh commands for zwave devices do not have guaranteed ordering
+    test.socket.zwave:__set_channel_ordering("relaxed")
+
+    for _, device in ipairs(HEM8_DEVICES) do
+      for _, endpoint in ipairs(device.endpoints) do
+        test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            Meter:Get({scale = Meter.scale.electric_meter.WATTS}, {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { endpoint }
+            })
+          )
+        )
+
+        test.socket.zwave:__expect_send(
+          zw_test_utils.zwave_test_build_send_command(
+            mock_parent,
+            Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}, {
+              encap = zw.ENCAP.AUTO,
+              src_channel = 0,
+              dst_channels = { endpoint }
+            })
+          )
+        )
+      end
+    end
+
+    test.socket.capability:__queue_receive({
+      mock_parent.id,
+      { capability = "refresh", component = "main", command = "refresh", args = { } }
+    })
   end
 )
 
