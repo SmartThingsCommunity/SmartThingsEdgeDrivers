@@ -16,24 +16,6 @@ local IASZone = (require "st.zigbee.zcl.clusters").IASZone
 local log = require "log"
 
 
-local BUTTON1_HELD = 0x0001
-local BUTTON1_PUSHED = 0x0003
-local BUTTON1_DOUBLE = 0x0005
-local BUTTON2_HELD = 0x0007
-local BUTTON2_PUSHED = 0x0009
-local BUTTON2_DOUBLE = 0x000B
-local BUTTON3_HELD = 0x000D
-local BUTTON3_PUSHED = 0x000F
-local BUTTON3_DOUBLE = 0x0011
-local BUTTON4_HELD = 0x00013
-local BUTTON4_PUSHED = 0x00015
-local BUTTON4_DOUBLE = 0x0017
-
-local BUTTON1 = "button1"
-local BUTTON2 = "button2"
-local BUTTON3 = "button3"
-local BUTTON4 = "button4"
-
 local LINXURA_BUTTON_FINGERPRINTS = {
   { mfr = "Linxura", model = "Smart Controller"},
   { mfr = "Linxura", model = "Aura Smart Button"}
