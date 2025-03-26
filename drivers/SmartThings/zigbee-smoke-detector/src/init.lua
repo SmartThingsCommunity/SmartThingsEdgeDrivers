@@ -16,17 +16,19 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
+local TemperatureMeasurement = (require "st.zigbee.zcl.clusters").TemperatureMeasurement
 
 local zigbee_smoke_driver_template = {
   supported_capabilities = {
     capabilities.smokeDetector,
-    capabilities.battery
+    capabilities.battery,
+    capabilities.alarm, 
+    capabilities.temperatureMeasurement
   },
   sub_drivers = {
     require("frient"),
     require("aqara-gas"),
-    require("aqara"),
-    require("frient")
+    require("aqara")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
 }
