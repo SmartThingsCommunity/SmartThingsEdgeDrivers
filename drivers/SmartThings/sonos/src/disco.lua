@@ -13,18 +13,18 @@ local ssdp_discovery_callback = function(driver, ssdp_group_info, known_devices_
   if not found_ip_addrs[ssdp_group_info.ip] then
     found_ip_addrs[ssdp_group_info.ip] = true
 
+    ---@type DiscoCallback
     local function add_device_callback(dni, inner_ssdp_group_info, player_info, group_info)
       if not known_devices_dnis[dni] then
         local name = player_info.device.name or player_info.device.modelDisplayName or "Unknown Sonos Player"
         local model = player_info.device.modelDisplayName or "Unknown Sonos Model"
 
-        local field_cache = {
+        driver._field_cache[dni] = {
           household_id = inner_ssdp_group_info.household_id,
           player_id = player_info.playerId,
-          wss_url = player_info.websocketUrl
+          wss_url = player_info.websocketUrl,
+          swGen = player_info.device.swGen
         }
-
-        driver._field_cache[dni] = field_cache
 
         driver.sonos:update_household_info(player_info.householdId, group_info)
 
