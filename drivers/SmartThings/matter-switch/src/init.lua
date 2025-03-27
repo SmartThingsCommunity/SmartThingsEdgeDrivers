@@ -295,7 +295,6 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
@@ -475,6 +474,24 @@ local function find_default_endpoint(device)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device)
+end
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "main"
+end
+
 local function assign_child_profile(device, child_ep)
   local profile
 
@@ -556,26 +573,31 @@ local function configure_buttons(device)
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
   for _, ep in ipairs(ms_eps) do
-    local supportedButtonValues_event
-    -- this ordering is important, since MSM & MSL devices must also support MSR
-    if tbl_contains(msm_eps, ep) then
-      supportedButtonValues_event = nil -- deferred to the max press handler
-      device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-      set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-    elseif tbl_contains(msl_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-    elseif tbl_contains(msr_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
-    else -- this switch endpoint only supports momentary switch, no release events
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
-    end
+    if device.profile.components[endpoint_to_component(device, ep)] then
+      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
+      local supportedButtonValues_event
+      -- this ordering is important, since MSM & MSL devices must also support MSR
+      if tbl_contains(msm_eps, ep) then
+        supportedButtonValues_event = nil -- deferred to the max press handler
+        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
+        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
+      elseif tbl_contains(msl_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+      elseif tbl_contains(msr_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
+      else -- this switch endpoint only supports momentary switch, no release events
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
+      end
 
-    if supportedButtonValues_event then
-      device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      if supportedButtonValues_event then
+        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      end
+      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    else
+      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
-    device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
   end
 end
 
@@ -618,7 +640,6 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
     profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(DEFERRED_CONFIGURE, true)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
@@ -698,6 +719,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
 
   if #button_eps > 0 then
     build_button_profile(device, main_endpoint, #button_eps)
+    configure_buttons(device)
     return
   end
 
@@ -707,24 +729,6 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
   end
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return find_default_endpoint(device)
-end
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
 end
 
 local function detect_bridge(device)
@@ -743,6 +747,9 @@ local function device_init(driver, device)
     return
   end
 
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+
   local main_endpoint = find_default_endpoint(device)
   if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
      not device:get_field(SWITCH_INITIALIZED) and
@@ -750,8 +757,6 @@ local function device_init(driver, device)
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
     initialize_buttons_and_switches(driver, device, main_endpoint)
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(find_child)
   end
@@ -1290,10 +1295,9 @@ local function info_changed(driver, device, event, args)
       device:send(clusters.ColorControl.attributes.ColorMode:read())
     end
     device:subscribe()
-    if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      -- profile has changed, and we deferred setting up our buttons, so do that now
+    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       configure_buttons(device)
-      device:set_field(DEFERRED_CONFIGURE, nil)
     end
   end
 end
