@@ -65,9 +65,9 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
-local CURRENT_HUE_SAT = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
-local CURRENT_X_Y     = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 local COLOR_MODE = "__color_mode"
+local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+local X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -910,7 +910,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == CURRENT_X_Y  or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -918,7 +918,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == CURRENT_X_Y  or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -1024,7 +1024,7 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == CURRENT_HUE_SAT then
+  if device:get_field(COLOR_MODE) == HUE_SAT_COLOR_MODE then
     return
   end
   local y = device:get_field(RECEIVED_Y)
@@ -1042,7 +1042,7 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == CURRENT_HUE_SAT then
+  if device:get_field(COLOR_MODE) == HUE_SAT_COLOR_MODE then
     return
   end
   local x = device:get_field(RECEIVED_X)
@@ -1058,15 +1058,15 @@ local function y_attr_handler(driver, device, ib, response)
 end
 
 local function color_mode_attr_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(COLOR_MODE) or (ib.data.value ~= CURRENT_HUE_SAT and ib.data.value ~= CURRENT_X_Y) then
+  if ib.data.value == device:get_field(COLOR_MODE) or (ib.data.value ~= HUE_SAT_COLOR_MODE and ib.data.value ~= X_Y_COLOR_MODE) then
     return
   end
   device:set_field(COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == CURRENT_HUE_SAT then
+  if ib.data.value == HUE_SAT_COLOR_MODE then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == CURRENT_X_Y then
+  elseif ib.data.value == X_Y_COLOR_MODE then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
