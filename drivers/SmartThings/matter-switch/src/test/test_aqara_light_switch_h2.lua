@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
+
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
+
 local button_attr = capabilities.button.button
-
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
-
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
 local aqara_child2_ep = 2
@@ -159,7 +162,6 @@ local function configure_buttons()
 end
 
 local function test_init()
-  local opts = { persist = true }
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.Switch.server.events.InitialPress,
@@ -208,7 +210,6 @@ local function test_init()
   test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
   test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
 
-  aqara_mock_device:set_field(DEFERRED_CONFIGURE, true, opts)
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "4-button"
   local device_info_json = dkjson.encode(device_info_copy)

@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
 -- This is to make sure that any device with the "Aggregator" device type

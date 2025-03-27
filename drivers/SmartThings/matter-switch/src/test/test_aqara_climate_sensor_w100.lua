@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.generated.zap_clusters"
+
 local button_attr = capabilities.button.button
 
 -- Mock a 3-button device with temperature and humidity sensor

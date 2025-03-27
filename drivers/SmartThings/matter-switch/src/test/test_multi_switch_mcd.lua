@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
+
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local mock_3switch = test.mock_device.build_test_matter_device({
