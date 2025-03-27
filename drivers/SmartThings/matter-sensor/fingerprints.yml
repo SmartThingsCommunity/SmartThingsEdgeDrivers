@@ -70,7 +70,7 @@ matterManufacturer:
     productId: 0x0001
     deviceProfileName: motion-contact-battery
   # LG
-  - id: 4142/8208
+  - id: "4142/8208"
     deviceLabel: LG Air Quality Sensor
     vendorId: 0x102E
     productId: 0x2010
