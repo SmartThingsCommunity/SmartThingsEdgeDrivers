@@ -36,12 +36,17 @@ local function generate_event_from_zone_status(driver, device, zone_status, zigb
    if zone_status:is_test_set() then
       print("Test mode detected!")
       device:emit_event(smokeDetector.smoke.tested())
+        
+  
    elseif zone_status:is_alarm1_set() then
       print("Smoke detected!")
       device:emit_event(smokeDetector.smoke.detected())
    else
-      print("Smoke cleared!")
+      device.thread:call_with_delay(6, function ()
+        print("Smoke cleared!")
       device:emit_event(smokeDetector.smoke.clear())
+      end)
+      
    end
 end
 
@@ -98,9 +103,7 @@ end
 
 local function do_configure(self, device)
   device:configure()
-  device:send(device_management.build_bind_request(device, zcl_clusters.IASZone.ID, self.environment_info.hub_zigbee_eui ))
   device:send(TemperatureMeasurement.server.attributes.MeasuredValue:configure_reporting(device, 60, 600, 100):to_endpoint(0x26))
-  
 end
 
 local info_changed = function (driver, device, event, args)
