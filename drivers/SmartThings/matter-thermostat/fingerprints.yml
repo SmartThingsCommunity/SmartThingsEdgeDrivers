@@ -12,7 +12,7 @@ matterManufacturer:
     deviceProfileName: air-purifier-hepa
   #Bosch
   - id: "4617/12306"
-    deviceLabel: "Radiator Thermostat II [M]"
+    deviceLabel: Radiator Thermostat II [M]
     vendorId: 0x1209
     productId: 0x3012
     deviceProfileName: thermostat-heating-only-nostate
