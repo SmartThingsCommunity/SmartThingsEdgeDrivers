@@ -1,5 +1,25 @@
 matterManufacturer:
 #Aqara
+  - id: "4447/4100"
+    deviceLabel: Aqara Light Switch H2 US (2 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1004
+    deviceProfileName: light-power-energy-powerConsumption
+  - id: "4447/4101"
+    deviceLabel: Aqara Light Switch H2 US (4 Buttons 3 Channel)
+    vendorId: 0x115F
+    productId: 0x1005
+    deviceProfileName: light-power-energy-powerConsumption
+  - id: "4447/4104"
+    deviceLabel: Aqara Light Switch H2 EU (2 Buttons 1 Channel)
+    vendorId: 0x115F
+    productId: 0x1008
+    deviceProfileName: light-power-energy-powerConsumption
+  - id: "4447/4105"
+    deviceLabel: Aqara Light Switch H2 EU (4 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1009
+    deviceProfileName: light-power-energy-powerConsumption   
   - id: "4447/6145"
     deviceLabel: Aqara LED Bulb T2 RGB CCT
     vendorId: 0x115F
