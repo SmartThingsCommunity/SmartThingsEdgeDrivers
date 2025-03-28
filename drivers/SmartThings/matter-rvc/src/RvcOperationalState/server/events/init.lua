@@ -21,4 +21,3 @@ end
 setmetatable(RvcOperationalStateEvents, event_mt)
 
 return RvcOperationalStateEvents
-

@@ -101,4 +101,3 @@ setmetatable(RvcRunMode.commands, command_helper_mt)
 setmetatable(RvcRunMode, {__index = cluster_base})
 
 return RvcRunMode
-
