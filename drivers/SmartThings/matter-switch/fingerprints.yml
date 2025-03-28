@@ -40,11 +40,6 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x1806
     deviceProfileName: light-level-colorTemperature-2700K-6500K
-  - id: "4447/8196"
-    deviceLabel: Climate Sensor W100
-    vendorId: 0x115F
-    productId: 0x2004
-    deviceProfileName: 3-button-battery-temperature-humidity
 #AiDot
   - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
     deviceLabel: Linkind Smart Light Bulb A19 RGBTW
