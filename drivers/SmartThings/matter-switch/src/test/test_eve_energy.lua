@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local data_types = require "st.matter.data_types"
-
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
+local version = require "version"
 
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
@@ -80,64 +80,54 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "On command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "On command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
-        { capability = "switch", component = "main", command = "on", args = {} }
+        { capability = "switch", component = "main", command = "on", args = { } }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.On(mock_device, 1)
       }
-    }
-  }
+    )
+  end
 )
 
-test.register_message_test(
-  "Off command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Off command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
-        { capability = "switch", component = "main", command = "off", args = {} }
+        { capability = "switch", component = "main", command = "off", args = { } }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
-    }
-  }
+    )
+  end
 )
 
 test.register_coroutine_test(
