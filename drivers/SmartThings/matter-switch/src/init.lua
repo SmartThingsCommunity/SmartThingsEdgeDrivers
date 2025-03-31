@@ -1114,6 +1114,9 @@ local function occupancy_attr_handler(driver, device, ib, response)
 end
 
 local function cumul_energy_imported_handler(driver, device, ib, response)
+  if ib.data and version.api < 11 then
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
+  end
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
@@ -1127,6 +1130,9 @@ local function cumul_energy_imported_handler(driver, device, ib, response)
 end
 
 local function per_energy_imported_handler(driver, device, ib, response)
+  if ib.data and version.api < 11 then
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
+  end
   if ib.data.elements.energy then
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
