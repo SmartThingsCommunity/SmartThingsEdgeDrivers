@@ -260,12 +260,12 @@ end
 local function emit_component_event_no_cache(device, component, capability_event)
     if not device:supports_capability(capability_event.capability, component.id) then
         local err_msg = string.format("Attempted to generate event for %s.%s but it does not support capability %s", device.id, component.id, capability_event.capability.NAME)
-        log.warn_with({ hub_logs = true }, err_msg)
+        old_log.warn_with({ hub_logs = true }, err_msg)
         return false, err_msg
     end
     local event, err = capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
     if err ~= nil then
-        log.warn_with({ hub_logs = true }, err)
+        old_log.warn_with({ hub_logs = true }, err)
     end
     return event, err
 end
