@@ -140,7 +140,7 @@ local function component_to_endpoint(device, component_name)
 end
 
 local function device_init(driver, device)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! device_added !!!!!!!!!!!!!")) -- needs to be removed
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! device_init !!!!!!!!!!!!!")) -- needs to be removed
   device:set_component_to_endpoint_fn(component_to_endpoint)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
@@ -160,6 +160,7 @@ local function device_init(driver, device)
  end
 
 local function device_added(driver, device)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! device_added: %s !!!!!!!!!!!!!", device.profile.id)) -- needs to be removed
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
 end
 
@@ -205,6 +206,7 @@ local function do_configure(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! info_changed !!!!!!!!!!!!!")) -- needs to be removed
   if device.profile.id == args.old_st_store.profile.id then
     return
   end
@@ -1532,7 +1534,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
     -- ALIRO_NON_EVICTABLE_ENDPOINT_KEY setting complete
     if issuerKey == nil then
       -- Update Aliro table
-      add_aliro_to_table(device, userIdx, keyId, issuerKeyIdx, credIndexForEndpointKey)
+      add_aliro_to_table(device, userIdx, keyId, credIndexForIssuerKey, credIndexForEndpointKey)
 
       -- Update commandResult
       local result = {
@@ -1564,7 +1566,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
 
       -- Get parameters
       if credIndexForEndpointKey == INITIAL_COTA_INDEX then
-        credIndexForEndpointKey = issuerKeyIdx + 1
+        credIndexForEndpointKey = credIndexForIssuerKey + 1
       end
       local credential = {
         credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
@@ -2297,8 +2299,8 @@ local function aliro_reader_group_sub_id_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_sub_id_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
 
-  -- Default cardRefId, Needs to be removed
-  device:emit_event(aliroSetting.cardRefId("default"))
+  -- Default cardId, Needs to be removed
+  device:emit_event(aliroSetting.cardId("default"))
 end
 
 local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
@@ -2414,11 +2416,11 @@ local function handle_set_reader_key(driver, device, command)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
-local function handle_set_card_ref_id(driver, device, command)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_card_ref_id !!!!!!!!!!!!!"))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! cardRefId: %s !!!!!!!!", command.args.cardRefId))
-  if command.args.cardRefId ~= nil then
-    device:emit_event(aliroSetting.cardRefId(command.args.cardRefId))
+local function handle_set_card_id(driver, device, command)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_card_id !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! cardId: %s !!!!!!!!", command.args.cardId))
+  if command.args.cardId ~= nil then
+    device:emit_event(aliroSetting.cardId(command.args.cardId))
   end
 end
 
@@ -2441,24 +2443,6 @@ end
 
 
 
-local function add_credential_to_table(device, userIdx, credIdx, credType)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_credential_to_table !!!!!!!!!!!!!")) -- needs to be removed
-
-  -- Get latest credential table
-  local cred_table = utils.deep_copy(device:get_latest_state(
-    "main",
-    capabilities.lockCredentials.ID,
-    capabilities.lockCredentials.credentials.NAME,
-    {}
-  ))
-
-  -- Add new entry to table
-  table.insert(cred_table, {userIndex = userIdx, credentialIndex = credIdx, credentialType = credType})
-  device:emit_event(capabilities.lockCredentials.credentials(cred_table, {visibility = {displayed = false}}))
-end
-
-
-
 
 local function handle_set_aliro_credential(driver, device, command)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_aliro_credential !!!!!!!!!!!!!"))
@@ -2477,8 +2461,7 @@ local function handle_set_aliro_credential(driver, device, command)
   local credIndexForEndpointKey = INITIAL_COTA_INDEX
   if userIdx == 0 then
     userIdx = nil
-  else -- Assuming that userIndex is not 0, issuerKey and endPointKey exist unconditionally in the aliro table.
-    dataOpType = DoorLock.types.DataOperationTypeEnum.Modify
+  else -- If userIndex is not 0, it needs to check whether issuerKey and endPointKey exist in the aliro table.
     local aliro_table = utils.deep_copy(device:get_latest_state(
       "main",
       aliroSettingId,
@@ -2496,7 +2479,10 @@ local function handle_set_aliro_credential(driver, device, command)
         break;
       end
     end
-    delete_aliro_from_table(device, userIdx, keyId)
+    if credIndexForIssuerKey ~= INITIAL_COTA_INDEX and credIndexForEndpointKey ~= INITIAL_COTA_INDEX then
+      dataOpType = DoorLock.types.DataOperationTypeEnum.MODIFY
+      delete_aliro_from_table(device, userIdx, keyId)
+    end
   end
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
@@ -2539,6 +2525,7 @@ local function handle_set_aliro_credential(driver, device, command)
   -- needs to be removed
   device.log.info_with({hub_logs=true}, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
   device.log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  device.log.info_with({hub_logs=true}, string.format("dataOpType: %s", dataOpType))
   device.log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
   device.log.info_with({hub_logs=true}, string.format("keyId: %s", keyId))
   device.log.info_with({hub_logs=true}, string.format("issuerKey: %s", issuerKey))
@@ -2563,21 +2550,6 @@ local function handle_set_aliro_credential(driver, device, command)
     )
   )
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2639,18 +2611,6 @@ local function handle_clear_aliro_credential(driver, device, command)
     end
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2736,7 +2696,7 @@ local new_matter_lock_handler = {
     },
     [aliroSettingId] = {
       [aliroSetting.commands.setReaderKey.NAME] = handle_set_reader_key,
-      [aliroSetting.commands.setCardRefId.NAME] = handle_set_card_ref_id,
+      [aliroSetting.commands.setCardId.NAME] = handle_set_card_id,
       [aliroSetting.commands.setAliroCredential.NAME] = handle_set_aliro_credential,
       [aliroSetting.commands.clearAliroCredential.NAME] = handle_clear_aliro_credential,
     },
