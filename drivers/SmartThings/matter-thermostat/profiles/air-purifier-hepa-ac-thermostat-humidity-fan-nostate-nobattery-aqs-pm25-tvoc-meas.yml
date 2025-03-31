@@ -1,4 +1,4 @@
-name: air-purifier-hepa-ac-thermostat-humidity-fan-nostate-nobattery-aqs-pm25-ch2o-meas
+name: air-purifier-hepa-ac-thermostat-humidity-fan-nostate-nobattery-aqs-pm25-tvoc-meas
 components:
 - id: main
   label: Main
@@ -11,7 +11,7 @@ components:
     version: 1
   - id: fineDustSensor
     version: 1
-  - id: formaldehydeMeasurement
+  - id: tvocMeasurement
     version: 1
   - id: relativeHumidityMeasurement
     version: 1
