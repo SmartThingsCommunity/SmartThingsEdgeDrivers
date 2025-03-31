@@ -8,7 +8,7 @@ matterManufacturer:
   - id: "Leedarson AiDot Air Purifier"
     deviceLabel: AiDot Air Purifier
     vendorId: 0x1396
-    productId: 0x0043A
+    productId: 0x043A
     deviceProfileName: air-purifier-hepa
   #Eve
   - id: "4874/79"
@@ -56,7 +56,7 @@ matterGeneric:
       - id: 0x0300 # HVAC Heating/Cooling Unit
       - id: 0x0307 # Humidity Sensor
     deviceProfileName: thermostat-humidity
-  - id: "matter/hvac/themostat/humidity"
+  - id: "matter/hvac/thermostat/humidity"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
@@ -81,7 +81,7 @@ matterGeneric:
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
     deviceProfileName: thermostat-humidity-fan
-  - id: "matter/hvac/themostat/humidity/fan"
+  - id: "matter/hvac/thermostat/humidity/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat

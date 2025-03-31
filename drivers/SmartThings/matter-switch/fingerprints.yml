@@ -633,6 +633,11 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x0001
     deviceProfileName: plug-binary
+  - id: "5264/6227"
+    deviceLabel: Shelly Outdoor Plug S Gen3
+    vendorId: 0x1490
+    productId: 0x1853
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
