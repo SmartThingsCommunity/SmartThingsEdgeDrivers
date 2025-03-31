@@ -275,6 +275,10 @@ local function connecting_action(source)
         })
         if err ~= nil then return nil, err end
 
+        -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+        err = select(2, source._sock:settimeout(60))
+        if err ~= nil then return nil, err end
+
         err = select(2, source._sock:dohandshake())
         if err ~= nil then return nil, err end
       end
