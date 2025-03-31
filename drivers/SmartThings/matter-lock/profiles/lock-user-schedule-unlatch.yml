@@ -1,7 +1,6 @@
 name: lock-user-schedule-unlatch
 components:
-- label: Main
-  id: main
+- id: main
   capabilities:
   - id: lock
     version: 1
@@ -37,6 +36,14 @@ deviceConfig:
     - component: main
       capability: lock
       version: 1
+      visibleCondition: {
+        "capability": "lock",
+        "version": "1",
+        "component": "main",
+        "value": "lock.value",
+        "operator": "DOES_NOT_EQUAL",
+        "operand": "unlatched"
+      }
   detailView:
   - component: main
     capability: lock
