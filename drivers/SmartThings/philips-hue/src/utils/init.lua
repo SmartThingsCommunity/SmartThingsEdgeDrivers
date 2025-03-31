@@ -462,6 +462,16 @@ function utils.labeled_socket_builder(label)
       end
       log.info(
         string.format(
+          "%sSetting SSL socket timeout for Hue REST Connection", label
+        )
+      )
+      -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+      err = select(2, sock:settimeout(60))
+      if err ~= nil then
+        return nil, "settimeout error: " .. err
+      end
+      log.info(
+        string.format(
           "%sPerforming SSL handshake for for Hue REST Connection", label
         )
       )
