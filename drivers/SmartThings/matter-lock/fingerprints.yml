@@ -62,7 +62,13 @@ matterManufacturer:
     deviceLabel: Nuki Smart Lock Go
     vendorId: 0x135D
     productId: 0x00C1
-    deviceProfileName: lock-nocodes-notamper   
+    deviceProfileName: lock-nocodes-notamper
+  #U-tec
+  - id: "5247/1"
+    deviceLabel: ULTRALOQ Bolt Fingerprint Smart Matter Deadbolt
+    vendorId: 0x147F
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
