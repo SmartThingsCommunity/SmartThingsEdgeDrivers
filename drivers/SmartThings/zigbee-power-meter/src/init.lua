@@ -57,6 +57,7 @@ local zigbee_power_meter_driver_template = {
     require("ezex"),
     require("frient"),
     require("shinasystems"),
+    require("bituo"),
   },
   lifecycle_handlers = {
     init = device_init,
