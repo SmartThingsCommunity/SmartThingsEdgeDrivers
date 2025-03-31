@@ -25,14 +25,21 @@ if version.api < 10 then
 end
 
 local DoorLock = clusters.DoorLock
+local PowerSource = clusters.PowerSource
 local INITIAL_COTA_INDEX = 1
 local ALL_INDEX = 0xFFFE
 
 local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
-  {0x10E1, 0x2002} -- VDA
+  {0x147F, 0x0001}, -- U-tec
+  {0x1533, 0x0001}, -- eufy, E31
+  {0x1533, 0x0002}, -- eufy, E30
+  {0x1533, 0x0003}, -- eufy, C34
+  {0x10E1, 0x2002}  -- VDA
 }
+
+local PROFILE_BASE_NAME = "__profile_base_name"
 
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
@@ -53,6 +60,12 @@ local subscribed_attributes = {
   [capabilities.lockSchedules.ID] = {
     DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser,
     DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser
+  },
+  [capabilities.battery.ID] = {
+    PowerSource.attributes.BatPercentRemaining
+  },
+  [capabilities.batteryLevel.ID] = {
+    PowerSource.attributes.BatChargeLevel
   }
 }
 
@@ -126,6 +139,8 @@ local function do_configure(driver, device)
   local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.PIN_CREDENTIAL})
   local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
   local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
+  local battery_eps = device:get_endpoints(PowerSource.ID, {feature_bitmap = PowerSource.types.PowerSourceFeature.BATTERY})
 
   local profile_name = "lock"
   if #user_eps > 0 then
@@ -137,8 +152,21 @@ local function do_configure(driver, device)
       profile_name = profile_name .. "-schedule"
     end
   end
-  device.log.info(string.format("Updating device profile to %s.", profile_name))
-  device:try_update_metadata({profile = profile_name})
+  if #unbolt_eps > 0 then
+    profile_name = profile_name .. "-unlatch"
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+  else
+    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+  end
+  if #battery_eps > 0 then
+    device:set_field(PROFILE_BASE_NAME, profile_name, {persist = true})
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    req:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(req)
+  else
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -185,6 +213,7 @@ local function lock_state_handler(driver, device, ib, response)
     [LockState.NOT_FULLY_LOCKED] = attr.not_fully_locked(),
     [LockState.LOCKED] = attr.locked(),
     [LockState.UNLOCKED] = attr.unlocked(),
+    [LockState.UNLATCHED] = attr.unlatched()
   }
 
   -- The lock state is usually updated in lock_state_handler and lock_op_event_handler, respectively.
@@ -213,9 +242,14 @@ local function operating_modes_handler(driver, device, ib, response)
     [op_type.PASSAGE] = false,
   }
   local result = opMode_map[ib.data.value]
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
   if result == true then
     device:emit_event(status("true", {visibility = {displayed = true}}))
-    device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    if #unbolt_eps > 0 then
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+    else
+      device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    end
   elseif result == false then
     device:emit_event(status("false", {visibility = {displayed = true}}))
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
@@ -340,6 +374,55 @@ local function max_year_schedule_of_user_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockSchedules.yearDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
+---------------------------------
+-- Power Source Attribute List --
+---------------------------------
+local function handle_power_source_attribute_list(driver, device, ib, response)
+  local support_battery_percentage = false
+  local support_battery_level = false
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    if attr.value == 0x0C then
+      support_battery_percentage = true
+    end
+    if attr.value == 0x0E then
+      support_battery_level = true
+    end
+  end
+  local profile_name = device:get_field(PROFILE_BASE_NAME)
+  if profile_name ~= nil then
+    if support_battery_percentage then
+      profile_name = profile_name .. "-battery"
+    elseif support_battery_level then
+      profile_name = profile_name .. "-batteryLevel"
+    end
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+    device:try_update_metadata({profile = profile_name})
+  end
+end
+
+-------------------------------
+-- Battery Percent Remaining --
+-------------------------------
+local function handle_battery_percent_remaining(driver, device, ib, response)
+  if ib.data.value ~= nil then
+    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
+  end
+end
+
+--------------------------
+-- Battery Charge Level --
+--------------------------
+local function handle_battery_charge_level(driver, device, ib, response)
+  if ib.data.value == PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
 -- Capability Handler
 -----------------
 -- Lock/Unlock --
@@ -357,6 +440,30 @@ local function handle_lock(driver, device, command)
 end
 
 local function handle_unlock(driver, device, command)
+  local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
+  local cota_cred = device:get_field(lock_utils.COTA_CRED)
+  local ep = device:component_to_endpoint(command.component)
+
+  if #unbolt_eps > 0 then
+    if cota_cred then
+      device:send(
+        DoorLock.server.commands.UnboltDoor(device, ep, cota_cred)
+      )
+    else
+      device:send(DoorLock.server.commands.UnboltDoor(device, ep))
+    end
+  else
+    if cota_cred then
+      device:send(
+        DoorLock.server.commands.UnlockDoor(device, ep, cota_cred)
+      )
+    else
+      device:send(DoorLock.server.commands.UnlockDoor(device, ep))
+    end
+  end
+end
+
+local function handle_unlatch(driver, device, command)
   local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
   if cota_cred then
@@ -1568,7 +1675,7 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opType.value == Type.UNLOCK then
     opType = Lock.unlocked
   elseif opType.value == Type.UNLATCH then
-    opType = Lock.locked
+    opType = Lock.unlatched
   else
     return
   end
@@ -1634,6 +1741,11 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.RequirePINforRemoteOperation.ID] = require_remote_pin_handler,
         [DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser.ID] = max_week_schedule_of_user_handler,
         [DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser.ID] = max_year_schedule_of_user_handler,
+      },
+      [PowerSource.ID] = {
+        [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
+        [PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
+        [PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
       }
     },
     event = {
@@ -1660,6 +1772,7 @@ local new_matter_lock_handler = {
     [capabilities.lock.ID] = {
       [capabilities.lock.commands.lock.NAME] = handle_lock,
       [capabilities.lock.commands.unlock.NAME] = handle_unlock,
+      [capabilities.lock.commands.unlatch.NAME] = handle_unlatch
     },
     [capabilities.lockUsers.ID] = {
       [capabilities.lockUsers.commands.addUser.NAME] = handle_add_user,
@@ -1685,7 +1798,9 @@ local new_matter_lock_handler = {
     capabilities.lock,
     capabilities.lockUsers,
     capabilities.lockCredentials,
-    capabilities.lockSchedules
+    capabilities.lockSchedules,
+    capabilities.battery,
+    capabilities.batteryLevel
   },
   can_handle = is_new_matter_lock_products
 }

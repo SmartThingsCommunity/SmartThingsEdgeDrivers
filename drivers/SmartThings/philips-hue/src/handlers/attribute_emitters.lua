@@ -2,7 +2,7 @@ local capabilities = require "st.capabilities"
 local log = require "log"
 local st_utils = require "st.utils"
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
@@ -56,13 +56,46 @@ local function _emit_light_events_inner(light_device, light_repr)
     end
 
     if light_repr.color_temperature then
-      local mirek = Consts.DEFAULT_MIREK
+      local mirek = Consts.DEFAULT_MIN_MIREK
       if light_repr.color_temperature.mirek_valid then
         mirek = light_repr.color_temperature.mirek
       end
-      local min = light_device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+      local mirek_schema = light_repr.color_temperature.mirek_schema or {
+        mirek_minimum = Consts.DEFAULT_MIN_MIREK,
+        mirek_maximum = Consts.DEFAULT_MAX_MIREK
+      }
+
+      -- See note in `src/handlers/lifecycle_handlers/light.lua` about min/max relationship
+      -- if the below is not intuitive.
+      local color_temp_range = light_device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME);
+      local min_kelvin = (color_temp_range and color_temp_range.minimum)
+      local api_min_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE) or Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE)
+      local max_kelvin = (color_temp_range and color_temp_range.maximum)
+      local api_max_kelvin = math.floor(utils.mirek_to_kelvin(mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE) or Consts.MAX_TEMP_KELVIN)
+
+      local update_range = false
+      if min_kelvin ~= api_min_kelvin then
+        update_range = true
+        min_kelvin = api_min_kelvin
+        light_device:set_field(Fields.MIN_KELVIN, min_kelvin, { persist = true })
+      end
+
+      if max_kelvin ~= api_max_kelvin then
+        update_range = true
+        max_kelvin = api_max_kelvin
+        light_device:set_field(Fields.MAX_KELVIN, max_kelvin, { persist = true })
+      end
+
+      if update_range then
+        light_device.log.debug(st_utils.stringify_table({ minimum = min_kelvin, maximum = max_kelvin }, "updating color temp range"));
+        light_device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min_kelvin, maximum = max_kelvin }))
+      else
+        light_device.log.debug(st_utils.stringify_table(color_temp_range, "color temp range unchanged"));
+      end
+
+      -- local min =  or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
       local kelvin = math.floor(
-        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min, Consts.MAX_TEMP_KELVIN)
+        st_utils.clamp_value(utils.mirek_to_kelvin(mirek), min_kelvin, max_kelvin)
       )
       if utils.is_nan(kelvin) then
         light_device.log.warn(
@@ -72,8 +105,17 @@ local function _emit_light_events_inner(light_device, light_repr)
           )
         )
       else
+        local last_kelvin_setpoint = light_device:get_field(Fields.COLOR_TEMP_SETPOINT)
+        if
+          last_kelvin_setpoint ~= nil and
+          last_kelvin_setpoint >= utils.mirek_to_kelvin(mirek + 1) and
+          last_kelvin_setpoint <= utils.mirek_to_kelvin(mirek - 1)
+        then
+          kelvin = last_kelvin_setpoint;
+        end
         light_device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
       end
+      light_device:set_field(Fields.COLOR_TEMP_SETPOINT, nil);
     end
 
     if light_repr.color then
@@ -117,6 +159,18 @@ local function _emit_light_events_inner(light_device, light_repr)
 end
 
 function AttributeEmitters.connectivity_update(child_device, zigbee_status)
+  if child_device == nil or (child_device and child_device.id == nil) then
+    log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if zigbee_status == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil zigbee_status sent to connectivity_update for %s",
+        (child_device and (child_device.label or child_device.id)) or "unknown device"))
+    return
+  end
+
   if zigbee_status.status == "connected" then
     child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device online")
     child_device:online()
@@ -131,6 +185,13 @@ end
 function AttributeEmitters.emit_button_attribute_events(button_device, button_info)
   if button_device == nil or (button_device and button_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if button_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil button info sent to emit_button_attribute_events for %s",
+        (button_device and (button_device.label or button_device.id)) or "unknown device"))
     return
   end
 
@@ -189,6 +250,13 @@ function AttributeEmitters.emit_contact_sensor_attribute_events(sensor_device, s
     return
   end
 
+  if sensor_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil sensor_info sent to emit_contact_sensor_attribute_events for %s",
+        (sensor_device and (sensor_device.label or sensor_device.id)) or "unknown device"))
+    return
+  end
+
   if sensor_info.power_state  and type(sensor_info.power_state.battery_level) == "number" then
     log.debug("emit power")
     sensor_device:emit_event(capabilities.battery.battery(st_utils.clamp_value(sensor_info.power_state.battery_level, 0, 100)))
@@ -224,6 +292,13 @@ end
 function AttributeEmitters.emit_motion_sensor_attribute_events(sensor_device, sensor_info)
   if sensor_device == nil or (sensor_device and sensor_device.id == nil) then
     log.warn("Tried to emit attribute events for a device that has been deleted")
+    return
+  end
+
+  if sensor_info == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil sensor_info sent to emit_motion_sensor_attribute_events for %s",
+        (sensor_device and (sensor_device.label or sensor_device.id)) or "unknown device"))
     return
   end
 
@@ -264,6 +339,13 @@ end
 function AttributeEmitters.emit_light_attribute_events(light_device, light_repr)
   if light_device == nil or (light_device and light_device.id == nil) then
     log.warn("Tried to emit light status event for device that has been deleted")
+    return
+  end
+
+  if light_repr == nil then
+    log.error_with({ hub_logs = true },
+    string.format("nil light_repr sent to emit_light_attribute_events for %s",
+        (light_device and (light_device.label or light_device.id)) or "unknown device"))
     return
   end
   local success, maybe_err = pcall(_emit_light_events_inner, light_device, light_repr)

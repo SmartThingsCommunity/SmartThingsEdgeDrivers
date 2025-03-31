@@ -9,6 +9,7 @@ Fields.SonosPlayerFields = {
   HOUSEHOULD_ID = "householdId",
   PLAYER_ID = "playerId",
   WSS_URL = "wss_url",
+  SW_GEN = "sw_gen",
 }
 
 return Fields

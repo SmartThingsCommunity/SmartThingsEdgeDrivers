@@ -142,6 +142,7 @@ local function do_configure(driver, device)
   local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
   local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  local light_eps = device:get_endpoints(clusters.OnOff.ID)
   if dishwasher.can_handle({}, driver, device) then
     local profile_name = "dishwasher"
     if #tn_eps > 0 then
@@ -188,6 +189,12 @@ local function do_configure(driver, device)
     end
     if #wind_eps > 0 then
       profile_name = profile_name .. "-wind"
+    end
+    for _, ep in ipairs(light_eps) do
+      if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+        profile_name = profile_name .. "-light"
+        break
+      end
     end
     device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
@@ -248,6 +255,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
   -- Only emit the capability for RPC version >= 5, since unit conversion for
   -- range capabilities is only supported in that case.

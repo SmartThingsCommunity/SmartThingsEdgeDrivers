@@ -119,6 +119,66 @@ local mock_device_color_dimmer = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_mounted_on_off_control = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 7,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "CLIENT", feature_map = 2},
+
+      },
+      device_types = {
+        {device_type_id = 0x010F, device_type_revision = 1} -- Mounted On/Off Control
+      }
+    }
+  }
+})
+
+local mock_device_mounted_dimmable_load_control = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("switch-level.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 7,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "CLIENT", feature_map = 2},
+
+      },
+      device_types = {
+        {device_type_id = 0x0110, device_type_revision = 1} -- Mounted Dimmable Load Control
+      }
+    }
+  }
+})
+
 local mock_device_water_valve = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("matter-thing.yml"),
   manufacturer_info = {
@@ -343,9 +403,39 @@ local function test_init_color_dimmer()
   mock_device_color_dimmer:expect_metadata_update({ profile = "switch-color-level" })
 end
 
+local function test_init_mounted_on_off_control()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mounted_on_off_control)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_mounted_on_off_control))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_mounted_on_off_control)
+end
+
+local function test_init_mounted_dimmable_load_control()
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mounted_dimmable_load_control)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_mounted_dimmable_load_control))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control)
+end
+
 local function test_init_water_valve()
   test.mock_device.add_test_device(mock_device_water_valve)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_water_valve.id, "doConfigure" })
   mock_device_water_valve:expect_metadata_update({ profile = "water-valve-level" })
+  mock_device_water_valve:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_parent_child_different_types()
@@ -394,6 +484,7 @@ local function test_init_parent_child_unsupported_device_type()
   })
 end
 
+
 test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as server",
   function()
@@ -423,10 +514,24 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Test profile change on init for water valve parent cluster as server",
-    function()
-    end,
-    { test_init = test_init_water_valve }
+  "Test profile change on init for mounted onoff control parent cluster as server",
+  function()
+  end,
+  { test_init = test_init_mounted_on_off_control }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for mounted dimmable load control parent cluster as server",
+  function()
+  end,
+  { test_init = test_init_mounted_dimmable_load_control }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for water valve parent cluster as server",
+  function()
+  end,
+  { test_init = test_init_water_valve }
 )
 
 test.register_coroutine_test(

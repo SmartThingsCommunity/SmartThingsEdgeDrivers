@@ -1,4 +1,5 @@
 local log = require "log"
+local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -71,7 +72,15 @@ end
 
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
-function utils.mirek_to_kelvin(mirek) return 1000000 / mirek end
+function utils.mirek_to_kelvin(mirek, with_step_size)
+  local raw_kelvin = 1000000 / mirek
+
+  if type(with_step_size) == "number" then
+    return with_step_size * math.floor(raw_kelvin / with_step_size)
+  end
+
+  return st_utils.round(raw_kelvin)
+end
 
 function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
@@ -208,6 +217,13 @@ end
 ---@return string? resource_id the Hue RID, or nil on error
 ---@return string? err
 function utils.get_hue_rid(device)
+  if
+    device == nil
+    or (device and (device.id == nil or device.get_field == nil or device.device_network_id == nil))
+  then
+    return nil, string.format("nil or incomplete device record passed to get_hue_rid, device has likely been deleted")
+  end
+
   local resource_id = device:get_field(Fields.RESOURCE_ID)
   if resource_id then
     return resource_id

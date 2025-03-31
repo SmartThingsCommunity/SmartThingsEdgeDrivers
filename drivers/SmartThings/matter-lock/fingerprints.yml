@@ -1,5 +1,5 @@
 matterManufacturer:
-#Aqara
+  #Aqara
   - id: "4447/10242"
     deviceLabel: Aqara Smart Lock U200
     vendorId: 0x115F
@@ -10,7 +10,23 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2801
     deviceProfileName: lock-user-pin
-#Level
+  #Eufy
+  - id: "5427/1"
+    deviceLabel: eufy Smart Lock E31
+    vendorId: 0x1533
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/2"
+    deviceLabel: eufy Smart Lock E30
+    vendorId: 0x1533
+    productId: 0x0002
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/3"
+    deviceLabel: eufy Smart Lock C34
+    vendorId: 0x1533
+    productId: 0x0003
+    deviceProfileName: lock-user-pin-battery
+  #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
     vendorId: 0x129F
@@ -21,17 +37,32 @@ matterManufacturer:
     vendorId: 0x129F
     productId: 0x0003
     deviceProfileName: lock-nocodes-notamper-batteryLevel
-#Nuki
-  - id: "Nuki Smart Lock Pro"
-    deviceLabel: Nuki Smart Lock Pro
-    vendorId: 0x135d
-    productId: 0xb1
+  #Nuki
+  - id: "4957/161"
+    deviceLabel: Nuki Smart Lock Ultra
+    vendorId: 0x135D
+    productId: 0x00A1
     deviceProfileName: lock-nocodes-notamper
   - id: "Nuki Smart Lock"
     deviceLabel: Nuki Smart Lock
     vendorId: 0x135d
     productId: 0xb0
     deviceProfileName: lock-nocodes-notamper
+  - id: "Nuki Smart Lock Pro"
+    deviceLabel: Nuki Smart Lock Pro
+    vendorId: 0x135d
+    productId: 0xb1
+    deviceProfileName: lock-nocodes-notamper
+  - id: "4957/178"
+    deviceLabel: Nuki Smart Lock Pro
+    vendorId: 0x135D
+    productId: 0x00B2
+    deviceProfileName: lock-nocodes-notamper
+  - id: "4957/193"
+    deviceLabel: Nuki Smart Lock Go
+    vendorId: 0x135D
+    productId: 0x00C1
+    deviceProfileName: lock-nocodes-notamper   
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

@@ -14,9 +14,19 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - idle
+            - cooling
+            - heating
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: AirConditioner
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

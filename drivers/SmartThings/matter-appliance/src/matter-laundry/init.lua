@@ -49,7 +49,7 @@ local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
 local SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS = "__supported_laundry_spin_speeds"
 local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
 
--- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual laundry temperatures:
 -- Laundry Washer:
@@ -58,10 +58,12 @@ local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
 -- Laundry Dryer:
 --   1. if the received setpoint command value is in range 27 ~ 80, it is inferred as *C
 --   2. if the received setpoint command value is in range 80.6 ~ 176, it is inferred as *F
-local LAUNDRYWASHER_MAX_TEMP_IN_C = 55.0
-local LAUNDRYWASHER_MIN_TEMP_IN_C = 13.0
-local LAUNDRYDRYER_MAX_TEMP_IN_C = 80.0
-local LAUNDRYDRYER_MIN_TEMP_IN_C = 27.0
+-- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
+-- is in Celsius, but we still limit the setpoint range to reasonable values.
+local LAUNDRYWASHER_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 55.0
+local LAUNDRYWASHER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 13.0
+local LAUNDRYDRYER_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 80.0
+local LAUNDRYDRYER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 27.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -171,6 +173,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
 
   -- Only emit the capability for RPC version >= 5, since unit conversion for
@@ -431,7 +434,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     return
   end
 
-  if value > max_temp_in_c then
+  if version.rpc <= 5 and value > max_temp_in_c then
     value = utils.f_to_c(value)
   end
   if value < min or value > max then

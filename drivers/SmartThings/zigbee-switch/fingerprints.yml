@@ -1120,6 +1120,16 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SQM300Z3
     deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z6
+    deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
@@ -2253,36 +2263,36 @@ zigbeeManufacturer:
     deviceProfileName: on-off-level
   # Wall Hero
   - id: "WALL HERO/ACL-401S4I"
-    deviceLabel: 四位智能开关面板 1
+    deviceLabel: WallHero Switch (4 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S4I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S8I"
-    deviceLabel: 八位智能开关/场景面板 1
+    deviceLabel: WallHero Switch (8 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401ON"
-    deviceLabel: 智能墙面五孔插座
+    deviceLabel: WallHero Outlet
     manufacturer: WALL HERO
     model: ACL-401ON
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S1I"
-    deviceLabel: 一位智能开关面板
+    deviceLabel: WallHero Switch (1 Way)
     manufacturer: WALL HERO
     model: ACL-401S1I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S3I"
-    deviceLabel: 三位智能开关面板 1
+    deviceLabel: WallHero Switch (3 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S3I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S2I"
-    deviceLabel: 二位智能开关面板 1
+    deviceLabel: WallHero Switch (2 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S2I
     deviceProfileName: wallhero
-  # End Wall Hero
+  # NEXENTRO
   - id: "Insta GmbH/Switching Actuator"
     deviceLabel: NEXENTRO Switching Actuator
     manufacturer: Insta GmbH
@@ -2293,6 +2303,17 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  # Inovelli
+  - id: "Inovelli/VZM31-SN"
+    deviceLabel: "Inovelli 2-in-1 Blue Series"
+    manufacturer: Inovelli
+    model: VZM31-SN
+    deviceProfileName: inovelli-vzm31-sn
+  - id: "LAISIAO/BATH"
+    deviceLabel: Laisiao Bathroom Heater
+    manufacturer: LAISIAO
+    model: yuba
+    deviceProfileName: switch-smart-bath-heater-laisiao
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
@@ -2355,3 +2376,11 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0B04 #Electrical Measurment
     deviceProfileName: switch-level-power
+  - id: "genericMeteredSwitch/3"
+    deviceLabel: Zigbee Switch
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0702 #Simple Metering
+        - 0x0B04 #Electrical Measurment
+    deviceProfileName: switch-power

@@ -14,6 +14,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
 
@@ -69,7 +70,6 @@ local function test_init()
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
     clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -83,18 +83,32 @@ local function test_init()
 
   test.mock_device.add_test_device(mock_device)
 
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+  read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+  read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
+  read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
+  test.socket.matter:__expect_send({mock_device.id, read_req})
+
   test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
 
-local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" })
-local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" })
+local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }, {state_change = true})
+local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }, {state_change = true})
 
 local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "thermostat-nostate" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   test.wait_for_events()
+
+  test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x0C)})})
+  test.socket.matter:__queue_receive({mock_device.id, clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x29)})})
+  mock_device:expect_metadata_update({ profile = "thermostat" })
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
   test.socket.matter:__queue_receive({
@@ -106,17 +120,23 @@ local function configure(device)
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 2667) --26.67 celcius
   })
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", cached_heating_setpoint)
+    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 5.00, maximum = 40.00, step = 0.1 }, unit = "C" }))
   )
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", cached_cooling_setpoint)
+    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }))
   )
-  test.wait_for_events()
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 5.00, maximum = 40.00, step = 0.1 }, unit = "C" }))
+  )
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }))
+  )
 end
 
 test.register_coroutine_test(
   "Heat setpoint lower than min",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(mock_device, 1, 1000)
@@ -126,9 +146,9 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     )
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 9 } }
@@ -142,6 +162,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Cool setpoint lower than min",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:build_test_report_data(mock_device, 1, 1000)
@@ -151,9 +172,9 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     )
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 9 } }
@@ -167,6 +188,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Heat setpoint higher than max",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(mock_device, 1, 1000)
@@ -176,9 +198,9 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     )
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 33 } }
@@ -192,6 +214,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Cool setpoint higher than max",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:build_test_report_data(mock_device, 1, 1000)
@@ -201,9 +224,9 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222)
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     )
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 33 } }
@@ -217,11 +240,12 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Heat setpoint inside deadband",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(mock_device, 1, 16) --1.6 celcius
     })
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 26 } }
@@ -235,11 +259,12 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Cool setpoint inside deadband",
   function()
+    configure(mock_device)
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.Thermostat.attributes.MinSetpointDeadBand:build_test_report_data(mock_device, 1, 16) --1.6 celcius
     })
-    configure(mock_device)
+    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 25 } }
@@ -285,7 +310,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     }
   }
 )
@@ -312,7 +337,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22 }, unit = "C" }))
+      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     }
   }
 )

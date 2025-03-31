@@ -12,6 +12,13 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - idle
+            - cooling
+            - heating
   - id: battery
     version: 1
   - id: firmwareUpdate
@@ -20,3 +27,6 @@ components:
     version: 1
   categories:
   - name: Thermostat
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

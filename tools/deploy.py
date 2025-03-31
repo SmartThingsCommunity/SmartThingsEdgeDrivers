@@ -49,12 +49,13 @@ if LOCALE:
     with open(localization_file) as csvfile:
       reader = csv.reader(csvfile)
       for row in reader:
-        print("en: "+row[0]+" "+LOCALE+": "+row[1])
-        subprocess.run(
-          "find . -name 'fingerprints.yml' | xargs sed -i -E 's/deviceLabel ?: \"?"+row[0].translate(slash_escape)+"\"?/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
-          shell=True,
-          cwd=os.path.dirname(current_path)
-        )
+        if len(row) > 1:
+          print("en: "+row[0]+" "+LOCALE+": "+row[1])
+          subprocess.run(
+            "find . -name 'fingerprints.yml' | xargs sed -i -E 's/deviceLabel ?: \"?"+row[0].translate(slash_escape)+"\"?/deviceLabel: "+row[1].translate(slash_escape)+"/g'",
+            shell=True,
+            cwd=os.path.dirname(current_path)
+          )
 
     subprocess.run("git status", shell=True)
 
@@ -64,7 +65,7 @@ response = requests.get(
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   }
 )
 if response.status_code != 200:
@@ -80,7 +81,7 @@ else:
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
         "Authorization": "Bearer "+TOKEN,
-        "X-ST-LOG-LEVEL": "TRACE"
+        "X-ST-LOG-LEVEL": "DEBUG"
       },
       json = {
         DRIVERID: driver[DRIVERID],
@@ -138,7 +139,7 @@ for partner in partners:
               "Content-Type": "application/zip",
               "Accept": "application/vnd.smartthings+json;v=20200810",
               "Authorization": "Bearer "+TOKEN,
-              "X-ST-LOG-LEVEL": "TRACE"},
+              "X-ST-LOG-LEVEL": "DEBUG"},
             data=data)
           if response.status_code != 200:
             print("Failed to upload driver "+driver)
@@ -171,7 +172,7 @@ response = requests.put(
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
     "Content-Type": "application/json",
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   },
   data=json.dumps(driver_updates)
 )

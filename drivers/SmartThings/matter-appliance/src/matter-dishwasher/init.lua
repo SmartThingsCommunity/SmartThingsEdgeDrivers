@@ -39,13 +39,15 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 
--- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual dishwasher temperatures:
 --   1. if the received setpoint command value is in range 33 ~ 90, it is inferred as *C
 --   2. if the received setpoint command value is in range 91.4 ~ 194, it is inferred as *F
-local DISHWASHER_MAX_TEMP_IN_C = 90.0
-local DISHWASHER_MIN_TEMP_IN_C = 33.0
+-- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
+-- is in Celsius, but we still limit the setpoint range to reasonable values.
+local DISHWASHER_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 90.0
+local DISHWASHER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 33.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -144,6 +146,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
 
   -- Only emit the capability for RPC version >= 5, since unit conversion for
@@ -349,7 +352,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local min = device:get_field(min_field) or DISHWASHER_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or DISHWASHER_MAX_TEMP_IN_C
 
-  if value > DISHWASHER_MAX_TEMP_IN_C then
+  if version.rpc <= 5 and value > DISHWASHER_MAX_TEMP_IN_C then
     value = utils.f_to_c(value)
   end
   if value < min or value > max then

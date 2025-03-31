@@ -34,13 +34,15 @@ local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local TCC_DEVICE_TYPE_ID = 0x0071
 
--- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the recevied command value is for what unit as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual oven temperatures:
 --   1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
 --   2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
-local OVEN_MAX_TEMP_IN_C = 260
-local OVEN_MIN_TEMP_IN_C = 127
+-- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
+-- is in Celsius, but we still limit the setpoint range to reasonable values.
+local OVEN_MAX_TEMP_IN_C = version.rpc >= 6 and 400.0 or 260.0
+local OVEN_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 127.0
 
 local setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
@@ -159,6 +161,7 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local range = {
     minimum = min,
     maximum = max,
+    step = 0.1
   }
 
   -- Only emit the capability for RPC version >= 5, since unit conversion for
@@ -226,7 +229,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
 
-  if value > OVEN_MAX_TEMP_IN_C then
+  if version.rpc <= 5 and value > OVEN_MAX_TEMP_IN_C then
     value = utils.f_to_c(value)
   end
   if value < min or value > max then
