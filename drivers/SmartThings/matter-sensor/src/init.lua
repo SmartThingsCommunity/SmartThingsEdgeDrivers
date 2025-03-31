@@ -52,8 +52,6 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
-local HUE_MANUFACTURER_ID = 0x100B
-
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
@@ -172,8 +170,7 @@ end
 
 local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_feature_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+  if #battery_feature_eps > 0 then
     local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(attribute_list_read)
