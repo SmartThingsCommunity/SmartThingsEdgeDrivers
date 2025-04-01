@@ -21,8 +21,9 @@ local lua_socket = require "socket"
 local utils = require "st.utils"
 local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
--- Include driver-side definitions when lua libs api version is < 11
 local version = require "version"
+
+-- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
