@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -277,6 +277,12 @@ local function device_removed(driver, device)
   delete_poll_schedule(device)
 end
 
+-- override do_configure to prevent it running in the main driver
+local function do_configure(driver, device) end
+
+-- override driver_switched to prevent it running in the main driver
+local function driver_switched(driver, device) end
+
 local function handle_refresh(self, device)
   requestData(device)
 end
@@ -368,6 +374,8 @@ local eve_energy_handler = {
     init = device_init,
     added = device_added,
     removed = device_removed,
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
