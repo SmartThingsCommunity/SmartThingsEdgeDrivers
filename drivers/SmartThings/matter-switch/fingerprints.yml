@@ -447,6 +447,11 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0005
     deviceProfileName: switch-binary
+  - id: "4129/6"
+    deviceLabel: Radiant Smart LED Dimmer
+    vendorId: 0x1021
+    productId: 0x0006
+    deviceProfileName: switch-level  
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
