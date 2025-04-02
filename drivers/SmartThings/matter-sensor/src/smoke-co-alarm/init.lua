@@ -204,9 +204,9 @@ local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
 end
 
 local function hardware_fault_capability_handler(device)
-  if (device:get_field(BatteryAlert) ~= device:get_field(BatteryLevel)
-    and device:get_field(BatteryAlert) ~= clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL)
-    or device:get_field(HardwareFaultAlert) == true then
+  local batLevelOk  = device:get_field(BatteryLevel) == clusters.PowerSource.types.BatChargeLevelEnum.OK
+  local batAlertWarnOrCrit  = device:get_field(BatteryAlert) ~= nil and device:get_field(BatteryAlert) ~= clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL
+  if (batLevelOk and batAlertWarnOrCrit) or device:get_field(HardwareFaultAlert) == true then
     device:emit_event(capabilities.hardwareFault.hardwareFault.detected())
   else
     device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
@@ -214,12 +214,12 @@ local function hardware_fault_capability_handler(device)
 end
 
 local function hardware_fault_alert_handler(driver, device, ib, response)
-  device:set_field(HardwareFaultAlert, ib.data.value)
+  device:set_field(HardwareFaultAlert, ib.data.value, {persist = true})
   hardware_fault_capability_handler(device)
 end
 
 local function battery_alert_attr_handler(driver, device, ib, response)
-  device:set_field(BatteryAlert, ib.data.value)
+  device:set_field(BatteryAlert, ib.data.value, {persist = true})
   hardware_fault_capability_handler(device)
 end
 
@@ -234,8 +234,8 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
 end
 
 local function handle_battery_charge_level(driver, device, ib, response)
-  device:set_field(BatteryLevel, ib.data.value) -- set this for use in hardware_fault_capability_handler
-  if device.supports_capability(capabilities.batteryLevel) then -- attribute subscribed to even when devices do not support batteryLevel, to set the field above 
+  device:set_field(BatteryLevel, ib.data.value, {persist = true}) -- value used in hardware_fault_capability_handler
+  if device.supports_capability(capabilities.batteryLevel) then -- check required since attribute is subscribed to even without batteryLevel support, to set the field above
     if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
       device:emit_event(capabilities.batteryLevel.battery.normal())
     elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
