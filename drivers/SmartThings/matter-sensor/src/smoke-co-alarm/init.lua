@@ -159,16 +159,6 @@ local function binary_state_handler_factory(zeroEvent, nonZeroEvent)
   end
 end
 
--- local function bool_handler_factory(trueEvent, falseEvent)
-  -- return function(driver, device, ib, response)
-    -- if ib.data.value and trueEvent ~= nil then
-      -- device:emit_event_for_endpoint(ib.endpoint_id, trueEvent)
-    -- elseif falseEvent ~= nil then
-      -- device:emit_event_for_endpoint(ib.endpoint_id, falseEvent)
-    -- end
-  -- end
--- end
-
 local function test_in_progress_event_handler(driver, device, ib, response)
   if device:supports_capability(capabilities.smokeDetector) then
     if ib.data.value then
@@ -275,7 +265,7 @@ local matter_smoke_co_alarm_handler = {
         [clusters.SmokeCoAlarm.attributes.COState.ID] = binary_state_handler_factory(capabilities.carbonMonoxideDetector.carbonMonoxide.clear(), capabilities.carbonMonoxideDetector.carbonMonoxide.detected()),
         [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = battery_alert_attr_handler,
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
-        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_handler, -- bool_handler_factory(capabilities.hardwareFault.hardwareFault.detected(), capabilities.hardwareFault.hardwareFault.clear()),
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_handler,
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
