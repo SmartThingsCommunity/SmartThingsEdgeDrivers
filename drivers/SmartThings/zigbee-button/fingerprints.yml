@@ -189,6 +189,18 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-005
     deviceProfileName: SLED-three-buttons  
+  - id: "Linxura Smart Controller"
+    deviceLabel: Linxura Smart Controller
+    manufacturer: Linxura
+    model: Smart Controller
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
+  - id: "Aura Smart button"
+    deviceLabel: Aura Smart Button
+    manufacturer: Linxura
+    model: Aura Smart Button
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
   # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: WallHero Remote Control (4-Inch)
