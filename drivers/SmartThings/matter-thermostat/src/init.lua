@@ -1073,6 +1073,11 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
+  if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then -- this being nil means the sequence_of_operation_handler hasn't run.
+    device.log.info_with({hub_logs = true}, "In the SystemMode handler, ControlSequenceOfOperation has not run yet. Aborting.")
+    return
+  end
+
   local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
   -- check that the given mode was in the supported modes list
   if tbl_contains(supported_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
@@ -1161,6 +1166,9 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations)
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+
+  -- do an extra SystemMode read in case of out of order attribute handling
+  device:send(clusters.Thermostat.attributes.SystemMode:read(device))
 end
 
 local function min_deadband_limit_handler(driver, device, ib, response)
