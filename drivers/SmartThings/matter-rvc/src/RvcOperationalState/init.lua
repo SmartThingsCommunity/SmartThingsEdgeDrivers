@@ -109,4 +109,3 @@ setmetatable(RvcOperationalState.events, event_helper_mt)
 setmetatable(RvcOperationalState, {__index = cluster_base})
 
 return RvcOperationalState
-
